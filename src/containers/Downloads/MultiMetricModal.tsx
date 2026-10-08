@@ -633,7 +633,7 @@ export function MultiMetricModal({
 								</Button>
 							) : null}
 
-							{isPreview ? <p className="ml-auto body-sm text-pro-text-tertiary">Preview — last 10 rows</p> : null}
+							{isPreview ? <p className="ml-auto body-sm text-tertiary">Preview — last 10 rows</p> : null}
 						</div>
 					</DialogToolbar>
 				) : null}
@@ -673,8 +673,8 @@ export function MultiMetricModal({
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center body-md">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-pro-text-secondary">No rows in selected date range</p>
+										<Icon name="search" className="size-6 text-tertiary" />
+										<p className="text-secondary">No rows in selected date range</p>
 										<Button
 											variant="secondary"
 											size="sm"
@@ -769,8 +769,8 @@ function ParamPickerEmpty({
 					<Icon name="layers" className="size-5 text-link" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="label-lg text-pro-text-primary">Choose a {labels.singular} to begin</p>
-					<p className="body-sm text-pro-text-tertiary">
+					<p className="label-lg text-primary">Choose a {labels.singular} to begin</p>
+					<p className="body-sm text-tertiary">
 						Pick a {labels.singular} — we&rsquo;ll show its available metrics so you can combine them.
 					</p>
 				</div>
@@ -797,7 +797,7 @@ function ParamPickerEmpty({
 
 				{suggestions.length > 0 ? (
 					<div className="flex flex-col items-center gap-2">
-						<p className="label-xs tracking-[0.08em] text-pro-text-tertiary uppercase">Or start with</p>
+						<p className="label-xs tracking-[0.08em] text-tertiary uppercase">Or start with</p>
 						<div className="flex flex-wrap justify-center gap-1.5">
 							{suggestions.map((opt) => (
 								<Button key={opt.value} type="button" variant="secondary" size="sm" onClick={() => onSelect(opt)}>
@@ -828,8 +828,8 @@ function EmptyState({
 					<Icon name="layers" className="size-5 text-link" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="label-md text-pro-text-primary">Select metrics to combine</p>
-					<p className="body-sm text-pro-text-tertiary">
+					<p className="label-md text-primary">Select metrics to combine</p>
+					<p className="body-sm text-tertiary">
 						{availableCount > 0
 							? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
 							: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
@@ -851,7 +851,7 @@ function CenteredLoader() {
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-3">
 				<LoadingSpinner size={28} />
-				<p className="body-md text-pro-text-secondary">Fetching data...</p>
+				<p className="body-md text-secondary">Fetching data…</p>
 			</div>
 		</div>
 	)
@@ -873,8 +873,8 @@ function CenteredHint({ icon, text }: { icon: IIcon['name']; text: string }) {
 	return (
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-2 text-center">
-				<Icon name={icon} className="size-6 text-pro-text-tertiary" />
-				<p className="body-md text-pro-text-secondary">{text}</p>
+				<Icon name={icon} className="size-6 text-tertiary" />
+				<p className="body-md text-secondary">{text}</p>
 			</div>
 		</div>
 	)
@@ -899,7 +899,7 @@ function PreviewTable({
 							<th
 								// oxlint-disable-next-line react/no-array-index-key -- CSV headings may repeat; the fixed schema ordinal identifies each column.
 								key={columnIndex}
-								className="border-b border-subtle px-3 py-2 text-left font-medium whitespace-nowrap text-pro-text-tertiary"
+								className="border-b border-subtle px-3 py-2 text-left font-medium whitespace-nowrap text-tertiary"
 							>
 								{h}
 							</th>
@@ -913,7 +913,7 @@ function PreviewTable({
 								<td
 									// oxlint-disable-next-line react/no-array-index-key -- CSV cells identify schema positions; column labels can repeat.
 									key={i}
-									className={`px-3 py-1.5 whitespace-nowrap text-pro-text-primary ${i === 0 ? '' : 'tabular-nums'}`}
+									className={`px-3 py-1.5 whitespace-nowrap text-primary ${i === 0 ? '' : 'tabular-nums'}`}
 								>
 									{row.values[i] ?? ''}
 								</td>
@@ -930,7 +930,7 @@ function PreviewTable({
 								<td
 									// oxlint-disable-next-line react/no-array-index-key -- CSV cells identify schema positions; column labels can repeat.
 									key={i}
-									className={`px-3 py-1.5 whitespace-nowrap text-pro-text-primary ${i === 0 ? '' : 'tabular-nums'}`}
+									className={`px-3 py-1.5 whitespace-nowrap text-primary ${i === 0 ? '' : 'tabular-nums'}`}
 								>
 									{row.values[i] ?? ''}
 								</td>
@@ -940,7 +940,7 @@ function PreviewTable({
 				</tbody>
 			</table>
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
-				<div className="border-t border-subtle bg-overlay px-3 py-2 body-sm text-pro-text-tertiary">
+				<div className="border-t border-subtle bg-overlay px-3 py-2 body-sm text-tertiary">
 					<p>
 						Showing first {formatNumber(PREVIEW_ROWS)} of {formatNumber(rows.length)} rows · download for full data
 					</p>

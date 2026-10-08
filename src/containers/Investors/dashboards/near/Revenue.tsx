@@ -42,38 +42,38 @@ const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChartProps['charts'] = [
 
 function KpiCard({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-1">
-				<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
+				<span className="label-sm tracking-wide text-secondary">{label}</span>
 				{tooltip && (
 					<span className="group relative cursor-help">
-						<svg className="size-3.5 text-pro-text-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg className="size-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<circle cx="12" cy="12" r="10" strokeWidth="2" />
 							<path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round" />
 						</svg>
-						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 body-sm text-pro-text-secondary shadow-lg group-hover:block">
+						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-subtle bg-surface p-2 body-sm text-secondary shadow-lg group-hover:block">
 							{tooltip}
 						</span>
 					</span>
 				)}
 			</div>
-			<span className="mono-xl text-pro-text-primary">{value}</span>
+			<span className="mono-xl text-primary">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-1 label-md text-pro-text-label">{title}</h3>
-			{subtitle && <p className="mb-3 body-sm text-pro-text-secondary">{subtitle}</p>}
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-1 label-md text-secondary">{title}</h3>
+			{subtitle && <p className="mb-3 body-sm text-secondary">{subtitle}</p>}
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 const walletColumnHelper = createColumnHelper<typeof displayTableFeatures, WalletEntry>()
@@ -84,7 +84,7 @@ const walletColumns = walletColumnHelper.columns([
 		cell: (info) => {
 			const row = info.row.original
 			return row.link ? (
-				<a href={row.link} target="_blank" rel="noopener noreferrer" className="mono-md text-sl-accent hover:underline">
+				<a href={row.link} target="_blank" rel="noopener noreferrer" className="mono-md text-link hover:underline">
 					{info.getValue()}
 				</a>
 			) : (
@@ -163,11 +163,11 @@ export default function Revenue() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<details className="group rounded-xl border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label">
-				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-pro-text-primary">
+			<details className="group rounded-xl border border-subtle bg-surface transition-all hover:border-strong">
+				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-primary">
 					<span>Quick Investment Thesis</span>
 					<svg
-						className="size-5 shrink-0 text-pro-text-label transition-transform duration-200 group-open:rotate-180"
+						className="size-5 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -175,7 +175,7 @@ export default function Revenue() {
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 					</svg>
 				</summary>
-				<div className="flex flex-col gap-4 border-t border-pro-cards-border px-5 pt-4 pb-5 body-md text-pro-text-secondary">
+				<div className="flex flex-col gap-4 border-t border-subtle px-5 pt-4 pb-5 body-md text-secondary">
 					<p>
 						The standard way to evaluate NEAR understates its traction. Base-chain metrics alone miss the majority of
 						fee-generating activity. When NEAR Intents volume is included, the annualized fee run rate as of early 2026
@@ -357,15 +357,15 @@ export default function Revenue() {
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Wallet Breakdown</SectionHeader>
-					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full">
 							<thead>
 								{walletTable.getHeaderGroups().map((headerGroup) => (
-									<tr key={headerGroup.id} className="border-b border-pro-cards-border">
+									<tr key={headerGroup.id} className="border-b border-subtle">
 										{headerGroup.headers.map((header) => (
 											<th
 												key={header.id}
-												className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
+												className="px-4 py-3 text-left title-sm tracking-wide text-secondary uppercase"
 												style={{ width: header.getSize() }}
 												onClick={header.column.getToggleSortingHandler()}
 											>
@@ -384,9 +384,9 @@ export default function Revenue() {
 							</thead>
 							<tbody>
 								{walletTable.getRowModel().rows.map((row) => (
-									<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
+									<tr key={row.id} className="border-b border-subtle last:border-b-0 hover:bg-hover-row">
 										{row.getVisibleCells().map((cell) => (
-											<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
+											<td key={cell.id} className="px-4 py-2.5 body-md text-primary">
 												{typeof cell.column.columnDef.cell === 'function'
 													? cell.column.columnDef.cell(cell.getContext())
 													: (cell.getValue() as string)}
@@ -407,17 +407,17 @@ export default function Revenue() {
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
 							<details
 								key={key}
-								className="group overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label"
+								className="group overflow-hidden rounded-lg border border-subtle bg-surface transition-all hover:border-strong"
 							>
-								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-pro-text-primary transition-colors hover:bg-sl-hover-bg">
+								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-primary transition-colors hover:bg-hover-row">
 									<span className="flex items-start gap-3">
-										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-pro-text-label label-sm text-pro-cards-bg">
+										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-(--text-secondary) label-sm text-(--bg-surface)">
 											{idx + 1}
 										</span>
 										<span className="pt-0.5">{item.question}</span>
 									</span>
 									<svg
-										className="mt-1 size-5 shrink-0 text-pro-text-label transition-transform duration-200 group-open:rotate-180"
+										className="mt-1 size-5 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -425,8 +425,8 @@ export default function Revenue() {
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 									</svg>
 								</summary>
-								<div className="border-t border-pro-cards-border bg-sl-hover-bg px-5 pt-4 pb-5">
-									<p className="pl-9 body-md text-pro-text-secondary">{item.answer}</p>
+								<div className="border-t border-subtle bg-hover-row px-5 pt-4 pb-5">
+									<p className="pl-9 body-md text-secondary">{item.answer}</p>
 								</div>
 							</details>
 						))}
@@ -435,12 +435,12 @@ export default function Revenue() {
 			)}
 
 			{data.metadata && (
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 body-sm text-pro-text-label">
+				<div className="rounded-lg border border-subtle bg-surface p-4 body-sm text-secondary">
 					<p>
 						Data via{' '}
 						{Object.entries(data.metadata.links || {}).map(([key, url], idx, arr) => (
 							<span key={key}>
-								<a href={url} target="_blank" rel="noopener noreferrer" className="text-sl-accent hover:underline">
+								<a href={url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
 									{key}
 								</a>
 								{idx < arr.length - 1 ? ' · ' : ''}

@@ -43,7 +43,7 @@ const renderLogo = (item: Logo) => (
 		href={item.link}
 		rel="nofollow noopener noreferrer"
 		target="_blank"
-		className="relative inline-flex h-[56px] w-[131px] shrink-0 items-center justify-center rounded-[6px] border border-research-accent/50 bg-research-white px-4.5 py-3 lg:h-[96px] lg:w-[236px] lg:px-9"
+		className="relative inline-flex h-[56px] w-[131px] shrink-0 items-center justify-center rounded-[6px] border border-brand-strong bg-equity-logo px-4.5 py-3 lg:h-[96px] lg:w-[236px] lg:px-9"
 	>
 		<img
 			src={item.logo}

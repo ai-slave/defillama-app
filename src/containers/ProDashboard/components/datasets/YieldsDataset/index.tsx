@@ -103,7 +103,7 @@ export function YieldsDataset({
 				</div>
 			) : error ? (
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">Failed to load yields data</div>
+					<div className="text-center text-secondary">Failed to load yields data</div>
 				</div>
 			) : (
 				<>

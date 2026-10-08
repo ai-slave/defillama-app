@@ -5,7 +5,7 @@ import { type DashboardLayout, findTabForItem } from '../dashboardLayout/buildDa
 
 export const DASHBOARD_ITEM_HASH_PREFIX = '#item='
 export const DASHBOARD_ITEM_REVEAL_EVENT = 'pro-dashboard:reveal-item'
-const HIGHLIGHT_RING_CLASSES = ['ring-2', 'ring-pro-accent']
+const HIGHLIGHT_RING_CLASSES = ['ring-2', 'ring-brand']
 const HIGHLIGHT_TRANSITION_CLASSES = ['transition-shadow', 'duration-260', 'ease-out-quart']
 const HIGHLIGHT_DURATION_MS = 2000
 const HIGHLIGHT_FADE_MS = 300

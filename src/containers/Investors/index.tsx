@@ -74,11 +74,11 @@ function InvestorsShell({
 				values={panelTabs.map((tab) => tab.id)}
 				orientation="vertical"
 			>
-				<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-pro-app-bg pro-dashboard md:flex-row">
+				<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-page md:flex-row">
 					{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- a scrim over the sidebar; the close button and Escape are the keyboard paths. */}
-					{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
+					{sidebarOpen && <div className="fixed inset-0 z-20 bg-screen-dim md:hidden" onClick={closeSidebar} />}
 
-					<div className="sticky top-0 z-10 flex items-center gap-3 bg-pro-app-bg px-4 py-3 md:hidden">
+					<div className="sticky top-0 z-10 flex items-center gap-3 bg-page px-4 py-3 md:hidden">
 						<Tooltip
 							content="Open dashboards menu"
 							render={
@@ -107,7 +107,7 @@ function InvestorsShell({
 						<div className="hidden flex-col items-center pb-3 md:flex">
 							<Logo href="/" />
 						</div>
-						<div className="mb-3 hidden h-px bg-sl-divider md:block" />
+						<div className="mb-3 hidden h-px bg-border-subtle md:block" />
 
 						<nav aria-label="Dashboards" className="flex flex-1 flex-col gap-1 overflow-y-auto">
 							{visibleProjects.map((project, index) => {
@@ -119,7 +119,7 @@ function InvestorsShell({
 									<div key={project.id}>
 										{isSingleProtocol ? (
 											// One protocol has nothing to switch or collapse, so its name is a label, not a control.
-											<div className={`px-3 py-2 label-md ${isActive ? 'text-sl-accent' : 'text-pro-text-secondary'}`}>
+											<div className={`px-3 py-2 label-md ${isActive ? 'text-link' : 'text-secondary'}`}>
 												{project.name}
 											</div>
 										) : (
@@ -138,16 +138,14 @@ function InvestorsShell({
 													}
 												}}
 												className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left label-md transition-colors ${
-													isActive
-														? 'text-sl-accent'
-														: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
+													isActive ? 'text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
 												}`}
 											>
 												<svg
 													viewBox="0 0 12 12"
 													fill="none"
 													aria-hidden="true"
-													className={`size-3.5 shrink-0 text-pro-text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+													className={`size-3.5 shrink-0 text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
 												>
 													<path
 														d="M4.5 2.5L8 6L4.5 9.5"
@@ -162,7 +160,7 @@ function InvestorsShell({
 										)}
 
 										{isExpanded && (
-											<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
+											<div className="ml-3 flex flex-col gap-0.5 border-l border-subtle pt-1 pl-2">
 												<TabList aria-label={`${project.name} dashboard`} className="flex flex-col gap-0.5">
 													{panelTabs.map((tab, idx) => {
 														const isNewGroup = tab.group && (idx === 0 || panelTabs[idx - 1]?.group !== tab.group)
@@ -172,16 +170,14 @@ function InvestorsShell({
 														return (
 															<Fragment key={tab.id}>
 																{isNewGroup && !isSoloGroup && (
-																	<div
-																		className={`px-3 label-xs text-pro-text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}
-																	>
+																	<div className={`px-3 label-xs text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}>
 																		{tab.group}
 																	</div>
 																)}
 																<Tab
 																	value={tab.id}
 																	onClick={closeSidebar}
-																	className={`w-full rounded-md px-3 py-1.5 text-left label-sm text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary data-[active=true]:bg-sl-accent-muted data-[active=true]:text-sl-accent ${isSoloGroup && idx !== 0 ? 'mt-3' : ''}`}
+																	className={`w-full rounded-md px-3 py-1.5 text-left label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary data-[active=true]:bg-brand-tint data-[active=true]:text-link ${isSoloGroup && idx !== 0 ? 'mt-3' : ''}`}
 																>
 																	<TabLabel tab={tab} />
 																</Tab>
@@ -200,7 +196,7 @@ function InvestorsShell({
 																	target="_blank"
 																	rel="noopener noreferrer"
 																	onClick={closeSidebar}
-																	className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left label-sm text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+																	className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 																/>
 															}
 														>

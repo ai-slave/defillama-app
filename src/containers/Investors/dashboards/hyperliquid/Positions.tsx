@@ -72,10 +72,10 @@ const PORTFOLIO_CHART_OPTIONS = createSingleSeriesChartOptions('$')
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value ?? '—'}</span>
-			{helper ? <span className="body-sm text-pro-text-label">{helper}</span> : null}
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value ?? '—'}</span>
+			{helper ? <span className="body-sm text-secondary">{helper}</span> : null}
 		</div>
 	)
 }
@@ -142,9 +142,9 @@ function PortfolioTrend({
 	const changePct = first ? ((last - first) / first) * 100 : 0
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h3 className="label-md text-pro-text-label">Portfolio Trend ({window})</h3>
+				<h3 className="label-md text-secondary">Portfolio Trend ({window})</h3>
 				<span className={changePct >= 0 ? 'body-sm text-success' : 'body-sm text-error'}>
 					{changePct >= 0 ? '+' : ''}
 					{formatPercent(changePct, {
@@ -166,7 +166,7 @@ function PortfolioTrend({
 					exportButtons="hidden"
 				/>
 			</Suspense>
-			<div className="mt-2 flex items-center justify-between body-sm text-pro-text-label">
+			<div className="mt-2 flex items-center justify-between body-sm text-secondary">
 				<span>{formatDate(points[0].time, { input: 'milliseconds' })}</span>
 				<span>
 					Last: {formatUsd(last, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
@@ -419,8 +419,8 @@ function DataTable<T>({
 	})
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{/* Auto layout sizes each column to its nowrap cells, so a phone scrolls the table sideways instead of
 			    squashing every column into the card's width. */}
 			<Table table={instance} tableLayout="auto" />
@@ -527,7 +527,7 @@ export default function Positions() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="label-sm tracking-wide text-pro-text-label">Vault:</div>
+				<div className="label-sm tracking-wide text-secondary">Vault:</div>
 				<SegmentedControl<VaultFilter>
 					variant="default"
 					size="md"
@@ -537,7 +537,7 @@ export default function Positions() {
 					onValueChange={setVaultFilter}
 				/>
 
-				<div className="ml-auto body-sm text-pro-text-label">Snapshot: {kpis.snapshotTime}</div>
+				<div className="ml-auto body-sm text-secondary">Snapshot: {kpis.snapshotTime}</div>
 			</div>
 
 			<div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -552,7 +552,7 @@ export default function Positions() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="label-sm tracking-wide text-pro-text-label">Portfolio Window:</div>
+				<div className="label-sm tracking-wide text-secondary">Portfolio Window:</div>
 				<SegmentedControl<typeof portfolioWindow>
 					variant="default"
 					size="md"
@@ -566,7 +566,7 @@ export default function Positions() {
 			<PortfolioTrend points={portfolio.points} window={portfolioWindow} />
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="label-sm tracking-wide text-pro-text-label">Funding Window:</div>
+				<div className="label-sm tracking-wide text-secondary">Funding Window:</div>
 				<SegmentedControl<typeof fundingWindow>
 					variant="default"
 					size="md"

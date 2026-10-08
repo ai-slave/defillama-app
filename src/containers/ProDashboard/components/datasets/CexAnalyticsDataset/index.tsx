@@ -138,7 +138,7 @@ function DatasetState({
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">{errorMessage}</div>
+					<div className="text-center text-secondary">{errorMessage}</div>
 				</div>
 			</div>
 		)
@@ -222,18 +222,18 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 	return (
 		<div className="flex h-full w-full flex-col gap-4">
 			<div className="flex flex-wrap items-start justify-between gap-2">
-				<p className="body-md text-pro-text-secondary">Snapshot metrics across centralized exchanges.</p>
+				<p className="body-md text-secondary">Snapshot metrics across centralized exchanges.</p>
 				{data.summary.loadedAt ? (
-					<span className="body-sm tracking-wide text-pro-text-tertiary uppercase">
+					<span className="body-sm tracking-wide text-tertiary uppercase">
 						Loaded {formatDateTime(data.summary.loadedAt, { timeZone: 'UTC' }) ?? '-'}
 					</span>
 				) : null}
 			</div>
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
 				{cards.map((card) => (
-					<div key={card.label} className="rounded-lg border border-pro-cards-border p-3">
-						<p className="label-sm tracking-wide text-pro-text-tertiary uppercase">{card.label}</p>
-						<p className="mt-2 mono-xl text-pro-text-primary">{card.value}</p>
+					<div key={card.label} className="rounded-lg border border-subtle p-3">
+						<p className="label-sm tracking-wide text-tertiary uppercase">{card.label}</p>
+						<p className="mt-2 mono-xl text-primary">{card.value}</p>
 					</div>
 				))}
 			</div>
@@ -278,9 +278,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 		<div className="flex h-full w-full flex-col">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<p className="mr-auto body-md text-pro-text-secondary">
-						Spot, derivatives, OI, leverage, and efficiency across CEXs.
-					</p>
+					<p className="mr-auto body-md text-secondary">Spot, derivatives, OI, leverage, and efficiency across CEXs.</p>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<CSVExportButton
 							onClick={() => {
@@ -323,7 +321,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							type="text"
 							placeholder="Search CEXs..."
 							onInput={(event) => setVenueName(event.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
@@ -362,7 +360,7 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 
 	if (dataset.source.length === 0) {
 		return (
-			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 body-md text-pro-text-secondary">
+			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 body-md text-secondary">
 				No volume data available.
 			</div>
 		)
@@ -464,7 +462,7 @@ function VenueMarketShareChart({
 
 	if (dataset.source.length === 0 || charts.length === 0) {
 		return (
-			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 body-md text-pro-text-secondary">
+			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 body-md text-secondary">
 				No market share data available.
 			</div>
 		)

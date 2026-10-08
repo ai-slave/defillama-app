@@ -27,11 +27,11 @@ export function PresetPicker({
 						aria-pressed={isActive}
 						onClick={() => onSelect(preset.id)}
 						className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-3 text-left transition ${
-							isActive ? 'border-brand bg-brand-tint' : 'border-pro-cards-border hover:border-brand'
+							isActive ? 'border-brand bg-brand-tint' : 'border-medium hover:border-brand'
 						}`}
 					>
-						<span className="title-md text-pro-text-primary">{preset.name}</span>
-						{preset.description ? <span className="body-sm text-pro-text-secondary">{preset.description}</span> : null}
+						<span className="title-md text-primary">{preset.name}</span>
+						{preset.description ? <span className="body-sm text-secondary">{preset.description}</span> : null}
 						{isActive ? <span className="rounded-sm bg-brand-tint px-2 py-0.5 label-sm text-link">Active</span> : null}
 					</button>
 				)

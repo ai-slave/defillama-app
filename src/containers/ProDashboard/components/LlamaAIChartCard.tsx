@@ -227,7 +227,6 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 					onClose={() => setConfirmingRefresh(false)}
 					portal
 					unmountOnHide
-					scope="pro"
 					tone="primary"
 					title="Refresh with premium data?"
 					description={refreshConfirmation}

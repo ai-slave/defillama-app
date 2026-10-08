@@ -55,7 +55,7 @@ export function YieldsTableHeader({
 						placeholder="Search pools…"
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
-						className="w-full rounded-md border border-subtle bg-surface px-3 py-1.5 body-md focus:border-primary focus:outline-hidden"
+						className="w-full rounded-md border border-medium bg-surface px-3 py-1.5 body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 					/>
 				</div>
 			</div>

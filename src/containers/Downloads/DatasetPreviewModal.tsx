@@ -491,7 +491,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 					title={dataset.name}
 					subtitle={
 						loading
-							? 'Loading...'
+							? 'Loading…'
 							: error
 								? 'Error'
 								: (() => {
@@ -581,7 +581,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 									<RowLimitPicker value={rowLimit} totalRows={sortedRows.length} onChange={setRowLimit} />
 								</>
 							) : (
-								<p className="body-sm text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
+								<p className="body-sm text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 							)}
 						</div>
 					</DialogToolbar>
@@ -596,7 +596,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-3">
 									<LoadingSpinner size={28} />
-									<p className="body-md text-pro-text-secondary">Fetching dataset...</p>
+									<p className="body-md text-secondary">Fetching dataset…</p>
 								</div>
 							</div>
 						) : error ? (
@@ -611,15 +611,15 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 						) : columnMeta.length === 0 ? (
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-2 text-center">
-									<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-									<p className="body-md text-pro-text-secondary">No data</p>
+									<Icon name="eye-off" className="size-6 text-tertiary" />
+									<p className="body-md text-secondary">No data</p>
 								</div>
 							</div>
 						) : sortedRows.length === 0 ? (
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-2 text-center">
-									<Icon name="search" className="size-6 text-pro-text-tertiary" />
-									<p className="body-md text-pro-text-secondary">No matching rows</p>
+									<Icon name="search" className="size-6 text-tertiary" />
+									<p className="body-md text-secondary">No matching rows</p>
 								</div>
 							</div>
 						) : (
@@ -673,7 +673,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 																className="flex min-w-0 flex-1 items-center gap-1"
 															>
 																<span
-																	className={`truncate label-sm ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+																	className={`truncate label-sm ${isSelected ? 'text-secondary' : 'text-tertiary'}`}
 																>
 																	{column.header}
 																</span>
@@ -700,7 +700,6 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 									>
 										{rowVirtualizer.items.map((virtualRow) => {
 											const row = displayedRows[virtualRow.index]
-											const isOdd = virtualRow.index % 2 === 1
 											return (
 												<div
 													key={row.id}
@@ -726,13 +725,13 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 															<div
 																key={column.index}
 																title={rawValue || undefined}
-																className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
 																style={{
 																	textAlign: column.align,
 																	position: isSticky ? 'sticky' : undefined,
 																	left: isSticky ? 0 : undefined,
 																	zIndex: isSticky ? 1 : undefined,
-																	background: isSticky ? 'var(--bg-overlay)' : isOdd ? 'var(--bg-primary)' : undefined,
+																	background: isSticky ? 'var(--bg-overlay)' : undefined,
 																	boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 																}}
 															>

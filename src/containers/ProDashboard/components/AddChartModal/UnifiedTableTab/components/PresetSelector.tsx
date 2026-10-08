@@ -10,14 +10,14 @@ interface PresetSelectorProps {
 	onApplyPreset: (preset: FilterPreset) => void
 }
 
-const CATEGORY_CONFIG: Record<FilterPresetCategory, { label: string; color: string }> = {
-	quick: { label: 'Quick', color: 'bg-gray-500/20 text-tertiary' },
-	size: { label: 'Size', color: 'bg-brand-tint-strong text-link' },
-	growth: { label: 'Growth', color: 'bg-success-tint-strong text-success' },
-	activity: { label: 'Activity', color: 'bg-purple-500/20 text-purple-400' },
-	revenue: { label: 'Revenue', color: 'bg-success-tint-strong text-success' },
-	investment: { label: 'Investment', color: 'bg-warning-tint-strong text-warning' },
-	category: { label: 'Category', color: 'bg-cyan-500/20 text-cyan-400' }
+const CATEGORY_LABELS: Record<FilterPresetCategory, string> = {
+	quick: 'Quick',
+	size: 'Size',
+	growth: 'Growth',
+	activity: 'Activity',
+	revenue: 'Revenue',
+	investment: 'Investment',
+	category: 'Category'
 }
 
 const CATEGORY_ORDER: Array<FilterPresetCategory> = [
@@ -78,12 +78,13 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 			{CATEGORY_ORDER.map((category) => {
 				const presets = groupedPresets.get(category)
 				if (!presets?.length) return null
-				const config = CATEGORY_CONFIG[category]
 
 				return (
 					<div key={category}>
 						<div className="mb-1.5 flex items-center gap-2">
-							<span className={`rounded-sm px-1.5 py-0.5 title-sm ${config.color}`}>{config.label}</span>
+							<span className="rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 title-sm text-secondary">
+								{CATEGORY_LABELS[category]}
+							</span>
 						</div>
 						<div className="flex flex-wrap gap-1.5">
 							{presets.map((preset) => {

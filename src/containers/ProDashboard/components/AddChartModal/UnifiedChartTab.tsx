@@ -371,9 +371,9 @@ export function UnifiedChartTab({
 						/>
 					) : null}
 
-					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-subtle bg-surface">
 						{composerItems.length === 0 ? (
-							<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">
+							<div className="flex h-full items-center justify-center body-sm text-tertiary">
 								Select entities to preview chart
 							</div>
 						) : chartCreationMode === 'separate' && composerItems.length > 1 ? (

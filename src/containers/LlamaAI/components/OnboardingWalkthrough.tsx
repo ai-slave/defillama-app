@@ -361,7 +361,7 @@ export function OnboardingWalkthrough({
 					className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 data-leave:pointer-events-none motion-safe:animate-[fadein_0.3s_ease-out] data-leave:motion-safe:animate-[intro-exit_0.25s_ease-in_forwards]"
 				>
 					<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
-						<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
+						<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold to-transparent opacity-60" />
 						<div className="p-6">
 							<div className="mb-5 flex flex-col items-center gap-3 text-center">
 								<div className="relative">
@@ -394,7 +394,7 @@ export function OnboardingWalkthrough({
 								{CAPABILITY_BADGES.map(([icon, label]) => (
 									<span
 										key={label}
-										className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 body-xs text-ai-bronze-deep"
+										className="flex items-center gap-1 rounded-md border border-ai-gold-muted bg-ai-gold-tint px-2 py-0.5 body-xs text-ai-gold-deep"
 									>
 										<Icon name={icon} height={12} width={12} className="opacity-70" />
 										{label}
@@ -541,7 +541,7 @@ export function OnboardingWalkthrough({
 						className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 motion-safe:animate-ai-fade-in"
 					>
 						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
-							<div className="h-px w-full bg-linear-to-r from-transparent via-success/50 to-transparent" />
+							<div className="h-px w-full bg-linear-to-r from-transparent via-success to-transparent opacity-50" />
 
 							<div className="p-6">
 								<div className="mb-4 flex flex-col items-center gap-1 text-center">
@@ -606,7 +606,7 @@ function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; ste
 					<div
 						key={stepName}
 						className={`h-1 rounded-full motion-safe:transition-[width,opacity] motion-safe:duration-200 ${
-							index <= currentIndex ? 'w-3.5 bg-ai-bronze-deep' : 'w-1 bg-surface-elevated-2'
+							index <= currentIndex ? 'w-3.5 bg-ai-gold-deep' : 'w-1 bg-surface-elevated-2'
 						}`}
 					/>
 				))}

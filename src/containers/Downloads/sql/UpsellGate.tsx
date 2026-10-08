@@ -186,11 +186,11 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 			<section className="flex flex-col gap-8 lg:gap-10">
 				<header className="flex flex-col gap-5">
 					<div className="flex items-center gap-2">
-						<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
+						<span aria-hidden className="inline-block size-1.5 rounded-full bg-brand" />
 						<span className="label-xs tracking-[0.18em] text-link uppercase">API plan</span>
 					</div>
-					<h2 className="heading-lg tracking-tight text-balance text-pro-text-primary">{heading}</h2>
-					<p className="max-w-xl body-lg text-pro-text-secondary">{copy}</p>
+					<h2 className="heading-lg tracking-tight text-balance text-primary">{heading}</h2>
+					<p className="max-w-xl body-lg text-secondary">{copy}</p>
 				</header>
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
@@ -201,8 +201,8 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 			<section className="flex flex-col gap-6">
 				<div className="flex items-baseline justify-between gap-3">
-					<h3 className="label-xs tracking-[0.18em] text-pro-text-tertiary uppercase">Everything in SQL Studio</h3>
-					<span className="hidden body-sm text-pro-text-tertiary sm:inline">
+					<h3 className="label-xs tracking-[0.18em] text-tertiary uppercase">Everything in SQL Studio</h3>
+					<span className="hidden body-sm text-tertiary sm:inline">
 						SQL compute runs locally — your API quota stays untouched
 					</span>
 				</div>
@@ -218,29 +218,29 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: boolean; subscriptionHref: string }) {
 	return (
-		<div className="flex flex-col gap-6 rounded-xl border border-sub-brand-primary/30 bg-surface p-6 shadow-sm lg:sticky lg:top-4">
+		<div className="flex flex-col gap-6 rounded-xl border border-brand-muted bg-surface p-6 shadow-sm lg:sticky lg:top-4">
 			<div className="flex items-center gap-2">
-				<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
+				<span aria-hidden className="inline-block size-1.5 rounded-full bg-brand" />
 				<span className="label-xs tracking-[0.18em] text-link uppercase">API plan</span>
 			</div>
 
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-baseline gap-1.5">
-					<span className="heading-lg tracking-[-0.04em] text-pro-text-primary tabular-nums">$300</span>
-					<span className="label-lg text-pro-text-secondary">/mo</span>
+					<span className="heading-lg tracking-[-0.04em] text-primary tabular-nums">$300</span>
+					<span className="label-lg text-secondary">/mo</span>
 				</div>
-				<span className="body-sm text-pro-text-tertiary">
-					or <span className="font-mono text-pro-text-secondary tabular-nums">$3,000</span> billed yearly
+				<span className="body-sm text-tertiary">
+					or <span className="font-mono text-secondary tabular-nums">$3,000</span> billed yearly
 				</span>
 			</div>
 
 			<div className="flex flex-col gap-3 border-t border-subtle pt-5">
-				<span className="label-xs tracking-[0.18em] text-pro-text-tertiary uppercase">What's included</span>
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">What's included</span>
 				<ul className="flex flex-col gap-2.5">
 					{PLAN_INCLUDES.map((item) => (
 						<li key={item} className="flex items-start gap-2.5 body-md">
 							<Icon name="check" className="mt-0.5 size-3.5 shrink-0 text-link" />
-							<span className="text-pro-text-primary">{item}</span>
+							<span className="text-primary">{item}</span>
 						</li>
 					))}
 				</ul>
@@ -257,7 +257,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 					{isAuthenticated ? 'Upgrade to API plan' : 'Sign in & subscribe'}
 					<Icon name="arrow-up-right" className="size-3.5" />
 				</Button>
-				<span className="body-sm text-pro-text-tertiary">Cancel anytime · pay with card or crypto</span>
+				<span className="body-sm text-tertiary">Cancel anytime · pay with card or crypto</span>
 			</div>
 		</div>
 	)
@@ -275,14 +275,14 @@ function FeatureTile({
 	body: string
 }) {
 	return (
-		<div className="group flex gap-4 border-t border-subtle py-5 transition-colors hover:border-sub-brand-primary/40">
-			<span className="mono-sm-bold text-pro-text-tertiary tabular-nums">{String(index).padStart(2, '0')}</span>
+		<div className="group flex gap-4 border-t border-subtle py-5 transition-colors hover:border-brand-muted">
+			<span className="mono-sm-bold text-tertiary tabular-nums">{String(index).padStart(2, '0')}</span>
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-center gap-2">
 					<Icon name={icon} className="size-3.5 text-link" />
-					<span className="title-md text-pro-text-primary">{title}</span>
+					<span className="title-md text-primary">{title}</span>
 				</div>
-				<p className="body-md text-pro-text-secondary">{body}</p>
+				<p className="body-md text-secondary">{body}</p>
 			</div>
 		</div>
 	)
@@ -312,20 +312,20 @@ function TabStrip({ id }: { id: string }) {
 	return (
 		<TabList
 			aria-label="SQL Studio sample tabs"
-			className="flex items-stretch gap-1 overflow-x-auto border-b border-subtle bg-pro-app-bg/40 px-2 pt-2"
+			className="flex items-stretch gap-1 overflow-x-auto border-b border-subtle bg-surface-elevated-1 px-2 pt-2"
 		>
 			{TABS.map((tab) => (
 				<Tab
 					key={tab.key}
 					id={`${id}-${tab.key}`}
-					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-pro-text-primary"
+					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-secondary transition-colors hover:bg-hover-row hover:text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-primary"
 				>
 					<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
-						{tab.dirty ? <span className="size-1.5 rounded-full bg-pro-premium-300" /> : null}
+						{tab.dirty ? <span className="size-1.5 rounded-full bg-warning" /> : null}
 					</span>
 					<Icon
 						name={tab.kind === 'notebook' ? 'layers' : 'file-text'}
-						className={`size-3 shrink-0 text-pro-text-tertiary ${tab.kind === 'notebook' ? 'group-aria-selected:text-link' : 'group-aria-selected:text-pro-text-secondary'}`}
+						className={`size-3 shrink-0 text-tertiary ${tab.kind === 'notebook' ? 'group-aria-selected:text-link' : 'group-aria-selected:text-secondary'}`}
 					/>
 					<span className="min-w-0 flex-1 truncate text-left mono-sm">{tab.label}</span>
 					<span
@@ -338,7 +338,7 @@ function TabStrip({ id }: { id: string }) {
 			))}
 			<span
 				aria-hidden="true"
-				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-pro-text-tertiary"
+				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-tertiary"
 			>
 				<Icon name="plus" className="size-3.5" />
 			</span>
@@ -362,17 +362,17 @@ function NotebookBody() {
 
 function NotebookHeader() {
 	return (
-		<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2.5">
+		<div className="flex items-center justify-between gap-3 border-b border-subtle bg-surface-elevated-1 px-4 py-2.5">
 			<div className="flex min-w-0 flex-col gap-0.5">
-				<span className="truncate title-md tracking-tight text-pro-text-primary">Revenue capture across DeFi</span>
-				<span className="mono-sm text-pro-text-tertiary tabular-nums">3 cells · 2 SQL · 1 chart · last run 412ms</span>
+				<span className="truncate title-md tracking-tight text-primary">Revenue capture across DeFi</span>
+				<span className="mono-sm text-tertiary tabular-nums">3 cells · 2 SQL · 1 chart · last run 412ms</span>
 			</div>
 			<div className="flex shrink-0 items-center gap-2">
 				<span className="hidden items-center gap-1.5 sm:inline-flex">
 					<Keycap>⌘</Keycap>
 					<Keycap>↵</Keycap>
 				</span>
-				<span className="inline-flex items-center gap-1.5 rounded-md bg-sub-brand-primary px-3 py-1 title-sm text-on-brand">
+				<span className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1 title-sm text-on-brand">
 					<PlayGlyph />
 					Run all
 				</span>
@@ -403,8 +403,8 @@ function MarkdownCell() {
 		<CellShell focused={false}>
 			<CellHeader name="cell_1" badge="md" />
 			<div className="px-3 pb-3 pl-9">
-				<h4 className="title-md tracking-tight text-pro-text-primary">Revenue capture across DeFi</h4>
-				<p className="mt-1.5 body-sm text-pro-text-secondary">
+				<h4 className="title-md tracking-tight text-primary">Revenue capture across DeFi</h4>
+				<p className="mt-1.5 body-sm text-secondary">
 					Which protocols earn the most fees, and how much do they keep as revenue? Joining{' '}
 					<InlineCode>fees</InlineCode> and <InlineCode>revenue</InlineCode> highlights the high-volume, low-capture
 					protocols.
@@ -415,7 +415,7 @@ function MarkdownCell() {
 }
 
 function InlineCode({ children }: { children: ReactNode }) {
-	return <code className="rounded-sm bg-pro-app-bg/70 px-1 py-px mono-sm text-pro-text-primary">{children}</code>
+	return <code className="rounded-sm bg-surface-elevated-1 px-1 py-px mono-sm text-primary">{children}</code>
 }
 
 function SqlNotebookCell() {
@@ -426,7 +426,7 @@ function SqlNotebookCell() {
 				badge="sql"
 				action={
 					<>
-						<span className="inline-flex items-center gap-1 rounded-md bg-sub-brand-primary px-2 py-0.5 label-xs text-on-brand">
+						<span className="inline-flex items-center gap-1 rounded-md bg-brand px-2 py-0.5 label-xs text-on-brand">
 							<PlayGlyph size={4} />
 							Run
 						</span>
@@ -434,12 +434,12 @@ function SqlNotebookCell() {
 							<Keycap muted>⌘</Keycap>
 							<Keycap muted>↵</Keycap>
 						</span>
-						<Icon name="ellipsis" className="size-3.5 text-pro-text-tertiary" />
+						<Icon name="ellipsis" className="size-3.5 text-tertiary" />
 					</>
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<pre className="overflow-x-auto rounded-md border border-subtle bg-pro-app-bg/60 px-3 py-2 mono-sm text-pro-text-primary">
+				<pre className="overflow-x-auto rounded-md border border-subtle bg-surface-elevated-1 px-3 py-2 mono-sm text-primary">
 					<code>
 						<KW>SELECT</KW> f.name, f.category,
 						{'\n'}
@@ -461,15 +461,15 @@ function SqlNotebookCell() {
 				</pre>
 
 				<div className="mt-2.5 flex items-center justify-between gap-2 body-xs">
-					<span className="font-mono text-pro-text-tertiary tabular-nums">7 rows · 5 cols · 412ms</span>
-					<span className="flex items-center gap-1.5 font-mono text-pro-success-300">
-						<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
+					<span className="font-mono text-tertiary tabular-nums">7 rows · 5 cols · 412ms</span>
+					<span className="flex items-center gap-1.5 font-mono text-success">
+						<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
 						<span className="tracking-[0.12em] uppercase">cached</span>
 					</span>
 				</div>
 				<div className="mt-1.5 overflow-hidden rounded-md border border-subtle">
 					<GridTable rows={SAMPLE_ROWS.slice(0, 3)} cols={SAMPLE_COLS} />
-					<div className="border-subtle/60 border-t bg-pro-app-bg/30 px-3 py-1.5 mono-sm text-pro-text-tertiary">
+					<div className="border-t border-subtle bg-surface-elevated-1 px-3 py-1.5 mono-sm text-tertiary">
 						… 4 more rows
 					</div>
 				</div>
@@ -485,22 +485,22 @@ function ChartNotebookCell() {
 				name="cell_3"
 				badge="chart"
 				action={
-					<span className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2 py-0.5 mono-sm text-pro-text-secondary">
-						<span className="text-pro-text-tertiary">source</span>
-						<span className="text-pro-text-primary">cell_2</span>
-						<span aria-hidden className="text-pro-text-tertiary">
+					<span className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-surface px-2 py-0.5 mono-sm text-secondary">
+						<span className="text-tertiary">source</span>
+						<span className="text-primary">cell_2</span>
+						<span aria-hidden className="text-tertiary">
 							·
 						</span>
 						<span className="tabular-nums">7 × 5</span>
-						<Icon name="chevron-down" className="size-3 text-pro-text-tertiary" />
+						<Icon name="chevron-down" className="size-3 text-tertiary" />
 					</span>
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<div className="rounded-md border border-subtle bg-pro-app-bg/30 px-3 pt-3">
+				<div className="rounded-md border border-subtle bg-surface-elevated-1 px-3 pt-3">
 					<div className="mb-2 flex items-baseline justify-between">
-						<span className="label-xs tracking-[0.18em] text-pro-text-tertiary uppercase">30d fees by protocol</span>
-						<span className="mono-sm text-pro-text-tertiary tabular-nums">bar · top 7</span>
+						<span className="label-xs tracking-[0.18em] text-tertiary uppercase">30d fees by protocol</span>
+						<span className="mono-sm text-tertiary tabular-nums">bar · top 7</span>
 					</div>
 					<FeesChart height={108} />
 				</div>
@@ -513,9 +513,7 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 	return (
 		<div
 			className={`relative rounded-md border transition-colors ${
-				focused
-					? 'border-sub-brand-primary/45 bg-surface shadow-sub-brand-ring'
-					: 'border-subtle bg-surface hover:border-subtle'
+				focused ? 'border-brand-strong bg-surface ring-1 ring-brand-muted' : 'border-subtle bg-surface'
 			}`}
 		>
 			{children}
@@ -526,8 +524,8 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md' | 'chart'; action?: ReactNode }) {
 	return (
 		<div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
-			<Icon name="menu" className="size-3 shrink-0 text-pro-text-tertiary" />
-			<span className="mono-sm text-pro-text-tertiary">{name}</span>
+			<Icon name="menu" className="size-3 shrink-0 text-tertiary" />
+			<span className="mono-sm text-tertiary">{name}</span>
 			<CellTypeBadge kind={badge} />
 			{action ? <div className="ml-auto flex items-center gap-1.5">{action}</div> : null}
 		</div>
@@ -536,9 +534,9 @@ function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md'
 
 function CellTypeBadge({ kind }: { kind: 'sql' | 'md' | 'chart' }) {
 	const map = {
-		sql: { label: 'SQL', cls: 'bg-sub-brand-primary/15 text-link' },
-		md: { label: 'MD', cls: 'bg-pro-ai-300/15 text-pro-ai-300' },
-		chart: { label: 'CHART', cls: 'bg-pro-premium-300/15 text-pro-premium-300' }
+		sql: { label: 'SQL', cls: 'bg-brand-tint text-link' },
+		md: { label: 'MD', cls: 'bg-pro-ai-tint text-pro-ai-text' },
+		chart: { label: 'CHART', cls: 'bg-warning-tint text-warning' }
 	}[kind]
 	return (
 		<span
@@ -553,10 +551,10 @@ function AddCellBar() {
 	return (
 		<div className="group flex items-center gap-2 pt-1">
 			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
-			<span className="inline-flex items-center gap-3 rounded-md body-sm text-pro-text-tertiary">
-				<AddCellChip dot="bg-sub-brand-primary" label="Query" />
-				<AddCellChip dot="bg-pro-premium-300" label="Visualize" />
-				<AddCellChip dot="bg-pro-ai-300" label="Narrate" />
+			<span className="inline-flex items-center gap-3 rounded-md body-sm text-tertiary">
+				<AddCellChip dot="bg-brand" label="Query" />
+				<AddCellChip dot="bg-warning" label="Visualize" />
+				<AddCellChip dot="bg-pro-ai" label="Narrate" />
 			</span>
 			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
 		</div>
@@ -575,19 +573,19 @@ function AddCellChip({ dot, label }: { dot: string; label: string }) {
 function QueryBody() {
 	return (
 		<div className="flex flex-col">
-			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2">
+			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-surface-elevated-1 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-link" />
-					<span className="truncate mono-sm text-pro-text-secondary">fees-vs-revenue.sql</span>
+					<span className="truncate mono-sm text-secondary">fees-vs-revenue.sql</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
-					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
-					<span className="font-mono tracking-[0.12em] text-pro-success-300 uppercase">ready</span>
-					<span aria-hidden className="text-pro-text-tertiary">
+					<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
+					<span className="font-mono tracking-[0.12em] text-success uppercase">ready</span>
+					<span aria-hidden className="text-tertiary">
 						·
 					</span>
-					<span className="font-mono text-pro-text-tertiary tabular-nums">412ms</span>
-					<span aria-hidden className="hidden text-pro-text-tertiary sm:inline">
+					<span className="font-mono text-tertiary tabular-nums">412ms</span>
+					<span aria-hidden className="hidden text-tertiary sm:inline">
 						·
 					</span>
 					<span className="hidden sm:inline-flex">
@@ -596,8 +594,8 @@ function QueryBody() {
 				</span>
 			</div>
 
-			<div className="border-b border-subtle bg-pro-app-bg/40 px-4 py-3">
-				<pre className="overflow-x-auto mono-sm text-pro-text-primary">
+			<div className="border-b border-subtle bg-surface-elevated-1 px-4 py-3">
+				<pre className="overflow-x-auto mono-sm text-primary">
 					<code>
 						<COMMENT>-- Which protocols earn the most fees, and how much do they capture as revenue?</COMMENT>
 						{'\n'}
@@ -632,8 +630,8 @@ function QueryBody() {
 
 			<div className="flex flex-col gap-3 px-4 py-3.5">
 				<div className="flex items-baseline justify-between">
-					<span className="label-xs tracking-[0.18em] text-pro-text-tertiary uppercase">30d fees by protocol</span>
-					<span className="mono-sm text-pro-text-tertiary tabular-nums">bar · top 7</span>
+					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">30d fees by protocol</span>
+					<span className="mono-sm text-tertiary tabular-nums">bar · top 7</span>
 				</div>
 				<FeesChart />
 			</div>
@@ -644,20 +642,20 @@ function QueryBody() {
 function AltQueryBody() {
 	return (
 		<div className="flex flex-col">
-			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2">
+			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-surface-elevated-1 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
-					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
-					<span className="truncate mono-sm text-pro-text-secondary">chains-tvl.sql</span>
-					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-pro-premium-300" />
-					<span className="label-xs tracking-[0.12em] text-pro-premium-300 uppercase">unsaved</span>
+					<Icon name="file-text" className="size-3.5 shrink-0 text-tertiary" />
+					<span className="truncate mono-sm text-secondary">chains-tvl.sql</span>
+					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-warning" />
+					<span className="label-xs tracking-[0.12em] text-warning uppercase">unsaved</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
-					<span className="font-mono text-pro-text-tertiary tabular-nums">86ms</span>
+					<span className="font-mono text-tertiary tabular-nums">86ms</span>
 				</span>
 			</div>
 
-			<div className="border-b border-subtle bg-pro-app-bg/40 px-4 py-3">
-				<pre className="overflow-x-auto mono-sm text-pro-text-primary">
+			<div className="border-b border-subtle bg-surface-elevated-1 px-4 py-3">
+				<pre className="overflow-x-auto mono-sm text-primary">
 					<code>
 						<COMMENT>-- Top L1 chains by TVL with rolling 30d change and dominance</COMMENT>
 						{'\n'}
@@ -688,7 +686,7 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 		<div className="overflow-x-auto">
 			<div style={{ width: totalWidth, minWidth: '100%' }}>
 				<div
-					className="grid border-b border-subtle bg-surface mono-sm text-pro-text-secondary"
+					className="grid border-b border-subtle bg-surface mono-sm text-secondary"
 					style={{ gridTemplateColumns: gridTemplate, height: 42 }}
 				>
 					{cols.map((col) => {
@@ -696,15 +694,15 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 						return (
 							<div
 								key={col.name}
-								className={`border-subtle/60 flex flex-col justify-center gap-0.5 truncate border-l px-2.5 first:border-l-0 ${
+								className={`flex flex-col justify-center gap-0.5 truncate border-l border-subtle px-2.5 first:border-l-0 ${
 									isNumeric ? 'items-end text-right' : 'items-start text-left'
 								}`}
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
+									<span className="truncate font-mono font-bold text-primary">{col.name}</span>
 								</div>
-								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary">{col.type}</span>
+								<span className="truncate mono-sm tracking-tight text-tertiary">{col.type}</span>
 							</div>
 						)
 					})}
@@ -715,8 +713,8 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- This table only renders fixed demonstration datasets.
 							key={i}
-							className={`grid mono-sm tabular-nums transition-colors hover:bg-brand-faint ${
-								zebra ? 'bg-pro-app-bg/25' : ''
+							className={`grid mono-sm tabular-nums transition-colors hover:bg-hover-row ${
+								zebra ? 'bg-hover-card' : ''
 							}`}
 							style={{ gridTemplateColumns: gridTemplate, height: 28 }}
 						>
@@ -726,9 +724,9 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 								return (
 									<div
 										key={col.name}
-										className={`border-subtle/30 flex items-center truncate border-l px-2.5 first:border-l-0 ${
+										className={`flex items-center truncate border-l border-subtle px-2.5 first:border-l-0 ${
 											isNumeric ? 'justify-end' : ''
-										} text-pro-text-primary`}
+										} text-primary`}
 									>
 										<span className="truncate">{formatCellValue(value)}</span>
 									</div>
@@ -746,7 +744,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 	const data = SAMPLE_ROWS.map((r, i) => ({
 		label: r.short,
 		value: r.fees_30d,
-		tone: BAR_TONES[i] ?? 'bg-sub-brand-softest'
+		tone: BAR_TONES[i] ?? 'bg-brand opacity-40'
 	}))
 	const dataMax = Math.max(...data.map((d) => d.value))
 	const yMax = niceCeiling(dataMax)
@@ -756,7 +754,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 	return (
 		<div className="flex w-full" style={{ paddingBottom: 22 }}>
 			<div
-				className="flex shrink-0 flex-col-reverse justify-between mono-sm text-pro-text-tertiary tabular-nums"
+				className="flex shrink-0 flex-col-reverse justify-between mono-sm text-tertiary tabular-nums"
 				style={{ width: Y_AXIS_WIDTH, height }}
 			>
 				{ticks.map((t) => (
@@ -778,13 +776,13 @@ function FeesChart({ height = 132 }: { height?: number }) {
 						const h = (b.value / yMax) * height
 						return (
 							<div key={b.label} className="group relative flex flex-1 flex-col items-center justify-end">
-								<span className="mb-1 mono-sm text-pro-text-secondary tabular-nums">{formatCompactUsd(b.value)}</span>
+								<span className="mb-1 mono-sm text-secondary tabular-nums">{formatCompactUsd(b.value)}</span>
 								<div
-									className={`w-full rounded-t-[3px] ${b.tone} transition-opacity group-hover:opacity-90`}
+									className={`w-full rounded-t-[3px] ${b.tone} transition-[filter] group-hover:brightness-110`}
 									style={{ height: Math.max(h, 1.5) }}
 								/>
 								<span
-									className="absolute truncate mono-sm text-pro-text-tertiary"
+									className="absolute truncate mono-sm text-tertiary"
 									style={{ top: '100%', marginTop: 6, maxWidth: '100%' }}
 								>
 									{b.label}
@@ -798,14 +796,15 @@ function FeesChart({ height = 132 }: { height?: number }) {
 	)
 }
 
+// The sample chart is illustration, so its bars fade the brand fill with opacity rather than a ramp step.
 const BAR_TONES = [
-	'bg-sub-brand-primary',
-	'bg-sub-brand-secondary',
-	'bg-sub-brand-soft',
-	'bg-sub-brand-soft',
-	'bg-sub-brand-softest',
-	'bg-sub-brand-softest',
-	'bg-sub-brand-softest'
+	'bg-brand',
+	'bg-brand opacity-80',
+	'bg-brand opacity-60',
+	'bg-brand opacity-60',
+	'bg-brand opacity-40',
+	'bg-brand opacity-40',
+	'bg-brand opacity-40'
 ]
 
 function KW({ children }: { children: ReactNode }) {
@@ -813,11 +812,11 @@ function KW({ children }: { children: ReactNode }) {
 }
 
 function NUM({ children }: { children: ReactNode }) {
-	return <span className="text-pro-success-300">{children}</span>
+	return <span className="text-success">{children}</span>
 }
 
 function COMMENT({ children }: { children: ReactNode }) {
-	return <span className="text-pro-text-tertiary italic">{children}</span>
+	return <span className="text-tertiary italic">{children}</span>
 }
 
 function formatCellValue(value: string | number): string {

@@ -219,7 +219,7 @@ export function ArticleEditorHeader({
 								pillState === 'error'
 									? 'border-error-muted bg-error-faint text-error hover:bg-error-tint'
 									: pillState === 'unsaved'
-										? 'border-warning-muted bg-warning-faint text-warning hover:bg-warning-tint dark:text-warning'
+										? 'border-warning-muted bg-warning-faint text-warning hover:bg-warning-tint'
 										: 'border-transparent text-secondary hover:border-medium hover:bg-hover-row aria-disabled:hover:border-transparent aria-disabled:hover:bg-transparent'
 							}`}
 						/>
@@ -233,7 +233,7 @@ export function ArticleEditorHeader({
 					{pillState === 'unsaved' || pillState === 'error' ? (
 						<kbd
 							aria-hidden
-							className="hidden rounded-sm border border-current/25 px-1 py-px label-xs tracking-wider opacity-70 lg:inline"
+							className={`hidden rounded-sm border px-1 py-px label-xs tracking-wider lg:inline ${pillState === 'error' ? 'border-error-muted' : 'border-warning-muted'}`}
 						>
 							⌘S
 						</kbd>

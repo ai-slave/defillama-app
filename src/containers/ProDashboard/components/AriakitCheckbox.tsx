@@ -28,15 +28,15 @@ export function AriakitCheckbox({
 					className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 						checked
 							? 'border-brand bg-brand text-on-brand'
-							: 'border-pro-cards-border bg-surface-elevated-1 hover:border-brand-strong'
+							: 'border-medium bg-surface-elevated-1 hover:border-brand-strong'
 					} ${disabled ? 'cursor-not-allowed' : ''}`}
 				>
 					{checked ? <Icon name="check" width={10} height={10} /> : null}
 				</div>
 				{label ? (
 					<div className="flex flex-col">
-						<span className="body-sm text-pro-text-secondary">{label}</span>
-						{description ? <span className="body-sm text-pro-text-tertiary">{description}</span> : null}
+						<span className="body-sm text-secondary">{label}</span>
+						{description ? <span className="body-sm text-tertiary">{description}</span> : null}
 					</div>
 				) : null}
 			</label>

@@ -79,7 +79,7 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 	return (
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="mr-auto flex items-center gap-1 p-1 md:p-3">
-				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-accent body-sm text-on-brand">
+				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand body-sm text-on-brand">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
 				<h2 className="title-lg">
@@ -471,22 +471,22 @@ export function DemoPreview() {
 	const createAccountHref = `/subscription?returnUrl=${encodeURIComponent(router.asPath)}`
 
 	return (
-		<div className="relative min-h-screen pro-dashboard">
-			<div className="border-b border-subtle bg-(--bg) py-6">
+		<div className="relative min-h-screen">
+			<div className="border-b border-subtle bg-page py-6">
 				<div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
 					<div className="text-center">
-						<h1 className="mb-2 heading-lg text-pro-text-primary">Build your own DeFi dashboard</h1>
-						<p className="body-xl text-pro-text-secondary">
+						<h1 className="mb-2 heading-lg text-primary">Build your own DeFi dashboard</h1>
+						<p className="body-xl text-secondary">
 							Combine TVL, fees, volume and protocol tables into one live view, then share it with a link.
 						</p>
 					</div>
 
 					<div className="flex items-center justify-center">
-						<div className="grid gap-2 pro-dashboard sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
+						<div className="grid gap-2 sm:grid-cols-2 lg:gap-6 xl:grid-cols-4">
 							{features.map((feature) => (
 								<div
 									key={feature.title}
-									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 body-md text-pro-text-secondary"
+									className="flex flex-wrap items-center justify-center gap-2 rounded-sm bg-linear-to-b from-brand-faint to-transparent px-8 py-15 body-md text-secondary"
 								>
 									<div className="align-center flex gap-2">
 										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-link" />
@@ -499,70 +499,68 @@ export function DemoPreview() {
 
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
-							<div className="flex flex-col rounded-sm border border-medium bg-page px-6 py-8 text-center dark:border-subtle dark:bg-pro-glass-bg">
-								<h3 className="mb-3 heading-sm text-secondary dark:text-pro-text-primary">Free Account</h3>
-								<div className="mb-6 heading-lg text-gray-800 dark:text-pro-text-primary">
+							<div className="flex flex-col rounded-sm border border-subtle bg-surface px-6 py-8 text-center">
+								<h3 className="mb-3 heading-sm text-primary">Free Account</h3>
+								<div className="mb-6 heading-lg text-primary">
 									$0
-									<span className="body-lg text-secondary dark:text-pro-text-secondary">/month</span>
+									<span className="body-lg text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-pro-text-secondary">Access to public dashboards</span>
+										<span className="text-secondary">Access to public dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-pro-text-secondary">
-											View community-created dashboards
-										</span>
+										<span className="text-secondary">View community-created dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-pro-text-secondary">Basic DeFi data access</span>
+										<span className="text-secondary">Basic DeFi data access</span>
 									</li>
 								</ul>
 								<Link href={createAccountHref}>
-									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-link transition-colors hover:bg-brand hover:text-on-brand">
+									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-link transition-colors hover:bg-brand-tint">
 										Create Free Account
 									</span>
 								</Link>
 							</div>
 
-							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand/10 to-purple-600/10 px-6 py-8 text-center shadow-overlay-sm transition-transform hover:scale-[1.02]">
-								<h3 className="mb-3 bg-linear-to-r from-brand to-purple-600 bg-clip-text heading-sm text-transparent">
+							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand-faint to-pro-ai-tint px-6 py-8 text-center shadow-overlay-sm transition-transform hover:scale-[1.02]">
+								<h3 className="mb-3 bg-linear-to-r from-link to-pro-ai-text bg-clip-text heading-sm text-transparent">
 									Pro
 								</h3>
 								<div className="mb-6 heading-lg text-link">
-									$49<span className="body-lg text-pro-text-secondary">/month</span>
+									$49<span className="body-lg text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-link" />
-										<span className="font-semibold text-pro-text-primary">Everything in Free, plus:</span>
+										<span className="font-semibold text-primary">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-pro-text-primary">Create unlimited custom dashboards</span>
+										<span className="text-primary">Create unlimited custom dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-pro-text-primary">CSV data downloads</span>
+										<span className="text-primary">CSV data downloads</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-pro-text-primary">Advanced analytics & custom columns</span>
+										<span className="text-primary">Advanced analytics & custom columns</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-pro-text-primary">Full LlamaFeed access with AI summaries</span>
+										<span className="text-primary">Full LlamaFeed access with AI summaries</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-pro-text-primary">Priority access to new features</span>
+										<span className="text-primary">Priority access to new features</span>
 									</li>
 								</ul>
 								<Link href={createAccountHref}>
-									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-purple-600 px-8 py-3 font-semibold text-on-brand shadow-lg transition-opacity hover:opacity-90">
+									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-pro-ai px-8 py-3 font-semibold text-on-brand shadow-lg transition-[filter] hover:brightness-110">
 										<Icon name="sparkles" height={16} width={16} />
 										Upgrade to Pro
 									</span>
@@ -573,9 +571,9 @@ export function DemoPreview() {
 				</div>
 			</div>
 
-			<div className="sticky top-0 z-20 border-b border-subtle bg-(--bg)">
+			<div className="sticky top-0 z-20 border-b border-subtle bg-page">
 				<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-					<p className="body-md text-pro-text-secondary">
+					<p className="body-md text-secondary">
 						Start free to browse community dashboards, upgrade to Pro to build your own.
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
@@ -596,12 +594,12 @@ export function DemoPreview() {
 			</div>
 
 			<div className="mx-auto grid w-full max-w-7xl grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-2">
-				<p className="col-span-full p-2 text-center body-sm text-pro-text-form italic">
+				<p className="col-span-full p-2 text-center body-sm text-secondary italic">
 					Sample charts use illustrative data
 				</p>
 
 				<div
-					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<TextCard text={demoTextCard} />
 				</div>
@@ -609,14 +607,14 @@ export function DemoPreview() {
 				{demoCharts.slice(0, 2).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${firstMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${firstMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<DemoMultiChartCard multi={firstMultiChart} />
 				</div>
@@ -624,26 +622,26 @@ export function DemoPreview() {
 				{demoCharts.slice(2, 4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<TextCard text={demoTextCard2} />
 				</div>
 
 				<div
-					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<TextCard text={demoTextCard3} />
 				</div>
 
 				<div
-					className={`${secondMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${secondMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<DemoMultiChartCard multi={secondMultiChart} />
 				</div>
@@ -651,28 +649,28 @@ export function DemoPreview() {
 				{demoCharts.slice(4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<TextCard text={demoTextCard4} />
 				</div>
 
 				<div
-					className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
+					className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
 				>
 					<DemoMultiChartCard multi={thirdMultiChart} />
 				</div>
 			</div>
 
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-2">
-				<p className="p-2 text-center body-sm text-pro-text-form italic">Live data from DefiLlama</p>
-				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg">
+				<p className="p-2 text-center body-sm text-secondary italic">Live data from DefiLlama</p>
+				<div className="rounded-md border border-subtle bg-surface">
 					<UnifiedTable
 						config={{
 							id: 'demo-ethereum-protocols',

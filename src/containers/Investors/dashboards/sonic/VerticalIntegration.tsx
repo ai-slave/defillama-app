@@ -13,13 +13,13 @@ export default function VerticalIntegration() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col gap-6">
 			<div className="max-w-2xl">
-				<h2 className="heading-xs text-pro-text-primary">Vertical Integration</h2>
-				<p className="mt-3 body-lg text-pro-text-secondary">
+				<h2 className="heading-xs text-primary">Vertical Integration</h2>
+				<p className="mt-3 body-lg text-secondary">
 					Vertical integration is Sonic's strategy of building and aligning core applications, infrastructure, and
 					liquidity so that economic activity on the network compounds back into the S token rather than leaking to
 					disconnected teams or external tokens.
 				</p>
-				<p className="mt-3 body-lg text-pro-text-secondary">
+				<p className="mt-3 body-lg text-secondary">
 					Rather than depending on gas fees alone, the goal is to own or integrate the key economic primitives across
 					the network so that adoption, usage, and revenue translate into more durable value creation for Sonic.
 				</p>
@@ -27,7 +27,7 @@ export default function VerticalIntegration() {
 					href="https://blog.soniclabs.com/vertical-integration-the-missing-link-in-l1-value-creation/"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="mt-3 inline-flex items-center gap-1 label-md text-sl-accent transition-colors hover:underline"
+					className="mt-3 inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
 				>
 					Read more
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
@@ -37,20 +37,17 @@ export default function VerticalIntegration() {
 			</div>
 
 			<div className="flex flex-1 flex-col gap-4">
-				<h3 className="title-sm tracking-wider text-pro-text-label uppercase">Product Breakdown</h3>
+				<h3 className="title-sm tracking-wider text-secondary uppercase">Product Breakdown</h3>
 				<div className="flex flex-wrap items-center gap-2">
 					{PRODUCTS.map((name) => (
-						<span
-							key={name}
-							className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 body-md text-pro-text-secondary"
-						>
+						<span key={name} className="rounded-md border border-medium bg-surface px-3 py-1.5 body-md text-secondary">
 							{name}
 						</span>
 					))}
 				</div>
 
 				<div className="relative flex-1">
-					<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+					<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
 						<div className="flex flex-col">
 							<div className="flex border-b border-subtle">
 								{Array.from({ length: 5 }).map((_, i) => (
@@ -76,10 +73,10 @@ export default function VerticalIntegration() {
 								</div>
 							))}
 						</div>
-						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
+						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
 					</div>
 					<div className="absolute inset-0 flex items-center justify-center">
-						<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 title-md tracking-wide text-pro-text-secondary shadow-lg">
+						<span className="rounded-full border border-medium bg-surface px-5 py-2.5 title-md tracking-wide text-secondary shadow-lg">
 							Dashboard — Coming Soon
 						</span>
 					</div>

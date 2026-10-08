@@ -17,15 +17,15 @@ export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCa
 			aria-checked={isSelected}
 			onClick={onToggle}
 			disabled={!metric.isValid}
-			className={`group flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+			className={`group flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled ${
 				isSelected ? 'border-brand bg-brand-faint' : 'border-subtle not-disabled:hover:border-brand-muted'
 			}`}
 		>
-			<CheckboxIndicator checked={isSelected} />
+			<CheckboxIndicator checked={isSelected} className="group-disabled:border-disabled" />
 
 			<span className="min-w-0 flex-1">
-				<span className="block label-md text-primary">{metric.title}</span>
-				<span className="flex items-center gap-1.5 body-sm text-tertiary">
+				<span className="block label-md text-primary group-disabled:text-disabled">{metric.title}</span>
+				<span className="flex items-center gap-1.5 body-sm text-tertiary group-disabled:text-disabled">
 					<span className="capitalize">{metric.chartType}</span>
 					<span aria-hidden>•</span>
 					<span className={metric.isValid ? 'text-secondary' : 'text-data-down'}>

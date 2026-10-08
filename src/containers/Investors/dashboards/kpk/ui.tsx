@@ -59,7 +59,7 @@ export function signedInt(value: number | null | undefined): string {
 
 /** A gain is KPK's own performance, so it wears mint rather than the generic success green. */
 export const signClass = (value: number | null | undefined) =>
-	value == null ? 'text-pro-text-secondary' : value >= 0 ? KPK_MINT_TEXT : 'text-error'
+	value == null ? 'text-secondary' : value >= 0 ? KPK_MINT_TEXT : 'text-error'
 
 export const PROSE_DUST_M = 0.0005
 
@@ -163,7 +163,7 @@ export function earnedTitle(window: KpkExcessWindow | null | undefined): string 
  */
 export function LedgerStrip({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="grid grid-cols-1 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
+		<div className="grid grid-cols-1 overflow-hidden rounded-lg border border-subtle bg-surface sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
 			{children}
 		</div>
 	)
@@ -221,20 +221,20 @@ export function LedgerTile({
 }) {
 	const pairs = metrics ?? (metric ? [{ value: metric, label: metricLabel, title: metricTitle, ref: metricRef }] : [])
 	return (
-		<div className="flex min-w-0 flex-col gap-2 border-t border-pro-cards-border p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
-			<span className="label-sm tracking-wider text-pro-text-label uppercase">{label}</span>
+		<div className="flex min-w-0 flex-col gap-2 border-t border-subtle p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
+			<span className="label-sm tracking-wider text-secondary uppercase">{label}</span>
 			{value == null ? (
 				<div className="mx-auto h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			) : (
 				<span
-					className={`flex mono-xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-pro-text-primary'}`}
+					className={`flex mono-xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-primary'}`}
 				>
 					{value}
-					{suffix && <small className="mono-md text-pro-text-label">{suffix}</small>}
+					{suffix && <small className="mono-md text-secondary">{suffix}</small>}
 				</span>
 			)}
 			{sub && (
-				<span className="body-sm text-pro-text-secondary">
+				<span className="body-sm text-secondary">
 					{sub}
 					<InfoTip text={subTitle} className="ml-1" />
 					{subRef && (
@@ -246,10 +246,10 @@ export function LedgerTile({
 				</span>
 			)}
 			{pairs.length > 0 && (
-				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
+				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-subtle pt-2.5 body-sm text-secondary">
 					{pairs.map((pair) => (
 						<span key={`${pair.value}${pair.label ?? ''}`}>
-							<b className="mono-md text-pro-text-primary tabular-nums">{pair.value}</b>
+							<b className="mono-md text-primary tabular-nums">{pair.value}</b>
 							{pair.label ? ` ${pair.label}` : null}
 							<InfoTip text={pair.title} className="ml-1" />
 							{pair.ref && (
@@ -276,7 +276,7 @@ export function LedgerTile({
 export function SectionHeader({ title, children }: { title: string; children?: React.ReactNode }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
-			<h2 className="title-md text-pro-text-primary">{title}</h2>
+			<h2 className="title-md text-primary">{title}</h2>
 			{children}
 		</div>
 	)
@@ -289,11 +289,7 @@ export function SectionHeader({ title, children }: { title: string; children?: R
  * engages. The mockup gets this for free — its tables sit in plain block containers.
  */
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-	return (
-		<div className={`min-w-0 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 ${className}`}>
-			{children}
-		</div>
-	)
+	return <div className={`min-w-0 rounded-lg border border-subtle bg-surface p-4 ${className}`}>{children}</div>
 }
 
 export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
@@ -306,7 +302,7 @@ export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 					href={ref.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="rounded-md border border-pro-cards-border px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-pro-text-primary"
+					className="rounded-md border border-medium px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand hover:text-primary"
 				>
 					{ref.label} ↗
 				</a>
@@ -317,9 +313,9 @@ export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 
 export function Disclaimer({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="border-t border-pro-cards-border pt-4">
-			<h3 className="mb-1.5 label-xs tracking-wider text-pro-text-label uppercase">{title}</h3>
-			<p className="body-sm text-pro-text-tertiary">{children}</p>
+		<div className="border-t border-subtle pt-4">
+			<h3 className="mb-1.5 label-xs tracking-wider text-secondary uppercase">{title}</h3>
+			<p className="body-sm text-tertiary">{children}</p>
 		</div>
 	)
 }
@@ -327,7 +323,7 @@ export function Disclaimer({ title, children }: { title: string; children: React
 export function QueryError({ label }: { label: string }) {
 	return (
 		<Card>
-			<p className="body-md text-pro-text-secondary">{label} data is unavailable right now. Please try again later.</p>
+			<p className="body-md text-secondary">{label} data is unavailable right now. Please try again later.</p>
 		</Card>
 	)
 }
@@ -379,10 +375,10 @@ export function MeterBar({
 	scale?: number
 	tone?: 'accent' | 'warning'
 }) {
-	if (value == null) return <span className="text-pro-text-tertiary">—</span>
+	if (value == null) return <span className="text-tertiary">—</span>
 	const width = Math.min(100, Math.max(0, (value / scale) * 100))
 	return (
-		<span className="relative inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm bg-pro-cards-border align-middle">
+		<span className="relative inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm bg-surface-elevated-2 align-middle">
 			<span
 				className={`block h-full rounded-sm ${tone === 'warning' ? 'bg-warning' : KPK_MINT_BG}`}
 				style={{ width: `${width}%` }}
@@ -390,7 +386,7 @@ export function MeterBar({
 			{target != null && target < scale && (
 				<span
 					aria-hidden
-					className="absolute top-0 h-full w-px bg-pro-text-secondary"
+					className="absolute top-0 h-full w-px bg-(--text-secondary)"
 					style={{ left: `${(target / scale) * 100}%` }}
 				/>
 			)}
@@ -441,7 +437,7 @@ export function InfoTip({ text, className = '' }: { text: string | undefined; cl
 			<Tooltip
 				content={text}
 				aria-label={text}
-				className="-m-1.5 cursor-help p-1.5 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
+				className="-m-1.5 cursor-help p-1.5 text-tertiary transition-colors hover:text-primary"
 			>
 				<svg
 					viewBox="0 0 24 24"
@@ -466,17 +462,17 @@ export function DashSwatch({ className = '' }: { className?: string }) {
 	return (
 		<span
 			aria-hidden
-			className={`inline-block w-3 shrink-0 border-t border-dashed border-pro-text-primary align-middle ${className}`}
+			className={`inline-block w-3 shrink-0 border-t border-dashed border-(--text-primary) align-middle ${className}`}
 		/>
 	)
 }
 
 export function ChartFootnote({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="mt-3 flex items-start gap-2 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-tertiary">
+		<div className="mt-3 flex items-start gap-2 border-t border-subtle pt-2.5 body-sm text-tertiary">
 			<DashSwatch className="mt-2" />
 			<span>
-				<b className="font-medium text-pro-text-secondary">{title}</b> — {children}
+				<b className="font-medium text-secondary">{title}</b> — {children}
 			</span>
 		</div>
 	)
@@ -498,7 +494,7 @@ export function RowLink({ href, label, size = 'md' }: { href: string | undefined
 					target="_blank"
 					rel="noopener noreferrer"
 					aria-label={`Open ${label} in a new tab`}
-					className={`inline-flex shrink-0 items-center justify-center rounded-md border border-pro-cards-border text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-sl-accent ${
+					className={`inline-flex shrink-0 items-center justify-center rounded-md border border-medium text-secondary transition-colors hover:border-brand hover:text-link ${
 						isSmall ? 'size-[18px] align-text-bottom' : 'size-6'
 					}`}
 				/>
@@ -543,7 +539,7 @@ export function ContinuityRule({ years }: { years: Array<number> | undefined }) 
 					opacity="0.55"
 				/>
 			))}
-			<g className="text-pro-text-tertiary">
+			<g className="text-tertiary">
 				{years.map((year, index) => (
 					<text
 						key={year}
@@ -626,25 +622,25 @@ export function DataTable<Row extends object>({
 	empty?: string
 } & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
-	if (rows.length === 0) return <div className="px-2 py-4 body-sm text-pro-text-secondary">{empty}</div>
+	if (rows.length === 0) return <div className="px-2 py-4 body-sm text-secondary">{empty}</div>
 
 	const footerRows: Array<FooterRow> = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
 	const keyedRows = getRowKey
 		? rows.map((item) => ({ item, key: getRowKey(item) }))
 		: keyedOccurrences(rows, getOccurrenceKey)
 
-	const pinnedCol = 'sticky left-0 border-r border-pro-cards-border bg-(--pro-frozen-bg)'
-	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--sl-hover-bg),var(--sl-hover-bg))]'
+	const pinnedCol = 'sticky left-0 border-r border-subtle bg-(--sl-frozen-bg)'
+	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--hover-row),var(--hover-row))]'
 	const headCell = (first: boolean) =>
 		freeze === 'panes'
-			? `sticky top-0 border-b border-pro-cards-border bg-(--pro-frozen-bg) ${first ? `${pinnedCol} z-30` : 'z-20'}`
+			? `sticky top-0 border-b border-subtle bg-(--sl-frozen-bg) ${first ? `${pinnedCol} z-30` : 'z-20'}`
 			: freeze
-				? `border-b border-pro-cards-border ${first ? `${pinnedCol} z-10` : ''}`
+				? `border-b border-subtle ${first ? `${pinnedCol} z-10` : ''}`
 				: ''
 	const bodyCell = (first: boolean, last: boolean) =>
-		freeze ? `${last ? '' : 'border-b border-pro-cards-border/60'} ${first ? `${pinnedCol} ${rowTint} z-10` : ''}` : ''
+		freeze ? `${last ? '' : 'border-b border-subtle'} ${first ? `${pinnedCol} ${rowTint} z-10` : ''}` : ''
 	const footCell = (first: boolean, muted: boolean) =>
-		freeze ? `${muted ? '' : 'border-t border-pro-cards-border'} ${first ? `${pinnedCol} z-10` : ''}` : ''
+		freeze ? `${muted ? '' : 'border-t border-subtle'} ${first ? `${pinnedCol} z-10` : ''}` : ''
 	const footContent = (row: FooterRow, key: string, first: boolean) => {
 		// A row's note sits on its name, the one cell every footer row fills. When the
 		// name wraps, the flex row squeezes its items, so the icon is kept at full size.
@@ -671,12 +667,12 @@ export function DataTable<Row extends object>({
 				className={`body-sm ${fit ? 'w-full' : 'w-max min-w-full'} ${freeze ? 'border-separate border-spacing-0' : ''}`}
 			>
 				<thead>
-					<tr className={freeze ? '' : 'border-b border-pro-cards-border'}>
+					<tr className={freeze ? '' : 'border-b border-subtle'}>
 						{cols.map((col, index) => (
 							<th
 								key={col.key}
 								style={col.width ? { width: col.width } : undefined}
-								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
+								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-secondary uppercase first:pl-0 last:pr-0 ${
 									col.right ? 'text-right' : 'text-left'
 								} ${headCell(index === 0)}`}
 							>
@@ -690,15 +686,13 @@ export function DataTable<Row extends object>({
 					{keyedRows.map(({ item: row, key }, rowIndex) => (
 						<tr
 							key={key}
-							className={`hover:bg-sl-hover-bg ${
-								freeze ? 'group/row' : 'border-b border-pro-cards-border/60 last:border-0'
-							}`}
+							className={`hover:bg-hover-row ${freeze ? 'group/row' : 'border-b border-subtle last:border-0'}`}
 						>
 							{cols.map((col, index) => (
 								<td
 									key={col.key}
 									className={`px-3 py-2.5 first:pl-0 last:pr-0 ${col.wrap ? (fit ? '' : 'min-w-[170px]') : 'whitespace-nowrap'} ${
-										col.right ? 'text-right text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'
+										col.right ? 'text-right text-primary tabular-nums' : 'text-secondary'
 									} ${bodyCell(index === 0, rowIndex === keyedRows.length - 1)}`}
 								>
 									{cellValue(col.render ? col.render(row) : Reflect.get(row, col.key))}
@@ -713,12 +707,12 @@ export function DataTable<Row extends object>({
 							<tr
 								// oxlint-disable-next-line react/no-array-index-key -- Footer positions identify total and secondary-reading slots.
 								key={rowIndex}
-								className={row.muted ? 'text-pro-text-secondary' : freeze ? '' : 'border-t border-pro-cards-border'}
+								className={row.muted ? 'text-secondary' : freeze ? '' : 'border-t border-subtle'}
 							>
 								{cols.map((col, index) => (
 									<td
 										key={col.key}
-										className={`px-3 first:pl-0 last:pr-0 ${row.muted ? 'pt-1.5' : 'pt-3 text-pro-text-primary'} ${
+										className={`px-3 first:pl-0 last:pr-0 ${row.muted ? 'pt-1.5' : 'pt-3 text-primary'} ${
 											// A total's figures take the title weight so they read above the rows; its label keeps medium.
 											col.right
 												? `text-right tabular-nums ${row.muted ? '' : 'font-semibold'}`

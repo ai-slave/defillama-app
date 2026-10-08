@@ -14,7 +14,7 @@ import type { tableFeaturesConfig } from './index'
 
 const renderChange = (value: number | null) => (
 	<span
-		className={`${value != null && value > 0 ? 'text-success' : value != null && value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}
+		className={`${value != null && value > 0 ? 'text-success' : value != null && value < 0 ? 'text-error' : 'text-secondary'}`}
 	>
 		{value == null ? '-' : <PercentChange percent={value} fontWeight={100} />}
 	</span>
@@ -43,9 +43,7 @@ const usdColumn = (
 	accessorFn: (row) => row[id] ?? undefined,
 	size,
 	cell: ({ row }) => (
-		<span className="text-pro-text-secondary">
-			{formatUsd(row.original[id], USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-		</span>
+		<span className="text-secondary">{formatUsd(row.original[id], USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}</span>
 	)
 })
 
@@ -59,7 +57,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 			return (
 				<div className="flex items-center gap-2">
 					<TokenLogo name={row.original.name} kind="chain" alt={`Logo of ${row.original.name}`} size={24} />
-					<span className="font-medium text-pro-text-primary">{row.original.name}</span>
+					<span className="font-medium text-primary">{row.original.name}</span>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</div>
 			)
@@ -70,7 +68,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 		id: 'protocols',
 		accessorFn: (row) => row.protocols ?? undefined,
 		size: 100,
-		cell: ({ row }) => <span className="text-pro-text-primary">{row.original.protocols}</span>
+		cell: ({ row }) => <span className="text-primary">{row.original.protocols}</span>
 	},
 	{
 		header: 'Active Addresses',
@@ -78,7 +76,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 		accessorFn: (row) => row.users ?? undefined,
 		size: 130,
 		cell: ({ row }) => (
-			<span className="text-pro-text-primary">
+			<span className="text-primary">
 				{row.original.users == null ? '-' : formatCompactNumber(row.original.users, NUMBER_LOWERCASE_MILLIONS_OPTIONS)}
 			</span>
 		)
@@ -110,9 +108,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 		accessorFn: (row) => row.tvl ?? undefined,
 		size: 140,
 		cell: ({ row }) => (
-			<span className="text-pro-text-primary">
-				{formatUsd(row.original.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
+			<span className="text-primary">{formatUsd(row.original.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}</span>
 		)
 	},
 	usdColumn('Bridged TVL', 'bridgedTvl', 120),
@@ -130,9 +126,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 		accessorFn: (row) => row.mcaptvl ?? undefined,
 		size: 120,
 		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{row.original.mcaptvl == null ? '-' : formatRatio(row.original.mcaptvl)}
-			</span>
+			<span className="text-secondary">{row.original.mcaptvl == null ? '-' : formatRatio(row.original.mcaptvl)}</span>
 		)
 	},
 	usdColumn('Market Cap', 'mcap', 140)

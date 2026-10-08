@@ -98,7 +98,7 @@ const LINKS: Record<string, string> = {
 
 export default function FlareHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
 			<FlareLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -107,7 +107,7 @@ export default function FlareHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>
@@ -119,7 +119,7 @@ export default function FlareHeader() {
 					href="https://flare.network"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-opacity hover:opacity-85"
+					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-[filter] hover:brightness-110"
 					style={{ background: 'linear-gradient(135deg, #FF7A1A, #E62058)' }}
 				>
 					Launch App

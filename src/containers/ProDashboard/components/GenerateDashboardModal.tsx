@@ -272,7 +272,7 @@ function GenerateDashboardModalInner({
 	}
 
 	return (
-		<Dialog size="md" scope="pro" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
+		<Dialog size="md" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
 			<form ref={formRef} onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
 				<DialogDiscardGuard
 					when={nameLength > 0 || promptLength > 0 || tags.length > 0 || !!generation.data}

@@ -435,11 +435,11 @@ export function MetricSentenceBuilder({
 								type="button"
 								onClick={() => handleSelectAggregator(option.value)}
 								className={`w-full rounded-md px-2.5 py-1.5 text-left label-md transition-colors ${
-									option.value === aggregator ? 'text-pro-text-primary' : 'text-pro-text-secondary'
+									option.value === aggregator ? 'text-primary' : 'text-secondary'
 								}`}
 							>
 								<div>{option.label}</div>
-								<div className="body-sm text-pro-text-tertiary">{option.description}</div>
+								<div className="body-sm text-tertiary">{option.description}</div>
 							</button>
 						))}
 					</div>
@@ -453,11 +453,11 @@ export function MetricSentenceBuilder({
 								type="button"
 								onClick={() => handleSelectWindow(option.value)}
 								className={`w-full rounded-md px-2.5 py-1.5 text-left label-md transition-colors ${
-									option.value === metricWindow ? 'text-pro-text-primary' : 'text-pro-text-secondary'
+									option.value === metricWindow ? 'text-primary' : 'text-secondary'
 								}`}
 							>
 								<div>{option.label}</div>
-								<div className="body-sm text-pro-text-tertiary">{option.description}</div>
+								<div className="body-sm text-tertiary">{option.description}</div>
 							</button>
 						))}
 					</div>
@@ -465,21 +465,21 @@ export function MetricSentenceBuilder({
 			case 'metric':
 				return (
 					<div className="max-h-[320px] w-full overflow-y-auto overscroll-contain" data-metric-token="true">
-						<div className="sticky top-0 border-b border-pro-cards-border bg-pro-cards-bg p-1.5">
+						<div className="sticky top-0 border-b border-subtle bg-surface p-1.5">
 							<input
 								value={searchTerm}
 								onChange={(event) => setSearchTerm(event.target.value)}
 								aria-label="Search metrics"
 								placeholder="Search metrics…"
-								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
+								className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</div>
 						<div className="p-1.5">
 							{baseMetricTypes.length === 0 ? (
-								<p className="px-2 py-3 body-md text-pro-text-tertiary">No metrics available.</p>
+								<p className="px-2 py-3 body-md text-tertiary">No metrics available.</p>
 							) : null}
 							{baseMetricTypes.length > 0 && filteredMetrics.length === 0 ? (
-								<p className="px-2 py-3 body-md text-pro-text-tertiary">No metrics match that search.</p>
+								<p className="px-2 py-3 body-md text-tertiary">No metrics match that search.</p>
 							) : null}
 							{filteredMetrics.map((value) => {
 								const label = getProDashboardChartTypeConfig(value)?.title || value
@@ -490,7 +490,7 @@ export function MetricSentenceBuilder({
 										type="button"
 										onClick={() => handleSelectMetric(value)}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-											isActive ? 'text-pro-text-primary' : 'text-pro-text-secondary'
+											isActive ? 'text-primary' : 'text-secondary'
 										}`}
 									>
 										<span>{label}</span>
@@ -506,7 +506,7 @@ export function MetricSentenceBuilder({
 					<ComboboxProvider store={subjectCombobox}>
 						<div className="w-full space-y-2.5 p-2.5 sm:space-y-3 sm:p-3" data-metric-token="true">
 							<div className="space-y-1.5">
-								<div className="label-sm text-pro-text-secondary">Select subject</div>
+								<div className="label-sm text-secondary">Select subject</div>
 								<SegmentedControl
 									variant="field"
 									size="md"
@@ -532,24 +532,24 @@ export function MetricSentenceBuilder({
 													type="button"
 													onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
 													data-umami-event="dashboard-parameter-bind-metric-subject"
-													className={`flex items-center justify-between gap-2 rounded-md border border-pro-cards-border px-2.5 py-1.5 text-left label-md transition-colors ${
+													className={`flex items-center justify-between gap-2 rounded-md border border-medium px-2.5 py-1.5 text-left label-md transition-colors ${
 														subjectParameter.boundVariable?.id === variable.id
-															? 'bg-brand-tint text-pro-text-primary'
-															: 'text-pro-text-secondary hover:bg-pro-cards-bg'
+															? 'bg-brand-tint text-primary'
+															: 'text-secondary hover:bg-surface'
 													}`}
 												>
 													<span className="truncate">{variable.label}</span>
-													<span className="shrink-0 body-sm text-pro-text-tertiary">{option.description}</span>
+													<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
 												</button>
 											)
 										})}
 									</div>
 								) : null}
-								<div className="rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-inner">
+								<div className="rounded-lg border border-dashed border-medium bg-surface p-2.5 shadow-inner">
 									<Combobox
 										autoFocus
 										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
-										className="mb-1.5 w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
+										className="mb-1.5 w-full rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
 										aria-label="Search"
 									/>
 									{subjectTab === 'chain' ? (
@@ -571,7 +571,7 @@ export function MetricSentenceBuilder({
 																	closePopover()
 																}}
 																className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																	isActive ? 'bg-brand-tint text-pro-text-primary' : 'text-pro-text-secondary'
+																	isActive ? 'bg-brand-tint text-primary' : 'text-secondary'
 																}`}
 																style={{
 																	position: 'absolute',
@@ -600,7 +600,7 @@ export function MetricSentenceBuilder({
 												</div>
 											</ComboboxList>
 										) : (
-											<p className="px-2 py-6 text-center body-md text-pro-text-tertiary">No chains found.</p>
+											<p className="px-2 py-6 text-center body-md text-tertiary">No chains found.</p>
 										)
 									) : filteredProtocolOptions.length > 0 ? (
 										<ComboboxList ref={protocolListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
@@ -620,7 +620,7 @@ export function MetricSentenceBuilder({
 																closePopover()
 															}}
 															className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																isActive ? 'bg-brand-tint text-pro-text-primary' : 'text-pro-text-secondary'
+																isActive ? 'bg-brand-tint text-primary' : 'text-secondary'
 															}`}
 															style={{
 																position: 'absolute',
@@ -641,13 +641,11 @@ export function MetricSentenceBuilder({
 																	/>
 																) : null}
 																<div className="flex min-w-0 flex-col">
-																	<span
-																		className={`truncate ${option.isChild ? 'text-pro-text-secondary' : 'text-pro-text-primary'}`}
-																	>
+																	<span className={`truncate ${option.isChild ? 'text-secondary' : 'text-primary'}`}>
 																		{option.label}
 																	</span>
 																	{option.isChild ? (
-																		<span className="body-sm text-pro-text-tertiary">Child protocol</span>
+																		<span className="body-sm text-tertiary">Child protocol</span>
 																	) : null}
 																</div>
 															</div>
@@ -658,7 +656,7 @@ export function MetricSentenceBuilder({
 											</div>
 										</ComboboxList>
 									) : (
-										<p className="px-2 py-6 text-center body-md text-pro-text-tertiary">No protocols found.</p>
+										<p className="px-2 py-6 text-center body-md text-tertiary">No protocols found.</p>
 									)}
 								</div>
 							</div>
@@ -676,18 +674,18 @@ export function MetricSentenceBuilder({
 
 	return (
 		<div className="flex flex-col gap-2.5 sm:gap-3">
-			<div className="rounded-lg border border-pro-cards-border bg-linear-to-br from-pro-cards-bg via-pro-cards-bg to-pro-cards-bg p-2.5 shadow-sm sm:p-3">
+			<div className="rounded-lg border border-subtle bg-linear-to-br from-surface via-surface to-surface p-2.5 shadow-sm sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
 					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link sm:size-8">
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
 					</div>
 					<div className="min-w-0">
-						<div className="title-sm text-pro-text-primary">Metric sentence builder</div>
-						<div className="body-sm text-pro-text-tertiary">Create metrics based on natural language</div>
+						<div className="title-sm text-primary">Metric sentence builder</div>
+						<div className="body-sm text-tertiary">Create metrics based on natural language</div>
 					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-pro-text-primary sm:gap-x-2.5 sm:gap-y-2">
-					<span className="body-sm text-pro-text-tertiary sm:body-md">Show</span>
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-primary sm:gap-x-2.5 sm:gap-y-2">
+					<span className="body-sm text-tertiary sm:body-md">Show</span>
 					<TokenButton
 						label={aggregatorLabel}
 						onClick={handleTokenPress('aggregator')}
@@ -704,7 +702,7 @@ export function MetricSentenceBuilder({
 							anchorRefs.current.metric = node
 						}}
 					/>
-					<span className="body-sm text-pro-text-tertiary sm:body-md">for</span>
+					<span className="body-sm text-tertiary sm:body-md">for</span>
 					<TokenButton
 						label={subjectLabel}
 						onClick={handleTokenPress('subject')}
@@ -713,7 +711,7 @@ export function MetricSentenceBuilder({
 							anchorRefs.current.subject = node
 						}}
 					/>
-					<span className="body-sm text-pro-text-tertiary sm:body-md">over</span>
+					<span className="body-sm text-tertiary sm:body-md">over</span>
 					<TokenButton
 						label={windowLabel}
 						onClick={handleTokenPress('window')}
@@ -723,8 +721,8 @@ export function MetricSentenceBuilder({
 						}}
 					/>
 				</div>
-				<div className="mt-2.5 flex items-center gap-2 rounded-md border border-dashed border-pro-cards-border px-2 py-1.5 sm:mt-3 sm:px-2.5">
-					<span className="label-sm text-pro-text-secondary">Chart</span>
+				<div className="mt-2.5 flex items-center gap-2 rounded-md border border-dashed border-medium px-2 py-1.5 sm:mt-3 sm:px-2.5">
+					<span className="label-sm text-secondary">Chart</span>
 					<SegmentedControl
 						label="Chart type"
 						value={chartType}
@@ -739,7 +737,7 @@ export function MetricSentenceBuilder({
 				store={popover}
 				modal={false}
 				data-metric-token="true"
-				className="z-50 rounded-lg border border-pro-cards-border bg-pro-cards-bg shadow-lg"
+				className="z-50 rounded-lg border border-subtle bg-surface shadow-lg"
 				style={{
 					width: popoverWidth,
 					maxWidth: 'calc(100vw - 16px)',

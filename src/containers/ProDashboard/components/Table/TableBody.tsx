@@ -38,7 +38,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 						className="relative -mx-2 min-h-0 w-full flex-1 overflow-auto px-2 sm:mx-0 sm:px-0"
 						style={{ height: '100%' }}
 					>
-						<table className="w-full min-w-[600px] border-collapse body-sm text-pro-text-primary sm:body-md">
+						<table className="w-full min-w-[600px] border-collapse body-sm text-primary sm:body-md">
 							<thead className="sticky top-0 z-10">
 								{table.getHeaderGroups().map((headerGroup) => {
 									let firstVisibleHeaderId: string | null = null
@@ -60,7 +60,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 															colSpan={header.colSpan}
 															rowSpan={header.rowSpan}
 
-															className={`relative border-r border-b border-subtle bg-pro-cards-bg px-1 py-2 font-medium first:rounded-l-md last:rounded-r-md last:border-r-0 sm:px-2 ${
+															className={`relative border-r border-b border-subtle bg-surface px-1 py-2 font-medium first:rounded-l-md last:rounded-r-md last:border-r-0 sm:px-2 ${
 																header.column.columnDef.meta?.align === 'end' ? 'text-right' : 'text-left'
 															}`}
 															style={{
@@ -98,7 +98,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 													<ProCardLoading variant="table" label="Loading data…" />
 												</div>
 											) : (
-												<span className="text-pro-text-tertiary">{emptyMessage}</span>
+												<span className="text-tertiary">{emptyMessage}</span>
 											)}
 										</td>
 									</tr>

@@ -11,7 +11,7 @@ export function ComposerNameField({ value, onChange }: { value: string; onChange
 	const id = useId()
 	return (
 		<div className="shrink-0">
-			<label htmlFor={id} className="mb-1 block label-sm text-pro-text-secondary">
+			<label htmlFor={id} className="mb-1 block label-sm text-secondary">
 				Card name (optional)
 			</label>
 			<input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} className={proInputStyles} />
@@ -104,7 +104,7 @@ export function SelectionFooter({
 					onRemoveFromComposer={onRemoveFromComposer}
 				/>
 			</div>
-			<div className="body-sm text-pro-text-tertiary">
+			<div className="body-sm text-tertiary">
 				{chartCreationMode === 'combined'
 					? `1 combined chart with ${composerItems.length} series (max ${MAX_MULTI_CHART_SERIES})`
 					: `${composerItems.length} separate card${composerItems.length !== 1 ? 's' : ''}`}

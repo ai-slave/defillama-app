@@ -220,13 +220,11 @@ export function SeriesTrendChart({
 			}
 		>
 			{isLoading ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-pro-text-tertiary">Loading...</div>
+				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Loading…</div>
 			) : isError ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-pro-text-tertiary">
-					Failed to load data
-				</div>
+				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Failed to load data</div>
 			) : chartSeries.length === 0 ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-pro-text-tertiary">No data</div>
+				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">No data</div>
 			) : (
 				<MultiSeriesChart
 					dataset={model.dataset}

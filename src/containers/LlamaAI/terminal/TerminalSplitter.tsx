@@ -10,7 +10,7 @@ import {
 } from './terminalViewStore'
 
 const RAIL_BUTTON_CLASSES =
-	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white'
+	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong'
 
 export function TerminalSplitter({
 	ratio,

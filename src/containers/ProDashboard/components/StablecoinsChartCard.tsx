@@ -211,7 +211,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				{latestMcap !== null && chartType === 'totalMcap' ? (
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
-							<span className="body-sm text-pro-text-tertiary uppercase">Total Market Cap</span>
+							<span className="body-sm text-tertiary uppercase">Total Market Cap</span>
 							<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
 								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>

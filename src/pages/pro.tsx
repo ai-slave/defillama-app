@@ -346,7 +346,7 @@ function ProContent({
 
 	return (
 		<Tabs value={activeTab} onValueChange={switchTab} values={availableTabs}>
-			<div className="flex flex-1 flex-col gap-4 p-2 pro-dashboard lg:px-0">
+			<div className="flex flex-1 flex-col gap-4 p-2 lg:px-0">
 				<div className="flex items-center gap-2">
 					<Ariakit.TabList className="flex scrollbar-none min-w-0 overflow-x-auto" aria-label="Dashboard views">
 						<Tab type="button" value="discover" data-umami-event="dashboard-open-discover" className={proTabStyles}>

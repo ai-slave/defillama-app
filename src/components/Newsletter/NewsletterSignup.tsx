@@ -124,7 +124,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					className ? ` ${className}` : ''
 				}`}
 			>
-				<div aria-hidden className="pointer-events-none absolute top-0 bottom-0 left-0 w-[3px] bg-sub-brand-primary" />
+				<div aria-hidden className="pointer-events-none absolute top-0 bottom-0 left-0 w-[3px] bg-brand" />
 				<Tooltip
 					content="Dismiss"
 					render={
@@ -214,10 +214,10 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="mail-rounded" height={28} width={28} className="text-sub-text-primary" />
-				<span className="label-lg text-sub-text-primary">Newsletters</span>
+				<Icon name="mail-rounded" height={28} width={28} className="text-primary" />
+				<span className="label-lg text-primary">Newsletters</span>
 			</div>
 
 			{succeeded ? (
@@ -225,7 +225,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 			) : (
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					<label className="flex flex-col gap-1">
-						<span className="label-sm text-sub-text-muted">Subscribing as</span>
+						<span className="label-sm text-tertiary">Subscribing as</span>
 						<Input
 							ref={emailRef}
 							type="email"
@@ -240,7 +240,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						{NEWSLETTERS.map(({ key, label, description }) => (
 							<div key={key} className="flex flex-col gap-1">
 								<div className="flex items-center justify-between gap-4">
-									<span className="body-md text-sub-text-primary">{label}</span>
+									<span className="body-md text-primary">{label}</span>
 									<ToggleSwitch
 										checked={selected[key]}
 										onClick={() => toggle(key)}
@@ -248,7 +248,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 										aria-label={`Subscribe to ${label}`}
 									/>
 								</div>
-								<p className="max-w-[400px] body-sm text-sub-text-muted">{description}</p>
+								<p className="max-w-[400px] body-sm text-tertiary">{description}</p>
 							</div>
 						))}
 					</div>
@@ -267,7 +267,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							Subscribe
 						</Button>
 						{disabledReason ? (
-							<p id={helperId} className="body-sm text-sub-text-muted">
+							<p id={helperId} className="body-sm text-tertiary">
 								{disabledReason}
 							</p>
 						) : null}
@@ -298,12 +298,12 @@ function NewsletterSuccess({
 
 	return (
 		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-sub-brand-primary/8">
+			<div className="flex size-12 items-center justify-center rounded-full bg-brand-faint">
 				<Icon name="check-circle" height={28} width={28} className="text-link" />
 			</div>
 			<div className="flex flex-col gap-1">
-				<span className="label-lg text-sub-text-primary">You are subscribed</span>
-				<p className="max-w-[360px] body-sm text-sub-text-muted">
+				<span className="label-lg text-primary">You are subscribed</span>
+				<p className="max-w-[360px] body-sm text-tertiary">
 					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
 				</p>
 			</div>

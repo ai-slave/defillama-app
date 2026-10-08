@@ -439,15 +439,15 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{unifiedTable.loadError === 'initial' ? (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-subtle bg-surface">
 						<ProCardError title="Couldn't load this table" retry={unifiedTable} />
 					</div>
 				) : unifiedTable.isLoading ? (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-subtle bg-surface p-3">
 						<ProCardLoading variant="table" />
 					</div>
 				) : (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden rounded-md border border-subtle bg-surface">
 						<UnifiedVirtualTable
 							rows={unifiedTable.rows}
 							headerGroups={unifiedTable.headerGroups}
@@ -457,10 +457,10 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 							pageSize={unifiedTable.pageSize}
 						/>
 						{unifiedTable.leafRows.length === 0 ? (
-							<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
+							<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-(--bg-surface-glass) to-surface">
 								<div
 									role="status"
-									className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 body-md text-pro-text-secondary"
+									className="pointer-events-auto rounded-md border border-subtle bg-surface px-4 py-3 body-md text-secondary"
 								>
 									No rows match your scope or filters.
 								</div>
@@ -484,7 +484,6 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				open={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
 				unmountOnHide
-				scope="pro"
 				title="Duplicate table"
 				description="Create a duplicate of this table in the dashboard?"
 				confirmLabel="Duplicate"

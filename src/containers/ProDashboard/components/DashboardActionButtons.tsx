@@ -89,7 +89,7 @@ export function CopyDashboardButton({
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}
 			</span>
 			{copy.isSuccess ? (
-				<BasicLink href={`/pro/${dashboardUrlKey(copy.data)}`} className="body-md text-pro-text-secondary underline">
+				<BasicLink href={`/pro/${dashboardUrlKey(copy.data)}`} className="body-md text-secondary underline">
 					Open copy
 				</BasicLink>
 			) : null}

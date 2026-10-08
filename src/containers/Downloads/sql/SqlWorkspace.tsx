@@ -1129,17 +1129,13 @@ function StatusStrip({
 	const runTone = error ? 'error' : busy ? 'busy' : lastRun ? 'ready' : 'muted'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-pro-text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={envTone} />
-				<span className="text-pro-text-tertiary">LlamaSQL</span>
+				<span className="text-tertiary">LlamaSQL</span>
 				<span
 					className={
-						duckdbStatus === 'ready'
-							? 'text-pro-text-primary'
-							: duckdbStatus === 'error'
-								? 'text-error'
-								: 'text-pro-premium-300'
+						duckdbStatus === 'ready' ? 'text-primary' : duckdbStatus === 'error' ? 'text-error' : 'text-warning'
 					}
 				>
 					{duckdbStatus === 'ready' ? 'ready' : duckdbStatus === 'error' ? 'failed' : 'loading'}
@@ -1150,22 +1146,22 @@ function StatusStrip({
 
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={runTone} blink={busy} />
-				<span className="text-pro-text-tertiary">Last run</span>
+				<span className="text-tertiary">Last run</span>
 				{loadingStage ? (
-					<span className="text-pro-premium-300">{loadingStage}</span>
+					<span className="text-warning">{loadingStage}</span>
 				) : running ? (
-					<span className="text-pro-premium-300">running…</span>
+					<span className="text-warning">running…</span>
 				) : error ? (
 					<span className="text-error">error</span>
 				) : lastRun ? (
-					<span className="text-pro-text-primary">
+					<span className="text-primary">
 						<span className="tabular-nums">{formatSqlDuration(lastRun.durationMs)}</span>
-						<span className="px-1 text-pro-text-tertiary">·</span>
+						<span className="px-1 text-tertiary">·</span>
 						<span className="tabular-nums">{formatNumber(lastRun.rows)}</span>
-						<span className="text-pro-text-tertiary"> rows</span>
+						<span className="text-tertiary"> rows</span>
 					</span>
 				) : (
-					<span className="text-pro-text-tertiary">idle</span>
+					<span className="text-tertiary">idle</span>
 				)}
 			</span>
 		</div>
@@ -1263,9 +1259,9 @@ function SavedQueriesTab({
 	if (savedQueries.length === 0) {
 		return (
 			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-12 text-center">
-				<Icon name="bookmark" className="size-6 text-pro-text-tertiary" />
-				<p className="body-md text-pro-text-secondary">No saved queries yet.</p>
-				<p className="max-w-sm body-sm text-pro-text-tertiary">
+				<Icon name="bookmark" className="size-6 text-tertiary" />
+				<p className="body-md text-secondary">No saved queries yet.</p>
+				<p className="max-w-sm body-sm text-tertiary">
 					Click Save in the editor to bookmark a query — saved queries survive across sessions.
 				</p>
 			</div>
@@ -1296,14 +1292,14 @@ function SavedQueriesTab({
 								) : (
 									<Icon
 										name="arrow-right"
-										className="size-3.5 shrink-0 text-pro-text-tertiary transition-colors group-hover:text-link"
+										className="size-3.5 shrink-0 text-tertiary transition-colors group-hover:text-link"
 									/>
 								)}
 								<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-									<span className="truncate title-md text-pro-text-primary transition-colors group-hover:text-link">
+									<span className="truncate title-md text-primary transition-colors group-hover:text-link">
 										{q.name}
 									</span>
-									<span className="truncate mono-sm text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
+									<span className="truncate mono-sm text-tertiary">{firstNonEmptyLine(q.sql)}</span>
 								</span>
 							</Ariakit.Button>
 							{/* A touch screen cannot hover, so it always shows the actions. */}

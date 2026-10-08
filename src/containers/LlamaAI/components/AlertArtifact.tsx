@@ -273,7 +273,7 @@ export function AlertArtifact({
 	return (
 		<div
 			className={`my-2 flex flex-col gap-3 rounded-lg border bg-surface p-3 ${
-				isSaved ? 'border-subtle' : 'border-warning-strong ring-2 ring-warning/15'
+				isSaved ? 'border-subtle' : 'border-warning-strong ring-2 ring-(--bg-warning-tint)'
 			}`}
 		>
 			<div className="flex items-center gap-3">

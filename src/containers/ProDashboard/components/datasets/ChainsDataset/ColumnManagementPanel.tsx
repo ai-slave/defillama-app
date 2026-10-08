@@ -50,9 +50,9 @@ export function ColumnManagementPanel({
 	}
 
 	return (
-		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="mb-4 rounded-md border border-subtle bg-surface p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h4 className="label-md text-pro-text-primary">Customize columns</h4>
+				<h4 className="label-md text-primary">Customize columns</h4>
 				<div className="flex items-center gap-2">
 					<Button variant="secondary" size="sm" onClick={() => setAllColumnsVisible(true)}>
 						Show all
@@ -68,7 +68,7 @@ export function ColumnManagementPanel({
 					name="search"
 					height={14}
 					width={14}
-					className="absolute top-1/2 left-3 -translate-y-1/2 transform text-pro-text-tertiary"
+					className="absolute top-1/2 left-3 -translate-y-1/2 transform text-tertiary"
 				/>
 				<input
 					ref={searchRef}
@@ -76,17 +76,17 @@ export function ColumnManagementPanel({
 					aria-label="Search columns"
 					placeholder="Search columns…"
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border border-pro-cards-border bg-pro-glass-bg py-2 pr-3 pl-9 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+					className="w-full rounded-md border border-medium bg-page py-2 pr-3 pl-9 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 title-sm text-pro-text-secondary">
+					<h5 className="mb-2 flex items-center gap-2 title-sm text-secondary">
 						<Icon name="eye" className="size-3.5" />
 						Active columns ({activeColumns.length})
 					</h5>
-					<p className="mb-3 body-sm text-pro-text-tertiary">Use arrows to reorder • Click × to hide</p>
+					<p className="mb-3 body-sm text-tertiary">Use arrows to reorder • Click × to hide</p>
 					<div className="max-h-60 space-y-1 overflow-y-auto">
 						{activeColumns.map((columnId, index) => {
 							const column = columns.find((col) => col.id === columnId)
@@ -99,15 +99,13 @@ export function ColumnManagementPanel({
 							return (
 								<div
 									key={columnId}
-									className="flex items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 transition-colors hover:bg-pro-hover-fill"
+									className="hover-wash flex items-center justify-between rounded-md border border-subtle bg-surface-elevated-1 p-2 transition-colors"
 								>
 									<div className="flex items-center gap-2">
 										<Icon name="check" className="size-3.5 text-success" />
-										<span className="body-sm text-pro-text-primary">{column.name}</span>
+										<span className="body-sm text-primary">{column.name}</span>
 										{columnId.endsWith('_share') ? (
-											<span className="rounded-md bg-pro-info-100 px-1 py-0.5 body-sm text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
-												%
-											</span>
+											<span className="rounded-md bg-brand-tint px-1 py-0.5 body-sm text-link">%</span>
 										) : null}
 									</div>
 									<div className="flex items-center gap-1">
@@ -172,15 +170,15 @@ export function ColumnManagementPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 title-sm text-pro-text-secondary">
+					<h5 className="mb-2 flex items-center gap-2 title-sm text-secondary">
 						<Icon name="plus" className="size-3.5" />
 						Available columns
 					</h5>
-					<p className="mb-3 body-sm text-pro-text-tertiary">Click to add to table</p>
+					<p className="mb-3 body-sm text-tertiary">Click to add to table</p>
 					<div className="max-h-60 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => (
 							<div key={group.title}>
-								<h6 className="mb-1 label-sm text-pro-text-secondary">{group.title}</h6>
+								<h6 className="mb-1 label-sm text-secondary">{group.title}</h6>
 								<div className="space-y-1">
 									{group.columns
 										.filter((col) => columnVisibility[col.id] === false)
@@ -189,14 +187,12 @@ export function ColumnManagementPanel({
 												type="button"
 												key={column.id}
 												onClick={(event) => toggleFromRow(event, event.currentTarget, column.id)}
-												className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 text-left transition-colors hover:bg-pro-hover-fill"
+												className="hover-wash flex w-full items-center gap-2 rounded-md border border-subtle bg-surface-elevated-1 p-2 text-left transition-colors"
 											>
 												<Icon name="plus" className="size-3.5" />
-												<span className="label-sm text-pro-text-primary">{column.name}</span>
+												<span className="label-sm text-primary">{column.name}</span>
 												{column.id.endsWith('_share') ? (
-													<span className="ml-auto rounded-md bg-pro-info-100 px-1 py-0.5 label-sm text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
-														%
-													</span>
+													<span className="ml-auto rounded-md bg-brand-tint px-1 py-0.5 label-sm text-link">%</span>
 												) : null}
 											</button>
 										))}
@@ -207,8 +203,8 @@ export function ColumnManagementPanel({
 				</div>
 			</div>
 
-			<div className="mt-4 flex items-center justify-between border-t border-pro-cards-border pt-3 body-sm">
-				<span className="text-pro-text-tertiary">
+			<div className="mt-4 flex items-center justify-between border-t border-subtle pt-3 body-sm">
+				<span className="text-tertiary">
 					{activeColumns.length} of {columns.length} columns visible
 				</span>
 				<Button variant="primary" size="sm" onClick={onDone}>

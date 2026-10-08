@@ -37,9 +37,9 @@ function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="label-md text-pro-text-label">{title}</h3>
+				<h3 className="label-md text-secondary">{title}</h3>
 				{actions}
 			</div>
 			{children}
@@ -49,15 +49,15 @@ function ChartCard({
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value}</span>
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 type AADimension = 'byProtocol' | 'byNetwork' | 'byAsset'
@@ -113,9 +113,9 @@ function AllocatedAssetsSection({
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SLL Allocated Assets</SectionHeader>
-			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<div className="rounded-lg border border-subtle bg-surface p-4">
 				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-					<h3 className="label-md text-pro-text-label">{allocatedAssets.title}</h3>
+					<h3 className="label-md text-secondary">{allocatedAssets.title}</h3>
 					<div className="flex flex-wrap items-center gap-2">
 						<SegmentedControl<typeof view>
 							variant="default"
@@ -152,32 +152,32 @@ function AllocatedAssetsSection({
 								{currentEntries.map((entry, idx) => {
 									const hasChildren = entry.children && entry.children.length > 0
 									const isOpen = expandedRows.has(idx)
-									const color = pieColors[entry.name] || 'var(--pro-text-tertiary)'
+									const color = pieColors[entry.name] || 'var(--text-tertiary)'
 									const row = (
 										<>
 											<span className="flex w-4 shrink-0 justify-center">
 												{hasChildren ? (
 													<Icon
 														name="chevron-right"
-														className={`size-3.5 text-pro-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
+														className={`size-3.5 text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
 													/>
 												) : null}
 											</span>
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-											<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary">{entry.name}</span>
-											<span className="shrink-0 label-md text-pro-text-primary">{entry.formatted}</span>
-											<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
+											<span className="min-w-0 flex-1 truncate body-md text-primary">{entry.name}</span>
+											<span className="shrink-0 label-md text-primary">{entry.formatted}</span>
+											<span className="w-12 shrink-0 text-right body-sm text-secondary">
 												{formatPercent(entry.pct, { input: 'percent' })}
 											</span>
 										</>
 									)
 									return (
-										<div key={entry.name} className="border-b border-pro-cards-border last:border-b-0">
+										<div key={entry.name} className="border-b border-subtle last:border-b-0">
 											{hasChildren ? (
 												<button
 													type="button"
 													aria-expanded={isOpen}
-													className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-sl-hover-bg"
+													className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-hover-row"
 													onClick={() => toggleRow(idx)}
 												>
 													{row}
@@ -188,7 +188,7 @@ function AllocatedAssetsSection({
 											{isOpen && entry.children && (
 												<div className="pb-2 pl-8">
 													{entry.children.map((child) => (
-														<div key={child.name} className="flex items-center py-1.5 body-sm text-pro-text-label">
+														<div key={child.name} className="flex items-center py-1.5 body-sm text-secondary">
 															<span className="min-w-0 flex-1 truncate">{child.name}</span>
 															<span className="shrink-0">{child.formatted}</span>
 														</div>
@@ -199,9 +199,9 @@ function AllocatedAssetsSection({
 									)
 								})}
 							</div>
-							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="body-md text-pro-text-label">Total AUM</span>
-								<span className="title-md text-pro-text-primary">{allocatedAssets.totalFormatted}</span>
+							<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3">
+								<span className="body-md text-secondary">Total AUM</span>
+								<span className="title-md text-primary">{allocatedAssets.totalFormatted}</span>
 							</div>
 						</div>
 					</div>
@@ -506,39 +506,39 @@ function TreasurySection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Treasury &amp; Buybacks</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 label-md text-pro-text-label">Treasury</h3>
+				<div className="rounded-lg border border-subtle bg-surface p-4">
+					<h3 className="mb-3 label-md text-secondary">Treasury</h3>
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="body-sm text-pro-text-label">Total Treasury Assets</span>
-							<span className="title-md text-pro-text-primary">{data.treasuryKpis.totalAssets.formatted}</span>
+						<div className="flex items-center justify-between border-b border-subtle py-2">
+							<span className="body-sm text-secondary">Total Treasury Assets</span>
+							<span className="title-md text-primary">{data.treasuryKpis.totalAssets.formatted}</span>
 						</div>
-						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="body-sm text-pro-text-label">Buyback Threshold</span>
-							<span className="title-md text-pro-text-primary">{data.treasuryKpis.buybackThreshold.formatted}</span>
+						<div className="flex items-center justify-between border-b border-subtle py-2">
+							<span className="body-sm text-secondary">Buyback Threshold</span>
+							<span className="title-md text-primary">{data.treasuryKpis.buybackThreshold.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="body-sm text-pro-text-label">Current vs Threshold</span>
+							<span className="body-sm text-secondary">Current vs Threshold</span>
 							<span className={`title-md ${data.treasuryKpis.vsThreshold.value >= 0 ? 'text-success' : 'text-error'}`}>
 								{data.treasuryKpis.vsThreshold.formatted}
 							</span>
 						</div>
 					</div>
 				</div>
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 label-md text-pro-text-label">SPK Buyback Tracker</h3>
+				<div className="rounded-lg border border-subtle bg-surface p-4">
+					<h3 className="mb-3 label-md text-secondary">SPK Buyback Tracker</h3>
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="body-sm text-pro-text-label">USDS Spent</span>
-							<span className="title-md text-pro-text-primary">{data.buybackKpis.usdsSpent.formatted}</span>
+						<div className="flex items-center justify-between border-b border-subtle py-2">
+							<span className="body-sm text-secondary">USDS Spent</span>
+							<span className="title-md text-primary">{data.buybackKpis.usdsSpent.formatted}</span>
 						</div>
-						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="body-sm text-pro-text-label">SPK Bought</span>
-							<span className="title-md text-pro-text-primary">{data.buybackKpis.spkBought.formatted}</span>
+						<div className="flex items-center justify-between border-b border-subtle py-2">
+							<span className="body-sm text-secondary">SPK Bought</span>
+							<span className="title-md text-primary">{data.buybackKpis.spkBought.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="body-sm text-pro-text-label">Avg Price</span>
-							<span className="title-md text-pro-text-primary">{data.buybackKpis.avgPrice.formatted}</span>
+							<span className="body-sm text-secondary">Avg Price</span>
+							<span className="title-md text-primary">{data.buybackKpis.avgPrice.formatted}</span>
 						</div>
 					</div>
 				</div>
@@ -609,8 +609,8 @@ export default function Financials() {
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Projected Returns Breakdown</SectionHeader>
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 label-md text-pro-text-label">{data.projectedBreakdown.title}</h3>
+				<div className="rounded-lg border border-subtle bg-surface p-4">
+					<h3 className="mb-3 label-md text-secondary">{data.projectedBreakdown.title}</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[300px]">
 							<PieChart
@@ -624,33 +624,33 @@ export default function Financials() {
 						<div>
 							<table className="w-full">
 								<thead>
-									<tr className="border-b border-pro-cards-border">
-										<th className="pb-2 text-left title-sm text-pro-text-label uppercase">Product</th>
-										<th className="pb-2 text-right title-sm text-pro-text-label uppercase">Revenue</th>
-										<th className="pb-2 text-right title-sm text-pro-text-label uppercase">Share</th>
+									<tr className="border-b border-subtle">
+										<th className="pb-2 text-left title-sm text-secondary uppercase">Product</th>
+										<th className="pb-2 text-right title-sm text-secondary uppercase">Revenue</th>
+										<th className="pb-2 text-right title-sm text-secondary uppercase">Share</th>
 									</tr>
 								</thead>
 								<tbody>
 									{data.projectedBreakdown.series.map((item) => (
-										<tr key={item.name} className="border-b border-pro-cards-border last:border-b-0">
-											<td className="py-2.5 body-md text-pro-text-primary">
+										<tr key={item.name} className="border-b border-subtle last:border-b-0">
+											<td className="py-2.5 body-md text-primary">
 												<span
 													className="mr-2 inline-block size-2 rounded-full"
-													style={{ background: data.breakdownColors[item.name] || 'var(--pro-text-tertiary)' }}
+													style={{ background: data.breakdownColors[item.name] || 'var(--text-tertiary)' }}
 												/>
 												{item.name}
 											</td>
-											<td className="py-2.5 text-right title-md text-pro-text-primary">{item.formatted}</td>
-											<td className="py-2.5 text-right body-md text-pro-text-label">
+											<td className="py-2.5 text-right title-md text-primary">{item.formatted}</td>
+											<td className="py-2.5 text-right body-md text-secondary">
 												{formatPercent(item.pct, { input: 'percent' })}
 											</td>
 										</tr>
 									))}
 								</tbody>
 							</table>
-							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="body-md text-pro-text-label">Total</span>
-								<span className="title-md text-pro-text-primary">{data.projectedBreakdown.totalFormatted}</span>
+							<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3">
+								<span className="body-md text-secondary">Total</span>
+								<span className="title-md text-primary">{data.projectedBreakdown.totalFormatted}</span>
 							</div>
 						</div>
 					</div>
@@ -676,7 +676,7 @@ export default function Financials() {
 			{data.quarterlyReports && data.quarterlyReports.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Quarterly Reports</SectionHeader>
-					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+					<div className="rounded-lg border border-subtle bg-surface p-4">
 						<div className="flex flex-col">
 							{data.quarterlyReports.map((report) => (
 								<a
@@ -684,7 +684,7 @@ export default function Financials() {
 									href={report.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="border-b border-pro-cards-border py-3 label-md text-link last:border-b-0 hover:underline"
+									className="border-b border-subtle py-3 label-md text-link last:border-b-0 hover:underline"
 								>
 									{report.label}
 								</a>

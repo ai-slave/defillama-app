@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
 			canonicalUrl="/privacy-policy"
 		>
 			<div className="mx-auto mb-16 flex w-full max-w-3xl flex-col gap-8 text-secondary">
-				<h1 className="text-center heading-lg text-on-brand">Privacy Policy</h1>
+				<h1 className="text-center heading-lg text-primary">Privacy Policy</h1>
 				<p>
 					This Privacy Policy explains how information about you is collected, used, and disclosed by DefiLlama. This
 					Privacy Policy applies to information we collect when you use the website operated by us and located at{' '}
@@ -25,16 +25,16 @@ export default function PrivacyPolicy() {
 				</p>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">1. Collection of Information.</h2>
+					<h2 className="heading-sm text-primary">1. Collection of Information.</h2>
 					<p>
-						<span className="font-medium text-on-brand">1.1</span> Information You Provide to Us. We collect information
+						<span className="font-medium text-primary">1.1</span> Information You Provide to Us. We collect information
 						you provide directly to us. The types of information we may collect include your digital asset wallet
 						address, your email, completed transaction hashes, and the token names, symbols, or other blockchain
 						identifiers.
 					</p>
 					<div>
 						<p>
-							<span className="font-medium text-on-brand">1.2</span> Information We Collect Automatically When You Use
+							<span className="font-medium text-primary">1.2</span> Information We Collect Automatically When You Use
 							the Services. When you access or use our Services, we may automatically collect information about you,
 							including:
 						</p>
@@ -52,7 +52,7 @@ export default function PrivacyPolicy() {
 						</ul>
 					</div>
 					<p>
-						<span className="font-medium text-on-brand">1.3</span> Information Collected by Cookies and Other Tracking
+						<span className="font-medium text-primary">1.3</span> Information Collected by Cookies and Other Tracking
 						Technologies. We may use various technologies to collect information, including cookies and web beacons.
 						Cookies are small data files stored on your hard drive or in device memory that help us improve our services
 						and your experience, see which areas and features of our services are popular and count visits. Web beacons
@@ -61,19 +61,19 @@ export default function PrivacyPolicy() {
 						please see “Your Choices” below.
 					</p>
 					<p>
-						<span className="font-medium text-on-brand">1.4</span>{' '}
-						<span className="font-medium text-on-brand">No Sensitive Personal Information.</span> We do not
-						intentionally collect sensitive personal information such as government ID numbers, payment card or
-						financial account numbers, precise geolocation, health or biometric data, or information about children
-						under 13. Please do not submit such data to our Services.
+						<span className="font-medium text-primary">1.4</span>{' '}
+						<span className="font-medium text-primary">No Sensitive Personal Information.</span> We do not intentionally
+						collect sensitive personal information such as government ID numbers, payment card or financial account
+						numbers, precise geolocation, health or biometric data, or information about children under 13. Please do
+						not submit such data to our Services.
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">2. Use of Information.</h2>
+					<h2 className="heading-sm text-primary">2. Use of Information.</h2>
 					<div>
 						<p>
-							<span className="font-medium text-on-brand">2.1</span> We may use information about you for various
+							<span className="font-medium text-primary">2.1</span> We may use information about you for various
 							purposes, including to:
 						</p>
 						<ul className="flex list-disc flex-col pl-4">
@@ -99,11 +99,11 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">3. Sharing of Information.</h2>
+					<h2 className="heading-sm text-primary">3. Sharing of Information.</h2>
 					<div>
 						<p>
-							<span className="font-medium text-on-brand">3.1</span> We may use share information about you as follows
-							or as otherwise described in this Privacy Policy:
+							<span className="font-medium text-primary">3.1</span> We may use share information about you as follows or
+							as otherwise described in this Privacy Policy:
 						</p>
 						<ul className="flex list-disc flex-col pl-4">
 							<li>
@@ -130,15 +130,15 @@ export default function PrivacyPolicy() {
 						</ul>
 					</div>
 					<p>
-						<span className="font-medium text-on-brand">3.2</span> We may also share aggregated or de-identified
+						<span className="font-medium text-primary">3.2</span> We may also share aggregated or de-identified
 						information, which cannot reasonably be used to identify you.
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">4. Security</h2>
+					<h2 className="heading-sm text-primary">4. Security</h2>
 					<p>
-						<span className="font-medium text-on-brand">4.1</span> Security procedures are in place to protect the
+						<span className="font-medium text-primary">4.1</span> Security procedures are in place to protect the
 						confidentiality of your data. We use encryption to protect your information in transit (e.g., HTTPS/TLS) and
 						apply industry-standard access controls and least-privilege practices to limit access to any stored data. We
 						collect and retain only the minimum information necessary to operate the Services.
@@ -146,18 +146,18 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">5. Transfer of Information</h2>
+					<h2 className="heading-sm text-primary">5. Transfer of Information</h2>
 					<p>
-						<span className="font-medium text-on-brand">5.1</span> All our servers are in the EU and all data is hosted
+						<span className="font-medium text-primary">5.1</span> All our servers are in the EU and all data is hosted
 						there. This is also true for our analytics provider, Fathom, but your data might be exposed to some
 						providers such as Cloudflare that are based out of the EU.
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">6. Your Choices</h2>
+					<h2 className="heading-sm text-primary">6. Your Choices</h2>
 					<p>
-						<span className="font-medium text-on-brand">6.1</span> You may update, correct or delete information about
+						<span className="font-medium text-primary">6.1</span> You may update, correct or delete information about
 						you at any time emailing us at{' '}
 						<a href="mailto:support@defillama.com" className="underline">
 							support@defillama.com
@@ -168,9 +168,9 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="heading-sm text-on-brand">7. Contact Us</h2>
+					<h2 className="heading-sm text-primary">7. Contact Us</h2>
 					<p>
-						<span className="font-medium text-on-brand">7.1</span> If you have any questions about this Privacy Policy,
+						<span className="font-medium text-primary">7.1</span> If you have any questions about this Privacy Policy,
 						please contact us by email at{' '}
 						<a href="mailto:support@defillama.com" className="underline">
 							support@defillama.com

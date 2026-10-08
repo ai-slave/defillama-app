@@ -1,91 +1,64 @@
 /* ----------------------------------------------------------------------------
-   Articles / Research product theme — the research/callout palette and the
-   surface's effect shadows.
+   Articles / Research product theme: the research accents, the statics for
+   media overlays, and the surface's effect shadows.
 
-   A standing product palette, separate from the design system's tokens in
-   semantics.css. Add tokens here as the product evolves.
-   Component CSS for the editor/prose/loader lives with the Articles container.
+   Text, surfaces, borders, hovers and tints come from the core tokens in
+   semantics.css; this file keeps only what the core palette has no role
+   for. Component CSS for the editor/prose/loader lives with the Articles
+   container.
 ---------------------------------------------------------------------------- */
 
 @layer base {
 	:root {
-		--research-accent: #3a8bff;
+		/* Accents */
 		--research-accent-strong: #237bff;
-		--research-heading: #0c2956;
+		/* Blue text on the always-white hero pills: the brand fill, 5.3:1 on
+		   white in both modes (research-accent-strong is 3.9:1). */
+		--research-accent-ink: var(--blue-9);
 		--research-gold: #f4d28e;
 		--research-live: #ee802f;
+		/* Navy behind the banner strip, the feed URL card and the title
+		   overlays on report covers. */
 		--research-banner: #0b1e6b;
-		--research-accent-soft: #6ba8ff;
-		--research-accent-tint: #d7e7fe;
-		--research-accent-tint-hover: #bcd6fb;
+		--research-banner-scrim: color-mix(in srgb, var(--research-banner) 70%, transparent);
 		--research-highlight: #fff3a3;
+		/* The editorial navy of the public research pages' headings and titles
+		   (14:1 on white). Dark mode has no navy that reads, so it is the
+		   primary text there. */
+		--research-navy: #0c2956;
 
-		/* Articles callout tint */
-		--callout-border: #d89b2a;
-		--callout-bg: #fff8e6;
-		--callout-text: #4d3606;
-		--callout-accent: #a17317;
-
-		/* Link-tint hovers/fills (shared with reports/newsletters pages) */
-		--research-tint-hover: #1f67d233;
-		--research-tint: oklch(0.533 0.18 259 / 0.12);
-
-		/* Surface roles — mode-adaptive ones get html.dark overrides below */
-		--research-ink: #1a1a1a;
-		--research-invert: #1a1a1a;
-		--research-wash: rgb(0 0 0 / 0.05);
-		--research-wash-strong: rgb(0 0 0 / 0.12);
-		--research-line: rgb(0 0 0 / 0.2);
-
-		/* Statics (media overlays, always-light chips, warning ring) */
+		/* Statics for overlays on imagery and the always-white hero pills:
+		   the same in both modes. */
 		--research-white: #ffffff;
 		--research-black: #000000;
+		--research-white-wash: color-mix(in srgb, var(--research-white) 10%, transparent);
+		--research-white-line: color-mix(in srgb, var(--research-white) 30%, transparent);
 		--research-backdrop-soft: rgb(0 0 0 / 0.4);
+		--research-backdrop-strong: rgb(0 0 0 / 0.6);
 	}
 
-	html.dark {
+	html.dark,
+	.theme-dark {
 		--research-highlight: #5a4a16;
-		--research-tint-hover: #1f67d24d;
-		--callout-bg: #30230b;
-		--callout-text: var(--research-gold);
-		--callout-accent: var(--research-gold);
-
-		--research-ink: #ffffff;
-		--research-invert: #ffffff;
-		--research-wash: rgb(255 255 255 / 0.05);
-		--research-wash-strong: rgb(255 255 255 / 0.12);
-		--research-line: rgb(255 255 255 / 0.2);
+		--research-navy: var(--text-primary);
 	}
 }
 
-@theme {
-	/* Palette utilities */
-	--color-research-accent: var(--research-accent);
+@theme inline {
 	--color-research-accent-strong: var(--research-accent-strong);
-	--color-research-accent-soft: var(--research-accent-soft);
-	--color-research-accent-tint: var(--research-accent-tint);
-	--color-research-accent-tint-hover: var(--research-accent-tint-hover);
-	--color-research-heading: var(--research-heading);
+	--color-research-accent-ink: var(--research-accent-ink);
 	--color-research-gold: var(--research-gold);
 	--color-research-live: var(--research-live);
 	--color-research-banner: var(--research-banner);
+	--color-research-navy: var(--research-navy);
+	--color-research-banner-scrim: var(--research-banner-scrim);
 	--color-research-highlight: var(--research-highlight);
-	--color-research-tint-hover: var(--research-tint-hover);
-	--color-research-tint: var(--research-tint);
-	--color-callout-border: var(--callout-border);
-	--color-callout-bg: var(--callout-bg);
-	--color-callout-text: var(--callout-text);
-	--color-callout-accent: var(--callout-accent);
-
-	/* Surface-role utilities */
-	--color-research-ink: var(--research-ink);
-	--color-research-invert: var(--research-invert);
-	--color-research-wash: var(--research-wash);
-	--color-research-wash-strong: var(--research-wash-strong);
-	--color-research-line: var(--research-line);
 	--color-research-white: var(--research-white);
 	--color-research-black: var(--research-black);
+	--color-research-white-wash: var(--research-white-wash);
+	--color-research-white-line: var(--research-white-line);
 	--color-research-backdrop-soft: var(--research-backdrop-soft);
+	--color-research-backdrop-strong: var(--research-backdrop-strong);
 
 	/* Effect shadows for the editor/landing */
 	--shadow-research-glow: 0 0 20px -5px rgb(35 123 255 / 0.1);

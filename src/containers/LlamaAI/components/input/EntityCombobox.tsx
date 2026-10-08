@@ -85,7 +85,7 @@ function EntityTypeBadge({ type }: { type: string }) {
 		type === 'Chain'
 			? 'bg-brand-tint text-link'
 			: type === 'Protocol'
-				? 'bg-ai-mention/10 text-ai-mention'
+				? 'bg-ai-violet-tint text-ai-violet'
 				: 'bg-success-tint text-success'
 
 	return <span className={`rounded-sm px-1.5 py-0.5 label-xs ${colorClass}`}>{type}</span>

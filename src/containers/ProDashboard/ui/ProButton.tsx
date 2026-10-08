@@ -9,8 +9,8 @@ import { tw } from '~/ui/tw'
 const PRO_BUTTON_BASE = tw`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent whitespace-nowrap transition-[color,background-color,border-color,translate,scale] duration-120 ease-out-quart active:translate-y-px active:scale-[.985]`
 
 const PRO_BUTTON_VARIANTS = {
-	primary: tw`bg-pro-create text-pro-on-create hover:bg-pro-create-hover`,
-	ai: tw`bg-pro-generate text-pro-on-generate hover:bg-pro-generate-hover`
+	primary: tw`bg-brand-tint text-link hover:bg-brand-tint-strong`,
+	ai: tw`bg-pro-ai-tint text-pro-ai-text hover:bg-pro-ai-tint-strong`
 }
 
 // The same type styles, heights and radius (rounded-lg) as src/ui Button's md and lg, so a ProButton sits level with the Buttons in its row.

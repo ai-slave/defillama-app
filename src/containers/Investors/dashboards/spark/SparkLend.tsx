@@ -62,8 +62,8 @@ const INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
@@ -71,8 +71,8 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			<div className="flex h-[400px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -82,17 +82,17 @@ function CardSkeleton({ title }: { title: string }) {
 
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value ?? '—'}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value ?? '—'}</span>
 		</div>
 	)
 }
 
 function KpiSkeleton({ label }: { label: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
 			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 		</div>
 	)
@@ -170,8 +170,8 @@ function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Yield Pools</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Yield Pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

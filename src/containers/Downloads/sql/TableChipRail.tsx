@@ -111,14 +111,14 @@ function TableChip({
 				type="button"
 				onClick={onToggle}
 				aria-expanded={open}
-				className="flex items-center gap-1.5 px-2.5 py-1 label-sm text-pro-text-primary"
+				className="flex items-center gap-1.5 px-2.5 py-1 label-sm text-primary"
 			>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-pro-text-tertiary transition-transform ${open ? 'rotate-90 text-link' : ''}`}
+					className={`size-3 shrink-0 text-tertiary transition-transform ${open ? 'rotate-90 text-link' : ''}`}
 				/>
 				<span className="max-w-[180px] truncate font-mono">{table.name}</span>
-				<span className="text-pro-text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
+				<span className="text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
 			</button>
 			<Tooltip
 				content="Remove"
@@ -128,7 +128,7 @@ function TableChip({
 						type="button"
 						onClick={onRemove}
 						aria-label={`Remove ${table.name}`}
-						className="flex w-6 items-center justify-center border-l border-subtle text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 hover:bg-hover-row hover:text-pro-text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
+						className="flex w-6 items-center justify-center border-l border-subtle text-tertiary opacity-0 transition-all group-hover:opacity-100 hover:bg-hover-row hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
 					/>
 				}
 			>
@@ -158,8 +158,8 @@ function PendingChip({ table }: { table: PendingTable }) {
 				failed
 					? 'border-error-strong bg-error-faint text-error'
 					: loading
-						? 'border-brand-muted bg-brand-faint text-pro-text-primary'
-						: 'border-subtle bg-surface text-pro-text-secondary'
+						? 'border-brand-muted bg-brand-faint text-primary'
+						: 'border-subtle bg-surface text-secondary'
 			} ${loading ? 'animate-pulse' : ''}`}
 		>
 			<span className="flex size-3 shrink-0 items-center justify-center">
@@ -168,13 +168,11 @@ function PendingChip({ table }: { table: PendingTable }) {
 				) : loading ? (
 					<LoadingSpinner size={10} />
 				) : (
-					<span className="size-1.5 rounded-full bg-pro-text-tertiary/60" />
+					<span className="size-1.5 rounded-full bg-(--text-tertiary)" />
 				)}
 			</span>
 			<span className="max-w-[180px] truncate font-mono">{table.name}</span>
-			<span
-				className={`body-xs tracking-wide uppercase tabular-nums ${failed ? 'text-error' : 'text-pro-text-tertiary'}`}
-			>
+			<span className={`body-xs tracking-wide uppercase tabular-nums ${failed ? 'text-error' : 'text-tertiary'}`}>
 				{failed ? 'failed' : loading ? 'loading' : 'queued'}
 			</span>
 		</div>
@@ -186,8 +184,8 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 		<div className="rounded-md border border-subtle bg-surface px-3 py-2.5">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 body-sm">
-					<span className="font-mono font-bold text-pro-text-primary">{table.name}</span>
-					<span className="text-pro-text-tertiary">
+					<span className="font-mono font-bold text-primary">{table.name}</span>
+					<span className="text-tertiary">
 						{table.columns.length} cols · {prettyLabelForSource(table.source)}
 					</span>
 				</div>
@@ -220,7 +218,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 						title={c.type ? `${c.name} · ${c.type}` : c.name}
 					>
 						<TypeBadge kind={inferFineKindFromArrowType(c.type)} />
-						<span className="truncate font-mono text-pro-text-primary">{c.name}</span>
+						<span className="truncate font-mono text-primary">{c.name}</span>
 					</li>
 				))}
 			</ul>
@@ -236,8 +234,8 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-pro-text-secondary">
-			<span className="text-pro-text-primary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
+			<span className="text-primary">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>
 			<span className="ml-auto flex items-center gap-1.5">

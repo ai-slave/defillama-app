@@ -15,7 +15,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 	const isOpen = href !== null && hostname !== null
 
 	return (
-		<Dialog size="sm" scope="pro" open={isOpen} onClose={onClose} portal unmountOnHide>
+		<Dialog size="sm" open={isOpen} onClose={onClose} portal unmountOnHide>
 			<DialogHeader title="Leaving DefiLlama" closable={false} />
 			<DialogBody>
 				<p className="body-sm text-secondary">

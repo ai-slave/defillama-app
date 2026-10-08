@@ -148,14 +148,14 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col items-center justify-center gap-4 px-4">
 					{props.editable ? (
 						<>
-							<h3 className="text-center heading-xs text-pro-text-primary md:heading-sm">Select Tokens to Compare</h3>
+							<h3 className="text-center heading-xs text-primary md:heading-sm">Select Tokens to Compare</h3>
 							<div className="w-full max-w-md">
 								<TokenSelector config={config} onConfigChange={props.onConfigChange} placeholder="Search tokens…" />
 							</div>
-							<p className="mt-2 body-md text-pro-text-tertiary">Select up to {MAX_TOKENS} tokens to compare</p>
+							<p className="mt-2 body-md text-tertiary">Select up to {MAX_TOKENS} tokens to compare</p>
 						</>
 					) : (
-						<p className="body-md text-pro-text-secondary">No tokens configured.</p>
+						<p className="body-md text-secondary">No tokens configured.</p>
 					)}
 				</div>
 			</div>
@@ -188,25 +188,25 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 			{summary.kind === 'single' ? (
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
 					<div className="border border-subtle p-3">
-						<div className="mb-1 body-sm text-pro-text-tertiary">Total Value</div>
-						<div className="heading-xs text-pro-text-primary">
+						<div className="mb-1 body-sm text-tertiary">Total Value</div>
+						<div className="heading-xs text-primary">
 							{formatUsd(totalAmount, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 body-sm text-pro-text-tertiary">Protocols</div>
-						<div className="heading-xs text-pro-text-primary">{protocolCount}</div>
+						<div className="mb-1 body-sm text-tertiary">Protocols</div>
+						<div className="heading-xs text-primary">{protocolCount}</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 body-sm text-pro-text-tertiary">Top Category</div>
-						<div className="heading-xs text-pro-text-primary">{topCategories[0] ? topCategories[0][0] : '-'}</div>
-						<div className="body-sm text-pro-text-tertiary">
+						<div className="mb-1 body-sm text-tertiary">Top Category</div>
+						<div className="heading-xs text-primary">{topCategories[0] ? topCategories[0][0] : '-'}</div>
+						<div className="body-sm text-tertiary">
 							{topCategories[0] ? `${topCategories[0][1].count} protocols` : ''}
 						</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 body-sm text-pro-text-tertiary">Avg per Protocol</div>
-						<div className="heading-xs text-pro-text-primary">
+						<div className="mb-1 body-sm text-tertiary">Avg per Protocol</div>
+						<div className="heading-xs text-primary">
 							{protocolCount > 0
 								? formatUsd(totalAmount / protocolCount, {
 										compact: true,
@@ -225,18 +225,18 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 							if (!stats) throw new Error(`Missing token-usage summary bucket for ${symbol}`)
 							return (
 								<div key={symbol} className="border border-subtle p-3">
-									<div className="mb-1 body-sm text-pro-text-tertiary">{symbol.toUpperCase()} Value</div>
-									<div className="heading-xs text-pro-text-primary">
+									<div className="mb-1 body-sm text-tertiary">{symbol.toUpperCase()} Value</div>
+									<div className="heading-xs text-primary">
 										{formatUsd(stats.total, {
 											compact: true,
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
 										})}
 									</div>
-									<div className="body-sm text-pro-text-tertiary">{stats.protocols} protocols</div>
+									<div className="body-sm text-tertiary">{stats.protocols} protocols</div>
 									<div className="mt-2">
 										<div className="mb-1 flex items-center justify-between">
-											<span className="body-sm text-pro-text-tertiary">Share</span>
+											<span className="body-sm text-tertiary">Share</span>
 											<span className="label-sm">
 												{totalAmount > 0
 													? `${formatPercent(stats.total / totalAmount, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
@@ -258,23 +258,23 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 						{tokenSymbols.length <= 2 ? (
 							<div className="border border-subtle p-3">
-								<div className="mb-1 body-sm text-pro-text-tertiary">Total Combined</div>
-								<div className="heading-xs text-pro-text-primary">
+								<div className="mb-1 body-sm text-tertiary">Total Combined</div>
+								<div className="heading-xs text-primary">
 									{formatUsd(totalAmount, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})}
 								</div>
-								<div className="body-sm text-pro-text-tertiary">All tokens</div>
+								<div className="body-sm text-tertiary">All tokens</div>
 							</div>
 						) : null}
 
 						{tokenSymbols.length <= 3 ? (
 							<div className="border border-subtle p-3">
-								<div className="mb-1 body-sm text-pro-text-tertiary">Unique Protocols</div>
-								<div className="heading-xs text-pro-text-primary">{protocolCount}</div>
-								<div className="body-sm text-pro-text-tertiary">
+								<div className="mb-1 body-sm text-tertiary">Unique Protocols</div>
+								<div className="heading-xs text-primary">{protocolCount}</div>
+								<div className="body-sm text-tertiary">
 									{multiTokenProtocolCount > 0 ? `${multiTokenProtocolCount} use multiple` : 'Total count'}
 								</div>
 							</div>
@@ -282,15 +282,15 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 					</div>
 
 					<div className="mb-4 border border-subtle p-3">
-						<div className="mb-2 body-sm text-pro-text-tertiary">Protocol Distribution</div>
+						<div className="mb-2 body-sm text-tertiary">Protocol Distribution</div>
 						<div className="flex flex-wrap items-center gap-4">
 							<div className="flex items-center gap-2">
 								<div className="size-3 bg-brand" />
 								<span className="body-md">
 									<span className="font-semibold">{summary.protocolOverlap.shared}</span>
-									<span className="text-pro-text-tertiary"> shared</span>
+									<span className="text-tertiary"> shared</span>
 									{protocolCount > 0 ? (
-										<span className="body-sm text-pro-text-tertiary">
+										<span className="body-sm text-tertiary">
 											{' '}
 											(
 											{formatPercent(summary.protocolOverlap.shared / protocolCount, {
@@ -320,13 +320,13 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 										/>
 										<span className="body-md">
 											<span className="font-semibold">{exclusiveCount}</span>
-											<span className="text-pro-text-tertiary"> {symbol.toUpperCase()} only</span>
+											<span className="text-tertiary"> {symbol.toUpperCase()} only</span>
 										</span>
 									</div>
 								)
 							})}
 
-							<div className="ml-auto body-md text-pro-text-tertiary">Total: {protocolCount} protocols</div>
+							<div className="ml-auto body-md text-tertiary">Total: {protocolCount} protocols</div>
 						</div>
 					</div>
 				</>
@@ -362,7 +362,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 					<input
 						placeholder="Search protocols..."
 						onInput={(e) => setSearch(e.currentTarget.value)}
-						className="w-full max-w-xs rounded-sm border border-pro-cards-border bg-pro-cards-bg px-2 py-1.5 body-md text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-auto sm:px-3"
+						className="w-full max-w-xs rounded-sm border border-medium bg-surface px-2 py-1.5 body-md text-primary focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-auto sm:px-3"
 					/>
 				</div>
 			</div>

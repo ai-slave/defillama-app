@@ -6,7 +6,7 @@ import { SkeletonShimmer } from '../components/ProCardSkeleton'
 
 const BACKDROP = tw`fixed inset-0 z-50 animate-pro-fade-in bg-screen-dim`
 
-const BLOCK = tw`rounded-sm bg-pro-text-tertiary/15`
+const BLOCK = tw`rounded-sm bg-surface-elevated-2`
 
 const BODY_ROWS = ['w-full', 'w-5/6', 'w-2/3']
 
@@ -35,7 +35,7 @@ export function ProDialogFallback({ width = 'sm', workspace = false }: ProDialog
 		<div
 			aria-busy="true"
 			data-enter
-			className={`${dialogSurfaceStyles} ${dialogWidthStyles[width]} ${workspace ? dialogWorkspaceStyles : ''} animate-pro-fade-in pro-dashboard`}
+			className={`${dialogSurfaceStyles} ${dialogWidthStyles[width]} ${workspace ? dialogWorkspaceStyles : ''} animate-pro-fade-in`}
 			data-testid="pro-dialog-fallback"
 		>
 			{/* The shape of the dialog that loads: DialogHeader's row with its ×, then a p-4 body. */}

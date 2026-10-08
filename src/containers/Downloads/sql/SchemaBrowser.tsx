@@ -546,7 +546,7 @@ function ColumnChips({
 	columns: Array<{ name: string; type?: string }>
 	onInsertColumn: ((name: string) => void) | null
 }) {
-	const chip = 'inline-flex min-h-6 items-center gap-1 rounded-md border border-subtle px-1.5 mono-sm text-primary'
+	const chip = 'inline-flex min-h-6 items-center gap-1 rounded-md border border-medium px-1.5 mono-sm text-primary'
 	return (
 		<ul
 			aria-label={onInsertColumn ? 'Columns, select one to insert it in the editor' : 'Columns'}

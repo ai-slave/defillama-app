@@ -34,8 +34,8 @@ export function AuthorProfileStrip() {
 						🦙
 					</span>
 				)}
-				<p className="min-w-0 truncate font-medium text-pro-text-primary">
-					{profile.displayName} <span className="font-normal text-pro-text-tertiary">@{profile.slug}</span>
+				<p className="min-w-0 truncate font-medium text-primary">
+					{profile.displayName} <span className="font-normal text-tertiary">@{profile.slug}</span>
 				</p>
 				<div className="ml-auto flex shrink-0 items-center gap-1">
 					<Button as={BasicLink} href={`/authors/${profile.slug}`} size="sm" variant="ghost">
@@ -53,7 +53,7 @@ export function AuthorProfileStrip() {
 				</div>
 			</div>
 			{customized ? null : (
-				<p className="body-sm text-pro-text-tertiary">
+				<p className="body-sm text-tertiary">
 					Add your name, avatar, and links to stand out on your dashboards and Top Authors.
 				</p>
 			)}

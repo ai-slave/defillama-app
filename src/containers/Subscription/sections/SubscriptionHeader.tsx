@@ -18,7 +18,7 @@ function AuthActions({ accountClassName }: { accountClassName: string }) {
 			{!isClient || loaders.userLoading ? (
 				<Skeleton className="h-8 w-16 rounded-lg" />
 			) : isAuthenticated ? (
-				<BasicLink href="/account" className={`flex items-center gap-1.5 text-sub-text-primary ${accountClassName}`}>
+				<BasicLink href="/account" className={`flex items-center gap-1.5 text-primary ${accountClassName}`}>
 					<img src="/assets/account_avatar.png" alt="" className="size-6 rounded-full" />
 					<span>My Account</span>
 					<Icon name="chevron-right" className="size-3.5" />
@@ -41,7 +41,7 @@ export function SubscriptionHeader() {
 	return (
 		<>
 			{/* Mobile */}
-			<header className="relative z-20 flex h-16 items-center justify-between bg-sub-overlay px-4 backdrop-blur-[12px] md:hidden">
+			<header className="relative z-20 flex h-16 items-center justify-between bg-page-glass px-4 backdrop-blur-[12px] md:hidden">
 				<BasicLink href="/" aria-label="Back to home" className="flex size-10 items-center justify-center rounded-full">
 					<Icon name="chevron-left" height={28} width={28} />
 				</BasicLink>
@@ -52,8 +52,8 @@ export function SubscriptionHeader() {
 			</header>
 
 			{/* Desktop */}
-			<header className="relative z-20 hidden h-12 items-center justify-between bg-sub-overlay px-10.5 backdrop-blur-[12px] md:flex">
-				<BasicLink href="/" className="flex items-center gap-2 body-sm text-sub-text-primary">
+			<header className="relative z-20 hidden h-12 items-center justify-between bg-page-glass px-10.5 backdrop-blur-[12px] md:flex">
+				<BasicLink href="/" className="flex items-center gap-2 body-sm text-primary">
 					<Icon name="chevron-left" height={16} width={16} />
 					Back
 				</BasicLink>

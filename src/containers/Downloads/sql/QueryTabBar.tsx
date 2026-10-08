@@ -182,7 +182,7 @@ export function QueryTabBar({
 							menuStore.hide()
 						}}
 					>
-						<Icon name="pencil" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="pencil" className="size-3.5 shrink-0 text-tertiary" />
 						Rename
 					</MenuItem>
 					<MenuItem
@@ -192,7 +192,7 @@ export function QueryTabBar({
 							menuStore.hide()
 						}}
 					>
-						<Icon name="copy" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="copy" className="size-3.5 shrink-0 text-tertiary" />
 						Duplicate
 					</MenuItem>
 					{menuTab.mode === 'query' && onConvertToNotebook ? (
@@ -203,7 +203,7 @@ export function QueryTabBar({
 								menuStore.hide()
 							}}
 						>
-							<Icon name="layers" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+							<Icon name="layers" className="size-3.5 shrink-0 text-tertiary" />
 							Convert to notebook
 						</MenuItem>
 					) : null}
@@ -216,7 +216,7 @@ export function QueryTabBar({
 						}}
 						className="border-t border-subtle"
 					>
-						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="x" className="size-3.5 shrink-0 text-tertiary" />
 						Close
 					</MenuItem>
 					<MenuItem
@@ -227,7 +227,7 @@ export function QueryTabBar({
 							menuStore.hide()
 						}}
 					>
-						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="x" className="size-3.5 shrink-0 text-tertiary" />
 						Close others
 					</MenuItem>
 					<MenuItem
@@ -238,7 +238,7 @@ export function QueryTabBar({
 							menuStore.hide()
 						}}
 					>
-						<Icon name="arrow-right" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="arrow-right" className="size-3.5 shrink-0 text-tertiary" />
 						Close tabs to the right
 					</MenuItem>
 				</MenuSurface>
@@ -255,7 +255,7 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 				render={
 					<Ariakit.MenuButton
 						aria-label="New tab"
-						className="mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-pro-app-bg text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+						className="hover-wash mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-page text-tertiary transition-colors hover:text-primary"
 					/>
 				}
 			>
@@ -263,12 +263,12 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 			</Tooltip>
 			<MenuSurface variant="actions" gutter={4}>
 				<MenuItem onClick={onNewTab}>
-					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+					<Icon name="file-text" className="size-3.5 shrink-0 text-tertiary" />
 					<span className="flex-1">New query tab</span>
-					<span className="mono-sm text-pro-text-tertiary">⌘T</span>
+					<span className="mono-sm text-tertiary">⌘T</span>
 				</MenuItem>
 				<MenuItem onClick={onNewNotebook}>
-					<Icon name="layers" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+					<Icon name="layers" className="size-3.5 shrink-0 text-tertiary" />
 					<span className="flex-1">New notebook tab</span>
 				</MenuItem>
 			</MenuSurface>
@@ -315,7 +315,7 @@ function TabPill({
 		<div
 			ref={active ? scrollIntoViewNearest : undefined}
 			data-active={active}
-			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 body-md transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-pro-app-bg text-pro-text-primary' : 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
+			className={`group relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 body-md transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 before:bg-border-subtle first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-page text-primary' : 'border-transparent bg-transparent text-secondary hover:bg-hover-row hover:text-primary'}`}
 		>
 			<Tab
 				value={tab.id}
@@ -348,14 +348,14 @@ function TabPill({
 					{running ? (
 						<LoadingSpinner size={10} />
 					) : dirty ? (
-						<span className="size-1.5 rounded-full bg-pro-premium-300" />
+						<span className="size-1.5 rounded-full bg-warning" />
 					) : null}
 				</span>
 				{isNotebook ? (
 					<Icon
 						name="layers"
 						aria-hidden
-						className={`size-3 shrink-0 ${active ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+						className={`size-3 shrink-0 ${active ? 'text-secondary' : 'text-tertiary'}`}
 					/>
 				) : null}
 				<span className={`min-w-0 flex-1 truncate ${isRenaming ? 'invisible' : ''}`}>{tab.title}</span>
@@ -370,7 +370,7 @@ function TabPill({
 				onKeyDown={(event) => {
 					if (event.key === 'ArrowDown' || event.key === 'ArrowUp') onOpenMenu(event.currentTarget)
 				}}
-				className="flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-tertiary hover:bg-hover-row hover:text-pro-text-primary"
+				className="flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary hover:bg-hover-row hover:text-primary"
 			>
 				<Icon name="ellipsis" className="size-3" />
 			</Ariakit.MenuButton>
@@ -380,12 +380,12 @@ function TabPill({
 					tabIndex={focused ? 0 : -1}
 					aria-label={`Close ${tab.title}`}
 					onClick={() => onClose(true)}
-					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-tertiary transition-opacity hover:bg-hover-row hover:text-pro-text-primary ${active ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'}`}
+					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-opacity hover:bg-hover-row hover:text-primary ${active ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'}`}
 				>
 					<Icon name="x" className="size-3" />
 				</button>
 			) : null}
-			{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-px bg-pro-app-bg" /> : null}
+			{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-px bg-page" /> : null}
 		</div>
 	)
 }
@@ -434,7 +434,7 @@ function RenameInput({
 					onCommit(value, false)
 				}
 			}}
-			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px label-md text-pro-text-primary ring-1 ring-brand outline-hidden"
+			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px label-md text-primary ring-1 ring-brand outline-hidden"
 		/>
 	)
 }

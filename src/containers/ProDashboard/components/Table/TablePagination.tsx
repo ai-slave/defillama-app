@@ -45,7 +45,7 @@ export function TablePagination({
 					<Button size="md" onClick={previousPage} disabled={!canPreviousPage} accessibleWhenDisabled>
 						Previous
 					</Button>
-					<span className="body-sm text-pro-text-secondary">
+					<span className="body-sm text-secondary">
 						Page {pageIndex + 1} of {pageCount}
 					</span>
 					<Button size="md" onClick={nextPage} disabled={!canNextPage} accessibleWhenDisabled>

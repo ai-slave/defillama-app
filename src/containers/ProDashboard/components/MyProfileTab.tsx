@@ -34,15 +34,15 @@ export function MyProfileTab() {
 
 	if (profileFailed || pageFailed) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<p className="text-center text-pro-text-label">Your profile could not be loaded. Please try again later.</p>
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface px-1 py-12">
+				<p className="text-center text-secondary">Your profile could not be loaded. Please try again later.</p>
 			</div>
 		)
 	}
 
 	if (!view) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface px-1 py-12">
 				<LoadingSpinner size={24} />
 			</div>
 		)

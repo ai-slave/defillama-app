@@ -54,9 +54,9 @@ const LEGAL_LINKS: Array<FooterLink> = [
 ]
 
 const headingClassName = 'title-sm uppercase tracking-widest text-primary'
-const linkClassName = 'label-md text-primary transition-opacity hover:opacity-60'
+const linkClassName = 'label-md text-primary transition-colors hover:text-secondary'
 const descriptionClassName = 'body-md text-secondary'
-const legalLinkClassName = 'body-sm text-tertiary transition-opacity hover:opacity-60'
+const legalLinkClassName = 'body-sm text-secondary transition-colors hover:text-primary'
 
 function FooterLinkItem({ link }: { link: FooterLink }) {
 	if (link.external) {
@@ -79,7 +79,7 @@ function FooterLinkItem({ link }: { link: FooterLink }) {
 }
 
 function FooterSocials() {
-	const itemClassName = 'flex text-primary transition-opacity hover:opacity-70'
+	const itemClassName = 'flex text-primary transition-colors hover:text-secondary'
 	return (
 		<ul className="flex items-center gap-3">
 			{SOCIAL_LINKS.map((social) => (
@@ -241,7 +241,7 @@ function FooterMediaKit() {
 					aria-busy={isPending}
 					disabled={!canSubmit}
 					accessibleWhenDisabled
-					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 label-md text-on-brand transition-opacity hover:opacity-90 aria-disabled:opacity-70 ${
+					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 label-md text-on-brand not-aria-disabled:hover:brightness-110 focus-visible:focus-ring-on-brand aria-disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:text-disabled ${
 						isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
 					}`}
 				>
@@ -264,7 +264,7 @@ function FooterMediaKit() {
 			) : null}
 			<Link
 				href={NEWSLETTER_URL}
-				className={`${headingClassName} group mt-1 inline-flex w-fit items-center gap-1.5 transition-opacity hover:opacity-60`}
+				className={`${headingClassName} group mt-1 inline-flex w-fit items-center gap-1.5 transition-colors hover:text-secondary`}
 			>
 				DefiLlama newsletters
 				<Icon

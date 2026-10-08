@@ -109,7 +109,7 @@ export function CopyDashboardLinkButton({
 			<PopoverSurface variant="list" heading="Share dashboard" gutter={8} style={{ minWidth: '280px' }}>
 				{isPrivate ? (
 					<div className="flex flex-col gap-2 p-3">
-						<p className="body-sm text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
+						<p className="body-sm text-secondary">This dashboard is private. Only you can open the link.</p>
 						{onMakePublic ? (
 							<Button
 								type="button"
@@ -142,13 +142,13 @@ export function CopyDashboardLinkButton({
 							{copied === 'link' ? 'Link copied' : copied === 'embed' ? 'Embed code copied' : ''}
 						</span>
 						<div className="flex flex-col gap-1.5">
-							<p className="label-sm text-pro-text-label">Share Link</p>
+							<p className="label-sm text-secondary">Share Link</p>
 							<div className="flex gap-2">
 								<input
 									type="text"
 									value={shareUrl}
 									readOnly
-									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-sm"
+									className="flex-1 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-sm"
 								/>
 								<Tooltip
 									content={copied === 'link' ? 'Copied' : 'Copy link'}
@@ -180,7 +180,7 @@ export function CopyDashboardLinkButton({
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<p className="label-sm text-pro-text-label">Embed dashboard</p>
+							<p className="label-sm text-secondary">Embed dashboard</p>
 							<div className="flex gap-2">
 								<textarea
 									value={embedSnippet}
@@ -189,7 +189,7 @@ export function CopyDashboardLinkButton({
 									aria-label="Embed code"
 									spellCheck={false}
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 resize-none rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 mono-sm"
+									className="flex-1 resize-none rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 mono-sm"
 								/>
 								<Tooltip
 									content={copied === 'embed' ? 'Copied' : 'Copy embed code'}
@@ -218,7 +218,7 @@ export function CopyDashboardLinkButton({
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<p className="label-sm text-pro-text-label">Share on</p>
+							<p className="label-sm text-secondary">Share on</p>
 							<div className="flex gap-2">
 								<Button
 									type="button"

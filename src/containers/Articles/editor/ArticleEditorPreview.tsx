@@ -57,7 +57,7 @@ export function ArticleEditorPreview({
 							{isDirty ? (
 								<>
 									<span aria-hidden className="h-3 w-px bg-border-medium" />
-									<span className="text-warning dark:text-warning">Unsaved</span>
+									<span className="text-warning">Unsaved</span>
 								</>
 							) : null}
 						</div>

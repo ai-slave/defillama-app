@@ -92,7 +92,7 @@ export default function Mandates() {
 					}
 				>
 					{data && (
-						<span className="body-sm text-pro-text-secondary">
+						<span className="body-sm text-secondary">
 							Non-custodial · client assets never leave client-controlled Safes
 						</span>
 					)}
@@ -134,7 +134,7 @@ export default function Mandates() {
 						)}
 					</SectionHeader>
 					{data?.yieldAsOf && (
-						<p className="-mt-1 body-sm text-pro-text-secondary">
+						<p className="-mt-1 body-sm text-secondary">
 							Positions report as of {formatDate(data.yieldAsOf)}
 							{data.yieldIsSample ? ' — sample data, so every figure in this section is frozen at that date' : ''}
 						</p>
@@ -199,27 +199,27 @@ export default function Mandates() {
 								}
 							]}
 						/>
-						<div className="mt-4 flex flex-wrap gap-8 border-t border-pro-cards-border pt-4">
+						<div className="mt-4 flex flex-wrap gap-8 border-t border-subtle pt-4">
 							<div className="flex flex-col gap-1">
-								<span className="label-sm tracking-wider text-pro-text-label uppercase">Annual excess return</span>
+								<span className="label-sm tracking-wider text-secondary uppercase">Annual excess return</span>
 								<span className="flex items-center gap-1.5">
 									<span className={`tabular-nums ${signClass(perf?.excess)} mono-lg`}>
 										{perf ? usdSignedFromMillions(perf.excess) : '—'}
 									</span>
 									<InfoTip text={perfEarnedTitle} />
 								</span>
-								<span className="body-sm text-pro-text-secondary">
+								<span className="body-sm text-secondary">
 									Earned above benchmark on the {activeDenom ?? '—'} book
 									{excessWindow ? ` over the ${excessWindow.days} days to ${formatDate(excessWindow.to)}` : ''}
 								</span>
 							</div>
 							<div className="flex flex-col gap-1">
-								<span className="label-sm tracking-wider text-pro-text-label uppercase">Benchmark</span>
-								<span className="body-md text-pro-text-primary">{perf?.benchLabel ?? '—'}</span>
+								<span className="label-sm tracking-wider text-secondary uppercase">Benchmark</span>
+								<span className="body-md text-primary">{perf?.benchLabel ?? '—'}</span>
 							</div>
 						</div>
 						{activeDenom && perf && (
-							<p className="mt-4 border-t border-pro-cards-border pt-3 body-sm text-pro-text-secondary">
+							<p className="mt-4 border-t border-subtle pt-3 body-sm text-secondary">
 								{scopeLine(activeDenom, perf.scope)}
 							</p>
 						)}
@@ -240,7 +240,7 @@ export default function Mandates() {
 							{
 								key: 'name',
 								label: 'Client',
-								render: (row) => <span className="text-pro-text-primary">{row.name}</span>
+								render: (row) => <span className="text-primary">{row.name}</span>
 							},
 							{
 								key: 'aum',

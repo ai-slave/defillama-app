@@ -43,7 +43,7 @@ export function MyDashboardsControls({
 					name="search"
 					height={14}
 					width={14}
-					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
+					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-tertiary"
 				/>
 				<input
 					ref={ref}
@@ -98,7 +98,7 @@ export function MyDashboardsControls({
 				}}
 				label={
 					<>
-						<span className="text-pro-text-tertiary">Sort by:</span>
+						<span className="text-tertiary">Sort by:</span>
 						<span className="truncate">{selectedSort.name}</span>
 					</>
 				}

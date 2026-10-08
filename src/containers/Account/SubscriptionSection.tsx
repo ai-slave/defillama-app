@@ -96,13 +96,11 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 	const buttonLabel = planType === 'api' ? 'Upgrade API to yearly' : 'Upgrade Pro to yearly'
 
 	return (
-		<div className="flex items-center rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
+		<div className="flex items-center rounded-2xl border border-brand bg-brand-tint-strong p-4">
 			<div className="flex w-full flex-col gap-8.5 sm:w-[155px]">
 				<div className="flex flex-col gap-3">
-					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text heading-xs text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-[64%]">
-						Save {savings} with annual billing
-					</p>
-					<p className="body-sm text-sub-text-primary">
+					<p className="sub-gradient-text heading-xs">Save {savings} with annual billing</p>
+					<p className="body-sm text-primary">
 						Switch to yearly and get 12 months of {subscriptionLabel} for the price of 10.
 					</p>
 				</div>
@@ -116,13 +114,11 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 
 function FreeUpgradeBanner() {
 	return (
-		<div className="relative overflow-hidden rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
+		<div className="relative overflow-hidden rounded-2xl border border-brand bg-brand-tint-strong p-4">
 			<div className="relative z-10 flex max-w-[250px] flex-col gap-6.5">
 				<div className="flex flex-col gap-3">
-					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text heading-xs text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-77%">
-						Unlock the full power of DefiLlama
-					</p>
-					<p className="body-sm text-sub-text-primary">
+					<p className="sub-gradient-text heading-xs">Unlock the full power of DefiLlama</p>
+					<p className="body-sm text-primary">
 						Upgrade to Pro for advanced analytics tools, or get the API plan to power your own applications.
 					</p>
 				</div>
@@ -171,19 +167,12 @@ function PastDueSubscriptionCard({
 	const planName = getPlanName(subscription.type)
 	const canUpdatePayment = subscription.provider === 'stripe'
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-warning-border-light bg-sub-warning-bg/10 p-4 dark:border-sub-warning-border-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-warning-muted bg-warning-tint p-4">
 			<div className="flex items-start gap-2">
-				<Icon
-					name="alert-warning"
-					height={20}
-					width={20}
-					className="mt-0.5 shrink-0 text-sub-warning-text-light dark:text-sub-warning-text-dark"
-				/>
+				<Icon name="alert-warning" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
 				<div className="flex flex-col gap-1">
-					<h3 className="title-lg text-sub-warning-text-light dark:text-sub-warning-text-dark">
-						{planName} subscription past due
-					</h3>
-					<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
+					<h3 className="title-lg text-warning">{planName} subscription past due</h3>
+					<p className="body-md text-warning">
 						Your most recent payment failed. To keep your subscription active, update your payment method on Stripe.
 						{onCancel ? ' Otherwise, you can cancel the overdue subscription below.' : ''}
 					</p>
@@ -213,14 +202,9 @@ function PastDueSubscriptionCard({
 
 function LegacyWarning() {
 	return (
-		<div className="flex items-start gap-2 rounded-2xl border border-sub-warning-border-light bg-sub-warning-bg/10 p-4 dark:border-sub-warning-border-dark">
-			<Icon
-				name="alert-warning"
-				height={20}
-				width={20}
-				className="mt-0.5 shrink-0 text-sub-warning-text-light dark:text-sub-warning-text-dark"
-			/>
-			<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
+		<div className="flex items-start gap-2 rounded-2xl border border-warning-muted bg-warning-tint p-4">
+			<Icon name="alert-warning" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
+			<p className="body-md text-warning">
 				Your current subscription is a legacy plan. You need to unsubscribe via{' '}
 				<a href="https://subscriptions.llamapay.io/" target="_blank" rel="noopener noreferrer" className="underline">
 					LlamaPay
@@ -241,21 +225,21 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 	const hasAssigned = subscriptionType !== null
 
 	return (
-		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
-				<span className="label-md text-sub-text-primary">Team subscription</span>
+				<Icon name="users" height={20} width={20} className="text-primary" />
+				<span className="label-md text-primary">Team subscription</span>
 			</div>
 			{hasAssigned ? (
-				<p className="body-md text-sub-text-muted">
-					Your <span className="font-medium text-sub-text-primary">{getTeamSubLabel(subscriptionType)}</span>{' '}
-					subscription is managed by <span className="font-medium text-sub-text-primary">{teamName}</span>. Billing and
-					seat changes are handled by your team admin.
+				<p className="body-md text-tertiary">
+					Your <span className="font-medium text-primary">{getTeamSubLabel(subscriptionType)}</span> subscription is
+					managed by <span className="font-medium text-primary">{teamName}</span>. Billing and seat changes are handled
+					by your team admin.
 				</p>
 			) : (
-				<p className="body-md text-sub-text-muted">
-					You're a member of <span className="font-medium text-sub-text-primary">{teamName}</span>. Contact your team
-					admin to be assigned a subscription.
+				<p className="body-md text-tertiary">
+					You're a member of <span className="font-medium text-primary">{teamName}</span>. Contact your team admin to be
+					assigned a subscription.
 				</p>
 			)}
 		</div>
@@ -308,7 +292,7 @@ export function SubscriptionSection() {
 
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
-		<p className="flex flex-wrap items-center gap-2 body-sm text-sub-text-muted">
+		<p className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
 			Couldn't check payment status.
 			<Button
 				variant="secondary"

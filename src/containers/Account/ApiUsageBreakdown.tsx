@@ -30,8 +30,8 @@ interface ApiUsageBreakdownProps {
 }
 
 const DEFAULT_WINDOW_DAYS = 30
-// ECharts draws to canvas and cannot read var(), so these are the --sub-chart-* and --sub-text-muted values
-// from src/styles/themes/subscription.css. Only the split lines and the axis differ between themes.
+// ECharts draws to canvas and cannot read var(), so the palette is literal hex. Only the split lines and the axis
+// differ between themes.
 const LIGHT_CHART_COLORS: ApiUsageChartColors = {
 	routes: ['#1f67d2', '#22c55e', '#f59e0b', '#38bdf8', '#f97316', '#a855f7', '#14b8a6'],
 	others: '#64748b',
@@ -159,12 +159,12 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	)
 
 	return (
-		<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
+		<div className="flex flex-col gap-4 rounded-lg bg-surface-elevated-1 p-3">
 			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex flex-col gap-1">
-					<span className="body-md text-sub-text-primary">API usage breakdown</span>
-					<span className="body-sm text-sub-text-muted">Last {windowDays} days</span>
+					<span className="body-md text-primary">API usage breakdown</span>
+					<span className="body-sm text-tertiary">Last {windowDays} days</span>
 				</div>
 				<div className="flex flex-wrap items-center justify-end gap-3">
 					{hasData && routeSeries.length > 1 ? (
@@ -179,12 +179,12 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						/>
 					) : null}
 					<div className="flex flex-col items-end">
-						<span className="title-md text-sub-text-primary">{totalLabel}</span>
-						<span className="body-xs text-sub-text-muted">Total requests</span>
+						<span className="title-md text-primary">{totalLabel}</span>
+						<span className="body-xs text-tertiary">Total requests</span>
 					</div>
 					<div className="flex flex-col items-end">
-						<span className="title-md text-sub-text-primary">{avgLabel}</span>
-						<span className="body-xs text-sub-text-muted">Avg/day</span>
+						<span className="title-md text-primary">{avgLabel}</span>
+						<span className="body-xs text-tertiary">Avg/day</span>
 					</div>
 				</div>
 			</div>
@@ -197,7 +197,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						.map((series) => (
 							<div key={series.name} className="flex items-center gap-1.5">
 								<span className="inline-block size-2 rounded-full" style={{ backgroundColor: series.color }} />
-								<span className="body-xs text-sub-text-muted">{series.name}</span>
+								<span className="body-xs text-tertiary">{series.name}</span>
 							</div>
 						))}
 				</div>
@@ -205,18 +205,16 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 
 			{/* Chart */}
 			{isLoading ? (
-				<div className="flex min-h-[200px] items-center justify-center gap-2 body-sm text-sub-text-muted">
+				<div className="flex min-h-[200px] items-center justify-center gap-2 body-sm text-tertiary">
 					<LoadingSpinner size={14} />
-					<span>Loading usage stats...</span>
+					<span>Loading usage stats…</span>
 				</div>
 			) : isError ? (
-				<div className="flex min-h-[200px] items-center justify-center body-sm text-sub-text-muted">
+				<div className="flex min-h-[200px] items-center justify-center body-sm text-tertiary">
 					Unable to load usage stats right now.
 				</div>
 			) : sortedStats.length === 0 ? (
-				<div className="flex min-h-[200px] items-center justify-center body-sm text-sub-text-muted">
-					No usage data yet.
-				</div>
+				<div className="flex min-h-[200px] items-center justify-center body-sm text-tertiary">No usage data yet.</div>
 			) : (
 				<Suspense fallback={<div className="min-h-[200px]" />}>
 					<MultiSeriesChart

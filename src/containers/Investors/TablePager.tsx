@@ -21,7 +21,7 @@ export function TablePager({
 }) {
 	return (
 		<div className={`flex items-center justify-between gap-2 ${className}`}>
-			<span className="label-sm text-pro-text-label tabular-nums">{label}</span>
+			<span className="label-sm text-secondary tabular-nums">{label}</span>
 			<div className="flex gap-1">
 				<Button variant="secondary" size="sm" disabled={!canPrevious} accessibleWhenDisabled onClick={onPrevious}>
 					Prev

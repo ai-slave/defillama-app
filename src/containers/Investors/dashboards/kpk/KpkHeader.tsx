@@ -16,10 +16,10 @@ export default function KpkHeader() {
 	const asOf = data?.asOf ? formatDate(data.asOf) : null
 
 	return (
-		<header className="flex flex-col gap-2.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-3">
+		<header className="flex flex-col gap-2.5 rounded-lg border border-subtle bg-surface px-4 py-3">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-				<span className="heading-xs tracking-[0.14em] text-pro-text-primary">KPK</span>
-				<span className="label-sm tracking-[0.13em] text-pro-text-label uppercase">
+				<span className="heading-xs tracking-[0.14em] text-primary">KPK</span>
+				<span className="label-sm tracking-[0.13em] text-secondary uppercase">
 					{data?.tagline ?? 'Investor relations'}
 				</span>
 				<nav className="ml-auto flex flex-wrap items-center gap-1">
@@ -32,7 +32,7 @@ export default function KpkHeader() {
 								href={url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="rounded-full border border-pro-cards-border px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-pro-text-primary"
+								className="rounded-full border border-medium px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand hover:text-primary"
 							>
 								{LINK_LABELS[key]}
 							</a>
@@ -40,7 +40,7 @@ export default function KpkHeader() {
 					})}
 				</nav>
 			</div>
-			<div className="flex flex-wrap items-center gap-x-4 gap-y-1 body-sm text-pro-text-tertiary">
+			<div className="flex flex-wrap items-center gap-x-4 gap-y-1 body-sm text-tertiary">
 				{asOf && <span>Data as of {asOf}</span>}
 				{data?.notes?.map((note) => (
 					<span key={note}>{note}</span>

@@ -1,17 +1,17 @@
 /* ----------------------------------------------------------------------------
    Subscription product theme (also Sheets, Account, Downloads surfaces).
 
-   A standing product palette, separate from the design system's tokens in
-   semantics.css — add tokens here as the product evolves. The ratchet
-   tracks sub-* usage in core app code so the theme never leaks outside its
-   product.
+   The product keeps only its accents here: the API plan purple, the live
+   green, the violet, navy and blue accents, the background imagery and the
+   glow shadows. Text, surfaces, borders, hovers and tints come from the core
+   tokens in semantics.css. The ratchet tracks sub-* usage in core app code so
+   the theme never leaks outside its product.
 ---------------------------------------------------------------------------- */
 
 @theme {
 	--shadow-sub-live: 0 0 6px rgb(74 222 128 / 0.55);
 	--shadow-sub-purple-glow: 0 0 24px rgb(92 92 249 / 0.2);
 	--shadow-sub-blue-glow: 0 0 24px rgb(31 103 210 / 0.25);
-	--shadow-sub-brand-ring: 0 0 0 2px color-mix(in oklch, var(--sub-brand-primary) 10%, transparent);
 
 	/* Gentle bob for the floating chips on the mobile-app landing hero */
 	--animate-float: float 6s ease-in-out infinite;
@@ -25,122 +25,45 @@
 			transform: translateY(-8px);
 		}
 	}
+}
 
-	--color-sub-warning-text-light: #a15d23;
-	--color-sub-warning-text-dark: #ffa455;
-	--color-sub-warning-border-light: #ffd2aa;
-	--color-sub-warning-border-dark: #422b1b;
-	--color-sub-warning-bg: #ff8e2b;
-
-	/* Registered so callsites use the text-sub-… and bg-sub-… utilities instead of the paren form */
+/* Registered inline so each utility resolves per element, and `.theme-dark` surfaces get their dark values in
+   light mode too. */
+@theme inline {
 	--color-sub-blue: var(--sub-blue);
-	--color-sub-border-light: var(--sub-border-light);
-	--color-sub-border: var(--sub-border);
-	--color-sub-heading: var(--sub-heading);
-	--color-sub-text-cool: var(--sub-text-cool);
-	--color-sub-text-cool-muted: var(--sub-text-cool-muted);
-	--color-sub-overlay: var(--sub-overlay);
-	--color-sub-border-muted: var(--sub-border-muted);
-	--color-sub-border-slate-100: var(--sub-border-slate-100);
-	--color-sub-border-strong: var(--sub-border-strong);
-	--color-sub-border-strong-muted: var(--sub-border-strong-muted);
-	--color-sub-brand-primary: var(--sub-brand-primary);
-	--color-sub-brand-secondary: var(--sub-brand-secondary);
 	--color-sub-brand-soft: var(--sub-brand-soft);
-	--color-sub-brand-softest: var(--sub-brand-softest);
-	--color-sub-dark-card: var(--sub-dark-card);
-	--color-sub-dark-card-raised: var(--sub-dark-card-raised);
-	--color-sub-desktop-table-border: var(--sub-desktop-table-border);
-	--color-sub-desktop-table-header-bg: var(--sub-desktop-table-header-bg);
-	--color-sub-desktop-table-section-bg: var(--sub-desktop-table-section-bg);
-	--color-sub-desktop-text-muted: var(--sub-desktop-text-muted);
-	--color-sub-footer-text: var(--sub-footer-text);
-	--color-sub-icon-muted: var(--sub-icon-muted);
-	--color-sub-dark-panel: var(--sub-dark-panel);
-	--color-sub-dark-page: var(--sub-dark-page);
-	--color-sub-line: var(--sub-line);
-	--color-sub-mobile-table-border: var(--sub-mobile-table-border);
-	--color-sub-mobile-table-header-bg: var(--sub-mobile-table-header-bg);
-	--color-sub-mobile-table-section-bg: var(--sub-mobile-table-section-bg);
-	--color-sub-mobile-text-muted: var(--sub-mobile-text-muted);
+	--color-sub-live: var(--sub-live);
 	--color-sub-navy: var(--sub-navy);
 	--color-sub-orange: var(--sub-orange);
 	--color-sub-purple: var(--sub-purple);
 	--color-sub-purple-hover: var(--sub-purple-hover);
-	--color-sub-purple-soft: var(--sub-purple-soft);
-	--color-sub-social-icon: var(--sub-social-icon);
-	--color-sub-success: var(--sub-success);
-	--color-sub-live: var(--sub-live);
-	--color-sub-surface-dark: var(--sub-surface-dark);
-	--color-sub-surface-page: var(--sub-surface-page);
-	--color-sub-surface-panel: var(--sub-surface-panel);
-	--color-sub-text-muted: var(--sub-text-muted);
-	--color-sub-text-primary: var(--sub-text-primary);
-	--color-sub-text-secondary: var(--sub-text-secondary);
-	--color-sub-text-soft: var(--sub-text-soft);
-	--color-sub-violet: var(--sub-violet);
-	--color-sub-violet-bright: var(--sub-violet-bright);
+	/* Purple text that passes AA on every surface: the API plan's eyebrows and headings. */
+	--color-sub-purple-text: var(--sub-purple-text);
+	/* Translucent API purple for badges and callouts on the always-dark welcome page. */
+	--color-sub-purple-faint: color-mix(in srgb, var(--sub-purple) 8%, transparent);
+	--color-sub-purple-tint: color-mix(in srgb, var(--sub-purple) 15%, transparent);
+	--color-sub-purple-muted: color-mix(in srgb, var(--sub-purple) 25%, transparent);
+	/* Brand-tinted drop shadow under the app screenshots on the mobile-app landing. */
+	--color-sub-glow: color-mix(in srgb, var(--sub-brand-primary) 20%, transparent);
 }
 
 @layer base {
 	:root {
-		/* Subscription palette */
-		--sub-white: #ffffff;
-
-		/* Frozen residue of the subscription/sheets dark-surface values that
-		   were hardcoded in class names (value-preserving; not design tokens) */
-		--sub-line: #39393e;
-		--sub-text-soft: #b4b7bc;
-		--sub-dark-card: #222429;
-		--sub-dark-card-raised: #2a2b30;
-		--sub-dark-panel: #1a1b1f;
+		--sub-brand-primary: #1f67d2;
+		--sub-brand-soft: #6e9ddf;
 		--sub-navy: #0a1628;
 		--sub-orange: #f2994a;
 		--sub-live: #4ade80;
 		--sub-blue: #5a9fff;
+		--sub-purple: #5c5cf9;
 		--sub-purple-hover: #4a4af0;
 		--sub-purple-soft: #8a8aff;
 		--sub-violet: #6b4bd2;
 		--sub-violet-bright: #b794ff;
 
-		--sub-purple: #5c5cf9;
-
-		--sub-success: #32bc71;
-
-		/* Subscription Brand + Extended Tokens */
-		--sub-brand-primary: #1f67d2;
-		--sub-brand-secondary: #4b86db;
-		--sub-brand-soft: #6e9ddf;
-		--sub-brand-softest: #a5c3ed;
-
-		--sub-dark-page: #090b0c;
-		--sub-heading: #111f34;
-		--sub-text-cool: #64758c;
-		--sub-text-cool-muted: #8a97aa;
-		--sub-border: #ced8e6;
-		--sub-overlay: #fbfbfbcc;
-		--sub-surface-page: #f7f7f7;
-		--sub-surface-panel: #f6f7f9;
-		--sub-surface-dark: #131516;
-		--sub-surface-dark-deep: #090e13;
-		--sub-surface-dark-section: #151a1d;
-
-		--sub-surface-slate-25: #f5f7fb;
-		--sub-surface-slate-50: #e7eff8;
-
-		--sub-border-light: #eeeeee;
-		--sub-border-muted: #dedede;
-		--sub-border-strong: #2f3336;
-		--sub-border-strong-muted: #4d5158;
-		--sub-border-slate-100: #ced8e6;
-
-		--sub-text-primary: var(--sub-dark-page);
-		--sub-text-secondary: #484848;
-		--sub-text-muted: #878787;
-
-		--sub-icon-muted: #8c9aaf;
-
-		/* Chart palette */
+		/* Purple and violet text: the API accent darkened to pass AA in light, lightened in dark. */
+		--sub-purple-text: var(--sub-purple-hover);
+		--sub-violet-text: var(--sub-violet);
 
 		--sub-grid-image-light:
 			linear-gradient(to right, rgba(9, 11, 12, 0.14) 1px, transparent 1px),
@@ -174,41 +97,28 @@
 		);
 		--sub-top-gradient-light: linear-gradient(180deg, rgba(247, 247, 247, 0) 0%, #f7f7f7 100%);
 		--sub-top-gradient-dark: linear-gradient(180deg, rgba(9, 11, 12, 0) 0%, #090b0c 100%);
-
-		--sub-mobile-table-border: var(--sub-border-slate-100);
-		--sub-mobile-table-header-bg: var(--sub-surface-slate-25);
-		--sub-mobile-table-section-bg: var(--sub-surface-slate-50);
-		--sub-mobile-text-muted: var(--sub-text-cool);
-		--sub-desktop-table-border: var(--sub-border-light);
-		--sub-desktop-table-header-bg: var(--sub-surface-slate-25);
-		--sub-desktop-table-section-bg: var(--sub-white);
-		--sub-desktop-text-muted: var(--sub-text-secondary);
-		--sub-footer-text: var(--sub-text-muted);
-		--sub-social-icon: var(--sub-text-muted);
 	}
 
-	html.dark {
-		/* Adaptive body ink: sub-dark-page in light, the surface's dark ink in
-		   dark — replaces per-callsite `dark:text-*` forks. Bare sub-dark-page
-		   stays static for always-light cards. */
-		--sub-text-primary: #f6f7f9;
-		--sub-text-secondary: #c6c6c6;
-		--sub-icon-muted: #5f6369;
-		--sub-success: #65efa4;
-		--sub-border: #2f3336;
-		--sub-overlay: #090b0ccc;
-
-		--sub-mobile-table-border: var(--sub-dark-card);
-		--sub-mobile-table-header-bg: var(--sub-surface-dark-section);
-		--sub-mobile-table-section-bg: var(--sub-surface-dark-deep);
-		--sub-mobile-text-muted: var(--sub-text-secondary);
-		--sub-desktop-table-border: var(--sub-dark-card);
-		--sub-desktop-table-header-bg: var(--sub-surface-dark-section);
-		--sub-desktop-table-section-bg: var(--sub-surface-dark-section);
-		--sub-desktop-text-muted: var(--sub-text-secondary);
-		--sub-footer-text: var(--sub-text-muted);
-		--sub-social-icon: var(--sub-text-muted);
+	html.dark,
+	.theme-dark {
+		--sub-purple-text: var(--sub-purple-soft);
+		--sub-violet-text: var(--sub-violet-bright);
 	}
+}
+
+/* The subscription's blue gradient text. Both stops are blue text steps (11 and 12), which pass AA on every
+   surface, hover wash and tint in both modes. */
+@utility sub-gradient-text {
+	background-image: linear-gradient(to right, var(--blue-11), var(--blue-12));
+	background-clip: text;
+	color: transparent;
+}
+
+/* The API plan's purple gradient text; both stops pass AA on every surface in both modes. */
+@utility sub-gradient-text-purple {
+	background-image: linear-gradient(to right, var(--sub-purple-text), var(--sub-violet-text));
+	background-clip: text;
+	color: transparent;
 }
 
 /* The API plan's accent. Inside it, Button primary takes sub-purple, so a CTA there is a

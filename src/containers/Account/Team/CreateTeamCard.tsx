@@ -31,10 +31,10 @@ export function CreateTeamCard() {
 	}
 
 	return (
-		<div className="flex flex-col items-center gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-8 text-center dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col items-center gap-4 rounded-2xl border border-subtle bg-surface p-8 text-center">
 			<div className="flex flex-col gap-2">
-				<h2 className="heading-sm text-sub-text-primary">Team management</h2>
-				<p className="max-w-sm body-md text-sub-text-muted">
+				<h2 className="heading-sm text-primary">Team management</h2>
+				<p className="max-w-sm body-md text-tertiary">
 					Create a team to manage subscriptions for your organization. Purchase seats and invite members.
 				</p>
 			</div>

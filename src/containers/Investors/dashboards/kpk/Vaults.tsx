@@ -38,7 +38,7 @@ const LEGAL_URL = 'https://docs.kpk.io/vaults/resources/legal'
 function RebalanceCell({ value }: { value: KpkVault['rebalances30d'] }) {
 	if (value === 'NA') {
 		return (
-			<span className="text-pro-text-tertiary">
+			<span className="text-tertiary">
 				<InfoTip text="Passive lending pool — no rebalancing agent to count" className="mr-1" />
 				n/a
 			</span>
@@ -128,12 +128,12 @@ export default function Vaults() {
 								label: 'Vault',
 								render: (row) => (
 									<span className="flex flex-col">
-										<span className="text-pro-text-primary">
+										<span className="text-primary">
 											{row.name}
 											{row.doubleCounted && <InfoTip text={doubleCountNote} className="ml-1" />}{' '}
 											<RowLink href={row.url} label={row.name} size="sm" />
 										</span>
-										<span className="body-sm text-pro-text-tertiary">
+										<span className="body-sm text-tertiary">
 											{row.venue} · {row.chain}
 										</span>
 									</span>
@@ -166,7 +166,7 @@ export default function Vaults() {
 								render: (row) => (
 									<span className="flex flex-col items-end">
 										<span className={signClass(row.spreadBps)}>{signedBps(row.spreadBps)}</span>
-										{row.benchName && <span className="body-sm text-pro-text-tertiary">{row.benchName}</span>}
+										{row.benchName && <span className="body-sm text-tertiary">{row.benchName}</span>}
 									</span>
 								)
 							},
@@ -227,7 +227,7 @@ export default function Vaults() {
 						href={LEGAL_URL}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="underline underline-offset-2 transition-colors hover:text-sl-accent"
+						className="underline underline-offset-2 transition-colors hover:text-link"
 					>
 						docs.kpk.io/vaults/resources/legal
 					</a>

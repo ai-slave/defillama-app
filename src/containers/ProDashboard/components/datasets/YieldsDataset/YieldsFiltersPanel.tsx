@@ -74,11 +74,11 @@ export function YieldsFiltersPanel({
 	return (
 		<form
 			onSubmit={handleApply}
-			className="relative mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
+			className="relative mb-4 rounded-md border border-subtle bg-surface p-4"
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
 		>
 			<div className="mb-3 flex items-center justify-between">
-				<h4 className="label-md text-pro-text-primary">Filter yields</h4>
+				<h4 className="label-md text-primary">Filter yields</h4>
 				<div className="flex items-center gap-2">
 					{activeFilterCount > 0 ? (
 						<Button
@@ -98,11 +98,11 @@ export function YieldsFiltersPanel({
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
 				<div>
-					<h5 className="mb-3 title-sm text-pro-text-secondary">Yield filters</h5>
+					<h5 className="mb-3 title-sm text-secondary">Yield filters</h5>
 
 					<div className="space-y-3">
 						<div>
-							<p className="mb-2 label-sm text-pro-text-secondary">Total APY range</p>
+							<p className="mb-2 label-sm text-secondary">Total APY range</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
@@ -110,22 +110,22 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.apyMin || ''}
 									onChange={(e) => updateFilter('apyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
-								<span className="text-pro-text-tertiary">-</span>
+								<span className="text-tertiary">-</span>
 								<input
 									type="number"
 									aria-label="Maximum total APY"
 									placeholder="Max %"
 									value={localFilters.apyMax || ''}
 									onChange={(e) => updateFilter('apyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
 
 						<div>
-							<p className="mb-2 label-sm text-pro-text-secondary">Base APY range</p>
+							<p className="mb-2 label-sm text-secondary">Base APY range</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
@@ -133,16 +133,16 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.baseApyMin || ''}
 									onChange={(e) => updateFilter('baseApyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
-								<span className="text-pro-text-tertiary">-</span>
+								<span className="text-tertiary">-</span>
 								<input
 									type="number"
 									aria-label="Maximum base APY"
 									placeholder="Max %"
 									value={localFilters.baseApyMax || ''}
 									onChange={(e) => updateFilter('baseApyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -159,7 +159,7 @@ export function YieldsFiltersPanel({
 									className={`size-4 rounded-sm border-2 transition-all duration-150 ${
 										localFilters.hasRewards
 											? 'border-brand bg-brand'
-											: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
+											: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
 									}`}
 								>
 									{localFilters.hasRewards ? (
@@ -173,17 +173,17 @@ export function YieldsFiltersPanel({
 									) : null}
 								</div>
 							</div>
-							<span className="label-md text-pro-text-primary">Has Reward Incentives</span>
+							<span className="label-md text-primary">Has Reward Incentives</span>
 						</label>
 					</div>
 				</div>
 
 				<div>
-					<h5 className="mb-3 title-sm text-pro-text-secondary">Pool filters</h5>
+					<h5 className="mb-3 title-sm text-secondary">Pool filters</h5>
 
 					<div className="space-y-3">
 						<div>
-							<p className="mb-2 label-sm text-pro-text-secondary">TVL range (USD)</p>
+							<p className="mb-2 label-sm text-secondary">TVL range (USD)</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="text"
@@ -191,16 +191,16 @@ export function YieldsFiltersPanel({
 									placeholder="Min"
 									value={formatNumber(localFilters.tvlMin, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
-								<span className="text-pro-text-tertiary">-</span>
+								<span className="text-tertiary">-</span>
 								<input
 									type="text"
 									aria-label="Maximum TVL"
 									placeholder="Max"
 									value={formatNumber(localFilters.tvlMax, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -208,7 +208,7 @@ export function YieldsFiltersPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-3 title-sm text-pro-text-secondary">Pool types</h5>
+					<h5 className="mb-3 title-sm text-secondary">Pool types</h5>
 
 					<div className="space-y-2">
 						<label className="group flex cursor-pointer items-center gap-2">
@@ -223,7 +223,7 @@ export function YieldsFiltersPanel({
 									className={`size-4 border-2 transition-all duration-150 ${
 										localFilters.stablesOnly
 											? 'border-brand bg-brand'
-											: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
+											: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
 									}`}
 								>
 									{localFilters.stablesOnly ? (
@@ -237,11 +237,11 @@ export function YieldsFiltersPanel({
 									) : null}
 								</div>
 							</div>
-							<span className="label-md text-pro-text-primary">Stablecoins Only</span>
+							<span className="label-md text-primary">Stablecoins Only</span>
 						</label>
 
 						<div className="mt-4">
-							<p className="mb-3 label-sm text-pro-text-secondary">Pool categories</p>
+							<p className="mb-3 label-sm text-secondary">Pool categories</p>
 							<div className="space-y-2">
 								{availableCategories.map((category) => (
 									<label key={category} className="group flex cursor-pointer items-center gap-2">
@@ -264,7 +264,7 @@ export function YieldsFiltersPanel({
 												className={`size-4 rounded-sm border-2 transition-all duration-150 ${
 													selectedCategories.has(category)
 														? 'border-brand bg-brand'
-														: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
+														: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
 												}`}
 											>
 												{selectedCategories.has(category) ? (
@@ -278,7 +278,7 @@ export function YieldsFiltersPanel({
 												) : null}
 											</div>
 										</div>
-										<span className="label-md text-pro-text-primary">{category}</span>
+										<span className="label-md text-primary">{category}</span>
 									</label>
 								))}
 							</div>
@@ -287,7 +287,7 @@ export function YieldsFiltersPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-3 title-sm text-pro-text-secondary">Protocol & token filters</h5>
+					<h5 className="mb-3 title-sm text-secondary">Protocol & token filters</h5>
 
 					<div className="space-y-3">
 						<VirtualizedMultiSelect
@@ -309,7 +309,7 @@ export function YieldsFiltersPanel({
 				</div>
 			</div>
 
-			<div className="mt-4 flex items-center justify-between border-t border-pro-cards-border pt-3">
+			<div className="mt-4 flex items-center justify-between border-t border-subtle pt-3">
 				<Button
 					variant="ghost"
 					size="sm"

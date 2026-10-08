@@ -79,7 +79,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 			}
 		>
 			{query.isLoading ? (
-				<div className="flex h-[320px] items-center justify-center body-sm text-pro-text-tertiary">Loading…</div>
+				<div className="flex h-[320px] items-center justify-center body-sm text-tertiary">Loading…</div>
 			) : hasData ? (
 				<IncomeStatement
 					name={NAME}
@@ -90,9 +90,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					className="border-none bg-transparent p-0"
 				/>
 			) : (
-				<div className="flex h-[320px] items-center justify-center body-sm text-pro-text-tertiary">
-					No income statement data
-				</div>
+				<div className="flex h-[320px] items-center justify-center body-sm text-tertiary">No income statement data</div>
 			)}
 		</ChartCard>
 	)
@@ -229,10 +227,8 @@ export default function Financials() {
 						subtitle="Affiliate fees paid to integrating wallets and interfaces."
 					/>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-							<h3 className="mb-3 title-md text-pro-text-primary">
-								{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}
-							</h3>
+						<div className="rounded-lg border border-subtle bg-surface p-4">
+							<h3 className="mb-3 title-md text-primary">{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />
 						</div>
 						<DonutCard dist={affiliate.topShareDonut} subtitle="Share of lifetime affiliate fees." />

@@ -261,7 +261,7 @@ function PersonRow({
 					{item.src ? (
 						<>
 							<img src={item.src} alt="" className="h-full w-full object-cover" />
-							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-on-brand opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-research-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
 								Replace
 							</span>
 						</>

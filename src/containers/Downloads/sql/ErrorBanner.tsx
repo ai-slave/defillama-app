@@ -107,7 +107,7 @@ export function ErrorBanner({
 
 			{analysis.suggestions.length > 0 && analysis.offendingIdentifier ? (
 				<div className="flex flex-wrap items-center gap-1.5 body-sm">
-					<span className="text-error dark:text-error">Did you mean</span>
+					<span className="text-error">Did you mean</span>
 					{analysis.suggestions.map((s) => (
 						<button
 							key={s}
@@ -119,7 +119,7 @@ export function ErrorBanner({
 							{s}
 						</button>
 					))}
-					<span className="text-error dark:text-error">?</span>
+					<span className="text-error">?</span>
 				</div>
 			) : null}
 
@@ -131,7 +131,7 @@ export function ErrorBanner({
 						type="button"
 						onClick={() => setExpanded((v) => !v)}
 						aria-expanded={expanded}
-						className="inline-flex items-center gap-1.5 self-start label-sm text-error transition-colors hover:text-error dark:text-error"
+						className="inline-flex items-center gap-1.5 self-start label-sm text-error"
 					>
 						<Icon
 							name="chevron-right"
@@ -140,7 +140,7 @@ export function ErrorBanner({
 						Common causes
 					</button>
 					{expanded ? (
-						<ul className="flex flex-col gap-1 pl-4 body-sm text-error dark:text-red-200/90">
+						<ul className="flex flex-col gap-1 pl-4 body-sm text-secondary">
 							{hints.map((h, i) => (
 								// oxlint-disable-next-line react/no-array-index-key -- Hints are fixed prose slots for the selected error family.
 								<li key={i} className="list-disc">

@@ -231,7 +231,6 @@ export function DashboardOverflowMenu({
 			</span>
 			{showDeleteConfirm ? (
 				<ConfirmActionDialog
-					scope="pro"
 					title="Delete dashboard"
 					description={`Deleting “${dashboardName}” cannot be undone.`}
 					confirmLabel="Delete"

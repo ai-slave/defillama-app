@@ -33,7 +33,7 @@ export function SqlFreshness({ computedAt }: { computedAt: string }) {
 	const nowSeconds = useNowSeconds(0)
 	const status = nowSeconds === 0 ? null : freshness(computedAt, nowSeconds * 1000)
 	return (
-		<span className="flex items-center gap-1.5 body-sm text-pro-text-tertiary" title={status?.label}>
+		<span className="flex items-center gap-1.5 body-sm text-tertiary" title={status?.label}>
 			{status ? <span aria-hidden className={`inline-block size-1.5 shrink-0 rounded-full ${status.dot}`} /> : null}
 			Updated{' '}
 			{nowSeconds === 0

@@ -1,14 +1,24 @@
-/* Universal Token Rating keeps fixed grade colors. */
+/* Universal Token Rating keeps fixed grade colors: the same hue per grade in both modes.
+   A fill carries white text at 4.5:1 or more; grade text on a dark surface takes a lighter
+   value of the same hue (`-text`), because the fill is too dark to read there. */
 @layer base {
-	:root {
-		--utr-grade-aaa: #11935f;
-		--utr-grade-aa: #359b58;
-		--utr-grade-a: #58a351;
-		--utr-grade-bbb: #9fb242;
-		--utr-grade-bb: #c0a03a;
-		--utr-grade-b: #b96d39;
+	:root,
+	.theme-dark {
+		--utr-grade-aaa: #057b4e;
+		--utr-grade-aa: #067c3c;
+		--utr-grade-a: #2f7b29;
+		--utr-grade-bbb: #647300;
+		--utr-grade-bb: #846903;
+		--utr-grade-b: #a25822;
 		--utr-grade-ccc: #b23a38;
 		--utr-grade-on-color: #ffffff;
+		--utr-grade-aaa-text: var(--utr-grade-aaa);
+		--utr-grade-aa-text: var(--utr-grade-aa);
+		--utr-grade-a-text: var(--utr-grade-a);
+		--utr-grade-bbb-text: var(--utr-grade-bbb);
+		--utr-grade-bb-text: var(--utr-grade-bb);
+		--utr-grade-b-text: var(--utr-grade-b);
+		--utr-grade-ccc-text: var(--utr-grade-ccc);
 		--utr-grade-aaa-tint: color-mix(in srgb, var(--utr-grade-aaa) 10%, transparent);
 		--utr-grade-aa-tint: color-mix(in srgb, var(--utr-grade-aa) 10%, transparent);
 		--utr-grade-a-tint: color-mix(in srgb, var(--utr-grade-a) 10%, transparent);
@@ -16,6 +26,16 @@
 		--utr-grade-bb-tint: color-mix(in srgb, var(--utr-grade-bb) 10%, transparent);
 		--utr-grade-b-tint: color-mix(in srgb, var(--utr-grade-b) 10%, transparent);
 		--utr-grade-ccc-tint: color-mix(in srgb, var(--utr-grade-ccc) 10%, transparent);
+	}
+	html.dark,
+	.theme-dark {
+		--utr-grade-aaa-text: #1c9864;
+		--utr-grade-aa-text: #359b58;
+		--utr-grade-a-text: #58a351;
+		--utr-grade-bbb-text: #9fb242;
+		--utr-grade-bb-text: #c0a03a;
+		--utr-grade-b-text: #c0733f;
+		--utr-grade-ccc-text: #d95e58;
 	}
 }
 
@@ -28,6 +48,13 @@
 	--color-utr-grade-b: var(--utr-grade-b);
 	--color-utr-grade-ccc: var(--utr-grade-ccc);
 	--color-utr-grade-on-color: var(--utr-grade-on-color);
+	--color-utr-grade-aaa-text: var(--utr-grade-aaa-text);
+	--color-utr-grade-aa-text: var(--utr-grade-aa-text);
+	--color-utr-grade-a-text: var(--utr-grade-a-text);
+	--color-utr-grade-bbb-text: var(--utr-grade-bbb-text);
+	--color-utr-grade-bb-text: var(--utr-grade-bb-text);
+	--color-utr-grade-b-text: var(--utr-grade-b-text);
+	--color-utr-grade-ccc-text: var(--utr-grade-ccc-text);
 	--color-utr-grade-aaa-tint: var(--utr-grade-aaa-tint);
 	--color-utr-grade-aa-tint: var(--utr-grade-aa-tint);
 	--color-utr-grade-a-tint: var(--utr-grade-a-tint);

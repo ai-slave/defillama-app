@@ -157,20 +157,20 @@ function buildSupplyModel(chart: ChartData | undefined): CartesianChartModel | u
 
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-5 transition-all hover:border-sl-accent/20 hover:shadow-md">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl tracking-tight text-pro-text-primary">{value}</span>
-			<span className="body-sm text-pro-text-secondary">{description}</span>
+		<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted hover:shadow-md">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl tracking-tight text-primary">{value}</span>
+			<span className="body-sm text-secondary">{description}</span>
 		</div>
 	)
 }
 
 function KpiCard({ label, value }: { label: string; value?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
 			{value ? (
-				<span className="mono-xl text-pro-text-primary">{value}</span>
+				<span className="mono-xl text-primary">{value}</span>
 			) : (
 				<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			)}
@@ -180,10 +180,10 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 
 function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	return (
-		<div className="flex items-center gap-2 rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1">
-			<span className="label-sm text-pro-text-label">{label}</span>
+		<div className="flex items-center gap-2 rounded-full border border-medium bg-surface px-3 py-1">
+			<span className="label-sm text-secondary">{label}</span>
 			{value ? (
-				<span className="title-md text-pro-text-primary">{value}</span>
+				<span className="title-md text-primary">{value}</span>
 			) : (
 				<span className="inline-block h-4 w-12 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			)}
@@ -193,8 +193,8 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
@@ -202,8 +202,8 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function ChartSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			<div className="flex h-[350px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -212,7 +212,7 @@ function ChartSkeleton({ title }: { title: string }) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className="heading-xs tracking-tight text-pro-text-primary">{children}</h2>
+	return <h2 className="heading-xs tracking-tight text-primary">{children}</h2>
 }
 
 export default function Ecosystem() {
@@ -256,12 +256,12 @@ export default function Ecosystem() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-6">
+			<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="mono-xl text-pro-text-primary">Ecosystem</h1>
+					<h1 className="mono-xl text-primary">Ecosystem</h1>
 				</div>
-				<p className="max-w-2xl body-md text-pro-text-secondary">
+				<p className="max-w-2xl body-md text-secondary">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.
 				</p>
 			</div>

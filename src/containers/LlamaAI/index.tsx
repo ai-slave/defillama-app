@@ -175,7 +175,7 @@ const CHAT_PANEL_LAYOUT = {
 const SHRINK_TO_RIGHT_ANIMATION = 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]'
 
 const HEADER_ICON_BUTTON =
-	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white'
+	'flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong'
 
 const DashboardPanel = lazy(() =>
 	import('~/containers/LlamaAI/components/DashboardPanel').then((m) => ({ default: m.DashboardPanel }))
@@ -3173,7 +3173,7 @@ export const ChatControls = memo(function ChatControls({
 						data-umami-event-source="collapsed_controls"
 					/>
 				}
-				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong"
 			>
 				<Icon name="panel-left-open" height={16} width={16} />
 				<span className="sr-only">Open chat history</span>
@@ -3206,7 +3206,7 @@ export const ChatControls = memo(function ChatControls({
 							data-umami-event-source="header_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:bg-disabled aria-disabled:text-disabled"
+					className="flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong aria-disabled:cursor-not-allowed aria-disabled:bg-disabled aria-disabled:text-disabled"
 				>
 					<Icon name="share" height={14} width={14} />
 					<span className="sr-only">{SHARE_TOOLTIP}</span>

@@ -99,16 +99,14 @@ export function NotebookCell({
 				onDragEnd?.()
 			}}
 			className={`group relative flex flex-col gap-2 rounded-md border px-3 py-2 transition-colors ${
-				focused
-					? 'border-brand-strong bg-surface ring-1 ring-brand/20'
-					: 'border-subtle bg-surface hover:border-subtle hover:bg-surface'
+				focused ? 'border-brand-strong bg-surface ring-1 ring-brand-muted' : 'border-subtle bg-surface'
 			}`}
 		>
 			{staleGutter ? (
 				<span
 					aria-hidden
 					title="Upstream cell was edited — re-run to refresh"
-					className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-pro-premium-300/70"
+					className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-warning"
 				/>
 			) : null}
 
@@ -120,17 +118,17 @@ export function NotebookCell({
 						onMouseDown={() => setDraggable(true)}
 						onMouseUp={() => setDraggable(false)}
 						onMouseLeave={() => setDraggable(false)}
-						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-tertiary opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
 					>
 						<Icon name="menu" className="size-3" />
 					</span>
 				) : null}
-				<span className="inline-flex items-center gap-1.5 mono-sm text-pro-text-tertiary">
-					<span className="text-pro-text-secondary">{cellName}</span>
+				<span className="inline-flex items-center gap-1.5 mono-sm text-tertiary">
+					<span className="text-secondary">{cellName}</span>
 					<CellTypeBadge type={cell.type} />
 				</span>
 				{cell.running && cell.loadingStage ? (
-					<span className="inline-flex items-center gap-1 label-sm text-pro-premium-300">
+					<span className="inline-flex items-center gap-1 label-sm text-warning">
 						<LoadingSpinner size={10} />
 						{cell.loadingStage}
 					</span>
@@ -213,8 +211,8 @@ function CellTypeBadge({ type }: { type: CellType }) {
 		type === 'sql'
 			? 'bg-brand-tint-strong text-link'
 			: type === 'markdown'
-				? 'bg-pro-ai-300/15 text-pro-ai-300'
-				: 'bg-pro-premium-300/15 text-pro-premium-300'
+				? 'bg-pro-ai-tint text-pro-ai-text'
+				: 'bg-warning-tint text-warning'
 	return <span className={`inline-flex h-[14px] items-center rounded-[3px] px-1 mono-sm ${tone}`}>{label}</span>
 }
 
@@ -245,7 +243,7 @@ function CellMenu({
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
-				className="flex size-6 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+				className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary"
 				aria-label="Cell actions"
 			>
 				<Icon name="ellipsis" className="size-3.5" />
@@ -254,11 +252,11 @@ function CellMenu({
 				{cellType === 'sql' ? (
 					<>
 						<MenuItem disabled={isFirst} onClick={onRunAbove}>
-							<Icon name="chevron-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+							<Icon name="chevron-up" className="size-3.5 shrink-0 text-tertiary" />
 							Run cells above
 						</MenuItem>
 						<MenuItem disabled={isLast} onClick={onRunBelow}>
-							<Icon name="chevron-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+							<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 							Run cells below
 						</MenuItem>
 					</>
@@ -268,16 +266,16 @@ function CellMenu({
 					onClick={onMoveUp}
 					className={`${cellType === 'sql' ? 'border-t border-subtle' : ''}`}
 				>
-					<Icon name="arrow-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+					<Icon name="arrow-up" className="size-3.5 shrink-0 text-tertiary" />
 					Move up
 				</MenuItem>
 				<MenuItem disabled={isLast} onClick={onMoveDown}>
-					<Icon name="arrow-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+					<Icon name="arrow-down" className="size-3.5 shrink-0 text-tertiary" />
 					Move down
 				</MenuItem>
 				{otherTypes.map((t, i) => (
 					<MenuItem key={t} onClick={() => onConvertType(t)} className={i === 0 ? 'border-t border-subtle' : undefined}>
-						<Icon name="repeat" className="size-3.5 shrink-0 text-pro-text-tertiary" />
+						<Icon name="repeat" className="size-3.5 shrink-0 text-tertiary" />
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}
 					</MenuItem>
 				))}

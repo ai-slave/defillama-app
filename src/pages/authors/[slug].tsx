@@ -55,7 +55,7 @@ function AuthorNotFound({ canonicalPath }: { canonicalPath: string }) {
 					</h1>
 					<p className="max-w-lg body-md text-secondary">This dashboard author profile is not available.</p>
 				</div>
-				<BasicLink href="/pro" className="rounded-md bg-link px-4 py-2 label-md text-on-brand">
+				<BasicLink href="/pro" className="rounded-md bg-brand px-4 py-2 label-md text-on-brand hover:brightness-110">
 					Browse dashboards
 				</BasicLink>
 			</div>
@@ -131,7 +131,7 @@ export default function AuthorPage({ data, slug, status }: InferGetServerSidePro
 			jsonLd={buildAuthorJsonLd(author, stats, dashboards.totalItems)}
 		>
 			<AuthorOgImage author={author} />
-			<div className="mx-auto grid w-full max-w-7xl gap-6 px-3 py-5 pro-dashboard lg:px-0">
+			<div className="mx-auto grid w-full max-w-7xl gap-6 px-3 py-5 lg:px-0">
 				<BasicLink href="/pro" className="mr-auto flex items-center gap-2 body-md text-secondary hover:text-link">
 					<Icon name="arrow-left" className="size-4" />
 					Back to Dashboards

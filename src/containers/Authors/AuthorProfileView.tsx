@@ -226,7 +226,7 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	return (
 		<div className="group relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-brand-strong">
 			<div className="absolute inset-x-0 top-0 z-10 h-1 bg-brand opacity-0 transition-opacity group-hover:opacity-100" />
-			<AuthorDashboardPreview dashboard={dashboard} className="border-b border-pro-cards-border" />
+			<AuthorDashboardPreview dashboard={dashboard} className="border-b border-subtle" />
 			<div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
 				<div className="flex items-start justify-between gap-3">
 					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-primary group-hover:text-link">
@@ -288,7 +288,7 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 					) : null}
 				</div>
 				<div className="grid content-between gap-4 border-t border-medium pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-					<AuthorDashboardPreview dashboard={dashboard} className="rounded-md border border-pro-cards-border" />
+					<AuthorDashboardPreview dashboard={dashboard} className="rounded-md border border-subtle" />
 					<DashboardCardStats dashboard={dashboard} />
 					<div className="grid gap-2">
 						<p className="body-sm text-tertiary">
@@ -348,7 +348,7 @@ function AuthorHero({
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-brand-muted bg-research-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
+						<span className="rounded-md border border-brand-muted bg-brand-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
 							Dashboard author
 						</span>
 						<span className="body-md text-tertiary">@{author.slug}</span>
@@ -370,7 +370,7 @@ function AuthorHero({
 						{isOwnProfile ? (
 							<BasicLink
 								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-brand-muted bg-research-tint px-3 py-2 label-sm text-link transition-colors hover:border-brand-strong hover:bg-research-tint-hover"
+								className="inline-flex items-center gap-1.5 rounded-md border border-brand-muted bg-brand-tint px-3 py-2 label-sm text-link transition-colors hover:border-brand-strong hover:bg-brand-tint-strong"
 							>
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
@@ -439,7 +439,7 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 					nav={nav}
 					ariaCurrent={sort === option.value ? 'page' : undefined}
 					className={`rounded-sm px-2.5 py-1.5 label-sm transition-colors ${
-						sort === option.value ? 'bg-research-tint text-link' : 'text-secondary hover:text-primary'
+						sort === option.value ? 'bg-brand-muted text-link' : 'text-secondary hover:text-primary'
 					}`}
 				>
 					{option.label}
@@ -457,7 +457,7 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 				<p className="max-w-lg body-md text-tertiary">
 					Build a dashboard and make it public to start collecting views, likes, and followers here.
 				</p>
-				<BasicLink href="/pro" className="rounded-md bg-link px-4 py-2 label-md text-on-brand">
+				<BasicLink href="/pro" className="rounded-md bg-brand px-4 py-2 label-md text-on-brand hover:brightness-110">
 					Create your first dashboard
 				</BasicLink>
 			</div>
@@ -493,8 +493,10 @@ function Pagination({
 				params={{ page: prev, sort }}
 				nav={nav}
 				ariaDisabled={page <= 1}
-				className={`rounded-md border border-medium px-3 py-2 body-md ${
-					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
+				className={`rounded-md border px-3 py-2 body-md ${
+					page <= 1
+						? 'pointer-events-none border-disabled text-disabled'
+						: 'border-medium text-primary hover:bg-hover-row'
 				}`}
 			>
 				Previous
@@ -506,8 +508,10 @@ function Pagination({
 				params={{ page: page >= totalPages ? page : next, sort }}
 				nav={nav}
 				ariaDisabled={page >= totalPages}
-				className={`rounded-md border border-medium px-3 py-2 body-md ${
-					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
+				className={`rounded-md border px-3 py-2 body-md ${
+					page >= totalPages
+						? 'pointer-events-none border-disabled text-disabled'
+						: 'border-medium text-primary hover:bg-hover-row'
 				}`}
 			>
 				Next

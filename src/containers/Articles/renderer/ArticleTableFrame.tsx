@@ -12,7 +12,7 @@ const WATERMARK_WIDTH = Math.round((389 / 133) * WATERMARK_HEIGHT)
 // The export control is hidden until hover so a research page stays a reading
 // surface. Coarse pointers have no hover, so it stays visible there.
 const CONTROL_CLASS =
-	'flex items-center justify-center gap-1 rounded-md px-2 py-1 label-xs tracking-wider text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary focus-visible:bg-research-tint-hover disabled:opacity-50'
+	'flex items-center justify-center gap-1 rounded-md px-2 py-1 label-xs tracking-wider text-secondary uppercase transition-colors not-disabled:hover:bg-hover-row not-disabled:hover:text-primary focus-visible:bg-hover-row disabled:text-disabled'
 
 export function ArticleTableFrame({ children }: { children: ReactNode }) {
 	const wrapRef = useRef<HTMLDivElement>(null)

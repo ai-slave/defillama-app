@@ -26,24 +26,24 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 function getTreemapValue(value: unknown): number {
@@ -171,7 +171,7 @@ const columns = columnHelper.columns([
 	columnHelper.display({
 		id: 'rank',
 		header: '#',
-		cell: (info) => <span className="text-pro-text-label">{info.row.index + 1}</span>,
+		cell: (info) => <span className="text-secondary">{info.row.index + 1}</span>,
 		size: 40
 	}),
 	columnHelper.accessor('name', {
@@ -195,7 +195,7 @@ const columns = columnHelper.columns([
 							}}
 						/>
 					) : (
-						<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted label-xs text-sl-accent">
+						<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint label-xs text-link">
 							{displayName.charAt(0)}
 						</span>
 					)}
@@ -269,13 +269,13 @@ export default function FeeM() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* FeeM Introduction */}
-			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-				<p className="body-md text-pro-text-secondary">
+			<div className="rounded-lg border border-subtle bg-surface p-5">
+				<p className="body-md text-secondary">
 					FeeM lets builders earn directly from the transaction activity they generate on Sonic. It creates a built-in
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 title-sm tracking-wider text-pro-text-label uppercase">Fee Distribution</h3>
+				<h3 className="mt-4 title-sm tracking-wider text-secondary uppercase">Fee Distribution</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
 						<span className="title-md text-on-brand">90%</span>
@@ -286,12 +286,12 @@ export default function FeeM() {
 				</div>
 				<div className="mt-2.5 flex items-start body-md">
 					<div className="flex-1">
-						<span className="font-medium text-pro-text-primary">App / Builder</span>
-						<span className="ml-2 body-sm text-pro-text-label">Direct revenue, app incentives, or gas subsidies</span>
+						<span className="font-medium text-primary">App / Builder</span>
+						<span className="ml-2 body-sm text-secondary">Direct revenue, app incentives, or gas subsidies</span>
 					</div>
 					<div className="text-right" style={{ minWidth: '80px' }}>
-						<span className="font-medium text-pro-text-primary">Validators</span>
-						<span className="ml-2 body-sm text-pro-text-label">50% burned</span>
+						<span className="font-medium text-primary">Validators</span>
+						<span className="ml-2 body-sm text-secondary">50% burned</span>
 					</div>
 				</div>
 			</div>
@@ -331,15 +331,15 @@ export default function FeeM() {
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>FeeM Leaderboard</SectionHeader>
-				<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
-								<tr key={headerGroup.id} className="border-b border-pro-cards-border">
+								<tr key={headerGroup.id} className="border-b border-subtle">
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
+											className="px-4 py-3 text-left title-sm tracking-wide text-secondary uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -358,9 +358,9 @@ export default function FeeM() {
 						</thead>
 						<tbody>
 							{table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
+								<tr key={row.id} className="border-b border-subtle last:border-b-0 hover:bg-hover-row">
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
+										<td key={cell.id} className="px-4 py-2.5 body-md text-primary">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}
@@ -383,7 +383,7 @@ export default function FeeM() {
 							canNext={table.getCanNextPage()}
 							onPrevious={() => table.previousPage()}
 							onNext={() => table.nextPage()}
-							className="border-t border-pro-cards-border px-4 py-3"
+							className="border-t border-subtle px-4 py-3"
 						/>
 					)}
 				</div>

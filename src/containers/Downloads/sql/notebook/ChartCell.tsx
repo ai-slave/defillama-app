@@ -33,16 +33,16 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-subtle bg-surface px-2.5 py-1.5 body-sm">
-				<span className="text-pro-text-tertiary">Source</span>
+				<span className="text-tertiary">Source</span>
 				{availableSources.length === 0 ? (
-					<span className="text-pro-text-tertiary italic">
+					<span className="text-tertiary italic">
 						Add a SQL cell and run it first — chart cells visualize prior cell output.
 					</span>
 				) : (
 					<select
 						value={cell.source}
 						onChange={(e) => onSourceChange(e.target.value)}
-						className="rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 mono-sm text-pro-text-primary outline-hidden focus:border-brand"
+						className="rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary outline-hidden focus:border-brand"
 					>
 						<option value="">— pick cell —</option>
 						{availableSources.map((s) => (
@@ -53,23 +53,23 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					</select>
 				)}
 				{selected && !selected.hasRun ? (
-					<span className="inline-flex items-center gap-1 text-pro-premium-300">
+					<span className="inline-flex items-center gap-1 text-warning">
 						<Icon name="alert-triangle" className="size-3" />
 						source not yet run
 					</span>
 				) : selected?.result ? (
-					<span className="inline-flex min-w-0 items-center gap-1.5 text-pro-text-tertiary">
-						<span className="text-pro-text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span>
+					<span className="inline-flex min-w-0 items-center gap-1.5 text-tertiary">
+						<span className="text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span>
 						rows
 						<span aria-hidden>·</span>
 						<span className="flex min-w-0 flex-wrap items-center gap-1">
 							{selectedCols.slice(0, 4).map((c) => (
-								<span key={c.name} className="truncate mono-sm text-pro-text-secondary">
+								<span key={c.name} className="truncate mono-sm text-secondary">
 									{c.name}
 								</span>
 							))}
 							{selectedCols.length > 4 ? (
-								<span className="body-xs text-pro-text-tertiary">+{selectedCols.length - 4}</span>
+								<span className="body-xs text-tertiary">+{selectedCols.length - 4}</span>
 							) : null}
 						</span>
 					</span>
@@ -80,8 +80,8 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 				<ResultsChart result={result} chartConfig={cell.chartConfig} onChartConfigChange={onChartConfigChange} />
 			) : (
 				<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-10 text-center">
-					<Icon name="bar-chart-2" className="size-5 text-pro-text-tertiary" />
-					<p className="body-md text-pro-text-secondary">
+					<Icon name="bar-chart-2" className="size-5 text-tertiary" />
+					<p className="body-md text-secondary">
 						{cell.source
 							? `${cell.source} has no results yet — run it first.`
 							: 'Pick a source cell above to visualize its output.'}

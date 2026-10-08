@@ -31,10 +31,9 @@ function SectionLink({ url, title, onClick }: SectionLinkProps) {
 	return (
 		<Link
 			href={url}
-			className="inline-flex min-h-11 items-center gap-x-2 label-sm uppercase"
+			className="inline-flex min-h-11 items-center gap-x-2 label-sm text-link uppercase"
 			rel={isExternal ? 'noopener noreferrer' : undefined}
 			target={isExternal ? '_blank' : undefined}
-			style={{ color: '#237BFF' }}
 			onClick={onClick}
 		>
 			<span>{title}</span>
@@ -54,11 +53,11 @@ function NewsletterCard({ item, isLarge }: NewsletterCardProps) {
 				pushResearchAnalyticsEvent(null, 'widget_click', 'DefiLlama Research Newsletters widget', item.title)
 			}
 		>
-			<div className="relative aspect-[368/240] overflow-hidden rounded-[7px] bg-surface-elevated-1 transition-[filter] duration-300 ease-out group-hover:brightness-[0.8] dark:bg-research-wash-strong">
+			<div className="relative aspect-[368/240] overflow-hidden rounded-[7px] bg-surface-elevated-1 transition-[filter] duration-300 ease-out group-hover:brightness-[0.8]">
 				{item.imageUrl ? (
 					<img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
 				) : (
-					<div className="flex h-full items-center justify-center text-research-accent-strong dark:text-on-brand">
+					<div className="flex h-full items-center justify-center text-link">
 						<ResearchIcon name="newsletter-mark" width={40} height={40} aria-hidden />
 					</div>
 				)}
@@ -67,14 +66,14 @@ function NewsletterCard({ item, isLarge }: NewsletterCardProps) {
 			<div className="mt-3 flex flex-col gap-1">
 				<h3
 					className={clsx(
-						'line-clamp-3 leading-[120%] font-semibold text-research-heading transition-opacity duration-300 group-hover:opacity-70 dark:text-research-ink',
+						'line-clamp-3 leading-[120%] font-semibold text-research-navy transition-colors duration-300 group-hover:text-secondary',
 						isLarge ? 'text-lg lg:text-2xl' : 'text-base lg:text-lg'
 					)}
 				>
 					{item.title}
 				</h3>
 				{item.publishedAt ? (
-					<time dateTime={item.publishedAt} className="label-md text-secondary dark:text-on-brand/80">
+					<time dateTime={item.publishedAt} className="label-md text-tertiary">
 						{formatDate(item.publishedAt)}
 					</time>
 				) : null}
@@ -164,7 +163,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 											pushResearchAnalyticsEvent(article, 'widget_click', 'DefiLlama Research Interview widget')
 										}
 									>
-										<span className="line-clamp-3 min-w-0 flex-1 text-base leading-snug font-medium text-research-heading transition-opacity group-hover:opacity-70 lg:text-lg lg:font-semibold dark:text-research-ink">
+										<span className="line-clamp-3 min-w-0 flex-1 text-base leading-snug font-medium text-research-navy transition-colors group-hover:text-secondary lg:text-lg lg:font-semibold">
 											{article.title}
 										</span>
 										{article.coverImage?.url ? (
@@ -178,7 +177,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 												/>
 											</div>
 										) : (
-											<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-surface-elevated-1 lg:h-[105px] lg:w-[105px] dark:bg-research-wash-strong" />
+											<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-surface-elevated-1 lg:h-[105px] lg:w-[105px]" />
 										)}
 									</Link>
 								</li>

@@ -242,7 +242,7 @@ function TimelineRows({
 	// The row being written is open; it collapses to its preview as soon as any later row arrives.
 	const last = steps[steps.length - 1]
 	const liveReasoning = streaming && last?.kind === 'reasoning' ? last.id : undefined
-	const muted = hackerMode ? 'text-ai-terminal/70' : 'text-tertiary'
+	const muted = hackerMode ? 'text-ai-terminal-dim' : 'text-tertiary'
 
 	return (
 		<ol
@@ -351,7 +351,7 @@ function ReasoningRow({
 							Reasoning
 						</span>
 						{open ? null : (
-							<span className={`truncate ${hackerMode ? 'text-ai-terminal/60' : 'text-tertiary'}`}>
+							<span className={`truncate ${hackerMode ? 'text-ai-terminal-dim' : 'text-tertiary'}`}>
 								: {reasoningPreview(step.text)}
 							</span>
 						)}
@@ -361,7 +361,7 @@ function ReasoningRow({
 				{open ? (
 					<div
 						className={`mt-0.5 mb-1 ml-3.5 border-l border-subtle pl-3 mono-sm whitespace-pre-wrap ${
-							hackerMode ? 'text-ai-terminal/80' : 'text-tertiary'
+							hackerMode ? 'text-ai-terminal-dim' : 'text-tertiary'
 						}`}
 					>
 						{step.text}
@@ -410,7 +410,7 @@ function ToolRow({
 					{step.label}
 				</span>
 				{preview ? (
-					<span className={`truncate mono-sm ${hackerMode ? 'text-ai-terminal/60' : 'text-tertiary'}`}>
+					<span className={`truncate mono-sm ${hackerMode ? 'text-ai-terminal-dim' : 'text-tertiary'}`}>
 						: {preview}
 					</span>
 				) : null}
@@ -448,7 +448,7 @@ function ToolRow({
 				{open && hasDetails ? (
 					<div
 						className={`mt-1 mb-1 ml-3.5 flex flex-col gap-1.5 rounded-lg border p-2 select-text ${
-							hackerMode ? 'border-ai-terminal/20 bg-ai-ink' : 'border-subtle bg-surface'
+							hackerMode ? 'theme-dark border-ai-terminal-muted bg-surface' : 'border-subtle bg-surface'
 						}`}
 					>
 						{showToolDetails && step.params && Object.keys(step.params).length > 0 ? (

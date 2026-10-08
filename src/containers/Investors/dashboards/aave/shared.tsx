@@ -53,7 +53,7 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 									const canSort = column_getCanSort(header.column)
 									// A sortable header is a control: as a span with an onClick, sorting was mouse-only.
 									const HEADER =
-										'relative inline-flex flex-nowrap items-center gap-1 title-sm tracking-wider text-pro-text-tertiary uppercase'
+										'relative inline-flex flex-nowrap items-center gap-1 title-sm tracking-wider text-tertiary uppercase'
 									return (
 										<div
 											key={header.id}
@@ -84,8 +84,8 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 									return (
 										<div
 											key={cell.id}
-											className={`truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary transition-colors ${
-												rowIdx % 2 === 1 ? 'bg-pro-cards-bg' : ''
+											className={`truncate border-b border-subtle px-3 py-2.5 body-md text-primary transition-colors ${
+												rowIdx % 2 === 1 ? 'bg-surface' : ''
 											} ${align === 'end' ? 'tabular-nums' : ''}`}
 											style={{ textAlign: align }}
 										>
@@ -112,8 +112,8 @@ export function PageLoader() {
 
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-			<h3 className="mb-4 title-sm tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-5">
+			<h3 className="mb-4 title-sm tracking-wider text-tertiary uppercase">{title}</h3>
 			{children}
 		</div>
 	)
@@ -121,8 +121,8 @@ export function ChartCard({ title, children }: { title: string; children: React.
 
 export function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-			<h3 className="mb-4 title-sm tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-5">
+			<h3 className="mb-4 title-sm tracking-wider text-tertiary uppercase">{title}</h3>
 			<div className="flex h-[400px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -133,8 +133,8 @@ export function CardSkeleton({ title }: { title: string }) {
 export function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="label-sm tracking-wide text-pro-text-tertiary">{label}</span>
-			<span className="mono-lg text-pro-text-primary tabular-nums">{value ?? '—'}</span>
+			<span className="label-sm tracking-wide text-tertiary">{label}</span>
+			<span className="mono-lg text-primary tabular-nums">{value ?? '—'}</span>
 		</div>
 	)
 }
@@ -142,7 +142,7 @@ export function KpiCard({ label, value }: { label: string; value: string | numbe
 export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="label-sm tracking-wide text-pro-text-tertiary">{label}</span>
+			<span className="label-sm tracking-wide text-tertiary">{label}</span>
 			<div className="h-7 w-20 animate-pulse rounded-sm bg-tertiary opacity-20" />
 		</div>
 	)
@@ -151,7 +151,7 @@ export function KpiSkeleton({ label }: { label: string }) {
 /** Full-width metric strip — items stretch evenly, separated by vertical dividers */
 export function MetricStrip({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="flex gap-0 overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+		<div className="flex gap-0 overflow-x-auto rounded-lg border border-subtle bg-surface">
 			{Array.isArray(children) ? (
 				Children.map(children, (child, i) => (
 					<div className={`flex-1 px-5 py-3 ${i > 0 ? 'border-l border-subtle' : ''}`} style={{ minWidth: '120px' }}>
@@ -169,7 +169,7 @@ export function MetricStrip({ children }: { children: React.ReactNode }) {
 export function SectionHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
 	return (
 		<div className="flex items-center justify-between">
-			<h3 className="title-sm tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
+			<h3 className="title-sm tracking-wider text-tertiary uppercase">{title}</h3>
 			{actions}
 		</div>
 	)

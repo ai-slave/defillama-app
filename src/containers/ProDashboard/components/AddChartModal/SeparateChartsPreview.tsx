@@ -39,14 +39,11 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 						stackSeries: false
 					})
 					return (
-						<div
-							key={item.id}
-							className="flex flex-col gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2"
-						>
-							<span className="truncate body-sm text-pro-text-secondary">{series.name}</span>
+						<div key={item.id} className="flex flex-col gap-1 rounded-md border border-subtle bg-surface p-2">
+							<span className="truncate body-sm text-secondary">{series.name}</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
-									<Suspense fallback={<div className="size-full animate-pulse rounded-sm bg-pro-cards-bg" />}>
+									<Suspense fallback={<div className="size-full animate-pulse rounded-sm bg-surface" />}>
 										<MultiSeriesChart
 											dataset={chartView.dataset}
 											charts={chartView.charts}
@@ -59,7 +56,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										/>
 									</Suspense>
 								) : (
-									<div className="flex size-full flex-col items-center justify-center gap-1.5 body-sm text-pro-text-tertiary">
+									<div className="flex size-full flex-col items-center justify-center gap-1.5 body-sm text-tertiary">
 										{item.hasError ? (
 											<>
 												<p role="alert" className="text-data-down">
@@ -88,7 +85,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 					)
 				})}
 			</div>
-			{hiddenCount > 0 ? <p className="body-sm text-pro-text-tertiary">+{hiddenCount} more</p> : null}
+			{hiddenCount > 0 ? <p className="body-sm text-tertiary">+{hiddenCount} more</p> : null}
 		</div>
 	)
 }

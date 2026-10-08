@@ -307,7 +307,6 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	return (
 		<Dialog
 			size="md"
-			scope="pro"
 			open={open}
 			onClose={handleClose}
 			onClosed={onClosed}

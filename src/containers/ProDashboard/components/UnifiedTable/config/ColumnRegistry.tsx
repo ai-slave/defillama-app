@@ -20,14 +20,14 @@ import type { tableFeaturesConfig } from '../core/useUnifiedTable'
 import type { ProtocolTableRow } from '../types'
 import { createCustomColumnDef, validateCustomColumnOnLoad } from '../utils/customColumns'
 
-const renderDash = () => <span className="text-pro-text-tertiary">-</span>
+const renderDash = () => <span className="text-tertiary">-</span>
 
 const renderUsd = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		</span>
 	)
@@ -38,7 +38,7 @@ const renderPercent = (value: number | null | undefined) => {
 		return renderDash()
 	}
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			<PercentChange percent={value} noSign />
 		</span>
 	)
@@ -49,7 +49,7 @@ const renderPercentChangeCell = (value: number | null | undefined) => {
 		return renderDash()
 	}
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			<PercentChange percent={value} />
 		</span>
 	)
@@ -59,7 +59,7 @@ const renderRatio = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="text-pro-text-secondary">{`${formatRatio(value)}x`}</span>
+	return <span className="text-secondary">{`${formatRatio(value)}x`}</span>
 }
 
 type MetricKey = keyof ProtocolTableMetrics
@@ -188,7 +188,7 @@ export const getUnifiedTableColumns = ({
 								<span className="inline-block size-6 shrink-0" />
 							)
 						) : null}
-						<span className="font-medium text-pro-text-primary">{display.displayName}</span>
+						<span className="font-medium text-primary">{display.displayName}</span>
 					</div>
 				)
 			}

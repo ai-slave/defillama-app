@@ -129,8 +129,8 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Active Pools</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Active Pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

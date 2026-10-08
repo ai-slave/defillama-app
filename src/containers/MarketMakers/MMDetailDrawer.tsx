@@ -226,7 +226,7 @@ function ClaimBanner({ onClaim }: { onClaim: () => void }) {
 			<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
 			<div className="flex flex-col gap-2">
 				<h3 className="label-lg text-on-brand">Claim this organization</h3>
-				<p className="body-md text-on-brand/70">
+				<p className="body-md text-on-brand">
 					Claimed organizations have a better chance to improve the leaderboard score. Join Forgd today, complete your
 					profile details, and start tracking your activity.
 				</p>

@@ -515,11 +515,11 @@ export function StablecoinsChartTab({
 					</>
 				)}
 
-				<div className="body-sm text-pro-text-tertiary">
+				<div className="body-sm text-tertiary">
 					{stablecoinMode === 'chain' && totalMcapCurrent !== null ? (
 						<p>
 							Total Market Cap:{' '}
-							<span className="font-semibold text-pro-text-primary">
+							<span className="font-semibold text-primary">
 								{formatUsd(totalMcapCurrent, {
 									compact: true,
 									minimumCompactValue: 1_000_000,
@@ -531,7 +531,7 @@ export function StablecoinsChartTab({
 					{stablecoinMode === 'asset' && totalCirculating !== null ? (
 						<p>
 							Total Circulating:{' '}
-							<span className="font-semibold text-pro-text-primary">
+							<span className="font-semibold text-primary">
 								{formatCompactNumber(totalCirculating, {
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'
@@ -543,9 +543,9 @@ export function StablecoinsChartTab({
 				</div>
 			</div>
 
-			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-pro-cards-border px-3 py-2">
-					<h4 className="label-sm text-pro-text-secondary">Preview</h4>
+			<div className="overflow-hidden rounded-lg border border-subtle">
+				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-subtle px-3 py-2">
+					<h4 className="label-sm text-secondary">Preview</h4>
 					{stablecoinMode === 'chain' && chainChartType === 'pie' && chainPieSeriesNames.length > 1 ? (
 						<SelectWithCombobox
 							size="sm"
@@ -590,14 +590,14 @@ export function StablecoinsChartTab({
 				</div>
 
 				{(stablecoinMode === 'chain' && hasChainSelection) || (stablecoinMode === 'asset' && hasAssetSelection) ? (
-					<div className="bg-pro-cards-bg p-3">
+					<div className="bg-surface p-3">
 						<div className="mb-3">
-							<h3 className="mb-1 title-md text-pro-text-primary">
+							<h3 className="mb-1 title-md text-primary">
 								{stablecoinMode === 'chain'
 									? `${selectedStablecoinChain === 'All' ? 'All chains' : selectedStablecoinChain} - ${chartTypeLabel}`
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}
 							</h3>
-							<p className="body-sm text-pro-text-secondary">
+							<p className="body-sm text-secondary">
 								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by chain'}
 							</p>
 						</div>
@@ -606,7 +606,7 @@ export function StablecoinsChartTab({
 						</div>
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
+					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
 						<div>
 							<Icon name="dollar-sign" height={32} width={32} className="mx-auto mb-1" />
 							<div className="body-sm">

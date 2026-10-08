@@ -35,7 +35,7 @@ export function BoundParameterBadge({ bindings, item }: BoundParameterBadgeProps
 				<span
 					key={variable.id}
 					title={isReadOnly ? `Follows the ${variable.label} parameter` : 'Bound to dashboard parameter'}
-					className="inline-flex shrink-0 items-center rounded-full border border-pro-cards-border bg-pro-cards-bg px-2 py-0.5 label-sm text-pro-text-secondary"
+					className="inline-flex shrink-0 items-center rounded-full border border-medium bg-surface px-2 py-0.5 label-sm text-secondary"
 				>
 					{variable.label}
 				</span>

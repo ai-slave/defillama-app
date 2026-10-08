@@ -90,7 +90,7 @@ function AssetRow({
 				href={route}
 				target="_blank"
 				rel="noreferrer noopener"
-				className="group/asset flex items-center gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-research-wash focus-visible:bg-research-wash focus-visible:outline-hidden dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong"
+				className="group/asset flex items-center gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden"
 			>
 				{content}
 			</a>

@@ -59,19 +59,19 @@ const calloutToneStyles: Record<ArticleCalloutTone, { wrap: string; tone: string
 		tone: 'text-tertiary'
 	},
 	data: {
-		wrap: 'border-brand-muted bg-research-tint',
+		wrap: 'border-brand-muted bg-brand-tint',
 		tone: 'text-link'
 	},
 	warning: {
-		wrap: 'border-callout-border bg-callout-bg text-callout-text dark:text-research-gold',
-		tone: 'text-callout-accent dark:text-research-gold'
+		wrap: 'border-warning-muted bg-warning-faint text-primary',
+		tone: 'text-warning'
 	},
 	pullquote: {
 		wrap: 'border-y border-x-0 border-brand-muted bg-transparent rounded-none px-2',
 		tone: 'text-link'
 	},
 	bio: {
-		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-link bg-research-tint',
+		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-link bg-brand-tint',
 		tone: 'text-link'
 	}
 }

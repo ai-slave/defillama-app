@@ -81,8 +81,7 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
    `fullSheet` or a workspace; a SideSheet always keeps the full sheet height.
    A two-pane sheet shows one pane at a time below md (the list, or the
    pick's detail with a DialogBackButton); every switch goes through
-   `keepFocus` from ./focus.ts. A product that re-scopes tokens under its own
-   root class passes `scope`, because a portalled dialog sits outside it.
+   `keepFocus` from ./focus.ts.
 
    `pending` locks the surface while a request that cannot be cancelled runs:
    Escape, an outside tap, the header × and DialogCancelButton stop closing
@@ -369,15 +368,11 @@ type SurfaceProps = {
 	pending?: boolean
 } & Omit<ComponentProps<typeof Ariakit.Dialog>, 'className'>
 
-// Product token scopes: portalled dialogs sit outside the product's own root, so they re-apply its tokens.
-const DIALOG_SCOPE = { pro: 'pro-dashboard' } as const
-
 export function Dialog({
 	size,
 	fullSheet = false,
 	canvas = false,
 	workspace = false,
-	scope,
 	onClosed,
 	...props
 }: SurfaceProps & {
@@ -387,7 +382,6 @@ export function Dialog({
 	workspace?: boolean
 	/** Only for a body of bg-surface cards, like the Metrics browser. */
 	canvas?: boolean
-	scope?: keyof typeof DIALOG_SCOPE
 	/** For a controlled dialog (`open` and `onClose`): runs once the exit animation has ended, for a caller that keeps
 	    heavy content mounted until then. */
 	onClosed?: () => void
@@ -397,8 +391,7 @@ export function Dialog({
 		: fullSheet
 			? dialogFullSheetSurfaceStyles
 			: dialogSurfaceStyles
-	const className =
-		`${surface} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()
+	const className = `${surface} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''}`.trim()
 	return onClosed ? (
 		<ClosedReportingSurfaceDialog className={className} onClosed={onClosed} {...props} />
 	) : (

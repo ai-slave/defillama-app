@@ -14,10 +14,9 @@ import { TabStatus } from './TabStatus'
 /**
  * Renders an Investor Relations dashboard module (loaded by `dashboardId` from the ungated registry)
  * inside the main site. Shared by the protocol IR subroute and the chain IR tab. Uncontrolled, it draws its
- * own tab strip (external tabs are links after it); a controlled `activeTab` comes from the page's route nav. The `investors-dashboard pro-dashboard` wrapper provides the CSS variables the dashboard
- * components depend on (`--pro-*`, `--sl-*`); `investors-dashboard-embedded` re-points the surface
- * tokens (`--cards-*`, `--text-*`, ...) back to the site theme so the content sits in the page flow
- * instead of reproducing the standalone IR shell.
+ * own tab strip (external tabs are links after it); a controlled `activeTab` comes from the page's route nav. The `investors-dashboard` wrapper provides the partner accents (`--sl-*`);
+ * `investors-dashboard-embedded` paints frozen table columns with the page background, because the content sits in the page
+ * flow instead of the standalone IR shell's cards.
  */
 export function InvestorRelationsView({
 	dashboardId,
@@ -74,7 +73,7 @@ export function InvestorRelationsView({
 	return (
 		<AppMetadataProvider>
 			<CustomServerDataContext.Provider value={customServerData ?? {}}>
-				<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4 pro-dashboard">
+				<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4">
 					{HeaderComponent ? (
 						<Suspense fallback={null}>
 							<HeaderComponent />

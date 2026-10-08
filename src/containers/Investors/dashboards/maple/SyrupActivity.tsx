@@ -169,8 +169,8 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Recent stSyrup Transactions</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Recent stSyrup Transactions</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
@@ -193,8 +193,8 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Recent Drip Reward Claims</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Recent Drip Reward Claims</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
@@ -326,7 +326,7 @@ export default function SyrupActivity() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">Syrup Protocol</h3>
+				<h3 className="mb-3 title-md tracking-wide text-secondary uppercase">Syrup Protocol</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{protocolKpis ? (
 						<>
@@ -347,7 +347,7 @@ export default function SyrupActivity() {
 			</div>
 
 			<div>
-				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">stSyrup Activity</h3>
+				<h3 className="mb-3 title-md tracking-wide text-secondary uppercase">stSyrup Activity</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{activityKpis ? (
 						<>
@@ -403,7 +403,7 @@ export default function SyrupActivity() {
 			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
 
 			<div>
-				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">Drip Rewards</h3>
+				<h3 className="mb-3 title-md tracking-wide text-secondary uppercase">Drip Rewards</h3>
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>

@@ -213,7 +213,7 @@ function renderCitation(node: TiptapJson, key: string) {
 		...(stringAttr(node.attrs, 'title') ? { title: stringAttr(node.attrs, 'title') } : {})
 	}
 	const className =
-		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-research-tint px-1 body-sm text-link no-underline'
+		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-brand-tint px-1 body-sm text-link no-underline'
 	if (citation.url) {
 		const link = <a href={citation.url} target="_blank" rel="noreferrer noopener" className={className} />
 		// Tooltip renders only its children when content is empty, which would drop the link.
@@ -253,7 +253,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		return (
 			<aside
 				key={key}
-				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-link bg-research-tint px-5 py-4 leading-[1.65] text-secondary [&_p]:my-0 [&_p+p]:mt-2"
+				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-link bg-brand-tint px-5 py-4 leading-[1.65] text-secondary [&_p]:my-0 [&_p+p]:mt-2"
 			>
 				{renderChildren(node, key, ctx)}
 			</aside>
@@ -261,12 +261,11 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 	}
 	const wrap =
 		tone === 'warning'
-			? 'border-callout-border/60 bg-callout-bg text-callout-text dark:text-research-gold'
+			? 'border-warning-muted bg-warning-faint text-primary'
 			: tone === 'data'
-				? 'border-brand-muted bg-research-tint'
+				? 'border-brand-muted bg-brand-tint'
 				: 'border-medium bg-surface'
-	const toneText =
-		tone === 'warning' ? 'text-callout-accent dark:text-research-gold' : tone === 'data' ? 'text-link' : 'text-tertiary'
+	const toneText = tone === 'warning' ? 'text-warning' : tone === 'data' ? 'text-link' : 'text-tertiary'
 	return (
 		<aside key={key} className={`my-6 rounded-md border p-4 ${wrap}`}>
 			<div className={`mb-1.5 label-sm capitalize ${toneText}`}>{tone}</div>
@@ -465,12 +464,12 @@ function formatHeaderDate(iso: string | null | undefined) {
 }
 
 const metaChipClassName =
-	'inline-flex items-center rounded-[3px] bg-link px-2 py-0.75 label-xs tracking-tight whitespace-nowrap text-on-brand transition-opacity hover:opacity-90'
+	'inline-flex items-center rounded-[3px] bg-brand px-2 py-0.75 label-xs tracking-tight whitespace-nowrap text-on-brand'
 
 function MetaChip({ children, href }: { children: ReactNode; href?: string }) {
 	if (href) {
 		return (
-			<Link href={href} className={metaChipClassName}>
+			<Link href={href} className={`${metaChipClassName} transition-[filter] hover:brightness-110`}>
 				{children}
 			</Link>
 		)
@@ -1018,7 +1017,7 @@ export function ArticleRenderer({
 								article={article as ArticleDocument}
 								pdfUrl={article.reportPdf.url}
 								widgetLabel="Article page"
-								className="inline-flex items-center gap-2 rounded-md bg-link px-3.5 py-2 label-md text-on-brand transition-opacity hover:opacity-90"
+								className="inline-flex items-center gap-2 rounded-md bg-brand px-3.5 py-2 label-md text-on-brand transition-[filter] hover:brightness-110 focus-visible:focus-ring-on-brand"
 							>
 								<Icon name="download-cloud" className="size-4" />
 								Download PDF
@@ -1106,7 +1105,7 @@ export function ArticleRenderer({
 				<div ref={sentinelRef} aria-hidden className="h-0 w-full" />
 
 				<div className="article-prose [overflow-wrap:anywhere] break-words">
-					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-link prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-link prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-secondary prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-primary prose-code:rounded prose-code:bg-research-tint prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-link prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-medium prose-pre:bg-surface prose-pre:text-primary prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-medium [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-medium [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-secondary [&_.article-table_th]:border [&_.article-table_th]:border-medium [&_.article-table_th]:bg-page [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-primary [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
+					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-link prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-link prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-secondary prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-primary prose-code:rounded prose-code:bg-brand-tint prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-link prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-medium prose-pre:bg-surface prose-pre:text-primary prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-medium [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-medium [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-secondary [&_.article-table_th]:border [&_.article-table_th]:border-medium [&_.article-table_th]:bg-page [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-primary [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
 						{(() => {
 							const docContent = contentJson.content ?? []
 							const nodes = docContent.map((child, idx) => renderNode(child, `article-root-${idx}`, ctx))

@@ -61,7 +61,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div
 					role="row"
-					className="sticky top-0 z-20 grid border-b border-subtle mono-sm text-pro-text-secondary"
+					className="sticky top-0 z-20 grid border-b border-subtle mono-sm text-secondary"
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
@@ -74,15 +74,15 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="columnheader"
 								key={col.columnIndex}
-								className={`border-subtle/60 flex flex-col justify-center gap-0.5 truncate border-l px-2.5 first:border-l-0 ${
+								className={`flex flex-col justify-center gap-0.5 truncate border-l border-subtle px-2.5 first:border-l-0 ${
 									isNumeric ? 'items-end text-right' : 'items-start text-left'
 								}`}
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
+									<span className="truncate font-mono font-bold text-primary">{col.name}</span>
 								</div>
-								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary">{col.type}</span>
+								<span className="truncate mono-sm tracking-tight text-tertiary">{col.type}</span>
 							</div>
 						)
 					})}
@@ -95,8 +95,8 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="row"
 								key={v.index}
-								className={`absolute inset-x-0 grid mono-sm tabular-nums transition-colors hover:bg-brand-faint ${
-									zebra ? 'bg-pro-app-bg/25' : ''
+								className={`absolute inset-x-0 grid mono-sm tabular-nums transition-colors hover:bg-hover-row ${
+									zebra ? 'bg-hover-card' : ''
 								}`}
 								style={{
 									transform: `translateY(${v.start}px)`,
@@ -113,13 +113,13 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 										<div
 											role="cell"
 											key={col.columnIndex}
-											className={`border-subtle/30 flex items-center truncate border-l px-2.5 first:border-l-0 ${
-												isNumeric ? 'justify-end text-pro-text-primary' : 'text-pro-text-primary'
-											} ${isNull ? 'text-pro-text-tertiary' : ''}`}
+											className={`flex items-center truncate border-l border-subtle px-2.5 first:border-l-0 ${
+												isNumeric ? 'justify-end' : ''
+											} ${isNull ? 'text-tertiary' : 'text-primary'}`}
 											title={isNull || isList ? '' : cellToTitle(value)}
 										>
 											{isList ? (
-												<Suspense fallback={<span className="mono-sm text-pro-text-tertiary">…</span>}>
+												<Suspense fallback={<span className="mono-sm text-tertiary">…</span>}>
 													<SparklineChart data={toSparklineData(value as Array<unknown>)} height={20} />
 												</Suspense>
 											) : (
@@ -134,7 +134,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						)
 					})}
 					{result.rows.length === 0 ? (
-						<div className="flex items-center justify-center py-8 mono-sm text-pro-text-tertiary">0 rows</div>
+						<div className="flex items-center justify-center py-8 mono-sm text-tertiary">0 rows</div>
 					) : null}
 				</div>
 			</div>

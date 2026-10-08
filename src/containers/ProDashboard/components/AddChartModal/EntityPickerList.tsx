@@ -92,7 +92,7 @@ export function EntityPickerList({
 			<div
 				role="status"
 				aria-live="polite"
-				className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-pro-cards-border bg-pro-cards-bg"
+				className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-subtle bg-surface"
 			>
 				<LoadingIndicator />
 			</div>
@@ -100,25 +100,25 @@ export function EntityPickerList({
 	}
 
 	return (
-		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-pro-cards-border">
-			<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
+		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-subtle">
+			<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
 				<div className="relative flex-1">
 					<Icon
 						name="search"
 						width={14}
 						height={14}
-						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
+						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
 					/>
 					<input
 						ref={searchRef}
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
-						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 body-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-medium bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 body-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (
 					<div className="ml-3 flex items-center gap-2 label-sm">
-						<span className="text-pro-text-secondary">{selectedEntities.length} selected</span>
+						<span className="text-secondary">{selectedEntities.length} selected</span>
 						<Button variant="link" onClick={() => keepFocus(onClear, () => searchRef.current)}>
 							Clear
 						</Button>
@@ -128,7 +128,7 @@ export function EntityPickerList({
 
 			<div ref={listRef} className="flex-1 overflow-y-auto">
 				{filteredEntities.length === 0 ? (
-					<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">
+					<div className="flex h-full items-center justify-center body-sm text-tertiary">
 						No {mode === 'chain' ? 'chains' : 'protocols'} found
 					</div>
 				) : (
@@ -164,7 +164,7 @@ export function EntityPickerList({
 								>
 									<div
 										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-											isSelected ? 'border-brand bg-brand' : 'border-pro-cards-border bg-surface-elevated-1'
+											isSelected ? 'border-brand bg-brand' : 'border-subtle bg-surface-elevated-1'
 										}`}
 									>
 										{isSelected ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}
@@ -176,11 +176,11 @@ export function EntityPickerList({
 											alt={entity.label}
 											width={20}
 											height={20}
-											className="size-5 shrink-0 rounded-full object-cover ring-1 ring-pro-cards-border"
+											className="size-5 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
 										/>
 									) : null}
 
-									<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-pro-text-primary'}`}>
+									<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-primary'}`}>
 										{entity.label}
 									</span>
 								</button>

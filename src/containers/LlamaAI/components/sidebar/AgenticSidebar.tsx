@@ -854,7 +854,7 @@ function SidebarDestinations({
 								label: (
 									<>
 										Terminal
-										<span className="rounded-full border border-ai-gold/30 bg-ai-gold-tint px-1.5 label-xs text-ai-bronze uppercase">
+										<span className="rounded-full border border-ai-gold-muted bg-ai-gold-tint px-1.5 label-xs text-ai-gold-deep uppercase">
 											New
 										</span>
 									</>

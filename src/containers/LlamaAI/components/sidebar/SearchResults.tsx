@@ -10,7 +10,7 @@ function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 		type === 'user_message'
 			? 'bg-brand-muted text-link'
 			: type === 'session_title'
-				? 'bg-ai-mention/10 text-ai-mention'
+				? 'bg-ai-violet-tint text-ai-violet'
 				: 'bg-surface-elevated-2 text-secondary'
 	return <span className={`shrink-0 rounded-sm px-1 py-0.5 label-xs ${colorClass}`}>{label}</span>
 }

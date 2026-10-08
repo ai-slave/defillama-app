@@ -57,7 +57,7 @@ export default function ThorchainHeader() {
 	const links = data?.links ?? {}
 
 	return (
-		<header className="flex items-center gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
+		<header className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-4 py-2.5">
 			{/* RUNE token mark, inlined so the dashboard owns it (no asset file dependency). */}
 			<svg viewBox="0 0 300 300" role="img" aria-label="THORChain" className="size-8 shrink-0">
 				<circle cx="150" cy="150" r="150" fill="url(#rune-logo)" />
@@ -73,7 +73,7 @@ export default function ThorchainHeader() {
 				</defs>
 			</svg>
 			<div className="leading-tight">
-				<span className="title-md text-pro-text-primary">{data?.projectName ?? 'THORChain'}</span>
+				<span className="title-md text-primary">{data?.projectName ?? 'THORChain'}</span>
 			</div>
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINK_LABELS).map(([key, label]) => {
@@ -85,7 +85,7 @@ export default function ThorchainHeader() {
 							href={url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary sm:flex"
+							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary sm:flex"
 						>
 							{LINK_ICONS[key]}
 							<span className="hidden lg:inline">{label}</span>
@@ -97,7 +97,7 @@ export default function ThorchainHeader() {
 						href={data.launchUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-black transition-opacity hover:opacity-85"
+						className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-black transition-[filter] hover:brightness-110"
 						style={{ background: 'linear-gradient(135deg, #00CCFF, #31FD9D)' }}
 					>
 						Launch App

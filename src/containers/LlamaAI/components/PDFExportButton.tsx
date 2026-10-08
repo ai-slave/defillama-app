@@ -20,7 +20,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 	const menu = Ariakit.useMenuStore()
 	const pdfExport = useMutation({
 		mutationFn: async (isDark: boolean) => {
-			toast.loading('Generating PDF...', { id: TOAST_ID })
+			toast.loading('Generating PDF…', { id: TOAST_ID })
 			const response = await authorizedFetch(`${AI_SERVER}/export/pdf`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

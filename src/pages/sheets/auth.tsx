@@ -80,15 +80,15 @@ function AuthContent() {
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 				<meta name="robots" content="noindex, nofollow" />
 			</Head>
-			<div className="col-span-full flex min-h-screen w-full items-center justify-center bg-sub-dark-panel px-5">
+			<div className="theme-dark col-span-full flex min-h-screen w-full items-center justify-center bg-page px-5">
 				{isAuthenticated ? (
-					<div className="w-full max-w-md rounded-xl border border-sub-line bg-sub-dark-panel p-8 text-center">
+					<div className="w-full max-w-md rounded-xl border border-subtle bg-surface p-8 text-center">
 						<div className="mb-6">
 							<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success-tint">
 								<Icon name="check" height={24} width={24} className="text-success" />
 							</div>
-							<h2 className="mb-2 heading-sm text-on-brand">Successfully logged in.</h2>
-							{user?.email ? <p className="body-md text-sub-text-muted">Signed in as {user.email}</p> : null}
+							<h2 className="mb-2 heading-sm text-primary">Successfully logged in.</h2>
+							{user?.email ? <p className="body-md text-tertiary">Signed in as {user.email}</p> : null}
 							{isUnknownRedirect ? (
 								<div className="mt-2 text-left">
 									<InlineStatus variant="error">
@@ -104,7 +104,7 @@ function AuthContent() {
 									/>
 								</div>
 							) : (
-								<p className="mt-2 body-md text-sub-text-muted">
+								<p className="mt-2 body-md text-tertiary">
 									You should be automatically redirected to finish the authentication process.
 								</p>
 							)}
@@ -114,7 +114,7 @@ function AuthContent() {
 							<button
 								type="button"
 								onClick={logout}
-								className="w-full rounded-lg border border-sub-line bg-transparent py-3 font-medium text-on-brand transition-colors hover:bg-sub-dark-card-raised"
+								className="w-full rounded-lg border border-medium py-3 font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 							>
 								Sign out
 							</button>

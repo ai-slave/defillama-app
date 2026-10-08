@@ -51,7 +51,7 @@ function BerachainLogo() {
 	return (
 		<div className="flex items-center gap-2.5">
 			<BerachainIcon className="size-9 shrink-0" />
-			<span className="heading-xs text-pro-text-primary">Berachain</span>
+			<span className="heading-xs text-primary">Berachain</span>
 		</div>
 	)
 }
@@ -65,7 +65,7 @@ const LINKS: Record<string, string> = {
 
 export default function BerachainHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
 			<BerachainLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -74,7 +74,7 @@ export default function BerachainHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>
@@ -86,7 +86,7 @@ export default function BerachainHeader() {
 					href="https://hub.berachain.com"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-black transition-opacity hover:opacity-85"
+					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-black transition-[filter] hover:brightness-110"
 					style={{ background: '#F6A623' }}
 				>
 					Launch App

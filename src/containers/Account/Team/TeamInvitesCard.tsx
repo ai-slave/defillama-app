@@ -46,11 +46,11 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 	return (
 		<>
 			{/* Phones stack the actions under the invite, so the address, expiry and any error keep the full width. */}
-			<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 sm:flex-row sm:items-center dark:border-sub-border-strong">
+			<div className="flex flex-col gap-3 rounded-lg border border-subtle p-3 sm:flex-row sm:items-center">
 				<div className="min-w-0 flex-1">
-					<span className="block truncate body-md text-sub-text-primary">{invite.email}</span>
+					<span className="block truncate body-md text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
-						<span className={`body-sm ${isExpired ? 'text-data-down' : 'text-sub-text-muted'}`}>
+						<span className={`body-sm ${isExpired ? 'text-data-down' : 'text-tertiary'}`}>
 							{/* An expired token can't be resent; the supported flow is revoke, then invite again. */}
 							{isExpired
 								? 'Expired — revoke this invite and send a new one'
@@ -122,11 +122,11 @@ export function TeamInvitesCard() {
 	const [showInviteModal, setShowInviteModal] = useState(false)
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Icon name="mail" height={20} width={20} className="text-sub-text-primary" />
-					<span className="label-lg text-sub-text-primary">Pending invites</span>
+					<Icon name="mail" height={20} width={20} className="text-primary" />
+					<span className="label-lg text-primary">Pending invites</span>
 				</div>
 				<Button
 					type="button"

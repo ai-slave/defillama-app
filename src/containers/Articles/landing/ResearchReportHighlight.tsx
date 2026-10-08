@@ -29,9 +29,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 			</div>
 			<div className="grid grow grid-cols-1 gap-8 lg:grid-cols-[397fr_719fr] lg:gap-12">
 				<div className="flex flex-col gap-6">
-					<h2 className="text-2xl leading-[150%] font-medium text-research-heading dark:text-research-ink">
-						{highlight.title}
-					</h2>
+					<h2 className="text-2xl leading-[150%] font-medium text-research-navy">{highlight.title}</h2>
 					{coverUrl ? (
 						<div className="relative w-full">
 							<img
@@ -53,7 +51,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 					>
 						<div className="flex flex-col justify-between gap-6">
 							{excerpt ? (
-								<div className="body-md text-primary dark:text-research-ink">
+								<div className="body-md text-primary">
 									<p className="mb-2 whitespace-break-spaces last:mb-0">{excerpt}</p>
 								</div>
 							) : null}
@@ -66,7 +64,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 								article={highlight}
 								pdfUrl={pdfUrl}
 								widgetLabel="Report highlight"
-								className="label-md text-research-heading underline-offset-4 hover:underline dark:text-research-ink"
+								className="label-md text-research-navy underline-offset-4 hover:underline"
 							/>
 						) : null}
 						<ReadMoreLink url={articleHref(highlight)} title="Read this report" />

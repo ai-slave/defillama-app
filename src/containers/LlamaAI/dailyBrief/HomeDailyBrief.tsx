@@ -38,7 +38,7 @@ function subscribeToDesktop(onChange: () => void) {
 	return () => query.removeEventListener('change', onChange)
 }
 
-const askStyles = 'text-ai-gold-deep dark:text-ai-gold-bright'
+const askStyles = 'text-ai-gold-deep'
 
 const questionCardStyles =
 	'hover-wash-card flex h-full w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 text-left active:bg-surface-elevated-1'

@@ -50,7 +50,7 @@ export function ArticleCoverImageEditor({
 							className="block size-full object-cover"
 						/>
 						<div
-							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-linear-to-t from-research-black/55 via-research-black/10 to-transparent p-3 transition-opacity ${
+							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-linear-to-t from-research-backdrop-soft to-transparent p-3 transition-opacity ${
 								isUploadingCover
 									? 'opacity-100'
 									: 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
@@ -59,7 +59,7 @@ export function ArticleCoverImageEditor({
 							<button
 								type="button"
 								onClick={onOpenCoverDetails}
-								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55"
+								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-white-line bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-research-white backdrop-blur-sm transition-colors hover:bg-research-backdrop-strong"
 							>
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
@@ -70,7 +70,7 @@ export function ArticleCoverImageEditor({
 								onClick={openCoverPicker}
 								accessibleWhenDisabled
 								aria-busy={isUploadingCover || undefined}
-								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:bg-research-invert/55 aria-busy:cursor-progress"
+								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-white-line bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-research-white backdrop-blur-sm transition-colors not-aria-disabled:hover:bg-research-backdrop-strong aria-busy:cursor-progress"
 							>
 								{isUploadingCover ? (
 									<>
@@ -96,7 +96,7 @@ export function ArticleCoverImageEditor({
 												() => editor.querySelector('button')
 											)
 										}}
-										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft p-1.5 text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error-strong not-aria-disabled:hover:bg-error/70 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-white-line bg-research-backdrop-soft p-1.5 text-research-white backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error-muted not-aria-disabled:hover:bg-error-tint not-aria-disabled:hover:text-error aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled"
 									/>
 								}
 							>

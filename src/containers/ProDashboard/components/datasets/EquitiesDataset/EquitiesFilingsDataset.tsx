@@ -73,7 +73,7 @@ const columns = columnHelper.columns([
 					href={info.getValue()}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-muted p-1.5 hover:bg-pro-btn-secondary-hover"
+					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-tint p-1.5 hover:bg-brand-tint-strong"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
 					<span className="sr-only">open in new tab</span>
@@ -183,7 +183,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">No ticker specified</div>
+					<div className="text-center text-secondary">No ticker specified</div>
 				</div>
 			</div>
 		)
@@ -203,7 +203,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">Failed to load SEC filings</div>
+					<div className="text-center text-secondary">Failed to load SEC filings</div>
 				</div>
 			</div>
 		)
@@ -215,11 +215,11 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<label className="flex items-center gap-2 label-md">
-							<span className="text-pro-text-secondary">Form</span>
+							<span className="text-secondary">Form</span>
 							<select
 								value={selectedForm}
 								onChange={(e) => setSelectedForm(e.currentTarget.value)}
-								className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1 label-md text-pro-text-primary"
+								className="rounded-md border border-medium bg-page px-2 py-1 label-md text-primary"
 							>
 								<option value="All">All</option>
 								{filingForms.map((form) => (
@@ -252,7 +252,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							type="text"
 							placeholder="Search filings..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

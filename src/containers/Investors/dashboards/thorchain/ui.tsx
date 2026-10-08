@@ -171,8 +171,8 @@ function lastNDaysZoom(len: number, days = THREE_MONTHS): { dataZoom: { start: n
 
 function KpiCard({ label, value, sub, def }: { label: string; value: string; sub?: string; def?: string | undefined }) {
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wider text-pro-text-tertiary uppercase">
+		<div className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-4">
+			<span className="flex items-center gap-1 label-sm tracking-wider text-tertiary uppercase">
 				{label}
 				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
 				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
@@ -182,8 +182,8 @@ function KpiCard({ label, value, sub, def }: { label: string; value: string; sub
 					</Tooltip>
 				)}
 			</span>
-			<span className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</span>
-			{sub && <span className="mono-sm text-pro-text-tertiary tabular-nums">{sub}</span>}
+			<span className="mono-lg tracking-tight text-primary tabular-nums">{value}</span>
+			{sub && <span className="mono-sm text-tertiary tabular-nums">{sub}</span>}
 		</div>
 	)
 }
@@ -215,14 +215,14 @@ export function KpiGrid({
 	if (!label) return grid
 	return (
 		<div className="flex flex-col gap-3">
-			<span className="title-sm tracking-wider text-pro-text-secondary uppercase">{label}</span>
+			<span className="title-sm tracking-wider text-secondary uppercase">{label}</span>
 			{grid}
 		</div>
 	)
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-tertiary uppercase">{children}</h2>
 }
 
 // Single KPI that degrades to a placeholder when the backend hasn't shipped the
@@ -240,8 +240,8 @@ export function Kpi({
 }) {
 	if (kpi) return <KpiCard label={label} value={kpi.formatted} def={def} />
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wider text-pro-text-tertiary uppercase">{label}</span>
+		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-medium bg-surface p-4">
+			<span className="label-sm tracking-wider text-tertiary uppercase">{label}</span>
 			<span className="mono-lg text-tertiary tabular-nums">—</span>
 			<span className="mono-sm text-tertiary">{note ? `awaiting ${note}` : 'awaiting data'}</span>
 		</div>
@@ -252,7 +252,7 @@ export function Kpi({
 export function KpiBand({ label, children }: { label: string; children: React.ReactNode }) {
 	return (
 		<div className="flex flex-col gap-3">
-			<span className="title-sm tracking-wider text-pro-text-secondary uppercase">{label}</span>
+			<span className="title-sm tracking-wider text-secondary uppercase">{label}</span>
 			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{children}</div>
 		</div>
 	)
@@ -274,11 +274,11 @@ export function PlaceholderCard({
 	return (
 		<ChartCard title={title} subtitle={subtitle}>
 			<div
-				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-pro-cards-border text-center"
+				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium text-center"
 				style={{ height }}
 			>
-				<span className="body-sm text-pro-text-tertiary">Awaiting data</span>
-				{note && <code className="rounded-sm bg-pro-app-bg px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
+				<span className="body-sm text-tertiary">Awaiting data</span>
+				{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
 			</div>
 		</ChartCard>
 	)
@@ -307,14 +307,14 @@ export function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
-					<h3 className="title-md text-pro-text-primary">{title}</h3>
-					{subtitle && <p className="mt-0.5 body-sm text-pro-text-tertiary">{subtitle}</p>}
+					<h3 className="title-md text-primary">{title}</h3>
+					{subtitle && <p className="mt-0.5 body-sm text-tertiary">{subtitle}</p>}
 				</div>
 				<div className="flex min-w-0 items-center gap-3">
-					{value && <p className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
+					{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
 					{control}
 				</div>
 			</div>
@@ -495,12 +495,12 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 	const cols = table.columns
 	const grid = cols.map((c) => (c.align === 'right' ? 'minmax(90px,1fr)' : 'minmax(120px,2fr)')).join(' ')
 	return (
-		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border" style={{ maxHeight }}>
+		<div className="w-full overflow-auto rounded-lg border border-subtle" style={{ maxHeight }}>
 			<div style={{ display: 'grid', gridTemplateColumns: grid }}>
 				{cols.map((c) => (
 					<div
 						key={c.key}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 title-sm tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-surface px-3 py-2.5 title-sm tracking-wider text-tertiary uppercase"
 						style={{ textAlign: c.align ?? 'left' }}
 					>
 						{c.label}
@@ -510,9 +510,9 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 					cols.map((c) => (
 						<div
 							key={`${i}-${c.key}`}
-							className={`truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${
+							className={`truncate border-b border-subtle px-3 py-2.5 body-md text-primary ${
 								c.format && c.format !== 'text' ? 'tabular-nums' : ''
-							} ${i % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
+							} ${i % 2 === 1 ? 'bg-surface' : ''}`}
 							style={{ textAlign: c.align ?? 'left' }}
 						>
 							{String(row[c.key] ?? '')}

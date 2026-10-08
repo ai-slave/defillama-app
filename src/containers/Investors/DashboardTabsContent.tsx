@@ -26,7 +26,7 @@ const PLACEHOLDER_COLS = ['', '', '', '', '']
 
 export function SkeletonTable() {
 	return (
-		<div className="relative overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+		<div className="relative overflow-hidden rounded-lg border border-subtle bg-surface">
 			<div className="flex flex-col">
 				<div className="flex border-b border-subtle">
 					{PLACEHOLDER_COLS.map((_, i) => (
@@ -52,7 +52,7 @@ export function SkeletonTable() {
 					</div>
 				))}
 			</div>
-			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
+			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
 		</div>
 	)
 }
@@ -62,7 +62,7 @@ function ComingSoonSection({ label }: { label: string }) {
 		<div className="relative">
 			<SkeletonTable />
 			<div className="absolute inset-0 flex items-center justify-center">
-				<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 title-md tracking-wide text-pro-text-secondary shadow-lg">
+				<span className="rounded-full border border-medium bg-surface px-5 py-2.5 title-md tracking-wide text-secondary shadow-lg">
 					{label} — Coming Soon
 				</span>
 			</div>
@@ -75,7 +75,7 @@ export function TabLabel({ tab }: { tab: DashboardTabConfig }) {
 	return (
 		<span className="flex items-center gap-1.5">
 			{tab.label}
-			<span className="rounded-sm border border-pro-cards-border px-1 py-px label-xs tracking-wide text-pro-text-tertiary">
+			<span className="rounded-sm border border-medium px-1 py-px label-xs tracking-wide text-tertiary">
 				Coming soon
 			</span>
 		</span>
@@ -121,7 +121,7 @@ export function InvestorsContent({
 		<>
 			{!hasCustomHeader && (
 				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight text-pro-text-primary">
+					<h1 className="heading-sm tracking-tight text-primary">
 						{activeTab === 'dashboard' ? displayName || 'Dashboard' : tabs.find((t) => t.id === activeTab)?.label}
 					</h1>
 				</header>
@@ -163,7 +163,7 @@ export function CustomOnlyContent({
 		<>
 			{!hasCustomHeader && (
 				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight text-pro-text-primary">
+					<h1 className="heading-sm tracking-tight text-primary">
 						{tabs.find((t) => t.id === activeTab)?.label ?? displayName}
 					</h1>
 				</header>

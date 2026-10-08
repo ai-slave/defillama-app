@@ -7,12 +7,12 @@ import { Button } from '~/ui/Button'
 
 function CheckIcon() {
 	return (
-		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint">
+		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link">
 			<svg
 				viewBox="0 0 24 24"
 				className="size-3"
 				fill="none"
-				stroke="#2172E5"
+				stroke="currentColor"
 				strokeWidth="2.5"
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -235,26 +235,23 @@ const templates = [
 ]
 
 function SectionSeparator() {
-	return <hr className="mx-auto max-w-[1100px] border-sub-line/40" />
+	return <hr className="mx-auto max-w-[1100px] border-subtle" />
 }
 
 function HeroMock() {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-dark-panel shadow-brand-glow-combo">
-			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 body-sm">
-				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center mono-sm text-tertiary">
+		<div className="overflow-hidden rounded-2xl border border-subtle bg-surface shadow-brand-glow-combo">
+			<div className="flex items-center gap-2.5 border-b border-subtle px-4 py-2 body-sm">
+				<span className="min-w-[36px] rounded-sm border border-medium bg-page px-2 py-0.75 text-center mono-sm text-tertiary">
 					B2
 				</span>
 				<span className="max-w-full min-w-0 truncate mono-sm">{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}</span>
 			</div>
-			<div
-				className="grid border-b border-sub-line/40 bg-sub-dark-card/50"
-				style={{ gridTemplateColumns: heroGridCols }}
-			>
-				<div className="border-r border-sub-line/40 px-3 py-2.5" />
-				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 title-sm tracking-[0.5px] text-tertiary uppercase">
+			<div className="grid border-b border-subtle bg-surface-elevated-1" style={{ gridTemplateColumns: heroGridCols }}>
+				<div className="border-r border-subtle px-3 py-2.5" />
+				<div className="flex items-center border-r border-subtle px-3 py-2.5 title-sm tracking-[0.5px] text-tertiary uppercase">
 					A
 				</div>
 				<div className="flex items-center px-3 py-2.5 title-sm tracking-[0.5px] text-tertiary uppercase">B</div>
@@ -262,17 +259,17 @@ function HeroMock() {
 			{heroRows.map((row) => (
 				<div
 					key={row.num}
-					className="grid border-b border-sub-line/40 last:border-b-0"
+					className="grid border-b border-subtle last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 body-sm text-tertiary tabular-nums">
+					<div className="flex items-center justify-center border-r border-subtle bg-surface-elevated-1 px-3 py-2.5 body-sm text-tertiary tabular-nums">
 						{row.num}
 					</div>
-					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 mono-sm">
+					<div className="flex min-w-0 items-center overflow-hidden border-r border-subtle px-3 py-2.5 mono-sm">
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 title-sm text-sub-live tabular-nums ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
+						className={`flex items-center px-3 py-2.5 title-sm text-sub-live tabular-nums ${row.selected ? 'rounded-sm ring-2 ring-brand ring-inset' : ''}`}
 					>
 						{row.value}
 					</div>
@@ -305,10 +302,10 @@ function ShowcaseSection({
 				<div className={reversed ? 'md:order-2' : ''}>
 					<p className="mb-3 title-md tracking-[2px] text-link uppercase">{overline}</p>
 					<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
-					<p className="mb-6 body-md text-sub-text-soft">{description}</p>
+					<p className="mb-6 body-md text-secondary">{description}</p>
 					<ul className="flex flex-col gap-3">
 						{bullets.map((bullet) => (
-							<li key={bullet} className="flex items-start gap-2.5 body-md text-sub-text-soft">
+							<li key={bullet} className="flex items-start gap-2.5 body-md text-secondary">
 								<CheckIcon />
 								{bullet}
 							</li>
@@ -325,7 +322,7 @@ type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number
 type MockRow = { num: string; cells: Array<MockCell> }
 
 const cellClass = (variant?: 'value' | 'formula') =>
-	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? 'font-mono' : 'text-sub-text-soft'
+	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? 'font-mono' : 'text-secondary'
 
 function MockTable({
 	formulaBar,
@@ -351,25 +348,25 @@ function MockTable({
 	}
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-sub-line/40 bg-sub-dark-panel shadow-pop">
+		<div className="overflow-hidden rounded-xl border border-subtle bg-surface shadow-pop">
 			{formulaBar ? (
-				<div className="grid grid-cols-[28px_1fr] border-b border-sub-line/40">
-					<div className="border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-2" />
+				<div className="grid grid-cols-[28px_1fr] border-b border-subtle">
+					<div className="border-r border-subtle bg-surface-elevated-1 px-2.5 py-2" />
 					<p className="flex items-center px-2.5 py-2 mono-sm">{highlightFormula(formulaBar)}</p>
 				</div>
 			) : null}
 			{headers ? (
 				<div
-					className="border-b border-sub-line/40 bg-sub-dark-card/40"
+					className="border-b border-subtle bg-surface-elevated-1"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
+					<div className="flex items-center justify-center border-r border-subtle bg-surface-elevated-1 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
 						<div
 							key={label}
-							className={`flex items-center px-2.5 py-1.75 label-xs tracking-[0.3px] text-tertiary uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex items-center px-2.5 py-1.75 label-xs tracking-[0.3px] text-tertiary uppercase ${i < colCount - 1 ? 'border-r border-subtle' : ''}`}
 						>
 							{label}
 						</div>
@@ -379,17 +376,17 @@ function MockTable({
 			{rows.map((row) => (
 				<div
 					key={row.num}
-					className="border-b border-sub-line/40 last:border-b-0"
+					className="border-b border-subtle last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
+					<div className="flex items-center justify-center border-r border-subtle bg-surface-elevated-1 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-subtle' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -398,15 +395,15 @@ function MockTable({
 				</div>
 			))}
 			{footer ? (
-				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
+				<div className="border-t border-subtle" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
+					<div className="flex items-center justify-center border-r border-subtle bg-surface-elevated-1 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-subtle' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -423,7 +420,7 @@ function TemplatesSection() {
 		<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
 			<div className="mb-12 text-center">
 				<h2 className="mb-2.5 text-[32px] font-bold tracking-[-0.02em]">Templates</h2>
-				<p className="mx-auto max-w-[500px] body-lg text-sub-text-soft">
+				<p className="mx-auto max-w-[500px] body-lg text-secondary">
 					Pre-built spreadsheets to get you started. Clone and customize to fit your workflow.
 				</p>
 			</div>
@@ -436,9 +433,9 @@ function TemplatesSection() {
 						rel="noopener noreferrer"
 						data-umami-event="sheets-templates-click"
 						data-umami-event-template={tpl.title}
-						className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-dark-panel p-7 transition-all hover:border-brand hover:shadow-brand-glow"
+						className="flex flex-col gap-2.5 rounded-2xl border border-subtle bg-surface p-7 transition-all hover:border-brand hover:shadow-brand-glow"
 					>
-						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
+						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-link [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 							{tpl.icon}
 						</div>
 						<h3 className="title-md">{tpl.title}</h3>
@@ -476,7 +473,7 @@ export default function SheetsContainer() {
 					<h1 className="text-[clamp(32px,4vw,48px)] leading-[1.15] font-extrabold tracking-[-0.03em]">
 						Your spreadsheet, powered by DeFi data
 					</h1>
-					<p className="max-w-[480px] body-lg text-sub-text-soft">
+					<p className="max-w-[480px] body-lg text-secondary">
 						Custom functions that pull TVL, fees, yields, stablecoin stats and historical data for 6,000+ protocols.
 					</p>
 					<div className="mt-1 flex flex-col gap-3 sm:flex-row">

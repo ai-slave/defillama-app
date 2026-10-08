@@ -68,9 +68,9 @@ const renderItem = (coin: string, i: number) => (
 	<span
 		key={`${coin}-${i}`}
 		data-coin={coin}
-		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-pro-cards-border px-4 label-sm text-pro-text-primary transition-colors duration-300"
+		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-subtle px-4 label-sm text-primary transition-colors duration-300"
 	>
-		<span className="shrink-0 text-pro-text-label">{coin}</span>
+		<span className="shrink-0 text-secondary">{coin}</span>
 		<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
 			--
 		</span>
@@ -188,7 +188,7 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 	}, [coins])
 
 	return (
-		<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+		<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
 			<div className="relative h-10 overflow-hidden">
 				<div
 					ref={trackRef}
@@ -204,10 +204,10 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value != null ? value : '—'}</span>
-			{helper ? <span className="body-sm text-pro-text-label">{helper}</span> : null}
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value != null ? value : '—'}</span>
+			{helper ? <span className="body-sm text-secondary">{helper}</span> : null}
 		</div>
 	)
 }
@@ -218,8 +218,8 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	const sorted = data.toSorted((a, b) => b.value - a.value)
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Funding Rates (Annualized) — Top 20 by OI</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Funding Rates (Annualized) — Top 20 by OI</h3>
 			<HBarChart
 				categories={sorted.map((d) => d.name)}
 				values={sorted.map((d) => d.value)}
@@ -458,8 +458,8 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 	for (let index = 0; index < data.length; index++) stackColors[data[index].name] = OI_COLORS[index % OI_COLORS.length]
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Open Interest Distribution</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Open Interest Distribution</h3>
 			<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 		</div>
 	)
@@ -482,8 +482,8 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	if (points.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Volume vs Open Interest (bubble size = funding magnitude)</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Volume vs Open Interest (bubble size = funding magnitude)</h3>
 			<ScatterChart
 				chartData={points}
 				xAxisLabel="24h Volume ($)"
@@ -516,8 +516,8 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Predicted Funding Rates (Annualized) — HL vs CEXs</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Predicted Funding Rates (Annualized) — HL vs CEXs</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
@@ -539,8 +539,8 @@ function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Perpetual Markets</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Perpetual Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
@@ -562,8 +562,8 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Spot Markets</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Spot Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>

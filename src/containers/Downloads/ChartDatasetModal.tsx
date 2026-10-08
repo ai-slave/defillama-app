@@ -910,7 +910,7 @@ export function ChartDatasetModal({
 
 	const headerSubtitle = (() => {
 		if (isCategoryMode) {
-			if (dataLoading) return `Loading ${selectedCategory} breakdown...`
+			if (dataLoading) return `Loading ${selectedCategory} breakdown…`
 			if (dataError) return 'Error'
 			if (headers.length > 0) {
 				const protocolCols = Math.max(0, headers.length - 1)
@@ -929,7 +929,7 @@ export function ChartDatasetModal({
 			}
 			return `${selectedParams.length} selected`
 		}
-		if (dataLoading) return 'Loading...'
+		if (dataLoading) return 'Loading…'
 		if (dataError) return 'Error'
 		if (headers.length > 0) {
 			return `${rowsCountLabel} · ${selectedCount}/${headers.length} cols selected`
@@ -1020,7 +1020,7 @@ export function ChartDatasetModal({
 								maxSelections={MAX_PARAMS}
 							/>
 						) : (
-							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 label-sm text-pro-text-secondary">
+							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 label-sm text-secondary">
 								<Icon name="layers" className="size-3.5" />
 								{selectedParams.length} protocols
 							</span>
@@ -1074,7 +1074,7 @@ export function ChartDatasetModal({
 								/>
 							</>
 						) : hasData && isPreview ? (
-							<p className="body-sm text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
+							<p className="body-sm text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 						) : null}
 						{isBulk ? (
 							<Button
@@ -1101,8 +1101,8 @@ export function ChartDatasetModal({
 							{!hasPreviewTarget ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="body-md text-pro-text-secondary">
+										<Icon name="search" className="size-6 text-tertiary" />
+										<p className="body-md text-secondary">
 											Select a {dataset.paramLabel.toLowerCase()} above to load chart data
 										</p>
 									</div>
@@ -1111,7 +1111,7 @@ export function ChartDatasetModal({
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-3">
 										<LoadingSpinner size={28} />
-										<p className="body-md text-pro-text-secondary">Fetching chart data...</p>
+										<p className="body-md text-secondary">Fetching chart data…</p>
 									</div>
 								</div>
 							) : dataError ? (
@@ -1126,15 +1126,15 @@ export function ChartDatasetModal({
 							) : columnMeta.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-										<p className="body-md text-pro-text-secondary">No data</p>
+										<Icon name="eye-off" className="size-6 text-tertiary" />
+										<p className="body-md text-secondary">No data</p>
 									</div>
 								</div>
 							) : sortedRows.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center body-md">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-pro-text-secondary">
+										<Icon name="search" className="size-6 text-tertiary" />
+										<p className="text-secondary">
 											{dateRange && rows.length > 0
 												? 'No rows in selected date range'
 												: deferredSearch.length > 0
@@ -1209,7 +1209,7 @@ export function ChartDatasetModal({
 																	className="flex min-w-0 flex-1 items-center gap-1"
 																>
 																	<span
-																		className={`truncate label-sm ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+																		className={`truncate label-sm ${isSelected ? 'text-secondary' : 'text-tertiary'}`}
 																	>
 																		{column.header}
 																	</span>
@@ -1236,7 +1236,6 @@ export function ChartDatasetModal({
 										>
 											{rowVirtualizer.items.map((virtualRow) => {
 												const row = sortedRows[virtualRow.index]
-												const isOdd = virtualRow.index % 2 === 1
 												return (
 													<div
 														key={row.id}
@@ -1262,17 +1261,13 @@ export function ChartDatasetModal({
 																<div
 																	key={column.index}
 																	title={rawValue || undefined}
-																	className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																	className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
 																	style={{
 																		textAlign: column.align,
 																		position: isSticky ? 'sticky' : undefined,
 																		left: isSticky ? 0 : undefined,
 																		zIndex: isSticky ? 1 : undefined,
-																		background: isSticky
-																			? 'var(--bg-overlay)'
-																			: isOdd
-																				? 'var(--bg-primary)'
-																				: undefined,
+																		background: isSticky ? 'var(--bg-overlay)' : undefined,
 																		boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 																	}}
 																>

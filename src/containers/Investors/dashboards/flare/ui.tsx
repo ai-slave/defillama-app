@@ -19,8 +19,8 @@ export function KpiCard({
 	def?: string
 }) {
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wider text-pro-text-label uppercase">
+		<div className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-4">
+			<span className="flex items-center gap-1 label-sm tracking-wider text-secondary uppercase">
 				{label}
 				{def && (
 					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
@@ -29,7 +29,7 @@ export function KpiCard({
 				)}
 			</span>
 			<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-				<span className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</span>
+				<span className="mono-xl tracking-tight text-primary tabular-nums">{value}</span>
 				{change && (
 					<span
 						className={`flex items-center gap-0.5 mono-sm tabular-nums ${change.value >= 0 ? 'text-success' : 'text-error'}`}
@@ -39,7 +39,7 @@ export function KpiCard({
 					</span>
 				)}
 			</div>
-			{sub && <span className="mono-sm text-pro-text-label tabular-nums">{sub}</span>}
+			{sub && <span className="mono-sm text-secondary tabular-nums">{sub}</span>}
 		</div>
 	)
 }
@@ -62,10 +62,10 @@ export function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
-					<h3 className="flex items-center gap-1 title-md text-pro-text-primary">
+					<h3 className="flex items-center gap-1 title-md text-primary">
 						{title}
 						{titleTooltip && (
 							<Tooltip content={titleTooltip} className="-my-2 -mr-2 cursor-help p-2" aria-label={titleTooltip}>
@@ -73,9 +73,9 @@ export function ChartCard({
 							</Tooltip>
 						)}
 					</h3>
-					{subtitle && <p className="mt-0.5 body-sm text-pro-text-label">{subtitle}</p>}
+					{subtitle && <p className="mt-0.5 body-sm text-secondary">{subtitle}</p>}
 				</div>
-				{value && <p className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
+				{value && <p className="mono-xl tracking-tight text-primary tabular-nums">{value}</p>}
 			</div>
 			{children}
 		</div>
@@ -83,13 +83,13 @@ export function ChartCard({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 	return (
 		<div
-			className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 pl-5 body-md text-pro-text-secondary"
+			className="rounded-lg border border-subtle bg-surface p-4 pl-5 body-md text-secondary"
 			style={{ borderLeft: '3px solid #FF7A1A' }}
 		>
 			{children}

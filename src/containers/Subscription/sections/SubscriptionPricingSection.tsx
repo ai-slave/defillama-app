@@ -42,14 +42,14 @@ export function SubscriptionPricingSection({
 				<div className="flex items-center gap-2">
 					<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
 					<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:h-10 md:w-10 dark:block" />
-					<span className="hidden heading-sm text-on-brand dark:inline">DefiLlama</span>
+					<span className="hidden heading-sm text-primary dark:inline">DefiLlama</span>
 				</div>
 				<div className="flex w-full flex-col items-center gap-7">
-					<h1 className="heading-lg text-sub-text-primary">
+					<h1 className="heading-lg text-primary">
 						The Smartest Way to Navigate <br className="hidden md:inline" />
 						Onchain Data
 					</h1>
-					<p className="body-xl text-sub-text-cool md:w-[540px] md:body-lg md:text-sub-text-secondary dark:md:text-sub-text-secondary">
+					<p className="body-xl text-secondary md:w-[540px] md:body-lg">
 						Analyze 6,000+ protocols across 400+ chains with AI, custom dashboards, live data feeds and premium API
 						endpoints.
 					</p>
@@ -66,17 +66,17 @@ export function SubscriptionPricingSection({
 				>
 					<Ariakit.RadioGroup
 						aria-label="Billing cycle"
-						className="relative flex w-[268px] rounded-full bg-white p-1 md:w-[236px] dark:bg-sub-surface-dark"
+						className="relative flex w-[268px] rounded-full bg-surface p-1 md:w-[236px]"
 					>
 						<div
-							className={`absolute top-1 left-1 h-14 w-[calc(50%-4px)] rounded-full bg-sub-brand-primary transition-transform duration-300 ease-in-out md:h-12 ${
+							className={`absolute top-1 left-1 h-14 w-[calc(50%-4px)] rounded-full bg-brand transition-transform duration-300 ease-in-out md:h-12 ${
 								isYearly ? 'translate-x-full' : 'translate-x-0'
 							}`}
 						/>
 						<label
 							htmlFor={`${id}-monthly`}
 							className={`relative z-10 flex h-14 flex-1 cursor-pointer items-center justify-center rounded-full label-lg transition-colors duration-300 has-focus-visible:focus-ring md:h-12 md:label-md ${
-								isMonthly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
+								isMonthly ? 'text-on-brand' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							<Ariakit.Radio id={`${id}-monthly`} value="monthly" className="sr-only" />
@@ -85,22 +85,20 @@ export function SubscriptionPricingSection({
 						<label
 							htmlFor={`${id}-yearly`}
 							className={`relative z-10 flex h-14 flex-1 cursor-pointer flex-col items-center justify-center rounded-full label-lg transition-colors duration-300 has-focus-visible:focus-ring md:h-12 md:label-md ${
-								isYearly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
+								isYearly ? 'text-on-brand' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							<Ariakit.Radio id={`${id}-yearly`} value="yearly" className="sr-only" aria-label="Yearly" />
 							<span>Yearly</span>
 							<span
-								className={`label-sm transition-colors duration-300 md:label-xs ${isYearly ? 'text-sub-brand-softest' : 'text-sub-brand-secondary dark:text-sub-brand-softest'}`}
+								className={`label-sm transition-colors duration-300 md:label-xs ${isYearly ? 'text-on-brand' : 'text-link'}`}
 							>
 								Get 2 months free
 							</span>
 						</label>
 					</Ariakit.RadioGroup>
 				</Ariakit.RadioProvider>
-				<p className="body-sm text-sub-text-cool md:text-sub-text-secondary dark:md:text-sub-text-secondary">
-					Cancel Anytime, Crypto &amp; Card Payments
-				</p>
+				<p className="body-sm text-secondary">Cancel Anytime, Crypto &amp; Card Payments</p>
 			</div>
 
 			<div className="subscription-pricing-cards mt-9 flex w-full flex-wrap justify-center gap-4">

@@ -127,7 +127,7 @@ Focus and selection:
 
 Partner and border colors:
 
-- A partner's brand color travels with its data. Set it as a CSS variable on the element (`style={{ '--card-accent': brandColor }}`) and read it from one shared class (`hover:border-(--card-accent)/20`, or `shadow-(color:--card-accent)` for a shadow), as `src/pages/investors.tsx` does. It becomes a product-theme token only when it must change between modes, like `--sl-kpk-mint` in `src/styles/themes/pro.css`.
+- A partner's brand color travels with its data. Set it as a CSS variable on the element (`style={{ '--card-accent': brandColor }}`) and derive its translucent variants once with `color-mix` in one shared class (`.ir-card-accent` in `src/styles/themes/pro.css`), read as `hover:border-(--card-accent-border)`, as `src/pages/investors.tsx` does. Never a `/NN` modifier on the variable. It becomes a product-theme token only when it must change between modes, like `--sl-kpk-mint` in `src/styles/themes/pro.css`.
 - Every width-only border or divide utility (`border`, `border-t`, `divide-y`) needs a color source, or it renders `currentColor`, near-white in dark mode (`implicit-border-color`).
 
 ## Color ramps
@@ -390,14 +390,15 @@ Chart data contracts: `docs/charts.md`.
 
 ## Product surfaces
 
-- ProDashboard, Account and Subscription, Downloads, Articles, Investors, Sheets, LlamaAI and Yields follow the same rules as every page and keep their own look through their product themes in `src/styles/themes/`. They get audited and improved like any other page: UX, structure, component reuse and accessibility.
-- Shared components they use keep their own variants, never page-local style forks or a product variant. Repointing a product's palette onto the core tokens is optional.
-- Pro's controls are the app's `Button`, `SegmentedControl` and `Select`. `ProButton` exists only for Pro's create and generate CTAs: the soft blue `primary` tint and the soft violet `ai` tint (ramp step 3, step 4 on hover, step 11 text), never solid purple. Pro keeps its card and panel surface tokens.
+- A product theme in `src/styles/themes/` holds only the product's accents: its brand hues, gradients, illustration and partner colors, and named translucent variants of those accents. Text tiers, surfaces, borders, hovers, tints and status colors come from the core tokens, so a product page has the same grays, card borders and contrast as every other page. Never add a product token for a core role (a product gray, card border or page background).
+- An accent sits on a ramp when one fits (`pro-ai-*` on violet) and registers with `@theme inline`, so it resolves per element, inside `.theme-dark` too.
+- Shared components on a product page keep their own variants, never page-local style forks or a product variant.
+- Pro's controls are the app's `Button`, `SegmentedControl` and `Select`. `ProButton` exists only for Pro's create and generate CTAs: the soft blue `primary` tint (`bg-brand-tint`) and the soft violet `ai` tint (`bg-pro-ai-tint`), step 3 at rest, step 4 on hover, step 11 text, never solid purple.
 - Research's internal pages (editor, admin, mine, profile) use the default colours and controls; the public research pages keep their editorial look (below).
-- Product tokens and utilities stay inside their surfaces (`product-token-leak`, `product-utility-leak`). The surface map is `PRODUCT_SURFACE_PREFIXES` in `scripts/policies/check-design-tokens.mjs`, counted in its own `product` bucket.
+- Product tokens and utilities stay inside their surfaces (`product-token-leak`, `product-utility-leak`). The surface map is `PRODUCT_SURFACE_PREFIXES` in `scripts/policies/check-design-tokens.mjs`, counted in its own `product` bucket: a separate baseline, not an exemption from any rule.
 - LlamaAI's theme exceptions are listed in `src/styles/themes/llamaai.css`.
 - A product color on a control is a token scope in the product's theme file that re-points the brand tokens (`.sub-api-accent`, `.sub-trial-accent`, `.ai-slack-accent`), so the control stays a plain `Button`.
-- Articles' editorial research chrome keeps its own look on the landing, feed and article pages: uppercase tracked eyebrow links, the round share icon row, and the public pages' pill CTAs (the hero's links and the footer's 40px `bg-link` "Get the media kit" pill).
+- Articles' editorial research chrome keeps its own look on the landing, feed and article pages: uppercase tracked eyebrow links, the round share icon row, and the public pages' pill CTAs (the hero's links and the footer's 40px `bg-brand` "Get the media kit" pill).
 - A control that is a whole table or matrix cell keeps the cell's box (a raw button with `hover:bg-hover-row`), not `Button`; so do the micro toggles inside a chart series chip.
 - A rating pair whose options carry outcome colours (Good green, Bad red, as in LlamaAI's feedback dialog) keeps its own tinted button pair in a `fieldset` with a `legend` and `aria-pressed`, not a `SegmentedControl`, whose neutral selection would drop the outcome colour.
 

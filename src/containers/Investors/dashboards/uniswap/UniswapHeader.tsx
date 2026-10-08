@@ -44,10 +44,10 @@ export default function UniswapHeader() {
 	const links = data?.links ?? {}
 
 	return (
-		<header className="flex items-center gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
+		<header className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-4 py-2.5">
 			<UniswapLogo />
 			<div className="leading-tight">
-				<span className="title-md text-pro-text-primary">{data?.projectName ?? 'Uniswap'}</span>
+				<span className="title-md text-primary">{data?.projectName ?? 'Uniswap'}</span>
 			</div>
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINK_LABELS).map(([key, label]) => {
@@ -59,7 +59,7 @@ export default function UniswapHeader() {
 							href={url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary sm:flex"
+							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary sm:flex"
 						>
 							{LINK_ICONS[key]}
 							<span className="hidden lg:inline">{label}</span>
@@ -71,7 +71,7 @@ export default function UniswapHeader() {
 						href={links.app}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-opacity hover:opacity-85"
+						className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-[filter] hover:brightness-110"
 						style={{ background: 'linear-gradient(135deg, #FF007A, #FC72FF)' }}
 					>
 						Launch App

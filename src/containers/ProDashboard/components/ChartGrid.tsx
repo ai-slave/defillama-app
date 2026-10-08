@@ -176,7 +176,7 @@ const COL_SPAN_CLASS_MAP: Record<1 | 2 | 3 | 4, string> = {
 }
 const GROUP_GRID_CLASS = 'grid grid-flow-dense grid-cols-1 gap-3 lg:grid-cols-4'
 const DRAGGING_CARD_CLASS =
-	'data-[dragging=true]:border-dashed data-[dragging=true]:border-pro-accent/60 data-[dragging=true]:bg-pro-app-bg data-[dragging=true]:shadow-none data-[dragging=true]:*:opacity-0'
+	'data-[dragging=true]:border-dashed data-[dragging=true]:border-brand-strong data-[dragging=true]:bg-page data-[dragging=true]:shadow-none data-[dragging=true]:*:opacity-0'
 const DROP_ANIMATION: DropAnimation = {
 	duration: 200,
 	easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
@@ -808,7 +808,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		<button
 			type="button"
 			onClick={() => onAddChartClick(placement)}
-			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border label-md text-link hover:bg-hover-row focus-visible:bg-hover-row"
+			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-medium label-md text-link hover:bg-hover-row focus-visible:bg-hover-row"
 		>
 			<Icon name="plus" height={16} width={16} />
 			Add card
@@ -847,7 +847,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 					{showEmptyTabNotice ? (
 						<div
 							{...(showAddTile ? {} : { role: 'status' })}
-							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-pro-cards-border px-3 text-center body-md text-pro-text-tertiary"
+							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-medium px-3 text-center body-md text-tertiary"
 						>
 							{showAddTile ? 'This tab has no cards yet. Add one or drag a card here.' : 'Nothing in this tab yet'}
 						</div>

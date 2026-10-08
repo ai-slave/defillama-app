@@ -461,7 +461,6 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				open={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
 				unmountOnHide
-				scope="pro"
 				title="Duplicate chart"
 				description="Create a duplicate of this chart in the dashboard?"
 				confirmLabel="Duplicate"

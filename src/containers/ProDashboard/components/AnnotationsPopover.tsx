@@ -16,7 +16,7 @@ import { ProBadge } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
 
 const INPUT_STYLES =
-	'min-w-0 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
+	'min-w-0 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-sm text-primary placeholder:text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
 
 export function AnnotationsPopover() {
 	const { annotations, setAnnotations } = useProDashboardAnnotations()
@@ -60,13 +60,13 @@ export function AnnotationsPopover() {
 				<div className="flex w-[340px] max-w-full flex-col">
 					<div className="flex items-center gap-2 border-b border-subtle py-2 pr-1 pl-3">
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-							<Ariakit.PopoverHeading className="label-sm text-pro-text-primary">Annotations</Ariakit.PopoverHeading>
-							<p className="body-xs text-pro-text-secondary">Dated marks shown on every time-series chart.</p>
+							<Ariakit.PopoverHeading className="label-sm text-primary">Annotations</Ariakit.PopoverHeading>
+							<p className="body-xs text-secondary">Dated marks shown on every time-series chart.</p>
 						</div>
 						<DrawerDismiss label="Close annotations" />
 					</div>
 					{annotations.length === 0 ? (
-						<p className="px-3 py-3 body-sm text-pro-text-secondary">No annotations yet.</p>
+						<p className="px-3 py-3 body-sm text-secondary">No annotations yet.</p>
 					) : (
 						<ul className="flex max-h-60 flex-col overflow-y-auto">
 							{annotations.map((annotation) => (
@@ -74,8 +74,8 @@ export function AnnotationsPopover() {
 									key={annotation.id}
 									className="flex items-center gap-2 border-b border-subtle px-3 py-1.5 body-sm last-of-type:border-b-0"
 								>
-									<span className="shrink-0 mono-sm text-pro-text-secondary">{annotation.date}</span>
-									<span className="min-w-0 flex-1 truncate text-pro-text-primary">{annotation.label}</span>
+									<span className="shrink-0 mono-sm text-secondary">{annotation.date}</span>
+									<span className="min-w-0 flex-1 truncate text-primary">{annotation.label}</span>
 									<Tooltip
 										content="Delete annotation"
 										render={
@@ -125,7 +125,7 @@ export function AnnotationsPopover() {
 							/>
 						</div>
 						<div className="flex items-center justify-between gap-2">
-							<span className="body-xs text-pro-text-tertiary">
+							<span className="body-xs text-tertiary">
 								{atLimit
 									? `Limit of ${MAX_DASHBOARD_ANNOTATIONS} reached. Delete one to add another.`
 									: `${annotations.length}/${MAX_DASHBOARD_ANNOTATIONS}`}

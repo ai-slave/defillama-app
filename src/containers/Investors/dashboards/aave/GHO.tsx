@@ -113,7 +113,7 @@ function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+		<div className="rounded-lg border border-subtle bg-surface p-5">
 			<SectionHeader title="GHO Across Markets" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
@@ -214,7 +214,7 @@ export default function GHO() {
 				{apyLoading ? (
 					<CardSkeleton title="" />
 				) : borrowApyDataset.source.length > 0 ? (
-					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+					<div className="rounded-lg border border-subtle bg-surface p-5">
 						<MultiSeriesChart
 							dataset={borrowApyDataset}
 							charts={BORROW_APY_CHART}

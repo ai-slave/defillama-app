@@ -55,7 +55,7 @@ export default function ReportsPage() {
 			canonicalUrl="/reports"
 		>
 			{/* DL Research Section */}
-			<div className="relative overflow-hidden rounded-lg border border-research-accent-strong/20 bg-surface p-4 shadow-research-glow-wide">
+			<div className="relative overflow-hidden rounded-lg border border-brand-muted bg-surface p-4 shadow-research-glow-wide">
 				{/* Dot pattern decorations */}
 				<div
 					className="pointer-events-none absolute top-0 left-0 h-full w-16"
@@ -75,7 +75,7 @@ export default function ReportsPage() {
 				/>
 
 				{/* Glow orb behind logo */}
-				<div className="pointer-events-none absolute -top-20 -left-20 size-40 rounded-full bg-research-accent-strong/10 blur-3xl" />
+				<div className="pointer-events-none absolute -top-20 -left-20 size-40 rounded-full bg-research-accent-strong opacity-10 blur-3xl" />
 
 				<div className="relative flex flex-col gap-5">
 					{/* Header */}
@@ -128,16 +128,14 @@ interface Report {
 function DLReportCard({ report }: { report: Report }) {
 	if (report.comingSoon) {
 		return (
-			<div className="relative flex flex-col overflow-hidden rounded-md border border-research-accent-strong/15 bg-surface shadow-research-glow transition-shadow duration-300 hover:shadow-research-glow-md">
+			<div className="relative flex flex-col overflow-hidden rounded-md border border-brand-muted bg-surface shadow-research-glow transition-shadow duration-300 hover:shadow-research-glow-md">
 				{report.image && (
-					<div className="relative h-36 w-full overflow-hidden bg-sub-navy">
+					<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
 						<img src={report.image} alt="" className="size-full object-cover opacity-40" />
-						<div className="absolute inset-0 bg-linear-to-t from-sub-navy via-sub-navy/60 to-transparent" />
+						<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
 						<div className="absolute bottom-3 left-4 flex items-center gap-2">
-							<h3 className="heading-xs text-on-brand">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 title-sm text-on-brand">
-								Coming Soon
-							</span>
+							<h3 className="heading-xs text-primary">{report.title}</h3>
+							<span className="animate-pulse rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming Soon</span>
 						</div>
 					</div>
 				)}
@@ -145,9 +143,7 @@ function DLReportCard({ report }: { report: Report }) {
 					{!report.image && (
 						<div className="flex items-center gap-2">
 							<h3 className="heading-xs">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 title-sm text-on-brand">
-								Coming Soon
-							</span>
+							<span className="animate-pulse rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming Soon</span>
 						</div>
 					)}
 					<div className="flex items-center gap-3 body-sm text-secondary">
@@ -165,10 +161,7 @@ function DLReportCard({ report }: { report: Report }) {
 					<p className="body-md text-secondary">{report.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{report.topics.map((topic) => (
-							<span
-								key={topic}
-								className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 label-sm text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
-							>
+							<span key={topic} className="rounded-full bg-brand-tint px-2.5 py-0.5 label-sm text-link">
 								{topic}
 							</span>
 						))}
@@ -178,7 +171,7 @@ function DLReportCard({ report }: { report: Report }) {
 							href={report.spotlightHref}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="mt-1 flex items-center gap-1.5 rounded-md border border-research-accent-strong/20 bg-research-accent-strong/5 px-3 py-2 body-md text-research-accent-strong transition-colors hover:bg-research-accent-strong/10 dark:text-sub-blue"
+							className="mt-1 flex items-center gap-1.5 rounded-md border border-brand-muted bg-brand-faint px-3 py-2 body-md text-link transition-colors hover:bg-brand-tint"
 						>
 							<Icon name="file-text" height={14} width={14} />
 							<span className="flex-1">Spotlight: {report.spotlightTitle}</span>
@@ -195,17 +188,17 @@ function DLReportCard({ report }: { report: Report }) {
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group relative flex flex-col overflow-hidden rounded-md border border-research-accent-strong/15 bg-surface shadow-research-glow transition-all duration-300 hover:border-research-accent-strong/30 hover:shadow-research-glow-strong"
+			className="group relative flex flex-col overflow-hidden rounded-md border border-brand-muted bg-surface shadow-research-glow transition-all duration-300 hover:border-brand-strong hover:shadow-research-glow-strong"
 		>
 			{report.image && (
-				<div className="relative h-36 w-full overflow-hidden bg-sub-navy">
+				<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
 					<img
 						src={report.image}
 						alt=""
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
-					<div className="absolute inset-0 bg-linear-to-t from-sub-navy via-sub-navy/60 to-transparent" />
-					<h3 className="absolute bottom-3 left-4 heading-xs text-on-brand">{report.title}</h3>
+					<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
+					<h3 className="absolute bottom-3 left-4 heading-xs text-primary">{report.title}</h3>
 				</div>
 			)}
 			<div className="flex flex-1 flex-col gap-3 p-4">
@@ -237,10 +230,7 @@ function DLReportCard({ report }: { report: Report }) {
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
-						<span
-							key={topic}
-							className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 label-sm text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
-						>
+						<span key={topic} className="rounded-full bg-brand-tint px-2.5 py-0.5 label-sm text-link">
 							{topic}
 						</span>
 					))}
@@ -256,17 +246,17 @@ function ReportCard({ report }: { report: Report }) {
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group relative flex flex-col overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:bg-research-tint"
+			className="group hover-wash-card relative flex flex-col overflow-hidden rounded-md border border-medium bg-surface"
 		>
 			{report.image && (
-				<div className="relative h-36 w-full overflow-hidden bg-sub-navy">
+				<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
 					<img
 						src={report.image}
 						alt=""
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
-					<div className="absolute inset-0 bg-linear-to-t from-sub-navy to-transparent" />
-					<h3 className="absolute bottom-3 left-4 heading-xs text-on-brand">{report.title}</h3>
+					<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
+					<h3 className="absolute bottom-3 left-4 heading-xs text-primary">{report.title}</h3>
 				</div>
 			)}
 			<div className="flex flex-1 flex-col gap-3 p-4">
@@ -298,7 +288,7 @@ function ReportCard({ report }: { report: Report }) {
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
-						<span key={topic} className="rounded-full bg-black/5 px-2.5 py-0.5 label-sm text-secondary dark:bg-white/5">
+						<span key={topic} className="rounded-full bg-surface-elevated-1 px-2.5 py-0.5 label-sm text-secondary">
 							{topic}
 						</span>
 					))}

@@ -55,11 +55,11 @@ export function DashboardLoadProgress() {
 				className="h-[2px] w-full overflow-hidden rounded-full bg-surface-elevated-2"
 			>
 				<div
-					className="h-full rounded-full bg-pro-accent transition-[width] duration-500 ease-out"
+					className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
 					style={{ width: `${totalCount > 0 ? (readyWithinTotal / totalCount) * 100 : 0}%` }}
 				/>
 			</div>
-			<p role="status" className="body-sm text-pro-text-tertiary md:sr-only">
+			<p role="status" className="body-sm text-tertiary md:sr-only">
 				Loading cards… {readyWithinTotal} of {totalCount}
 			</p>
 		</div>

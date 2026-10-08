@@ -184,7 +184,7 @@ export default function NewslettersPage() {
 											accessibleWhenDisabled
 											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
 												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
-											} ${on ? 'border-link bg-research-tint' : 'border-medium bg-surface hover:border-brand-strong'}`}
+											} ${on ? 'border-brand bg-brand-muted' : 'border-medium bg-surface hover:border-brand-strong'}`}
 										>
 											<span className="flex min-h-16 items-center justify-start">
 												<img
@@ -217,7 +217,7 @@ export default function NewslettersPage() {
 													</span>
 													<span
 														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 label-sm whitespace-nowrap transition-colors ${
-															on ? 'border-link bg-link text-on-brand' : 'border-medium text-secondary'
+															on ? 'border-brand bg-brand text-on-brand' : 'border-medium text-secondary'
 														}`}
 														aria-hidden
 													>

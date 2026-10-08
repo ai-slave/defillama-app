@@ -46,7 +46,7 @@ export function TabNavigation({ isSqlAllowed }: { isSqlAllowed: boolean }) {
 						<span className="flex items-center justify-center gap-1.5">
 							<span className="lg:hidden">{tab.mobileLabel}</span>
 							<span className="hidden lg:inline">{tab.label}</span>
-							{tab.subtitle ? <span className="hidden text-pro-text-tertiary lg:inline">{tab.subtitle}</span> : null}
+							{tab.subtitle ? <span className="hidden text-tertiary lg:inline">{tab.subtitle}</span> : null}
 							{lockLabel ? (
 								<Tooltip content={lockTooltip}>
 									<ProBadge tone="premium" icon={<Icon name="file-lock-2" height={12} width={12} />}>

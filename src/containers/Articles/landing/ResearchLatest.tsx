@@ -26,7 +26,7 @@ function TitleOverlay({
 	title: string
 	placement: TitlePlacement
 }>) {
-	const base = 'absolute z-20 bg-research-heading/70 p-4 title-lg text-on-brand'
+	const base = 'absolute z-20 bg-research-banner-scrim p-4 title-lg text-on-brand'
 
 	const titleClamp = 'line-clamp-3 lg:line-clamp-4'
 
@@ -119,7 +119,7 @@ function ContentCard({
 				) : null}
 			</div>
 
-			<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-white px-2 py-0.5 label-xs text-on-brand uppercase backdrop-blur-sm">
+			<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-white px-2 py-0.5 label-xs text-research-white uppercase backdrop-blur-sm">
 				{item.label}
 			</span>
 
@@ -194,7 +194,7 @@ export function ResearchLatest({ articles = EMPTY_ARTICLES, initialData }: Resea
 					<Link
 						key={cat.id}
 						href={cat.anchor}
-						className="w-full rounded-[4px] border border-research-accent/35 bg-transparent px-3.75 py-0.75 text-center label-md text-research-accent-strong uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-research-accent hover:text-research-accent-strong focus-visible:border-research-accent focus-visible:text-research-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-accent motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-research-invert dark:text-research-ink dark:hover:border-research-accent dark:hover:text-research-accent-soft dark:focus-visible:border-research-accent dark:focus-visible:text-research-accent-soft"
+						className="w-full rounded-[4px] border border-brand-muted px-3.75 py-0.75 text-center label-md text-link uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-brand hover:bg-brand-tint focus-visible:border-brand focus-visible:bg-brand-tint motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto"
 					>
 						{cat.label}
 					</Link>

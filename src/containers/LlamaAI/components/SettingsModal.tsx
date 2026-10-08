@@ -1002,7 +1002,7 @@ export const SettingsModal = memo(function SettingsModal({
 									<div
 										className={`flex w-full items-center justify-between gap-4 rounded-xl border p-4 ${
 											settings.hackerMode
-												? 'border-ai-terminal/30 bg-ai-ink shadow-ai-terminal-glow'
+												? 'theme-dark border-ai-terminal-muted bg-surface shadow-ai-terminal-glow'
 												: 'border-subtle bg-surface'
 										}`}
 									>
@@ -1016,7 +1016,7 @@ export const SettingsModal = memo(function SettingsModal({
 												>
 													{settings.hackerMode ? '> hacker_mode --active' : 'Hacker mode'}
 												</p>
-												<p className={`m-0 body-sm ${settings.hackerMode ? 'text-ai-on-ink-muted' : 'text-secondary'}`}>
+												<p className="m-0 body-sm text-secondary">
 													Watch the llama hack through your questions in green.
 												</p>
 											</div>

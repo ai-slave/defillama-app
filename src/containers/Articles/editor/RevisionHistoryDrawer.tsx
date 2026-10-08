@@ -1019,8 +1019,8 @@ function MetaValue({ value, tone }: { value: string | null; tone: 'add' | 'remov
 	}
 	const styles =
 		tone === 'remove'
-			? 'border-error-muted bg-error-faint text-error dark:text-error line-through'
-			: 'border-emerald-500/30 bg-success-faint text-success dark:text-success'
+			? 'border-error-muted bg-error-faint text-error line-through'
+			: 'border-success-muted bg-success-faint text-success'
 	return (
 		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 body-sm ${styles}`}>{value}</span>
 	)
@@ -1056,9 +1056,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	}
 	if (op.type === 'add') {
 		return (
-			<div
-				className={`${baseClasses} bg-success-faint.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}
-			>
+			<div className={`${baseClasses} bg-success-faint text-primary ring-1 ring-(--border-success-muted) ring-inset`}>
 				<span aria-hidden className="pt-0.5 text-center mono-sm text-success">
 					+
 				</span>
@@ -1069,7 +1067,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	if (op.type === 'remove') {
 		return (
 			<div
-				className={`${baseClasses} bg-error-faint text-error line-through ring-1 ring-red-500/20 ring-inset dark:text-error`}
+				className={`${baseClasses} bg-error-faint text-error line-through ring-1 ring-(--border-error-muted) ring-inset`}
 			>
 				<span aria-hidden className="pt-0.5 text-center mono-sm text-error no-underline">
 					−
@@ -1079,7 +1077,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 		)
 	}
 	return (
-		<div className={`${baseClasses} bg-warning-faint text-primary ring-1 ring-warning/20 ring-inset`}>
+		<div className={`${baseClasses} bg-warning-faint text-primary ring-1 ring-(--border-warning-muted) ring-inset`}>
 			<span aria-hidden className="pt-0.5 text-center mono-sm text-warning">
 				~
 			</span>
@@ -1092,14 +1090,14 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 							<span
 								// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 								key={idx}
-								className="rounded-[2px] bg-success-tint-strong px-0.5 text-emerald-700 dark:text-emerald-300"
+								className="rounded-[2px] bg-success-tint px-0.5 text-success"
 							>
 								{word.value}
 							</span>
 						)
 					return (
 						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
-						<span key={idx} className="rounded-[2px] bg-error-tint px-0.5 text-error line-through dark:text-error">
+						<span key={idx} className="rounded-[2px] bg-error-tint px-0.5 text-error line-through">
 							{word.value}
 						</span>
 					)

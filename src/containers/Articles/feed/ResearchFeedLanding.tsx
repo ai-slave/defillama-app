@@ -32,7 +32,7 @@ function CopyFeedUrlButton({ value }: { value: string }) {
 				type="button"
 				onClick={() => void copy(value)}
 				aria-label="Copy feed URL"
-				className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-live px-5 py-2.5 label-md text-research-heading transition-[background-color,transform] duration-150 hover:bg-research-live/90 motion-safe:active:scale-[0.97] sm:w-auto"
+				className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-live px-5 py-2.5 label-md text-research-banner transition-[filter,transform] duration-150 hover:brightness-110 motion-safe:active:scale-[0.97] sm:w-auto"
 			>
 				<Icon name={copied ? 'check' : 'copy'} height={15} width={15} />
 				{copied ? 'Copied' : 'Copy'}
@@ -104,7 +104,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 						</p>
 
 						<div
-							className="dl-feed-reveal mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-research-heading p-3 ring-1 ring-research-white/10 ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
+							className="dl-feed-reveal theme-dark mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-research-banner p-3 ring-1 ring-(--border-medium) ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
 							style={{ animationDelay: '140ms' }}
 						>
 							<span className="flex min-w-0 flex-1 items-center gap-3">
@@ -112,7 +112,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 									<span className="dl-feed-pulse absolute inline-flex size-full rounded-full bg-research-live" />
 									<span className="relative inline-flex size-2.5 rounded-full bg-research-live" />
 								</span>
-								<code className="truncate mono-md text-on-brand">{RESEARCH_FEED_URL}</code>
+								<code className="truncate mono-md text-primary">{RESEARCH_FEED_URL}</code>
 							</span>
 							<CopyFeedUrlButton value={RESEARCH_FEED_URL} />
 						</div>

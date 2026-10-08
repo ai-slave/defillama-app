@@ -130,7 +130,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 											setSignupSource('llamaai-landing')
 											signIn.open(null)
 										}}
-										className="font-medium text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+										className="font-medium text-ai-gold-deep underline decoration-ai-gold-muted transition-colors hover:decoration-current"
 									>
 										Sign in
 									</button>{' '}
@@ -147,16 +147,15 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 								key={i}
 								onClick={() => handleClick(q)}
 								className={clsx(
-									'group flex flex-col items-start gap-3 rounded-xl border border-medium bg-ai-white p-4 text-left transition-all duration-200',
-									'hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
-									'dark:border-subtle dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
+									'group flex flex-col items-start gap-3 rounded-xl border border-subtle bg-surface p-4 text-left transition-all duration-200',
+									'hover:-translate-y-0.5 hover:border-ai-gold-muted hover:shadow-ai-halo dark:hover:shadow-ai-halo-faint'
 								)}
 							>
-								<span className="inline-block rounded-full border border-ai-gold/30 bg-ai-gold/8 px-2.5 py-0.5 label-sm text-ai-gold dark:border-ai-gold-bright/30 dark:bg-ai-gold-bright/8 dark:text-ai-gold-bright">
+								<span className="inline-block rounded-full border border-ai-gold-muted bg-ai-gold-tint px-2.5 py-0.5 label-sm text-ai-gold-deep">
 									{q.tag}
 								</span>
 								<span className="flex-1 body-md text-secondary">{q.text}</span>
-								<span className="flex items-center gap-1 label-md text-ai-gold opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:text-ai-gold-bright">
+								<span className="flex items-center gap-1 label-md text-ai-gold-deep opacity-0 transition-opacity duration-200 group-hover:opacity-100">
 									Ask this
 									<Icon name="arrow-right" height={12} width={12} />
 								</span>
@@ -187,15 +186,14 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					>
 						<div
 							className={clsx(
-								'flex items-center gap-2 rounded-xl border border-medium bg-ai-white px-4 py-3 transition-all duration-200',
-								'focus-within:border-ai-gold/50 focus-within:shadow-ai-focus-gold',
-								'dark:border-subtle dark:bg-ai-ink-raised dark:focus-within:border-ai-gold-bright/30 dark:focus-within:shadow-ai-focus-gold-dark'
+								'flex items-center gap-2 rounded-xl border border-medium bg-surface px-4 py-3 transition-all duration-200',
+								'focus-within:border-ai-gold-deep focus-within:shadow-ai-focus-gold dark:focus-within:shadow-ai-focus-gold-dark'
 							)}
 						>
 							<input
 								name="freeform"
 								type="text"
-								placeholder="Or ask your own question..."
+								placeholder="Or ask your own question…"
 								className="flex-1 bg-transparent body-md text-secondary outline-hidden placeholder:text-tertiary"
 							/>
 							<button
@@ -234,8 +232,7 @@ function MobileAppButton() {
 			data-umami-event="mobile-app-ai-landing-hero-click"
 			className={clsx(
 				'group relative z-10 inline-flex items-center justify-center gap-2.5 rounded-xl px-5 py-3 label-lg transition-all duration-200',
-				'border border-medium bg-ai-white text-primary hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
-				'dark:border-subtle dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
+				'border border-medium bg-surface text-primary hover:-translate-y-0.5 hover:border-ai-gold-muted hover:shadow-ai-halo dark:hover:shadow-ai-halo-faint'
 			)}
 		>
 			<img src="/assets/app/app-icon.png" alt="" width={20} height={20} className="size-5 shrink-0 rounded-md" />
@@ -262,7 +259,7 @@ function MobileAppCard() {
 					<BasicLink
 						href="/app"
 						data-umami-event="mobile-app-ai-landing-card-click"
-						className="group inline-flex items-center gap-1 label-md text-ai-gold transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+						className="group inline-flex items-center gap-1 label-md text-ai-gold-deep"
 					>
 						Learn more
 						<Icon
@@ -378,13 +375,11 @@ function ExampleShowcase() {
 			}}
 		>
 			<div className="mb-3 flex items-start gap-2.5 px-1">
-				<div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-elevated-1 body-md dark:bg-ai-ink-raised">
+				<div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-elevated-1 body-md">
 					👤
 				</div>
 				<div>
-					<span className="mb-1 block title-sm tracking-wider text-ai-gold uppercase dark:text-ai-gold-bright">
-						{example.category}
-					</span>
+					<span className="mb-1 block title-sm tracking-wider text-ai-gold-deep uppercase">{example.category}</span>
 					<span className="label-md text-secondary">&ldquo;{example.prompt}&rdquo;</span>
 				</div>
 			</div>
@@ -395,14 +390,14 @@ function ExampleShowcase() {
 				rel="noopener noreferrer"
 				onClick={() => trackUmamiEvent('llamaai-landing-showcase-click', { example: example.id })}
 				className={clsx(
-					'group relative block overflow-hidden rounded-2xl border border-medium shadow-card-soft transition-all duration-500',
-					'hover:-translate-y-1 hover:border-ai-gold/40 hover:shadow-ai-gold-wash',
-					'dark:border-subtle dark:shadow-modal-soft dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-gold-wash-faint'
+					'group relative block overflow-hidden rounded-2xl border border-subtle shadow-card-soft transition-all duration-500',
+					'hover:-translate-y-1 hover:border-ai-gold-muted hover:shadow-ai-gold-wash',
+					'dark:shadow-modal-soft dark:hover:shadow-ai-gold-wash-faint'
 				)}
 			>
 				<div
 					className={clsx(
-						'relative aspect-4/3 w-full overflow-hidden bg-ai-ink transition-opacity duration-200',
+						'relative aspect-4/3 w-full overflow-hidden bg-surface-elevated-1 transition-opacity duration-200',
 						isTransitioning ? 'opacity-0' : 'opacity-100'
 					)}
 				>
@@ -416,16 +411,20 @@ function ExampleShowcase() {
 						alt={`LlamaAI ${example.category} example`}
 						className="block size-full object-cover object-top transition-transform duration-700 group-hover:scale-105 dark:hidden"
 					/>
-					<div className="absolute inset-0 flex items-center justify-center bg-linear-to-t from-ai-black/50 via-ai-black/0 to-ai-black/0 opacity-0 transition-all duration-500 group-hover:opacity-100">
-						<span className="flex translate-y-4 items-center gap-2 rounded-full bg-linear-to-r from-ai-gold-bright to-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold shadow-ai-halo-bright transition-all duration-500 group-hover:translate-y-0">
+					<div className="absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-500 group-hover:opacity-100">
+						<span
+							aria-hidden="true"
+							className="absolute inset-0 bg-linear-to-t from-ai-black via-transparent to-transparent opacity-50"
+						/>
+						<span className="relative flex translate-y-4 items-center gap-2 rounded-full bg-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold shadow-ai-halo-bright transition-all duration-500 group-hover:translate-y-0">
 							View full conversation
 							<Icon name="arrow-up-right" height={14} width={14} />
 						</span>
 					</div>
 				</div>
-				<div className="flex items-center justify-between bg-ai-white px-4 py-3 dark:bg-ai-ink-raised">
+				<div className="flex items-center justify-between bg-surface px-4 py-3">
 					<span className="body-md text-tertiary">{example.description}</span>
-					<span className="flex shrink-0 items-center gap-1 title-md text-ai-gold transition-all group-hover:gap-2 dark:text-ai-gold-bright">
+					<span className="flex shrink-0 items-center gap-1 title-md text-ai-gold-deep transition-all group-hover:gap-2">
 						View
 						<Icon name="arrow-up-right" height={12} width={12} />
 					</span>
@@ -446,9 +445,7 @@ function ExampleShowcase() {
 						<span
 							className={clsx(
 								'block h-1.5 rounded-full transition-all duration-300',
-								i === current
-									? 'w-6 bg-ai-gold dark:bg-ai-gold-bright'
-									: 'w-1.5 bg-ai-gold/45 group-hover:bg-ai-gold/80 dark:bg-ai-gold-bright/45 dark:group-hover:bg-ai-gold-bright/80'
+								i === current ? 'w-6 bg-ai-gold' : 'w-1.5 bg-ai-gold-muted group-hover:bg-ai-gold'
 							)}
 						/>
 					</button>
@@ -521,7 +518,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				}
 			`}</style>
 			<LlamaAIMobileAppPromotion />
-			<div className="col-span-full flex min-h-screen flex-col overflow-x-hidden bg-surface-elevated-1">
+			<div className="col-span-full flex min-h-screen flex-col overflow-x-hidden bg-page">
 				{/* Header */}
 				<header className="relative z-20 px-4 pt-4 md:px-8 md:pt-6">
 					<BasicLink
@@ -581,7 +578,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								/>
 							</div>
 							<h1 className="mb-6 text-[3rem] leading-[1.05] font-extrabold tracking-[-0.03em] text-primary md:text-[4rem] lg:text-[4.5rem]">
-								<span className="bg-linear-to-r from-ai-gold to-ai-gold-deep bg-clip-text text-transparent dark:from-ai-gold-bright dark:to-ai-gold">
+								<span className="bg-linear-to-r from-ai-gold to-ai-gold-deep bg-clip-text text-transparent">
 									LlamaAI
 								</span>
 							</h1>
@@ -613,13 +610,10 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				{/* Capability Strip - Desktop: single row of 5, Mobile: 3 top + 2 bottom centered */}
 				<section className="relative z-10 mx-auto max-w-5xl px-4 pb-10 md:px-8">
 					{/* Desktop: all 5 in one row */}
-					<div className="hidden overflow-hidden rounded-xl border border-subtle bg-surface-elevated-1 md:grid md:grid-cols-5 md:gap-px">
+					<div className="hidden overflow-hidden rounded-xl border border-subtle bg-border-subtle md:grid md:grid-cols-5 md:gap-px">
 						{CAPABILITIES.map((cap) => (
-							<div
-								key={cap.label}
-								className="flex flex-col items-center gap-1.5 bg-ai-white px-3 py-4 text-center dark:bg-ai-ink-raised"
-							>
-								<Icon name={cap.icon} height={18} width={18} className="text-ai-gold dark:text-ai-gold-bright" />
+							<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
+								<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
 								<span className="title-sm text-tertiary">{cap.label}</span>
 								<span className="body-xs text-tertiary">{cap.sub}</span>
 							</div>
@@ -627,25 +621,19 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 					</div>
 					{/* Mobile: top row of 3, bottom row of 2 centered */}
 					<div className="flex flex-col items-center md:hidden">
-						<div className="grid w-full grid-cols-3 gap-px overflow-hidden rounded-t-xl border-x border-t border-subtle bg-surface-elevated-1">
+						<div className="grid w-full grid-cols-3 gap-px overflow-hidden rounded-t-xl border-x border-t border-subtle bg-border-subtle">
 							{CAPABILITIES.slice(0, 3).map((cap) => (
-								<div
-									key={cap.label}
-									className="flex flex-col items-center gap-1.5 bg-ai-white px-3 py-4 text-center dark:bg-ai-ink-raised"
-								>
-									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold dark:text-ai-gold-bright" />
+								<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
+									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
 									<span className="title-sm text-tertiary">{cap.label}</span>
 									<span className="body-xs text-tertiary">{cap.sub}</span>
 								</div>
 							))}
 						</div>
-						<div className="grid w-2/3 grid-cols-2 gap-px overflow-hidden rounded-b-xl border-x border-b border-subtle bg-surface-elevated-1">
+						<div className="grid w-2/3 grid-cols-2 gap-px overflow-hidden rounded-b-xl border-x border-b border-subtle bg-border-subtle">
 							{CAPABILITIES.slice(3).map((cap) => (
-								<div
-									key={cap.label}
-									className="flex flex-col items-center gap-1.5 bg-ai-white px-3 py-4 text-center dark:bg-ai-ink-raised"
-								>
-									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold dark:text-ai-gold-bright" />
+								<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
+									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
 									<span className="title-sm text-tertiary">{cap.label}</span>
 									<span className="body-xs text-tertiary">{cap.sub}</span>
 								</div>
@@ -665,8 +653,8 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						</h2>
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 							{/* DeFi & TradFi - wide card */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 md:col-span-2 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 title-lg text-ai-gold dark:text-ai-gold-bright">DeFi, TradFi & Onchain</h3>
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted md:col-span-2">
+								<h3 className="mb-1.5 title-lg text-ai-gold-deep">DeFi, TradFi & Onchain</h3>
 								<p className="mb-4 max-w-lg body-md text-tertiary">
 									DefiLlama's 5,000+ protocols paired with stocks, macro, and onchain data. Questions that used to need
 									multiple tools and tabs are now single prompts.
@@ -678,7 +666,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<span className="text-success">5/5 ok</span> 6921ms
 										</span>
 									</div>
-									<div className="divide-subtle space-y-0 divide-y">
+									<div className="space-y-0 divide-y divide-(--border-subtle)">
 										{[
 											{ key: 'load_skill', time: '2ms' },
 											{ key: 'execute_sql', time: '31ms', detail: '64 rows' },
@@ -709,8 +697,8 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</div>
 
 							{/* Scheduled Alerts */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 title-lg text-ai-gold dark:text-ai-gold-bright">Scheduled alerts</h3>
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted">
+								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Scheduled alerts</h3>
 								<p className="mb-4 body-md text-tertiary">
 									Automate recurring prompts. Set up daily price checks, portfolio summaries, or custom data monitors on
 									your schedule.
@@ -718,7 +706,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-subtle bg-surface-elevated-1">
 									<div className="border-b border-subtle px-3 py-2">
 										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded-sm bg-ai-gold/15 dark:bg-ai-gold-bright/15">
+											<div className="flex size-5 items-center justify-center rounded-sm bg-ai-gold-tint">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													width="11"
@@ -729,7 +717,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 													strokeWidth="2.5"
 													strokeLinecap="round"
 													strokeLinejoin="round"
-													className="text-ai-gold dark:text-ai-gold-bright"
+													className="text-ai-gold"
 												>
 													<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
 													<line x1="16" y1="2" x2="16" y2="6" />
@@ -746,15 +734,15 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<p className="body-xs text-tertiary">Daily at 9 AM UTC</p>
 										</div>
 										<div className="h-3.5 w-6 shrink-0 rounded-full bg-brand p-0.5">
-											<div className="size-2.5 translate-x-2.5 rounded-full bg-ai-white shadow-sm" />
+											<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-sm" />
 										</div>
 									</div>
 								</div>
 							</div>
 
 							{/* Memory & Settings */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 title-lg text-ai-gold dark:text-ai-gold-bright">Customize your experience</h3>
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted">
+								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Customize your experience</h3>
 								<p className="mb-4 body-md text-tertiary">
 									LlamaAI learns what you care about and tailors responses to your style. Set custom instructions and
 									let memory build your profile across sessions.
@@ -782,7 +770,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<span className="title-sm text-secondary">Settings</span>
 										</div>
 									</div>
-									<div className="divide-subtle space-y-0 divide-y">
+									<div className="space-y-0 divide-y divide-(--border-subtle)">
 										<div className="px-3 py-2">
 											<p className="label-sm text-secondary">Custom instructions</p>
 											<p className="body-xs text-tertiary">Be concise. Always include % changes.</p>
@@ -792,7 +780,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 												<p className="label-sm text-secondary">Remember my preferences</p>
 											</div>
 											<div className="h-3.5 w-6 shrink-0 rounded-full bg-brand p-0.5">
-												<div className="size-2.5 translate-x-2.5 rounded-full bg-ai-white shadow-sm" />
+												<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-sm" />
 											</div>
 										</div>
 									</div>
@@ -800,8 +788,8 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</div>
 
 							{/* Research Reports - wide card */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 md:col-span-2 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 title-lg text-ai-gold dark:text-ai-gold-bright">Research reports</h3>
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted md:col-span-2">
+								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Research reports</h3>
 								<p className="mb-4 max-w-lg body-md text-tertiary">
 									Generate in-depth research reports on any protocol, sector, or trend. Multiple agents research in
 									parallel, then synthesize everything into a single exportable PDF.
@@ -809,11 +797,11 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-subtle bg-surface-elevated-1">
 									<div className="flex items-center gap-2.5 border-b border-subtle px-3 py-2">
 										<span className="body-md">🦙</span>
-										<span className="flex-1 label-sm text-secondary">Researching in parallel...</span>
-										<span className="rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary">
+										<span className="flex-1 label-sm text-secondary">Researching in parallel…</span>
+										<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary">
 											1/3 done
 										</span>
-										<span className="rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 mono-sm text-secondary">01:27</span>
+										<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 mono-sm text-secondary">01:27</span>
 									</div>
 									<div className="space-y-1.5 px-3 py-2.5">
 										<div className="flex items-center gap-2">
@@ -881,18 +869,18 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											alt="LlamaAI Demo"
 											className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
 										/>
-										<div className="absolute inset-0 bg-linear-to-t from-ai-black/60 via-ai-black/20 to-ai-black/10 transition-opacity duration-300 group-hover:opacity-70" />
+										<div className="absolute inset-0 bg-linear-to-t from-ai-black to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40" />
 										<div className="relative z-10 flex size-16 items-center justify-center rounded-full bg-linear-to-br from-ai-gold-bright to-ai-gold shadow-ai-halo-strong transition-all duration-300 group-hover:scale-110 group-hover:shadow-ai-gold-glow-lg md:size-20">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 24 24"
 												fill="currentColor"
-												className="ml-1 size-6 text-primary md:size-8"
+												className="ml-1 size-6 text-ai-on-gold-strong md:size-8"
 											>
 												<path d="M8 5.14v14l11-7-11-7z" />
 											</svg>
 										</div>
-										<span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-screen-dim px-3 py-1.5 label-sm text-ai-white/90 backdrop-blur-sm transition-all duration-300 group-hover:bg-ai-black/80 md:bottom-6 md:px-4 md:py-2 md:label-md">
+										<span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-ai-ink-scrim px-3 py-1.5 label-sm text-ai-white backdrop-blur-sm md:bottom-6 md:px-4 md:py-2 md:label-md">
 											Watch demo
 										</span>
 									</button>
@@ -921,7 +909,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							FAQs
 						</h2>
 
-						<div className="divide-subtle divide-y border-t border-subtle">
+						<div className="divide-y divide-(--border-subtle) border-t border-subtle">
 							<FAQ question="What is LlamaAI?">
 								<p>
 									Your AI research assistant for DeFi and financial markets. Ask questions in plain language and get
@@ -978,7 +966,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 									Contact{' '}
 									<a
 										href="mailto:support@defillama.com"
-										className="text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+										className="text-ai-gold-deep underline decoration-ai-gold-muted transition-colors hover:decoration-current"
 									>
 										support@defillama.com
 									</a>
@@ -995,18 +983,18 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						<BasicLink
 							href="/mcp"
 							onClick={() => trackUmamiEvent('llamaai-mcp-upsell-click')}
-							className="group flex flex-col gap-4 rounded-2xl border border-ai-research/20 bg-linear-to-r from-ai-research/5 to-ai-research-bright/5 p-5 transition-colors hover:border-ai-research/40 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+							className="group flex flex-col gap-4 rounded-2xl border border-ai-violet-muted bg-ai-violet-faint p-5 transition-colors hover:border-ai-violet-strong sm:flex-row sm:items-center sm:justify-between sm:p-6"
 						>
 							<div>
 								<h3 className="font-semibold text-primary">
-									Building with AI agents? <span className="text-ai-research">Try our MCP Server</span>
+									Building with AI agents? <span className="text-ai-violet">Try our MCP Server</span>
 								</h3>
 								<p className="mt-1 max-w-lg body-md text-secondary">
 									Connect Claude, Cursor, OpenClaw, or any MCP-compatible agent directly to DefiLlama's data. 23 tools
 									for TVL, yields, prices, protocol metrics, and more.
 								</p>
 							</div>
-							<span className="shrink-0 self-start rounded-lg border border-ai-research/30 px-4 py-2 label-md text-ai-research transition-colors group-hover:bg-ai-research/10 sm:self-center">
+							<span className="shrink-0 self-start rounded-lg border border-ai-violet-muted px-4 py-2 label-md text-ai-violet transition-colors group-hover:bg-ai-violet-tint sm:self-center">
 								Explore MCP
 							</span>
 						</BasicLink>
@@ -1056,7 +1044,7 @@ function FAQ({ question, children }: { question: string; children: React.ReactNo
 	return (
 		<details className="group">
 			<summary className="flex cursor-pointer items-center gap-4 py-4 md:py-5">
-				<span className="flex-1 label-md text-primary transition-colors group-hover:text-ai-gold md:label-lg dark:group-hover:text-ai-gold-bright">
+				<span className="flex-1 label-md text-primary transition-colors group-hover:text-ai-gold-deep md:label-lg">
 					{question}
 				</span>
 				<Icon

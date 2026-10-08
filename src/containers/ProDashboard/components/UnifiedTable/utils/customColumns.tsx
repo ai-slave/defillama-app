@@ -33,12 +33,12 @@ function getParsedExpression(expression: string): ReturnType<typeof parser.parse
 	}
 }
 
-const renderDash = () => <span className="text-pro-text-tertiary">-</span>
+const renderDash = () => <span className="text-tertiary">-</span>
 
 const renderUsd = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		</span>
 	)
@@ -47,7 +47,7 @@ const renderUsd = (value: number | null | undefined) => {
 const renderNumber = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			{formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		</span>
 	)
@@ -56,7 +56,7 @@ const renderNumber = (value: number | null | undefined) => {
 const renderPercent = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
 	return (
-		<span className="text-pro-text-secondary">
+		<span className="text-secondary">
 			<PercentChange percent={value} noSign />
 		</span>
 	)
@@ -65,7 +65,7 @@ const renderPercent = (value: number | null | undefined) => {
 const renderRatio = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
 	return (
-		<span className="text-pro-text-secondary">{`${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}x`}</span>
+		<span className="text-secondary">{`${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}x`}</span>
 	)
 }
 

@@ -20,7 +20,7 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 			{canScrollLeft || canScrollRight ? (
 				<>
 					{canScrollLeft ? (
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-page to-transparent md:block" />
 					) : null}
 					<Tooltip
 						content="Scroll left"
@@ -53,7 +53,7 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 			{(canScrollLeft || canScrollRight) && itemCount > 3 ? (
 				<>
 					{canScrollRight ? (
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-page to-transparent md:block" />
 					) : null}
 					<Tooltip
 						content="Scroll right"
@@ -100,13 +100,10 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					)}
 				</BasicLink>
 				<div className="min-w-0 flex-1">
-					<BasicLink
-						href={`/authors/${author.slug}`}
-						className="block truncate title-lg text-pro-text-primary hover:text-link"
-					>
+					<BasicLink href={`/authors/${author.slug}`} className="block truncate title-lg text-primary hover:text-link">
 						{author.displayName}
 					</BasicLink>
-					<p className="truncate body-sm text-pro-text-tertiary">
+					<p className="truncate body-sm text-tertiary">
 						{shelf.dashboardCount} {shelf.dashboardCount === 1 ? 'dashboard' : 'dashboards'}
 					</p>
 				</div>
@@ -114,7 +111,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 			</div>
 
 			{shelf.dashboards.length === 0 ? (
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
 					No public dashboards yet
 				</p>
 			) : (
@@ -130,7 +127,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border body-md text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-link md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-medium body-md text-secondary transition-colors hover:border-brand-muted hover:text-link md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
@@ -152,9 +149,9 @@ export function FollowingShelves() {
 	if (shelves.length === 0) {
 		return (
 			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-				<Icon name="users" height={32} width={32} className="text-pro-text-tertiary" />
-				<h2 className="text-center title-lg text-pro-text-primary">You're not following anyone yet</h2>
-				<p className="text-center body-md text-pro-text-secondary">
+				<Icon name="users" height={32} width={32} className="text-tertiary" />
+				<h2 className="text-center title-lg text-primary">You're not following anyone yet</h2>
+				<p className="text-center body-md text-secondary">
 					Follow authors and their public dashboards will show up here.
 				</p>
 				<div className="mt-7">

@@ -28,17 +28,17 @@ export function DashboardList({
 		<div>
 			{dashboards.length === 0 && emptyMessage ? (
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-					<Icon name="search" height={32} width={32} className="text-pro-text-tertiary" />
-					<p className="text-center body-md text-pro-text-secondary">{emptyMessage.title}</p>
+					<Icon name="search" height={32} width={32} className="text-tertiary" />
+					<p className="text-center body-md text-secondary">{emptyMessage.title}</p>
 					<Button size="md" type="button" variant="secondary" onClick={emptyMessage.onClearFilters}>
 						Clear filters
 					</Button>
 				</div>
 			) : dashboards.length === 0 ? (
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-					<Icon name="layers" height={32} width={32} className="text-pro-text-tertiary" />
-					<h2 className="text-center title-lg text-pro-text-primary">No dashboards yet</h2>
-					<p className="text-center body-md text-pro-text-secondary">Create your first dashboard to get started</p>
+					<Icon name="layers" height={32} width={32} className="text-tertiary" />
+					<h2 className="text-center title-lg text-primary">No dashboards yet</h2>
+					<p className="text-center body-md text-secondary">Create your first dashboard to get started</p>
 					<ProButton type="button" variant="primary" size="lg" onClick={onCreateNew}>
 						<Icon name="plus" height={16} width={16} />
 						Create dashboard

@@ -120,7 +120,7 @@ const storeButtonSizeClassNames = {
 	lg: 'h-14 w-full max-w-[300px]'
 } as const
 const storeButtonClassName =
-	'flex items-center justify-center rounded-xl bg-black transition-opacity duration-200 hover:opacity-85 dark:border dark:border-white/15'
+	'theme-dark hover-wash flex items-center justify-center rounded-xl border border-medium bg-page transition-colors duration-200'
 const storeBadgeClassName = 'h-full w-auto'
 
 export function StoreButtons({
@@ -185,7 +185,7 @@ export function StoreButtons({
 					target="_blank"
 					rel="noopener noreferrer"
 					data-umami-event={`mobile-app-other-store-${eventSuffix}`}
-					className="body-sm text-sub-text-muted underline"
+					className="body-sm text-tertiary underline"
 				>
 					{platform === 'ios' ? 'Also on Google Play' : 'Also on the App Store'}
 				</a>
@@ -194,8 +194,7 @@ export function StoreButtons({
 	)
 }
 
-const chipClassName =
-	'rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 body-sm text-sub-text-secondary dark:bg-sub-dark-card'
+const chipClassName = 'rounded-full border border-medium bg-surface px-3 py-1.5 body-sm text-secondary'
 
 function QuotaChips() {
 	return (
@@ -212,20 +211,18 @@ function QuotaChips() {
 	)
 }
 
-const sectionHeadingClassName = 'heading-lg tracking-tight text-sub-text-primary'
+const sectionHeadingClassName = 'heading-lg tracking-tight text-primary'
 
 function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
 	return <section className={`mx-auto max-w-[1440px] px-4 md:px-10 2xl:px-32 ${className}`}>{children}</section>
 }
 
 function GradientWord({ children }: { children: React.ReactNode }) {
-	return (
-		<span className="bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-transparent">{children}</span>
-	)
+	return <span className="sub-gradient-text-purple">{children}</span>
 }
 
 function SectionEyebrow({ children }: { children: React.ReactNode }) {
-	return <span className="title-sm tracking-[0.18em] text-sub-purple uppercase">{children}</span>
+	return <span className="title-sm tracking-[0.18em] text-sub-purple-text uppercase">{children}</span>
 }
 
 function HeroPhone() {
@@ -234,15 +231,15 @@ function HeroPhone() {
 			{/* aura + rings behind the phone */}
 			<div
 				aria-hidden="true"
-				className="absolute top-1/2 left-1/2 size-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sub-brand-primary/25 blur-[90px] md:size-[500px] md:blur-[130px] dark:bg-sub-blue/35"
+				className="absolute top-1/2 left-1/2 size-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-tint-strong blur-[90px] md:size-[500px] md:blur-[130px] dark:bg-sub-blue dark:opacity-35"
 			/>
 			<div
 				aria-hidden="true"
-				className="absolute top-1/2 left-1/2 size-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sub-brand-primary/10 md:size-[580px]"
+				className="absolute top-1/2 left-1/2 size-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-muted md:size-[580px]"
 			/>
 			<div
 				aria-hidden="true"
-				className="absolute top-1/2 left-1/2 hidden size-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sub-brand-primary/5 md:block"
+				className="absolute top-1/2 left-1/2 hidden size-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-muted md:block"
 			/>
 
 			<img
@@ -250,18 +247,18 @@ function HeroPhone() {
 				alt="LlamaAI in the DefiLlama app answering “Should I buy ETH right now?” with a full investment thesis"
 				width={760}
 				height={1245}
-				className="relative w-full max-w-[300px] rounded-[2rem] border border-sub-border/60 shadow-2xl shadow-sub-brand-primary/20 md:max-w-[360px]"
+				className="relative w-full max-w-[300px] rounded-[2rem] border border-subtle shadow-2xl shadow-sub-glow md:max-w-[360px]"
 			/>
 
 			{FLOATING_CHIPS.map((chip) => (
 				<div
 					key={chip.label}
-					className={`absolute hidden items-center gap-2.5 rounded-2xl border border-sub-border bg-sub-surface-panel/85 py-2.5 pr-4 pl-3 shadow-xl shadow-sub-brand-primary/5 backdrop-blur-md motion-safe:animate-float lg:flex dark:bg-sub-dark-card/85 ${chip.className}`}
+					className={`absolute hidden items-center gap-2.5 rounded-2xl border border-medium bg-surface-glass py-2.5 pr-4 pl-3 shadow-overlay-sm backdrop-blur-md motion-safe:animate-float lg:flex ${chip.className}`}
 				>
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-sub-brand-primary to-sub-brand-soft text-on-brand">
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand to-sub-brand-soft text-on-brand">
 						<Icon name={chip.icon} height={15} width={15} />
 					</span>
-					<span className="label-md whitespace-nowrap text-sub-text-primary">{chip.label}</span>
+					<span className="label-md whitespace-nowrap text-primary">{chip.label}</span>
 				</div>
 			))}
 		</div>
@@ -272,16 +269,16 @@ function Hero({ protocols, chains }: { protocols: number; chains: number }) {
 	return (
 		<Section className="relative flex flex-col items-center gap-14 pt-14 pb-20 md:gap-20 md:pt-24 md:pb-28">
 			<div className="flex flex-col items-center gap-6">
-				<span className="flex items-center gap-2 rounded-full border border-sub-border bg-sub-surface-panel px-3.5 py-1.5 label-sm text-sub-text-secondary dark:bg-sub-dark-card">
+				<span className="flex items-center gap-2 rounded-full border border-medium bg-surface px-3.5 py-1.5 label-sm text-secondary">
 					<span className="size-1.5 rounded-full bg-sub-live shadow-sub-live" />
 					Now on iOS and Android
 				</span>
 
-				<h1 className="max-w-[820px] text-center heading-lg tracking-[-0.03em] text-sub-text-primary">
+				<h1 className="max-w-[820px] text-center heading-lg tracking-[-0.03em] text-primary">
 					Meet <GradientWord>LlamaAI</GradientWord>
 				</h1>
 
-				<p className="max-w-[620px] text-center body-xl text-sub-text-secondary">
+				<p className="max-w-[620px] text-center body-xl text-secondary">
 					Your AI research analyst for crypto — full theses, live charts, forecasts and backtests, backed by DefiLlama
 					data on {formatNumber(protocols)} protocols across {formatNumber(chains)} chains.
 				</p>
@@ -302,14 +299,14 @@ function Features() {
 			<div className="mx-auto flex max-w-[680px] flex-col items-center gap-4 text-center">
 				<SectionEyebrow>LlamaAI</SectionEyebrow>
 				<h2 className={sectionHeadingClassName}>DeFi and TradFi data, live insights, actionable analysis</h2>
-				<p className="body-lg text-sub-text-secondary">
+				<p className="body-lg text-secondary">
 					Everything DefiLlama knows, with an analyst that reads it for you and shows the work.
 				</p>
 				<div className="flex flex-wrap justify-center gap-2">
 					{ASK_EXAMPLES.map((example) => (
 						<span
 							key={example}
-							className="rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 body-sm text-sub-text-secondary transition-colors duration-200 hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
+							className="rounded-full border border-medium bg-surface px-3 py-1.5 body-sm text-secondary transition-colors duration-200 hover:border-brand-muted hover:text-primary"
 						>
 							{example}
 						</span>
@@ -321,13 +318,13 @@ function Features() {
 				{FEATURES.map((feature) => (
 					<div
 						key={feature.title}
-						className="flex flex-col gap-3 rounded-2xl border border-sub-border bg-sub-surface-panel p-6 transition-all duration-300 hover:-translate-y-1 hover:border-sub-brand-primary/40 hover:shadow-sub-blue-glow dark:bg-sub-dark-card"
+						className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-muted hover:shadow-sub-blue-glow"
 					>
-						<span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-sub-brand-primary to-sub-brand-soft text-on-brand shadow-sub-blue-glow">
+						<span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-brand to-sub-brand-soft text-on-brand shadow-sub-blue-glow">
 							<Icon name={feature.icon} height={20} width={20} />
 						</span>
-						<h3 className="heading-xs text-sub-text-primary">{feature.title}</h3>
-						<p className="body-md text-sub-text-secondary">{feature.description}</p>
+						<h3 className="heading-xs text-primary">{feature.title}</h3>
+						<p className="body-md text-secondary">{feature.description}</p>
 					</div>
 				))}
 			</div>
@@ -352,9 +349,9 @@ function Previews() {
 							width={760}
 							height={1245}
 							loading="lazy"
-							className="w-full rounded-3xl border border-sub-border/60 shadow-xl shadow-black/5 transition-transform duration-300 md:hover:-translate-y-1.5 dark:shadow-black/30"
+							className="w-full rounded-3xl border border-subtle shadow-xl transition-transform duration-300 md:hover:-translate-y-1.5"
 						/>
-						<figcaption className="text-center label-lg text-sub-text-secondary">{preview.caption}</figcaption>
+						<figcaption className="text-center label-lg text-secondary">{preview.caption}</figcaption>
 					</figure>
 				))}
 			</div>
@@ -365,22 +362,22 @@ function Previews() {
 function FinalCta() {
 	return (
 		<Section className="pt-4 pb-16 md:pt-8 md:pb-28">
-			<div className="relative overflow-hidden rounded-3xl border border-sub-brand-primary/25 bg-sub-surface-panel px-6 py-14 text-center md:py-20 dark:bg-sub-dark-card">
+			<div className="relative overflow-hidden rounded-3xl border border-brand-muted bg-surface px-6 py-14 text-center md:py-20">
 				<div
 					aria-hidden="true"
 					className="absolute inset-0 [background-image:var(--sub-grid-image-light)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)] [background-size:52px_52px] opacity-40 dark:[background-image:var(--sub-grid-image-dark)] dark:opacity-25"
 				/>
 				<div
 					aria-hidden="true"
-					className="absolute -top-32 left-1/2 h-64 w-[720px] max-w-full -translate-x-1/2 rounded-full bg-sub-brand-primary/20 blur-[100px] dark:bg-sub-blue/25"
+					className="absolute -top-32 left-1/2 h-64 w-[720px] max-w-full -translate-x-1/2 rounded-full bg-brand-tint-strong blur-[100px] dark:bg-sub-blue dark:opacity-25"
 				/>
 
 				<div className="relative flex flex-col items-center gap-8">
 					<div className="flex max-w-[640px] flex-col items-center gap-4">
-						<h2 className="heading-lg tracking-tight text-sub-text-primary">
+						<h2 className="heading-lg tracking-tight text-primary">
 							Put <GradientWord>LlamaAI</GradientWord> in your pocket
 						</h2>
-						<p className="max-w-[560px] body-lg text-sub-text-secondary">
+						<p className="max-w-[560px] body-lg text-secondary">
 							Try 3 prompts straight away, no account needed. Sign in for 10 free prompts a day, or go unlimited with a
 							DefiLlama Pro subscription — the same one that works on the web.
 						</p>
@@ -396,14 +393,14 @@ function SectionDivider() {
 	return (
 		<div
 			aria-hidden="true"
-			className="mx-auto h-px max-w-5xl bg-linear-to-r from-transparent via-sub-border/70 to-transparent"
+			className="mx-auto h-px max-w-5xl bg-linear-to-r from-transparent via-(--border-medium) to-transparent"
 		/>
 	)
 }
 
 export function MobileAppLanding({ protocols, chains }: { protocols: number; chains: number }) {
 	return (
-		<div className="relative col-span-full min-h-screen w-full [overflow-x:clip] [overflow-y:visible] bg-sub-surface-page text-sub-text-primary dark:bg-sub-dark-page">
+		<div className="relative col-span-full min-h-screen w-full [overflow-x:clip] [overflow-y:visible] bg-page text-primary">
 			<SubscriptionBackground />
 			<SubscriptionHeader />
 

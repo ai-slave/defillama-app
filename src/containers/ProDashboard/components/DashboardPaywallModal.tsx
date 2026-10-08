@@ -60,7 +60,7 @@ export function DashboardPaywallModal({ reason, onClose }: DashboardPaywallModal
 	const config = REASON_CONFIG[reason]
 
 	return (
-		<Dialog size="sm" scope="pro" open onClose={onClose} portal unmountOnHide>
+		<Dialog size="sm" open onClose={onClose} portal unmountOnHide>
 			<DialogHeader title={config.title} />
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">{config.description}</Ariakit.DialogDescription>

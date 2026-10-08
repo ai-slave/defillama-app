@@ -195,10 +195,10 @@ export function ChainsDataset({
 				const sourceValue = row.original[metric.key]
 				const total = totals[metric.key]
 				const value = getChainMetricShare(sourceValue, total)
-				if (value == null) return <span className="text-pro-text-secondary">-</span>
+				if (value == null) return <span className="text-secondary">-</span>
 
 				return (
-					<span className="text-pro-text-secondary">
+					<span className="text-secondary">
 						{formatPercent(value, {
 							input: 'percent',
 							minimumFractionDigits: 2,

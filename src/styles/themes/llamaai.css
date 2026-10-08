@@ -5,82 +5,94 @@
    Everything ordinary — text tiers, borders, surfaces, hover washes,
    backdrops, status colors, blues — comes from semantics.css and the shared
    src/ui primitives (design.md → "Product surfaces"). This file holds:
-   - the gold/bronze brand accents and the CTA gradient,
-   - the always-dark ink surfaces (image lightbox),
-   - the terminal palette behind hacker mode,
-   - the alerts orange, research purple, mention purple, and Slack button,
+   - the gold brand accents, the gold text and the CTA gradient,
+   - the image lightbox's mode-invariant ink (ai-ink-*, ai-white, ai-black),
+   - the hacker-mode terminal green,
+   - the violet accent (computed citations, protocol badges, the MCP upsell)
+     on the violet ramp, and the Slack button,
    - the brand shadows and entrance animations.
    Do not add a neutral, status, or blue token here; add it to semantics.css.
-   Mode handling: light values on :root, dark overrides under html.dark.
-   ai-ink-*, ai-on-ink-*, ai-white/black, and terminal are mode-invariant.
+   Mode handling: light values on :root, dark overrides under html.dark and
+   .theme-dark (the hacker-mode cards), so a scoped dark card gets the dark
+   accents in light mode too. ai-ink, ai-white and ai-black are
+   mode-invariant.
 ---------------------------------------------------------------------------- */
 
 :root {
-	/* Always-dark surfaces (image lightbox, terminal, code) */
+	/* Ink: the LlamaAI announcement's dark banner (announcements.css) */
 	--ai-ink: #111214;
 	--ai-ink-raised: #1e2028;
-	--ai-on-ink-muted: #8b8d93;
 
-	/* Statics */
+	/* Statics: the image lightbox and the scrims over screenshots */
 	--ai-white: #ffffff;
 	--ai-black: #000000;
 
-	/* Brand — LlamaAI gold + landing bronze accents */
+	/* Brand — LlamaAI gold. ai-gold is the accent for fills, icons and
+	   borders (2.6:1 on white, never text in light mode); ai-gold-deep is
+	   the gold text, AA on the surfaces, the hover wash and ai-gold-tint in
+	   both modes. */
 	--ai-gold: #c99a4a;
 	--ai-gold-bright: #fde0a9;
 	--ai-gold-soft: #fbedcb;
 	--ai-on-gold: #5c4a1f;
 	--ai-on-gold-strong: #1a1200;
-	--ai-bronze: #a17f47;
-	--ai-bronze-deep: #86663a;
-	--ai-bronze-bright: #e8c089;
-	--ai-gold-deep: #8b6914;
+	--ai-gold-deep: #7d5e12;
 	--ai-gold-tint: #fdf8ef;
 	--ai-gold-gradient: linear-gradient(93.94deg, #fde0a9 24.73%, #fbedcb 57.42%, #fde0a9 99.73%);
 
-	/* Purples + integrations */
-	--ai-research: #5c5cf9;
-	--ai-research-bright: #8a8aff;
-	--ai-mention: #8b5cf6;
+	/* Integrations */
 	--ai-slack: #4a154b;
 
-	/* Status */
-	--ai-warning: #d97706;
-	--ai-warning-bright: #f59e0b;
-	--ai-terminal: #00ff41;
+	/* Hacker mode: terminal green text. Light mode darkens it to pass AA on
+	   the chat's surfaces; the dark value is the neon. -dim is the quieter
+	   tier (previews, reasoning). */
+	--ai-terminal: #006b1b;
+	--ai-terminal-dim: #007a1f;
 }
 
-html.dark {
+html.dark,
+.theme-dark {
 	--ai-gold: #fde0a9;
-	--ai-bronze: #e8c089;
-	--ai-bronze-deep: #f3d6a3;
-
-	--ai-mention: #a78bfa;
+	--ai-gold-deep: #fde0a9;
 	--ai-gold-tint: #252218;
 
-	--ai-warning: #fbbf24;
+	--ai-terminal: #00ff41;
+	--ai-terminal-dim: #00b32e;
 }
 
+/* Inline so each utility reads its value where it is used (html.dark,
+   .theme-dark), not the value computed at :root. */
 @theme inline {
-	--color-ai-ink: var(--ai-ink);
-	--color-ai-ink-raised: var(--ai-ink-raised);
-	--color-ai-on-ink-muted: var(--ai-on-ink-muted);
 	--color-ai-white: var(--ai-white);
 	--color-ai-black: var(--ai-black);
+	/* The lightbox: its scrim (also the error notes and toolbar over it),
+	   the white wash for hovers and hairline rings, and the stronger wash a
+	   resting wash control hovers to. */
+	--color-ai-ink-scrim: color-mix(in srgb, var(--ai-black) 80%, transparent);
+	--color-ai-ink-wash: color-mix(in srgb, var(--ai-white) 10%, transparent);
+	--color-ai-ink-wash-strong: color-mix(in srgb, var(--ai-white) 20%, transparent);
+
 	--color-ai-gold: var(--ai-gold);
 	--color-ai-gold-bright: var(--ai-gold-bright);
-	--color-ai-gold-soft: var(--ai-gold-soft);
 	--color-ai-on-gold: var(--ai-on-gold);
 	--color-ai-on-gold-strong: var(--ai-on-gold-strong);
-	--color-ai-bronze: var(--ai-bronze);
-	--color-ai-bronze-deep: var(--ai-bronze-deep);
-	--color-ai-bronze-bright: var(--ai-bronze-bright);
 	--color-ai-gold-deep: var(--ai-gold-deep);
 	--color-ai-gold-tint: var(--ai-gold-tint);
-	--color-ai-research-bright: var(--ai-research-bright);
-	--color-ai-research: var(--ai-research);
-	--color-ai-mention: var(--ai-mention);
+	/* Gold borders and underlines: badge outlines, card hover borders. */
+	--color-ai-gold-muted: color-mix(in srgb, var(--ai-gold) 35%, transparent);
+
+	/* The violet accent on the violet ramp: step 11 text and accent bar,
+	   step 2 and 3 tints, step 7 and 8 borders. */
+	--color-ai-violet: var(--violet-11);
+	--color-ai-violet-faint: var(--violet-2);
+	--color-ai-violet-tint: var(--violet-3);
+	--color-ai-violet-muted: var(--violet-7);
+	--color-ai-violet-strong: var(--violet-8);
+
 	--color-ai-terminal: var(--ai-terminal);
+	--color-ai-terminal-dim: var(--ai-terminal-dim);
+	/* Outline of a hacker-mode card, on its theme-dark surface. */
+	--color-ai-terminal-muted: color-mix(in srgb, var(--ai-terminal) 25%, transparent);
 
 	--shadow-ai-gold-ring: 0 0 20px rgb(253 224 169 / 0.3);
 	--shadow-ai-gold-ring-hover: 0 0 28px rgb(253 224 169 / 0.5);

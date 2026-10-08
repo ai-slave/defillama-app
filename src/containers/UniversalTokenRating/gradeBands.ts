@@ -10,13 +10,13 @@ export type UtrGradeColor = {
 }
 
 export const UTR_GRADE_COLORS: Record<UtrGradeLabel | 'N/A', UtrGradeColor> = {
-	AAA: { text: 'text-utr-grade-aaa', solid: 'bg-utr-grade-aaa', tinted: 'bg-utr-grade-aaa-tint', hex: '#11935f' },
-	AA: { text: 'text-utr-grade-aa', solid: 'bg-utr-grade-aa', tinted: 'bg-utr-grade-aa-tint', hex: '#359b58' },
-	A: { text: 'text-utr-grade-a', solid: 'bg-utr-grade-a', tinted: 'bg-utr-grade-a-tint', hex: '#58a351' },
-	BBB: { text: 'text-utr-grade-bbb', solid: 'bg-utr-grade-bbb', tinted: 'bg-utr-grade-bbb-tint', hex: '#9fb242' },
-	BB: { text: 'text-utr-grade-bb', solid: 'bg-utr-grade-bb', tinted: 'bg-utr-grade-bb-tint', hex: '#c0a03a' },
-	B: { text: 'text-utr-grade-b', solid: 'bg-utr-grade-b', tinted: 'bg-utr-grade-b-tint', hex: '#b96d39' },
-	CCC: { text: 'text-utr-grade-ccc', solid: 'bg-utr-grade-ccc', tinted: 'bg-utr-grade-ccc-tint', hex: '#b23a38' },
+	AAA: { text: 'text-utr-grade-aaa-text', solid: 'bg-utr-grade-aaa', tinted: 'bg-utr-grade-aaa-tint', hex: '#11935f' },
+	AA: { text: 'text-utr-grade-aa-text', solid: 'bg-utr-grade-aa', tinted: 'bg-utr-grade-aa-tint', hex: '#359b58' },
+	A: { text: 'text-utr-grade-a-text', solid: 'bg-utr-grade-a', tinted: 'bg-utr-grade-a-tint', hex: '#58a351' },
+	BBB: { text: 'text-utr-grade-bbb-text', solid: 'bg-utr-grade-bbb', tinted: 'bg-utr-grade-bbb-tint', hex: '#9fb242' },
+	BB: { text: 'text-utr-grade-bb-text', solid: 'bg-utr-grade-bb', tinted: 'bg-utr-grade-bb-tint', hex: '#c0a03a' },
+	B: { text: 'text-utr-grade-b-text', solid: 'bg-utr-grade-b', tinted: 'bg-utr-grade-b-tint', hex: '#b96d39' },
+	CCC: { text: 'text-utr-grade-ccc-text', solid: 'bg-utr-grade-ccc', tinted: 'bg-utr-grade-ccc-tint', hex: '#b23a38' },
 	'N/A': { text: 'text-tertiary', solid: 'bg-surface-elevated-1', tinted: 'bg-surface-elevated-1', hex: '' }
 }
 

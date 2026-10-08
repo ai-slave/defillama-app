@@ -95,9 +95,9 @@ function DashboardPageNotice({
 	children: ReactNode
 }) {
 	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
+		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface p-1">
 			<h1 className="heading-lg">{title}</h1>
-			{message ? <p className="text-center body-lg text-pro-text-label">{message}</p> : null}
+			{message ? <p className="text-center body-lg text-secondary">{message}</p> : null}
 			{children}
 		</div>
 	)
@@ -334,9 +334,9 @@ function DashboardPageContent({
 		const hasServerAccess = !!currentDashboard?.access && currentDashboard.access.role !== 'none'
 		if (!hasActiveSubscription && dashboardVisibility !== 'public' && !hasServerAccess) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
+				<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-subtle bg-surface p-1">
 					<h1 className="heading-lg">Pro Dashboard Access</h1>
-					<p className="-mt-6 text-center body-lg text-pro-text-label">
+					<p className="-mt-6 text-center body-lg text-secondary">
 						Subscribe to Pro to access this dashboard and unlock advanced features
 					</p>
 
@@ -359,8 +359,8 @@ function DashboardPageContent({
 						</div>
 					</div>
 
-					<h2 className="heading-lg text-pro-text-primary">
-						$49<span className="body-xl text-pro-text-secondary">/month</span>
+					<h2 className="heading-lg text-primary">
+						$49<span className="body-xl text-secondary">/month</span>
 					</h2>
 
 					<Button

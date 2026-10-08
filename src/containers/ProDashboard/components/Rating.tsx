@@ -52,7 +52,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				return focusPageOnLeave(node)
 			}}
 			onSubmit={handleSubmit}
-			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
+			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-subtle bg-surface p-4"
 		>
 			<div className="flex flex-wrap items-center gap-4">
 				<h3 className="heading-xs">
@@ -79,22 +79,22 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				</Tooltip>
 			</div>
 
-			<p className="body-md text-pro-text-label">
+			<p className="body-md text-secondary">
 				{mode === 'create'
 					? 'How well did LlamaAI understand your requirements?'
 					: 'How well did LlamaAI improve your dashboard?'}
 			</p>
 
 			{prompt ? (
-				<div className="flex flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
-					<p className="body-sm text-pro-text-label">Prompt used:</p>
+				<div className="flex flex-col items-center gap-2 rounded-md border border-subtle bg-page p-3">
+					<p className="body-sm text-secondary">Prompt used:</p>
 					<p className="text-center body-md">{prompt}</p>
 				</div>
 			) : null}
 
 			{rating > 0 ? (
 				<div className="flex w-full flex-col gap-1">
-					<label htmlFor={feedbackId} className="label-sm tracking-wide text-pro-text-label uppercase">
+					<label htmlFor={feedbackId} className="label-sm tracking-wide text-secondary uppercase">
 						Your Feedback (Optional)
 					</label>
 					<textarea
@@ -102,7 +102,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 						name="feedback"
 						placeholder="Share your thoughts about the AI-generated dashboard..."
 						rows={3}
-						className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+						className="w-full rounded-md border border-medium bg-page p-2 text-primary placeholder:text-tertiary read-only:border-disabled read-only:bg-disabled read-only:text-disabled focus:border-brand focus:outline-hidden"
 						readOnly={submission.isPending}
 					/>
 				</div>
@@ -184,7 +184,7 @@ function RatingStars({
 							height={20}
 							width={20}
 							aria-hidden="true"
-							className={`${star <= (hovered || value) ? 'fill-current text-warning' : 'text-pro-text-form'} transition-colors`}
+							className={`${star <= (hovered || value) ? 'fill-current text-warning' : 'text-secondary'} transition-colors`}
 						/>
 					</span>
 				))}

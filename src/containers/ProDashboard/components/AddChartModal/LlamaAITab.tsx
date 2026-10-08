@@ -114,7 +114,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 				aria-label="Search saved charts"
 				placeholder="Search saved charts…"
 				onInput={(e) => setSearchQuery(e.currentTarget.value)}
-				className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+				className="w-full rounded-md border border-medium bg-surface-elevated-1 px-3 py-2 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 			/>
 
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -124,7 +124,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						<div
 							key={chart.id}
 							className={`relative flex flex-col gap-2 rounded-lg border p-3 transition-colors ${
-								selected ? 'border-brand bg-brand-faint' : 'border-pro-cards-border hover:border-brand-strong'
+								selected ? 'border-brand bg-brand-faint' : 'border-medium hover:border-brand-strong'
 							}`}
 						>
 							<div className="flex items-start gap-2">
@@ -133,7 +133,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									type="button"
 									aria-pressed={selected}
 									onClick={() => onChartSelect(selected ? null : chart)}
-									className="line-clamp-1 min-w-0 flex-1 text-left font-medium text-pro-text-primary after:absolute after:inset-0 after:rounded-lg"
+									className="line-clamp-1 min-w-0 flex-1 text-left font-medium text-primary after:absolute after:inset-0 after:rounded-lg"
 								>
 									{chart.title}
 								</button>
@@ -157,7 +157,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									<Icon name="trash-2" height={16} width={16} />
 								</Tooltip>
 							</div>
-							<p className="line-clamp-2 body-sm text-pro-text-tertiary">{chart.original_query}</p>
+							<p className="line-clamp-2 body-sm text-tertiary">{chart.original_query}</p>
 							{chart.session_id ? (
 								<a
 									href={`/ai/chat/${chart.session_id}`}

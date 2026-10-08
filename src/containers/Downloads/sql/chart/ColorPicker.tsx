@@ -22,7 +22,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 		<Ariakit.PopoverProvider placement="bottom-start">
 			<Ariakit.PopoverDisclosure
 				aria-label={`Color for ${name}`}
-				className="size-3 shrink-0 rounded-sm border border-subtle shadow-sm transition-transform hover:scale-110"
+				className="size-3 shrink-0 rounded-sm border border-medium shadow-sm transition-transform hover:scale-110"
 				style={{ background: active }}
 			/>
 			<PopoverSurface variant="panel" heading={`Color for ${name}`} aria-label={`Color for ${name}`}>
@@ -34,7 +34,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 									key={c}
 									htmlFor={`${id}-${c}`}
 									aria-label={c}
-									className={`relative size-4 cursor-pointer rounded-sm border transition-transform hover:scale-110 has-focus-visible:focus-ring ${active.toLowerCase() === c.toLowerCase() ? 'border-pro-text-primary ring-1 ring-brand' : 'border-subtle'}`}
+									className={`relative size-4 cursor-pointer rounded-sm border transition-transform hover:scale-110 has-focus-visible:focus-ring ${active.toLowerCase() === c.toLowerCase() ? 'border-(--text-primary) ring-1 ring-brand' : 'border-medium'}`}
 									style={{ background: c }}
 								>
 									<Ariakit.Radio
@@ -58,7 +58,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 								if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 							}}
 							placeholder="#2f73c6"
-							className="w-20 rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 mono-sm text-pro-text-primary focus:border-brand focus:outline-hidden"
+							className="w-20 rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary focus:border-brand focus:outline-hidden"
 						/>
 						<Button variant="link" onClick={() => onChange(null)}>
 							Reset

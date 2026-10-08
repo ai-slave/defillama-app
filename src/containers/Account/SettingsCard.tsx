@@ -14,16 +14,16 @@ export function SettingsCard() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="gear-settings" height={28} width={28} className="text-sub-text-primary" />
-				<span className="label-lg text-sub-text-primary">Settings</span>
+				<Icon name="gear-settings" height={28} width={28} className="text-primary" />
+				<span className="label-lg text-primary">Settings</span>
 			</div>
 
 			<div className="flex flex-col gap-4">
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center justify-between">
-						<span className="body-md text-sub-text-primary">Receive promotional emails</span>
+						<span className="body-md text-primary">Receive promotional emails</span>
 						<ToggleSwitch
 							checked={promoEmailsOn}
 							onClick={handleTogglePromoEmails}
@@ -31,7 +31,7 @@ export function SettingsCard() {
 							aria-label="Receive promotional emails"
 						/>
 					</div>
-					<p className="max-w-[400px] body-sm text-sub-text-muted">{PROMO_EMAILS_TEXT}</p>
+					<p className="max-w-[400px] body-sm text-tertiary">{PROMO_EMAILS_TEXT}</p>
 				</div>
 			</div>
 		</div>

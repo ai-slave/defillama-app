@@ -56,14 +56,6 @@ function buildSearchUrl(
 	return qs ? `${pathname}?${qs}` : pathname
 }
 
-function ResultBadge({ children }: { children: React.ReactNode }) {
-	return (
-		<span className="rounded-[4px] border border-research-white px-2 py-0.75 label-xs tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
-			{children}
-		</span>
-	)
-}
-
 function ByLine({ article }: { article: ArticleDocument }) {
 	const authorEntries =
 		getArticleBylineAuthorEntries(article) ??
@@ -78,13 +70,13 @@ function ByLine({ article }: { article: ArticleDocument }) {
 			: null)
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-sm text-research-heading/60 dark:text-on-brand/55">
+		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-sm text-tertiary">
 			{authorEntries?.length ? (
-				<span className="flex flex-wrap items-center gap-1 font-medium text-research-heading/80 dark:text-on-brand/75">
+				<span className="flex flex-wrap items-center gap-1 font-medium text-secondary">
 					{authorEntries.map((entry, index) => (
 						<span key={entry.key} className="inline-flex items-center gap-1">
 							{entry.href ? (
-								<Link href={entry.href} className="transition-colors hover:text-research-accent-strong">
+								<Link href={entry.href} className="transition-colors hover:text-link">
 									{entry.name}
 								</Link>
 							) : (
@@ -127,14 +119,9 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 		<form
 			action={routePath}
 			onSubmit={handleSubmit}
-			className="group relative flex items-center border-b border-research-heading/20 transition-colors focus-within:border-research-accent-strong dark:border-research-invert/20 dark:focus-within:border-research-invert"
+			className="group relative flex items-center border-b border-medium transition-colors focus-within:border-brand"
 		>
-			<Icon
-				name="search"
-				height={14}
-				width={14}
-				className="pointer-events-none mr-3 text-research-heading/55 dark:text-on-brand/55"
-			/>
+			<Icon name="search" height={14} width={14} className="pointer-events-none mr-3 text-tertiary" />
 			<label className="flex-1">
 				<span className="sr-only">Search research</span>
 				<input
@@ -142,12 +129,12 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 					value={draft}
 					onChange={(e) => setDraft(e.target.value)}
 					placeholder="Search reports, interviews, spotlights…"
-					className="w-full bg-transparent py-2.5 body-md text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
+					className="w-full bg-transparent py-2.5 body-md text-research-navy placeholder:text-tertiary focus:outline-hidden"
 				/>
 			</label>
 			<button
 				type="submit"
-				className="ml-2 inline-flex items-center gap-1 p-1 label-xs tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:hover:text-research-ink"
+				className="ml-2 inline-flex items-center gap-1 p-1 label-xs tracking-[0.18em] text-link uppercase transition-colors hover:text-research-navy"
 			>
 				<span>Search</span>
 				<span aria-hidden>→</span>
@@ -175,14 +162,11 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 
 	// The current section draws its accent and underline from aria-current.
 	const linkStyles =
-		'relative inline-flex items-center label-xs tracking-[0.18em] uppercase transition-colors text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink aria-[current=page]:text-research-accent-strong dark:aria-[current=page]:text-research-ink after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong after:opacity-0 aria-[current=page]:after:opacity-100 dark:after:bg-research-white'
+		'relative inline-flex items-center label-xs tracking-[0.18em] uppercase transition-colors text-secondary hover:text-primary aria-[current=page]:text-link after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-current after:opacity-0 aria-[current=page]:after:opacity-100'
 
 	return (
 		<nav aria-labelledby={labelId} className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-			<span
-				id={labelId}
-				className="label-xs tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40"
-			>
+			<span id={labelId} className="label-xs tracking-[0.24em] text-tertiary uppercase">
 				Sections
 			</span>
 			<Link href={hrefForSection()} aria-current={!activeSection ? 'page' : undefined} className={linkStyles}>
@@ -210,7 +194,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 			<Link
 				href={articleHref(article)}
 				aria-label={article.title}
-				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-research-heading/5 dark:bg-research-wash"
+				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-surface-elevated-1"
 			>
 				{cover ? (
 					<img
@@ -221,31 +205,34 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 						className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
 					/>
 				) : (
-					<div className="grid size-full place-items-center text-research-heading/20 dark:text-on-brand/20">
+					<div className="grid size-full place-items-center text-tertiary">
 						<ResearchIcon name="research-placeholder" className="size-6" aria-hidden />
 					</div>
 				)}
 				{sectionLabel ? (
 					<span className="absolute top-[10px] left-[10px] z-[1]">
-						<ResultBadge>{sectionLabel}</ResultBadge>
+						{/* Over a cover the badge is white on the image; without one it sits on the light placeholder. */}
+						<span
+							className={`rounded-[4px] border px-2 py-0.75 label-xs tracking-[0.04em] uppercase ${cover ? 'border-research-white text-research-white backdrop-blur-[2px]' : 'border-medium text-secondary'}`}
+						>
+							{sectionLabel}
+						</span>
 					</span>
 				) : null}
 			</Link>
 			<div className="grid content-start gap-2.5">
 				<Link href={articleHref(article)} className="block">
-					<h3 className="text-[19px] leading-[130%] font-semibold tracking-tight text-research-heading transition-colors group-hover:text-research-accent-strong sm:text-[22px] dark:text-research-ink dark:group-hover:text-research-accent-soft">
+					<h3 className="text-[19px] leading-[130%] font-semibold tracking-tight text-research-navy transition-colors group-hover:text-link sm:text-[22px]">
 						{article.title}
 					</h3>
 					{article.excerpt || article.subtitle ? (
-						<p className="mt-2.5 line-clamp-2 body-md text-research-heading/70 dark:text-on-brand/70">
-							{article.excerpt || article.subtitle}
-						</p>
+						<p className="mt-2.5 line-clamp-2 body-md text-secondary">{article.excerpt || article.subtitle}</p>
 					) : null}
 				</Link>
 				{article.client ? (
 					<Link
 						href={researchClientHref(article.client.id)}
-						className="w-fit label-xs tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:text-research-accent-soft dark:hover:text-research-ink"
+						className="w-fit label-xs tracking-[0.18em] text-link uppercase transition-colors hover:text-research-navy"
 					>
 						{articleClientLabel(article.client)}
 					</Link>
@@ -289,17 +276,15 @@ function Pagination({
 
 	const btnBase =
 		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 label-sm tracking-[0.08em] uppercase transition-colors'
-	const enabledStyle =
-		'bg-research-accent-tint text-research-accent hover:bg-research-accent-tint-hover dark:border dark:border-research-invert/40 dark:bg-transparent dark:text-research-ink dark:hover:bg-research-wash-strong'
-	const disabledStyle =
-		'cursor-not-allowed bg-research-heading/5 text-research-heading/30 dark:border dark:border-research-line dark:bg-transparent dark:text-on-brand/30'
+	const enabledStyle = 'bg-brand-tint text-link hover:bg-brand-tint-strong'
+	const disabledStyle = 'cursor-not-allowed bg-disabled text-disabled'
 
 	return (
 		<nav
 			aria-label="Search results pagination"
-			className="flex flex-wrap items-center justify-between gap-3 border-t border-research-heading/10 pt-5 dark:border-research-line"
+			className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle pt-5"
 		>
-			<span className="label-xs tracking-[0.18em] text-research-heading/55 uppercase tabular-nums dark:text-on-brand/55">
+			<span className="label-xs tracking-[0.18em] text-tertiary uppercase tabular-nums">
 				{rangeStart}–{rangeEnd} of {formatNumber(totalItems)}
 			</span>
 			<div className="flex items-center gap-2">
@@ -315,7 +300,7 @@ function Pagination({
 					<span aria-hidden>←</span>
 					<span>Prev</span>
 				</Ariakit.Button>
-				<span className="px-2 mono-sm tracking-[0.12em] text-research-heading/80 tabular-nums dark:text-on-brand/80">
+				<span className="px-2 mono-sm tracking-[0.12em] text-secondary tabular-nums">
 					{page} / {totalPages}
 				</span>
 				<Ariakit.Button
@@ -338,15 +323,11 @@ function EmptyState({ query, tag, section, client }: { query: string; tag: strin
 	return (
 		<div className="grid place-items-center px-4 py-20 text-center">
 			<div className="grid max-w-md gap-3">
-				<ResearchIcon
-					name="research-search-empty"
-					className="mx-auto size-12 text-research-heading/25 dark:text-on-brand/25"
-					aria-hidden
-				/>
-				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-heading dark:text-research-ink">
+				<ResearchIcon name="research-search-empty" className="mx-auto size-12 text-tertiary" aria-hidden />
+				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-navy">
 					{hasFilters ? 'Nothing matches that.' : 'No research yet.'}
 				</h2>
-				<p className="body-md text-research-heading/65 dark:text-on-brand/65">
+				<p className="body-md text-secondary">
 					{hasFilters
 						? 'Try a different keyword, drop a filter, or browse the sections below.'
 						: 'Once research is published, you can search across reports, interviews, and more from here.'}
@@ -357,12 +338,11 @@ function EmptyState({ query, tag, section, client }: { query: string; tag: strin
 }
 
 function ResultsTitle({ query, tag, clientName }: { query: string; tag: string; clientName: string | null }) {
-	const cls =
-		'text-[clamp(22px,2.6vw,30px)] leading-[120%] font-medium tracking-tight text-research-heading dark:text-research-ink'
+	const cls = 'text-[clamp(22px,2.6vw,30px)] leading-[120%] font-medium tracking-tight text-research-navy'
 	if (query) {
 		return (
 			<h1 className={cls}>
-				<span className="text-research-heading/45 dark:text-on-brand/45">Results for </span>
+				<span className="text-tertiary">Results for </span>
 				<span>"{query}"</span>
 			</h1>
 		)
@@ -370,7 +350,7 @@ function ResultsTitle({ query, tag, clientName }: { query: string; tag: string; 
 	if (tag) {
 		return (
 			<h1 className={cls}>
-				<span className="text-research-heading/45 dark:text-on-brand/45">Tagged </span>
+				<span className="text-tertiary">Tagged </span>
 				<span>#{tag}</span>
 			</h1>
 		)
@@ -378,7 +358,7 @@ function ResultsTitle({ query, tag, clientName }: { query: string; tag: string; 
 	if (clientName) {
 		return (
 			<h1 className={cls}>
-				<span className="text-research-heading/45 dark:text-on-brand/45">Client </span>
+				<span className="text-tertiary">Client </span>
 				<span>{clientName}</span>
 			</h1>
 		)
@@ -482,7 +462,7 @@ export default function ResearchSearch() {
 		<div className="mx-auto grid w-full max-w-6xl gap-7 px-3 pt-4 pb-20 sm:px-6 lg:px-8">
 			<header className="grid gap-4 pr-16 lg:pr-0">
 				<div className="flex items-baseline justify-between gap-6 label-xs tracking-[0.22em] uppercase">
-					<span className="text-research-accent-strong">Research / Archive</span>
+					<span className="text-link">Research / Archive</span>
 					<Button variant="link" onClick={clearSearchParams} className="shrink-0">
 						<span aria-hidden>←</span>
 						Back
@@ -491,7 +471,7 @@ export default function ResearchSearch() {
 
 				<ResultsTitle query={query} tag={tag} clientName={clientName} />
 
-				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
+				<div className="flex items-center gap-x-3 text-tertiary">
 					<span className="label-xs tracking-[0.18em] uppercase tabular-nums">
 						{/* A failed read has no count to give: the block below says why. */}
 						{failed
@@ -500,7 +480,7 @@ export default function ResearchSearch() {
 								? 'Loading…'
 								: `${formatNumber(totalItems)} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>
-					<div className="grow border-t border-research-heading/15 dark:border-research-line" />
+					<div className="grow border-t border-subtle" />
 				</div>
 
 				<SearchBar searchQuery={searchQuery} routePath={router.pathname} />
@@ -511,7 +491,7 @@ export default function ResearchSearch() {
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
 			{failed ? (
 				<div className="grid justify-items-start gap-3 border border-error-muted bg-error-faint p-6">
-					<h2 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h2>
+					<h2 className="text-xl font-semibold text-research-navy">Couldn't load research</h2>
 					<p role="alert" className="body-md text-error">
 						{error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
 					</p>
@@ -530,7 +510,7 @@ export default function ResearchSearch() {
 				</div>
 			) : response.items.length > 0 ? (
 				<>
-					<ul className="grid divide-y divide-research-heading/10 dark:divide-white/10">
+					<ul className="grid divide-y divide-(--border-subtle)">
 						{response.items.map((article) => (
 							<ResultCard key={article.id} article={article} />
 						))}

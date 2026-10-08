@@ -518,7 +518,7 @@ export function UnifiedTableTab({
 				<CollapsibleSection title="Grouping" badge="Protocols" className="shadow-sm">
 					<div className="flex flex-col gap-3">
 						<div>
-							<h4 className="mb-2 title-sm text-pro-text-secondary">Configure grouping</h4>
+							<h4 className="mb-2 title-sm text-secondary">Configure grouping</h4>
 							<GroupingOptions rowHeaders={rowHeaders} onToggleRowHeader={handleToggleRowHeader} />
 						</div>
 					</div>
@@ -529,8 +529,8 @@ export function UnifiedTableTab({
 						{recommendedPresets.length > 0 ? (
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
-									<h4 className="title-sm text-pro-text-secondary">Recommended data views</h4>
-									<p className="body-sm text-pro-text-tertiary">Based on your filters</p>
+									<h4 className="title-sm text-secondary">Recommended data views</h4>
+									<p className="body-sm text-tertiary">Based on your filters</p>
 								</div>
 								<PresetPicker
 									activePresetId={activePresetId}
@@ -540,11 +540,11 @@ export function UnifiedTableTab({
 							</div>
 						) : null}
 						<div className="flex flex-col gap-2">
-							<h4 className="title-sm text-pro-text-secondary">All data views</h4>
+							<h4 className="title-sm text-secondary">All data views</h4>
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
-								<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-2 body-sm text-pro-text-tertiary">
+								<div className="rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-tertiary">
 									All available data views are shown above.
 								</div>
 							)}
@@ -586,8 +586,8 @@ export function UnifiedTableTab({
 				<div className="flex flex-col gap-5">
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
-							<h5 className="title-sm tracking-wide text-pro-text-secondary uppercase">Active filters</h5>
-							<span className="body-sm text-pro-text-tertiary">
+							<h5 className="title-sm tracking-wide text-secondary uppercase">Active filters</h5>
+							<span className="body-sm text-tertiary">
 								{activeFilterCount > 0 ? `${activeFilterCount} applied` : 'None'}
 							</span>
 						</div>
@@ -596,16 +596,16 @@ export function UnifiedTableTab({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="title-sm text-pro-text-secondary">Filter presets</h5>
-							<p className="body-sm text-pro-text-tertiary">Start from curated combinations.</p>
+							<h5 className="title-sm text-secondary">Filter presets</h5>
+							<p className="body-sm text-tertiary">Start from curated combinations.</p>
 						</div>
 						<PresetSelector currentFilters={filters ?? {}} onApplyPreset={handleApplyPreset} />
 					</div>
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="title-sm text-pro-text-secondary">Scope</h5>
-							<p className="body-sm text-pro-text-tertiary">
+							<h5 className="title-sm text-secondary">Scope</h5>
+							<p className="body-sm text-tertiary">
 								Choose which chains, categories, protocols, or oracles to focus on.
 							</p>
 						</div>
@@ -620,10 +620,8 @@ export function UnifiedTableTab({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="title-sm text-pro-text-secondary">Metric & flag filters</h5>
-							<p className="body-sm text-pro-text-tertiary">
-								Add filters for TVL, volume, fees, revenue, and other metrics.
-							</p>
+							<h5 className="title-sm text-secondary">Metric & flag filters</h5>
+							<p className="body-sm text-tertiary">Add filters for TVL, volume, fees, revenue, and other metrics.</p>
 						</div>
 						<FilterBuilder filters={filters} onFiltersChange={handlePanelFiltersChange} />
 					</div>
@@ -694,7 +692,7 @@ export function UnifiedTableTab({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-pro-cards-border">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-subtle">
 					<div className="h-full overflow-auto">
 						{activeRwaTab === 'rwa-chains' ? (
 							<RWAChainsDataset />
@@ -741,7 +739,7 @@ export function UnifiedTableTab({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-pro-cards-border">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-subtle">
 					<div className="h-full overflow-auto">
 						{activeEquitiesTab === 'equities' ? (
 							<EquitiesCompaniesDataset />
@@ -766,28 +764,28 @@ export function UnifiedTableTab({
 				<button
 					type="button"
 					onClick={() => handleSelectTableType(heroCard.value)}
-					className="group relative flex flex-col rounded-lg border border-pro-cards-border p-5 text-left transition-all hover:border-pro-accent/40"
+					className="group relative flex flex-col rounded-lg border border-subtle p-5 text-left transition-all hover:border-brand-muted"
 				>
 					<div className="mb-3 flex items-center justify-between">
 						<div className="flex items-center gap-3">
 							<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint">
 								<Icon name={heroCard.icon} height={22} width={22} className="text-link" />
 							</div>
-							<h3 className="heading-xs text-pro-text-primary">{heroCard.label}</h3>
+							<h3 className="heading-xs text-primary">{heroCard.label}</h3>
 						</div>
 						<Icon
 							name="arrow-right"
 							height={18}
 							width={18}
-							className="text-pro-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-link"
+							className="text-secondary transition-transform group-hover:translate-x-1 group-hover:text-link"
 						/>
 					</div>
-					<p className="mb-4 body-md text-pro-text-secondary">{heroCard.description}</p>
+					<p className="mb-4 body-md text-secondary">{heroCard.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{heroCard.tags.map((tag) => (
 							<span
 								key={tag}
-								className="rounded-full px-2.5 py-1 label-sm text-pro-text-secondary transition-colors group-hover:bg-brand-tint group-hover:text-link"
+								className="rounded-full px-2.5 py-1 label-sm text-secondary transition-colors group-hover:bg-brand-tint group-hover:text-link"
 							>
 								{tag}
 							</span>
@@ -796,7 +794,7 @@ export function UnifiedTableTab({
 				</button>
 
 				<div className="mt-4">
-					<span className="mb-2.5 block title-sm text-pro-text-secondary">Other datasets</span>
+					<span className="mb-2.5 block title-sm text-secondary">Other datasets</span>
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						{otherCards.map((card) => {
 							const isProLocked =
@@ -825,22 +823,22 @@ export function UnifiedTableTab({
 											handleSelectTableType(card.value)
 										}
 									}}
-									className="group flex items-start gap-2.5 rounded-lg border border-pro-cards-border p-3 text-left transition-all hover:border-pro-accent/40"
+									className="group flex items-start gap-2.5 rounded-lg border border-subtle p-3 text-left transition-all hover:border-brand-muted"
 								>
 									<div className="flex size-8 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-brand-tint">
 										<Icon
 											name={isProLocked ? 'file-lock-2' : card.icon}
 											height={16}
 											width={16}
-											className="text-pro-text-secondary group-hover:text-link"
+											className="text-secondary group-hover:text-link"
 										/>
 									</div>
 									<div className="min-w-0 flex-1">
-										<span className="label-md text-pro-text-primary">
+										<span className="label-md text-primary">
 											{card.label}
 											{isProLocked ? <span className="ml-1 body-sm opacity-60">(Pro)</span> : null}
 										</span>
-										<p className="mt-0.5 line-clamp-1 body-sm text-pro-text-secondary">{card.description}</p>
+										<p className="mt-0.5 line-clamp-1 body-sm text-secondary">{card.description}</p>
 									</div>
 								</button>
 							)
@@ -907,7 +905,7 @@ export function UnifiedTableTab({
 								<span className="flex items-center gap-2">
 									<span className="truncate">{tab.label}</span>
 									{tab.badge ? (
-										<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 label-sm text-pro-text-tertiary max-sm:hidden">
+										<span className="max-w-[160px] truncate rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-tertiary max-sm:hidden">
 											{tab.badge}
 										</span>
 									) : null}

@@ -140,8 +140,8 @@ const reserveColumns: Array<ColumnDef<typeof displayTableFeatures, FlatReserve>>
 		header: 'Status',
 		accessorKey: 'isFrozen',
 		cell: ({ row }) => {
-			if (row.original.isPaused) return <span className="text-pro-text-tertiary">Paused</span>
-			if (row.original.isFrozen) return <span className="text-pro-text-tertiary">Frozen</span>
+			if (row.original.isPaused) return <span className="text-tertiary">Paused</span>
+			if (row.original.isFrozen) return <span className="text-tertiary">Frozen</span>
 			return <span className="text-success">Active</span>
 		},
 		size: 70
@@ -170,7 +170,7 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+		<div className="rounded-lg border border-subtle bg-surface p-5">
 			<SectionHeader title="All Reserves" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />

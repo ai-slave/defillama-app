@@ -79,7 +79,7 @@ function SocialLink({ kind, value }: { kind: string; value: string }) {
 			href={href}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-research-heading/15 px-3 label-sm text-research-heading/70 transition-colors hover:border-research-accent-strong/40 hover:text-research-accent-strong dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-research-ink"
+			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-medium px-3 label-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
 		>
 			<span>{kind.replace(/-/g, ' ')}</span>
 			<Icon name="arrow-up-right" className="size-3" />
@@ -142,10 +142,10 @@ function BrandHero() {
 			<ResearchAuthorHeaderGradient />
 			<div className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-6 px-4 pt-8 pb-12 sm:px-6 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,249px)] lg:items-start lg:gap-10 lg:px-8 lg:pt-12 lg:pb-16">
 				<div className="grid gap-2">
-					<h1 className="heading-lg tracking-widest text-on-brand dark:text-research-accent">
+					<h1 className="heading-lg tracking-widest text-on-brand">
 						<BasicLink
 							href="/research"
-							className="text-inherit transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+							className="text-inherit underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-research-white"
 						>
 							DefiLlama Research
 						</BasicLink>
@@ -154,7 +154,7 @@ function BrandHero() {
 				</div>
 
 				<p className="max-w-[60ch] label-lg text-on-brand lg:label-xl">
-					<span className="font-bold text-research-accent">DefiLlama Research</span> is the research arm of{' '}
+					<span className="font-bold">DefiLlama Research</span> is the research arm of{' '}
 					<span className="font-semibold">DefiLlama</span>, delivering bespoke digital asset research, market
 					intelligence, and strategic advisory services powered by the DefiLlama ecosystem.
 				</p>
@@ -162,7 +162,7 @@ function BrandHero() {
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
 						href="mailto:research@defillama.com"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 label-lg whitespace-nowrap text-research-accent transition-opacity hover:opacity-90"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-research-white px-5 label-lg whitespace-nowrap text-research-accent-ink transition-[filter] hover:brightness-95"
 					>
 						<span>Contact us</span>
 						<Icon name="mail" className="size-5 shrink-0" />
@@ -171,7 +171,7 @@ function BrandHero() {
 						href="https://calendly.com/research-defillama/30min"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-white px-6 label-lg whitespace-nowrap text-on-brand transition-colors hover:bg-white/10"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-research-white px-6 label-lg whitespace-nowrap text-on-brand transition-colors hover:bg-research-white-wash"
 					>
 						<span>Book a call</span>
 						<ResearchIcon name="calendly-mark" className="size-7 shrink-0" />
@@ -209,9 +209,9 @@ function ResearchArticleListRow({
 							className="h-16 w-full rounded-md object-cover"
 						/>
 					) : (
-						<div className="h-16 w-full rounded-md bg-research-heading/10 dark:bg-research-wash-strong" aria-hidden />
+						<div className="h-16 w-full rounded-md bg-surface-elevated-1" aria-hidden />
 					)}
-					<h3 className="line-clamp-3 label-lg text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
+					<h3 className="line-clamp-3 label-lg text-research-navy transition-colors group-hover:text-link">
 						{article.title}
 					</h3>
 				</BasicLink>
@@ -225,7 +225,7 @@ function ResearchArticleListRow({
 				href={articleHref(article)}
 				className={`group grid min-h-[176px] grid-cols-[218px_minmax(0,1fr)] gap-3 border ${
 					index > 0 ? 'border-t-0' : ''
-				} border-research-heading bg-transparent p-3 text-research-heading transition-colors hover:border-research-accent dark:border-white dark:text-research-ink dark:hover:border-research-accent`}
+				} border-current p-3 text-research-navy transition-colors hover:border-brand`}
 			>
 				{article.coverImage?.url ? (
 					<img
@@ -238,16 +238,13 @@ function ResearchArticleListRow({
 						className="h-[152px] w-[218px] rounded-md object-cover"
 					/>
 				) : (
-					<div
-						className="h-[152px] w-[218px] rounded-md bg-research-heading/10 dark:bg-research-wash-strong"
-						aria-hidden
-					/>
+					<div className="h-[152px] w-[218px] rounded-md bg-surface-elevated-1" aria-hidden />
 				)}
 				<div className="grid min-w-0 content-between gap-4 py-0.5">
-					<h3 className="line-clamp-4 heading-xs text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
+					<h3 className="line-clamp-4 heading-xs text-research-navy transition-colors group-hover:text-link">
 						{article.title}
 					</h3>
-					<p className="title-md text-research-accent">{getResearchArticleLabel(article)}</p>
+					<p className="title-md text-link">{getResearchArticleLabel(article)}</p>
 				</div>
 			</BasicLink>
 		</li>
@@ -271,13 +268,10 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 	return (
 		<section className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-5 px-4 pt-2 pb-8 sm:px-6 lg:gap-10 lg:px-8 lg:pb-12">
 			<div className="flex items-center gap-2">
-				<h2
-					id="latest-research"
-					className="shrink-0 label-lg text-research-heading lg:heading-xs lg:uppercase dark:text-research-ink"
-				>
+				<h2 id="latest-research" className="shrink-0 label-lg text-research-navy lg:heading-xs lg:uppercase">
 					Our Latest Research
 				</h2>
-				<div className="h-px min-w-0 flex-1 bg-research-heading dark:bg-white" aria-hidden />
+				<div className="h-px min-w-0 flex-1 bg-current" aria-hidden />
 			</div>
 
 			{/* mobile + tablet: compact rows, single column then two-up */}
@@ -295,7 +289,7 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 
 			<BasicLink
 				href="/research"
-				className="inline-flex items-center gap-2 justify-self-end title-md text-research-accent-strong uppercase transition-colors hover:text-research-heading lg:heading-xs dark:hover:text-research-ink"
+				className="inline-flex items-center gap-2 justify-self-end title-md text-link uppercase transition-colors hover:text-research-navy lg:heading-xs"
 			>
 				<span>View all</span>
 				<Icon name="arrow-right" className="size-4" />
@@ -306,7 +300,7 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 
 function DefillamaResearchContent({ articles }: { articles: Array<ArticleDocument> }) {
 	return (
-		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-surface-elevated-1 text-research-heading dark:text-research-ink lg:dark:bg-black">
+		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-page text-research-navy">
 			<ResearchAuthorBackground />
 			<BrandHero />
 			<ResearchArticleLists articles={articles} />

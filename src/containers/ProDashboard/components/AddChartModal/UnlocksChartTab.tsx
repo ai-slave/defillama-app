@@ -349,20 +349,20 @@ export function UnlocksChartTab({
 				</div>
 
 				{hasSelection && !isLoading && availableChartTypes.size === 0 ? (
-					<p className="body-sm text-pro-text-tertiary">No unlocks data available for this protocol.</p>
+					<p className="body-sm text-tertiary">No unlocks data available for this protocol.</p>
 				) : null}
 			</div>
 
-			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 label-sm text-pro-text-secondary">Preview</h4>
+			<div className="overflow-hidden rounded-lg border border-subtle">
+				<h4 className="border-b border-subtle px-3 py-2 label-sm text-secondary">Preview</h4>
 				{hasSelection ? (
-					<div className="bg-pro-cards-bg p-3">
+					<div className="bg-surface p-3">
 						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
 							<div>
-								<h3 className="mb-1 title-md text-pro-text-primary">
+								<h3 className="mb-1 title-md text-primary">
 									{previewTitle} - {selectedChartLabel}
 								</h3>
-								<p className="body-sm text-pro-text-secondary">Unlocks</p>
+								<p className="body-sm text-secondary">Unlocks</p>
 							</div>
 							{selectedUnlocksChartType === 'schedule' && stacks.length > 1 ? (
 								<SelectWithCombobox
@@ -379,7 +379,7 @@ export function UnlocksChartTab({
 						{chartContent}
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
+					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
 						<div>
 							<Icon name="linear-unlock" height={32} width={32} className="mx-auto mb-1" />
 							<p className="body-sm">Select a protocol to preview unlocks</p>

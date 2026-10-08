@@ -71,11 +71,11 @@ export function SelectedListSidebar({
 		>
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 				<div className="min-w-0">
-					<p className="title-sm text-pro-text-primary">
+					<p className="title-sm text-primary">
 						Selected {noun}s ({items.length})
 					</p>
 					{loadingCount > 0 ? (
-						<p className="label-xs text-pro-text-tertiary">
+						<p className="label-xs text-tertiary">
 							Ready {readyCount}/{items.length}
 						</p>
 					) : null}
@@ -115,9 +115,7 @@ export function SelectedListSidebar({
 										<Icon name="check" className="size-3.5 text-success" />
 									) : null}
 								</span>
-								<span
-									className={`truncate ${isActive ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'}`}
-								>
+								<span className={`truncate ${isActive ? 'font-medium text-primary' : 'text-secondary'}`}>
 									{item.label}
 								</span>
 							</button>
@@ -163,7 +161,7 @@ export function SelectedListSidebar({
 				})}
 			</div>
 			{isPreview ? null : (
-				<p className="border-t border-subtle p-3 text-center body-xs text-pro-text-tertiary">
+				<p className="border-t border-subtle p-3 text-center body-xs text-tertiary">
 					Download combined puts each {noun} in its own column
 				</p>
 			)}

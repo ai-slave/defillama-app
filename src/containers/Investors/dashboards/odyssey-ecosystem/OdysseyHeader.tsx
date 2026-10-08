@@ -6,11 +6,7 @@ const ODYSSEY_SLUG = 'odyssey-finance'
 
 function Logo({ slug, alt }: { slug: string; alt: string }) {
 	return (
-		<img
-			src={tokenIconUrl(slug, 32)}
-			alt={alt}
-			className="size-4 shrink-0 rounded-full bg-pro-cards-bg object-contain"
-		/>
+		<img src={tokenIconUrl(slug, 32)} alt={alt} className="size-4 shrink-0 rounded-full bg-surface object-contain" />
 	)
 }
 
@@ -53,7 +49,7 @@ export function OdysseyIcon({ className = 'size-7' }: { className?: string }) {
 		<img
 			src={tokenIconUrl(ODYSSEY_SLUG, 64)}
 			alt="Odyssey Finance"
-			className={`${className} rounded-full bg-pro-cards-bg object-contain`}
+			className={`${className} rounded-full bg-surface object-contain`}
 		/>
 	)
 }
@@ -62,7 +58,7 @@ function OdysseyLogo() {
 	return (
 		<div className="flex items-center gap-2.5">
 			<OdysseyIcon className="size-7 shrink-0" />
-			<span className="heading-xs text-pro-text-primary">Odyssey Ecosystem</span>
+			<span className="heading-xs text-primary">Odyssey Ecosystem</span>
 		</div>
 	)
 }
@@ -70,7 +66,7 @@ function OdysseyLogo() {
 export default function OdysseyHeader() {
 	const { data: meta } = useTab<MetadataResponse>('metadata')
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
 			<OdysseyLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{buildLinks(meta).map(({ label, url, icon }) => (
@@ -79,7 +75,7 @@ export default function OdysseyHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 					>
 						{icon}
 						<span className="hidden lg:inline">{label}</span>

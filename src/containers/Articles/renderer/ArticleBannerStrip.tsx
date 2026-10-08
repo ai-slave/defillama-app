@@ -124,7 +124,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 								target="_blank"
 								rel="noopener noreferrer"
 								onClick={trackClick}
-								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
+								className="inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline"
 							>
 								{linkLabel}
 								<Icon name="arrow-up-right" height={10} width={10} />
@@ -133,7 +133,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 							<Link
 								href={linkUrl}
 								onClick={trackClick}
-								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
+								className="inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline"
 							>
 								{linkLabel}
 							</Link>

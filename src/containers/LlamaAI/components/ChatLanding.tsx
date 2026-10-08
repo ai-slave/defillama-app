@@ -128,7 +128,7 @@ export function ChatLanding({
 			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 lg:mt-25 lg:flex-none lg:justify-start">
 				<img src="/assets/llamaai/llama-ai.svg" alt="LlamaAI" className="object-contain" width={64} height={77} />
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-ai-gold/30 bg-ai-gold-tint px-2.5 py-1 label-xs tracking-wide text-ai-bronze uppercase">
+					<span className="inline-flex items-center gap-1.5 rounded-full border border-ai-gold-muted bg-ai-gold-tint px-2.5 py-1 label-xs tracking-wide text-ai-gold-deep uppercase">
 						<Icon name="sparkles" height={14} width={14} />
 						Suggested for you
 					</span>
@@ -142,9 +142,9 @@ export function ChatLanding({
 						<button
 							type="button"
 							onClick={onGreetingCta}
-							className="group inline-flex items-center gap-1.5 font-medium text-ai-bronze not-disabled:not-aria-disabled:hover:text-ai-bronze-deep"
+							className="group inline-flex items-center gap-1.5 font-medium text-ai-gold-deep"
 						>
-							<span className="border-b border-ai-bronze-bright/0 pb-px group-hover:border-ai-bronze-bright/50">
+							<span className="border-b border-transparent pb-px group-hover:border-ai-gold-muted">
 								{greetingTip.cta.label}
 							</span>
 							<Icon name="arrow-right" height={14} width={14} />

@@ -65,7 +65,7 @@ export function ClaimProfileBanner({ asset }: { asset?: string | null }) {
 				<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
 				<div className="flex flex-col gap-1">
 					<p className="label-lg text-on-brand">Claim this token profile</p>
-					<p className="body-sm text-on-brand/70">
+					<p className="body-sm text-on-brand">
 						Core team members can claim this profile to verify project information and update disclosures.
 					</p>
 					<BasicLink href={href} className={`${forgdCtaSecondaryButtonStyles} mt-2 w-fit lg:hidden`}>
@@ -181,7 +181,7 @@ export function CantFindTokenBanner() {
 				/>
 				<div className="flex flex-col gap-1">
 					<p className="label-lg text-on-brand">Can’t Find Your Token?</p>
-					<p className="body-sm text-on-brand/70">
+					<p className="body-sm text-on-brand">
 						Submit your project information to apply for inclusion in the Universal Token Rating.
 					</p>
 					<BasicLink

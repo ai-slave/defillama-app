@@ -105,7 +105,7 @@ function DashboardSettingsModalInner({
 
 	return (
 		<>
-			<Dialog size="sm" scope="pro" open={isOpen} onClose={onClose} pending={busy} portal unmountOnHide>
+			<Dialog size="sm" open={isOpen} onClose={onClose} pending={busy} portal unmountOnHide>
 				<form ref={formRef} onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
 					<DialogDiscardGuard
 						when={dirty}
@@ -183,7 +183,6 @@ function DashboardSettingsModalInner({
 
 			{showDeleteConfirm && dashboardId ? (
 				<ConfirmActionDialog
-					scope="pro"
 					title="Delete dashboard"
 					description={`Deleting “${dashboardName}” cannot be undone.`}
 					confirmLabel="Delete"

@@ -468,13 +468,14 @@ function SortableLogoRow({
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 label-sm text-secondary">
-					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
+					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. It is only
+					    disabled while the save runs, so it keeps its look like a pending Button. */}
 					<Ariakit.Checkbox
 						checked={logo.enabled}
 						onChange={(e) => onToggle(e.target.checked)}
 						disabled={togglePending}
 						accessibleWhenDisabled
-						className="size-4 accent-link aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+						className="size-4 accent-link aria-disabled:cursor-progress"
 					/>
 					Enabled
 				</label>
@@ -564,13 +565,14 @@ function SortableMentionRow({
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 label-sm text-secondary">
-					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
+					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. It is only
+					    disabled while the save runs, so it keeps its look like a pending Button. */}
 					<Ariakit.Checkbox
 						checked={mention.enabled}
 						onChange={(e) => onToggle(e.target.checked)}
 						disabled={togglePending}
 						accessibleWhenDisabled
-						className="size-4 accent-link aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+						className="size-4 accent-link aria-disabled:cursor-progress"
 					/>
 					Enabled
 				</label>

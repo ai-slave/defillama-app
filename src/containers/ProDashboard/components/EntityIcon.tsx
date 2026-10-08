@@ -13,7 +13,7 @@ export function EntityIcon({
 
 	return (
 		<span
-			className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-elevated-2 ring-1 ring-pro-cards-border"
+			className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-elevated-2 ring-1 ring-(--border-subtle)"
 			style={{ width: size, height: size }}
 		>
 			{src && src !== failedSrc ? (
@@ -28,7 +28,7 @@ export function EntityIcon({
 					onError={() => setFailedSrc(src)}
 				/>
 			) : (
-				<span aria-hidden="true" className="title-sm text-pro-text-secondary">
+				<span aria-hidden="true" className="title-sm text-secondary">
 					{name?.charAt(0).toUpperCase() ?? ''}
 				</span>
 			)}

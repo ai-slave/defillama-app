@@ -360,7 +360,7 @@ export function YieldsChartTab({
 						/>
 
 						<div className="flex flex-col">
-							<span className="mb-1 block label-sm text-pro-text-secondary">TVL Range</span>
+							<span className="mb-1 block label-sm text-secondary">TVL Range</span>
 							<div className="flex gap-1">
 								<input
 									type="number"
@@ -368,7 +368,7 @@ export function YieldsChartTab({
 									placeholder="Min"
 									value={minTvl ?? ''}
 									onChange={(e) => onMinTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 								<input
 									type="number"
@@ -376,14 +376,14 @@ export function YieldsChartTab({
 									placeholder="Max"
 									value={maxTvl ?? ''}
 									onChange={(e) => onMaxTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
 					</div>
 
 					{selectedYieldPool && !showPoolPicker ? (
-						<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+						<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
 							<div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
 								<div className="flex min-w-0 items-center gap-3">
 									{selectedPoolData ? (
@@ -392,19 +392,19 @@ export function YieldsChartTab({
 											alt={selectedPoolData.project}
 											width={32}
 											height={32}
-											className="size-8 rounded-full object-cover ring-1 ring-pro-cards-border"
+											className="size-8 rounded-full object-cover ring-1 ring-(--border-subtle)"
 										/>
 									) : null}
 									<div className="min-w-0">
-										<p className="title-md text-pro-text-primary">{selectedYieldPool.name}</p>
-										<div className="flex flex-wrap items-center gap-x-2 body-sm text-pro-text-tertiary">
+										<p className="title-md text-primary">{selectedYieldPool.name}</p>
+										<div className="flex flex-wrap items-center gap-x-2 body-sm text-tertiary">
 											<span>{selectedYieldPool.project}</span>
 											<span>•</span>
 											<span>{selectedYieldPool.chain}</span>
 											{selectedPoolData ? (
 												<>
 													<span>•</span>
-													<span className="font-medium text-pro-text-secondary">
+													<span className="font-medium text-secondary">
 														TVL:{' '}
 														{formatUsd(selectedPoolData.tvl, {
 															compact: true,
@@ -413,7 +413,7 @@ export function YieldsChartTab({
 														})}
 													</span>
 													<span>•</span>
-													<span className="font-medium text-pro-text-secondary">
+													<span className="font-medium text-secondary">
 														APY:{' '}
 														{formatPercent(selectedPoolData.apy, {
 															input: 'percent',
@@ -444,24 +444,24 @@ export function YieldsChartTab({
 							</div>
 						</div>
 					) : (
-						<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-							<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-sm">
+						<div className="overflow-hidden rounded-lg border border-subtle">
+							<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
 								<div className="flex items-center gap-3">
 									<div className="relative">
 										<Icon
 											name="search"
 											width={12}
 											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
+											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
 										/>
 										<input
 											onInput={(e) => setPoolSearch(e.currentTarget.value)}
 											placeholder="Search pools…"
 											aria-label="Search pools"
-											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 label-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
+											className="w-36 rounded-md border border-medium bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 label-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
 										/>
 									</div>
-									<span className="label-sm text-pro-text-tertiary">
+									<span className="label-sm text-tertiary">
 										{filteredPools.length} pool
 										{filteredPools.length !== 1 ? 's' : ''}
 									</span>
@@ -473,14 +473,14 @@ export function YieldsChartTab({
 								) : null}
 							</div>
 
-							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-pro-cards-border px-3 py-2 label-sm sm:grid-cols-[1fr_100px_100px_80px]">
-								<p className="text-pro-text-tertiary">Pool</p>
+							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-subtle px-3 py-2 label-sm sm:grid-cols-[1fr_100px_100px_80px]">
+								<p className="text-tertiary">Pool</p>
 								<button
 									type="button"
 									aria-pressed={sortColumn === 'tvl'}
 									onClick={() => toggleSort('tvl')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'tvl' ? 'text-link' : 'text-pro-text-tertiary hover:text-pro-text-primary'
+										sortColumn === 'tvl' ? 'text-link' : 'text-tertiary hover:text-primary'
 									}`}
 								>
 									TVL
@@ -496,7 +496,7 @@ export function YieldsChartTab({
 									aria-pressed={sortColumn === 'apy'}
 									onClick={() => toggleSort('apy')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'apy' ? 'text-link' : 'text-pro-text-tertiary hover:text-pro-text-primary'
+										sortColumn === 'apy' ? 'text-link' : 'text-tertiary hover:text-primary'
 									}`}
 								>
 									APY
@@ -507,12 +507,12 @@ export function YieldsChartTab({
 										className={sortColumn === 'apy' ? 'opacity-100' : 'opacity-30'}
 									/>
 								</button>
-								<p className="text-right text-pro-text-tertiary max-sm:hidden">Category</p>
+								<p className="text-right text-tertiary max-sm:hidden">Category</p>
 							</div>
 
 							<div ref={poolListRef} className="h-[240px] overflow-y-auto">
 								{searchedAndSortedPools.length === 0 ? (
-									<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">
+									<div className="flex h-full items-center justify-center body-sm text-tertiary">
 										No pools match your search
 									</div>
 								) : (
@@ -559,24 +559,20 @@ export function YieldsChartTab({
 																alt={pool.project}
 																width={24}
 																height={24}
-																className="size-6 shrink-0 rounded-full object-cover ring-1 ring-pro-cards-border"
+																className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
 															/>
 														) : null}
 														<div className="min-w-0">
-															<div
-																className={`truncate font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}
-															>
+															<div className={`truncate font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
 																{pool.pool}
 															</div>
-															<div className="truncate body-sm text-pro-text-tertiary">
+															<div className="truncate body-sm text-tertiary">
 																{pool.project} • {pool.chains[0]}
 															</div>
 														</div>
 													</div>
 
-													<div
-														className={`text-right font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}
-													>
+													<div className={`text-right font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
 														{formatUsd(pool.tvl, {
 															compact: true,
 															minimumCompactValue: 1_000_000,
@@ -585,7 +581,7 @@ export function YieldsChartTab({
 													</div>
 
 													<div className="text-right">
-														<div className={`font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}>
+														<div className={`font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
 															{formatPercent(pool.apy, {
 																input: 'percent',
 																minimumFractionDigits: 2,
@@ -594,7 +590,7 @@ export function YieldsChartTab({
 															}) ?? '0.00%'}
 														</div>
 														{pool.apyMean30d != null ? (
-															<div className="body-sm text-pro-text-tertiary">
+															<div className="body-sm text-tertiary">
 																30d:{' '}
 																{formatPercent(pool.apyMean30d, {
 																	input: 'percent',
@@ -608,7 +604,7 @@ export function YieldsChartTab({
 
 													<div className="text-right max-sm:hidden">
 														{pool.category ? (
-															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-pro-text-tertiary">
+															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-tertiary">
 																{pool.category}
 															</span>
 														) : null}
@@ -623,15 +619,13 @@ export function YieldsChartTab({
 					)}
 
 					{/* Chart Preview */}
-					<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-						<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
-							<span className="label-sm text-pro-text-secondary">
-								{selectedYieldPool ? selectedYieldPool.name : 'Preview'}
-							</span>
+					<div className="overflow-hidden rounded-lg border border-subtle">
+						<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
+							<span className="label-sm text-secondary">{selectedYieldPool ? selectedYieldPool.name : 'Preview'}</span>
 						</div>
 
 						{selectedYieldPool ? (
-							<div className="border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
+							<div className="border-b border-subtle bg-surface px-3 py-2">
 								<SegmentedControl
 									label="Chart type"
 									variant="chips"
@@ -651,11 +645,11 @@ export function YieldsChartTab({
 						) : null}
 
 						{selectedYieldPool ? (
-							<div className="bg-pro-cards-bg p-3">
+							<div className="bg-surface p-3">
 								<div className="mb-2 flex items-center gap-2 body-sm">
-									<span className="text-pro-text-tertiary">{selectedYieldPool.project}</span>
-									<span className="text-pro-text-tertiary">•</span>
-									<span className="text-pro-text-tertiary">{selectedYieldPool.chain}</span>
+									<span className="text-tertiary">{selectedYieldPool.project}</span>
+									<span className="text-tertiary">•</span>
+									<span className="text-tertiary">{selectedYieldPool.chain}</span>
 								</div>
 
 								{selectedYieldChartType === 'tvl-apy' &&
@@ -663,13 +657,13 @@ export function YieldsChartTab({
 								latestYieldData.tvl !== null ? (
 									<div className="mb-3 flex gap-4">
 										<div className="flex flex-col">
-											<span className="body-sm text-pro-text-tertiary uppercase">Latest APY</span>
+											<span className="body-sm text-tertiary uppercase">Latest APY</span>
 											<span className="mono-md-bold" style={{ color: '#cc3e82' }}>
 												{formatPercent(latestYieldData.apy, { input: 'percent' })}
 											</span>
 										</div>
 										<div className="flex flex-col">
-											<span className="body-sm text-pro-text-tertiary uppercase">TVL</span>
+											<span className="body-sm text-tertiary uppercase">TVL</span>
 											<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
 												{formatUsd(latestYieldData.tvl, {
 													compact: true,
@@ -762,7 +756,7 @@ export function YieldsChartTab({
 								</div>
 							</div>
 						) : (
-							<div className="flex h-[280px] items-center justify-center bg-pro-cards-bg text-center text-pro-text-tertiary">
+							<div className="flex h-[280px] items-center justify-center bg-surface text-center text-tertiary">
 								<div>
 									<Icon name="bar-chart-2" height={32} width={32} className="mx-auto mb-1" />
 									<p className="body-sm">Select a yield pool to see preview</p>

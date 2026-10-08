@@ -63,7 +63,6 @@ export function AddChartModal({
 		<Dialog
 			size="xl"
 			workspace
-			scope="pro"
 			open={isOpen}
 			onClose={onClose}
 			{...(onClosed ? { onClosed } : {})}

@@ -145,7 +145,7 @@ function ColumnButton(props: ColumnButtonProps) {
 				<button
 					type="button"
 					onClick={(event) => toggleFromRow(event, event.currentTarget, columnKey, true)}
-					className="hover:bg-surface-secondary flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
+					className="hover-wash flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
 				/>
 			}
 		>
@@ -232,7 +232,7 @@ export function YieldsColumnManagementPanel({
 					placeholder="Search columns…"
 					value={searchTerm}
 					onChange={(event) => setSearchTerm(event.currentTarget.value)}
-					className="bg-surface-secondary w-full rounded-md border border-subtle py-2 pr-3 pl-9 body-md text-primary"
+					className="w-full rounded-md border border-medium bg-surface py-2 pr-3 pl-9 body-md text-primary placeholder:text-tertiary"
 				/>
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

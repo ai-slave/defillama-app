@@ -154,7 +154,7 @@ export function CompositionSection({
 					/>
 				)}
 			</SectionHeader>
-			{subtitle && <p className="-mt-1 body-sm text-pro-text-secondary">{subtitle}</p>}
+			{subtitle && <p className="-mt-1 body-sm text-secondary">{subtitle}</p>}
 			{/* `minmax(0,…)` on both tracks: the default `auto` minimum is min-content, which lets
 			    the share table push the chart column off the page instead of scrolling itself.
 			    Splits at the mockup's own 900px-ish breakpoint rather than waiting for xl. One
@@ -175,7 +175,7 @@ export function CompositionSection({
 							/>
 							{/* A hole the line joins across, named under the chart rather than left to
 							    read as a measurement. */}
-							{note && <p className="mt-2 body-sm text-pro-text-tertiary">{note}</p>}
+							{note && <p className="mt-2 body-sm text-tertiary">{note}</p>}
 							{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
 						</>
 					) : (
@@ -187,7 +187,7 @@ export function CompositionSection({
 				<Card>
 					{/* The payload's own title, the same string the chip above carries. A hard space
 					    while it is in flight — a collapsed empty heading would jump the table below. */}
-					<h3 className="mb-2 label-sm tracking-wider text-pro-text-label uppercase">{model?.title ?? ' '}</h3>
+					<h3 className="mb-2 label-sm tracking-wider text-secondary uppercase">{model?.title ?? ' '}</h3>
 					<DataTable
 						getOccurrenceKey={(row) => row.name}
 						rows={model?.rows}
@@ -198,7 +198,7 @@ export function CompositionSection({
 								label: 'Segment',
 								wrap: true,
 								render: (row) => (
-									<span className="flex items-center gap-2 text-pro-text-primary">
+									<span className="flex items-center gap-2 text-primary">
 										<span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: row.color }} />
 										{row.name}
 										{row.duplicate && (

@@ -264,8 +264,8 @@ export function NotebookView({
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="title-md tracking-tight text-pro-text-primary">{tab.title}</h3>
-					<span className="body-sm text-pro-text-tertiary tabular-nums">
+					<h3 className="title-md tracking-tight text-primary">{tab.title}</h3>
+					<span className="body-sm text-tertiary tabular-nums">
 						{cells.length} cell{cells.length === 1 ? '' : 's'}
 						{hasRunnableSql ? ` · ${runnableSqlCount} SQL` : ''}
 						{chartCount > 0 ? ` · ${chartCount} chart${chartCount === 1 ? '' : 's'}` : ''}
@@ -273,12 +273,12 @@ export function NotebookView({
 				</div>
 				<div className="flex items-center gap-2">
 					{promoteRunAll && hasRunnableSql ? (
-						<span className="hidden body-sm text-pro-text-tertiary sm:inline">
-							Not yet run — <span className="text-pro-text-secondary tabular-nums">{runnableSqlCount}</span>{' '}
+						<span className="hidden body-sm text-tertiary sm:inline">
+							Not yet run — <span className="text-secondary tabular-nums">{runnableSqlCount}</span>{' '}
 							{runnableSqlCount === 1 ? 'query' : 'queries'}
 							{chartCount > 0 ? (
 								<>
-									, <span className="text-pro-text-secondary tabular-nums">{chartCount}</span>{' '}
+									, <span className="text-secondary tabular-nums">{chartCount}</span>{' '}
 									{chartCount === 1 ? 'chart' : 'charts'}
 								</>
 							) : null}
@@ -302,7 +302,7 @@ export function NotebookView({
 			{tab.cellsDirty || firstStaleName ? (
 				<div
 					ref={focusRunAllOnLeave}
-					className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-pro-premium-300/40 bg-pro-premium-300/5 px-3 py-1.5 body-sm text-pro-premium-300"
+					className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warning-muted bg-warning-faint px-3 py-1.5 body-sm text-warning"
 				>
 					<span className="inline-flex items-center gap-1.5">
 						<Icon name="alert-triangle" className="size-3.5" />
@@ -427,8 +427,8 @@ function AddCellBar({
 function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; variant: 'between' | 'end' }) {
 	const triggerCls =
 		variant === 'between'
-			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-pro-app-bg text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand-strong hover:text-link aria-expanded:opacity-100 aria-expanded:border-brand-strong aria-expanded:text-link'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-brand-muted hover:text-link'
+			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-medium bg-page text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand-strong hover:text-link aria-expanded:opacity-100 aria-expanded:border-brand-strong aria-expanded:text-link'
+			: 'inline-flex items-center gap-1.5 rounded-md border border-medium bg-surface px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand-muted hover:text-link'
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">
@@ -455,12 +455,12 @@ function AddMenuItem({
 	hint: string
 	tone: 'primary' | 'gold' | 'purple'
 }) {
-	const dot = tone === 'primary' ? 'bg-brand' : tone === 'gold' ? 'bg-pro-premium-300' : 'bg-pro-ai-300'
+	const dot = tone === 'primary' ? 'bg-brand' : tone === 'gold' ? 'bg-warning' : 'bg-pro-ai'
 	return (
 		<MenuItem onClick={onClick}>
 			<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="body-xs text-pro-text-tertiary">{hint}</span>
+			<span className="body-xs text-tertiary">{hint}</span>
 		</MenuItem>
 	)
 }

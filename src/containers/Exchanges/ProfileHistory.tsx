@@ -44,7 +44,7 @@ function HistorySection({
 					className="ml-auto text-tertiary transition-transform group-open/history:rotate-180"
 				/>
 			</summary>
-			<div className="divide-subtle divide-y">{children}</div>
+			<div className="divide-y divide-(--border-subtle)">{children}</div>
 		</Card>
 	)
 }

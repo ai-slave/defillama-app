@@ -178,7 +178,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 					<p className="mono-xl tabular-nums">{displayValue}</p>
 					{change.label && metric.aggregator !== 'growth' ? (
 						<ProBadge
-							tone={change.direction === 'up' ? 'success' : change.direction === 'down' ? 'warning' : 'neutral'}
+							tone={change.direction === 'up' ? 'up' : change.direction === 'down' ? 'down' : 'neutral'}
 							{...(hasSeenLoading ? { className: 'animate-pro-rise [animation-delay:300ms]' } : {})}
 						>
 							{change.label}
@@ -196,7 +196,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 						</div>
 					</Suspense>
 				) : null}
-				<p className="body-md text-pro-text-secondary">{summaryText}</p>
+				<p className="body-md text-secondary">{summaryText}</p>
 			</div>
 		)
 	}, [

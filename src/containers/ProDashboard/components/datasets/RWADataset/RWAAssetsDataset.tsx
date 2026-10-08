@@ -178,7 +178,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">Failed to load RWA assets data</div>
+					<div className="text-center text-secondary">Failed to load RWA assets data</div>
 				</div>
 			</div>
 		)
@@ -204,7 +204,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 							type="text"
 							placeholder="Search assets..."
 							onInput={(event) => setProjectName(event.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

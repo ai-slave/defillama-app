@@ -11,7 +11,7 @@ export default function Stablecoins() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col">
 			<div className="relative flex-1">
-				<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+				<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
 					<div className="flex flex-col">
 						<div className="flex border-b border-subtle">
 							{Array.from({ length: 5 }).map((_, i) => (
@@ -37,10 +37,10 @@ export default function Stablecoins() {
 							</div>
 						))}
 					</div>
-					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
+					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
 				</div>
 				<div className="absolute inset-0 flex items-center justify-center">
-					<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 title-md tracking-wide text-pro-text-secondary shadow-lg">
+					<span className="rounded-full border border-medium bg-surface px-5 py-2.5 title-md tracking-wide text-secondary shadow-lg">
 						Stablecoins — Coming Soon
 					</span>
 				</div>

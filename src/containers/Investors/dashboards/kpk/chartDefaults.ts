@@ -105,7 +105,7 @@ export const KPK_CATEGORY_SLOTS: Readonly<Record<string, number>> = {
  */
 export const KPK_MINT_TEXT = 'text-sl-kpk-mint'
 export const KPK_MINT_BG = 'bg-sl-kpk-mint'
-export const KPK_MINT_BORDER = 'border-sl-kpk-mint/45'
+export const KPK_MINT_BORDER = 'border-sl-kpk-mint-muted'
 export const KPK_BENCH_TEXT = 'text-sl-kpk-benchmark'
 export const KPK_BENCH_BG = 'bg-sl-kpk-benchmark'
 

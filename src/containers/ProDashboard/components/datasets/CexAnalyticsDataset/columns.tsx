@@ -6,7 +6,7 @@ import type { tableFeaturesConfig } from './index'
 const renderRatio = (value: number | null, suffix = 'x') => {
 	const formatted = formatRatio(value)
 	return formatted == null ? (
-		<span className="text-pro-text-tertiary">-</span>
+		<span className="text-tertiary">-</span>
 	) : (
 		<span>
 			{formatted}
@@ -17,12 +17,12 @@ const renderRatio = (value: number | null, suffix = 'x') => {
 
 const renderPercent = (value: number | null) => {
 	const formatted = formatPercent(value, { input: 'percent' })
-	return formatted == null ? <span className="text-pro-text-tertiary">-</span> : <span>{formatted}</span>
+	return formatted == null ? <span className="text-tertiary">-</span> : <span>{formatted}</span>
 }
 
 const renderCurrency = (value: number | null) => {
 	const formatted = formatUsd(value)
-	return formatted == null ? <span className="text-pro-text-tertiary">-</span> : <>{formatted}</>
+	return formatted == null ? <span className="text-tertiary">-</span> : <>{formatted}</>
 }
 
 export const cexAnalyticsColumns: Array<ColumnDef<typeof tableFeaturesConfig, CexAnalyticsSnapshotRow>> = [

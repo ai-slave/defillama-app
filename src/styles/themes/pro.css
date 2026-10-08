@@ -1,15 +1,11 @@
 /* ----------------------------------------------------------------------------
    Pro Dashboard product theme (ProDashboard, Downloads, AddToDashboard) and
-   the embedded Investors dashboards (--sl-*).
+   the Investors dashboards (--sl-*).
 
-   Pro's card, panel and text surface tokens, separate from the design
-   system's tokens in semantics.css. Pro's controls are the app's Button,
-   SegmentedControl and Select; ProButton's create and generate tints are
-   the pro-create and pro-generate tokens below. `pro-dashboard`
-   and `.investors-dashboard` re-scope the --pro-* base tokens (defined at
-   :root at the bottom of this file) with the product's own values; never
-   rewrite those names' callsites to semantic utilities — the alias→semantic
-   identity does not hold inside those scopes.
+   Pro's text, surfaces, borders and status colors are the core tokens in
+   semantics.css. This file holds only Pro's accents: the violet AI tint
+   (pro-ai-*, on the violet ramp), the Investors partner colors, and the
+   product's animations.
 ---------------------------------------------------------------------------- */
 
 @theme {
@@ -84,181 +80,49 @@
 			transform: scaleY(1);
 		}
 	}
+}
 
-	/* Pro base tokens registered as utilities (definitions at the bottom of
-	   this file: :root fallbacks + pro-dashboard / investors re-scopes; the
-	   var chain resolves per element, so scoped overrides keep working) */
-	--color-pro-text-primary: var(--pro-text-primary);
-	--color-pro-text-secondary: var(--pro-text-secondary);
-	--color-pro-text-tertiary: var(--pro-text-tertiary);
-	--color-pro-text-label: var(--pro-text-label);
-	--color-pro-text-form: var(--pro-text-form);
-	--color-pro-cards-bg: var(--pro-cards-bg);
-	--color-pro-cards-border: var(--pro-cards-border);
-	--color-pro-app-bg: var(--pro-app-bg);
-	--color-pro-form-control-border: var(--pro-form-control-border);
-	--color-pro-accent: var(--pro-accent);
-	--color-pro-hover-fill: var(--hover-row);
-	--color-pro-glass-bg: var(--pro-glass-bg);
-	--color-pro-link-hover-bg: var(--pro-link-hover-bg);
-	--color-pro-link-button-bg: var(--pro-link-button-bg);
-	--color-pro-btn-secondary-hover: var(--pro-btn-secondary-hover);
+/* Inline so each utility reads the ramp where it is used (html.dark, .theme-dark,
+   .investors-dashboard), not the value computed at :root. */
+@theme inline {
+	/* Pro's AI accent on the violet ramp: step 9 fill, step 3 tint and step 4
+	   on hover, step 11 text, so a label passes AA on the tint in both modes. */
+	--color-pro-ai: var(--violet-9);
+	--color-pro-ai-tint: var(--violet-3);
+	--color-pro-ai-tint-strong: var(--violet-4);
+	--color-pro-ai-text: var(--violet-11);
 
-	/* Investors (smart list) palette registered as utilities */
-	--color-sl-accent: var(--sl-accent);
-	--color-sl-accent-hover: var(--sl-accent-hover);
-	--color-sl-accent-muted: var(--sl-accent-muted);
-	--color-sl-btn-inactive-bg: var(--sl-btn-inactive-bg);
-	--color-sl-divider: var(--sl-divider);
-	--color-sl-hover-bg: var(--sl-hover-bg);
-	--color-sl-text-brand: var(--sl-text-brand);
+	/* Investors partner colors (KPK's mint and benchmark lines) */
 	--color-sl-kpk-mint: var(--sl-kpk-mint);
+	--color-sl-kpk-mint-muted: var(--sl-kpk-mint-muted);
 	--color-sl-kpk-benchmark: var(--sl-kpk-benchmark);
-
-	/* ProButton tints on the color ramps: step 3 rest, step 4 hover, step 11
-	   text, so the label passes AA in both states and both modes. */
-	--color-pro-create: var(--blue-3);
-	--color-pro-create-hover: var(--blue-4);
-	--color-pro-on-create: var(--blue-11);
-	--color-pro-generate: var(--violet-3);
-	--color-pro-generate-hover: var(--violet-4);
-	--color-pro-on-generate: var(--violet-11);
-
-	--color-pro-ai-300: oklch(0.612 0.213 278.1); /* Vibrant purple */
-	--color-pro-ai-400: oklch(0.41 0.13 279.09); /* Deep purple */
-
-	--color-pro-info-100: oklch(0.935 0.02 257); /* Light blue/gray */
-	--color-pro-info-200: oklch(0.78 0.12 257); /* Muted blue */
-	--color-pro-info-300: oklch(0.612 0.213 257); /* Vibrant blue */
-	--color-pro-info-400: oklch(0.41 0.13 257); /* Deep blue */
-
-	--color-pro-success-100: oklch(0.935 0.02 143); /* Light green/gray */
-	--color-pro-success-200: oklch(0.78 0.12 143); /* Muted green */
-	--color-pro-success-300: oklch(0.612 0.213 143); /* Vibrant green */
-	--color-pro-success-400: oklch(0.41 0.13 143); /* Deep green */
-
-	--color-pro-premium-100: oklch(0.94 0.01 71.72); /* Light version of pro-premium-400 */
-	--color-pro-premium-200: oklch(0.78 0.08 60); /* Medium gold */
-	--color-pro-premium-300: oklch(0.612 0.15 60); /* Vibrant gold */
-	--color-pro-premium-400: oklch(0.41 0.12 60); /* Deep gold */
 }
 
-/* ------------------------- Pro Dashboard Utilities ------------------------- */
-@utility pro-dashboard {
-	/* Product light text tiers; dark aliases the app semantics */
-	--pro-text-primary: #0a0a0a;
-	--pro-text-secondary: #2d2d2d;
-	--pro-text-tertiary: #4a4a4a;
-
-	--pro-hover-fill: #e0e0e0;
-
-	html.dark & {
-		--pro-text-primary: var(--text-primary);
-		--pro-text-secondary: var(--text-secondary);
-		--pro-text-tertiary: var(--text-tertiary);
-
-		--pro-hover-fill: #0d1516;
-	}
-}
-
+/* Investors dashboards: core tokens plus the partner colors above. */
 .investors-dashboard {
-	--pro-hover-fill: #ebedf0;
-
-	--pro-app-bg: #f0f2f5;
-	--pro-cards-bg: #ffffff;
-	--pro-frozen-bg: var(--pro-cards-bg);
-	--pro-cards-border: rgba(0, 0, 0, 0.06);
-	--pro-form-control-border: rgba(0, 0, 0, 0.1);
-	--pro-accent: #2172e5;
-	--pro-text-primary: #1a1d23;
-	--pro-text-secondary: #555962;
-	--pro-text-tertiary: #8b8f99;
-	--pro-text-label: #6e727c;
-	--pro-text-form: #555962;
-
-	--sl-accent: #2172e5;
-	--sl-accent-hover: #1a5ecc;
-	--sl-accent-muted: rgba(33, 114, 229, 0.08);
-	--sl-sidebar-bg: #ffffff;
-	--sl-sidebar-border: rgba(0, 0, 0, 0.06);
-	--sl-text-brand: rgba(0, 0, 0, 0.45);
+	--sl-frozen-bg: var(--bg-surface);
 	--sl-stroke-brand: #0090b3;
-	--sl-hover-bg: rgba(0, 0, 0, 0.04);
-	--sl-divider: rgba(0, 0, 0, 0.06);
-	--sl-btn-inactive-bg: rgba(0, 0, 0, 0.04);
 	--sl-kpk-mint: #007556;
+	--sl-kpk-mint-muted: color-mix(in srgb, var(--sl-kpk-mint) 45%, transparent);
 	--sl-kpk-benchmark: #5865cd;
-	--sl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-
-	--color-pro-text-primary: var(--pro-text-primary);
-	--color-pro-text-secondary: var(--pro-text-secondary);
-	--color-pro-text-tertiary: var(--pro-text-tertiary);
-	--color-pro-text-label: var(--pro-text-label);
-	--color-pro-text-form: var(--pro-text-form);
-	--color-pro-cards-bg: var(--pro-cards-bg);
-	--color-pro-cards-border: var(--pro-cards-border);
-	--color-pro-app-bg: var(--pro-app-bg);
-	--color-pro-form-control-border: var(--pro-form-control-border);
-	--color-pro-accent: var(--pro-accent);
-	--color-sl-accent: var(--sl-accent);
-	--color-sl-accent-hover: var(--sl-accent-hover);
-	--color-sl-accent-muted: var(--sl-accent-muted);
-	--color-sl-btn-inactive-bg: var(--sl-btn-inactive-bg);
-	--color-sl-divider: var(--sl-divider);
-	--color-sl-hover-bg: var(--sl-hover-bg);
-	--color-sl-text-brand: var(--sl-text-brand);
-	--color-sl-kpk-mint: var(--sl-kpk-mint);
-	--color-sl-kpk-benchmark: var(--sl-kpk-benchmark);
 
 	html.dark & {
-		--pro-hover-fill: #12141a;
-
-		--pro-app-bg: #060709;
-		--pro-cards-bg: #0c0e13;
-		--pro-cards-border: rgba(255, 255, 255, 0.04);
-		--pro-form-control-border: rgba(255, 255, 255, 0.07);
-		--pro-text-primary: #cdd0d5;
-		--pro-text-secondary: #6e727c;
-		--pro-text-tertiary: #3e4148;
-		--pro-text-label: #555962;
-		--pro-text-form: #6e727c;
-
-		--sl-accent: #2172e5;
-		--sl-accent-hover: #3b8af0;
-		--sl-accent-muted: rgba(33, 114, 229, 0.1);
-		--sl-sidebar-bg: #0a0b0f;
-		--sl-sidebar-border: rgba(255, 255, 255, 0.04);
-		--sl-text-brand: rgba(255, 255, 255, 0.4);
 		--sl-stroke-brand: #00d4ff;
-		--sl-hover-bg: rgba(255, 255, 255, 0.04);
-		--sl-divider: rgba(255, 255, 255, 0.04);
-		--sl-btn-inactive-bg: rgba(255, 255, 255, 0.05);
 		--sl-kpk-mint: #00af82;
 		--sl-kpk-benchmark: #7384ef;
-		--sl-card-shadow: none;
 	}
 }
 
-.investors-dashboard.investors-dashboard-embedded,
-html.dark .investors-dashboard.investors-dashboard-embedded {
-	--pro-app-bg: inherit;
-	--pro-cards-bg: inherit;
-	--pro-frozen-bg: var(--bg-page);
-	--pro-cards-border: inherit;
-	--pro-form-control-border: inherit;
-	--pro-accent: inherit;
-	--pro-text-primary: inherit;
-	--pro-text-secondary: inherit;
-	--pro-text-tertiary: inherit;
-	--pro-text-label: inherit;
-	--pro-text-form: inherit;
+/* Embedded in the main site the content sits in the page flow, so frozen
+   table columns take the page background. */
+.investors-dashboard.investors-dashboard-embedded {
+	--sl-frozen-bg: var(--bg-page);
 }
 
 .investors-dashboard {
 	& .sl-sidebar {
-		background: var(--sl-sidebar-bg);
-		border-right: 1px solid var(--sl-sidebar-border);
-		box-shadow: var(--sl-card-shadow);
+		background: var(--bg-surface);
+		border-right: 1px solid var(--border-subtle);
 	}
 
 	& [data-umami-event='csv-download'],
@@ -282,6 +146,13 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 
 .sl-loader {
 	animation: sl-pulse-glow 2s ease-in-out infinite;
+}
+
+/* A landing project card's hover border and glow, translucent variants of the
+   --card-accent partner color its data sets on the element. */
+.ir-card-accent {
+	--card-accent-border: color-mix(in srgb, var(--card-accent) 20%, transparent);
+	--card-accent-glow: color-mix(in srgb, var(--card-accent) 4%, transparent);
 }
 
 @keyframes ir-rise {
@@ -346,45 +217,4 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	.ir-stamp-check {
 		animation: none;
 	}
-}
-
-@utility pro-info-card {
-	.pro-dashboard & {
-		border-radius: 0.3rem;
-		background-image: linear-gradient(to top, rgba(35, 91, 255, 0), rgba(35, 91, 255, 0.15));
-	}
-	.pro-dashboard &:hover {
-		background-color: rgba(17, 30, 78, 0.25);
-	}
-}
-
-/* ----------------------------------------------------------------------------
-   Pro base tokens. Inside `pro-dashboard` these are re-scoped above with the
-   product's own values; these :root defaults keep portals (dialogs, menus
-   rendered at body level) and shared components on the app semantics.
----------------------------------------------------------------------------- */
-:root {
-	--pro-text-primary: var(--text-primary);
-	--pro-text-secondary: var(--text-secondary);
-	--pro-text-tertiary: var(--text-tertiary);
-	--pro-text-form: var(--text-secondary);
-	--pro-text-label: var(--text-secondary);
-	--pro-app-bg: var(--bg-page);
-	--pro-cards-bg: var(--bg-surface);
-	--pro-frozen-bg: var(--bg-surface);
-	--pro-cards-border: var(--border-medium);
-	--pro-form-control-border: var(--border-medium);
-	--pro-accent: var(--bg-brand);
-	/* Floating "glass" surfaces; no library token yet */
-	--pro-glass-bg: oklch(0.991 0.001 106.4);
-	/* Link-tint hovers/fills carried over from the app shell */
-	--pro-link-hover-bg: #1f67d233;
-	--pro-link-button-bg: oklch(0.533 0.18 259 / 0.12);
-	--pro-btn-secondary-hover: oklch(0.571 0.191 258.5 / 0.2);
-}
-
-html.dark {
-	--pro-cards-border: var(--border-strong);
-	--pro-glass-bg: oklch(0.157 0.012 206.6 / 0.7);
-	--pro-link-hover-bg: #1f67d24d;
 }

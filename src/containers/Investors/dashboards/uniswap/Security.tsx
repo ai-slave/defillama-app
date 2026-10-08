@@ -140,31 +140,26 @@ const REPORT_HEADERS = ['Product', 'Version', 'Report', 'Firm']
 function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 	const sorted = sortReports(reports)
 	return (
-		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border" style={{ maxHeight: '480px' }}>
+		<div className="w-full overflow-auto rounded-lg border border-subtle" style={{ maxHeight: '480px' }}>
 			<div style={{ display: 'grid', gridTemplateColumns: REPORT_COLUMNS }}>
 				{REPORT_HEADERS.map((label) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 label-md tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-surface px-3 py-2.5 label-md tracking-wider text-tertiary uppercase"
 					>
 						{label}
 					</div>
 				))}
 				{keyedOccurrences(sorted, (report) => JSON.stringify([report.repo, report.file, report.url])).map(
 					({ item: report, key }, index) => {
-						const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-						const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${rowBg}`
+						const rowBg = index % 2 === 1 ? 'bg-surface' : ''
+						const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-primary ${rowBg}`
 						return (
 							<Fragment key={key}>
 								<div className={cell}>{report.repo}</div>
 								<div className={cell}>{report.version}</div>
 								<div className={cell}>
-									<a
-										href={report.url}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="text-sl-accent hover:underline"
-									>
+									<a href={report.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
 										{report.file}
 									</a>
 								</div>

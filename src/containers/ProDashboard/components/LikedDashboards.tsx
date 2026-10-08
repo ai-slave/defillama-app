@@ -17,9 +17,9 @@ export function LikedDashboards() {
 	if (dashboards.length === 0) {
 		return (
 			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-				<Icon name="star" height={32} width={32} className="text-pro-text-tertiary" />
-				<h2 className="text-center title-lg text-pro-text-primary">No starred dashboards yet</h2>
-				<p className="text-center body-md text-pro-text-secondary">Dashboards you star show up here.</p>
+				<Icon name="star" height={32} width={32} className="text-tertiary" />
+				<h2 className="text-center title-lg text-primary">No starred dashboards yet</h2>
+				<p className="text-center body-md text-secondary">Dashboards you star show up here.</p>
 				<div className="mt-7">
 					<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
 						Browse dashboards

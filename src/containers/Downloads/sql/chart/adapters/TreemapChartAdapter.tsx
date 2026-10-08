@@ -36,7 +36,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady, heigh
 
 	if (!nameCol || !valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-pro-text-secondary">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
 				Treemap needs a category column and a numeric column.
 			</div>
 		)

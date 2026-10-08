@@ -22,7 +22,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className={`${proCardShellStyles} group flex h-full flex-col gap-2 p-3 transition-colors hover:border-pro-accent/40`}
+			className={`${proCardShellStyles} group flex h-full flex-col gap-2 p-3 transition-colors hover:border-brand-muted`}
 		>
 			<div className="flex items-center gap-2">
 				{author.avatarUrl ? (
@@ -37,11 +37,11 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					</span>
 				)}
 				<div className="min-w-0">
-					<p className="truncate title-md text-pro-text-primary group-hover:text-link">{author.displayName}</p>
-					<p className="truncate body-sm text-pro-text-tertiary">@{author.slug}</p>
+					<p className="truncate title-md text-primary group-hover:text-link">{author.displayName}</p>
+					<p className="truncate body-sm text-tertiary">@{author.slug}</p>
 				</div>
 			</div>
-			{author.bio ? <p className="line-clamp-2 body-sm text-pro-text-secondary">{author.bio}</p> : null}
+			{author.bio ? <p className="line-clamp-2 body-sm text-secondary">{author.bio}</p> : null}
 			<ProMeta
 				className="mt-auto tabular-nums"
 				items={[
@@ -67,9 +67,9 @@ export function TopAuthorsRail() {
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-top-authors-${i}`}
-							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg"
+							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-lg border border-subtle bg-surface"
 						>
-							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent" />
 						</div>
 					))}
 				</div>
@@ -81,7 +81,7 @@ export function TopAuthorsRail() {
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
 					No authors to show yet
 				</p>
 			</div>
@@ -96,7 +96,7 @@ export function TopAuthorsRail() {
 				{canScrollLeft || canScrollRight ? (
 					<>
 						{canScrollLeft ? (
-							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll left"
@@ -133,7 +133,7 @@ export function TopAuthorsRail() {
 				{(canScrollLeft || canScrollRight) && authors.length > 4 ? (
 					<>
 						{canScrollRight ? (
-							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll right"

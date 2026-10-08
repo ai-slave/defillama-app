@@ -191,7 +191,7 @@ function RWAChartTabInner({
 				/>
 			)}
 
-			<div className="min-h-[320px] rounded-md border border-pro-cards-border bg-pro-cards-bg">
+			<div className="min-h-[320px] rounded-md border border-subtle bg-surface">
 				{rwaMode === 'overview' ? (
 					<OverviewPreview
 						breakdown={selectedRwaBreakdown}
@@ -267,7 +267,7 @@ function AssetControls({
 				placeholder={isLoading ? 'Loading assets…' : 'Search for an RWA asset…'}
 			/>
 			<div className="flex flex-wrap gap-2">
-				<span className="body-md text-pro-text-secondary">Metrics:</span>
+				<span className="body-md text-secondary">Metrics:</span>
 				{ALL_METRICS.map((metric) => {
 					const isSelected = selectedMetrics.includes(metric)
 					return (

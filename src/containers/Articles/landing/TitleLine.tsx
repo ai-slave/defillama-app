@@ -10,12 +10,13 @@ export function TitleLine(props: TitleLineProps) {
 	const { title = '', hideOnMobile = false } = props
 
 	return (
-		<div className="flex grow items-center gap-x-3.75 text-lg leading-[150%] font-medium text-research-heading dark:text-research-ink">
+		<div className="flex grow items-center gap-x-3.75 text-lg leading-[150%] font-medium text-research-navy">
 			<div>{title}</div>
 			<div
 				className={clsx(
 					'grow border-t lg:border-t-[2px]',
-					'border-research-heading dark:border-research-invert',
+					// The rule takes the title's ink.
+					'border-current',
 					hideOnMobile && 'max-md:hidden'
 				)}
 			/>

@@ -196,12 +196,16 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 										aria-disabled={inserting || undefined}
 										aria-busy={inserting || undefined}
 										onClick={() => handleInsert(item)}
-										className="flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-busy:cursor-progress"
+										className="group flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed aria-busy:cursor-progress"
 									>
-										<Icon name="bar-chart-2" className="size-4 shrink-0 text-tertiary" aria-hidden="true" />
+										<Icon
+											name="bar-chart-2"
+											className="size-4 shrink-0 text-tertiary group-disabled:text-disabled"
+											aria-hidden="true"
+										/>
 										<span className="flex min-w-0 flex-1 flex-col">
-											<span className="truncate body-md text-primary">{item.title}</span>
-											<span className="body-sm text-tertiary">
+											<span className="truncate body-md text-primary group-disabled:text-disabled">{item.title}</span>
+											<span className="body-sm text-tertiary group-disabled:text-disabled">
 												{chartTypeLabel(item.chart_type)} · saved {formatDate(item.created_at) ?? '-'}
 												{item.frozen ? ' · data frozen when saved' : null}
 											</span>

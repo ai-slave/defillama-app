@@ -175,7 +175,6 @@
 	z-index: 1;
 }
 
-/* Light mode uses the warning ambers; dark overrides every property below. */
 /* A new timeline row: fade in with a 4px rise. */
 @keyframes llamaStepEnter {
 	from {

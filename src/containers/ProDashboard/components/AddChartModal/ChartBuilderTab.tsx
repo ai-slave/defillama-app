@@ -523,7 +523,7 @@ export function ChartBuilderTab({
 			/>
 
 			<div className={`mb-1 lg:block ${pane === 'configure' ? 'block' : 'hidden'}`}>
-				<label htmlFor={nameId} className="mb-1 block label-sm text-pro-text-secondary">
+				<label htmlFor={nameId} className="mb-1 block label-sm text-secondary">
 					Card name (optional)
 				</label>
 				<input
@@ -531,15 +531,15 @@ export function ChartBuilderTab({
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
 				<div
-					className={`w-full space-y-1.5 overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
+					className={`w-full space-y-1.5 overflow-y-auto rounded-md border border-subtle bg-surface p-2 max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
 				>
-					<h3 className="title-sm text-pro-text-primary">Chart configuration</h3>
+					<h3 className="title-sm text-primary">Chart configuration</h3>
 
 					<div>
 						<VirtualizedSelect
@@ -552,8 +552,8 @@ export function ChartBuilderTab({
 						/>
 					</div>
 
-					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 label-sm text-pro-text-secondary">Mode</h4>
+					<div className="border-t border-subtle pt-1.5">
+						<h4 className="mb-1 label-sm text-secondary">Mode</h4>
 						<SegmentedControl
 							label="Grouping mode"
 							options={MODE_OPTIONS}
@@ -565,12 +565,12 @@ export function ChartBuilderTab({
 						/>
 					</div>
 
-					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 label-sm text-pro-text-secondary">Filters</h4>
+					<div className="border-t border-subtle pt-1.5">
+						<h4 className="mb-1 label-sm text-secondary">Filters</h4>
 
 						{isChainsMode ? null : isProtocolUnsupportedMetric ? (
-							<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-								<p className="body-sm text-pro-text-tertiary">This metric is available only for all protocols.</p>
+							<div className="mb-1.5 rounded-md border border-medium px-2 py-1.5">
+								<p className="body-sm text-tertiary">This metric is available only for all protocols.</p>
 							</div>
 						) : (
 							<div className="mb-1.5 flex flex-col gap-1.5">
@@ -691,7 +691,7 @@ export function ChartBuilderTab({
 						</div>
 
 						{!hasExactRemainder ? (
-							<p className="mb-1 body-sm text-pro-text-secondary">
+							<p className="mb-1 body-sm text-secondary">
 								This source returns exact Top {chartBuilder.limit} chain series only.
 							</p>
 						) : isChainsMode || !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
@@ -719,8 +719,8 @@ export function ChartBuilderTab({
 						) : null}
 					</div>
 
-					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 label-sm text-pro-text-secondary">Chart type</h4>
+					<div className="border-t border-subtle pt-1.5">
+						<h4 className="mb-1 label-sm text-secondary">Chart type</h4>
 						<Ariakit.RadioProvider
 							orientation="both"
 							value={chartBuilder.chartType}
@@ -749,7 +749,7 @@ export function ChartBuilderTab({
 					</div>
 
 					{chartBuilder.chartType === 'treemap' && !isSnapshotMetric ? (
-						<div className="border-t border-pro-cards-border pt-1.5">
+						<div className="border-t border-subtle pt-1.5">
 							<VirtualizedSelect
 								variant="field"
 								label="Treemap value"
@@ -761,8 +761,8 @@ export function ChartBuilderTab({
 						</div>
 					) : null}
 
-					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 label-sm text-pro-text-secondary">Display value as</h4>
+					<div className="border-t border-subtle pt-1.5">
+						<h4 className="mb-1 label-sm text-secondary">Display value as</h4>
 						<SegmentedControl
 							label="Display value as"
 							options={hasExactRemainder ? DISPLAY_OPTIONS : DISPLAY_OPTIONS.slice(0, 1)}
@@ -775,18 +775,18 @@ export function ChartBuilderTab({
 				</div>
 
 				<div
-					className={`min-h-0 flex-1 flex-col overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-3 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
+					className={`min-h-0 flex-1 flex-col overflow-y-auto rounded-md border border-subtle bg-surface p-3 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
 				>
 					<div className="mb-2 flex shrink-0 items-center justify-between">
-						<h3 className="title-sm text-pro-text-primary">Preview</h3>
-						<div className="flex items-center gap-1 body-sm text-pro-text-tertiary">
+						<h3 className="title-sm text-primary">Preview</h3>
+						<div className="flex items-center gap-1 body-sm text-tertiary">
 							<span>ⓘ</span>
 							<span>Updates as you configure</span>
 						</div>
 					</div>
 
 					<div
-						className="relative flex flex-1 items-center justify-center rounded-md border border-pro-cards-border bg-pro-cards-bg"
+						className="relative flex flex-1 items-center justify-center rounded-md border border-subtle bg-surface"
 						style={{ minHeight: '450px' }}
 					>
 						{queryReadFailed(preview) && !previewData ? (
@@ -802,16 +802,14 @@ export function ChartBuilderTab({
 								</Button>
 							</div>
 						) : previewLoading ? (
-							<div className="flex flex-col items-center gap-2 text-center text-pro-text-tertiary">
+							<div className="flex flex-col items-center gap-2 text-center text-tertiary">
 								<LoadingSpinner size={24} />
-								<p className="body-md text-pro-text-secondary">Loading preview…</p>
+								<p className="body-md text-secondary">Loading preview…</p>
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
 								<Suspense
-									fallback={
-										<div className="size-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg" />
-									}
+									fallback={<div className="size-full animate-pulse rounded-md border border-subtle bg-surface" />}
 								>
 									{chartBuilder.chartType === 'treemap' ? (
 										<BuilderTreemapChart data={treemapData} height="450px" />
@@ -831,14 +829,12 @@ export function ChartBuilderTab({
 								</Suspense>
 							</div>
 						) : previewData ? (
-							<p className="body-md text-pro-text-secondary">No data for these settings.</p>
+							<p className="body-md text-secondary">No data for these settings.</p>
 						) : (
 							<div className="text-center">
-								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-pro-text-tertiary" />
-								<p className="body-md text-pro-text-secondary">Configure chart settings to see preview</p>
-								<p className="mt-1 body-sm text-pro-text-tertiary">
-									Select a metric to generate chart (all chains by default)
-								</p>
+								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-tertiary" />
+								<p className="body-md text-secondary">Configure chart settings to see preview</p>
+								<p className="mt-1 body-sm text-tertiary">Select a metric to generate chart (all chains by default)</p>
 							</div>
 						)}
 					</div>
@@ -846,7 +842,7 @@ export function ChartBuilderTab({
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-2 label-sm">
-								<h4 className="text-pro-text-secondary">Series colors</h4>
+								<h4 className="text-secondary">Series colors</h4>
 								<Button
 									variant="link"
 									onClick={() => onChartBuilderChange({ seriesColors: {} })}
@@ -856,23 +852,23 @@ export function ChartBuilderTab({
 									Reset all
 								</Button>
 							</div>
-							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
+							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-subtle bg-surface p-2">
 								{visibleSeries.map((series) => {
 									const activeColor = resolveSeriesColor(series.name, series.color)
 									const hasOverride = !!seriesColors?.[series.name]
 									return (
 										<div
 											key={series.name}
-											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 body-sm"
+											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1 body-sm"
 										>
-											<span className="max-w-[140px] truncate text-pro-text-secondary" title={series.name}>
+											<span className="max-w-[140px] truncate text-secondary" title={series.name}>
 												{series.name}
 											</span>
 											<input
 												type="color"
 												value={activeColor}
 												onChange={(event) => handleSeriesColorChange(series.name, event.target.value)}
-												className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
+												className="size-5 cursor-pointer rounded-sm border border-medium bg-transparent p-0"
 												aria-label={`Select color for ${series.name}`}
 											/>
 											<Button
@@ -893,8 +889,8 @@ export function ChartBuilderTab({
 
 					<div className="mt-2 shrink-0 rounded-sm bg-surface-elevated-1 p-2">
 						<div className="flex items-start gap-1">
-							<span className="body-sm text-pro-text-tertiary">ⓘ</span>
-							<p className="body-sm text-pro-text-tertiary">
+							<span className="body-sm text-tertiary">ⓘ</span>
+							<p className="body-sm text-tertiary">
 								This chart shows {chartBuilder.metric}
 								{chartBuilder.mode === 'protocol'
 									? ` for ${

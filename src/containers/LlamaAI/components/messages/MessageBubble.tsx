@@ -59,7 +59,7 @@ function StreamingImagePlaceholder() {
 		<div className={`${IMAGE_FRAME} flex items-center justify-center`} style={{ aspectRatio: '1 / 1' }}>
 			<div
 				aria-hidden="true"
-				className="absolute inset-0 bg-linear-to-br from-brand/10 via-brand/5 to-transparent motion-safe:animate-pulse"
+				className="absolute inset-0 bg-linear-to-br from-brand-muted to-transparent motion-safe:animate-pulse"
 			/>
 			<div role="status" className="relative flex flex-col items-center gap-1.5 body-sm text-tertiary">
 				<Icon name="image-plus" height={20} width={20} />
@@ -120,7 +120,7 @@ function GeneratedImageBlock({
 			{!loaded ? (
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 bg-linear-to-br from-brand/10 via-brand/5 to-transparent motion-safe:animate-pulse"
+					className="absolute inset-0 bg-linear-to-br from-brand-muted to-transparent motion-safe:animate-pulse"
 				/>
 			) : null}
 			<img

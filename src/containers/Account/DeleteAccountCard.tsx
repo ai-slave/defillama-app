@@ -475,13 +475,13 @@ export function DeleteAccountCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-surface p-4 dark:border-sub-border-strong">
+			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
 					<Icon name="trash-2" height={28} width={28} className="text-error" />
-					<span className="label-lg text-sub-text-primary">Delete account</span>
+					<span className="label-lg text-primary">Delete account</span>
 				</div>
 				<div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-					<p className="max-w-[440px] body-sm text-sub-text-muted">
+					<p className="max-w-[440px] body-sm text-tertiary">
 						Permanently delete your account data and remove your email from DefiLlama marketing services. This action
 						cannot be undone.
 					</p>

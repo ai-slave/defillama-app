@@ -33,9 +33,7 @@ export default function Unlocks() {
 					hideTokenStats
 				/>
 			) : (
-				<p className="flex h-[360px] items-center justify-center text-center body-sm text-pro-text-tertiary">
-					No unlocks data.
-				</p>
+				<p className="flex h-[360px] items-center justify-center text-center body-sm text-tertiary">No unlocks data.</p>
 			)}
 
 			{history?.unlockChart && (

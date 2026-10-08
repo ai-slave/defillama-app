@@ -28,8 +28,8 @@ export function DiscoveryShelfHeading({
 	return (
 		<div className="flex items-end justify-between gap-3">
 			<div className="flex min-w-0 flex-col gap-0.5">
-				<h3 className="title-lg text-pro-text-primary">{title}</h3>
-				{subtitle ? <p className="body-sm text-pro-text-tertiary">{subtitle}</p> : null}
+				<h3 className="title-lg text-primary">{title}</h3>
+				{subtitle ? <p className="body-sm text-tertiary">{subtitle}</p> : null}
 			</div>
 			{seeAllHref ? (
 				<BasicLink href={seeAllHref} className="flex shrink-0 items-center gap-1 label-md text-link hover:underline">
@@ -61,9 +61,9 @@ export function DiscoverySection({
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-${title}-${i}`}
-							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg md:w-[320px]"
+							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-lg border border-subtle bg-surface md:w-[320px]"
 						>
-							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent" />
 						</div>
 					))}
 				</div>
@@ -75,7 +75,7 @@ export function DiscoverySection({
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
 					{emptyMessage}
 				</p>
 			</div>
@@ -90,7 +90,7 @@ export function DiscoverySection({
 				{canScrollLeft || canScrollRight ? (
 					<>
 						{canScrollLeft ? (
-							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll left"
@@ -130,7 +130,7 @@ export function DiscoverySection({
 				{(canScrollLeft || canScrollRight) && dashboards.length > 3 ? (
 					<>
 						{canScrollRight ? (
-							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll right"

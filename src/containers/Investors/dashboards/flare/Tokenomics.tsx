@@ -34,20 +34,20 @@ const FAQ_ITEMS: Array<{ q: string; a: React.ReactNode }> = [
 
 function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 	return (
-		<details className="group rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 label-md text-pro-text-primary">
+		<details className="group rounded-lg border border-subtle bg-surface">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 label-md text-primary">
 				{q}
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className="size-4 shrink-0 text-pro-text-label transition-transform group-open:rotate-180"
+					className="size-4 shrink-0 text-secondary transition-transform group-open:rotate-180"
 				>
 					<path d="M6 9l6 6 6-6" />
 				</svg>
 			</summary>
-			<p className="px-4 pb-4 body-md text-pro-text-secondary">{a}</p>
+			<p className="px-4 pb-4 body-md text-secondary">{a}</p>
 		</details>
 	)
 }
@@ -140,14 +140,12 @@ export default function Tokenomics() {
 							</ChartCard>
 						)}
 						{protocolChart && (
-							<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+							<div className="rounded-lg border border-subtle bg-surface p-4">
 								<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 									<div className="min-w-0">
-										<h3 className="title-md text-pro-text-primary">
-											{protocolChart.title ?? 'FLR by Protocol (Monthly)'}
-										</h3>
+										<h3 className="title-md text-primary">{protocolChart.title ?? 'FLR by Protocol (Monthly)'}</h3>
 										{protocolChart.subtitle && (
-											<p className="mt-0.5 body-sm text-pro-text-label">{protocolChart.subtitle}</p>
+											<p className="mt-0.5 body-sm text-secondary">{protocolChart.subtitle}</p>
 										)}
 									</div>
 									<SegmentedControl<typeof protocolView>
@@ -186,11 +184,11 @@ export default function Tokenomics() {
 				<KpiCard label="Total Burned" value={bk.totalGasBurned} />
 			</div>
 
-			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<div className="rounded-lg border border-subtle bg-surface p-4">
 				<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 					<div className="min-w-0">
-						<h3 className="title-md text-pro-text-primary">{b.burnTitle}</h3>
-						<p className="mt-0.5 body-sm text-pro-text-label">
+						<h3 className="title-md text-primary">{b.burnTitle}</h3>
+						<p className="mt-0.5 body-sm text-secondary">
 							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
 						</p>
 					</div>
@@ -284,7 +282,7 @@ export default function Tokenomics() {
 					chartOptions={e.burnVsEmitChartOptions}
 				/>
 			</ChartCard>
-			{e.burnVsEmitSubtitle && <p className="body-sm text-pro-text-label">{e.burnVsEmitSubtitle}</p>}
+			{e.burnVsEmitSubtitle && <p className="body-sm text-secondary">{e.burnVsEmitSubtitle}</p>}
 
 			<SectionHeader>FIRE (FIP.16)</SectionHeader>
 			{fire ? (
@@ -307,15 +305,15 @@ export default function Tokenomics() {
 						)}
 						<KpiCard label="Tag Fees" value={fire.kpis.tagsCollectedUsd} def="Fees from Flare's Tags product." />
 					</div>
-					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+					<div className="rounded-lg border border-subtle bg-surface p-4">
 						<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 							<div className="min-w-0">
-								<h3 className="title-md text-pro-text-primary">{fire.title}</h3>
-								<p className="mt-0.5 body-sm text-pro-text-label">
+								<h3 className="title-md text-primary">{fire.title}</h3>
+								<p className="mt-0.5 body-sm text-secondary">
 									{fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}
 								</p>
 							</div>
-							<span className="rounded-full border border-pro-cards-border px-2.5 py-0.5 label-xs tracking-wide text-success uppercase">
+							<span className="rounded-full border border-medium px-2.5 py-0.5 label-xs tracking-wide text-success uppercase">
 								Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}
 							</span>
 						</div>
@@ -331,10 +329,10 @@ export default function Tokenomics() {
 						/>
 					</div>
 					{fire.wallets.length > 0 && (
-						<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+						<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 							<table className="w-full text-left body-md">
 								<thead>
-									<tr className="border-b border-pro-cards-border label-md tracking-wider text-pro-text-label uppercase">
+									<tr className="border-b border-subtle label-md tracking-wider text-secondary uppercase">
 										<th className="p-3">Source</th>
 										<th className="p-3">Wallet</th>
 										<th className="p-3 text-right">Fees</th>
@@ -344,38 +342,34 @@ export default function Tokenomics() {
 								</thead>
 								<tbody>
 									{fire.wallets.map((w) => (
-										<tr key={w.wallet} className="border-b border-pro-cards-border last:border-b-0">
-											<td className="p-3 font-medium text-pro-text-primary">{w.name}</td>
+										<tr key={w.wallet} className="border-b border-subtle last:border-b-0">
+											<td className="p-3 font-medium text-primary">{w.name}</td>
 											<td className="p-3">
 												<a
 													href={`https://flare-explorer.flare.network/address/${w.wallet}`}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="mono-sm text-pro-text-secondary hover:text-pro-text-primary"
+													className="mono-sm text-secondary hover:text-primary"
 												>
 													{w.wallet.slice(0, 6)}…{w.wallet.slice(-4)}
 												</a>
 											</td>
-											<td className="p-3 text-right body-sm text-pro-text-secondary tabular-nums">
+											<td className="p-3 text-right body-sm text-secondary tabular-nums">
 												{formatNumber(w.feesToken, { maximumFractionDigits: 0 })} {w.feeToken}
 											</td>
-											<td className="p-3 text-right body-sm text-pro-text-primary tabular-nums">
-												{w.feesUsdFormatted}
-											</td>
-											<td className="p-3 text-right body-sm text-pro-text-secondary tabular-nums">
-												{formatNumber(w.txCount)}
-											</td>
+											<td className="p-3 text-right body-sm text-primary tabular-nums">{w.feesUsdFormatted}</td>
+											<td className="p-3 text-right body-sm text-secondary tabular-nums">{formatNumber(w.txCount)}</td>
 										</tr>
 									))}
 								</tbody>
 							</table>
 						</div>
 					)}
-					<p className="body-sm text-pro-text-label">{fire.note}</p>
+					<p className="body-sm text-secondary">{fire.note}</p>
 				</>
 			) : (
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
-					<p className="body-sm text-pro-text-label">{b.firePoolNote}</p>
+				<div className="rounded-lg border border-subtle bg-surface p-5">
+					<p className="body-sm text-secondary">{b.firePoolNote}</p>
 				</div>
 			)}
 

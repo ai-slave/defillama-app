@@ -29,19 +29,17 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
+			<div className="flex items-center gap-3 rounded-lg border border-subtle p-3">
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate body-md text-sub-text-primary">{member.email}</span>
+						<span className="truncate body-md text-primary">{member.email}</span>
 						{isAdminMember && (
-							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-link">
-								Admin
-							</span>
+							<span className="shrink-0 rounded-full bg-brand-tint px-2 py-0.5 label-xs text-link">Admin</span>
 						)}
-						{isCurrentUser && <span className="shrink-0 body-xs text-sub-text-muted">(you)</span>}
+						{isCurrentUser && <span className="shrink-0 body-xs text-tertiary">(you)</span>}
 					</div>
 					<div className="mt-1 flex items-center gap-2">
-						<span className={`body-sm ${hasSubscription ? 'text-sub-success' : 'text-sub-text-muted'}`}>
+						<span className={`body-sm ${hasSubscription ? 'text-success' : 'text-tertiary'}`}>
 							{getSubscriptionLabel(member.subscriptionType)}
 						</span>
 					</div>

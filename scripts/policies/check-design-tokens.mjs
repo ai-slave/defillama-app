@@ -110,6 +110,8 @@ const BORDER_SIDE = /^[tblrxyse]$/
 const STRING_LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g
 const BORDER_TOKEN = /(?<![\w.-])((?:[\w[\]()&>~.*-]+:)*)((?:border|divide)(?:-[\w[\]().%/-]+)?)(?![\w-])/g
 
+const BORDER_ONLY_COLORS = new Set(['very-subtle', 'subtle', 'medium', 'strong', 'brand'])
+
 function classifyBorderUtility(utility) {
 	const m = utility.match(/^(border|divide)(?:-(.+))?$/)
 	if (!m) return 'other'
@@ -123,6 +125,8 @@ function classifyBorderUtility(utility) {
 		return 'color'
 	}
 	if (kind === 'border' && parts.length === 1 && /^\d+$/.test(parts[0])) return 'width'
+	// The border-subtle family are @utility names in semantics.css with no divide- twin: `divide-subtle` sets no color.
+	if (kind === 'divide' && BORDER_ONLY_COLORS.has(rest)) return 'other'
 	return 'color'
 }
 
@@ -133,7 +137,6 @@ function matchImplicitBorderColor(content) {
 		const literal = match[0]
 		if (!literal.includes('border') && !literal.includes('divide')) continue
 		if (literal.startsWith('`') && literal.includes('${')) continue
-		if (/pro-(?:border|divider|btn-[\w-]+)/.test(literal)) continue
 		const tokens = literal.slice(1, -1).split(/\s+/)
 		const isClassAttribute = /(?:class|className)\s*=\s*$/.test(
 			source.slice(Math.max(0, match.index - 24), match.index)
@@ -474,6 +477,40 @@ const HUED_REST =
 	/(?<![\w:-])(?:border-(?:brand|link|error|warning|success|data-up|data-down)(?:-muted|-strong)?|bg-(?:brand|error|warning|success|data-up|data-down)-(?:faint|tint|tint-strong)|bg-brand-faint|bg-brand-muted)(?![\w-])/
 const NEUTRAL_HOVER =
 	/(?<![\w-])(?:hover-wash(?:-card)?|(?:[\w\-[\]=]+:)*(?:hover|focus-visible):(?:[\w-]+:)*bg-(?:hover-row|hover-card))(?![\w-])/
+// Tailwind drops a class it cannot resolve without a warning. The token utilities in semantics.css are
+// property-scoped (@utility bg-brand-tint, @utility border-subtle), so `from-brand-tint`, `divide-subtle` or
+// `border-subtle/60` compile to nothing. The names come from the stylesheets, so a new token is covered.
+const TOKEN_CSS = execSync('git ls-files -- "src/styles/*.css" "src/styles/**/*.css" src/tailwind.css', {
+	cwd: ROOT,
+	encoding: 'utf8'
+})
+	.split('\n')
+	.filter(Boolean)
+	.map((file) => fs.readFileSync(path.join(ROOT, file), 'utf8'))
+	.join('\n')
+const TOKEN_UTILITIES = new Set([...TOKEN_CSS.matchAll(/@utility\s+([\w-]+)\s*\{/g)].map((m) => m[1]))
+const THEME_NAMES = new Set([...TOKEN_CSS.matchAll(/--(?:color|shadow)-([\w-]+)\s*:/g)].map((m) => m[1]))
+const COLOR_PROPS =
+	'bg|text|border(?:-[trblxy])?|from|via|to|ring|fill|stroke|divide|outline|decoration|placeholder|caret|accent|shadow'
+const UTILITY_COLORS = new Map()
+for (const utility of TOKEN_UTILITIES) {
+	const m = utility.match(new RegExp(`^(?:${COLOR_PROPS})-(.+)$`))
+	if (m) UTILITY_COLORS.set(m[1], utility)
+}
+const COLOR_CLASS = new RegExp(
+	`(?<![\\w-])(?:[\\w\\-[\\]&=.'*@():>]+:)*!?((?:${COLOR_PROPS})-([a-z][\\w-]*))(\\/[\\w.[\\]]+)?(?![\\w-])`,
+	'g'
+)
+function matchUnresolvedTokenUtility(content) {
+	const found = []
+	for (const [token, utility, name, modifier] of content.matchAll(COLOR_CLASS)) {
+		if (TOKEN_UTILITIES.has(utility)) {
+			if (modifier) found.push(token)
+		} else if (!THEME_NAMES.has(name) && UTILITY_COLORS.has(name)) found.push(token)
+	}
+	return found.length > 0 ? found : null
+}
+
 function matchNeutralHoverOnHuedControl(content) {
 	const found = []
 	for (const [literal] of content.matchAll(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g)) {
@@ -615,9 +652,23 @@ const RULES = [
 		pattern: /rounded(?:-[a-z]{1,2})?-\[(?:8|12)px\]/g
 	},
 	{
+		id: 'product-role-token',
+		description:
+			'a product-theme color named for a core role (a product text tier, surface, card, border, line, divider or hover). A product theme holds only accents; the role takes the core token (design.md → Product surfaces)',
+		pattern:
+			/(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*(?:bg|text|border(?:-[trblxy])?|from|via|to|ring|fill|stroke|divide|outline|placeholder)-(?:pro|sub|sl|ai|research|callout|utr)-(?:text|surface|cards?|app|page|panel|heading|border|line|divider|hover|invert|wash|overlay|icon|footer|bg)(?:-[\w-]+)?(?![\w-])/g
+	},
+	{
+		id: 'unresolved-token-utility',
+		description:
+			'a class Tailwind cannot generate, so it renders nothing: a token utility on another property (`from-brand-tint`, `divide-subtle`; only the @utility in semantics.css exists) or with a /NN modifier (`border-subtle/60`). Use the property the token has, an arbitrary `from-(--bg-brand-tint)`, or the token for the role',
+		match: matchUnresolvedTokenUtility,
+		skipTests: true
+	},
+	{
 		id: 'implicit-border-color',
 		description:
-			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …)',
+			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …; a divide-y takes divide-(--border-subtle), since divide-subtle sets no color)',
 		match: matchImplicitBorderColor
 	},
 	{

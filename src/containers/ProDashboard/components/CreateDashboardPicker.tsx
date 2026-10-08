@@ -141,7 +141,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	// and replaces the form so nothing can create a second dashboard.
 	if (creation.isSuccess) {
 		return (
-			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" portal unmountOnHide>
+			<Dialog ref={dialogRef} store={dialogStore} size="sm" portal unmountOnHide>
 				<DialogHeader title="Dashboard created" />
 				<DialogBody>
 					<Ariakit.DialogDescription className="body-sm text-secondary">
@@ -168,7 +168,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	// keyed picker, which resets the step.
 	if (view.mode === 'scratch') {
 		return (
-			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" pending={pending} portal unmountOnHide>
+			<Dialog ref={dialogRef} store={dialogStore} size="sm" pending={pending} portal unmountOnHide>
 				<CreateDashboardModalContent
 					formId={formId}
 					onCreate={submitCreation}
@@ -196,16 +196,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 
 	if (view.mode === 'comparison') {
 		return (
-			<Dialog
-				ref={dialogRef}
-				store={dialogStore}
-				size="lg"
-				fullSheet
-				scope="pro"
-				pending={pending}
-				portal
-				unmountOnHide
-			>
+			<Dialog ref={dialogRef} store={dialogStore} size="lg" fullSheet pending={pending} portal unmountOnHide>
 				{/* The footer's Back leads out of the wizard from its first step, so the header has no second back. */}
 				<DialogHeader title="Create comparison dashboard" />
 				<Suspense
@@ -231,7 +222,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	}
 
 	return (
-		<Dialog ref={dialogRef} store={dialogStore} size="lg" scope="pro" pending={pending} portal unmountOnHide>
+		<Dialog ref={dialogRef} store={dialogStore} size="lg" pending={pending} portal unmountOnHide>
 			<DialogHeader title="Create new dashboard" />
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">
@@ -244,7 +235,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						disabled={pending}
 						autoFocus={view.from === 'scratch'}
 						onClick={() => setView({ mode: 'scratch', from: null })}
-						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
+						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-brand-muted"
 					>
 						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="file-plus" height={20} width={20} />
@@ -262,7 +253,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						disabled={pending}
 						autoFocus={view.from === 'comparison'}
 						onClick={() => setView({ mode: 'comparison', from: null })}
-						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
+						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-brand-muted"
 					>
 						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="bar-chart-2" height={20} width={20} />
@@ -370,6 +361,8 @@ function DashboardTemplates({
 				{cards.map(({ template, selection, failed, loading, empty }) => {
 					const creating = pendingName === template.name
 					const unavailable = pendingName !== null || failed || loading || empty
+					// The card being created keeps its look; every other unavailable card reads as disabled.
+					const dimmed = unavailable && !creating
 					const status = creating
 						? 'Creating dashboard…'
 						: loading
@@ -398,9 +391,9 @@ function DashboardTemplates({
 									variables: generated.variables
 								})
 							}}
-							className={`rounded-lg border p-3 text-left transition-colors hover:border-pro-accent/40 aria-disabled:cursor-not-allowed ${creating ? 'border-pro-accent/40' : 'border-subtle aria-disabled:opacity-60'}`}
+							className={`rounded-lg border p-3 text-left transition-colors aria-disabled:cursor-not-allowed ${creating ? 'border-brand-muted' : dimmed ? 'border-disabled bg-disabled' : 'border-subtle hover:border-brand-muted'}`}
 						>
-							<span className="flex items-center gap-2 label-md text-primary">
+							<span className={`flex items-center gap-2 label-md ${dimmed ? 'text-disabled' : 'text-primary'}`}>
 								{template.name}
 								{creating || loading ? <LoadingSpinner size={14} /> : null}
 							</span>

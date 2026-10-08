@@ -50,7 +50,7 @@ export function ProCardLoading({
 	variant?: ProCardSkeletonVariant
 }) {
 	return (
-		<div aria-busy="true" className={`flex min-w-0 flex-1 flex-col text-pro-text-tertiary ${className ?? ''}`.trim()}>
+		<div aria-busy="true" className={`flex min-w-0 flex-1 flex-col text-tertiary ${className ?? ''}`.trim()}>
 			<ProCardSkeleton kind={variant} />
 			<span className="sr-only">{label}</span>
 		</div>
@@ -73,8 +73,8 @@ export function ProCardError({
 	return (
 		<div role={role} className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center">
 			{/* A status is a lasting state of the card (nothing to draw, needs regenerating), not a failure: not red. */}
-			<p className={`body-sm ${role === 'alert' ? 'text-data-down' : 'text-pro-text-secondary'}`}>{title}</p>
-			{detail ? <p className="body-sm text-pro-text-tertiary">{detail}</p> : null}
+			<p className={`body-sm ${role === 'alert' ? 'text-data-down' : 'text-secondary'}`}>{title}</p>
+			{detail ? <p className="body-sm text-tertiary">{detail}</p> : null}
 			{retry || action ? (
 				<div className="mt-1 flex flex-wrap justify-center gap-2">
 					{retry ? <ProCardRetryButton retry={retry} /> : null}
@@ -88,7 +88,7 @@ export function ProCardError({
 export function ProCardEmpty({ message, action }: { message: ReactNode; action?: ProCardStatusAction }) {
 	return (
 		<div role="status" className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center">
-			<p className="body-sm text-pro-text-tertiary">{message}</p>
+			<p className="body-sm text-tertiary">{message}</p>
 			{action ? (
 				<div className="mt-1">
 					<ProCardActionButton {...action} pendingLabel={null} />

@@ -122,7 +122,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 			<div className="flex max-w-full items-stretch gap-2.5 rounded-md border-l-2 border-l-ai-gold py-2 pl-3">
 				<div className="flex shrink-0 items-center gap-1.5">
 					<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-4" />
-					<span className="label-sm whitespace-nowrap text-ai-gold-deep dark:text-ai-gold-bright">
+					<span className="label-sm whitespace-nowrap text-ai-gold-deep">
 						Ask about {displayName}
 						{freeLabel.showFree ? <span className={freeLabelBOnly}> · free</span> : null}
 					</span>

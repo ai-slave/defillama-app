@@ -33,49 +33,49 @@ export function AuthenticationCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="key-filled" height={28} width={28} className="text-sub-text-primary" />
-					<span className="label-lg text-sub-text-primary">Authentication</span>
+					<Icon name="key-filled" height={28} width={28} className="text-primary" />
+					<span className="label-lg text-primary">Authentication</span>
 				</div>
 
-				<p className="body-sm text-sub-text-muted">Manage your authentication methods.</p>
+				<p className="body-sm text-tertiary">Manage your authentication methods.</p>
 
 				{walletEmail ? (
 					<>
 						<div className="flex items-center gap-3">
-							<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
-								<Icon name="wallet" height={20} width={20} className="text-sub-text-primary" />
+							<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
+								<Icon name="wallet" height={20} width={20} className="text-primary" />
 							</div>
 							<div className="flex flex-col gap-1">
-								<span className="body-md text-sub-text-primary">{walletDisplayName}</span>
-								<span className="body-sm text-sub-text-muted">Wallet address</span>
+								<span className="body-md text-primary">{walletDisplayName}</span>
+								<span className="body-sm text-tertiary">Wallet address</span>
 							</div>
 						</div>
 
 						<div className="flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-3">
 								<div className="flex flex-col gap-1">
-									<span className="body-md text-sub-text-primary">Email &amp; Password</span>
-									<span className="body-sm text-sub-text-muted">Not set up</span>
+									<span className="body-md text-primary">Email &amp; Password</span>
+									<span className="body-sm text-tertiary">Not set up</span>
 								</div>
 								<Button type="button" size="md" onClick={() => setIsSwitchToEmailModalOpen(true)}>
 									Add email sign-in
 								</Button>
 							</div>
-							<p className="body-sm text-sub-text-muted">Add an email and password as another way to sign in.</p>
+							<p className="body-sm text-tertiary">Add an email and password as another way to sign in.</p>
 						</div>
 					</>
 				) : (
 					<>
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
-									<Icon name="mail-rounded" height={20} width={20} className="text-sub-text-primary" />
+								<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
+									<Icon name="mail-rounded" height={20} width={20} className="text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
-									<span className="body-md text-sub-text-primary">{user?.email}</span>
-									<span className="body-sm text-sub-text-muted">Email & Password</span>
+									<span className="body-md text-primary">{user?.email}</span>
+									<span className="body-sm text-tertiary">Email & Password</span>
 								</div>
 							</div>
 							<div className="flex gap-2">
@@ -90,12 +90,12 @@ export function AuthenticationCard() {
 
 						{user?.walletAddress && (
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
-									<Icon name="wallet" height={20} width={20} className="text-sub-text-primary" />
+								<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
+									<Icon name="wallet" height={20} width={20} className="text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
-									<span className="body-md text-sub-text-primary">{truncateAddress(user.walletAddress)}</span>
-									<span className="body-sm text-sub-text-muted">Wallet address</span>
+									<span className="body-md text-primary">{truncateAddress(user.walletAddress)}</span>
+									<span className="body-sm text-tertiary">Wallet address</span>
 								</div>
 							</div>
 						)}

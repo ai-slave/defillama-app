@@ -54,14 +54,14 @@ export function ApiAccessCard({
 
 	if (!apiKey) {
 		return (
-			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-					<span className="label-lg text-sub-text-primary">API access</span>
+					<Icon name="cli" height={28} width={28} className="text-primary" />
+					<span className="label-lg text-primary">API access</span>
 				</div>
 
-				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-dark-page">
-					<p className="max-w-sm body-md text-sub-text-muted">
+				<div className="flex flex-col items-center gap-4 rounded-lg bg-surface-elevated-1 px-4 py-8 text-center">
+					<p className="max-w-sm body-md text-tertiary">
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
 					<Button
@@ -86,17 +86,17 @@ export function ApiAccessCard({
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			{/* Header */}
 			<div className="flex items-center gap-2">
-				<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-				<span className="label-lg text-sub-text-primary">API access</span>
+				<Icon name="cli" height={28} width={28} className="text-primary" />
+				<span className="label-lg text-primary">API access</span>
 			</div>
 
 			{/* API Key Section */}
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-					<span className="body-md text-sub-text-primary">Your API key</span>
+					<span className="body-md text-primary">Your API key</span>
 					<div className="flex flex-wrap gap-2">
 						<Button
 							// A key generated here replaces the Generate button, so its first control takes that focus.
@@ -122,8 +122,8 @@ export function ApiAccessCard({
 						</Button>
 					</div>
 				</div>
-				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
-					<code className="mono-sm break-all text-sub-text-muted">{showKey ? apiKey : '•'.repeat(apiKey.length)}</code>
+				<div className="rounded-lg bg-surface-elevated-1 px-3 py-2.5">
+					<code className="mono-sm break-all text-tertiary">{showKey ? apiKey : '•'.repeat(apiKey.length)}</code>
 				</div>
 			</div>
 
@@ -144,24 +144,24 @@ export function ApiAccessCard({
 				/>
 			) : null}
 			{/* API Usage */}
-			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
-				<span className="body-md text-sub-text-primary">API usage</span>
+			<div className="flex flex-col gap-4 rounded-lg bg-surface-elevated-1 p-3">
+				<span className="body-md text-primary">API usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="body-sm text-sub-text-muted">
+						<span className="body-sm text-tertiary">
 							Remaining API calls: {formatPercent(usagePercentage, { input: 'percent' })}
 						</span>
-						<span className="body-sm text-sub-text-primary">
-							{formatNumber(remaining)} <span className="text-sub-text-muted">/{formatNumber(API_CREDITS_LIMIT)}</span>
+						<span className="body-sm text-primary">
+							{formatNumber(remaining)} <span className="text-tertiary">/{formatNumber(API_CREDITS_LIMIT)}</span>
 						</span>
 					</div>
-					<div className="h-2 overflow-hidden rounded-full bg-sub-border-light dark:bg-white/[0.08]">
-						<div className="h-full rounded-full bg-sub-brand-primary" style={{ width: `${usagePercentage}%` }} />
+					<div className="h-2 overflow-hidden rounded-full bg-surface-elevated-2">
+						<div className="h-full rounded-full bg-brand" style={{ width: `${usagePercentage}%` }} />
 					</div>
 					<div className="flex items-center justify-between">
-						<span className="body-sm text-sub-text-muted">Rate limit:</span>
-						<span className="body-sm text-sub-text-primary">
-							1,000 Requests<span className="text-sub-text-muted">/minute</span>
+						<span className="body-sm text-tertiary">Rate limit:</span>
+						<span className="body-sm text-primary">
+							1,000 Requests<span className="text-tertiary">/minute</span>
 						</span>
 					</div>
 				</div>
@@ -169,11 +169,11 @@ export function ApiAccessCard({
 
 			{/* Overage */}
 			{overage && (
-				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
+				<div className="flex flex-col gap-2 rounded-lg bg-surface-elevated-1 p-3">
 					<div className="flex items-center justify-between gap-4">
-						<span className="body-md text-sub-text-primary">
+						<span className="body-md text-primary">
 							Allow extra usage charges{' '}
-							<span className="text-sub-text-muted">({overage.enabled ? 'Enabled' : 'Disabled'})</span>
+							<span className="text-tertiary">({overage.enabled ? 'Enabled' : 'Disabled'})</span>
 						</span>
 						<ToggleSwitch
 							checked={overage.enabled}
@@ -182,7 +182,7 @@ export function ApiAccessCard({
 							aria-label="Allow extra usage charges"
 						/>
 					</div>
-					<p className="body-sm text-sub-text-muted">
+					<p className="body-sm text-tertiary">
 						When enabled, API usage beyond your plan's included limits continues uninterrupted and the additional usage
 						is billed to your card. Pricing after included limits: $0.60 per 1,000 calls.
 						<br />

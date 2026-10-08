@@ -124,16 +124,16 @@ export function MetricTab(props: MetricTabProps) {
 				className="shrink-0 lg:hidden"
 			/>
 			<div
-				className={`w-full flex-col border border-pro-cards-border max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px] ${pane === 'configure' ? 'flex' : 'hidden'}`}
+				className={`w-full flex-col border border-subtle max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px] ${pane === 'configure' ? 'flex' : 'hidden'}`}
 			>
 				<div className="flex flex-col gap-3 p-2.5 sm:p-3">
-					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-sm sm:p-3">
+					<div className="rounded-lg border border-subtle bg-surface p-2.5 shadow-sm sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">
 							<div>
-								<label htmlFor={nameId} className="block label-sm text-pro-text-primary">
+								<label htmlFor={nameId} className="block label-sm text-primary">
 									Card name (optional)
 								</label>
-								<p className="body-sm text-pro-text-tertiary">Shown above the metric tile</p>
+								<p className="body-sm text-tertiary">Shown above the metric tile</p>
 							</div>
 							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link md:flex">
 								<Icon name="pencil" width={14} height={14} />
@@ -145,10 +145,10 @@ export function MetricTab(props: MetricTabProps) {
 								type="text"
 								value={metricLabel}
 								onChange={(e) => onLabelChange(e.target.value)}
-								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-2 focus:ring-brand/40 focus:outline-hidden"
+								className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								maxLength={64}
 							/>
-							<div className="flex items-center justify-between body-sm text-pro-text-tertiary">
+							<div className="flex items-center justify-between body-sm text-tertiary">
 								<span>Leave blank to use the automatic title.</span>
 								<span>{metricLabel.length}/64</span>
 							</div>
@@ -182,13 +182,13 @@ export function MetricTab(props: MetricTabProps) {
 			</div>
 
 			<div
-				className={`min-h-[280px] flex-1 shrink-0 flex-col overflow-hidden border border-pro-cards-border lg:flex lg:min-h-0 lg:shrink ${pane === 'preview' ? 'flex' : 'hidden'}`}
+				className={`min-h-[280px] flex-1 shrink-0 flex-col overflow-hidden border border-subtle lg:flex lg:min-h-0 lg:shrink ${pane === 'preview' ? 'flex' : 'hidden'}`}
 			>
-				<div className="flex-1 overflow-hidden rounded-md bg-pro-cards-bg p-2 sm:p-2.5">
+				<div className="flex-1 overflow-hidden rounded-md bg-surface p-2 sm:p-2.5">
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />
 					) : (
-						<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary sm:body-md">
+						<div className="flex h-full items-center justify-center body-sm text-tertiary sm:body-md">
 							<div className="text-center">
 								<Icon name="activity" height={28} width={28} className="mx-auto mb-1 sm:size-8" />
 								<p>Select subject and metric to preview</p>

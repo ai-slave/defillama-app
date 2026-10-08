@@ -20,24 +20,22 @@ const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise
 
 const cardWrapperStyles = {
 	highlighted:
-		'w-full flex-[1_1_280px] flex flex-col gap-2.5 rounded-[24px] bg-sub-brand-primary px-0.5 pt-0.5 pb-3 sm:max-w-[330px]',
+		'w-full flex-[1_1_280px] flex flex-col gap-2.5 rounded-[24px] bg-brand px-0.5 pt-0.5 pb-3 sm:max-w-[330px]',
 	default: 'w-full flex-[1_1_280px] flex flex-col sm:max-w-[330px] sm:gap-2.5 sm:pb-3'
 }
 
 const cardShellStyles = {
 	highlighted: 'relative flex flex-1 flex-col',
-	default:
-		'relative flex flex-1 flex-col rounded-[24px] border border-sub-border-slate-100 bg-white dark:border-sub-border-strong dark:bg-sub-surface-dark'
+	default: 'relative flex flex-1 flex-col rounded-[24px] border border-subtle bg-surface'
 }
 
 const cardInnerStyles = {
 	highlighted:
-		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[22px] bg-white px-5 py-6 dark:bg-sub-surface-dark sm:px-4',
-	default:
-		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[24px] bg-white px-5 py-6 dark:bg-sub-surface-dark sm:px-4'
+		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[22px] bg-surface px-5 py-6 sm:px-4',
+	default: 'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[24px] bg-surface px-5 py-6 sm:px-4'
 }
 
-export const SELECTED_COLUMN_HIGHLIGHT = 'bg-brand-faint dark:bg-sub-brand-primary/5'
+export const SELECTED_COLUMN_HIGHLIGHT = 'bg-brand-faint'
 
 const selectedColumnStyles = {
 	active: SELECTED_COLUMN_HIGHLIGHT,
@@ -75,7 +73,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 	return (
 		<li className={`flex items-start gap-2${item.isSubItem ? ' ml-7 sm:ml-5' : ''}`}>
 			{item.isSubItem ? (
-				<span className="inline-flex size-6 shrink-0 items-center justify-center body-lg text-sub-text-secondary sm:h-5 sm:w-5 sm:body-md">
+				<span className="inline-flex size-6 shrink-0 items-center justify-center body-lg text-secondary sm:h-5 sm:w-5 sm:body-md">
 					–
 				</span>
 			) : (
@@ -83,26 +81,21 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 					{/* The icon is the only sign of whether the plan has the feature, so it carries a name. */}
 					<span className="sr-only">{item.availability === 'check' ? 'Included: ' : 'Not included: '}</span>
 					{item.availability === 'check' ? (
-						<Icon name="check" height={24} width={24} className="text-sub-brand-secondary sm:h-5 sm:w-5" />
+						<Icon name="check" height={24} width={24} className="text-link sm:h-5 sm:w-5" />
 					) : item.availability === 'x' ? (
 						<Icon name="x" height={24} width={24} className="text-error sm:h-5 sm:w-5" />
 					) : (
-						<Icon
-							name="minus"
-							height={24}
-							width={24}
-							className="text-sub-icon-muted sm:h-5 sm:w-5 dark:text-sub-icon-muted"
-						/>
+						<Icon name="minus" height={24} width={24} className="text-tertiary sm:h-5 sm:w-5" />
 					)}
 				</span>
 			)}
 			{item.highlightText ? (
-				<span className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text body-lg text-transparent sm:pt-0.5 sm:body-md dark:from-sub-brand-secondary dark:to-sub-brand-softest">
+				<span className="sub-gradient-text body-lg sm:pt-0.5 sm:body-md">
 					<FeatureLabel item={item} />
 				</span>
 			) : (
 				<span
-					className={`body-lg sm:pt-0.5 sm:body-md ${item.availability === 'check' || item.availability === 'x' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted'}`}
+					className={`body-lg sm:pt-0.5 sm:body-md ${item.availability === 'check' || item.availability === 'x' ? 'text-primary' : 'text-tertiary'}`}
 				>
 					<FeatureLabel item={item} />
 				</span>
@@ -120,7 +113,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 function ProviderManageNotice({ provider }: { provider: string | null }) {
 	if (provider === 'llamapay' || provider === 'legacy') {
 		return (
-			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-tertiary">
 				Your plan is billed through{' '}
 				<a
 					href="https://subscriptions.llamapay.io/"
@@ -136,14 +129,14 @@ function ProviderManageNotice({ provider }: { provider: string | null }) {
 	}
 	if (provider === 'apple') {
 		return (
-			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-tertiary">
 				Your plan is billed through the App Store. Manage it in your Apple subscription settings.
 			</p>
 		)
 	}
 	if (provider === 'google_play') {
 		return (
-			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-tertiary">
 				Your plan is billed through Google Play. Manage it in your Google Play subscription settings.
 			</p>
 		)
@@ -215,8 +208,8 @@ function PricingCardCta({
 		if (!isCurrentPlan) return null
 		return (
 			<>
-				<p className="mt-4 text-center label-lg text-link sm:label-md dark:text-sub-brand-secondary">Current plan</p>
-				<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
+				<p className="mt-4 text-center label-lg text-link sm:label-md">Current plan</p>
+				<p className="text-center body-sm text-tertiary">
 					{isTeamProvided
 						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
 						: `Your ${card.title} plan was set up by the DefiLlama team. To change it, email support@defillama.com.`}
@@ -234,13 +227,13 @@ function PricingCardCta({
 	if (isCurrentPlan) {
 		return (
 			<>
-				<p className="mt-4 text-center label-lg text-link sm:label-md dark:text-sub-brand-secondary">
+				<p className="mt-4 text-center label-lg text-link sm:label-md">
 					{isTrial ? 'Current plan (trial)' : 'Current plan'}
 				</p>
 				{isCancelPending ? (
 					<div className="flex flex-col gap-2 rounded-lg border border-warning-muted bg-warning-tint p-3">
 						<p className="text-center label-sm text-warning">Cancellation scheduled</p>
-						<p className="text-center body-sm text-sub-text-muted">
+						<p className="text-center body-sm text-tertiary">
 							Your plan stays active until the end of the billing period.
 						</p>
 						{/* Reverting opens the Stripe billing portal, so it only applies to Stripe plans */}
@@ -268,9 +261,7 @@ function PricingCardCta({
 							Upgrade to full access
 						</Button>
 						{isEndTrialApplying ? (
-							<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
-								{END_TRIAL_APPLYING_REASON}
-							</p>
+							<p className="text-center body-sm text-tertiary">{END_TRIAL_APPLYING_REASON}</p>
 						) : null}
 					</>
 				) : null}
@@ -279,7 +270,7 @@ function PricingCardCta({
 						<Button variant="primary" size="lg" className="w-full" onClick={() => onUpgradeToYearly?.(card.key)}>
 							Upgrade to yearly
 						</Button>
-						<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
+						<p className="text-center body-sm text-tertiary">
 							Switch to annual billing — save {card.key === 'api' ? '$600' : '$98'}/year
 						</p>
 					</>
@@ -346,7 +337,7 @@ function PricingCardCta({
 							{card.primaryCta}
 						</Button>
 					</div>
-					<div className="rounded-lg border border-sub-border-slate-100 px-3 py-2.5 body-sm text-sub-text-cool sm:px-2.5 sm:py-2 dark:border-sub-border-strong dark:text-sub-text-muted">
+					<div className="rounded-lg border border-medium px-3 py-2.5 body-sm text-tertiary sm:px-2.5 sm:py-2">
 						<p className="label-sm text-success">Free trial differences:</p>
 						<ul className="mt-1 flex flex-col gap-0.5">
 							<li>• 3 deep research reports in total (vs 5/day)</li>
@@ -394,9 +385,7 @@ function PricingCardCta({
 				</>
 			)}
 			{cryptoError?.cardKey === card.key ? <InlineStatus variant="error">{cryptoError.message}</InlineStatus> : null}
-			{card.ctaSubtext ? (
-				<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">{card.ctaSubtext}</p>
-			) : null}
+			{card.ctaSubtext ? <p className="text-center body-sm text-tertiary">{card.ctaSubtext}</p> : null}
 			{!isAuthenticated && card.key !== 'free' && card.key !== 'enterprise' ? (
 				<p className="text-center body-sm">
 					<Button variant="link" onClick={() => onPrimaryCtaClick?.('free')}>
@@ -418,50 +407,34 @@ export function PricingCardContent({
 	return (
 		<div className="flex flex-col gap-7 sm:gap-5">
 			<div className="flex flex-col gap-2 sm:min-h-[140px] sm:gap-3">
-				<h3 className="heading-sm text-sub-heading sm:text-sub-text-primary dark:text-sub-text-primary">
-					{card.title}
-				</h3>
-				{card.subtitle ? (
-					<p className="label-md text-sub-text-cool sm:text-sub-text-secondary dark:text-sub-text-muted">
-						{card.subtitle}
-					</p>
-				) : null}
+				<h3 className="heading-sm text-primary">{card.title}</h3>
+				{card.subtitle ? <p className="label-md text-secondary">{card.subtitle}</p> : null}
 				{card.priceMain ? (
 					<div className="flex flex-col gap-1 sm:gap-0">
 						<div className="flex items-end gap-0.5">
-							<p className="bg-linear-to-r from-sub-brand-primary to-sub-heading bg-clip-text heading-lg text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest">
-								{card.priceMain}
-							</p>
-							<p className="body-lg text-sub-text-cool sm:text-sub-text-secondary dark:sm:text-sub-text-secondary">
-								{card.priceUnit}
-							</p>
+							<p className="sub-gradient-text heading-lg">{card.priceMain}</p>
+							<p className="body-lg text-tertiary">{card.priceUnit}</p>
 						</div>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<div className="mt-1 flex items-center gap-1.5">
-								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 title-sm text-success ring-1 ring-emerald-200 dark:bg-success-tint dark:ring-emerald-500/30">
+								<span className="inline-flex items-center rounded-full bg-success-tint px-2.5 py-0.5 title-sm text-success ring-1 ring-(--border-success-muted)">
 									7-day free trial available
 								</span>
 							</div>
 						) : card.priceSecondary ? (
-							<p className="body-xl text-sub-text-cool-muted sm:body-lg dark:text-sub-text-muted">
-								{card.priceSecondary}
-							</p>
+							<p className="body-xl text-tertiary sm:body-lg">{card.priceSecondary}</p>
 						) : null}
 					</div>
 				) : card.description ? (
-					<p className="heading-lg text-sub-heading sm:heading-sm dark:text-sub-text-primary">{card.description}</p>
+					<p className="heading-lg text-primary sm:heading-sm">{card.description}</p>
 				) : null}
 			</div>
 
-			{card.includedTierText ? (
-				<p className="body-md text-sub-text-cool-muted dark:text-sub-text-muted">{card.includedTierText}</p>
-			) : null}
+			{card.includedTierText ? <p className="body-md text-tertiary">{card.includedTierText}</p> : null}
 
 			{card.sections.map((section) => (
 				<div key={`${card.key}-${section.title}`} className="flex flex-col gap-3">
-					<h4 className="heading-sm text-sub-heading sm:label-lg sm:text-sub-text-primary dark:text-sub-text-primary">
-						{section.title}
-					</h4>
+					<h4 className="heading-sm text-primary sm:label-lg">{section.title}</h4>
 					<ul className="flex flex-col gap-3 sm:gap-2">
 						{section.items.map((item) => (
 							<FeatureBullet key={`${card.key}-${section.title}-${item.label}`} item={item} />
@@ -571,16 +544,14 @@ export function PricingCard({
 							loading={loading}
 							cryptoError={cryptoError}
 						/>
-						{isLowerTier ? (
-							<p className="text-center label-sm text-link dark:text-sub-brand-secondary">Included in your plan</p>
-						) : null}
+						{isLowerTier ? <p className="text-center label-sm text-link">Included in your plan</p> : null}
 					</div>
 				</div>
 			</div>
 
 			{card.recommendedLabel ? (
 				<div className={`pricing-original ${badgeSlotClass}`}>
-					<div className="text-center label-md text-sub-brand-softest">{card.recommendedLabel}</div>
+					<div className="text-center label-md text-on-brand">{card.recommendedLabel}</div>
 				</div>
 			) : (
 				<div className={`pricing-original ${badgeSlotClass}`} aria-hidden="true" />
@@ -615,10 +586,10 @@ export function ComparisonCell({
 		<div
 			role="cell"
 			aria-label={isIncluded ? 'Included' : isLimited ? 'Limited' : 'Not included'}
-			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-sub-border-slate-100 text-center md:w-[146px] md:border-sub-border-light dark:border-sub-dark-card dark:md:border-sub-dark-card ${selectedStyle} ${borderEnd} ${className}`}
+			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-subtle text-center md:w-[146px] ${selectedStyle} ${borderEnd} ${className}`}
 		>
 			{isIncluded ? (
-				<Icon name="check" height={24} width={24} className="text-sub-brand-secondary" aria-hidden="true" />
+				<Icon name="check" height={24} width={24} className="text-link" aria-hidden="true" />
 			) : isLimited ? (
 				// Focusable so keyboards reach the limit's explanation, and tappable on touch, not hover-only.
 				<Tooltip
@@ -630,13 +601,7 @@ export function ComparisonCell({
 					<span className="label-md text-warning">Limited</span>
 				</Tooltip>
 			) : (
-				<Icon
-					name="minus"
-					height={24}
-					width={24}
-					className="text-sub-text-cool-muted md:text-sub-border-muted dark:text-sub-border-strong-muted dark:md:text-sub-border-strong-muted"
-					aria-hidden="true"
-				/>
+				<Icon name="minus" height={24} width={24} className="text-tertiary" aria-hidden="true" />
 			)}
 		</div>
 	)

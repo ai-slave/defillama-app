@@ -51,7 +51,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] truncate border border-medium bg-pro-cards-bg p-2 text-left font-semibold group-hover:bg-pro-link-hover-bg">
+				<th className="w-[28%] truncate border border-medium bg-surface p-2 text-left font-semibold group-hover:bg-hover-row">
 					{hasSubRows ? (
 						<button
 							type="button"
@@ -60,7 +60,7 @@ function FinancialRow({
 								event.stopPropagation()
 								setIsExpanded((expanded) => !expanded)
 							}}
-							className="-ml-1 flex w-full items-center gap-1 rounded-sm text-left text-pro-text-secondary hover:bg-pro-link-hover-bg focus-visible:bg-pro-link-hover-bg"
+							className="-ml-1 flex w-full items-center gap-1 rounded-sm text-left text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 						>
 							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} className="shrink-0" />
 							<span className="truncate">{row.label}</span>
@@ -75,7 +75,7 @@ function FinancialRow({
 				{headers.map((header) => (
 					<td
 						key={`${row.id}-${header.index}`}
-						className="truncate border border-medium p-2 text-left font-medium group-hover:bg-pro-link-hover-bg"
+						className="truncate border border-medium p-2 text-left font-medium group-hover:bg-hover-row"
 					>
 						{formatEquitiesStatementCellValue(row.label, getEquitiesStatementValue(row, header))}
 					</td>
@@ -83,14 +83,14 @@ function FinancialRow({
 			</tr>
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
-						<tr key={subRow.id} className="group text-pro-text-secondary">
-							<th className="w-[28%] truncate border border-medium bg-pro-cards-bg p-2 pl-9 text-left font-normal italic group-hover:bg-pro-link-hover-bg">
+						<tr key={subRow.id} className="group text-secondary">
+							<th className="w-[28%] truncate border border-medium bg-surface p-2 pl-9 text-left font-normal italic group-hover:bg-hover-row">
 								<span className="truncate">{subRow.label}</span>
 							</th>
 							{headers.map((header) => (
 								<td
 									key={`${subRow.id}-${header.index}`}
-									className="truncate border border-medium p-2 text-left font-normal group-hover:bg-pro-link-hover-bg"
+									className="truncate border border-medium p-2 text-left font-normal group-hover:bg-hover-row"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, getEquitiesStatementValue(subRow, header))}
 								</td>
@@ -157,7 +157,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex size-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">No ticker specified</div>
+					<div className="text-center text-secondary">No ticker specified</div>
 				</div>
 			</div>
 		)
@@ -177,7 +177,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex size-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">Failed to load financial statements</div>
+					<div className="text-center text-secondary">Failed to load financial statements</div>
 				</div>
 			</div>
 		)
@@ -234,13 +234,11 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 				<table className="w-full border-collapse body-md">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] truncate border border-medium bg-pro-app-bg p-2 text-left font-semibold">
-								Name
-							</th>
+							<th className="min-w-[220px] truncate border border-medium bg-page p-2 text-left font-semibold">Name</th>
 							{statementHeaders.map((header) => (
 								<th
 									key={`${statementType}-${periodType}-${header.periodEnding}`}
-									className="min-w-[132px] truncate border border-medium bg-pro-app-bg p-2 text-left font-semibold"
+									className="min-w-[132px] truncate border border-medium bg-page p-2 text-left font-semibold"
 								>
 									{formatStatementPeriodLabel(header.periodEnding)}
 								</th>

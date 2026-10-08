@@ -53,22 +53,22 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 	if (chartView.charts.length === 0 && composerItems.length > 0) {
 		return (
 			<div className="flex size-full items-center justify-center">
-				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 text-center">
+				<div className="rounded-md border border-subtle bg-surface p-4 text-center">
 					{anyLoading ? (
-						<div className="flex flex-col items-center gap-2 text-pro-text-tertiary">
+						<div className="flex flex-col items-center gap-2 text-tertiary">
 							<LoadingSpinner size={20} />
-							<p className="body-sm text-pro-text-tertiary">Loading chart data…</p>
+							<p className="body-sm text-tertiary">Loading chart data…</p>
 						</div>
 					) : (
 						<>
-							<p className="mb-2 body-md text-pro-text-secondary">Chart preview</p>
-							<p className="body-sm text-pro-text-tertiary">
+							<p className="mb-2 body-md text-secondary">Chart preview</p>
+							<p className="body-sm text-tertiary">
 								{composerItems.length} chart
 								{composerItems.length > 1 ? 's' : ''} selected
 							</p>
 							<div className="mt-3 space-y-1">
 								{composerItems.map((item) => (
-									<div key={item.id} className="body-sm text-pro-text-tertiary">
+									<div key={item.id} className="body-sm text-tertiary">
 										• {item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
 										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
 									</div>
@@ -86,9 +86,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 	return (
 		<div className="size-full">
 			<Suspense
-				fallback={
-					<div className="h-[450px] w-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg" />
-				}
+				fallback={<div className="h-[450px] w-full animate-pulse rounded-md border border-subtle bg-surface" />}
 			>
 				<MultiSeriesChart
 					dataset={chartView.dataset}

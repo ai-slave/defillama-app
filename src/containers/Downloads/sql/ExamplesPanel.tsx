@@ -45,9 +45,9 @@ function CollapsedExamplesRail({
 				type="button"
 				onClick={onExpand}
 				aria-label={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
-				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 label-sm text-pro-text-tertiary transition-colors hover:text-link"
+				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 label-sm text-tertiary transition-colors hover:text-link"
 			>
-				<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary transition-colors group-hover:text-link" />
+				<Icon name="sparkles" className="size-3.5 text-tertiary transition-colors group-hover:text-link" />
 				<span className="tracking-widest uppercase [writing-mode:vertical-rl]" style={{ transform: 'rotate(180deg)' }}>
 					Playbook
 				</span>
@@ -113,11 +113,11 @@ function ExpandedExamplesPanel({
 		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-subtle bg-surface p-3">
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="title-md tracking-tight text-pro-text-primary">Playbook</h3>
-					<span className="body-sm text-pro-text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
+					<h3 className="title-md tracking-tight text-primary">Playbook</h3>
+					<span className="body-sm text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
 				</div>
 				<div className="flex items-center gap-1">
-					<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary" />
+					<Icon name="sparkles" className="size-3.5 text-tertiary" />
 					{onCollapse ? (
 						<Tooltip
 							content="Collapse playbook"
@@ -140,13 +140,13 @@ function ExpandedExamplesPanel({
 
 			{/* An underline field, not SearchField: a boxed field outweighs this dense 256px rail. */}
 			<div className="flex flex-col gap-1">
-				<label htmlFor={filterId} className="label-sm text-pro-text-secondary">
+				<label htmlFor={filterId} className="label-sm text-secondary">
 					Filter
 				</label>
 				<div className="relative">
 					<Icon
 						name="search"
-						className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-pro-text-tertiary"
+						className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-tertiary"
 					/>
 					<input
 						ref={filterRef}
@@ -155,7 +155,7 @@ function ExpandedExamplesPanel({
 						value={filter}
 						onChange={(e) => setFilter(e.target.value)}
 						placeholder="Filter queries…"
-						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 body-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+						className="w-full border-b border-medium bg-transparent pr-6 pb-1.5 pl-5 body-sm text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 					/>
 					{filter ? (
 						<Button
@@ -180,15 +180,15 @@ function ExpandedExamplesPanel({
 
 			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
 				{filteredGroups.length === 0 ? (
-					<p className="py-8 text-center body-sm text-pro-text-tertiary">
-						No queries match <span className="font-mono text-pro-text-secondary">"{filter}"</span>
+					<p className="py-8 text-center body-sm text-tertiary">
+						No queries match <span className="font-mono text-secondary">"{filter}"</span>
 					</p>
 				) : null}
 
 				{filteredGroups.map(({ meta, items }, groupIndex) => (
 					<section key={meta.name} onMouseEnter={() => setHoveredGroup(meta.name)} className="flex flex-col gap-1">
 						<header className="flex items-baseline justify-between">
-							<h4 className="flex items-center gap-1.5 title-sm text-pro-text-secondary">
+							<h4 className="flex items-center gap-1.5 title-sm text-secondary">
 								<span
 									aria-hidden
 									className="inline-block size-1.5 shrink-0 rounded-full"
@@ -196,9 +196,9 @@ function ExpandedExamplesPanel({
 								/>
 								{meta.name}
 							</h4>
-							<span className="body-sm text-pro-text-tertiary tabular-nums">{items.length}</span>
+							<span className="body-sm text-tertiary tabular-nums">{items.length}</span>
 						</header>
-						<ul className="border-subtle/60 flex flex-col border-t">
+						<ul className="flex flex-col border-t border-subtle">
 							{items.map((ex, itemIndex) => {
 								const ordinal = groupOrdinalOffsets[groupIndex] + itemIndex + 1
 								const itemId = `example:${ex.title}`
@@ -222,17 +222,17 @@ function ExpandedExamplesPanel({
 			</div>
 
 			<footer className="border-t border-subtle pt-2">
-				<p className="flex items-baseline gap-1.5 body-sm text-pro-text-tertiary">
+				<p className="flex items-baseline gap-1.5 body-sm text-tertiary">
 					<span
 						aria-hidden
 						className="inline-block size-1 shrink-0 translate-y-[-1px] rounded-full"
 						style={{ background: activeBlurb.color }}
 					/>
 					<span>
-						<span className="font-semibold text-pro-text-secondary">{activeBlurb.name}.</span> {activeBlurb.blurb}
+						<span className="font-semibold text-secondary">{activeBlurb.name}.</span> {activeBlurb.blurb}
 					</span>
 				</p>
-				<p className="mt-1 body-sm text-pro-text-tertiary">
+				<p className="mt-1 body-sm text-tertiary">
 					Click an example to load tables and run it.
 					{totalVisible !== EXAMPLE_QUERIES.length ? ` · ${totalVisible} shown` : ''}
 				</p>
@@ -291,14 +291,14 @@ function PlaybookItem({
 					{isBusy ? (
 						<LoadingSpinner size={10} />
 					) : (
-						<span className="label-sm text-pro-text-tertiary transition-colors group-hover/item:text-pro-text-primary">
+						<span className="label-sm text-tertiary transition-colors group-hover/item:text-primary">
 							{String(ordinal).padStart(2, '0')}
 						</span>
 					)}
 				</span>
 				<span
 					className={`truncate label-sm transition-colors ${
-						isBusy ? 'text-link' : 'text-pro-text-primary group-hover/item:text-link'
+						isBusy ? 'text-link' : 'text-primary group-hover/item:text-link'
 					}`}
 				>
 					{example.title}
@@ -308,7 +308,7 @@ function PlaybookItem({
 					className={`size-3 transition-all duration-200 ${
 						isBusy
 							? 'translate-x-0 text-link opacity-100'
-							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-link group-hover/item:opacity-100'
+							: '-translate-x-1 text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-link group-hover/item:opacity-100'
 					}`}
 				/>
 			</Tooltip>

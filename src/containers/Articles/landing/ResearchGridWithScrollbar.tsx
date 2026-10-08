@@ -80,10 +80,10 @@ function ResearchGridWithScrollbarScroller({
 							</div>
 							{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 							<div className="flex grow flex-col pt-4">
-								<div className="line-clamp-4 title-lg text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
+								<div className="line-clamp-4 title-lg text-research-navy group-hover:text-secondary">
 									{article.title}
 								</div>
-								<div className="mt-1.25 label-md text-secondary dark:text-on-brand/80">
+								<div className="mt-1.25 label-md text-tertiary">
 									{formatDate(article.displayDate ?? article.publishedAt)}
 								</div>
 							</div>

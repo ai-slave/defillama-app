@@ -40,7 +40,7 @@ const focusNeighbourOnLeave = passFocusOnLeave(
 )
 
 function DashboardCardGradientStrip() {
-	return <div className="h-1.5 w-full bg-linear-to-r from-pro-accent/20 via-pro-accent/10 to-transparent" />
+	return <div className="h-1.5 w-full bg-linear-to-r from-brand-muted via-brand-faint to-transparent" />
 }
 
 function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
@@ -49,7 +49,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="relative z-10 inline-flex max-w-full items-center gap-1.5 body-sm text-pro-text-tertiary transition-colors hover:text-link"
+			className="relative z-10 inline-flex max-w-full items-center gap-1.5 body-sm text-tertiary transition-colors hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -149,7 +149,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	const titleRow = (
 		<div className="flex min-w-0 items-start gap-2">
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<h2 className="line-clamp-1 title-lg text-pro-text-primary">{name}</h2>
+				<h2 className="line-clamp-1 title-lg text-primary">{name}</h2>
 				<DashboardAuthorLink author={dashboard.author} />
 			</div>
 			{isPrivate ? (
@@ -197,7 +197,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	return (
 		<div
 			ref={focusNeighbourOnLeave}
-			className={`${proCardShellStyles} group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-180 ease-out-quart hover:-translate-y-0.5 hover:border-pro-accent/40 hover:shadow-overlay-sm ${className ?? ''}`}
+			className={`${proCardShellStyles} group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-180 ease-out-quart hover:-translate-y-0.5 hover:border-brand-muted hover:shadow-overlay-sm ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (
 				<div className="relative">
@@ -211,7 +211,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 			{viewMode === 'grid' ? (
 				<div className="flex flex-1 flex-col gap-1.5 p-3">
 					{titleRow}
-					<p className="line-clamp-2 h-[2lh] body-md text-pro-text-secondary">{dashboard.description}</p>
+					<p className="line-clamp-2 h-[2lh] body-md text-secondary">{dashboard.description}</p>
 					{tagRow}
 					<div className="mt-auto pt-1">{meta}</div>
 				</div>
@@ -220,7 +220,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					<div className="flex min-w-0 flex-1 flex-col gap-1">
 						{titleRow}
 						{dashboard.description ? (
-							<p className="line-clamp-1 body-md text-pro-text-secondary">{dashboard.description}</p>
+							<p className="line-clamp-1 body-md text-secondary">{dashboard.description}</p>
 						) : null}
 					</div>
 					{tagRow}
@@ -256,7 +256,6 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 
 			{showDeleteConfirm ? (
 				<ConfirmActionDialog
-					scope="pro"
 					finalFocus={returnFocus}
 					title={`Delete ${name}?`}
 					description="Deleting a dashboard cannot be undone."

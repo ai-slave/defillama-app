@@ -80,7 +80,7 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 body-sm text-pro-text-secondary">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 body-sm text-secondary">
 				<PickerChip
 					label="x"
 					value={config.xCol}
@@ -127,7 +127,7 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 					/>
 				) : null}
 
-				<span className="ml-auto body-sm text-pro-text-tertiary">{seriesSummary(config)}</span>
+				<span className="ml-auto body-sm text-tertiary">{seriesSummary(config)}</span>
 			</div>
 		</div>
 	)
@@ -165,7 +165,7 @@ function PickerChip({
 				selectedValue={value}
 				onChange={(option) => onChange(option.value)}
 			/>
-			{hint ? <span className="body-xs text-pro-text-tertiary">{hint}</span> : null}
+			{hint ? <span className="body-xs text-tertiary">{hint}</span> : null}
 		</div>
 	)
 }
@@ -222,7 +222,7 @@ function YSeriesPicker({
 					<div className="flex flex-col gap-1 p-2">
 						{yCols.length > 0 ? (
 							<div className="flex flex-col gap-1">
-								<span className="px-1 label-xs tracking-wide text-pro-text-tertiary uppercase">selected</span>
+								<span className="px-1 label-xs tracking-wide text-tertiary uppercase">selected</span>
 								{yCols.map((name, i) => (
 									<SeriesChip
 										key={name}
@@ -240,12 +240,12 @@ function YSeriesPicker({
 							</div>
 						) : null}
 
-						<span className="px-1 label-xs tracking-wide text-pro-text-tertiary uppercase">add</span>
+						<span className="px-1 label-xs tracking-wide text-tertiary uppercase">add</span>
 						{yCols.length >= 8 ? (
-							<p className="px-2 py-1 body-sm text-pro-text-secondary">Up to 8 series. Remove one to add another.</p>
+							<p className="px-2 py-1 body-sm text-secondary">Up to 8 series. Remove one to add another.</p>
 						) : null}
 						{available.filter((n) => !yCols.includes(n)).length === 0 ? (
-							<div className="px-2 py-1 body-sm text-pro-text-tertiary">No more numeric columns</div>
+							<div className="px-2 py-1 body-sm text-tertiary">No more numeric columns</div>
 						) : (
 							// `contents` keeps the rows in the column's gap; the wrapper makes them each other's only neighbours.
 							<div className="contents">
@@ -265,9 +265,9 @@ function YSeriesPicker({
 													() => next
 												)
 											}}
-											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 mono-sm text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled"
+											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 mono-sm text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled"
 										>
-											<Icon name="plus" className="size-3 text-pro-text-tertiary" />
+											<Icon name="plus" className="size-3 text-tertiary" />
 											<span className="truncate">{name}</span>
 										</button>
 									))}

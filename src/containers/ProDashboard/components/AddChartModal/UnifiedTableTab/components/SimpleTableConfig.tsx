@@ -164,7 +164,7 @@ function CexAnalyticsPreview({
 					return (
 						<div
 							key={config.id}
-							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-lg border border-pro-cards-border`}
+							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-lg border border-subtle`}
 						>
 							<div className={`${heightClass} overflow-auto`}>
 								<CexAnalyticsDataset config={config} />
@@ -378,10 +378,7 @@ export function SimpleTableConfig({
 							{selectedTokens.map((token) => {
 								const option = tokenOptionMap.get(token)
 								return (
-									<div
-										key={token}
-										className="inline-flex items-center gap-1.5 rounded-md bg-(--pro-hover-fill) px-2.5 py-1"
-									>
+									<div key={token} className="inline-flex items-center gap-1.5 rounded-md bg-(--chip-bg) px-2.5 py-1">
 										{option?.logo ? (
 											<img
 												src={option.logo}
@@ -396,7 +393,7 @@ export function SimpleTableConfig({
 										) : (
 											<div className="size-4 rounded-full bg-surface-elevated-2" />
 										)}
-										<span className="body-md text-pro-text-primary">{option?.label ?? token}</span>
+										<span className="body-md text-primary">{option?.label ?? token}</span>
 										<Tooltip
 											content={`Remove ${option?.label ?? token}`}
 											render={

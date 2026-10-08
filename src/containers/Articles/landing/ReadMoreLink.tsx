@@ -11,9 +11,8 @@ export function ReadMoreLink({ url, title }: ReadMoreLinkProps) {
 	return (
 		<Link
 			href={url}
-			className="inline-flex items-center gap-x-2 label-sm uppercase"
+			className="inline-flex items-center gap-x-2 label-sm text-link uppercase"
 			rel={isExternalLink ? 'noopener noreferrer' : undefined}
-			style={{ color: '#237BFF' }}
 			target={isExternalLink ? '_blank' : undefined}
 		>
 			<span>{title}</span>

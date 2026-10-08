@@ -139,7 +139,7 @@ export function CustomTimePeriodPicker({
 
 					{mode === 'relative' ? (
 						<div className="flex flex-col gap-2">
-							<label htmlFor="custom-period-relative-days" className="label-sm text-pro-text-label">
+							<label htmlFor="custom-period-relative-days" className="label-sm text-secondary">
 								Days ago
 							</label>
 							<div className="flex items-center gap-2">
@@ -153,13 +153,13 @@ export function CustomTimePeriodPicker({
 									className="flex-1"
 									placeholder="Enter days"
 								/>
-								<span className="body-sm text-pro-text-secondary">days ago → Now</span>
+								<span className="body-sm text-secondary">days ago → Now</span>
 							</div>
 						</div>
 					) : (
 						<div className="flex flex-col gap-3">
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-start-date" className="label-sm text-pro-text-label">
+								<label htmlFor="custom-period-start-date" className="label-sm text-secondary">
 									From
 								</label>
 								<Input
@@ -173,7 +173,7 @@ export function CustomTimePeriodPicker({
 								/>
 							</div>
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-end-date" className="label-sm text-pro-text-label">
+								<label htmlFor="custom-period-end-date" className="label-sm text-secondary">
 									To
 								</label>
 								<Input
@@ -189,7 +189,7 @@ export function CustomTimePeriodPicker({
 						</div>
 					)}
 
-					<div className="flex gap-2 border-t border-pro-cards-border pt-2">
+					<div className="flex gap-2 border-t border-subtle pt-2">
 						<Button size="md" type="button" onClick={handleClear} variant="secondary" className="flex-1">
 							Clear
 						</Button>

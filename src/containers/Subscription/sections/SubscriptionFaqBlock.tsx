@@ -10,7 +10,7 @@ function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => 
 	return (
 		<>
 			{text.slice(0, idx)}
-			<button type="button" onClick={onStartTrial} className="text-link underline dark:text-sub-brand-secondary">
+			<button type="button" onClick={onStartTrial} className="text-link underline">
 				{phrase}
 			</button>
 			{text.slice(idx + phrase.length)}
@@ -29,9 +29,7 @@ export function SubscriptionFaqBlock({
 
 	return (
 		<div className="mt-16 w-full md:mt-12 md:w-[384px]">
-			<h2 className="text-center heading-sm text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary">
-				Frequently Asked Questions
-			</h2>
+			<h2 className="text-center heading-sm text-primary">Frequently Asked Questions</h2>
 			<div className="mt-7 md:mt-9 md:flex md:flex-col md:gap-4">
 				{faqItems.map((item, index) => {
 					const questionId = `subscription-faq-question-${index}`
@@ -42,7 +40,7 @@ export function SubscriptionFaqBlock({
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- The authored FAQ order is fixed; expansion and aria IDs use these slots.
 							key={index}
-							className="border-b border-sub-mobile-table-border py-4 md:border-sub-desktop-table-border md:py-0 md:pb-4"
+							className="border-b border-subtle py-4 md:py-0 md:pb-4"
 						>
 							<button
 								type="button"
@@ -52,15 +50,8 @@ export function SubscriptionFaqBlock({
 								onClick={() => setExpandedIndex(isExpanded ? null : index)}
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
-								<p className="label-lg text-sub-heading md:label-md md:text-sub-text-primary dark:text-sub-text-primary">
-									{item.question}
-								</p>
-								<Icon
-									name={isExpanded ? 'x' : 'plus'}
-									height={18}
-									width={18}
-									className="shrink-0 text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary"
-								/>
+								<p className="label-lg text-primary md:label-md">{item.question}</p>
+								<Icon name={isExpanded ? 'x' : 'plus'} height={18} width={18} className="shrink-0 text-primary" />
 							</button>
 							<div
 								id={answerId}
@@ -69,7 +60,7 @@ export function SubscriptionFaqBlock({
 								className={`grid transition-[grid-template-rows] duration-250 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
 							>
 								<div className="overflow-hidden">
-									<p className="pt-2 body-md text-sub-text-secondary">
+									<p className="pt-2 body-md text-secondary">
 										<FaqAnswer text={item.answer} onStartTrial={onStartTrial} />
 									</p>
 								</div>

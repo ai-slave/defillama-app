@@ -405,7 +405,7 @@ export function EntityPreviewLink({
 						href={entity.route}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="article-entity-link inline-flex items-baseline gap-1 align-baseline font-medium text-link no-underline decoration-link/30 underline-offset-[3px] hover:underline"
+						className="article-entity-link inline-flex items-baseline gap-1 align-baseline font-medium text-link no-underline decoration-(--border-brand-muted) underline-offset-[3px] hover:underline"
 					/>
 				}
 			>

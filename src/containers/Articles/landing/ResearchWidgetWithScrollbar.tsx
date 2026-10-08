@@ -63,7 +63,7 @@ function ResearchWidgetWithScrollbarScroller({ articles }: { articles: Array<Art
 							</div>
 
 							<div className="flex grow flex-col justify-between gap-1.75 pr-5">
-								<div className="line-clamp-3 title-lg text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
+								<div className="line-clamp-3 title-lg text-research-navy group-hover:text-secondary">
 									{article.title}
 								</div>
 							</div>

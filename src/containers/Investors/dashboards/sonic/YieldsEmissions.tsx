@@ -13,24 +13,24 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 const columnHelper = createColumnHelper<typeof paginatedTableFeatures, YieldPool>()
@@ -119,7 +119,7 @@ export default function YieldsEmissions() {
 							href="https://burn.soniclabs.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="inline-flex items-center gap-1 label-md text-sl-accent transition-colors hover:underline"
+							className="inline-flex items-center gap-1 label-md text-link transition-colors hover:underline"
 						>
 							View Burn Counter
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
@@ -144,15 +144,15 @@ export default function YieldsEmissions() {
 					<KpiCard label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
 					<KpiCard label="Avg APY" value={data.yields.kpis.avgApy.formatted} />
 				</div>
-				<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
-								<tr key={headerGroup.id} className="border-b border-pro-cards-border">
+								<tr key={headerGroup.id} className="border-b border-subtle">
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
+											className="px-4 py-3 text-left title-sm tracking-wide text-secondary uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -171,9 +171,9 @@ export default function YieldsEmissions() {
 						</thead>
 						<tbody>
 							{table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
+								<tr key={row.id} className="border-b border-subtle last:border-b-0 hover:bg-hover-row">
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
+										<td key={cell.id} className="px-4 py-2.5 body-md text-primary">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}
@@ -194,7 +194,7 @@ export default function YieldsEmissions() {
 							canNext={table.getCanNextPage()}
 							onPrevious={() => table.previousPage()}
 							onNext={() => table.nextPage()}
-							className="border-t border-pro-cards-border px-4 py-3"
+							className="border-t border-subtle px-4 py-3"
 						/>
 					)}
 				</div>

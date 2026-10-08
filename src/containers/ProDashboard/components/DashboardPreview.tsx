@@ -9,8 +9,8 @@ const SPAN_CLASS: Record<DashboardPreviewTile['span'], string> = {
 	2: 'col-span-2'
 }
 
-const ACCENT = 'var(--pro-accent)'
-const ACCENT_ALT = 'var(--color-pro-ai-300)'
+const ACCENT = 'var(--bg-brand)'
+const ACCENT_ALT = 'var(--violet-9)'
 
 function linePath(series: Array<number>, height = 32): string {
 	const lastIndex = Math.max(1, series.length - 1)
@@ -140,7 +140,7 @@ function PieShape({ seed }: { seed: number }) {
 function NumberShape({ seed }: { seed: number }) {
 	return (
 		<div className="flex h-full flex-col justify-center gap-1">
-			<span className="block h-3 w-2/3 rounded-sm bg-pro-text-primary/70" />
+			<span className="block h-3 w-2/3 rounded-sm bg-(--text-tertiary)" />
 			<svg viewBox="0 0 100 12" preserveAspectRatio="none" className="h-2 w-full" aria-hidden="true">
 				<path
 					d={linePath(previewSeries(seed, 14), 12)}
@@ -166,7 +166,7 @@ function RowsShape({ seed, rows }: { seed: number; rows: number }) {
 	return (
 		<div className="flex h-full flex-col justify-center gap-1">
 			{previewRows(seed, rows).map((row) => (
-				<span key={row.key} className="block h-1 rounded-sm bg-pro-text-tertiary/40" style={{ width: row.width }} />
+				<span key={row.key} className="block h-1 rounded-sm bg-surface-elevated-2" style={{ width: row.width }} />
 			))}
 		</div>
 	)
@@ -203,19 +203,19 @@ export function DashboardPreview({
 	return (
 		<div
 			data-testid="dashboard-preview"
-			className={`relative aspect-[2/1] w-full overflow-hidden border-b border-pro-cards-border bg-pro-app-bg p-2 ${className ?? ''}`.trim()}
+			className={`relative aspect-[2/1] w-full overflow-hidden border-b border-subtle bg-page p-2 ${className ?? ''}`.trim()}
 		>
 			{tiles.length === 0 ? (
-				<p className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">No cards yet</p>
+				<p className="flex h-full items-center justify-center body-sm text-tertiary">No cards yet</p>
 			) : (
 				<div className="grid h-full grid-flow-dense grid-cols-4 grid-rows-3 gap-1">
 					{tiles.map((tile) => (
 						<div
 							key={tile.id}
 							data-testid="dashboard-preview-tile"
-							className={`${SPAN_CLASS[tile.span]} flex min-h-0 flex-col gap-1 overflow-hidden rounded-sm border border-pro-cards-border/60 bg-pro-cards-bg p-1.5`}
+							className={`${SPAN_CLASS[tile.span]} flex min-h-0 flex-col gap-1 overflow-hidden rounded-sm border border-subtle bg-surface p-1.5`}
 						>
-							<span className="truncate body-sm text-pro-text-tertiary">{tile.label}</span>
+							<span className="truncate body-sm text-tertiary">{tile.label}</span>
 							<span className="min-h-0 flex-1">
 								<TileShape tile={tile} />
 							</span>

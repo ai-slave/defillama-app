@@ -24,13 +24,13 @@ export function TextCard({ text }: TextCardProps) {
 					remarkPlugins={REMARK_PLUGINS}
 					rehypePlugins={SANITIZE_REHYPE_PLUGINS}
 					components={{
-						h1: ({ children }) => <h3 className="m-0! heading-sm text-pro-text-primary">{children}</h3>,
-						h2: ({ children }) => <h4 className="m-0! heading-xs text-pro-text-primary">{children}</h4>,
-						h3: ({ children }) => <h5 className="m-0! label-lg text-pro-text-primary">{children}</h5>,
-						p: ({ children }) => <p className="m-0! leading-relaxed text-pro-text-secondary">{children}</p>,
+						h1: ({ children }) => <h3 className="m-0! heading-sm text-primary">{children}</h3>,
+						h2: ({ children }) => <h4 className="m-0! heading-xs text-primary">{children}</h4>,
+						h3: ({ children }) => <h5 className="m-0! label-lg text-primary">{children}</h5>,
+						p: ({ children }) => <p className="m-0! leading-relaxed text-secondary">{children}</p>,
 						ul: ({ children }) => <ul className="m-0! flex list-disc flex-col gap-1 pl-4">{children}</ul>,
 						ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
-						li: ({ children }) => <li className="m-0! text-pro-text-secondary">{children}</li>,
+						li: ({ children }) => <li className="m-0! text-secondary">{children}</li>,
 						code: ({ children }) => (
 							<code className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 px-1 py-0.5 body-sm">
 								{children}
@@ -40,7 +40,7 @@ export function TextCard({ text }: TextCardProps) {
 							<pre className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 p-2">{children}</pre>
 						),
 						blockquote: ({ children }) => (
-							<blockquote className="m-0! overflow-x-auto border-l-3 border-pro-accent pl-2 text-pro-text-label italic">
+							<blockquote className="m-0! overflow-x-auto border-l-3 border-brand pl-2 text-secondary italic">
 								{children}
 							</blockquote>
 						),
@@ -66,8 +66,8 @@ export function TextCard({ text }: TextCardProps) {
 							)
 						},
 						img: () => null,
-						strong: ({ children }) => <strong className="m-0! font-semibold text-pro-text-primary">{children}</strong>,
-						em: ({ children }) => <em className="m-0! text-pro-text-secondary italic">{children}</em>,
+						strong: ({ children }) => <strong className="m-0! font-semibold text-primary">{children}</strong>,
+						em: ({ children }) => <em className="m-0! text-secondary italic">{children}</em>,
 						table: ({ children }) => (
 							<div className="overflow-x-auto">
 								<table className="m-0! w-full border-collapse body-md">{children}</table>
@@ -77,13 +77,11 @@ export function TextCard({ text }: TextCardProps) {
 						tbody: ({ children }) => <tbody>{children}</tbody>,
 						tr: ({ children }) => <tr>{children}</tr>,
 						th: ({ children }) => (
-							<th className="m-0! border-b border-pro-cards-border px-3 py-2 text-left font-semibold whitespace-nowrap text-pro-text-primary">
+							<th className="m-0! border-b border-subtle px-3 py-2 text-left font-semibold whitespace-nowrap text-primary">
 								{children}
 							</th>
 						),
-						td: ({ children }) => (
-							<td className="m-0! border-b border-pro-cards-border px-3 py-1.5 text-pro-text-secondary">{children}</td>
-						)
+						td: ({ children }) => <td className="m-0! border-b border-subtle px-3 py-1.5 text-secondary">{children}</td>
 					}}
 				>
 					{text.content}

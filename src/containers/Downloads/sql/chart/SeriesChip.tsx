@@ -51,7 +51,7 @@ export function SeriesChip({
 	return (
 		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row px-1.5 py-0.5">
 			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
-			<span className="truncate mono-sm text-pro-text-primary" style={{ maxWidth: '14ch' }}>
+			<span className="truncate mono-sm text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
 			{seriesKindEligible ? (
@@ -62,7 +62,7 @@ export function SeriesChip({
 							type="button"
 							onClick={toggleKind}
 							aria-label={`Series ${name} type: ${kind}`}
-							className="touch-target flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
+							className="touch-target hover-wash flex h-4 w-5 items-center justify-center rounded-sm border border-medium bg-page label-sm text-secondary hover:text-primary"
 						/>
 					}
 				>
@@ -81,7 +81,7 @@ export function SeriesChip({
 							className={`touch-target flex h-4 w-5 items-center justify-center rounded-sm border label-sm transition-colors ${
 								isRight
 									? 'border-brand bg-brand text-on-brand'
-									: 'border-subtle bg-pro-app-bg text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
+									: 'hover-wash border-medium bg-page text-secondary hover:text-primary'
 							}`}
 						/>
 					}
@@ -102,7 +102,7 @@ export function SeriesChip({
 							keepFocus(onRemove, () => next)
 						}}
 						aria-label={`Remove ${name}`}
-						className="touch-target flex h-4 w-5 items-center justify-center rounded-sm text-pro-text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-hover-row hover:text-pro-text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
+						className="touch-target flex h-4 w-5 items-center justify-center rounded-sm text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-hover-row hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
 					/>
 				}
 			>

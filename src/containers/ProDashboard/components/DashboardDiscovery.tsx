@@ -75,7 +75,7 @@ function SuggestedTags({
 
 	return (
 		<div className="flex flex-col items-center gap-3">
-			<p className="label-md text-pro-text-label">Try these popular tags:</p>
+			<p className="label-md text-secondary">Try these popular tags:</p>
 			<div className="flex flex-wrap justify-center gap-2">
 				{suggestedTags.map((tag) => (
 					<Button
@@ -203,8 +203,8 @@ export function DashboardDiscovery({
 						<BasicLink href="/pro?tab=discover" shallow className="text-link hover:underline">
 							Discover
 						</BasicLink>
-						<Icon name="chevron-right" height={14} width={14} className="text-pro-text-label" />
-						<span className="text-pro-text-label">
+						<Icon name="chevron-right" height={14} width={14} className="text-secondary" />
+						<span className="text-secondary">
 							{selectedSortBy.name}
 							{selectedSortBy.key === 'trending' ? ` (${selectedTimeFrame.name})` : ''}
 						</span>
@@ -225,7 +225,7 @@ export function DashboardDiscovery({
 								setSelectedValues={handleItemsPerPageChange}
 								label={
 									<>
-										<span className="text-pro-text-label">Items per page:</span>
+										<span className="text-secondary">Items per page:</span>
 										<span className="truncate">{itemsPerPage}</span>
 									</>
 								}
@@ -251,7 +251,7 @@ export function DashboardDiscovery({
 								}}
 								label={
 									<>
-										<span className="text-pro-text-label">Sort by:</span>
+										<span className="text-secondary">Sort by:</span>
 										<span className="truncate">{selectedSortBy.name}</span>
 									</>
 								}
@@ -274,7 +274,7 @@ export function DashboardDiscovery({
 									}}
 									label={
 										<>
-											<span className="text-pro-text-label">Time:</span>
+											<span className="text-secondary">Time:</span>
 											<span className="truncate">{selectedTimeFrame.name}</span>
 										</>
 									}
@@ -297,7 +297,7 @@ export function DashboardDiscovery({
 
 				{selectedTags.length > 0 ? (
 					<div className="mt-2 flex items-center gap-3 body-sm">
-						<h2 className="font-medium text-pro-text-label">Active filters:</h2>
+						<h2 className="font-medium text-secondary">Active filters:</h2>
 						<div className="flex flex-wrap gap-2">
 							{selectedTags.map((tag) => (
 								<Button
@@ -348,18 +348,18 @@ export function DashboardDiscovery({
 				/>
 			) : isLoading ? (
 				<>
-					<p className="-mb-2 body-sm text-pro-text-label">Loading dashboards…</p>
+					<p className="-mb-2 body-sm text-secondary">Loading dashboards…</p>
 					<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
 				</>
 			) : dashboards.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-6 py-16">
-					<div className="flex size-20 items-center justify-center rounded-full bg-pro-hover-fill">
-						<Icon name="search" height={40} width={40} className="text-pro-text-label" />
+				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-subtle bg-surface px-6 py-16">
+					<div className="flex size-20 items-center justify-center rounded-full bg-hover-row">
+						<Icon name="search" height={40} width={40} className="text-secondary" />
 					</div>
 
 					<div className="flex flex-col items-center gap-1.5">
 						<h1 className="text-center heading-lg">No Dashboards Found</h1>
-						<p className="max-w-md text-center text-pro-text-label">
+						<p className="max-w-md text-center text-secondary">
 							{searchQuery || selectedTags.length > 0
 								? "We couldn't find any dashboards matching your search. Try different keywords or explore popular tags below."
 								: 'Be the first to share a public dashboard with the community!'}
@@ -375,9 +375,9 @@ export function DashboardDiscovery({
 					) : null}
 
 					<div className="mt-2 flex items-center gap-3">
-						<div className="h-px w-12 bg-pro-cards-border" />
-						<span className="body-sm text-pro-text-label">or</span>
-						<div className="h-px w-12 bg-pro-cards-border" />
+						<div className="h-px w-12 bg-border-subtle" />
+						<span className="body-sm text-secondary">or</span>
+						<div className="h-px w-12 bg-border-subtle" />
 					</div>
 
 					<Button as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="md">
@@ -387,7 +387,7 @@ export function DashboardDiscovery({
 				</div>
 			) : (
 				<>
-					<p className="-mb-2 body-sm text-pro-text-label">
+					<p className="-mb-2 body-sm text-secondary">
 						Showing {dashboards.length} of {totalItems} dashboards
 					</p>
 
@@ -484,7 +484,7 @@ export function DashboardDiscovery({
 									<Icon name="chevrons-right" height={16} width={16} />
 								</Tooltip>
 							</div>
-							<p className="body-sm text-pro-text-label">
+							<p className="body-sm text-secondary">
 								Page {selectedPage} of {totalPages}
 							</p>
 						</div>

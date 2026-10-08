@@ -20,8 +20,8 @@ export function ParameterUnavailableCard({
 			className="flex h-full min-h-[inherit] flex-col items-center justify-center gap-2 p-4 text-center"
 			data-testid="parameter-unavailable"
 		>
-			<Icon name="alert-triangle" height={20} width={20} className="text-sub-orange" />
-			<p className="body-md text-pro-text-secondary">
+			<Icon name="alert-triangle" height={20} width={20} className="text-warning" />
+			<p className="body-md text-secondary">
 				This card follows the “{label}” parameter, but {unavailable.reason}
 			</p>
 			{onEdit ? (

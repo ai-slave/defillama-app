@@ -48,7 +48,7 @@ export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: Embed
 	// The theme outlives a closing; the copy result belongs to one opening, so it lives in the unmounted content.
 	const [theme, setTheme] = useState<EmbedTheme>('dark')
 	return (
-		<Dialog size="sm" scope="pro" open={open} onClose={onClose} portal unmountOnHide>
+		<Dialog size="sm" open={open} onClose={onClose} portal unmountOnHide>
 			<EmbedSnippetContent heading={heading} snippet={snippetFor(theme)} theme={theme} onThemeChange={setTheme} />
 		</Dialog>
 	)

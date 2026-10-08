@@ -100,7 +100,7 @@ export function SectionsTOC({
 								>
 									<span
 										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm label-xs ${
-											isActive ? 'bg-brand-muted text-ai-white' : 'bg-surface-elevated-1 text-tertiary'
+											isActive ? 'bg-brand-muted text-link' : 'bg-surface-elevated-1 text-tertiary'
 										}`}
 									>
 										{i + 1}

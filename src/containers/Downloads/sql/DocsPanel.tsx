@@ -123,7 +123,7 @@ function TechniqueChips({ techniques }: { techniques: Array<TechniqueName> }) {
 			{techniques.map((t) => (
 				<li key={t}>
 					<Tooltip content={TECHNIQUE_DOCS[t]} tabIndex={0} className="rounded-md">
-						<span className="inline-flex min-h-6 cursor-help items-center rounded-md border border-subtle px-1.5 mono-sm text-secondary">
+						<span className="inline-flex min-h-6 cursor-help items-center rounded-md border border-medium px-1.5 mono-sm text-secondary">
 							{t}
 						</span>
 					</Tooltip>
@@ -365,9 +365,9 @@ function tokenize(sql: string): Array<Token> {
 
 const TOKEN_CLASS: Record<TokenType, string> = {
 	kw: 'font-semibold text-link',
-	type: 'text-sub-violet dark:text-sub-violet-bright',
-	fn: 'text-sub-violet dark:text-sub-violet-bright',
-	str: 'text-sub-warning-text-light dark:text-sub-warning-text-dark',
+	type: 'text-pro-ai-text',
+	fn: 'text-pro-ai-text',
+	str: 'text-warning',
 	num: 'text-success',
 	cmt: 'italic text-tertiary',
 	punct: 'text-tertiary',

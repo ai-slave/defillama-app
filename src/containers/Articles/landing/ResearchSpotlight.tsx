@@ -78,7 +78,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 						<div className="flex grow flex-col py-4">
 							<div
 								className={clsx(
-									'font-semibold text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70',
+									'font-semibold text-research-navy group-hover:text-secondary',
 									count === 5 || count === 6
 										? 'line-clamp-4 text-base leading-[120%]'
 										: 'line-clamp-3 text-base leading-[150%] lg:text-lg'
@@ -86,7 +86,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 							>
 								{article.title}
 							</div>
-							<time className="mt-2.5 hidden label-md text-secondary lg:block dark:text-research-ink">
+							<time className="mt-2.5 hidden label-md text-tertiary lg:block">
 								{formatDate(article.displayDate ?? article.publishedAt)}
 							</time>
 						</div>

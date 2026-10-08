@@ -45,7 +45,7 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 
 type BindMode = 'matching' | 'all' | 'none'
 
-const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-pro-text-primary has-disabled:cursor-not-allowed has-disabled:text-disabled`
+const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-primary has-disabled:cursor-not-allowed has-disabled:text-disabled`
 
 function cardsLabel(count: number) {
 	return `${count} ${count === 1 ? 'card' : 'cards'}`
@@ -130,12 +130,12 @@ export function AddVariablePopover() {
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" gutter={8} heading="Add a dashboard parameter">
 				<form onSubmit={handleSubmit} className="flex w-[320px] max-w-full flex-col gap-3 p-3">
-					<p className="body-sm text-pro-text-tertiary">
+					<p className="body-sm text-tertiary">
 						A parameter lets viewers switch every bound card to another chain or protocol. Bind cards below or later
 						from each card’s editor.
 					</p>
 					<div className="flex flex-col gap-1">
-						<span id={kindGroupId} className="label-sm text-pro-text-primary">
+						<span id={kindGroupId} className="label-sm text-primary">
 							Parameter type
 						</span>
 						<SegmentedControl
@@ -149,7 +149,7 @@ export function AddVariablePopover() {
 						/>
 					</div>
 					<label htmlFor={labelInputId} className="flex flex-col gap-1">
-						<span className="label-sm text-pro-text-primary">Label</span>
+						<span className="label-sm text-primary">Label</span>
 						<Input
 							id={labelInputId}
 							value={label}
@@ -169,7 +169,7 @@ export function AddVariablePopover() {
 					/>
 					{compatibleTargets.length > 0 ? (
 						<Ariakit.RadioProvider value={effectiveBindMode} setValue={(mode) => setBindMode(mode as BindMode)}>
-							<p id={bindGroupId} className="label-sm text-pro-text-secondary">
+							<p id={bindGroupId} className="label-sm text-secondary">
 								Bind cards
 							</p>
 							<Ariakit.RadioGroup aria-labelledby={bindGroupId} className="flex flex-col gap-1.5">

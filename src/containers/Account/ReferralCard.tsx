@@ -61,24 +61,24 @@ export function ReferralCard() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="share" height={28} width={28} className="text-sub-text-primary" />
-				<span className="label-lg text-sub-text-primary">Referrals</span>
+				<Icon name="share" height={28} width={28} className="text-primary" />
+				<span className="label-lg text-primary">Referrals</span>
 			</div>
 
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center justify-between">
-					<span className="body-md text-sub-text-primary">Your referral link</span>
+					<span className="body-md text-primary">Your referral link</span>
 					<Button variant="secondary" size="sm" onClick={handleCopy}>
 						<Icon name="copy" className="size-3.5" />
 						{copied ? 'Copied' : 'Copy'}
 					</Button>
 				</div>
-				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
-					<code className="mono-sm break-all text-sub-text-primary">{referralLink}</code>
+				<div className="rounded-lg bg-surface-elevated-1 px-3 py-2.5">
+					<code className="mono-sm break-all text-primary">{referralLink}</code>
 				</div>
-				<p className="body-sm text-sub-text-primary">
+				<p className="body-sm text-primary">
 					Share this link to refer new users. You can also add{' '}
 					{/* The ref param is a code value, so it keeps the mono face inside the link. */}
 					<Tooltip content="Copy to clipboard" render={<Button variant="link" onClick={handleCopyRefParam} />}>
@@ -88,11 +88,11 @@ export function ReferralCard() {
 				</p>
 			</div>
 
-			<div className="flex flex-col gap-3 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
+			<div className="flex flex-col gap-3 rounded-lg bg-surface-elevated-1 p-3">
 				{/* A failed lookup must not read as zero referrals; keep previously loaded stats visible. */}
 				{isStatsError && stats == null ? (
 					<div className="flex items-center justify-between gap-2">
-						<span className="body-sm text-sub-text-primary">Couldn't load referral stats.</span>
+						<span className="body-sm text-primary">Couldn't load referral stats.</span>
 						<Button
 							variant="secondary"
 							size="sm"
@@ -106,19 +106,19 @@ export function ReferralCard() {
 				) : (
 					<>
 						<div className="flex items-center justify-between">
-							<span className="body-sm text-sub-text-primary">Sign-ups</span>
+							<span className="body-sm text-primary">Sign-ups</span>
 							{isStatsLoading ? (
 								<Skeleton className="h-4 w-8" />
 							) : (
-								<span className="label-sm text-sub-text-primary">{stats?.referralsCount ?? 0}</span>
+								<span className="label-sm text-primary">{stats?.referralsCount ?? 0}</span>
 							)}
 						</div>
 						<div className="flex items-center justify-between">
-							<span className="body-sm text-sub-text-primary">Paid subscriptions</span>
+							<span className="body-sm text-primary">Paid subscriptions</span>
 							{isStatsLoading ? (
 								<Skeleton className="h-4 w-8" />
 							) : (
-								<span className="label-sm text-sub-text-primary">{stats?.paidReferralsCount ?? 0}</span>
+								<span className="label-sm text-primary">{stats?.paidReferralsCount ?? 0}</span>
 							)}
 						</div>
 					</>

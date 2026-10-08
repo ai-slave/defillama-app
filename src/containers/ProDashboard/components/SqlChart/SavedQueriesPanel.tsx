@@ -31,7 +31,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 	}
 
 	return (
-		<ul className="flex flex-col border-t border-(--border-subtle)/60">
+		<ul className="flex flex-col border-t border-subtle">
 			{queries.map((query) => {
 				const taskId = `saved:${query.id}`
 				const isBusy = busyTaskId === taskId
@@ -43,7 +43,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 						key={query.id}
 						// A tap focuses the row, which reveals its actions on screens that cannot hover.
 						tabIndex={-1}
-						className={`group/row flex items-center gap-1 border-b border-(--border-subtle)/40 last:border-b-0 ${
+						className={`group/row flex items-center gap-1 border-b border-subtle last:border-b-0 ${
 							isDisabled ? 'opacity-60' : ''
 						}`}
 					>

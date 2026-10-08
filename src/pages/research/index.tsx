@@ -300,7 +300,7 @@ export default function ArticlesPage({
 			</Head>
 			<style>{`main{padding:0}#__next{gap:0;}`}</style>
 			<ArticleProxyAuthProvider>
-				<div className="col-span-full min-h-screen w-full text-research-heading dark:text-research-ink">
+				<div className="col-span-full min-h-screen w-full text-research-navy">
 					{showSearch ? (
 						<ResearchSearch />
 					) : (

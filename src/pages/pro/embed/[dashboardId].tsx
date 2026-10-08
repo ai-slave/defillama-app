@@ -53,7 +53,7 @@ export default function DashboardEmbedPage({
 				<title>{`${dashboardName} - DefiLlama`}</title>
 				<meta name="robots" content="noindex" />
 			</Head>
-			<div className="col-span-full flex min-h-dvh flex-col gap-2 p-2 text-pro-text-primary pro-dashboard">
+			<div className="col-span-full flex min-h-dvh flex-col gap-2 p-2 text-primary">
 				<header className="flex items-center justify-between gap-3 body-sm">
 					<div className="flex min-w-0 items-center gap-2">
 						<img
@@ -63,7 +63,7 @@ export default function DashboardEmbedPage({
 							width={53}
 							className="h-[18px] w-[53px] shrink-0 object-contain object-left"
 						/>
-						<span aria-hidden="true" className="text-pro-text-tertiary">
+						<span aria-hidden="true" className="text-tertiary">
 							/
 						</span>
 						<a
@@ -114,9 +114,9 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 
 	if (!item || !rawItem || item.kind === 'section') {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center">
+			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-subtle bg-surface p-6 text-center">
 				<p className="title-lg">Card not found</p>
-				<p className="body-md text-pro-text-secondary">This card is no longer part of the dashboard.</p>
+				<p className="body-md text-secondary">This card is no longer part of the dashboard.</p>
 				<a href={dashboardHref} target="_blank" rel="noreferrer" className="body-md text-link hover:underline">
 					Open the dashboard
 				</a>
@@ -134,7 +134,7 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 				// A card control that leaves while it has focus, such as a retry that succeeds, hands focus to its card.
 				tabIndex={-1}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
-				className="flex flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg"
+				className="flex flex-1 flex-col rounded-md border border-subtle bg-surface"
 			>
 				<DashboardCardContext.Provider value={cardContextValue}>
 					<CardHeightScaleContext.Provider value={cardHeightScale}>

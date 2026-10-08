@@ -13,7 +13,7 @@ interface ActiveFilterPillsProps {
 
 export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
 	if (pills.length === 0) {
-		return <p className="body-sm text-pro-text-tertiary">No filters applied yet.</p>
+		return <p className="body-sm text-tertiary">No filters applied yet.</p>
 	}
 
 	return (

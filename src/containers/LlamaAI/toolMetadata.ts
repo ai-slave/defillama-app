@@ -160,7 +160,7 @@ export const getToolLabel = (name: string | undefined | null): string =>
 export type ToolTone = 'brand' | 'accent' | 'success' | 'warning' | 'error' | 'neutral'
 export const TOOL_TONE_CLASS: Record<ToolTone, string> = {
 	brand: 'text-link',
-	accent: 'text-ai-mention',
+	accent: 'text-ai-violet',
 	success: 'text-success',
 	warning: 'text-warning',
 	error: 'text-error',

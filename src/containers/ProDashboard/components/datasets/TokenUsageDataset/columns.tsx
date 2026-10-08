@@ -41,7 +41,7 @@ export const getColumns = (
 
 				return (
 					<div className="flex items-center gap-2">
-						<span className="min-w-[30px] shrink-0 label-md text-pro-text-tertiary">{index + 1}</span>
+						<span className="min-w-[30px] shrink-0 label-md text-tertiary">{index + 1}</span>
 						<TokenLogo src={row.original.logo} alt={`Logo of ${value}`} data-lgonly />
 						<BasicLink href={`/protocol/${slug(value)}`} className="label-md text-link hover:underline">
 							{value}
@@ -56,7 +56,7 @@ export const getColumns = (
 			enableSorting: false,
 			cell: ({ row }) => {
 				const value = row.original.category
-				return <span className="label-sm text-pro-text-primary">{value || 'Unknown'}</span>
+				return <span className="label-sm text-primary">{value || 'Unknown'}</span>
 			}
 		}
 	]
@@ -73,7 +73,7 @@ export const getColumns = (
 							{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					) : (
-						<span className="body-md text-pro-text-tertiary">-</span>
+						<span className="body-md text-tertiary">-</span>
 					)
 				},
 				meta: {

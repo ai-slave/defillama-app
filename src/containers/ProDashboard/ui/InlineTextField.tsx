@@ -56,7 +56,7 @@ export function InlineTextField({
 	const statusAffordances = (
 		<>
 			{saving ? (
-				<span className="pointer-events-none absolute top-1 right-1 text-pro-text-tertiary">
+				<span className="pointer-events-none absolute top-1 right-1 text-tertiary">
 					<LoadingSpinner size={12} />
 				</span>
 			) : null}
@@ -86,7 +86,7 @@ export function InlineTextField({
 								setDraft(value)
 								setEditing(true)
 							}}
-							className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-pro-hover-fill/60 ${statusClassName} ${value ? '' : 'text-pro-text-tertiary italic'}`
+							className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-hover-row ${statusClassName} ${value ? '' : 'text-tertiary italic'}`
 								.replace(/\s+/g, ' ')
 								.trim()}
 						/>
@@ -113,7 +113,7 @@ export function InlineTextField({
 		setEditing(false)
 	}
 	const fieldClassName =
-		`${className ?? ''} min-w-0 rounded-sm border border-pro-cards-border bg-transparent px-1 outline-hidden focus:border-link ${statusClassName}`
+		`${className ?? ''} min-w-0 rounded-sm border border-medium bg-transparent px-1 outline-hidden focus:border-link ${statusClassName}`
 			.replace(/\s+/g, ' ')
 			.trim()
 	const shared = {

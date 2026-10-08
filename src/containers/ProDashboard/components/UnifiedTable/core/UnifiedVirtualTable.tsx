@@ -55,7 +55,7 @@ export function UnifiedVirtualTable({
 	return (
 		<div
 			ref={containerRef}
-			className="relative isolate min-h-0 w-full flex-1 overflow-auto rounded-md bg-pro-cards-bg"
+			className="relative isolate min-h-0 w-full flex-1 overflow-auto rounded-md bg-surface"
 			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}
 		>
 			<div
@@ -65,7 +65,7 @@ export function UnifiedVirtualTable({
 					zIndex: 10,
 					display: 'flex',
 					flexDirection: 'column',
-					background: 'var(--pro-cards-bg)'
+					background: 'var(--bg-surface)'
 				}}
 			>
 				{headerGroups.map((headerGroup) => {
@@ -100,12 +100,10 @@ export function UnifiedVirtualTable({
 											position: isSticky ? 'sticky' : undefined,
 											left: isSticky ? 0 : undefined,
 											zIndex: isSticky ? 10 : undefined,
-											background: 'var(--pro-cards-bg)'
+											background: 'var(--bg-surface)'
 										}}
 										className={`truncate border-t border-r border-subtle p-3 last:border-r-0 ${
-											compact
-												? 'flex min-h-[50px] items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
-												: ''
+											compact ? 'flex min-h-[50px] items-center border-r-transparent px-5' : ''
 										}`}
 									>
 										{header.column.getCanSort() ? (
@@ -170,9 +168,7 @@ export function UnifiedVirtualTable({
 										key={cell.id}
 										data-lighter={stripedBg && virtualRow.index % 2 === 0}
 										className={`truncate border-t border-r border-subtle p-3 ${
-											compact
-												? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
-												: ''
+											compact ? 'flex items-center border-r-transparent px-5' : ''
 										} ${textAlign === 'end' ? 'tabular-nums' : ''}`}
 										style={{
 											textAlign,
@@ -186,7 +182,7 @@ export function UnifiedVirtualTable({
 											position: isSticky ? 'sticky' : undefined,
 											left: isSticky ? 0 : undefined,
 											zIndex: isSticky ? 1 : undefined,
-											background: isSticky ? 'var(--pro-cards-bg)' : undefined
+											background: isSticky ? 'var(--bg-surface)' : undefined
 										}}
 									>
 										<FlexRender cell={cell} />

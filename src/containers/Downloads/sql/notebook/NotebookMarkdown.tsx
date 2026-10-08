@@ -18,7 +18,7 @@ const components: Components = {
 	th: ({ node: _node, children, ...props }: any) => (
 		<th
 			{...props}
-			className={`border border-subtle bg-pro-app-bg px-2 py-1.5 text-left font-semibold ${props.className ?? ''}`}
+			className={`border border-subtle bg-page px-2 py-1.5 text-left font-semibold ${props.className ?? ''}`}
 		>
 			{children}
 		</th>
@@ -42,7 +42,7 @@ const components: Components = {
 		const isBlock = typeof className === 'string' && className.includes('language-')
 		if (isBlock) {
 			return (
-				<pre className="overflow-x-auto rounded-md border border-subtle bg-pro-app-bg p-2 mono-sm">
+				<pre className="overflow-x-auto rounded-md border border-subtle bg-page p-2 mono-sm">
 					<code {...props} className={className}>
 						{children}
 					</code>
@@ -50,7 +50,7 @@ const components: Components = {
 			)
 		}
 		return (
-			<code {...props} className={`rounded-sm bg-pro-app-bg px-1 py-px mono-sm ${className ?? ''}`}>
+			<code {...props} className={`rounded-sm bg-page px-1 py-px mono-sm ${className ?? ''}`}>
 				{children}
 			</code>
 		)
@@ -59,10 +59,10 @@ const components: Components = {
 
 export function NotebookMarkdown({ content }: { content: string }) {
 	if (!content.trim()) {
-		return <div className="body-sm text-pro-text-tertiary italic">Empty markdown cell</div>
+		return <div className="body-sm text-tertiary italic">Empty markdown cell</div>
 	}
 	return (
-		<div className="prose prose-sm max-w-none text-pro-text-primary dark:prose-invert">
+		<div className="prose prose-sm max-w-none text-primary dark:prose-invert">
 			<ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={REHYPE_PLUGINS} components={components}>
 				{content}
 			</ReactMarkdown>

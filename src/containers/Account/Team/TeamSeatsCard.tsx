@@ -39,9 +39,9 @@ function isRenewingSub(sub: TeamSubscription): boolean {
 function InfoRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="shrink-0 body-sm text-sub-text-muted">{label}</span>
-			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
-			<span className={`shrink-0 body-sm ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
+			<span className="shrink-0 body-sm text-tertiary">{label}</span>
+			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-medium" />
+			<span className={`shrink-0 body-sm ${valueClassName || 'text-primary'}`}>{value}</span>
 		</div>
 	)
 }
@@ -82,19 +82,19 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	}
 
 	return (
-		<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
+		<div className="flex flex-col gap-3 rounded-lg border border-subtle p-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex flex-col">
-					<span className="label-md text-sub-text-primary">
+					<span className="label-md text-primary">
 						{label} — {subscription.billingInterval === 'year' ? 'Yearly' : 'Monthly'}
 					</span>
-					<span className="body-sm text-sub-text-muted">
+					<span className="body-sm text-tertiary">
 						{subscription.seats.seatCount} seat{subscription.seats.seatCount === 1 ? '' : 's'} × {formatUsd(unit)}
 						{intervalSuffix}
 					</span>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<span className="title-md text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
+					<span className="title-md text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
 					{isMonthly && active && !isCanceling && (
 						<Button
 							type="button"
@@ -126,16 +126,16 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				<InfoRow
 					label="Available"
 					value={String(subscription.seats.availableSeats)}
-					valueClassName={subscription.seats.availableSeats > 0 ? 'text-sub-success' : 'text-sub-text-muted'}
+					valueClassName={subscription.seats.availableSeats > 0 ? 'text-success' : 'text-tertiary'}
 				/>
 				{isCanceling && cancelAtDate ? (
 					<InfoRow label="Cancels on" value={formatDate(cancelAtDate) ?? '-'} valueClassName="text-error" />
 				) : active ? (
 					// The team response has no billing-period end, and deriving one from the row's
 					// creation date goes wrong once an annual upgrade moves Stripe's billing anchor.
-					<InfoRow label="Next billing" value="See the Stripe portal" valueClassName="text-sub-text-muted" />
+					<InfoRow label="Next billing" value="See the Stripe portal" valueClassName="text-tertiary" />
 				) : subscription.status ? (
-					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-sub-text-muted" />
+					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-tertiary" />
 				) : null}
 			</div>
 
@@ -194,11 +194,11 @@ function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscriptio
 	if (totals.yearly > 0) rows.push({ id: 'yearly', label: 'Total', value: `${formatUsd(totals.yearly)}/year` })
 
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
+		<div className="flex flex-col gap-1.5 rounded-lg bg-brand-faint p-3">
 			{rows.map((row) => (
 				<div key={row.id} className="flex flex-wrap items-center justify-between gap-2">
-					<span className="label-md text-sub-text-primary">{row.label}</span>
-					<span className="title-md text-sub-text-primary">{row.value}</span>
+					<span className="label-md text-primary">{row.label}</span>
+					<span className="title-md text-primary">{row.value}</span>
 				</div>
 			))}
 		</div>
@@ -215,8 +215,8 @@ function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }
 
 	return (
 		<div className="flex items-start gap-2">
-			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
-			<p className="body-sm text-sub-text-muted">
+			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-tertiary" />
+			<p className="body-sm text-tertiary">
 				Tip: switch to yearly billing and get 2 months free — save {formatUsd(savings)}/year on your current seats.
 			</p>
 		</div>
@@ -239,11 +239,11 @@ export function TeamSeatsCard() {
 	const hasStripe = teamSubscriptions.some((sub) => sub.provider === undefined || sub.provider === 'stripe')
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<Icon name="receipt" height={20} width={20} className="text-sub-text-primary" />
-					<span className="label-lg text-sub-text-primary">Subscriptions & Billing</span>
+					<Icon name="receipt" height={20} width={20} className="text-primary" />
+					<span className="label-lg text-primary">Subscriptions & Billing</span>
 					{/* The one reason the billing buttons are disabled while it runs; a failed refresh's retry shows its own. */}
 					<div role="status">
 						{billingWait && !isTeamRefreshError ? <LoadingIndicator label={billingWait.replace('…', '')} /> : null}

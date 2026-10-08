@@ -583,10 +583,10 @@ export function ColumnManager({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
+			<section className="rounded-lg border border-subtle bg-surface p-3">
 				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
-						<h4 className="title-sm text-pro-text-primary">Selected</h4>
+						<h4 className="title-sm text-primary">Selected</h4>
 						<span className="rounded-sm bg-brand-tint px-1.5 py-0.5 text-link">{selectedColumns.length}</span>
 					</div>
 					{selectedColumns.length > 0 ? (
@@ -604,7 +604,7 @@ export function ColumnManager({
 				>
 					<div className="max-h-[100px] overflow-y-auto">
 						{selectedColumns.length === 0 ? (
-							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-pro-cards-border body-sm text-pro-text-tertiary">
+							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-medium body-sm text-tertiary">
 								No columns selected
 							</div>
 						) : (
@@ -637,7 +637,7 @@ export function ColumnManager({
 					</DragOverlay>
 				</DndContext>
 
-				<p className="mt-2 body-sm text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
+				<p className="mt-2 body-sm text-tertiary">Drag to reorder. First column pinned left.</p>
 			</section>
 
 			<SortingSection
@@ -649,8 +649,8 @@ export function ColumnManager({
 				onReset={onSortingReset}
 			/>
 
-			<section className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-				<div className="border-b border-pro-cards-border p-2">
+			<section className="flex flex-col rounded-lg border border-subtle bg-surface">
+				<div className="border-b border-subtle p-2">
 					<SegmentedControl
 						label="Column group"
 						variant="chips"
@@ -661,26 +661,26 @@ export function ColumnManager({
 					/>
 				</div>
 
-				<div className="border-b border-pro-cards-border p-2">
+				<div className="border-b border-subtle p-2">
 					<div className="relative">
 						<Icon
 							name="search"
 							width={12}
 							height={12}
-							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
+							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
 						/>
 						<input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label="Search columns"
 							placeholder="Search columns…"
-							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border border-medium py-1.5 pr-2.5 pl-8 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
 				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
-						<p className="flex h-16 items-center justify-center body-sm text-pro-text-tertiary">No columns match</p>
+						<p className="flex h-16 items-center justify-center body-sm text-tertiary">No columns match</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{filteredColumns.map((column) => {
@@ -692,26 +692,22 @@ export function ColumnManager({
 										aria-pressed={isSelected}
 										onClick={() => handleToggleColumn(column.id)}
 										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
-											isSelected
-												? 'border-brand-muted bg-brand-faint'
-												: 'border-transparent hover:border-pro-cards-border'
+											isSelected ? 'border-brand-muted bg-brand-faint' : 'border-transparent hover:border-medium'
 										}`}
 									>
 										<div
 											className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
 													? 'border-brand bg-brand text-on-brand'
-													: 'border-pro-cards-border group-hover:border-brand-strong'
+													: 'border-medium group-hover:border-brand-strong'
 											}`}
 										>
 											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
 										</div>
-										<span
-											className={`flex-1 truncate label-sm ${isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'}`}
-										>
+										<span className={`flex-1 truncate label-sm ${isSelected ? 'text-primary' : 'text-secondary'}`}>
 											{column.header}
 										</span>
-										<span className="rounded-sm px-1 py-0.5 label-xs text-pro-text-tertiary uppercase">
+										<span className="rounded-sm px-1 py-0.5 label-xs text-tertiary uppercase">
 											{GROUP_LABELS[column.group]}
 										</span>
 									</button>
@@ -722,7 +718,7 @@ export function ColumnManager({
 				</div>
 			</section>
 
-			<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
+			<section className="rounded-lg border border-subtle bg-surface p-3">
 				<button
 					type="button"
 					onClick={() => {
@@ -740,12 +736,12 @@ export function ColumnManager({
 							height={14}
 							className="text-link"
 						/>
-						<span className="title-sm text-pro-text-primary">
+						<span className="title-sm text-primary">
 							{editingId ? 'Edit custom column' : 'Custom column'}
-							{!hasActiveSubscription ? <span className="ml-1 body-sm text-pro-text-tertiary">(Pro)</span> : null}
+							{!hasActiveSubscription ? <span className="ml-1 body-sm text-tertiary">(Pro)</span> : null}
 						</span>
 						{customColumns.length > 0 ? (
-							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 label-sm text-purple-500">
+							<span className="rounded-sm bg-pro-ai-tint px-1.5 py-0.5 label-sm text-pro-ai-text">
 								{customColumns.length}
 							</span>
 						) : null}
@@ -754,7 +750,7 @@ export function ColumnManager({
 						name="chevron-down"
 						width={14}
 						height={14}
-						className={`text-pro-text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
+						className={`text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
 					/>
 				</button>
 
@@ -767,10 +763,10 @@ export function ColumnManager({
 				</div>
 
 				{customColumnExpanded ? (
-					<div className="mt-3 space-y-3 border-t border-pro-cards-border pt-3">
+					<div className="mt-3 space-y-3 border-t border-subtle pt-3">
 						{editingId ? (
 							<div className="flex items-center justify-between body-sm">
-								<span className="text-pro-text-secondary">Editing: {customName || 'Custom column'}</span>
+								<span className="text-secondary">Editing: {customName || 'Custom column'}</span>
 								<Button variant="link" onClick={handleCancelEdit}>
 									Cancel
 								</Button>
@@ -778,7 +774,7 @@ export function ColumnManager({
 						) : null}
 
 						<div className="flex flex-col gap-1">
-							<label className="flex flex-col gap-1 label-sm text-pro-text-secondary">
+							<label className="flex flex-col gap-1 label-sm text-secondary">
 								Column name
 								<input
 									type="text"
@@ -787,7 +783,7 @@ export function ColumnManager({
 									placeholder="e.g., TVL to market cap"
 									aria-invalid={customName.trim() !== '' && nameError !== null}
 									aria-describedby={nameError && (customName || customExpression) ? `${fieldId}-name-error` : undefined}
-									className="rounded-md border border-pro-cards-border px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="rounded-md border border-medium px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</label>
 							{/* The save button stays disabled until the name is valid; say why once the reader has typed something. */}
@@ -799,7 +795,7 @@ export function ColumnManager({
 						</div>
 
 						<div className="flex flex-col gap-1">
-							<label htmlFor={`${fieldId}-expression`} className="label-sm text-pro-text-secondary">
+							<label htmlFor={`${fieldId}-expression`} className="label-sm text-secondary">
 								Expression
 							</label>
 							<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
@@ -812,12 +808,12 @@ export function ColumnManager({
 									onKeyDown={handleExpressionKeyDown}
 									onFocus={() => customExpression && setShowAutocomplete(true)}
 									placeholder="e.g., tvl / mcap, fees24h * 365"
-									className={`w-full rounded-md border px-2 py-1.5 pr-8 mono-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
+									className={`w-full rounded-md border px-2 py-1.5 pr-8 mono-sm text-primary placeholder:text-tertiary focus:outline-hidden ${
 										customExpression && !expressionValidation.isValid
 											? 'border-error'
 											: customExpression && expressionValidation.isValid
 												? 'border-success'
-												: 'border-pro-cards-border focus:border-brand'
+												: 'border-medium focus:border-brand'
 									}`}
 								/>
 								{customExpression ? (
@@ -830,7 +826,7 @@ export function ColumnManager({
 									</div>
 								) : null}
 								{showAutocomplete && filteredSuggestions.length > 0 ? (
-									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg">
+									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-lg">
 										{filteredSuggestions.map((suggestion, index) => (
 											<button
 												key={`${suggestion.type}-${suggestion.value}`}
@@ -838,32 +834,32 @@ export function ColumnManager({
 												onClick={() => insertSuggestion(suggestion)}
 												onMouseEnter={() => setAutocompleteIndex(index)}
 												className={`flex cursor-pointer items-center gap-2 px-2 py-1 label-sm ${
-													index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-pro-text-primary'
+													index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-primary'
 												}`}
 											>
 												<span
 													className={`size-1.5 shrink-0 rounded-full ${
 														suggestion.type === 'variable'
-															? 'bg-blue-400'
+															? 'bg-brand'
 															: suggestion.type === 'function'
-																? 'bg-purple-400'
-																: 'bg-gray-400'
+																? 'bg-pro-ai'
+																: 'bg-border-strong'
 													}`}
 												/>
 												<code className="shrink-0">{suggestion.display}</code>
-												<span className="ml-auto truncate text-pro-text-tertiary">{suggestion.description}</span>
+												<span className="ml-auto truncate text-tertiary">{suggestion.description}</span>
 											</button>
 										))}
 									</div>
 								) : null}
 							</div>
 						</div>
-						<p className="body-xs text-pro-text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
+						<p className="body-xs text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
 
 						{/* Each field keeps 14rem, so on a phone they stack instead of squeezing four segments each. */}
 						<div className="flex flex-wrap gap-2">
 							<div className="min-w-56 flex-1">
-								<p id={`${fieldId}-format`} className="mb-1 label-sm text-pro-text-secondary">
+								<p id={`${fieldId}-format`} className="mb-1 label-sm text-secondary">
 									Format
 								</p>
 								<SegmentedControl
@@ -877,7 +873,7 @@ export function ColumnManager({
 								/>
 							</div>
 							<div className="min-w-56 flex-1">
-								<p id={`${fieldId}-aggregation`} className="mb-1 label-sm text-pro-text-secondary">
+								<p id={`${fieldId}-aggregation`} className="mb-1 label-sm text-secondary">
 									Aggregation
 								</p>
 								<SegmentedControl
@@ -901,7 +897,7 @@ export function ColumnManager({
 								}`}
 							>
 								<div className="flex items-center justify-between">
-									<span className="text-pro-text-secondary">Result:</span>
+									<span className="text-secondary">Result:</span>
 									{preview !== null ? (
 										<span className="font-mono font-bold text-success">{preview}</span>
 									) : (
@@ -911,7 +907,7 @@ export function ColumnManager({
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success-muted pt-1">
 										{usedVariables.map((v) => (
-											<span key={v.key} className="body-sm text-pro-text-tertiary">
+											<span key={v.key} className="body-sm text-tertiary">
 												<code>{v.key}</code>={v.formatted}
 											</span>
 										))}
@@ -933,23 +929,23 @@ export function ColumnManager({
 				) : null}
 
 				{customColumns.length > 0 ? (
-					<div className="mt-3 space-y-1.5 border-t border-pro-cards-border pt-3">
+					<div className="mt-3 space-y-1.5 border-t border-subtle pt-3">
 						{customColumns.map((col) => (
 							<div
 								key={col.id}
-								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand-faint' : 'border-pro-cards-border'}`}
+								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand-faint' : 'border-subtle'}`}
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
-										<span className="truncate label-sm text-pro-text-primary">{col.name}</span>
-										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 label-xs uppercase">
+										<span className="truncate label-sm text-primary">{col.name}</span>
+										<span className="rounded-sm border border-medium bg-surface px-1 py-0.5 label-xs uppercase">
 											{col.format}
 										</span>
-										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 label-xs text-pro-text-tertiary">
+										<span className="rounded-sm border border-medium bg-surface px-1 py-0.5 label-xs text-tertiary">
 											{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}
 										</span>
 									</div>
-									<code className="block truncate body-sm text-pro-text-tertiary">{col.expression}</code>
+									<code className="block truncate body-sm text-tertiary">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
 									<Tooltip
@@ -1017,22 +1013,18 @@ function SortableChip({
 			ref={setNodeRef}
 			style={style}
 			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 body-sm transition-colors ${
-				isFirst
-					? 'border-brand-strong bg-brand-tint'
-					: isCustom
-						? 'border-purple-500/30 bg-purple-500/5'
-						: 'border-pro-cards-border'
+				isFirst ? 'border-brand-strong bg-brand-tint' : isCustom ? 'border-medium bg-pro-ai-tint' : 'border-medium'
 			}`}
 		>
 			<span
 				{...attributes}
 				{...listeners}
 				aria-label={`Move ${label}`}
-				className="cursor-grab touch-none text-pro-text-tertiary hover:text-pro-text-secondary active:cursor-grabbing"
+				className="cursor-grab touch-none text-tertiary hover:text-secondary active:cursor-grabbing"
 			>
 				<Icon name="menu" width={10} height={10} />
 			</span>
-			<span className="max-w-[80px] truncate font-medium text-pro-text-primary" title={label}>
+			<span className="max-w-[80px] truncate font-medium text-primary" title={label}>
 				{label}
 			</span>
 			{isFirst ? <Icon name="pin" width={8} height={8} className="text-link" /> : null}
@@ -1081,18 +1073,16 @@ function SortingSection({
 	}, [currentSortColumn, selectableColumns])
 
 	return (
-		<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
-			<h4 className="mb-2 title-sm text-pro-text-primary">Sorting</h4>
+		<section className="rounded-lg border border-subtle bg-surface p-3">
+			<h4 className="mb-2 title-sm text-primary">Sorting</h4>
 			<div className="flex flex-wrap items-center gap-2 body-sm">
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 body-sm transition-colors hover:border-brand-muted focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-medium px-2 py-1.5 body-sm transition-colors hover:border-brand-muted focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
-						<span className={`truncate ${currentSortColumn ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
-							{selectedLabel}
-						</span>
-						<Icon name="chevron-down" className="ml-2 size-3.5 shrink-0 text-pro-text-tertiary" />
+						<span className={`truncate ${currentSortColumn ? 'text-primary' : 'text-tertiary'}`}>{selectedLabel}</span>
+						<Icon name="chevron-down" className="ml-2 size-3.5 shrink-0 text-tertiary" />
 					</PopoverDisclosure>
 					<Popover
 						store={popover}
@@ -1100,7 +1090,7 @@ function SortingSection({
 						portal
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"
+						className="z-50 rounded-md border border-medium bg-overlay shadow-lg"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto p-1">
@@ -1111,7 +1101,9 @@ function SortingSection({
 									popover.setOpen(false)
 								}}
 								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-									!currentSortColumn ? 'bg-brand-tint text-link' : 'text-pro-text-secondary'
+									!currentSortColumn
+										? 'bg-brand-muted text-link'
+										: 'text-secondary hover:bg-hover-row hover:text-primary'
 								}`}
 							>
 								<span>No sorting</span>
@@ -1130,7 +1122,7 @@ function SortingSection({
 											popover.setOpen(false)
 										}}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-											isActive ? 'bg-brand-tint text-link' : 'text-pro-text-secondary'
+											isActive ? 'bg-brand-muted text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>

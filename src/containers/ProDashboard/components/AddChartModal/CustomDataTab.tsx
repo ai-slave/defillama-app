@@ -173,41 +173,41 @@ function CustomDataForm({
 				className={`min-h-0 flex-col gap-3 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'configure' ? 'flex' : 'hidden'}`}
 			>
 				<label className="flex flex-col gap-1">
-					<span className="label-sm text-pro-text-secondary">Card name (optional)</span>
+					<span className="label-sm text-secondary">Card name (optional)</span>
 					<input
 						type="text"
 						value={customData.name}
 						onChange={(event) => onNameChange(event.target.value)}
 						maxLength={80}
-						className="w-full rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</label>
 
 				<label className="flex flex-col gap-1">
-					<span className="label-sm text-pro-text-secondary">CSV file</span>
+					<span className="label-sm text-secondary">CSV file</span>
 					<input
 						type="file"
 						accept=".csv,text/csv"
 						data-umami-event="custom-data-file"
 						onChange={(event) => handleFile(event.target.files?.[0])}
-						className="w-full rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary file:mr-2 file:rounded-sm file:border-0 file:bg-pro-cards-bg file:px-2 file:py-1 file:label-sm file:text-pro-text-primary"
+						className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary file:mr-2 file:rounded-sm file:border-0 file:bg-surface file:px-2 file:py-1 file:label-sm file:text-primary"
 					/>
 				</label>
 
 				<label className="flex min-h-0 flex-1 flex-col gap-1">
-					<span className="label-sm text-pro-text-secondary">Or paste CSV</span>
+					<span className="label-sm text-secondary">Or paste CSV</span>
 					<textarea
 						value={customData.csvText}
 						onChange={(event) => handleTextChange(event.target.value)}
 						placeholder={'date,value\n2026-01-01,10'}
 						aria-label="Paste CSV"
-						className="min-h-[160px] w-full flex-1 resize-none rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 mono-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="min-h-[160px] w-full flex-1 resize-none rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 mono-sm text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</label>
 
 				{customData.error ? <p className="body-sm text-error">{customData.error}</p> : null}
 				{customData.sourceName ? (
-					<p className="truncate body-sm text-pro-text-tertiary">Source: {customData.sourceName}</p>
+					<p className="truncate body-sm text-tertiary">Source: {customData.sourceName}</p>
 				) : null}
 			</div>
 
@@ -227,7 +227,7 @@ function CustomDataForm({
 						options={DISPLAY_MODE_OPTIONS}
 					/>
 					{result ? (
-						<span className="body-sm text-pro-text-tertiary">
+						<span className="body-sm text-tertiary">
 							{result.rows.length} {result.rows.length === 1 ? 'row' : 'rows'} · {result.columns.length} columns
 						</span>
 					) : null}
@@ -239,9 +239,9 @@ function CustomDataForm({
 					</div>
 				) : null}
 
-				<div className="min-h-[260px] flex-1 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg p-2">
+				<div className="min-h-[260px] flex-1 overflow-hidden rounded-lg border border-subtle bg-surface p-2">
 					{!result ? (
-						<div className="flex h-full items-center justify-center px-6 text-center body-sm text-pro-text-tertiary">
+						<div className="flex h-full items-center justify-center px-6 text-center body-sm text-tertiary">
 							Paste or upload a CSV to preview it here.
 						</div>
 					) : customData.displayMode === 'table' ? (
@@ -249,7 +249,7 @@ function CustomDataForm({
 							<ResultsGrid result={result} />
 						</div>
 					) : !hasNumeric ? (
-						<div className="flex h-full items-center justify-center px-6 text-center body-sm text-pro-text-tertiary">
+						<div className="flex h-full items-center justify-center px-6 text-center body-sm text-tertiary">
 							No numeric columns in this dataset to chart.
 						</div>
 					) : (

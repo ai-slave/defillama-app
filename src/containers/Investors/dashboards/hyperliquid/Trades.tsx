@@ -57,10 +57,10 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 	const reversedAsks = [...topAsks].reverse()
 
 	return (
-		<div className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">Order Book</h3>
+		<div className="flex flex-col rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">Order Book</h3>
 
-			<div className="mb-2 grid grid-cols-3 label-sm text-pro-text-label">
+			<div className="mb-2 grid grid-cols-3 label-sm text-secondary">
 				<span>Price</span>
 				<span className="text-right">Size</span>
 				<span className="text-right">Orders</span>
@@ -73,20 +73,20 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 						<div key={`a-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-error-tint" style={{ width: `${pct}%` }} />
 							<span className="relative text-error">{formatNumber(level.px)}</span>
-							<span className="relative text-right text-pro-text-primary">
+							<span className="relative text-right text-primary">
 								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>
-							<span className="relative text-right text-pro-text-label">{level.n}</span>
+							<span className="relative text-right text-secondary">{level.n}</span>
 						</div>
 					)
 				})}
 
 				{midPrice > 0 && (
-					<div className="my-1 flex items-center justify-center gap-2 border-y border-pro-cards-border py-2">
-						<span className="title-md text-pro-text-primary">
+					<div className="my-1 flex items-center justify-center gap-2 border-y border-subtle py-2">
+						<span className="title-md text-primary">
 							{formatUsd(midPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
-						<span className="body-xs text-pro-text-label">
+						<span className="body-xs text-secondary">
 							Spread:{' '}
 							{formatPercent(spread, {
 								input: 'percent',
@@ -104,17 +104,17 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 						<div key={`b-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-success-tint" style={{ width: `${pct}%` }} />
 							<span className="relative text-success">{formatNumber(level.px)}</span>
-							<span className="relative text-right text-pro-text-primary">
+							<span className="relative text-right text-primary">
 								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>
-							<span className="relative text-right text-pro-text-label">{level.n}</span>
+							<span className="relative text-right text-secondary">{level.n}</span>
 						</div>
 					)
 				})}
 			</div>
 
 			{bids.length === 0 && asks.length === 0 ? (
-				<div className="flex flex-1 items-center justify-center py-10 body-md text-pro-text-label">
+				<div className="flex flex-1 items-center justify-center py-10 body-md text-secondary">
 					Waiting for order book data...
 				</div>
 			) : null}
@@ -124,10 +124,10 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 
 function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 	return (
-		<div className="flex max-h-[800px] flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 shrink-0 label-md text-pro-text-label">Recent Trades</h3>
+		<div className="flex max-h-[800px] flex-col rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 shrink-0 label-md text-secondary">Recent Trades</h3>
 
-			<div className="mb-2 grid shrink-0 grid-cols-4 label-sm text-pro-text-label">
+			<div className="mb-2 grid shrink-0 grid-cols-4 label-sm text-secondary">
 				<span>Time</span>
 				<span className="text-right">Price</span>
 				<span className="text-right">Size</span>
@@ -142,7 +142,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 							key={`${trade.tid}-${trade.time}`}
 							className={`grid grid-cols-4 py-0.75 ${isBuy ? 'text-success' : 'text-error'}`}
 						>
-							<span className="text-pro-text-label">{formatTime(trade.time)}</span>
+							<span className="text-secondary">{formatTime(trade.time)}</span>
 							<span className="text-right">{formatNumber(trade.px)}</span>
 							<span className="text-right">
 								{formatCompactNumber(trade.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
@@ -152,9 +152,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 					)
 				})}
 				{trades.length === 0 ? (
-					<div className="flex items-center justify-center py-10 body-md text-pro-text-label">
-						Waiting for trades...
-					</div>
+					<div className="flex items-center justify-center py-10 body-md text-secondary">Waiting for trades…</div>
 				) : null}
 			</div>
 		</div>
@@ -177,10 +175,10 @@ function MetricStrip({
 	depth1: number
 }) {
 	return (
-		<div className="grid grid-cols-2 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 md:grid-cols-6">
+		<div className="grid grid-cols-2 gap-3 rounded-lg border border-subtle bg-surface p-4 md:grid-cols-6">
 			<div>
-				<div className="body-sm text-pro-text-label">Spread</div>
-				<div className="body-md text-pro-text-primary">
+				<div className="body-sm text-secondary">Spread</div>
+				<div className="body-md text-primary">
 					{formatPercent(spreadPct, {
 						input: 'percent',
 						minimumFractionDigits: 4,
@@ -190,8 +188,8 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="body-sm text-pro-text-label">Buy Ratio 1m</div>
-				<div className="body-md text-pro-text-primary">
+				<div className="body-sm text-secondary">Buy Ratio 1m</div>
+				<div className="body-md text-primary">
 					{formatPercent(buyRatio1m, {
 						input: 'fraction',
 						minimumFractionDigits: 1,
@@ -201,8 +199,8 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="body-sm text-pro-text-label">Buy Ratio 5m</div>
-				<div className="body-md text-pro-text-primary">
+				<div className="body-sm text-secondary">Buy Ratio 5m</div>
+				<div className="body-md text-primary">
 					{formatPercent(buyRatio5m, {
 						input: 'fraction',
 						minimumFractionDigits: 1,
@@ -212,20 +210,20 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="body-sm text-pro-text-label">CVD 5m</div>
+				<div className="body-sm text-secondary">CVD 5m</div>
 				<div className={cvd5m >= 0 ? 'body-md text-success' : 'body-md text-error'}>
 					{formatCompactNumber(cvd5m, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
 			<div>
-				<div className="body-sm text-pro-text-label">Depth ±0.25%</div>
-				<div className="body-md text-pro-text-primary">
+				<div className="body-sm text-secondary">Depth ±0.25%</div>
+				<div className="body-md text-primary">
 					{formatUsd(depth025, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
 			<div>
-				<div className="body-sm text-pro-text-label">Depth ±1%</div>
-				<div className="body-md text-pro-text-primary">
+				<div className="body-sm text-secondary">Depth ±1%</div>
+				<div className="body-md text-primary">
 					{formatUsd(depth1, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
@@ -361,7 +359,7 @@ export default function Trades() {
 				<select
 					value={coin}
 					onChange={(e) => setCoin(e.target.value)}
-					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-md text-pro-text-primary outline-hidden"
+					className="rounded-lg border border-medium bg-surface px-3 py-2 label-md text-primary outline-hidden"
 				>
 					{(coinOptions.length > 0 ? coinOptions : ['BTC', 'ETH', 'SOL']).map((value) => (
 						<option key={value} value={value}>
@@ -373,7 +371,7 @@ export default function Trades() {
 				<select
 					value={nSigFigs}
 					onChange={(e) => setNSigFigs(Number(e.target.value))}
-					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-md text-pro-text-primary outline-hidden"
+					className="rounded-lg border border-medium bg-surface px-3 py-2 label-md text-primary outline-hidden"
 				>
 					{[2, 3, 4, 5].map((value) => (
 						<option key={value} value={value}>
@@ -384,7 +382,7 @@ export default function Trades() {
 
 				<div className="ml-auto flex items-center gap-1.5">
 					<div className={`size-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error'}`} />
-					<span className="body-sm text-pro-text-label">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
+					<span className="body-sm text-secondary">{isConnected ? 'Connected' : 'Reconnecting…'}</span>
 				</div>
 			</div>
 

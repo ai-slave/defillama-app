@@ -5,7 +5,7 @@ import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 // surface, which does not match these dashboards.
 export function TabStatus({ variant, children }: { variant: 'loading' | 'empty' | 'error'; children?: ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+		<div className="rounded-lg border border-subtle bg-surface">
 			{variant === 'loading' ? (
 				<SurfaceBodyLoadingStatus />
 			) : (

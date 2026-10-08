@@ -62,7 +62,7 @@ export default function Staking() {
 
 			{chart && chart.dataset.source.length > 0 && (
 				<ChartCard title={chart.title} titleTooltip={chart.titleTooltip}>
-					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 body-sm text-pro-text-label">
+					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 body-sm text-secondary">
 						{chart.seriesNames.map((name) => (
 							<span key={name} className="flex items-center gap-1.5">
 								<span className="size-2.5 rounded-full" style={{ backgroundColor: chart.colors[name] }} />
@@ -78,7 +78,7 @@ export default function Staking() {
 						height="360px"
 						chartOptions={chart.chartOptions}
 					/>
-					{chart.subtitle && <p className="mt-2 body-sm text-pro-text-label">{chart.subtitle}</p>}
+					{chart.subtitle && <p className="mt-2 body-sm text-secondary">{chart.subtitle}</p>}
 				</ChartCard>
 			)}
 

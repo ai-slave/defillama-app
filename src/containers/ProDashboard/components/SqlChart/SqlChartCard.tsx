@@ -115,7 +115,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 									Refresh
 								</Button>
 								<Tooltip content={REFRESH_HINT} className="flex items-center">
-									<Icon name="help-circle" height={13} width={13} className="text-pro-text-tertiary" />
+									<Icon name="help-circle" height={13} width={13} className="text-tertiary" />
 								</Tooltip>
 							</>
 						) : null
@@ -174,7 +174,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 						)}
 
 						{cardView === 'output' && snapshot?.truncated ? (
-							<span className="body-xs text-pro-text-tertiary">
+							<span className="body-xs text-tertiary">
 								Showing first {formatNumber(snapshot.rows.length)} of {formatNumber(snapshot.rowCount)} rows.
 							</span>
 						) : null}

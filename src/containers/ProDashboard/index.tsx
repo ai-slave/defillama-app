@@ -124,7 +124,7 @@ function DashboardAuthorByline({ author }: { author?: PublicDashboardAuthor }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="inline-flex items-center gap-2 body-md text-pro-text-secondary hover:text-link"
+			className="inline-flex items-center gap-2 body-md text-secondary hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -149,12 +149,12 @@ function AuthorProfileSetupNotice() {
 	if (dismissed) return null
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand-muted bg-pro-link-button-bg px-3 py-2">
+		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand-muted bg-brand-tint px-3 py-2">
 			<div className="flex min-w-0 items-start gap-2">
 				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
 				<div className="min-w-0">
-					<p className="label-md text-pro-text-primary">Set up your dashboard author profile</p>
-					<p className="mt-0.5 body-sm text-pro-text-secondary">
+					<p className="label-md text-primary">Set up your dashboard author profile</p>
+					<p className="mt-0.5 body-sm text-secondary">
 						Add your name, avatar, and links so visitors can see who built this dashboard.
 					</p>
 				</div>
@@ -244,7 +244,7 @@ function DemoPreviewFallback() {
 	return (
 		<div
 			role="alert"
-			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center"
+			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-subtle bg-surface p-6 text-center"
 		>
 			<p className="body-sm text-data-down">The preview could not be displayed.</p>
 			<BasicLink href="/pro?tab=discover" className="label-sm text-link hover:underline">
@@ -599,7 +599,7 @@ function ProDashboardContent() {
 						<div
 							role="status"
 							aria-live="polite"
-							className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1"
+							className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface p-1"
 						>
 							<LoadingIndicator label="Loading preview" />
 						</div>
@@ -612,7 +612,7 @@ function ProDashboardContent() {
 	}
 
 	return (
-		<div className="flex flex-1 flex-col gap-2 p-2 pro-dashboard lg:px-0">
+		<div className="flex flex-1 flex-col gap-2 p-2 lg:px-0">
 			<div className="flex flex-wrap items-center gap-2 label-sm">
 				<Button as={BasicLink} href="/pro" variant="link">
 					<Icon name="arrow-left" height={14} width={14} />
@@ -622,7 +622,7 @@ function ProDashboardContent() {
 					<Tooltip
 						content="Views"
 						render={<p />}
-						className="flex min-h-8 items-center gap-1.5 px-2 label-md text-pro-text-tertiary"
+						className="flex min-h-8 items-center gap-1.5 px-2 label-md text-tertiary"
 					>
 						<Icon name="eye" height={14} width={14} />
 						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
@@ -673,7 +673,7 @@ function ProDashboardContent() {
 							{doneStatusLabel ? (
 								<span
 									aria-hidden="true"
-									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 body-md text-pro-text-secondary"
+									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 body-md text-secondary"
 								>
 									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" height={14} width={14} />}
 									{doneStatusLabel}
@@ -701,7 +701,7 @@ function ProDashboardContent() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-				<h1 className="heading-lg text-pro-text-primary">
+				<h1 className="heading-lg text-primary">
 					{canEditHeaderText ? (
 						<InlineTextField
 							value={dashboardName}
@@ -745,7 +745,7 @@ function ProDashboardContent() {
 			</div>
 
 			<div className="flex min-w-0 flex-col gap-2">
-				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-md text-pro-text-secondary">
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-md text-secondary">
 					<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
 					{currentDashboard?.author && (canEditHeaderText || dashboardDescription) ? (
 						<span aria-hidden="true">·</span>
@@ -766,7 +766,7 @@ function ProDashboardContent() {
 					) : null}
 				</div>
 				{currentDashboard?.copiedFrom ? (
-					<p className="body-sm text-pro-text-secondary">
+					<p className="body-sm text-secondary">
 						Forked from{' '}
 						<BasicLink
 							href={`/pro/${currentDashboard.copiedFrom.slug ?? currentDashboard.copiedFrom.id}`}

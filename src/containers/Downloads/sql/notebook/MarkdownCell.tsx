@@ -50,7 +50,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 					}
 				}}
 				placeholder="Write markdown… ⌘↵ to render"
-				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 mono-sm text-pro-text-primary outline-hidden placeholder:text-pro-text-tertiary"
+				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 mono-sm text-primary outline-hidden placeholder:text-tertiary"
 			/>
 		)
 	}
@@ -66,7 +66,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 					startEdit()
 				}
 			}}
-			className={`group min-h-[24px] cursor-text px-0 py-0.5 ${source.trim() ? '' : 'text-pro-text-tertiary italic'}`}
+			className={`group min-h-[24px] cursor-text px-0 py-0.5 ${source.trim() ? '' : 'text-tertiary italic'}`}
 		>
 			{source.trim() ? (
 				<NotebookMarkdown content={source} />

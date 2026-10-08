@@ -44,10 +44,10 @@ function KpiCard({
 	change?: { value: number; formatted: string }
 }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
 			<div className="flex items-baseline gap-2">
-				<span className="mono-xl text-pro-text-primary">{value}</span>
+				<span className="mono-xl text-primary">{value}</span>
 				{change && (
 					<span className={`label-sm ${change.value >= 0 ? 'text-success' : 'text-error'}`}>{change.formatted}</span>
 				)}
@@ -58,15 +58,15 @@ function KpiCard({
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
 const protocolColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopProtocolEntry>()
@@ -76,7 +76,7 @@ function makeProtocolColumns(valueLabel: string) {
 		protocolColumnHelper.display({
 			id: 'rank',
 			header: '#',
-			cell: (info) => <span className="text-pro-text-label">{info.row.index + 1}</span>,
+			cell: (info) => <span className="text-secondary">{info.row.index + 1}</span>,
 			size: 40
 		}),
 		protocolColumnHelper.accessor('name', {
@@ -96,7 +96,7 @@ function makeProtocolColumns(valueLabel: string) {
 								}}
 							/>
 						) : (
-							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted label-xs text-sl-accent">
+							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint label-xs text-link">
 								{row.name.charAt(0)}
 							</span>
 						)}
@@ -108,7 +108,7 @@ function makeProtocolColumns(valueLabel: string) {
 		}),
 		protocolColumnHelper.accessor('category', {
 			header: 'Category',
-			cell: (info) => <span className="text-pro-text-label">{info.getValue() ?? '—'}</span>,
+			cell: (info) => <span className="text-secondary">{info.getValue() ?? '—'}</span>,
 			size: 120
 		}),
 		protocolColumnHelper.accessor((row) => row.total24h ?? undefined, {
@@ -153,15 +153,15 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 	})
 
 	return (
-		<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+		<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 			<table className="w-full">
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
-						<tr key={headerGroup.id} className="border-b border-pro-cards-border">
+						<tr key={headerGroup.id} className="border-b border-subtle">
 							{headerGroup.headers.map((header) => (
 								<th
 									key={header.id}
-									className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
+									className="px-4 py-3 text-left title-sm tracking-wide text-secondary uppercase"
 									style={{ width: header.getSize() }}
 									onClick={header.column.getToggleSortingHandler()}
 								>
@@ -180,9 +180,9 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 				</thead>
 				<tbody>
 					{table.getRowModel().rows.map((row) => (
-						<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
+						<tr key={row.id} className="border-b border-subtle last:border-b-0 hover:bg-hover-row">
 							{row.getVisibleCells().map((cell) => (
-								<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
+								<td key={cell.id} className="px-4 py-2.5 body-md text-primary">
 									{typeof cell.column.columnDef.cell === 'function'
 										? cell.column.columnDef.cell(cell.getContext())
 										: (cell.getValue() as string)}
@@ -203,7 +203,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 					canNext={table.getCanNextPage()}
 					onPrevious={() => table.previousPage()}
 					onNext={() => table.nextPage()}
-					className="border-t border-pro-cards-border px-4 py-3"
+					className="border-t border-subtle px-4 py-3"
 				/>
 			)}
 		</div>
@@ -233,8 +233,8 @@ function AssetBreakdownSection({
 	}
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-4 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-4 label-md text-secondary">{title}</h3>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
 					<PieChart
@@ -251,32 +251,32 @@ function AssetBreakdownSection({
 							const breakdownEntries = Object.entries(cat.breakdown).sort(([, a], [, b]) => b - a)
 							const hasChildren = breakdownEntries.length > 0
 							const isOpen = expandedRows.has(idx)
-							const color = pieColors[cat.name] || 'var(--pro-text-tertiary)'
+							const color = pieColors[cat.name] || 'var(--text-tertiary)'
 							const row = (
 								<>
 									<span className="flex w-4 shrink-0 justify-center">
 										{hasChildren ? (
 											<Icon
 												name="chevron-right"
-												className={`size-3.5 text-pro-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
+												className={`size-3.5 text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
 											/>
 										) : null}
 									</span>
 									<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-									<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary capitalize">{cat.name}</span>
-									<span className="shrink-0 label-md text-pro-text-primary">{cat.formatted}</span>
-									<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
+									<span className="min-w-0 flex-1 truncate body-md text-primary capitalize">{cat.name}</span>
+									<span className="shrink-0 label-md text-primary">{cat.formatted}</span>
+									<span className="w-12 shrink-0 text-right body-sm text-secondary">
 										{formatPercent(cat.pct, { input: 'percent' })}
 									</span>
 								</>
 							)
 							return (
-								<div key={cat.name} className="border-b border-pro-cards-border last:border-b-0">
+								<div key={cat.name} className="border-b border-subtle last:border-b-0">
 									{hasChildren ? (
 										<button
 											type="button"
 											aria-expanded={isOpen}
-											className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-sl-hover-bg"
+											className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-hover-row"
 											onClick={() => toggleRow(idx)}
 										>
 											{row}
@@ -287,7 +287,7 @@ function AssetBreakdownSection({
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (
-												<div key={symbol} className="flex items-center py-1.5 body-sm text-pro-text-label">
+												<div key={symbol} className="flex items-center py-1.5 body-sm text-secondary">
 													<span className="min-w-0 flex-1 truncate">{symbol}</span>
 													<span className="shrink-0">{formatSonicUsd(value)}</span>
 												</div>
@@ -298,9 +298,9 @@ function AssetBreakdownSection({
 							)
 						})}
 					</div>
-					<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-						<span className="body-md text-pro-text-label">Total</span>
-						<span className="title-md text-pro-text-primary">{totalFormatted}</span>
+					<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3">
+						<span className="body-md text-secondary">Total</span>
+						<span className="title-md text-primary">{totalFormatted}</span>
 					</div>
 				</div>
 			</div>
@@ -416,8 +416,8 @@ export default function Ecosystem() {
 
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-4 label-md text-pro-text-label">Stablecoin Supply Breakdown</h3>
+				<div className="rounded-lg border border-subtle bg-surface p-4">
+					<h3 className="mb-4 label-md text-secondary">Stablecoin Supply Breakdown</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<PieChart
@@ -431,25 +431,25 @@ export default function Ecosystem() {
 						<div>
 							<div className="max-h-[400px] overflow-y-auto">
 								{data.stablecoins.breakdown.map((coin) => {
-									const color = data.stablecoins.pieColors[coin.name] || 'var(--pro-text-tertiary)'
+									const color = data.stablecoins.pieColors[coin.name] || 'var(--text-tertiary)'
 									return (
 										<div
 											key={coin.name}
-											className="flex items-center gap-2 border-b border-pro-cards-border py-2.5 last:border-b-0"
+											className="flex items-center gap-2 border-b border-subtle py-2.5 last:border-b-0"
 										>
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-											<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary">{coin.name}</span>
-											<span className="shrink-0 title-md text-pro-text-primary">{coin.formatted}</span>
-											<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
+											<span className="min-w-0 flex-1 truncate body-md text-primary">{coin.name}</span>
+											<span className="shrink-0 title-md text-primary">{coin.formatted}</span>
+											<span className="w-12 shrink-0 text-right body-sm text-secondary">
 												{formatPercent(coin.pct, { input: 'percent' })}
 											</span>
 										</div>
 									)
 								})}
 							</div>
-							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="body-md text-pro-text-label">Total</span>
-								<span className="title-md text-pro-text-primary">{data.stablecoins.breakdownTotalFormatted}</span>
+							<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3">
+								<span className="body-md text-secondary">Total</span>
+								<span className="title-md text-primary">{data.stablecoins.breakdownTotalFormatted}</span>
 							</div>
 						</div>
 					</div>

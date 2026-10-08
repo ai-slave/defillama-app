@@ -7,7 +7,7 @@ function svgCoordinate(value: number): number {
 	return Math.round(value * 100) / 100
 }
 
-const SHIMMER_OVERLAY = tw`pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]`
+const SHIMMER_OVERLAY = tw`pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent`
 
 const TABLE_KINDS = new Set(['unified-table', 'dataset-table', 'custom-data', 'sql'])
 
@@ -24,7 +24,7 @@ export function SkeletonShimmer() {
 }
 
 function SkeletonBlock({ className }: { className: string }) {
-	return <div className={`rounded-sm bg-pro-text-tertiary/15 ${className}`} />
+	return <div className={`rounded-sm bg-surface-elevated-2 ${className}`} />
 }
 
 const WAVE_SEED = 20_260_914
@@ -62,8 +62,8 @@ function ChartSkeleton() {
 			<div className="flex min-w-0 flex-1 flex-col gap-2">
 				<div className="min-h-16 flex-1">
 					<svg viewBox="0 0 100 32" preserveAspectRatio="none" className="h-full w-full">
-						<path d={`${WAVE_PATH} L100,32 L0,32 Z`} className="fill-pro-text-tertiary" fillOpacity="0.08" />
-						<path d={WAVE_PATH} fill="none" strokeWidth="0.8" className="stroke-pro-text-tertiary/30" />
+						<path d={`${WAVE_PATH} L100,32 L0,32 Z`} className="fill-tertiary" fillOpacity="0.08" />
+						<path d={WAVE_PATH} fill="none" strokeWidth="0.8" className="stroke-(--border-medium)" />
 					</svg>
 				</div>
 				<div className="flex justify-between">
@@ -118,7 +118,7 @@ function TextSkeleton() {
 function PieSkeleton() {
 	return (
 		<div className="flex flex-1 items-center justify-center">
-			<div className="size-24 rounded-full border-8 border-pro-text-tertiary/15" />
+			<div className="size-24 rounded-full border-8 border-(--bg-surface-elevated-2)" />
 		</div>
 	)
 }

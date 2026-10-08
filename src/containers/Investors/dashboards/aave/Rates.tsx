@@ -130,7 +130,7 @@ function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+		<div className="rounded-lg border border-subtle bg-surface p-5">
 			<SectionHeader title="Rate Comparison Across Chains" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
@@ -249,7 +249,7 @@ export default function Rates() {
 				<select
 					value={activeAsset}
 					onChange={(e) => setSelectedAsset(e.target.value)}
-					className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 label-md text-pro-text-primary outline-hidden transition-colors focus:border-sl-accent"
+					className="rounded-md border border-medium bg-surface px-3 py-1.5 label-md text-primary outline-hidden transition-colors focus:border-brand"
 				>
 					{assetOptions.map((a) => (
 						<option key={a} value={a}>
@@ -313,25 +313,25 @@ export default function Rates() {
 			</div>
 
 			{rateCurveDataset ? (
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+				<div className="rounded-lg border border-subtle bg-surface p-5">
 					<div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-						<h3 className="title-sm tracking-wider text-pro-text-tertiary uppercase">
+						<h3 className="title-sm tracking-wider text-tertiary uppercase">
 							{activeAsset} Interest Rate Model{' '}
 							<span className="font-normal normal-case">· {primaryReserve?.chain}</span>
 						</h3>
 						{kpis?.optimalUtil && (
-							<span className="body-sm text-pro-text-tertiary">
-								Optimal <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.optimalUtil}</span>
+							<span className="body-sm text-tertiary">
+								Optimal <span className="font-jetbrains font-bold text-secondary">{kpis.optimalUtil}</span>
 							</span>
 						)}
 						{kpis?.slope1 && (
-							<span className="body-sm text-pro-text-tertiary">
-								Slope 1 <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.slope1}</span>
+							<span className="body-sm text-tertiary">
+								Slope 1 <span className="font-jetbrains font-bold text-secondary">{kpis.slope1}</span>
 							</span>
 						)}
 						{kpis?.slope2 && (
-							<span className="body-sm text-pro-text-tertiary">
-								Slope 2 <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.slope2}</span>
+							<span className="body-sm text-tertiary">
+								Slope 2 <span className="font-jetbrains font-bold text-secondary">{kpis.slope2}</span>
 							</span>
 						)}
 					</div>

@@ -48,7 +48,7 @@ export function DashboardTabs({
 				{canScrollLeft || canScrollRight ? (
 					<>
 						{canScrollLeft ? (
-							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-10 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-10 bg-linear-to-r from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll left"
@@ -73,7 +73,7 @@ export function DashboardTabs({
 				<Ariakit.TabList
 					ref={overflowRef}
 					aria-label="Dashboard sections"
-					className="flex scrollbar-none overflow-x-auto border-b border-pro-cards-border"
+					className="flex scrollbar-none overflow-x-auto border-b border-subtle"
 				>
 					{tabs.map((tab) => (
 						<Tab
@@ -92,7 +92,7 @@ export function DashboardTabs({
 				{canScrollLeft || canScrollRight ? (
 					<>
 						{canScrollRight ? (
-							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-10 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-10 bg-linear-to-l from-page to-transparent md:block" />
 						) : null}
 						<Tooltip
 							content="Scroll right"

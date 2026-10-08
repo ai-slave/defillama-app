@@ -100,11 +100,11 @@ export function SectionCard({
 						placeholder="Section title"
 						maxLength={SECTION_TITLE_MAX_LENGTH}
 						autoFocus={editing.autoFocusTitle}
-						className="title-lg text-pro-text-primary"
+						className="title-lg text-primary"
 						onCommit={(title) => editing.onUpdate({ title: title || 'Section' })}
 					/>
 				) : (
-					<h2 id={headingId} className="truncate title-lg text-pro-text-primary">
+					<h2 id={headingId} className="truncate title-lg text-primary">
 						{section.title}
 					</h2>
 				)}
@@ -113,14 +113,14 @@ export function SectionCard({
 						value={section.description ?? ''}
 						placeholder="Add a description"
 						maxLength={SECTION_DESCRIPTION_MAX_LENGTH}
-						className="body-md text-pro-text-secondary"
+						className="body-md text-secondary"
 						onCommit={(description) => editing.onUpdate({ description })}
 					/>
 				) : section.description ? (
-					<p className="body-md text-pro-text-secondary">{section.description}</p>
+					<p className="body-md text-secondary">{section.description}</p>
 				) : null}
 			</div>
-			<div aria-hidden="true" className="h-px min-w-6 flex-1 bg-pro-cards-border" />
+			<div aria-hidden="true" className="h-px min-w-6 flex-1 bg-border-subtle" />
 			<ProMeta className="shrink-0 tabular-nums" items={[`${itemCount} ${itemCount === 1 ? 'card' : 'cards'}`]} />
 			{editing ? (
 				<div role="presentation" onKeyDown={keepKeyboardEventsInsideCard} className={SECTION_CONTROLS_CLASS}>

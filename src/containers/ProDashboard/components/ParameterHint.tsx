@@ -25,12 +25,12 @@ export function ParameterHint() {
 	}
 
 	return (
-		<div className="flex items-center gap-2 text-pro-text-secondary">
+		<div className="flex items-center gap-2 text-secondary">
 			<Button variant="ghost" size="sm" onClick={createParameter} data-umami-event="dashboard-variable-add">
 				<Icon name={candidate.kind} height={14} width={14} />
 				<span>{`Make ${displayValue} a parameter`}</span>
 			</Button>
-			<span className="body-xs text-pro-text-tertiary">{`${candidate.count} cards use it`}</span>
+			<span className="body-xs text-tertiary">{`${candidate.count} cards use it`}</span>
 		</div>
 	)
 }

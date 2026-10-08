@@ -38,10 +38,10 @@ const ACCENT = {
 		bar: 'bg-brand'
 	},
 	computed: {
-		text: 'text-ai-mention',
-		marker: 'border-ai-mention/35 bg-ai-mention/10 text-ai-mention',
-		chip: 'bg-ai-mention/10 text-ai-mention',
-		bar: 'bg-ai-mention'
+		text: 'text-ai-violet',
+		marker: 'border-ai-violet-muted bg-ai-violet-tint text-ai-violet',
+		chip: 'bg-ai-violet-tint text-ai-violet',
+		bar: 'bg-ai-violet'
 	},
 	web: {
 		text: 'text-secondary',

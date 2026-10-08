@@ -82,8 +82,8 @@ interface QuoteBlockProps {
 export function QuoteBlock({ quote, variant = 'primary', size = 'large', mobile }: QuoteBlockProps) {
 	if (!quote.quote && !quote.username) return null
 
-	const bgColor = variant === 'secondary' ? 'bg-research-accent-tint' : 'bg-research-accent-strong'
-	const textColor = variant === 'secondary' ? 'text-research-accent-strong' : 'text-on-brand'
+	const bgColor = variant === 'secondary' ? 'bg-brand-tint' : 'bg-brand'
+	const textColor = variant === 'secondary' ? 'text-link' : 'text-on-brand'
 
 	const textStyles = mobile
 		? 'body-lg text-center px-6.5 py-3'
@@ -290,7 +290,7 @@ function AutoplayCarousel({
 							aria-current={idx === activeIndex || undefined}
 							onClick={() => setSelectedIndex(idx)}
 							className={`h-[8px] w-[8px] rounded-full transition-colors ${
-								idx === activeIndex ? 'bg-research-accent-strong' : 'bg-tertiary'
+								idx === activeIndex ? 'bg-research-accent-strong' : 'bg-border-strong'
 							}`}
 						/>
 					))}

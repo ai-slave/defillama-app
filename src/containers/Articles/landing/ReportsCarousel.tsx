@@ -76,7 +76,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-research-white bg-transparent transition-all duration-200 hover:bg-research-white/10',
+				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-research-white transition-all duration-200 hover:bg-research-white-wash',
 				disabled && 'cursor-not-allowed opacity-50',
 				className
 			)}
@@ -113,7 +113,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 					className="size-full object-cover md:size-full md:object-fill"
 				/>
 			) : (
-				<div className="flex h-full min-h-[200px] w-full items-center justify-center bg-slate-200 text-slate-500" />
+				<div className="flex h-full min-h-[200px] w-full items-center justify-center bg-surface-elevated-2" />
 			)}
 		</div>
 	)
@@ -123,7 +123,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	const overlay = (
 		<div
 			className={clsx(
-				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-research-heading/95 p-3.75 text-on-brand transition-transform duration-500 ease-in-out',
+				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-research-banner p-3.75 text-on-brand transition-transform duration-500 ease-in-out',
 				'translate-y-full',
 				!isMobile && 'md:group-hover:translate-y-0',
 				// Clicks fall through to the sibling slide link; only the PDF link opts back in.
@@ -142,7 +142,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-heading transition-opacity hover:opacity-90"
+							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-banner transition-[filter] hover:brightness-90"
 						/>
 					) : null}
 				</div>
@@ -156,7 +156,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm text-on-brand transition-colors hover:bg-research-white/10"
+						className="w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm text-on-brand transition-colors hover:bg-research-white-wash"
 					>
 						Read more
 					</Link>
@@ -165,7 +165,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-heading transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-banner transition-[filter] hover:brightness-90"
 						/>
 					) : null}
 				</div>
@@ -177,14 +177,14 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 		<>
 			{edgeFade === 'left' && (
 				<div
-					className="pointer-events-none absolute inset-y-0 left-0 z-10 w-1/2 rounded-l-xl [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
+					className="pointer-events-none absolute inset-y-0 left-0 z-10 w-1/2 rounded-l-xl [--edge-fade-color:var(--bg-page)] lg:w-full"
 					style={{ background: 'linear-gradient(to right, var(--edge-fade-color), transparent)' }}
 					aria-hidden
 				/>
 			)}
 			{edgeFade === 'right' && (
 				<div
-					className="pointer-events-none absolute inset-y-0 right-0 z-10 w-1/2 rounded-r-xl [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
+					className="pointer-events-none absolute inset-y-0 right-0 z-10 w-1/2 rounded-r-xl [--edge-fade-color:var(--bg-page)] lg:w-full"
 					style={{ background: 'linear-gradient(to left, var(--edge-fade-color), transparent)' }}
 					aria-hidden
 				/>
@@ -420,7 +420,7 @@ export function ReportsCarousel(props: ReportsCarouselProps) {
 
 	const getSlideClasses = () => {
 		return clsx(
-			'absolute cursor-pointer rounded-xl border border-medium text-on-brand/80 shadow-xl transition-all duration-300 ease-out',
+			'absolute cursor-pointer rounded-xl border border-medium shadow-xl transition-all duration-300 ease-out',
 			isMobile ? 'w-[266px]' : 'w-[294px]',
 			isTransitioning && 'pointer-events-none'
 		)

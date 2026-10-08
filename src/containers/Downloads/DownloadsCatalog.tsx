@@ -210,7 +210,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-1">
 					<h1 className="heading-lg">Downloads</h1>
-					<p className="body-md text-pro-text-secondary">
+					<p className="body-md text-secondary">
 						Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
 					</p>
 				</div>
@@ -230,7 +230,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								type="text"
 								inputMode="search"
 								value={searchValue}
-								placeholder="Search..."
+								placeholder="Search…"
 								onInput={(e) => setSearchValue(e.currentTarget.value)}
 								className={searchFieldInputPlacementStyles}
 							/>
@@ -255,7 +255,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					) : null}
 
 					{activeTab !== 'saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
-						<p className="body-sm text-pro-text-tertiary">
+						<p className="body-sm text-tertiary">
 							Showing {totalFilteredCount} of {totalCount} datasets
 							{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
 							{deferredSearch ? ` matching "${deferredSearch}"` : ''}
@@ -266,7 +266,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						<div className="flex flex-col gap-8">
 							{filteredDatasetsByCategory.map(({ category, items }) => (
 								<section key={category} className="flex flex-col gap-3">
-									<h2 className="heading-xs text-pro-text-primary">{category}</h2>
+									<h2 className="heading-xs text-primary">{category}</h2>
 									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										{items.map((dataset) => {
 											const disabled = !!isUserLoading
@@ -276,7 +276,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'dataset', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
@@ -291,10 +291,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 														</div>
 														<Icon
 															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
+															className="mt-0.5 size-4 shrink-0 text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
 														/>
 													</div>
-													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
+													<p className="body-md text-secondary">{dataset.description}</p>
 												</button>
 											)
 										})}
@@ -302,7 +302,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								</section>
 							))}
 							{filteredDatasetsByCategory.length === 0 && (
-								<p className="py-8 text-center body-md text-pro-text-tertiary">No datasets match your search.</p>
+								<p className="py-8 text-center body-md text-tertiary">No datasets match your search.</p>
 							)}
 						</div>
 					) : activeTab === 'time-series' ? (
@@ -312,15 +312,15 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								onClick={() => {
 									setOpened(isTrial ? { kind: 'trialLimit' } : { kind: 'multiMetric' })
 								}}
-								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand-muted bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand-strong hover:from-brand/12 hover:to-brand/4"
+								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand-muted bg-linear-to-br from-brand-faint to-transparent p-4 text-left transition-all hover:border-brand-strong"
 							>
 								<div className="flex items-start gap-3">
 									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint-strong">
 										<Icon name="layers" className="size-5 text-link" />
 									</div>
 									<div className="flex flex-col gap-0.5">
-										<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
-										<p className="body-md text-pro-text-secondary">
+										<p className="font-medium text-primary">Combine multiple metrics</p>
+										<p className="body-md text-secondary">
 											Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
 										</p>
 									</div>
@@ -333,7 +333,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 							{filteredChartsByCategory.map(({ category, items }) => (
 								<section key={`chart-${category}`} className="flex flex-col gap-3">
-									<h2 className="heading-xs text-pro-text-primary">{category}</h2>
+									<h2 className="heading-xs text-primary">{category}</h2>
 									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										{items.map((dataset) => {
 											const disabled = !!isUserLoading
@@ -343,7 +343,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'chart', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
@@ -358,11 +358,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 														</div>
 														<Icon
 															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
+															className="mt-0.5 size-4 shrink-0 text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
 														/>
 													</div>
-													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
-													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 body-sm text-pro-text-tertiary">
+													<p className="body-md text-secondary">{dataset.description}</p>
+													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-surface-elevated-1 px-2 py-0.5 body-sm text-tertiary">
 														Select {dataset.paramLabel}
 													</span>
 												</button>
@@ -370,9 +370,9 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										})}
 									</div>
 									{category === 'RWA' ? (
-										<p className="body-md text-pro-text-secondary">
+										<p className="body-md text-secondary">
 											Download more RWA data from the{' '}
-											<a href="https://defillama.com/rwa" className="text-link underline hover:opacity-80">
+											<a href="https://defillama.com/rwa" className="text-link underline">
 												RWA overview
 											</a>
 											.
@@ -381,7 +381,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								</section>
 							))}
 							{filteredChartsByCategory.length === 0 && (
-								<p className="py-8 text-center body-md text-pro-text-tertiary">No datasets match your search.</p>
+								<p className="py-8 text-center body-md text-tertiary">No datasets match your search.</p>
 							)}
 						</div>
 					) : (
@@ -438,13 +438,13 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				{view?.kind === 'trialLimit' ? <TrialCsvLimitModal isOpen onClose={closeView} /> : null}
 
 				<section className="mt-8 flex flex-col gap-4 border-t border-subtle pt-8">
-					<h2 className="heading-xs text-pro-text-primary">FAQ</h2>
+					<h2 className="heading-xs text-primary">FAQ</h2>
 					<div className="divide-y divide-(--border-subtle) border-y border-subtle">
 						<FaqItem question="How do I subscribe to download data from DefiLlama?">
 							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans on the{' '}
 							<a
 								href="https://defillama.com/subscription"
-								className="text-link underline hover:opacity-80"
+								className="text-link underline"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -456,7 +456,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							Yes, DefiLlama data is available through both a free and paid{' '}
 							<a
 								href="https://api-docs.defillama.com/"
-								className="text-link underline hover:opacity-80"
+								className="text-link underline"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -468,7 +468,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							You can contact us by email, a support form, or live support on the{' '}
 							<a
 								href="https://defillama.com/support"
-								className="text-link underline hover:opacity-80"
+								className="text-link underline"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -487,15 +487,15 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 	return (
 		<details className="group">
 			<summary className="flex cursor-pointer items-center gap-4 py-4">
-				<span className="flex-1 label-md text-pro-text-primary">{question}</span>
+				<span className="flex-1 label-md text-primary">{question}</span>
 				<Icon
 					name="chevron-down"
 					height={16}
 					width={16}
-					className="shrink-0 text-pro-text-secondary transition-transform duration-200 group-open:rotate-180"
+					className="shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
 				/>
 			</summary>
-			<div className="pb-4 body-md text-pro-text-secondary">{children}</div>
+			<div className="pb-4 body-md text-secondary">{children}</div>
 		</details>
 	)
 }
@@ -522,18 +522,18 @@ interface KindStyle {
 const KIND_STYLES: Record<KindBucket, KindStyle> = {
 	dataset: {
 		label: 'Dataset',
-		accent: 'bg-sky-500',
-		fg: 'text-sky-600 dark:text-sky-400'
+		accent: 'bg-brand',
+		fg: 'text-link'
 	},
 	timeseries: {
 		label: 'Time series',
-		accent: 'bg-violet-500',
-		fg: 'text-violet-600 dark:text-violet-400'
+		accent: 'bg-pro-ai',
+		fg: 'text-pro-ai-text'
 	},
 	query: {
 		label: 'SQL query',
 		accent: 'bg-success',
-		fg: 'text-success dark:text-success'
+		fg: 'text-success'
 	}
 }
 
@@ -573,9 +573,9 @@ function RecentDownloadsStrip({
 		<section aria-label="Recent downloads" className="flex flex-col gap-2">
 			<header className="flex items-baseline justify-between gap-3 px-0.5 label-sm">
 				<div className="flex items-baseline gap-2">
-					<Icon name="clock" className="size-3 self-center text-pro-text-tertiary" />
-					<h2 className="tracking-wider text-pro-text-tertiary uppercase">Recent</h2>
-					<span className="text-pro-text-tertiary">{items.length === 1 ? '1 run' : `${items.length} runs`}</span>
+					<Icon name="clock" className="size-3 self-center text-tertiary" />
+					<h2 className="tracking-wider text-tertiary uppercase">Recent</h2>
+					<span className="text-tertiary">{items.length === 1 ? '1 run' : `${items.length} runs`}</span>
 				</div>
 				<Button ref={focusTypeTabOnLeave} variant="link" onClick={onClear}>
 					Clear all
@@ -611,12 +611,12 @@ function RecentDownloadsStrip({
 											</span>
 										) : null}
 									</span>
-									<span className="truncate label-sm text-pro-text-primary">{preset.name}</span>
-									<span className="flex items-center justify-between gap-2 label-sm text-pro-text-tertiary tabular-nums">
+									<span className="truncate label-sm text-primary">{preset.name}</span>
+									<span className="flex items-center justify-between gap-2 label-sm text-tertiary tabular-nums">
 										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
 											name="arrow-up-right"
-											className="size-3 shrink-0 -translate-x-1 text-pro-text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-link group-hover:opacity-100"
+											className="size-3 shrink-0 -translate-x-1 text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-link group-hover:opacity-100"
 										/>
 									</span>
 								</button>
@@ -670,10 +670,10 @@ function SavedDownloadsContent({
 	return (
 		<>
 			<div className="flex items-baseline justify-between gap-3 px-0.5">
-				<p className="title-sm tracking-[0.14em] text-pro-text-tertiary uppercase">
+				<p className="title-sm tracking-[0.14em] text-tertiary uppercase">
 					{savedDownloads.length} {savedDownloads.length === 1 ? 'preset' : 'presets'}
 				</p>
-				<p className="flex items-center gap-3 body-sm text-pro-text-tertiary tabular-nums">
+				<p className="flex items-center gap-3 body-sm text-tertiary tabular-nums">
 					{bucketCounts.dataset > 0 ? (
 						<span className="flex items-center gap-1.5">
 							<span className={`size-1.5 rounded-full ${KIND_STYLES.dataset.accent}`} aria-hidden="true" />
@@ -738,14 +738,14 @@ function SavedEmptyState() {
 				</svg>
 			</div>
 			<div className="flex flex-col gap-1.5">
-				<h3 className="title-lg text-pro-text-primary">Pin your first preset</h3>
-				<p className="max-w-sm body-md text-pro-text-secondary">
+				<h3 className="title-lg text-primary">Pin your first preset</h3>
+				<p className="max-w-sm body-md text-secondary">
 					Save any dataset or chart configuration to run it again from here.
 				</p>
 			</div>
-			<p className="body-sm text-pro-text-tertiary">
+			<p className="body-sm text-tertiary">
 				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded-sm border border-subtle px-1.5 py-0.5 label-sm text-pro-text-primary">
+				<span className="inline-flex items-center gap-1 rounded-sm border border-medium px-1.5 py-0.5 label-sm text-primary">
 					<Icon name="bookmark" className="size-3" />
 					Save preset
 				</span>
@@ -789,13 +789,13 @@ function SavedDownloadRow({
 			>
 				<span className="flex items-baseline gap-2">
 					<span className={`shrink-0 label-xs tracking-wider uppercase ${style.fg}`}>{style.label}</span>
-					<span className="truncate label-md text-pro-text-primary">{preset.name}</span>
+					<span className="truncate label-md text-primary">{preset.name}</span>
 				</span>
-				<span className="flex min-w-0 items-center gap-2 body-sm text-pro-text-tertiary">
-					<span className="truncate text-pro-text-secondary">{sourceLabel}</span>
+				<span className="flex min-w-0 items-center gap-2 body-sm text-tertiary">
+					<span className="truncate text-secondary">{sourceLabel}</span>
 					{description ? (
 						<>
-							<span aria-hidden="true" className="text-pro-text-tertiary">
+							<span aria-hidden="true" className="text-tertiary">
 								·
 							</span>
 							<span className="truncate">{description}</span>
@@ -806,8 +806,8 @@ function SavedDownloadRow({
 
 			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}
 			<div className="pointer-events-none relative flex h-8 shrink-0 items-center justify-end gap-2 pl-2 sm:min-w-[12rem]">
-				<span className="label-sm text-pro-text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
-					<span className="hidden text-pro-text-tertiary sm:inline">{timestamp.prefix} </span>
+				<span className="label-sm text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
+					<span className="hidden text-tertiary sm:inline">{timestamp.prefix} </span>
 					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 

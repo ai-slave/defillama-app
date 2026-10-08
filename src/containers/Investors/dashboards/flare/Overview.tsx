@@ -47,10 +47,10 @@ export default function Overview() {
 			{protocolRankings.length > 0 && (
 				<>
 					<SectionHeader>Protocol Rankings</SectionHeader>
-					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full text-left body-md">
 							<thead>
-								<tr className="border-b border-pro-cards-border label-md tracking-wider text-pro-text-label uppercase">
+								<tr className="border-b border-subtle label-md tracking-wider text-secondary uppercase">
 									<th className="p-3">#</th>
 									<th className="p-3">Protocol</th>
 									<th className="p-3">Category</th>
@@ -60,21 +60,21 @@ export default function Overview() {
 							</thead>
 							<tbody>
 								{protocolRankings.map((p, i) => (
-									<tr key={p.name} className="border-b border-pro-cards-border last:border-b-0">
-										<td className="p-3 text-pro-text-label">{i + 1}</td>
-										<td className="p-3 font-medium text-pro-text-primary">
+									<tr key={p.name} className="border-b border-subtle last:border-b-0">
+										<td className="p-3 text-secondary">{i + 1}</td>
+										<td className="p-3 font-medium text-primary">
 											<a
 												href={p.url ?? undefined}
 												target="_blank"
 												rel="noopener noreferrer"
-												className="flex items-center gap-2 hover:text-sl-accent"
+												className="flex items-center gap-2 hover:text-link"
 											>
 												{p.logo && <img src={p.logo} alt="" className="size-5 shrink-0 rounded-full" loading="lazy" />}
 												{p.name}
 											</a>
 										</td>
-										<td className="p-3 text-pro-text-label">{p.category ?? '-'}</td>
-										<td className="p-3 text-right body-sm text-pro-text-primary tabular-nums">{p.tvlFormatted}</td>
+										<td className="p-3 text-secondary">{p.category ?? '-'}</td>
+										<td className="p-3 text-right body-sm text-primary tabular-nums">{p.tvlFormatted}</td>
 										<td
 											className={`p-3 text-right body-sm tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
 										>

@@ -92,15 +92,15 @@ export function SubscriptionCoverage() {
 					<div className="flex items-center justify-center gap-2">
 						<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
 						<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:size-10 dark:block" />
-						<span className="hidden heading-sm text-sub-text-primary dark:inline">DefiLlama</span>
+						<span className="hidden heading-sm text-primary dark:inline">DefiLlama</span>
 					</div>
 					<div className="flex flex-col items-center gap-6">
-						<h1 className="heading-lg text-sub-text-primary">
+						<h1 className="heading-lg text-primary">
 							The broadest DeFi coverage.
 							<br />
 							The <span className="text-link">deepest insight.</span>
 						</h1>
-						<p className="body-xl text-sub-text-secondary md:body-lg">One place to understand onchain markets.</p>
+						<p className="body-xl text-secondary md:body-lg">One place to understand onchain markets.</p>
 					</div>
 				</div>
 				<div
@@ -110,7 +110,7 @@ export function SubscriptionCoverage() {
 				>
 					<div className="flex w-full max-w-xl flex-col gap-2 px-2 text-left sm:px-0">
 						<div className="flex flex-wrap items-baseline justify-between gap-1">
-							<span className="title-lg text-sub-text-primary">DefiLlama</span>
+							<span className="title-lg text-primary">DefiLlama</span>
 							<span className="label-lg text-link">{formatNumber(COVERAGE_MULTIPLIER)}× the data coverage</span>
 						</div>
 						<div
@@ -124,7 +124,7 @@ export function SubscriptionCoverage() {
 						>
 							<div data-coverage-bar className="h-full origin-left rounded-full bg-brand" />
 						</div>
-						<span className="body-md text-sub-text-secondary">All other providers combined</span>
+						<span className="body-md text-secondary">All other providers combined</span>
 						<div
 							role="meter"
 							aria-label="All other providers combined"
@@ -135,7 +135,7 @@ export function SubscriptionCoverage() {
 						>
 							<div
 								data-coverage-bar
-								className="h-full origin-left rounded-full bg-sub-text-cool-muted"
+								className="h-full origin-left rounded-full bg-border-strong"
 								style={{ width: `${100 / COVERAGE_MULTIPLIER}%` }}
 							/>
 						</div>
@@ -144,12 +144,12 @@ export function SubscriptionCoverage() {
 						{coverage.map(({ label, value, change }) => (
 							<div
 								key={label}
-								className="flex min-w-0 flex-col items-center gap-2 px-2 even:border-l even:border-subtle md:border-l md:border-subtle md:first:border-l-0"
+								className="flex min-w-0 flex-col items-center gap-2 px-2 even:border-l even:border-subtle md:border-l md:first:border-l-0"
 							>
-								<dt className="order-last label-lg text-sub-text-primary md:heading-sm">{label}</dt>
+								<dt className="order-last label-lg text-primary md:heading-sm">{label}</dt>
 								<dd className="flex flex-col items-center gap-2">
 									<div className="min-h-5 label-md text-data-up">{change}</div>
-									<div className="flex items-center justify-center gap-2 text-sub-text-primary">
+									<div className="flex items-center justify-center gap-2 text-primary">
 										<span aria-hidden="true" className="size-2.5 shrink-0 rounded-full bg-sub-live" />
 										{value != null ? (
 											<>
@@ -182,7 +182,7 @@ export function SubscriptionCoverage() {
 					</InlineStatus>
 				) : null}
 			</div>
-			<p className="body-lg text-sub-text-primary">The most-cited data provider in crypto</p>
+			<p className="body-lg text-primary">The most-cited data provider in crypto</p>
 		</div>
 	)
 }
@@ -210,33 +210,33 @@ export function CoveragePricingContent({
 		<div className="pricing-coverage flex-col gap-4">
 			<div className="flex flex-col gap-1">
 				<div className="flex flex-wrap items-center justify-between gap-2">
-					<h3 className="heading-sm text-sub-text-primary">{card.title}</h3>
+					<h3 className="heading-sm text-primary">{card.title}</h3>
 					{card.recommendedLabel ? (
 						<span className="rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">{card.recommendedLabel}</span>
 					) : null}
 				</div>
-				<p className="body-md text-sub-text-secondary">{card.subtitle}</p>
+				<p className="body-md text-secondary">{card.subtitle}</p>
 				{card.priceMain ? (
 					<>
 						<p className="flex flex-wrap items-baseline gap-1">
 							<span className="mono-xl text-link">{card.priceMain}</span>
-							<span className="body-lg text-sub-text-primary">{card.priceUnit}</span>
+							<span className="body-lg text-primary">{card.priceUnit}</span>
 						</p>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<span className="w-fit rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">
 								7-day free trial available
 							</span>
 						) : card.priceSecondary ? (
-							<p className="body-md text-sub-text-secondary">{card.priceSecondary}</p>
+							<p className="body-md text-secondary">{card.priceSecondary}</p>
 						) : null}
 					</>
 				) : (
-					<p className="heading-sm text-sub-text-primary">{card.description}</p>
+					<p className="heading-sm text-primary">{card.description}</p>
 				)}
 			</div>
 			<ul className="flex flex-col gap-2">
 				{FEATURES[card.key].map((feature) => (
-					<li key={feature} className="flex items-start gap-2 body-md text-sub-text-primary">
+					<li key={feature} className="flex items-start gap-2 body-md text-primary">
 						<Icon name="check" width={14} height={14} className="mt-1 shrink-0 text-link" aria-hidden="true" />
 						{feature}
 					</li>

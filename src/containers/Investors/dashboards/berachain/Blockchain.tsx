@@ -11,24 +11,24 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="mono-xl text-pro-text-primary">{value ?? '—'}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
+			<span className="label-sm tracking-wide text-secondary">{label}</span>
+			<span className="mono-xl text-primary">{value ?? '—'}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
+		<div className="rounded-lg border border-subtle bg-surface p-4">
+			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ title }: { title: string }) {
-	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{title}</h2>
+	return <h2 className="title-sm tracking-wider text-secondary uppercase">{title}</h2>
 }
 
 const TRANSACTIONS_CHART = [
@@ -250,15 +250,15 @@ export default function Blockchain() {
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader title="Top Tokens by 30d Transfer Volume" />
-					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full">
 							<thead>
 								{tokenTable.getHeaderGroups().map((headerGroup) => (
-									<tr key={headerGroup.id} className="border-b border-pro-cards-border">
+									<tr key={headerGroup.id} className="border-b border-subtle">
 										{headerGroup.headers.map((header) => (
 											<th
 												key={header.id}
-												className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
+												className="px-4 py-3 text-left title-sm tracking-wide text-secondary uppercase"
 												style={{ width: header.getSize() }}
 												onClick={header.column.getToggleSortingHandler()}
 											>
@@ -277,9 +277,9 @@ export default function Blockchain() {
 							</thead>
 							<tbody>
 								{tokenTable.getRowModel().rows.map((row) => (
-									<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
+									<tr key={row.id} className="border-b border-subtle last:border-b-0 hover:bg-hover-row">
 										{row.getVisibleCells().map((cell) => (
-											<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
+											<td key={cell.id} className="px-4 py-2.5 body-md text-primary">
 												{typeof cell.column.columnDef.cell === 'function'
 													? cell.column.columnDef.cell(cell.getContext())
 													: (cell.getValue() as string)}

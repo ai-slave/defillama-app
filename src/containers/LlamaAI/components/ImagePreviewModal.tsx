@@ -33,7 +33,7 @@ export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePrevi
 			onClose={onClose}
 			aria-label="Image preview"
 			ref={catchLostFocus}
-			className="motion-safe:data-[enter]:animate-in motion-safe:data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
+			className="motion-safe:data-[enter]:animate-in motion-safe:data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-ink-scrim p-4 backdrop-blur-md data-[enter]:duration-150"
 			portal
 			unmountOnHide
 			onClick={(event) => {
@@ -42,7 +42,7 @@ export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePrevi
 		>
 			{imageUrl ? <ImagePreviewContent key={imageUrl} imageUrl={imageUrl} {...tracking} /> : null}
 			<Ariakit.DialogDismiss
-				className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md hover:bg-ai-white/20"
+				className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-ink-wash text-ai-white backdrop-blur-md hover:bg-ai-ink-wash-strong"
 				aria-label="Close preview"
 			>
 				<Icon name="x" height={16} width={16} />
@@ -96,11 +96,11 @@ function ImagePreviewContent({
 	return (
 		<div className="relative flex max-h-full min-h-0 max-w-full flex-col items-center gap-3 overflow-y-auto">
 			{imageFailed ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-ink-scrim p-3 text-center body-md text-ai-white">
 					Couldn’t load this image. Use Open to try it in a new tab.
 				</p>
 			) : (
-				<div className="shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-white/10">
+				<div className="shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-ink-wash">
 					<img
 						src={imageUrl}
 						alt="Preview"
@@ -109,7 +109,7 @@ function ImagePreviewContent({
 					/>
 				</div>
 			)}
-			<div className="flex max-w-full shrink-0 flex-wrap justify-center gap-2 rounded-2xl bg-screen-dim px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
+			<div className="flex max-w-full shrink-0 flex-wrap justify-center gap-2 rounded-2xl bg-ai-ink-scrim px-2 py-1.5 ring-1 ring-ai-ink-wash backdrop-blur-md">
 				<Ariakit.Button
 					type="button"
 					// Copied ignores presses, so its reset timer can only ever end the success it belongs to.
@@ -119,7 +119,7 @@ function ImagePreviewContent({
 					disabled={copy.isPending}
 					accessibleWhenDisabled
 					aria-busy={copy.isPending || undefined}
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-busy:cursor-progress"
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-ink-wash aria-busy:cursor-progress"
 				>
 					{copy.isPending ? (
 						<LoadingSpinner size={14} />
@@ -134,7 +134,7 @@ function ImagePreviewContent({
 					disabled={download.isPending}
 					accessibleWhenDisabled
 					aria-busy={download.isPending || undefined}
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-busy:cursor-progress"
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-ink-wash aria-busy:cursor-progress"
 				>
 					{download.isPending ? (
 						<LoadingSpinner size={14} />
@@ -147,7 +147,7 @@ function ImagePreviewContent({
 					href={imageUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 hover:bg-ai-white/10 hover:text-ai-white"
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white hover:bg-ai-ink-wash"
 				>
 					<Icon name="external-link" height={14} width={14} />
 					<span>
@@ -156,12 +156,12 @@ function ImagePreviewContent({
 				</a>
 			</div>
 			{copy.isError ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-ink-scrim p-3 text-center body-md text-ai-white">
 					Couldn’t copy the image URL. Try again, or use Open to copy it from your browser.
 				</p>
 			) : null}
 			{download.isError ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-ink-scrim p-3 text-center body-md text-ai-white">
 					Couldn’t download the image. Try again, or use Open to save it from your browser.
 				</p>
 			) : null}

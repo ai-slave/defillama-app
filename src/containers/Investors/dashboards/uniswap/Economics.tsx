@@ -79,16 +79,16 @@ const FEE_MECHANICS: Array<[string, string]> = [
 
 function FeeMechanics() {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 				{FEE_MECHANICS.map(([version, text]) => (
 					<div key={version} className="flex flex-col gap-1">
-						<span className="mono-md-bold text-pro-text-primary">{version}</span>
-						<p className="body-sm text-pro-text-secondary">{text}</p>
+						<span className="mono-md-bold text-primary">{version}</span>
+						<p className="body-sm text-secondary">{text}</p>
 					</div>
 				))}
 			</div>
-			<p className="mt-3 body-sm text-pro-text-tertiary">
+			<p className="mt-3 body-sm text-tertiary">
 				Protocol fees are set by governance-controlled policy and can be adjusted per pool.
 			</p>
 		</div>
@@ -111,15 +111,15 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h3 className="title-md text-pro-text-primary">Fee Switch</h3>
+				<h3 className="title-md text-primary">Fee Switch</h3>
 				<span
 					className={`rounded-full px-2 py-0.5 label-sm ${
-						isActive ? 'bg-success-tint-strong text-success' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'
+						isActive ? 'bg-success-tint-strong text-success' : 'bg-surface-elevated-1 text-tertiary'
 					}`}
 				>
 					{feeSwitch.status}
 				</span>
-				<p className="body-sm text-pro-text-tertiary">{feeSwitch.mechanism}</p>
+				<p className="body-sm text-tertiary">{feeSwitch.mechanism}</p>
 			</div>
 			<div className="flex flex-wrap gap-y-4">
 				{waves.map((wave, index) => {
@@ -136,13 +136,13 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 								<span className="size-2.5 shrink-0 rounded-full bg-success" />
 								{gaps[index] > 0 && (
 									<>
-										<span className="h-px min-w-2 flex-1 bg-pro-cards-border" />
-										<span className="mono-sm whitespace-nowrap text-pro-text-tertiary">+{gaps[index]}d</span>
-										<span className="h-px min-w-2 flex-1 bg-pro-cards-border" />
+										<span className="h-px min-w-2 flex-1 bg-border-subtle" />
+										<span className="mono-sm whitespace-nowrap text-tertiary">+{gaps[index]}d</span>
+										<span className="h-px min-w-2 flex-1 bg-border-subtle" />
 									</>
 								)}
 							</div>
-							<span className="mono-sm text-pro-text-tertiary tabular-nums">{wave.label ?? wave.date}</span>
+							<span className="mono-sm text-tertiary tabular-nums">{wave.label ?? wave.date}</span>
 							<div className="flex flex-wrap gap-1 pr-3">
 								{wave.chains.map((chain) => (
 									<img
@@ -150,7 +150,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 										src={chainIconUrl(chain, 48)}
 										alt={chain}
 										title={chain}
-										className="size-5 rounded-full bg-pro-cards-bg"
+										className="size-5 rounded-full bg-surface"
 										loading="lazy"
 									/>
 								))}
@@ -173,20 +173,20 @@ const ACTIVATION_HEADERS: Array<[string, 'left' | 'right']> = [
 
 function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 	return (
-		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border">
+		<div className="w-full overflow-auto rounded-lg border border-subtle">
 			<div style={{ display: 'grid', gridTemplateColumns: ACTIVATION_COLUMNS }}>
 				{ACTIVATION_HEADERS.map(([label, align]) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 label-md tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-surface px-3 py-2.5 label-md tracking-wider text-tertiary uppercase"
 						style={{ textAlign: align }}
 					>
 						{label}
 					</div>
 				))}
 				{rows.map((row, index) => {
-					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${rowBg}`
+					const rowBg = index % 2 === 1 ? 'bg-surface' : ''
+					const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-primary ${rowBg}`
 					const numCell = `${cell} text-right tabular-nums`
 					return [
 						<div key={`${row.chain}-chain`} className={cell}>
@@ -526,7 +526,7 @@ export default function Economics() {
 						disableClientTokenStatsFetch
 					/>
 				) : (
-					<p className="flex h-[360px] items-center justify-center text-center body-sm text-pro-text-tertiary">
+					<p className="flex h-[360px] items-center justify-center text-center body-sm text-tertiary">
 						No unlocks data.
 					</p>
 				)}

@@ -70,7 +70,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 				{isFirst && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 				<div
 					className={clsx(
-						'line-clamp-3 leading-[120%] font-semibold text-research-heading transition-all duration-500 ease-out group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70',
+						'line-clamp-3 leading-[120%] font-semibold text-research-navy transition-colors duration-500 ease-out group-hover:text-secondary',
 						isBig ? 'text-base lg:text-2xl' : 'text-base lg:text-lg'
 					)}
 				>
@@ -110,7 +110,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 									href={articleHref(article)}
 									onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}
 								>
-									<span className="line-clamp-2 min-w-0 flex-1 text-base leading-snug font-medium text-research-heading transition-colors group-hover:text-research-heading lg:text-lg lg:font-semibold dark:text-research-ink dark:group-hover:text-on-brand/70">
+									<span className="line-clamp-2 min-w-0 flex-1 text-base leading-snug font-medium text-research-navy transition-colors group-hover:text-secondary lg:text-lg lg:font-semibold">
 										{article.title}
 									</span>
 									{article.coverImage?.url ? (
@@ -124,7 +124,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 											/>
 										</div>
 									) : (
-										<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-surface-elevated-1 lg:h-[105px] lg:w-[105px] dark:bg-research-wash-strong" />
+										<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-surface-elevated-1 lg:h-[105px] lg:w-[105px]" />
 									)}
 								</Link>
 							</li>

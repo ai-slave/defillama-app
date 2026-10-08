@@ -93,16 +93,16 @@ function SubSectionCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
 				<div>
-					<h3 className="title-md text-pro-text-primary">{title}</h3>
-					{subtitle && <p className="mt-0.5 body-sm text-pro-text-secondary">{subtitle}</p>}
+					<h3 className="title-md text-primary">{title}</h3>
+					{subtitle && <p className="mt-0.5 body-sm text-secondary">{subtitle}</p>}
 				</div>
 				{total != null && (
 					<div className="text-right">
-						<div className="label-xs tracking-wider text-pro-text-label uppercase">Subtotal</div>
-						<div className="heading-xs text-pro-text-primary tabular-nums">{fmtUsd(total)}</div>
+						<div className="label-xs tracking-wider text-secondary uppercase">Subtotal</div>
+						<div className="heading-xs text-primary tabular-nums">{fmtUsd(total)}</div>
 					</div>
 				)}
 			</div>
@@ -268,7 +268,7 @@ export default function Revenue() {
 								exportButtons="hidden"
 							/>
 						) : (
-							<div className="px-2 py-6 body-sm text-pro-text-secondary">No monthly holder data</div>
+							<div className="px-2 py-6 body-sm text-secondary">No monthly holder data</div>
 						)
 					) : holderModel ? (
 						<MultiSeriesChart
@@ -281,7 +281,7 @@ export default function Revenue() {
 							exportButtons="hidden"
 						/>
 					) : (
-						<div className="px-2 py-6 body-sm text-pro-text-secondary">No daily holder data</div>
+						<div className="px-2 py-6 body-sm text-secondary">No daily holder data</div>
 					)}
 				</ChartCard>
 			)}
@@ -308,7 +308,7 @@ export default function Revenue() {
 								]}
 							/>
 						) : (
-							<div className="px-2 py-3 body-sm text-pro-text-secondary">
+							<div className="px-2 py-3 body-sm text-secondary">
 								Per-source breakdown not yet available for this month — only the total is reported.
 							</div>
 						)}
@@ -321,13 +321,13 @@ export default function Revenue() {
 
 			{/* 3 · Unclaimed pipeline */}
 			<SectionHeader>Unclaimed Pipeline · Overview</SectionHeader>
-			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+			<div className="rounded-lg border border-subtle bg-surface p-5">
 				<div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
 					<div>
-						<div className="label-sm tracking-wide text-pro-text-label uppercase">Pipeline Total</div>
-						<div className="mt-1 mono-xl text-pro-text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
+						<div className="label-sm tracking-wide text-secondary uppercase">Pipeline Total</div>
+						<div className="mt-1 mono-xl text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
 					</div>
-					{up.asOf && <span className="body-sm text-pro-text-secondary">As of {up.asOf}</span>}
+					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
 				</div>
 				{up.pie && (
 					<PieChart
@@ -449,15 +449,15 @@ export default function Revenue() {
 			>
 				<div className="flex flex-col gap-4">
 					{(data?.synthInterestDetail || []).map((r) => (
-						<div key={r.asset} className="rounded-md border border-pro-cards-border/60 p-3">
+						<div key={r.asset} className="rounded-md border border-subtle p-3">
 							<div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 								<div>
-									<span className="title-md text-pro-text-primary">{r.asset}</span>
-									<span className="ml-2 body-sm text-pro-text-secondary">
+									<span className="title-md text-primary">{r.asset}</span>
+									<span className="ml-2 body-sm text-secondary">
 										{formatPercent(r.annualRatePct, { input: 'percent' })} APR · debt {fmtUsd(r.totalDebtUsd)}
 									</span>
 								</div>
-								<div className="body-sm text-pro-text-secondary">
+								<div className="body-sm text-secondary">
 									<span className="mr-3">Daily {fmtUsd(r.estimatedDailyUsd)}</span>
 									<span>Monthly {fmtUsd(r.estimatedMonthlyUsd)}</span>
 								</div>

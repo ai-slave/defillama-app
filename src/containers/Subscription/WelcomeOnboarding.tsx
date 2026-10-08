@@ -305,12 +305,12 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-on-brand">Payment not completed</h2>
-					<p className="body-md text-sub-text-muted">Your payment didn't go through, so your plan hasn't changed.</p>
+					<h2 className="heading-sm text-primary">Payment not completed</h2>
+					<p className="body-md text-tertiary">Your payment didn't go through, so your plan hasn't changed.</p>
 					<button
 						type="button"
 						onClick={() => void Router.push('/subscription')}
-						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 					>
 						Back to plans
 					</button>
@@ -323,12 +323,12 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-on-brand">Sign in to continue</h2>
-					<p className="body-md text-sub-text-muted">Sign in with the account you subscribed with to see your plan.</p>
+					<h2 className="heading-sm text-primary">Sign in to continue</h2>
+					<p className="body-md text-tertiary">Sign in with the account you subscribed with to see your plan.</p>
 					<button
 						type="button"
 						onClick={onSignIn}
-						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 					>
 						Sign in
 					</button>
@@ -343,10 +343,10 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-on-brand">
+					<h2 className="heading-sm text-primary">
 						{isPaymentProcessing ? 'Payment processing' : 'Processing your payment'}
 					</h2>
-					<p className="body-md text-sub-text-muted">
+					<p className="body-md text-tertiary">
 						{isPaymentProcessing
 							? checking
 								? 'Your bank is still processing the payment. Your plan updates once it clears.'
@@ -363,7 +363,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<button
 						type="button"
 						onClick={() => window.location.reload()}
-						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 					>
 						Refresh
 					</button>
@@ -378,24 +378,23 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
-				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple/25 bg-sub-purple/8 px-3 py-1 label-sm tracking-wide text-sub-purple-soft">
+				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple-muted bg-sub-purple-faint px-3 py-1 label-sm tracking-wide text-sub-purple-text">
 					<Icon name="check-circle" height={13} width={13} />
 					{planName} activated
 				</span>
-				<h1 className="heading-lg tracking-tight text-on-brand">Welcome to DefiLlama {planName}</h1>
-				<p className="body-md text-sub-text-muted">What brought you here? Pick all that apply.</p>
+				<h1 className="heading-lg tracking-tight text-primary">Welcome to DefiLlama {planName}</h1>
+				<p className="body-md text-tertiary">What brought you here? Pick all that apply.</p>
 			</div>
 
 			{slackAcquisition ? (
-				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple/25 bg-sub-purple/8 px-4 py-3 text-left">
-					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple/15">
-						<Icon name="chat" height={16} width={16} className="text-sub-purple-soft" />
+				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-muted bg-sub-purple-faint px-4 py-3 text-left">
+					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-tint">
+						<Icon name="chat" height={16} width={16} className="text-sub-purple-text" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
-						<span className="label-md text-on-brand">LlamaAI is ready in Slack</span>
-						<span className="body-sm text-sub-text-muted">
-							Mention <span className="font-mono text-sub-text-soft">@LlamaAI</span> in any channel, or DM the bot
-							directly.
+						<span className="label-md text-primary">LlamaAI is ready in Slack</span>
+						<span className="body-sm text-tertiary">
+							Mention <span className="font-mono text-secondary">@LlamaAI</span> in any channel, or DM the bot directly.
 						</span>
 					</div>
 				</div>
@@ -414,16 +413,21 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 							onChange={() => toggleFeature(option.id)}
 							style={{
 								animationDelay: `${i * 40}ms`,
-								...(isSelected ? { borderColor: `${c}66`, backgroundColor: `${c}0f` } : {})
+								...(isSelected
+									? {
+											borderColor: `color-mix(in srgb, ${c} 40%, transparent)`,
+											backgroundColor: `color-mix(in srgb, ${c} 6%, transparent)`
+										}
+									: {})
 							}}
 							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus-visible:focus-ring ${
-								isSelected ? '' : 'border-sub-line bg-sub-dark-panel hover:border-sub-line hover:bg-sub-dark-card'
+								isSelected ? '' : 'border-medium hover:bg-hover-row'
 							}`}
 						>
 							<div
 								className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
 								style={{
-									backgroundColor: isSelected ? `${c}26` : `${c}14`
+									backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)`
 								}}
 							>
 								{option.iconType === 'svg' ? (
@@ -436,22 +440,20 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 										height={18}
 										width={18}
 										className="transition-colors duration-200"
-										style={{ color: isSelected ? c : '#8a8c90' }}
+										style={{ color: isSelected ? c : 'var(--text-tertiary)' }}
 									/>
 								)}
 							</div>
 							<div className="flex min-w-0 flex-col">
-								<span className={`label-md ${isSelected ? 'text-on-brand' : 'text-sub-text-soft'}`}>
-									{option.label}
-								</span>
+								<span className={`label-md ${isSelected ? 'text-primary' : 'text-secondary'}`}>{option.label}</span>
 								{option.description ? (
-									<span className="mt-0.5 label-sm text-sub-text-muted">{option.description}</span>
+									<span className="mt-0.5 label-sm text-tertiary">{option.description}</span>
 								) : null}
 							</div>
 							<div className="ml-auto shrink-0">
 								<div
 									className={`flex size-[18px] items-center justify-center rounded-full border transition-all duration-200 ${
-										isSelected ? '' : 'border-sub-line group-hover:border-[#555]'
+										isSelected ? '' : 'border-medium group-hover:border-strong'
 									}`}
 									style={isSelected ? { borderColor: c, backgroundColor: c } : undefined}
 								>
@@ -475,7 +477,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 				<button
 					type="button"
 					onClick={() => void Router.push('/account')}
-					className="py-1 label-sm text-sub-text-muted transition-colors hover:text-sub-text-soft"
+					className="py-1 label-sm text-tertiary transition-colors hover:text-secondary"
 				>
 					Skip
 				</button>

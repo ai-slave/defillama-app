@@ -14,7 +14,7 @@ export function ProMeta({ items, className }: { items: Array<ReactNode>; classNa
 		)
 	}
 	return (
-		<span className={`flex flex-wrap items-center gap-x-1.5 body-sm text-pro-text-tertiary ${className ?? ''}`.trim()}>
+		<span className={`flex flex-wrap items-center gap-x-1.5 body-sm text-tertiary ${className ?? ''}`.trim()}>
 			{separated}
 		</span>
 	)

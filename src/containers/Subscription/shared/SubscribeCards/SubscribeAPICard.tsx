@@ -41,20 +41,18 @@ export function SubscribeAPICard({
 
 	return (
 		<div className="sub-api-accent contents">
-			<h2 className="relative z-10 text-center heading-lg whitespace-nowrap text-sub-purple">API</h2>
+			<h2 className="relative z-10 text-center heading-lg whitespace-nowrap text-sub-purple-text">API</h2>
 			<div className="relative z-10 mt-1 flex flex-col items-center justify-center">
 				<div className="flex items-center">
-					<span className="bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-center label-xl text-transparent">
-						{displayPrice} USD
-					</span>
-					<span className="ml-1 text-sub-text-muted">{displayPeriod}</span>
+					<span className="sub-gradient-text-purple text-center label-xl">{displayPrice} USD</span>
+					<span className="ml-1 text-tertiary">{displayPeriod}</span>
 				</div>
 				{billingInterval === 'year' ? (
-					<span className="body-md text-sub-text-muted">{formatUsd(yearlyPrice)}/year</span>
+					<span className="body-md text-tertiary">{formatUsd(yearlyPrice)}/year</span>
 				) : null}
 			</div>
 			{billingInterval === 'month' ? (
-				<p className="relative z-10 mt-1 text-center font-medium text-sub-text-muted">Multiple payment options</p>
+				<p className="relative z-10 mt-1 text-center font-medium text-tertiary">Multiple payment options</p>
 			) : null}
 			<ul className="mx-auto mb-auto flex w-full flex-col gap-3 py-6 max-sm:body-md">
 				<li className="flex flex-nowrap items-start gap-2.5">
@@ -108,9 +106,7 @@ export function SubscribeAPICard({
 								>
 									Upgrade to yearly
 								</Button>
-								<p className="text-center body-sm text-sub-text-muted">
-									Switch to annual billing and get 2 months free
-								</p>
+								<p className="text-center body-sm text-tertiary">Switch to annual billing and get 2 months free</p>
 							</div>
 						) : null}
 						{isCancelPending ? (

@@ -24,7 +24,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink href={`/stablecoin/${row.original.slug}`} className="truncate label-md text-link hover:underline">
 						{name}
-						{symbol && symbol !== '-' ? <span className="text-pro-text-tertiary"> ({symbol})</span> : null}
+						{symbol && symbol !== '-' ? <span className="text-tertiary"> ({symbol})</span> : null}
 					</BasicLink>
 				</span>
 			)
@@ -75,7 +75,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 					{row.original.doublecounted ? (
 						<QuestionHelper text="This stablecoin is excluded from aggregate stablecoin market cap to avoid double counting." />
 					) : null}
-					<span className={row.original.doublecounted ? 'text-pro-text-tertiary' : ''}>
+					<span className={row.original.doublecounted ? 'text-tertiary' : ''}>
 						{value == null
 							? '-'
 							: formatUsd(value, {
@@ -153,7 +153,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 
 			return (
 				<Tooltip content={chains.join(', ')}>
-					<span className="body-md text-pro-text-secondary">
+					<span className="body-md text-secondary">
 						{displayChains.join(', ')}
 						{remainingCount > 0 ? ` +${remainingCount}` : null}
 					</span>
