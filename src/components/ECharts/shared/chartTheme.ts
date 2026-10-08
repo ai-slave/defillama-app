@@ -12,7 +12,7 @@ import { CHART_DOWN, CHART_UP } from '~/constants/colors'
  * src/constants/colors.ts and pass 3:1 in both modes, so they are not theme tokens.
  *
  * The fallbacks below are the tokens' resolved values, used on the server and
- * before the stylesheet loads; keep them equal to the tokens.
+ * before the stylesheet loads; the contrast policy (rule 5) fails when one drifts.
  */
 export interface ChartTheme {
 	text: string
@@ -56,7 +56,7 @@ const TOKENS: Record<
 > = {
 	text: { cssVar: '--chart-text', light: 'rgba(0, 0, 0, 1)', dark: 'rgba(255, 255, 255, 1)' },
 	axisLabel: { cssVar: '--chart-axis-label', light: '#6f6f6f', dark: '#878787' },
-	legendPageActive: { cssVar: '--chart-legend-page-active', light: '#1f67d2', dark: '#1f67d2' },
+	legendPageActive: { cssVar: '--chart-legend-page-active', light: '#145abe', dark: '#599aff' },
 	legendPageInactive: {
 		cssVar: '--chart-legend-page-inactive',
 		light: '#6f6f6f80',

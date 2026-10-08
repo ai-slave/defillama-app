@@ -76,23 +76,30 @@ function normalizeTimestamp(value: number, dateInMs: boolean) {
 	return dateInMs ? value : value * 1e3
 }
 
-// Steps of the crimson, violet and neutral ramps in primitives.css, as hex because canvas cannot read var().
+// Ramp steps as hex, because canvas cannot read var(); the contrast policy (rule 5) fails when a copy drifts from its
+// token. Icons are fixed: dark glyphs on the light fills in both modes, white on the danger fill.
+const EVENT_DOTS = {
+	danger: {
+		fill: { light: ['--crimson-9', '#d11b3b'], dark: ['--crimson-9', '#d11a3b'] },
+		border: { light: ['--crimson-11', '#bd0a31'], dark: ['--crimson-11', '#ff686f'] },
+		icon: '#ffffff'
+	},
+	range: {
+		fill: { light: ['--violet-9', '#7d4dd7'], dark: ['--violet-11', '#a884ff'] },
+		border: { light: ['--violet-11', '#6f41c2'], dark: ['--violet-12', '#e3dcff'] },
+		icon: '#351e5f'
+	},
+	other: {
+		fill: { light: ['--neutral-8', '#989898'], dark: ['--neutral-11', '#989b9c'] },
+		border: { light: ['--neutral-10', '#656565'], dark: ['--neutral-12', '#dee1e2'] },
+		icon: '#2b2b2b'
+	}
+} as const
+
 function getEventDotPalette(label: string, isThemeDark: boolean, isRange = false) {
-	if (isDangerLabel(label)) {
-		return isThemeDark
-			? { fill: 'rgba(209, 26, 59, 0.95)', border: '#ff686f', icon: 'rgba(255, 255, 255, 0.98)' }
-			: { fill: '#d11b3b', border: '#bd0a31', icon: 'rgba(255, 255, 255, 0.98)' }
-	}
-
-	if (isRange) {
-		return isThemeDark
-			? { fill: 'rgba(168, 132, 255, 0.95)', border: '#e3dcff', icon: '#351e5f' }
-			: { fill: '#7d4dd7', border: '#6f41c2', icon: '#351e5f' }
-	}
-
-	return isThemeDark
-		? { fill: 'rgba(152, 155, 156, 0.9)', border: '#dee1e2', icon: '#2b2b2b' }
-		: { fill: '#989898', border: '#656565', icon: '#2b2b2b' }
+	const dot = EVENT_DOTS[isDangerLabel(label) ? 'danger' : isRange ? 'range' : 'other']
+	const mode = isThemeDark ? 'dark' : 'light'
+	return { fill: dot.fill[mode][1], border: dot.border[mode][1], icon: dot.icon }
 }
 
 export function buildEventRailData({

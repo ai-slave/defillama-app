@@ -11,6 +11,9 @@ import { contrast } from '../generate-color-ramps.mjs'
  * 3. Every ramp keeps its pair rules: step 11 at 4.5:1 or more on steps 1–4, and white at 4.5:1 or more on step 9.
  * 4. Every chart color in src/constants/colors.ts (CHART_COLORS, OTHERS_COLOR, CHART_UP, CHART_DOWN) at 3:1 or more
  *    on the page and surface in both modes, so one value serves both themes and PNG exports.
+ * 5. Every token copy in canvas code (MIRRORS: Monaco and ECharts cannot read var()) still equals its token in that
+ *    mode, so a ramp or token change cannot leave a copy behind. A copy is written `cssVar: '--x', light: '…',
+ *    dark: '…'` (one token in both modes) or `light: ['--x', '…']` / `dark: ['--y', '…']` (a token per mode).
  *
  *   bun scripts/policies/check-color-contrast.mjs
  */
@@ -133,9 +136,40 @@ for (const mode of ['light', 'dark']) {
 	}
 }
 
+const MIRRORS = [
+	'src/components/ECharts/shared/chartTheme.ts',
+	'src/components/ECharts/MultiSeriesChart/eventRail.ts',
+	'src/containers/Downloads/sql/editorTheme.ts'
+]
+const sameColor = (a, b) => a?.toLowerCase().replace(/\s+/g, '') === b.toLowerCase().replace(/\s+/g, '')
+const modeMaps = { light: tokens('light'), dark: tokens('dark') }
+const mirrorFailures = []
+for (const file of MIRRORS) {
+	const source = fs.readFileSync(file, 'utf8')
+	const copies = []
+	for (const [, name, light, dark] of source.matchAll(
+		/cssVar:\s*'--([\w-]+)',\s*light:\s*'([^']+)',\s*dark:\s*'([^']+)'/g
+	)) {
+		copies.push(['light', name, light], ['dark', name, dark])
+	}
+	for (const [, mode, name, value] of source.matchAll(/\b(light|dark):\s*\['--([\w-]+)',\s*'([^']+)'\]/g)) {
+		copies.push([mode, name, value])
+	}
+	for (const [mode, name, value] of copies) {
+		const token = resolve(modeMaps[mode], name)
+		if (!sameColor(token, value))
+			mirrorFailures.push(`${file}: ${mode} copy of --${name} is ${value}, the token is ${token}`)
+	}
+}
+if (mirrorFailures.length > 0) {
+	console.error('Token copies out of date (rule 5):')
+	for (const failure of mirrorFailures) console.error(`  ${failure}`)
+	process.exit(1)
+}
+
 if (failures.length > 0) {
 	console.error('Color contrast below WCAG AA (design.md → "Color ramps"):')
 	for (const failure of failures) console.error(`  ${failure}`)
 	process.exit(1)
 }
-console.log('Color contrast policy: all text tokens, ramp pairs and chart colors pass in light and dark.')
+console.log('Color contrast policy: all text tokens, ramp pairs, chart colors and token copies pass in light and dark.')

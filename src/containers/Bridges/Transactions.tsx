@@ -239,7 +239,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 				return (
 					<span
 						className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
-							deposit ? 'bg-success-tint text-success' : 'bg-error-tint text-error'
+							deposit ? 'bg-data-up-tint text-data-up' : 'bg-data-down-tint text-data-down'
 						}`}
 					>
 						<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
