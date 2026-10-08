@@ -83,7 +83,7 @@ export function ReportIncorrectData({
 					<Icon name="flag" className="size-4" />
 				</Tooltip>
 			) : (
-				<Button type="button" size="md" className="mt-auto mr-auto" onClick={() => setOpen(true)}>
+				<Button type="button" size="sm" className="mt-auto mr-auto" onClick={() => setOpen(true)}>
 					Report incorrect data
 				</Button>
 			)}

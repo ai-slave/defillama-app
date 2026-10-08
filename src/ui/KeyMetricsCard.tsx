@@ -7,14 +7,15 @@ interface KeyMetricsPanelProps {
 	id?: string
 	/** The rows' container, which the PNG export measures. */
 	rowsRef?: Ref<HTMLDivElement>
-	/** Buttons pinned to the card bottom; callers order them (csv or report left, PNG export right). */
+	/** Buttons pinned to the card bottom, all size sm; callers order them (csv or report left, PNG export right). */
 	footer?: ReactNode
 	children: ReactNode
 }
 
 /** The Key Metrics block of every overview card (summary variant 1 in ./SummaryStats.tsx): the title-md "Key Metrics"
     h2 with the DefiLlama mark top-right, the MetricRow/MetricSection rows, then the footer pinned to the card bottom
-    (csv or report button left, PNG export right; a lone button sits left). Every Key Metrics block renders through it,
+    (csv or report button left, PNG export right; a lone button sits left; every footer button is size sm so the row
+    stays one height). Every Key Metrics block renders through it,
     token, equity and RWA pages included; never hand-roll the heading, mark or footer. */
 export function KeyMetricsPanel({ id, rowsRef, footer, children }: KeyMetricsPanelProps) {
 	return (
