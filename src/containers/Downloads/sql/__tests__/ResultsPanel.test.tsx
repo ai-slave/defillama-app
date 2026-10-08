@@ -145,20 +145,8 @@ test('picking the chart view stores its default configuration for share links, a
 	await act(async () => root.render(<Tab initial={undefined} />))
 	expect(stored).toBeUndefined()
 	await pickChart()
-	expect(stored).toEqual({
-		chartType: 'bar',
-		xCol: 'chain',
-		yCols: ['tvl'],
-		splitByCol: null,
-		stackMode: 'off',
-		rightAxisCols: [],
-		seriesKinds: {},
-		seriesColors: {},
-		numberFormat: 'auto',
-		candlestick: undefined,
-		bubble: undefined,
-		histogram: undefined
-	})
+	// ResultsChart.test.tsx owns the rest of the default configuration.
+	expect(stored).toMatchObject({ xCol: 'chain', yCols: ['tvl'] })
 
 	await act(async () => root.unmount())
 	root = createRoot(container)

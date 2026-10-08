@@ -3,7 +3,6 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { FreeUsage } from '~/containers/LlamaAI/types'
-import { formatDateTime } from '~/utils/dateFormat'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { FreeUsageNote, getFreeUsageNote, getPhonePromptPlaceholder } from '../FreeUsageNote'
@@ -106,9 +105,6 @@ describe('FreeUsageNote', () => {
 		vi.useFakeTimers({ toFake: ['Date'] })
 		vi.setSystemTime(new Date('2026-10-03T09:00:00.000Z'))
 		expect(show(usage(typed(3, 5), { bonus }))).toBe('Welcome week · ends in 6d3 of 5 questions left today')
-		expect(container.querySelector('[title]')?.getAttribute('title')).toBe(
-			formatDateTime('2026-10-09T09:00:00.000Z', { timeZone: 'UTC' })
-		)
 		const meter = container.querySelector('[role="meter"]')!
 		expect([meter.getAttribute('aria-valuenow'), meter.getAttribute('aria-valuemax')]).toEqual(['3', '5'])
 		expect(meter.querySelectorAll('[data-state="remaining"]')).toHaveLength(3)

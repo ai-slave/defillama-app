@@ -4,18 +4,10 @@ import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
-import type { UsageLimitOffer, UsageLimitPeriod } from '~/containers/LlamaAI/types'
+import type { UsageLimitOffer } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { formatDate } from '~/utils/dateFormat'
-
-interface ResearchLimitModalProps {
-	dialogStore: Ariakit.DialogStore
-	period: UsageLimitPeriod
-	limit: number
-	resetTime: string | null
-	feature?: 'research' | 'fact_checked'
-}
 
 const COPY = {
 	research: {
@@ -98,16 +90,11 @@ function TrialOrUpgradeLink({ umamiEvent, onClick }: { umamiEvent: string; onCli
 	)
 }
 
-export function ResearchLimitModal({
-	dialogStore,
-	period,
-	limit,
-	resetTime,
-	feature = 'research'
-}: ResearchLimitModalProps) {
-	const isBlocked = period === 'blocked'
+// Opens only when a free user taps Fact-checked, so it always reads as the Pro upsell.
+export function ResearchLimitModal({ dialogStore }: { dialogStore: Ariakit.DialogStore }) {
 	const { isTrial } = useAuthContext()
 	const open = Ariakit.useStoreState(dialogStore, 'open')
+	const copy = COPY.fact_checked
 
 	// Freeze the dialog choice while open: a successful upgrade flips isTrial, and swapping in the
 	// paid-plan dialog would replace the success pane mid-view. The latch cannot live inside either
@@ -116,16 +103,14 @@ export function ResearchLimitModal({
 	if (open && trialFlow === null) setTrialFlow(isTrial)
 	if (!open && trialFlow !== null) setTrialFlow(null)
 
-	const limitBody = getUsageLimitText({ feature, period, limit, resetTime })
-
 	// Trial users converting to a paid plan get the shared, instant-charge modal.
 	if (trialFlow ?? isTrial) {
 		return (
 			<EndTrialModal
 				isOpen={open}
 				onClose={dialogStore.hide}
-				title={COPY[feature].titleLimit}
-				description={isBlocked ? COPY[feature].bodyBlocked : limitBody}
+				title={copy.titleLimit}
+				description={copy.bodyBlocked}
 				confirmLabel="Upgrade to Pro"
 			/>
 		)
@@ -133,22 +118,13 @@ export function ResearchLimitModal({
 
 	return (
 		<Dialog size="sm" store={dialogStore} portal unmountOnHide>
-			<DialogHeader title={isBlocked ? COPY[feature].titleBlocked : COPY[feature].titleLimit} />
+			<DialogHeader title={copy.titleBlocked} />
 			<DialogBody>
-				<Ariakit.DialogDescription className="body-sm text-secondary">
-					{isBlocked ? COPY[feature].bodyBlocked : limitBody}
-				</Ariakit.DialogDescription>
-				{isBlocked ? <p className="body-sm text-secondary">{COPY[feature].proPitch}</p> : null}
+				<Ariakit.DialogDescription className="body-sm text-secondary">{copy.bodyBlocked}</Ariakit.DialogDescription>
+				<p className="body-sm text-secondary">{copy.proPitch}</p>
 			</DialogBody>
 			<DialogFooter>
-				{isBlocked ? (
-					<TrialOrUpgradeLink umamiEvent={COPY[feature].umamiUpgrade} onClick={dialogStore.hide} />
-				) : (
-					// Already on a paid plan, just hit the daily cap — informational only, no upsell.
-					<Button type="button" size="md" variant="primary" onClick={dialogStore.hide}>
-						Got it
-					</Button>
-				)}
+				<TrialOrUpgradeLink umamiEvent={copy.umamiUpgrade} onClick={dialogStore.hide} />
 			</DialogFooter>
 		</Dialog>
 	)

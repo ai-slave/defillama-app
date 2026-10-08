@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../../hooks/useUnifiedTableWizard'
 import { ColumnManager } from '../ColumnManager'
 
@@ -76,14 +77,18 @@ const radio = (group: string, text: string) =>
 		.querySelector<HTMLInputElement>('input[type="radio"]')!
 const button = (text: string) =>
 	Array.from(container.querySelectorAll('button')).find((element) => element.textContent?.trim() === text)!
+const nameField = () => container.querySelector('input[placeholder="e.g., TVL to market cap"]')
 
 describe('without Pro', () => {
 	signInAs('free')
 
 	test('a custom column preset offers the upgrade instead of opening the form', async () => {
-		await renderManager()
+		const onCustomColumnDraftChange = vi.fn()
+		await renderManager({ onCustomColumnDraftChange })
 		await act(async () => button('TVL/MCap').click())
-		expect(container.querySelector('input[placeholder="e.g., TVL to market cap"]')).toBeNull()
+		await waitForUi(() => expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Upgrade to Pro'))
+		expect(nameField()).toBeNull()
+		expect(onCustomColumnDraftChange).not.toHaveBeenCalled()
 	})
 
 	test('the column group radio narrows the column list to that group', async () => {
@@ -111,6 +116,20 @@ describe('without Pro', () => {
 
 describe('a subscriber', () => {
 	signInAs('subscriber')
+
+	test('a custom column preset opens the form with the preset as the draft', async () => {
+		const onCustomColumnDraftChange = vi.fn()
+		await renderManager({ onCustomColumnDraftChange })
+		await act(async () => button('TVL/MCap').click())
+		expect(nameField()).not.toBeNull()
+		expect(onCustomColumnDraftChange).toHaveBeenLastCalledWith({
+			id: null,
+			name: 'TVL/MCap',
+			expression: 'tvl / mcap',
+			format: 'ratio',
+			aggregation: null
+		})
+	})
 
 	test('the custom column format and aggregation are radio fields that update the draft', async () => {
 		const onCustomColumnDraftChange = vi.fn()

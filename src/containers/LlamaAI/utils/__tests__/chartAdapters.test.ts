@@ -451,9 +451,13 @@ describe('chart adapters', () => {
 		} satisfies ChartConfiguration
 		const result = adaptScatterChartData(config, [{ x: 1, y: 2, protocol: 'Aave' }])
 
-		expect(result.props.tooltipFormatter?.({ value: [1, 2, 'Aave'] })).toBe(
-			'<strong>Aave</strong><br/>&lt;img src=x onerror=alert(1)&gt;: 1<br/>Fees &amp; &lt;b&gt;revenue&lt;/b&gt;: 2'
-		)
+		const tooltip = result.props.tooltipFormatter?.({ value: [1, 2, 'Aave'] })
+
+		expect(tooltip).toContain('Aave')
+		expect(tooltip).toContain('&lt;img src=x onerror=alert(1)&gt;: 1')
+		expect(tooltip).toContain('Fees &amp; &lt;b&gt;revenue&lt;/b&gt;: 2')
+		expect(tooltip).not.toContain('<img')
+		expect(tooltip).not.toContain('<b>')
 	})
 
 	test('category tooltips list each renamed series with its own value, escaped', () => {
@@ -486,14 +490,16 @@ describe('chart adapters', () => {
 			encode: { x: [0], y: [chart.encode.y] }
 		}))
 
-		expect(
+		const tooltip =
 			formatter && !Array.isArray(formatter) && typeof formatter.formatter === 'function'
 				? formatter.formatter(params as never, '')
 				: null
-		).toBe(
-			'<div style="margin-bottom: 8px; font-weight: 600;">&lt;svg onload=alert(1)&gt;</div>' +
-				'<div> TVL &lt;img src=x onerror=alert(1)&gt;: 20</div><div> Fees: 5</div>'
-		)
+
+		expect(tooltip).toContain('&lt;svg onload=alert(1)&gt;')
+		expect(tooltip).toContain('TVL &lt;img src=x onerror=alert(1)&gt;: 20')
+		expect(tooltip).toContain('Fees: 5')
+		expect(tooltip).not.toContain('<img')
+		expect(tooltip).not.toContain('<svg')
 	})
 
 	test('keeps cartesian time-series rows sorted after adaptation', () => {

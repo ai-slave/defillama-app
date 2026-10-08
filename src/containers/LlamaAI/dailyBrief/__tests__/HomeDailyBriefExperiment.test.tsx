@@ -1,10 +1,9 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
-import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
-import { renderToString } from 'react-dom/server'
+import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { PageClockProvider } from '~/hooks/usePageClock'
 import { getExperimentAttribute, getVariant } from '~/utils/analytics/experiment'
+import { renderHydrated } from '~/utils/testing/hydration'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DailyBrief } from '../api'
@@ -57,6 +56,7 @@ afterEach(() => {
 	track.mockReset()
 	delete window.umami
 	vi.restoreAllMocks()
+	vi.useRealTimers()
 })
 
 describe('home-brief-default-v1', () => {
@@ -137,26 +137,30 @@ describe('home-brief-default-v1', () => {
 	})
 
 	test('ISR html carries both states for the pre-paint CSS, and B hydrates open without a mismatch', async () => {
-		const page = (
-			<PageClockProvider pageClockSec={Math.floor(Date.parse(brief.generatedAt) / 1000) + 3600}>
-				<session.Wrapper>
-					<HomeDailyBrief brief={brief} />
-				</session.Wrapper>
-			</PageClockProvider>
+		// HTML cached an hour after the brief was written, opened three hours after it.
+		const generatedSec = Date.parse(brief.generatedAt) / 1000
+		vi.useFakeTimers({ toFake: ['Date'], now: (generatedSec + 3 * 3600) * 1000 })
+		// The pre-paint script marks the variant before hydration; the server render never reads it.
+		setVariantFor(SEED_B)
+		const rendered = await renderHydrated(
+			<session.Wrapper>
+				<HomeDailyBrief brief={brief} />
+			</session.Wrapper>,
+			{ pageClockSec: generatedSec + 3600 }
 		)
-		const html = renderToString(page)
-		container.innerHTML = html
+		root = rendered.root
+		expect(rendered.errors).toEqual([])
+
+		container.innerHTML = rendered.serverHtml
 		expect(tabs()).toHaveLength(brief.sections.length)
 		expect(chips()).toHaveLength(3)
+		expect(container.querySelector('header span[title]')?.textContent).toBe('Updated 1h ago')
 
-		setVariantFor(SEED_B)
-		const onRecoverableError = vi.fn()
-		act(() => {
-			root = hydrateRoot(container, page, { onRecoverableError })
-		})
-		await waitForUi(() => expect(chips()).toHaveLength(0))
-		expect(onRecoverableError).not.toHaveBeenCalled()
-		expect(tabs()).toHaveLength(brief.sections.length)
+		const hydrated = rendered.container
+		expect(hydrated.querySelectorAll('[role="tab"]')).toHaveLength(brief.sections.length)
+		expect(hydrated.querySelectorAll('button[aria-label^="Ask LlamaAI: "]')).toHaveLength(0)
+		expect(hydrated.querySelector('header span[title]')?.textContent).toBe('Updated 3h ago')
+		hydrated.remove()
 	})
 
 	test('exposure fires once per session; opening and tapping a question each fire one action, closing fires none', () => {

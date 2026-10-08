@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { getSignupSource } from '~/auth/signupSource'
 import {
 	consumePendingEntrySource,
 	consumePendingPrompt,
@@ -62,9 +63,9 @@ describe('signed out', () => {
 			)
 		)
 		expect(mocks.push).not.toHaveBeenCalled()
-		expect(localStorage.getItem('llamaai-pending-prompt')).toBe('What is the latest status of the Bitget hack?')
+		expect(consumePendingPrompt()).toBe('What is the latest status of the Bitget hack?')
 		expect(track).toHaveBeenCalledWith('llamaai-daily-brief-click', { signedIn: false })
-		expect(sessionStorage.getItem('signup_source')).toBe('daily-brief')
+		expect(getSignupSource()).toBe('daily-brief')
 	})
 })
 

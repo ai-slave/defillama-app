@@ -83,6 +83,15 @@ test('the field is named by its visible label and the pick, and its search field
 	expect(document.querySelector('[role="listbox"]')).not.toBeNull()
 })
 
+test('with nothing picked the field shows its placeholder, and a pick takes its place', async () => {
+	await act(async () => root.render(<SinglePicker />))
+	expect(trigger().textContent).toBe('Select protocol…')
+
+	await open()
+	await act(async () => document.querySelector<HTMLElement>('[role="option"]')!.click())
+	await waitForUi(() => expect(trigger().textContent).toBe('Protocol 000'))
+})
+
 test('arrow keys from the search field reach options past the rendered rows, and Enter picks one', async () => {
 	const onPick = vi.fn()
 	await act(async () => root.render(<SinglePicker onPick={onPick} />))

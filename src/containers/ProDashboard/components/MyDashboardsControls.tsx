@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import type { RefObject } from 'react'
 import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
@@ -15,6 +15,8 @@ import {
 } from './myDashboardsControls.utils'
 
 interface MyDashboardsControlsProps {
+	/** The search input; the page hands focus to it when a control it removed (Clear filters) had focus. */
+	ref: RefObject<HTMLInputElement | null>
 	query: string
 	sort: MyDashboardsSort
 	visibility: MyDashboardsVisibility
@@ -24,6 +26,7 @@ interface MyDashboardsControlsProps {
 }
 
 export function MyDashboardsControls({
+	ref,
 	query,
 	sort,
 	visibility,
@@ -31,7 +34,6 @@ export function MyDashboardsControls({
 	onSortChange,
 	onVisibilityChange
 }: MyDashboardsControlsProps) {
-	const searchRef = useRef<HTMLInputElement>(null)
 	const selectedSort = MY_DASHBOARDS_SORT_OPTIONS.find((option) => option.key === sort) ?? MY_DASHBOARDS_SORT_OPTIONS[0]
 
 	return (
@@ -44,7 +46,7 @@ export function MyDashboardsControls({
 					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
 				/>
 				<input
-					ref={searchRef}
+					ref={ref}
 					type="text"
 					aria-label="Search my dashboards"
 					value={query}
@@ -65,7 +67,7 @@ export function MyDashboardsControls({
 								onClick={() =>
 									keepFocus(
 										() => onQueryChange(''),
-										() => searchRef.current
+										() => ref.current
 									)
 								}
 								className="absolute top-1/2 right-1.5 -translate-y-1/2"

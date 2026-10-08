@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, useState } from 'react'
+import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { MyDashboardsControls } from '../MyDashboardsControls'
@@ -21,8 +21,10 @@ afterEach(async () => {
 
 function Controls() {
 	const [query, setQuery] = useState('aave')
+	const searchRef = useRef<HTMLInputElement>(null)
 	return (
 		<MyDashboardsControls
+			ref={searchRef}
 			query={query}
 			sort="recent"
 			visibility="all"

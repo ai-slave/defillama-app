@@ -61,7 +61,9 @@ test('a slow subscription retry keeps focus on its button, then hands it to the 
 		retry.click()
 	})
 	await waitForUi(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
-	expect(document.activeElement).toBe(retry)
+	expect(retry.getAttribute('aria-disabled')).toBe('true')
+	// Browsers drop focus from a natively disabled button; happy-dom does not, so assert the cause.
+	expect(retry.disabled).toBe(false)
 	await waitForUi(() => expect(document.body.textContent).toContain('Active Subscription'))
 	expect(tryAgain()).toBeUndefined()
 	expect(document.activeElement?.getAttribute('href')).toBe('/account')

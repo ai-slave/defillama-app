@@ -37,7 +37,7 @@ test('stepping to the last version keeps focus on the arrow that just disabled i
 	const previous = container.querySelector<HTMLButtonElement>('[aria-label="Previous version"]')!
 	expect(previous.getAttribute('aria-disabled')).toBe('true')
 
-	next.focus()
+	act(() => next.focus())
 	await act(async () => next.click())
 
 	expect(container.textContent).toContain('2/2')

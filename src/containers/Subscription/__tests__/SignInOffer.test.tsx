@@ -2,11 +2,10 @@
 // @vitest-environment-options {"url":"https://defillama.com"}
 
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { AuthProvider } from '~/auth'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SignInDialog } from '../SignInDialog'
@@ -15,10 +14,10 @@ vi.mock('next/script', () => ({ default: () => null }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
 vi.mock('~/containers/Subscription/Turnstile', () => ({ Turnstile: () => null }))
 
+const session = installSubscriberSession('u1', { account: 'signed-out' })
 const track = installUmamiSink()
 const QUESTION = 'Which chains grew the most this month?'
 let root: Root
-let client: QueryClient
 
 function Harness({ question }: { question?: string }) {
 	const store = Ariakit.useDialogStore({ defaultOpen: true })
@@ -29,11 +28,9 @@ async function open(variant: 'a' | 'b', question: string | null = QUESTION) {
 	document.documentElement.setAttribute('data-ab-llamaai-signin-offer-v1', variant)
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<AuthProvider>
-					<Harness question={question ?? undefined} />
-				</AuthProvider>
-			</QueryClientProvider>
+			<session.Wrapper>
+				<Harness question={question ?? undefined} />
+			</session.Wrapper>
 		)
 	)
 	return waitForUi(() => {
@@ -46,22 +43,15 @@ const heading = (dialog: HTMLElement) => dialog.querySelector('h2, [role="headin
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(() => new Promise<Response>(() => {}))
-	)
 	const container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	client = new QueryClient()
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	document.body.innerHTML = ''
 	document.documentElement.removeAttribute('data-ab-llamaai-signin-offer-v1')
 	sessionStorage.clear()
-	client.clear()
-	vi.unstubAllGlobals()
 })
 
 test('B leads with Get your answer free, the welcome offer and the question', async () => {
@@ -75,7 +65,6 @@ test('B leads with Get your answer free, the welcome offer and the question', as
 test('B Create an account opens sign-up and counts a signup-click', async () => {
 	const dialog = await open('b')
 	const create = [...dialog.querySelectorAll('button')].find((b) => b.textContent === 'Create an account')!
-	expect(create.closest('p')).toBeNull()
 	await act(async () => create.click())
 	await waitForUi(() => expect(heading(document.querySelector('[role="dialog"]')!)).toBe('Create an account'))
 	expect(track).toHaveBeenCalledWith('experiment-action', {

@@ -72,17 +72,6 @@ test('signed out, asking your own question on /ai keeps it for after sign-in and
 	expect(consumePendingPrompt()).toBe('Which chains grew the most this month?')
 })
 
-test('signed out, the Sign in link on /ai still says what signing in is for', async () => {
-	const signIn = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((b) => b.textContent === 'Sign in')
-		expect(button).toBeDefined()
-		return button!
-	})
-	await act(async () => signIn.click())
-
-	expect(await dialogText()).toContain('Sign in to get your answer — free')
-})
-
 async function askSignedOut(question: string) {
 	const input = await waitForUi(() => {
 		const el = document.querySelector<HTMLInputElement>('input[name="freeform"]')

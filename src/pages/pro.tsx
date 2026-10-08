@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
@@ -45,6 +45,7 @@ import { ProButton, ProDialogFallback, ProMeta, proPanelStyles, proTabStyles } f
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -271,11 +272,17 @@ function ProContent({
 		publishMyDashboardsSearch.cancel()
 		setMyDashboardsQuery('')
 	}
-	const clearMyDashboardsControls = () => {
-		publishMyDashboardsSearch.cancel()
-		setMyDashboardsSearch(DEFAULT_MY_DASHBOARDS_CONTROLS.query)
-		setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
-	}
+	const myDashboardsSearchRef = useRef<HTMLInputElement>(null)
+	// Clear filters leaves with the empty state it sits in, so focus goes to the search box it emptied.
+	const clearMyDashboardsControls = () =>
+		keepFocus(
+			() => {
+				publishMyDashboardsSearch.cancel()
+				setMyDashboardsSearch(DEFAULT_MY_DASHBOARDS_CONTROLS.query)
+				setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
+			},
+			() => myDashboardsSearchRef.current
+		)
 	const myDashboardsControlsActive = areMyDashboardsControlsActive(myDashboardsControls)
 	const {
 		dashboards: myDashboards,
@@ -422,6 +429,7 @@ function ProContent({
 						<AuthorProfileStrip />
 
 						<MyDashboardsControls
+							ref={myDashboardsSearchRef}
 							query={myDashboardsSearch}
 							sort={myDashboardsControls.sort}
 							visibility={myDashboardsControls.visibility}

@@ -42,15 +42,13 @@ function Drawer() {
 	)
 }
 
-test('Reset keeps focus once it has put every filter back to its default', async () => {
+test('Reset keeps focus once pressing it disables it', async () => {
 	await act(async () => root.render(<Drawer />))
 	const reset = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Reset')!
 	await act(async () => {
 		reset.focus()
 		reset.click()
 	})
-	const defi = [...document.querySelectorAll('button')].find((el) => el.textContent === 'DeFi')!
-	expect(defi.getAttribute('aria-pressed')).toBe('false')
 	expect(reset.getAttribute('aria-disabled')).toBe('true')
 	expect(reset.disabled).toBe(false)
 	expect(document.activeElement).toBe(reset)

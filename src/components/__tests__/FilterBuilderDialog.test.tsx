@@ -44,17 +44,12 @@ function field(label: string) {
 }
 const chips = () => [...document.querySelectorAll<HTMLButtonElement>('[data-filter-chip]')]
 
-test('adding a filter keeps focus in the list, its fields are named, and Apply writes the draft', async () => {
+test('an added filter names its fields, and Apply writes the draft', async () => {
 	const change = vi.fn()
 	await act(async () => root.render(<TokensFiltersDialog filters={[]} onFiltersChange={change} />))
 	await click(control('Filters'))
 
-	const rank = control('MCap Rank')
-	const next = chips()[chips().indexOf(rank as HTMLButtonElement) + 1]
-	await click(rank)
-	expect(chips().includes(rank as HTMLButtonElement)).toBe(false)
-	expect(document.activeElement).toBe(next)
-
+	await click(control('MCap Rank'))
 	await type(field('MCap Rank minimum'), '10')
 	await click(control('Apply'))
 	expect(change).toHaveBeenCalledExactlyOnceWith([{ id: 'rank', min: 10, max: null }])
@@ -115,6 +110,28 @@ test('removing a filter hands focus to the next card, else the previous one, els
 	await click(control('Remove Price filter'))
 	expect(document.activeElement).toBe(chips()[0])
 	expect(accessibleName(chips()[0])).toBe('Price')
+})
+
+test('adding a filter hands focus to the next chip, else the previous one, else the dialog', async () => {
+	await act(async () =>
+		root.render(
+			<FilterBuilderDialog appliedCount={0}>
+				<Session initial={[]} />
+			</FilterBuilderDialog>
+		)
+	)
+	await click(control('Filters'))
+
+	await click(control('Volume'))
+	expect(control('Volume')).toBeUndefined()
+	expect(document.activeElement).toBe(control('Holders'))
+
+	await click(control('Holders'))
+	expect(document.activeElement).toBe(control('Price'))
+
+	// No chip is left, so the dialog's net hands focus to its first control.
+	await click(control('Price'))
+	expect(document.activeElement).toBe(control('Close dialog'))
 })
 
 // A table page as it applies filters: the Filters button, then the applied filters as pills that clear them.

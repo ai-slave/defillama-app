@@ -8,8 +8,11 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { DownloadsCatalog } from '../DownloadsCatalog'
 import { SavePresetDialog } from '../PresetDialogs'
 
-// Heavy dialogs the preset list can open; these tests assert nothing about them.
-vi.mock('../DatasetPreviewModal', () => ({ DatasetPreviewModal: () => null }))
+// Heavy dialogs the preset list can open; these tests assert nothing about them. The dataset preview stub only says
+// which dataset a run opened.
+vi.mock('../DatasetPreviewModal', () => ({
+	DatasetPreviewModal: ({ dataset }: { dataset: { name: string } }) => <p>Previewing {dataset.name}</p>
+}))
 vi.mock('../ChartDatasetModal', () => ({ ChartDatasetModal: () => null }))
 vi.mock('../MultiMetricModal', () => ({ MultiMetricModal: () => null }))
 vi.mock('~/containers/Subscription/shared/TrialCsvLimitModal', () => ({ TrialCsvLimitModal: () => null }))
@@ -151,13 +154,25 @@ test('catalog navigation preserves visible search and the category pick without 
 	expect(document.querySelectorAll('[role="tabpanel"]')).toHaveLength(1)
 })
 
-test('a saved preset offers Run, Rename and Delete as separate buttons, none nested in another', async () => {
-	const run = button('Run preset First preset')
-	expect(run.tagName).toBe('BUTTON')
-	for (const name of ['Run preset First preset', 'Rename First preset', 'Delete First preset']) {
-		expect(button(name).parentElement!.closest('button, [role="button"]')).toBeNull()
+test('Rename and Delete on a saved preset open their own dialog without running it; Run opens its preview', async () => {
+	const previewing = () => container.textContent!.includes('Previewing Protocols (TVL)')
+	const dialogTitle = (role: string) => {
+		const dialog = document.querySelector(`[role="${role}"]`)!
+		return document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent
 	}
-	expect(document.querySelectorAll('[aria-label="Rename First preset"]')).toHaveLength(1)
+
+	await click(button('Rename First preset'))
+	expect(dialogTitle('dialog')).toBe('Rename preset')
+	expect(previewing()).toBe(false)
+	await escape()
+
+	await click(button('Delete First preset'))
+	expect(dialogTitle('alertdialog')).toBe('Delete preset?')
+	expect(previewing()).toBe(false)
+	await escape()
+
+	await click(button('Run preset First preset'))
+	expect(previewing()).toBe(true)
 })
 
 test('Clear all on the recent strip hands focus to the selected tab', async () => {

@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { MarkoutHorizons, SlippageLadder } from '../ProfileExecution'
@@ -43,7 +44,9 @@ describe('paired execution measurements', () => {
 			<MarkoutHorizons key="absent-markout" execution={null} />,
 			<MarkoutHorizons key="unmeasured-markout" execution={{ markout1mBps: null, markout5mBps: null }} />
 		]) {
-			expect(renderToStaticMarkup(element)).toBe('<span class="text-tertiary">n/a</span>')
+			const cell = document.createElement('div')
+			cell.innerHTML = renderToStaticMarkup(element)
+			expect(cell.textContent).toBe('n/a')
 		}
 	})
 })

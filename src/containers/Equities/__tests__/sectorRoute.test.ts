@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
 import { getStaticProps } from '~/pages/equities/sectors/[sector]'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { readEquitiesSectorPageCompanies, type IEquitiesSectorPageViewData } from '../sectorPageData'
 
 const http = installFixtureFetch()
 
@@ -49,33 +50,11 @@ test('redirects mixed-case sectors to their canonical URL', async () => {
 
 test('serializes a company whose upstream industry slug is missing', async () => {
 	const result = await load('technology')
-	expect(result).toMatchObject({
-		props: {
-			state: {
-				status: 'ready',
-				data: {
-					companies: [
-						[
-							'AAPL',
-							'US',
-							'Apple Inc.',
-							'Consumer Electronics',
-							'consumer-electronics',
-							3_000_000_000_000,
-							1,
-							200,
-							1,
-							2,
-							3,
-							30
-						]
-					]
-				}
-			}
-		}
-	})
+	const { props } = result as { props: { state: { status: string; data: IEquitiesSectorPageViewData } } }
+	expect(props.state.status).toBe('ready')
+	expect(readEquitiesSectorPageCompanies(props.state.data.companies)).toMatchObject([
+		{ ticker: 'AAPL', name: 'Apple Inc.', industry: 'Consumer Electronics', industrySlug: 'consumer-electronics' }
+	])
 	// Next runs this check on every getStaticProps result and fails the build on undefined.
-	expect(isSerializableProps('/equities/sectors/[sector]', 'getStaticProps', (result as { props: object }).props)).toBe(
-		true
-	)
+	expect(isSerializableProps('/equities/sectors/[sector]', 'getStaticProps', props)).toBe(true)
 })

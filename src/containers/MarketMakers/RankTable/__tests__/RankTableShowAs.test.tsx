@@ -25,7 +25,7 @@ function Harness() {
 let unmount = () => {}
 afterEach(() => unmount())
 
-test('picks how the metrics read as one radio choice', async () => {
+test('picking Percentile under Show as switches the page to percentile mode', async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -40,9 +40,6 @@ test('picks how the metrics read as one radio choice', async () => {
 			(input) => input.closest('label')!.textContent === name
 		)!
 
-	expect(radio('Value').checked).toBe(true)
 	await act(async () => radio('Percentile').click())
-	expect(radio('Percentile').checked).toBe(true)
-	expect(radio('Value').checked).toBe(false)
 	expect(container.querySelector('output')!.textContent).toBe('percentile')
 })

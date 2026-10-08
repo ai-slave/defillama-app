@@ -68,7 +68,7 @@ Mock only at boundaries:
 - Keep every test under two seconds and every file under five. A test that needs longer sets its own timeout in the `test()` call and says why.
 - Bound every wait on a promise a mock is expected to resolve, so a lost mock registration fails fast instead of hanging.
 - In render tests, wrap every event, focus change and store write in `act`.
-- Wait with `waitForUi` from `src/utils/testing/waitForUi.ts`, never `vi.waitFor`.
+- In render tests, wait with `waitForUi` from `src/utils/testing/waitForUi.ts`, never `vi.waitFor`. Tests that render nothing, such as server routes and auth clients, use `vi.waitFor`.
 - A regression test for async UI holds the response (a fixture that returns a promise the test resolves), so the intermediate state renders before React batches past it.
 - happy-dom fires no `blur` or `focusout` when a focused element is removed or disabled, and it keeps focus on a disabled button. Chrome fires both events and drops focus to the page. Dispatch `focusout` with `relatedTarget: null` to act like Chrome, and assert `disabled` or `aria-disabled` rather than `document.activeElement`.
 - The app runs in Strict Mode (`reactStrictMode: true`), which replays effects on mount. A test of an effect that consumes a one-shot request renders under `<StrictMode>`.

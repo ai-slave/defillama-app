@@ -32,7 +32,8 @@ const chainProps = (name: string) =>
 		allChains: [],
 		metadata: { name },
 		entityQuestions: [],
-		isDataAvailable: true,
+		// Without data the overview draws only the chain's title strip, the one overview part not stubbed here.
+		isDataAvailable: false,
 		protocols: [],
 		protocolRankings: {
 			nextCursor: null,
@@ -98,8 +99,9 @@ test('an IR chain opens the Enterprise tab from the Overview / Enterprise row', 
 	])
 })
 
-test('a chain without an IR dashboard shows no tab row', async () => {
+test('a chain without an IR dashboard shows its overview with no tab row, even with the IR tab in the URL', async () => {
 	router.query = { tab: 'investor-relations' }
 	await render('Ethereum')
+	expect(container.querySelector('h1')?.textContent).toBe('Ethereum')
 	expect(container.querySelector('nav')).toBeNull()
 })

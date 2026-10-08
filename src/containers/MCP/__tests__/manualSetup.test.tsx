@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import MCPContainer from '..'
 
@@ -34,22 +35,13 @@ const tab = (name: string) =>
 	[...container.querySelectorAll<HTMLElement>('[role="tablist"][aria-label="MCP client"] [role="tab"]')].find(
 		(x) => x.textContent === name
 	)!
-const visiblePanels = () => [...container.querySelectorAll<HTMLElement>('[role="tabpanel"]:not([hidden])')]
+const visibleCopyButton = () => container.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) button')!
 
-test('the client config tabs show one snippet panel, labelled by the selected client, and Codex swaps it in', async () => {
+test('the manual setup opens on Claude Code, and picking Codex shows the Codex snippet to copy', async () => {
 	expect(tab('Claude Code').getAttribute('aria-selected')).toBe('true')
-	expect(visiblePanels()).toHaveLength(1)
-	expect(visiblePanels()[0].getAttribute('aria-labelledby')).toBe(tab('Claude Code').id)
-	expect(visiblePanels()[0].querySelector('pre')!.textContent).toBe(
-		'claude mcp add defillama --transport http https://mcp.defillama.com/mcp'
-	)
+	expect(accessibleName(visibleCopyButton())).toBe('Copy Claude Code')
 
 	await act(async () => tab('Codex').click())
 	expect(tab('Codex').getAttribute('aria-selected')).toBe('true')
-	expect(tab('Claude Code').getAttribute('aria-selected')).toBe('false')
-	expect(visiblePanels()).toHaveLength(1)
-	expect(visiblePanels()[0].querySelector('pre')!.textContent).toBe(
-		'codex mcp add defillama --url https://mcp.defillama.com/mcp'
-	)
-	expect(visiblePanels()[0].querySelector('button')!.getAttribute('aria-label')).toBe('Copy Codex')
+	expect(accessibleName(visibleCopyButton())).toBe('Copy Codex')
 })

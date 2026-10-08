@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChartDatasetDefinition } from '../chart-datasets'
 import { ChartDatasetModal } from '../ChartDatasetModal'
@@ -17,11 +18,7 @@ vi.mock('react-hot-toast', () => ({ toast: toasts, default: toasts }))
 vi.mock('@tanstack/react-virtual', async (original) =>
 	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
 )
-// Downloads write a Blob through an object URL, which happy-dom cannot follow.
-vi.mock('~/utils/download', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/utils/download')>()),
-	downloadTabular: vi.fn()
-}))
+const downloads = installDownloadSink()
 
 const chart: ChartDatasetDefinition = {
 	slug: 'test-chart',
@@ -84,6 +81,7 @@ beforeEach(() => {
 	root = createRoot(container)
 })
 afterEach(async () => {
+	vi.useRealTimers()
 	await act(async () => root.unmount())
 	client.clear()
 	container.remove()
@@ -165,12 +163,17 @@ test('a failed copy keeps its reason in the modal until the next action', async 
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 })
 
-test('a download from the sidebar is announced inside the modal', async () => {
+test('a download from the sidebar saves the combined file and is announced inside the modal', async () => {
+	// Only Date is faked: the combined file name carries the download day.
+	vi.useFakeTimers({ toFake: ['Date'] })
+	vi.setSystemTime(new Date('2026-09-15T12:00:00Z'))
 	await renderMetrics()
 	await waitForUi(() => expect(button('Download combined CSV').disabled).toBe(false))
 	await press(button('Download combined CSV'))
 	await waitForUi(() => expect(announced()).toContain('Downloaded alpha_metrics.csv'))
 	expect(toasts.success).not.toHaveBeenCalled()
+	expect(downloads.map(({ filename }) => filename)).toEqual(['alpha_metrics_2026-09-15.csv'])
+	expect(await downloads[0]!.blob.text()).toBe('date,tvl,active_loans\n2026-09-01,20,20\n2026-09-02,10,10')
 })
 
 test('the multi-metric modal is named by its heading', async () => {
@@ -265,12 +268,15 @@ test('on a phone, More actions offers Copy, Save preset and Copy link, and Copy 
 		return found
 	})
 	await press(items[2])
-	await waitForUi(() => expect(announced()).toContain('Link copied'))
-	// The menu has closed, so the dialog shows the confirmation itself.
-	expect([...document.querySelectorAll('[role="dialog"] p')].map((node) => node.textContent)).toContain('Link copied')
-	expect(writeClipboard).toHaveBeenCalledExactlyOnceWith(
-		'http://localhost:3000/downloads?k=dataset&s=test-dataset&c=date%2Cvalue'
+	// The menu has closed, so the dialog announces the confirmation itself.
+	await waitForUi(() =>
+		expect([...document.querySelectorAll('[role="dialog"] [role="status"]')].map((node) => node.textContent)).toContain(
+			'Link copied'
+		)
 	)
+	// SharedLink.test.tsx owns what the link encodes; here it only has to be a Downloads link.
+	expect(writeClipboard).toHaveBeenCalledOnce()
+	expect(new URL(writeClipboard.mock.calls[0]![0]).pathname).toBe('/downloads')
 })
 
 test('the phone Selected toggle counts the selected protocols, says whether the list is showing, and leaves at one', async () => {

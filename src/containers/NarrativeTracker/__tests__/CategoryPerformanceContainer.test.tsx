@@ -2,16 +2,18 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { CategoryPerformanceContainer } from '../index'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/narrative-tracker', push: vi.fn() }) }))
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
-vi.mock('~/components/ECharts/TreemapChart', () => ({ default: () => null }))
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => <p>series chart</p> }))
+vi.mock('~/components/ECharts/TreemapChart', () => ({ default: () => <p>treemap chart</p> }))
 
 let unmount = () => {}
 afterEach(() => unmount())
 
-test('the chart type is a radio pick in the chart toolbar, beside the period and denomination', async () => {
+test('picking Heatmap draws the treemap and drops the chart CSV export, which has no series to export', async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -30,17 +32,20 @@ test('the chart type is a radio pick in the chart toolbar, beside the period and
 		act(() => root.unmount())
 		container.remove()
 	}
-	const radio = (name: string) =>
-		[...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Chart type"] input')].find(
-			(input) => input.closest('label')!.textContent === name
-		)!
+	// The last .csv is the table's own export, which stays for every chart type.
+	const exportNames = () =>
+		[...container.querySelectorAll('button')]
+			.map((button) => accessibleName(button))
+			.filter((name) => name.startsWith('.'))
+	const heatmap = [
+		...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Chart type"] input')
+	].find((input) => input.closest('label')!.textContent === 'Heatmap')!
+	await waitForUi(() => expect(container.textContent).toContain('series chart'))
+	expect(exportNames()).toEqual(['.csv', '.png', '.csv'])
 
-	expect(container.querySelector('[role="tablist"]')).toBeNull()
-	expect(radio('Linechart').checked).toBe(true)
+	await act(async () => heatmap.click())
 
-	await act(async () => radio('Heatmap').click())
-	expect(radio('Heatmap').checked).toBe(true)
-	expect(radio('Linechart').checked).toBe(false)
-	// The period and denomination stay in the same toolbar whatever chart is drawn.
-	expect(container.querySelector('[role="radiogroup"][aria-label="Period"]')).not.toBeNull()
+	await waitForUi(() => expect(container.textContent).toContain('treemap chart'))
+	expect(container.textContent).not.toContain('series chart')
+	expect(exportNames()).toEqual(['.png', '.csv'])
 })

@@ -62,7 +62,9 @@ test('a failed dashboards list says so in the sidebar; a slow retry keeps its fo
 
 	await waitForUi(() => expect(button.getAttribute('aria-busy')).toBe('true'))
 	expect(dashboardsSection()!.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your dashboards.")
-	expect(document.activeElement).toBe(button)
+	expect(button.getAttribute('aria-disabled')).toBe('true')
+	// Browsers drop focus from a natively disabled button; happy-dom does not, so assert the cause.
+	expect(button.disabled).toBe(false)
 	await act(async () => response.resolve(Response.json({ items: [{ id: 'one', name: 'Research', slug: 'research' }] })))
 	await waitForUi(() => expect(dashboardsSection()!.querySelector('[role="alert"]')).toBeNull())
 	expect(dashboardsSection()!.querySelector('a')?.getAttribute('href')).toBe('/pro/research')

@@ -39,35 +39,6 @@ afterEach(async () => {
 	container.remove()
 })
 
-test('a failed See more keeps the results already loaded and offers a retry', async () => {
-	serve({
-		[SEARCH_API_URL]: (_url: URL, init?: RequestInit) => {
-			const { queries } = JSON.parse(init!.body as string) as { queries: Array<{ offset: number }> }
-			if (queries[0].offset > 0) return new Response('down', { status: 503 })
-			return { results: [{ hits: Array.from({ length: 20 }, (_, i) => hit(i + 1)) }, { hits: [] }] }
-		}
-	})
-	await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true })))
-	const input = await waitForUi(() => {
-		const element = document.querySelector<HTMLInputElement>('input[aria-label="Search"]')
-		expect(element).not.toBeNull()
-		return element!
-	})
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'protocol')
-		input.dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	const seeMore = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((b) => b.textContent === 'See more')
-		expect(button).toBeDefined()
-		return button!
-	})
-	await act(async () => seeMore.click())
-	await waitForUi(() => expect(document.body.textContent).toContain('Couldn’t load search results.'))
-	expect(document.body.textContent).toContain('Protocol 20')
-	expect([...document.querySelectorAll('button')].some((b) => b.textContent === 'Try again')).toBe(true)
-})
-
 test('a See more retry waits in its Try again, with the error on screen, until the next page loads', async () => {
 	let page2 = 0
 	const retry = Promise.withResolvers<Response>()
@@ -98,6 +69,7 @@ test('a See more retry waits in its Try again, with the error on screen, until t
 	})
 	await act(async () => seeMore.click())
 	await waitForUi(() => expect(document.body.textContent).toContain('Couldn’t load search results.'))
+	expect(document.body.textContent).toContain('Protocol 20')
 	await act(async () => button('Try again')!.click())
 	await waitForUi(() => expect(button('Retrying…')?.getAttribute('aria-busy')).toBe('true'))
 	expect(document.body.textContent).toContain('Couldn’t load search results.')

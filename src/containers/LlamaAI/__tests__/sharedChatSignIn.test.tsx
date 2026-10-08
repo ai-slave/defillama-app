@@ -84,8 +84,8 @@ async function askAndCloseSignIn() {
 test('a question abandoned at sign-in is not sent after a later sign-in', async () => {
 	await askAndCloseSignIn()
 	await act(async () => pb.authStore.save(session.token, session.record as never))
-	// Long enough for the account to load, which is when the page hands a waiting question over.
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	// The signed-in chat loads its history once the account arrives, which is when a waiting question goes out.
+	await waitForUi(() => expect(session.requests.map((call) => call.url.pathname)).toContain('/user/sessions'))
 	expect(agenticPrompts()).toEqual([])
 })
 

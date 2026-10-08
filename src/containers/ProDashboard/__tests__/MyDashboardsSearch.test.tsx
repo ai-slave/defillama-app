@@ -63,7 +63,10 @@ async function type(value: string) {
 async function click(name: string) {
 	const button = [...container.querySelectorAll('button')].find((candidate) => accessibleName(candidate) === name)
 	expect(button, `button ${name}`).not.toBeUndefined()
-	await act(async () => button!.click())
+	await act(async () => {
+		button!.focus()
+		button!.click()
+	})
 }
 /** Opens My Dashboards, types a search that matches nothing and waits for the list to say so. */
 async function searchForNothing() {
@@ -103,13 +106,16 @@ test('the clear button lists every dashboard at once, and the search typed befor
 	expect(container.textContent).not.toContain('No dashboards match')
 })
 
-test('Clear filters empties the box, and the search typed before it never lands', async () => {
+test('Clear filters empties the box and hands it focus, and the search typed before it never lands', async () => {
 	await searchForNothing()
 	const release = holdDebounce()
 	await type('zzzq')
 	expect(search().value).toBe('zzzq')
 	await click('Clear filters')
+	// The empty state leaves with its button, so focus goes to the search box it emptied.
+	expect(container.textContent).not.toContain('Clear filters')
 	expect(search().value).toBe('')
+	expect(document.activeElement).toBe(search())
 
 	await release()
 	await waitForUi(() => expect(container.textContent).toContain('Showing 1 of 1 dashboards'))

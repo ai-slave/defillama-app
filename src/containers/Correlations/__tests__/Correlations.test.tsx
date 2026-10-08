@@ -82,24 +82,34 @@ afterEach(async () => {
 	router.replace.mockClear()
 })
 
-test('a URL without coins shows the default tokens without rewriting the URL', async () => {
+test('a URL without coins shows the default tokens without rewriting the URL, and removing one hands focus to the next', async () => {
 	await act(async () => root.render(page()))
 
 	await waitForUi(() => expect(listedTokens()).toEqual(['BTC', 'ETH', 'USDT', 'BNB']))
 	expect(router.replace).not.toHaveBeenCalled()
 
-	await act(async () => tokenButtons()[0].click())
+	const remove = tokenButtons()[0]
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
 	expect(router.query).toEqual({ coin: ['ethereum', 'tether', 'binancecoin'] })
 	expect(listedTokens()).toEqual(['ETH', 'USDT', 'BNB'])
+	expect(document.activeElement?.textContent).toBe('Remove ETH')
 })
 
-test('removing the last coin from the URL shows the default tokens again', async () => {
+test('removing the last coin from the URL shows the default tokens again and hands focus to Add token', async () => {
 	router.query = { coin: 'solana' }
 	await act(async () => root.render(page()))
 	await waitForUi(() => expect(listedTokens()).toEqual(['SOL']))
 
-	await act(async () => tokenButtons()[0].click())
+	const remove = tokenButtons()[0]
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
 
 	expect(router.query).toEqual({})
 	await waitForUi(() => expect(listedTokens()).toEqual(['BTC', 'ETH', 'USDT', 'BNB']))
+	expect(document.activeElement?.textContent).toBe('Add token')
 })

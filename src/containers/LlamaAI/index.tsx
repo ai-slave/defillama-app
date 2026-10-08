@@ -491,7 +491,6 @@ export function AgenticChat({
 	const isResearchModalOpen = Ariakit.useStoreState(researchModalStore, 'open')
 	const isSettingsModalOpen = Ariakit.useStoreState(settingsModalStore, 'open')
 	const isSubscribeModalOpen = Ariakit.useStoreState(subscribeModalStore, 'open')
-	const [limitModalFeature, setLimitModalFeature] = useState<'research' | 'fact_checked'>('research')
 	const currentMessageIdRef = useRef<string | null>(null)
 	const executionCoordinator = useConstant(() => new ExecutionCoordinator())
 	const restoreCoordinator = useConstant(() => new AbortScope())
@@ -718,14 +717,7 @@ export function AgenticChat({
 
 	const openShareModal = useCallback((messageId?: string) => setShareTarget({ messageId: messageId ?? null }), [])
 
-	const handleFactCheckedGated = useCallback(() => {
-		dispatchStream({
-			type: 'SET_RATE_LIMIT_DETAILS',
-			value: { period: 'blocked', limit: 0, resetTime: null }
-		})
-		setLimitModalFeature('fact_checked')
-		researchModalStore.show()
-	}, [dispatchStream, researchModalStore])
+	const handleFactCheckedGated = useCallback(() => researchModalStore.show(), [researchModalStore])
 
 	const closeShareModal = useCallback(() => setShareTarget(null), [])
 
@@ -3091,15 +3083,7 @@ export function AgenticChat({
 											}}
 										/>
 									) : null}
-									{!readOnly && rateLimitDetails ? (
-										<ResearchLimitModal
-											dialogStore={researchModalStore}
-											period={rateLimitDetails.period}
-											limit={rateLimitDetails.limit}
-											resetTime={rateLimitDetails.resetTime}
-											feature={limitModalFeature}
-										/>
-									) : null}
+									{!readOnly ? <ResearchLimitModal dialogStore={researchModalStore} /> : null}
 									{!readOnly ? (
 										<EndTrialModal
 											isOpen={showTokenLimitModal}

@@ -61,9 +61,9 @@ describe('hallmark event-rail tooltip', () => {
 		})
 		const formatter = (series.tooltip as { formatter: (params: unknown) => string }).formatter
 
-		expect(formatter({ data: events[0] })).toBe(
-			'14 Sep 2026<li style="list-style:none;font-weight:600;">&lt;img src=x onerror=alert(1)&gt;</li>'
-		)
+		const html = formatter({ data: events[0] })
+		expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
+		expect(html).not.toContain('<img')
 	})
 })
 

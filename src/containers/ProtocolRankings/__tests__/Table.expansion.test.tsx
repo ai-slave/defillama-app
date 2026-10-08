@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ProtocolRankingInitialPage, ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
@@ -47,6 +48,7 @@ const initialPage = {
 
 const searchPage = { ...initialPage, rows: [parent] } satisfies ProtocolRankingPage<IProtocol>
 
+const http = installFixtureFetch()
 let response: ProtocolRankingPage<IProtocol> = searchPage
 let loadNextPage: (() => void) | null = null
 
@@ -58,10 +60,7 @@ beforeEach(() => {
 	localStorage.clear()
 	response = searchPage
 	loadNextPage = null
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(async () => ({ ok: true, status: 200, json: async () => response }) as Response)
-	)
+	http.serve({ '/api/public/protocol-rankings': () => response })
 	vi.stubGlobal(
 		'IntersectionObserver',
 		class {

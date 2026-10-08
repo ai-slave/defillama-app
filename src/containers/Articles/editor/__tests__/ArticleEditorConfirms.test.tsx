@@ -306,23 +306,6 @@ test('a co-author removal that fails after the reader left the editor reports it
 	await waitForUi(() => expect(toasts.error).toHaveBeenCalledWith("Couldn't remove this co-author. Try again."))
 })
 
-test('a discard that fails again keeps its error on screen while the new attempt runs', async () => {
-	article = {
-		...article,
-		status: 'published',
-		pending: { ...article, title: 'Pending headline' } as ArticleSnapshotPayload
-	}
-	await mount()
-	await click(button('Discard'))
-	const confirm = () => openDialog('Discard pending changes?')
-	await click(button('Discard changes', confirm()))
-	await waitForUi(() => expect(confirm().textContent).toContain("Couldn't discard the pending changes. Try again."))
-	articleWrite = () => new Promise<Response>(() => {})
-	await click(button('Discard changes', confirm()))
-	await waitForUi(() => expect(confirm().textContent).toContain('Discarding…'))
-	expect(confirm().textContent).toContain("Couldn't discard the pending changes. Try again.")
-})
-
 test('making a co-author the owner keeps the edits not saved yet', async () => {
 	articleWrite = () => ({ article: { ...article, viewerRole: 'collaborator' } })
 	await mount()

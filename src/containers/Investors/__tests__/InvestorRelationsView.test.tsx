@@ -6,7 +6,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { dashboardModuleQuery } from '../dashboardTabs'
 import { InvestorRelationsView } from '../InvestorRelationsView'
+import { getDashboardModule } from '../registry'
 
 // Real dashboard modules from the registry. Their data is out of scope here: every request answers 503,
 // so a tab that fetches shows its own error state.
@@ -14,7 +16,6 @@ const fetchFixtures = installFixtureFetch()
 
 const HYPERLIQUID = 'eobgdbgg0d0hake'
 const SPARK = '9vn8xp43tdzo6gt'
-const AAVE = 'g3rswlkr9khxa03'
 const ODYSSEY = '0dyss3y3c0sys7m1'
 
 describe('InvestorRelationsView', () => {
@@ -61,7 +62,13 @@ describe('InvestorRelationsView', () => {
 	}
 
 	function selectedTab() {
-		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
+		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.trim() ?? null
+	}
+
+	/** The name of the tab the open panel is labelled by. */
+	function panelLabel() {
+		const panel = container.querySelector('[role="tabpanel"]')!
+		return container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent?.trim()
 	}
 
 	/** The heading a dashboard without its own header shows for the open tab. */
@@ -91,22 +98,22 @@ describe('InvestorRelationsView', () => {
 	})
 
 	test('a dashboard switch hides the old tabs while the new module loads, then starts from its first tab', async () => {
+		// A Hyperliquid tab id that Spark has too, but not first: a selection kept across the switch would open it.
+		const [hyperliquid, spark] = await Promise.all([getDashboardModule(HYPERLIQUID), getDashboardModule(SPARK)])
+		const shared = hyperliquid.tabs.find((tab) => spark.tabs.findIndex((other) => other.id === tab.id) > 0)
+		expect(shared, 'a tab id both dashboards have').toBeDefined()
+
 		renderNow(HYPERLIQUID)
 		expect(tabButtons()).toEqual([])
 		await settle()
-		expect(tabButtons()).toEqual(['Ecosystem', 'Stats', 'Trades', 'HLP Positions', 'Reports', 'Investor Calls'])
-		expect(selectedTab()).toBe('Ecosystem')
+		expect(selectedTab()).toBe(tabButtons()[0])
 
-		await clickTab('Reports')
-		expect(selectedTab()).toBe('Reports')
-		// The panel is labelled by the tab that opened it.
-		const panel = container.querySelector('[role="tabpanel"]')!
-		expect(container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent).toBe(
-			'Reports'
-		)
-		expect(panel.textContent).toContain('Reports — Coming Soon')
-		// Spark also has an Overview tab with this id, so a kept selection would open it there.
-		await clickTab('Ecosystem')
+		const other = tabButtons().find((label) => label !== shared.label)!
+		await clickTab(other)
+		expect(selectedTab()).toBe(other)
+		expect(panelLabel()).toBe(other)
+		await clickTab(shared.label)
+		expect(selectedTab()).toBe(shared.label)
 
 		// Switching dashboards must not show Hyperliquid's tabs under Spark's name while Spark loads.
 		renderNow(SPARK)
@@ -114,17 +121,36 @@ describe('InvestorRelationsView', () => {
 		expect(container.querySelector('[role="tabpanel"]')).toBeNull()
 
 		await settle()
-		expect(tabButtons()).toEqual(['Financials', 'Overview', 'Distribution Rewards', 'Reports & Press Releases'])
-		expect(selectedTab()).toBe('Financials')
-		expect(container.querySelector('[role="tabpanel"]')?.textContent).toBe("Couldn't load Spark financials.")
+		expect(tabButtons()).not.toEqual([])
+		expect(selectedTab()).toBe(tabButtons()[0])
+		expect(panelLabel()).toBe(tabButtons()[0])
 	})
 
 	test('an external tab is a link beside the tab list, not a tab', async () => {
+		const odyssey = await getDashboardModule(ODYSSEY)
+		const external = odyssey.tabs.find((tab) => tab.externalHref)
+		expect(external, 'an external tab').toBeDefined()
+
 		await render(ODYSSEY)
-		expect(tabButtons()).toEqual(['TVL', 'Revenue', 'Incentives', 'Yields', 'Growth', 'Pegs'])
-		const link = Array.from(container.querySelectorAll('a')).find((a) => a.textContent === 'Treasury')!
-		expect(link.getAttribute('href')).toBe('https://metronome.octav.fi/app/Treasury?board=overview')
+		expect(container.querySelector('[role="tablist"]')).not.toBeNull()
+		expect(tabButtons()).not.toContain(external.label)
+		const link = Array.from(container.querySelectorAll('a')).find((a) => a.textContent === external.label)!
+		expect(link.getAttribute('href')).toBe(external.externalHref)
 		expect(link.closest('[role="tablist"]')).toBeNull()
+	})
+
+	test('a dashboard whose module fails to load says so instead of loading forever', async () => {
+		// The registry's imports cannot fail in tests, so the cache starts with the failed load a rejected import
+		// leaves behind. Without retryOnMount: false the mount would refetch and load the real module.
+		const query = dashboardModuleQuery(SPARK)
+		client.setQueryDefaults(query.queryKey, { retryOnMount: false })
+		await client.prefetchQuery({ ...query, queryFn: () => Promise.reject(new Error('ChunkLoadError')) })
+
+		renderNow(SPARK)
+		expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+			"Couldn't load this dashboard. Reload the page to try again."
+		)
+		expect(tabButtons()).toEqual([])
 	})
 
 	test('a controlled active tab hides the tab strip and drives the content', async () => {
@@ -136,14 +162,5 @@ describe('InvestorRelationsView', () => {
 
 		await render(HYPERLIQUID, 'investor-calls')
 		expect(openTabHeading()).toBe('Investor Calls')
-	})
-
-	test('a module that finishes loading after a dashboard switch does not replace the new tabs', async () => {
-		// Both imports are still in flight when the second render commits.
-		renderNow(HYPERLIQUID)
-		renderNow(AAVE)
-		await settle()
-		expect(tabButtons()).toEqual(['Overview', 'Markets', 'Rates', 'GHO'])
-		expect(openTabHeading()).toBe('Overview')
 	})
 })

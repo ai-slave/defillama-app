@@ -192,7 +192,7 @@ function getInitialInputs(filter: ActiveFilter) {
 interface FilterItemEditorProps {
 	filter: ActiveFilter
 	onUpdate: (filter: ActiveFilter) => void
-	onRemove: () => void
+	onRemove: (removeButton: HTMLElement) => void
 	isEditing: boolean
 	onStartEdit: () => void
 	onEndEdit: () => void
@@ -278,6 +278,23 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			{categoryLabel}
 		</span>
 	)
+	const removeButton = (
+		<Tooltip
+			content="Remove filter"
+			render={
+				<Button
+					variant="ghost"
+					size="sm"
+					square
+					data-filter-remove
+					onClick={(event) => onRemove(event.currentTarget)}
+					aria-label={`Remove ${config.label} filter`}
+				/>
+			}
+		>
+			<Icon name="x" className="size-4" />
+		</Tooltip>
+	)
 
 	if (filter.type === 'boolean') {
 		return (
@@ -297,14 +314,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					</div>
 					<span className="truncate text-xs opacity-80">{displayValue}</span>
 				</div>
-				<Tooltip
-					content="Remove filter"
-					render={
-						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
-					}
-				>
-					<Icon name="x" className="size-4" />
-				</Tooltip>
+				{removeButton}
 			</div>
 		)
 	}
@@ -333,14 +343,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						<span className="truncate text-xs opacity-80">{displayValue}</span>
 					</div>
 				</button>
-				<Tooltip
-					content="Remove filter"
-					render={
-						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
-					}
-				>
-					<Icon name="x" className="size-4" />
-				</Tooltip>
+				{removeButton}
 			</div>
 		)
 	}
@@ -360,20 +363,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<Tooltip
-						content="Remove filter"
-						render={
-							<Button
-								variant="ghost"
-								size="sm"
-								square
-								onClick={onRemove}
-								aria-label={`Remove ${config.label} filter`}
-							/>
-						}
-					>
-						<Icon name="x" className="size-4" />
-					</Tooltip>
+					{removeButton}
 				</div>
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
@@ -406,14 +396,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					<span className="truncate title-sm">{config.label}</span>
 					{categoryBadge}
 				</div>
-				<Tooltip
-					content="Remove filter"
-					render={
-						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
-					}
-				>
-					<Icon name="x" className="size-4" />
-				</Tooltip>
+				{removeButton}
 			</div>
 			<Select
 				allValues={OPERATOR_OPTIONS}
@@ -485,6 +468,8 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) {
 	const [search, setSearch] = useState('')
 	const searchRef = useRef<HTMLInputElement>(null)
+	const browseListRef = useRef<HTMLDivElement>(null)
+	const activeListRef = useRef<HTMLDivElement>(null)
 	const [expandedCategories, setExpandedCategories] = useState<Set<FilterCategory>>(new Set(['metrics', 'flags']))
 	const [pendingFilters, setPendingFilters] = useState<Array<ActiveFilter>>([])
 	const [editingFilterId, setEditingFilterId] = useState<string | null>(null)
@@ -574,6 +559,22 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 		}
 	}
 
+	// A filter that leaves the active list with nothing in its place hands focus to its option in the browse list, or to
+	// the search when a collapsed category or the query hides the option.
+	const optionOrSearch = (filterId: string) =>
+		browseListRef.current?.querySelector<HTMLElement>(`[data-filter-id="${filterId}"]`) ?? searchRef.current
+
+	// The next filter's × takes focus, else the previous one's, else the removed filter's option.
+	const removeFilter = (filterId: string, removeButton: HTMLElement) => {
+		const removes = [...activeListRef.current!.querySelectorAll<HTMLElement>('[data-filter-remove]')]
+		const index = removes.indexOf(removeButton)
+		const neighbour = removes[index + 1] ?? removes[index - 1]
+		keepFocus(
+			() => handleRemoveFilter(filterId),
+			() => neighbour ?? optionOrSearch(filterId)
+		)
+	}
+
 	const handleClearAll = () => {
 		setPendingFilters([])
 		setEditingFilterId(null)
@@ -633,7 +634,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						if (value) expandAllCategories()
 					}}
 				/>
-				<div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
+				<div ref={browseListRef} className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
 					{filteredCategories.map(({ category, label, filters: categoryFilters }) => {
 						const isExpanded = expandedCategories.has(category)
 						const availableFilters = categoryFilters.filter((f) => !activeFilterIds.has(f.id))
@@ -664,6 +665,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 											<button
 												key={filter.id}
 												type="button"
+												data-filter-id={filter.id}
 												onClick={() => handleAddFilter(filter)}
 												className="group flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 text-left transition-all hover:bg-(--cards-bg2)"
 											>
@@ -711,12 +713,16 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<span className="text-pro-text-secondary">Active ({allActiveFilters.length})</span>
 					</div>
 					{allActiveFilters.length > 0 ? (
-						<Button variant="link" onClick={handleClearAll}>
+						// The button leaves with the last filter, so focus goes to the search.
+						<Button variant="link" onClick={() => keepFocus(handleClearAll, () => searchRef.current)}>
 							Clear all
 						</Button>
 					) : null}
 				</div>
-				<div className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1">
+				<div
+					ref={activeListRef}
+					className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1"
+				>
 					{allActiveFilters.length === 0 ? (
 						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-pro-cards-border py-6 text-center">
 							<Icon name="settings" className="mb-2 size-5 text-pro-text-tertiary" />
@@ -733,11 +739,18 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									key={filter.config.id}
 									filter={filter}
 									onUpdate={handleUpdateFilter}
-									onRemove={() => handleRemoveFilter(filter.config.id)}
+									onRemove={(removeButton) => removeFilter(filter.config.id, removeButton)}
 									isEditing={isEditing}
 									onStartEdit={() => setEditingFilterId(filter.config.id)}
 									// A new filter closed without a value adds nothing, so it leaves the list.
-									onEndEdit={() => (isPending ? handleRemoveFilter(filter.config.id) : setEditingFilterId(null))}
+									onEndEdit={() =>
+										isPending
+											? keepFocus(
+													() => handleRemoveFilter(filter.config.id),
+													() => optionOrSearch(filter.config.id)
+												)
+											: setEditingFilterId(null)
+									}
 								/>
 							)
 						})

@@ -14,6 +14,9 @@ const session = installSubscriberSession('u1', { resolved: true })
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
+	// A failed subscription read retries twice, 250ms then 500ms later, before the hook sees the error. Fake timers run
+	// those waits, and the zero-delay timers React Query notifies with, at once.
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	session.serve({ '/subscription/trial-available': { trialAvailable: false } })
 	session.client.setQueryData(subscriptionStatusQueryKey('u1'), {
@@ -26,6 +29,7 @@ beforeEach(() => {
 	root = createRoot(container)
 })
 afterEach(async () => {
+	vi.useRealTimers()
 	await act(async () => root.unmount())
 	container.remove()
 })
@@ -37,8 +41,10 @@ function Access() {
 
 async function failNextRead() {
 	session.serve({ '/subscription/status': fixtureStatus(503, { message: 'Unavailable' }) })
-	await act(async () => session.client.refetchQueries({ queryKey: subscriptionStatusQueryKey('u1') }))
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
+	await act(async () => {
+		void session.client.refetchQueries({ queryKey: subscriptionStatusQueryKey('u1') })
+		await vi.runAllTimersAsync()
+	})
 }
 
 test('a failed refresh of a known API plan keeps SQL access', async () => {
@@ -64,5 +70,6 @@ test('a subscription that never loaded leaves SQL access unknown', async () => {
 			</session.Wrapper>
 		)
 	)
+	await act(() => vi.runAllTimersAsync())
 	await waitForUi(() => expect(container.textContent).toBe('unknown'))
 })

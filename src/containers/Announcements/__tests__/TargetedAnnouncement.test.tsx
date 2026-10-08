@@ -190,6 +190,23 @@ describe('TargetedAnnouncement', () => {
 			expect(text()).toBe('')
 		})
 
+		test('navigating to another chain resolves again: the closed promo stays hidden and the next banner shows', async () => {
+			serveInterests({ interests: [{ category: 'llamaai', score: 0.7 }], segments: [] })
+			await render()
+			await waitForImpression()
+			expect(text()).toContain(PROMO_TEXT)
+			await dismiss()
+			expect(text()).toBe('')
+			track.mockClear()
+
+			route.asPath = '/chain/arbitrum'
+			await render()
+			await waitForText('LlamaAI is now in the DefiLlama app.')
+			await waitForImpression()
+			expect(text()).not.toContain(PROMO_TEXT)
+			expect(impressions()[0][1]).toMatchObject({ kind: 'targeted', id: 'llamaai-mobile-app', page: '/chain/[chain]' })
+		})
+
 		test('clock ticks keep the banner and count one impression', async () => {
 			// The page clock ticks on an interval, so the test drives it along with the date.
 			vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
@@ -314,20 +331,6 @@ describe('TargetedAnnouncement', () => {
 			expect(sent().filter(([event]) => event === 'announcement-click')).toEqual([
 				['announcement-click', expect.objectContaining({ id: 'verified-apy', category: 'yields' })]
 			])
-		})
-
-		test('navigating to another chain resolves again and skips the banners dismissed earlier', async () => {
-			serveInterests({ interests: [{ category: 'llamaai', score: 0.7 }], segments: [] })
-			await render()
-			await waitForText('LlamaAI is now in the DefiLlama app.')
-			await dismiss()
-			track.mockClear()
-
-			route.asPath = '/chain/arbitrum'
-			await render()
-			await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
-			expect(text()).toBe('')
-			expect(impressions()).toEqual([])
 		})
 	})
 })

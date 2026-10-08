@@ -1,14 +1,13 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { PeggedAssetInfo } from '../StablecoinOverview'
 import type { PeggedAssetPageProps } from '../types'
 
-const http = installFixtureFetch()
+const session = installSubscriberSession('subscriber', { resolved: true })
 
 const router = vi.hoisted(() => ({
 	isReady: false,
@@ -19,8 +18,6 @@ const router = vi.hoisted(() => ({
 	replace: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
-// Needs the auth provider; nothing here reads it.
-vi.mock('~/components/AddToDashboard/AddToDashboardButton', () => ({ AddToDashboardButton: () => null }))
 
 const EMPTY_CHART = {
 	dataset: { source: [], dimensions: ['timestamp'] },
@@ -60,12 +57,11 @@ const props = {
 
 let container: HTMLDivElement
 let root: Root
-let queryClient: QueryClient
 
 const page = () => (
-	<QueryClientProvider client={queryClient}>
+	<session.Wrapper>
 		<PeggedAssetInfo {...props} />
-	</QueryClientProvider>
+	</session.Wrapper>
 )
 
 // Shallow routing re-renders the page with the new query; the mock does the same.
@@ -80,8 +76,7 @@ const totalCirculating = () =>
 const unreleasedCheckbox = () => container.querySelector<HTMLInputElement>('input[value="unreleased"]')!
 
 beforeEach(() => {
-	http.serve({ '/api/public/stablecoins/chart-series': EMPTY_CHART })
-	queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	session.serve({ '/api/public/stablecoins/chart-series': EMPTY_CHART, '/lite/dashboards': { items: [] } })
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -89,7 +84,6 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await act(async () => root.unmount())
-	queryClient.clear()
 	container.remove()
 	router.isReady = false
 	router.query = { peggedasset: 'tether' }
@@ -105,7 +99,8 @@ test('the unreleased flag in the URL adds unreleased supply once the router is r
 	await act(async () => root.render(page()))
 	expect(totalCirculating()).toBe('150m')
 	expect(unreleasedCheckbox().checked).toBe(true)
-	expect(http.requests.map(({ url }) => url.searchParams.get('unreleased'))).toEqual(['true'])
+	const chartRequests = session.requests.filter(({ url }) => url.pathname === '/api/public/stablecoins/chart-series')
+	expect(chartRequests.map(({ url }) => url.searchParams.get('unreleased'))).toEqual(['true'])
 
 	await act(async () => unreleasedCheckbox().click())
 	expect(router.query).toEqual({ peggedasset: 'tether' })

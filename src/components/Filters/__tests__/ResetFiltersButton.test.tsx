@@ -25,7 +25,7 @@ test.each([false, true])(
 		})
 		await act(async () => root.render(<FilterBar nestedMenu={nestedMenu} />))
 		const reset = container.querySelector('button')!
-		reset.focus()
+		await act(async () => reset.focus())
 		await act(async () => reset.click())
 
 		expect(reset.getAttribute('aria-disabled')).toBe('true')

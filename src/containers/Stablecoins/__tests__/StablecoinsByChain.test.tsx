@@ -3,12 +3,18 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { STABLECOINS_SERVER_URL } from '~/constants'
+import { resultBody } from '~/server/api/__tests__/resultBody'
+import { clearResultCache } from '~/server/api/resultCache'
+import type { ApiQuery } from '~/server/api/types'
+import type { IChainMetadata } from '~/utils/metadata/types'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { StablecoinChartSeriesPayload } from '../chartSeries'
+import { stablecoinVolumeChart } from '../server/api'
 import { StablecoinsByChain } from '../StablecoinsByChain'
-import { buildStablecoinVolumeChartPayload } from '../volumeChart'
 
 const router = vi.hoisted(() => ({
 	pathname: '/stablecoins/[chain]',
@@ -19,24 +25,20 @@ const router = vi.hoisted(() => ({
 const chart = vi.hoisted(() => ({
 	// Suspends the chart's render for matching props, holding the deferred chart on the rows already on screen.
 	holdWhen: (_props: IMultiSeriesChartProps): boolean => false,
-	pending: new Promise<never>(() => {}),
-	/** The series the last drawn chart was given, the target its CSV must match. */
-	drawnSeries: [] as Array<string>
+	pending: new Promise<never>(() => {})
 }))
 
 vi.mock('next/router', () => ({ useRouter: () => router }))
-// ECharts cannot draw in happy-dom; the stub suspends and records the series it was given to draw.
+// ECharts cannot draw in happy-dom; the stub only suspends, so the page keeps the chart it already drew.
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	default: (props: IMultiSeriesChartProps) => {
 		if (chart.holdWhen(props)) throw chart.pending
-		chart.drawnSeries = props.charts
-			.map((series) => series.name)
-			.filter((name) => props.selectedCharts?.has(name) ?? true)
 		return null
 	}
 }))
 
 const session = installSubscriberSession('subscriber', { resolved: true })
+const metadata = installMetadataSeeder()
 const downloads = installDownloadSink()
 let container: HTMLDivElement
 let root: Root
@@ -77,18 +79,26 @@ router.push.mockImplementation(async ({ query }: { query: Record<string, string 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	chart.holdWhen = () => false
-	chart.drawnSeries = []
 	router.query = { chartType: 'volume', chartView: 'byToken' }
+	clearResultCache()
+	metadata.seed({
+		chainMetadata: { ethereum: { name: 'Ethereum', id: 'ethereum' } as IChainMetadata },
+		chainRouteKeyBySlug: { ethereum: 'ethereum' }
+	})
 	session.serve({
-		// Applies the picker's intent the way the volume route does.
-		'/api/public/stablecoins/volume-chart': (url: URL) =>
-			buildStablecoinVolumeChartPayload({
-				chart: 'token',
-				data: VOLUME_POINTS,
-				limit: url.searchParams.has('all') ? null : Number(url.searchParams.get('limit')),
-				selectedNames: url.searchParams.has('include') ? url.searchParams.getAll('series') : null,
-				excludedNames: url.searchParams.has('exclude') ? url.searchParams.getAll('series') : null
-			})
+		[`${STABLECOINS_SERVER_URL}/chart/volume/chain/ethereum/token-breakdown`]: VOLUME_POINTS,
+		// The page's requests run through the real volume route.
+		'/api/public/stablecoins/volume-chart': async (url: URL) => {
+			// Next hands a route a repeated query key as an array.
+			const query: ApiQuery = {}
+			for (const key of new Set(url.searchParams.keys())) {
+				const values = url.searchParams.getAll(key)
+				query[key] = values.length === 1 ? values[0] : values
+			}
+			return resultBody(
+				await stablecoinVolumeChart.handle({ method: 'GET', url: url.pathname + url.search, query, headers: {} })
+			)
+		}
 	})
 	container = document.createElement('div')
 	document.body.append(container)
@@ -172,28 +182,28 @@ test('exports weekly volume once weekly grouping renders', async () => {
 	)
 })
 
-const csvSeries = (csv: string) => csv.split('\n')[0]!.split(',').slice(2)
+const csvHeader = (csv: string) => csv.split('\n')[0]
 
 test('exports the tokens the chart still draws while a new token selection renders', async () => {
 	await renderPage()
 	// Fetch the USDT-only rows once, so picking them again renders cached rows that the stub can hold.
 	await toggleToken('USDC')
-	await waitForUi(() => expect(chart.drawnSeries).toEqual(['USDT']))
+	await waitForUi(() => expect(tokenPicker()?.textContent).toBe('1Token'))
 	await toggleToken('USDC')
-	await waitForUi(() => expect(chart.drawnSeries).toEqual(['USDT', 'USDC']))
+	await waitForUi(() => expect(tokenPicker()?.textContent).toBe('2Token'))
 	chart.holdWhen = ({ dataset }) => !dataset.dimensions.includes('USDC')
 
 	await toggleToken('USDC')
 
-	expect(csvSeries(await exportCsv())).toEqual(chart.drawnSeries)
-	expect(chart.drawnSeries).toEqual(['USDT', 'USDC'])
+	expect(tokenPicker()?.textContent).toBe('1Token')
+	expect(csvHeader(await exportCsv())).toBe('Timestamp,Date,USDT,USDC')
 })
 
 test('exports the picked tokens once the selection renders', async () => {
 	await renderPage()
 
 	await toggleToken('USDC')
-	await waitForUi(() => expect(chart.drawnSeries).toEqual(['USDT']))
+	await waitForUi(() => expect(tokenPicker()?.textContent).toBe('1Token'))
 
 	expect(await exportCsv()).toBe(
 		'Timestamp,Date,USDT\n1609718400000,2021-01-04,10\n1609804800000,2021-01-05,20\n1610323200000,2021-01-11,30'

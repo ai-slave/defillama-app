@@ -51,12 +51,30 @@ async function renderTab(onChartTypeChange = vi.fn()) {
 			</QueryClientProvider>
 		)
 	)
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
 }
 
+const chartTypeRadios = () => [
+	...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Chart type"] input[type="radio"]')
+]
+
 test('editing a borrow-cost card keeps its chart type while the pool data loads', async () => {
+	// The pool list has the card's borrow market; the pool's supply and borrow history stay pending.
+	http.serve({
+		'/api/public/yields/earn': {
+			rows: [
+				{ configID: 'pool-1', pool: 'USDC', project: 'aave-v3', chains: ['Ethereum'], tvl: 1, tokenSymbols: ['USDC'] }
+			]
+		},
+		'/api/public/yields/borrow-markets': { rows: [{ id: 'pool-1', borrowApy: 4, totalBorrowUsd: 1 }] }
+	})
 	const onChartTypeChange = vi.fn()
 	await renderTab(onChartTypeChange)
+	// Borrow types join the picker once their history loads; until then none of the offered types is selected.
+	await waitForUi(() =>
+		expect(chartTypeRadios().map((radio) => [radio.parentElement!.textContent, radio.checked])).toEqual([
+			['TVL & Supply APY', false]
+		])
+	)
 	expect(onChartTypeChange).not.toHaveBeenCalled()
 })
 
