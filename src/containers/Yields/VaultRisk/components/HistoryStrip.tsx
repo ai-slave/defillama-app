@@ -249,9 +249,9 @@ export function buildHistoryStrip(
 }
 
 const INCIDENT_TONE: Record<IncidentPoint['tone'], string> = {
-	loss: 'border-data-down/70 bg-data-down/20',
-	'made-whole': 'border-data-up bg-data-up/15',
-	averted: 'border-data-up border-dashed bg-data-up/15'
+	loss: 'border-data-down-strong bg-data-down-tint-strong',
+	'made-whole': 'border-data-up bg-data-up-tint-strong',
+	averted: 'border-data-up border-dashed bg-data-up-tint-strong'
 }
 
 const INCIDENT_TONE_TEXT: Record<IncidentPoint['tone'], { label: string; className: string }> = {
@@ -334,7 +334,7 @@ function ProtocolIncidentDot({
 						aria-label={p.label}
 						data-hs-pt
 						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed bg-surface outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
-							p.recovered ? 'border-data-up/60' : 'border-secondary'
+							p.recovered ? 'border-data-up-strong' : 'border-secondary'
 						} ${selected ? 'ring-2 ring-brand' : ''}`}
 						style={{
 							left: `${p.x}%`,
@@ -367,7 +367,7 @@ function AuditChip({ c, selected, onToggle }: { c: AuditCluster; selected: boole
 					data-hs-pt
 					className={`absolute flex min-h-6 min-w-6 -translate-x-1/2 items-center justify-center rounded-sm border px-1 label-sm outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
 						selected
-							? 'border-brand bg-brand/10 text-link'
+							? 'border-brand bg-brand-tint text-link'
 							: 'border-medium bg-surface text-secondary hover:border-strong hover:text-primary'
 					}`}
 					style={{ left: `${c.x}%`, top: `calc(${AXIS_Y}% + 5px)` }}
@@ -546,7 +546,7 @@ export function HistoryStrip({
 					{vm.years.map((y) => (
 						<span key={y.label} aria-hidden className="contents">
 							<span
-								className="absolute h-1 w-px -translate-x-1/2 bg-secondary/40"
+								className="absolute h-1 w-px -translate-x-1/2 bg-border-strong"
 								style={{ left: `${y.x}%`, top: `calc(${AXIS_Y}% - 4px)` }}
 							/>
 							<span className="absolute bottom-0 -translate-x-1/2 body-xs text-secondary" style={{ left: `${y.x}%` }}>

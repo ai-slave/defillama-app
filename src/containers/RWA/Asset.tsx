@@ -102,8 +102,8 @@ function ClassificationItem({ label, value, positive, description }: Classificat
 			className={`flex items-start justify-between gap-2 rounded-md border p-2 ${
 				isBoolean
 					? positive
-						? 'border-success/30 bg-success/10'
-						: 'border-error/30 bg-error/10'
+						? 'border-success-muted bg-success-tint'
+						: 'border-error-muted bg-error-tint'
 					: 'border-subtle bg-surface'
 			}`}
 		>
@@ -132,7 +132,7 @@ function KYCItem({ label, required, description }: { label: string; required: bo
 	return (
 		<div
 			className={`flex items-start justify-between gap-2 rounded-md border p-2 ${
-				required ? 'border-warning/30 bg-warning/10' : 'border-success/30 bg-success/10'
+				required ? 'border-warning-muted bg-warning-tint' : 'border-success-muted bg-success-tint'
 			}`}
 		>
 			<p className="flex flex-col gap-1">

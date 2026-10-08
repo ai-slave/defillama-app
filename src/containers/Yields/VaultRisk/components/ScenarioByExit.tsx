@@ -92,7 +92,7 @@ function ScenarioRow({
 				id={scenarioRowId(s.scenarioId)}
 				onClick={() => clickable && onToggle()}
 				className={`border-t border-subtle ${
-					clickable ? (selected ? 'hover-wash cursor-pointer bg-brand-muted' : 'cursor-pointer hover:bg-hover-row') : ''
+					clickable ? (selected ? 'cursor-pointer bg-brand-muted' : 'cursor-pointer hover:bg-hover-row') : ''
 				}`}
 			>
 				<td className="px-3 py-3 align-middle">

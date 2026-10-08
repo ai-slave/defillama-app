@@ -22,7 +22,7 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 					<div key={step} aria-current={isActive ? 'step' : undefined} className="flex items-center gap-2">
 						<div
 							className={`flex size-8 items-center justify-center rounded-full label-sm transition-colors ${
-								isActive ? 'bg-brand text-on-brand' : isCompleted ? 'bg-brand/20 text-link' : 'text-tertiary'
+								isActive ? 'bg-brand text-on-brand' : isCompleted ? 'bg-brand-tint-strong text-link' : 'text-tertiary'
 							}`}
 						>
 							{isCompleted ? (
@@ -35,7 +35,7 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 							{STEP_LABELS[step]}
 						</span>
 						{index < WIZARD_STEPS.length - 1 ? (
-							<div className={`h-px w-8 ${isCompleted ? 'bg-brand/40' : 'bg-border-subtle'}`} />
+							<div className={`h-px w-8 ${isCompleted ? 'bg-brand' : 'bg-border-subtle'}`} />
 						) : null}
 					</div>
 				)

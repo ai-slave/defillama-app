@@ -232,9 +232,9 @@ export function ReturnMatrix({
 										value == null
 											? 'bg-surface-elevated-1 text-tertiary'
 											: value > 0
-												? 'bg-data-up/10 text-data-up'
+												? 'bg-data-up-tint text-data-up'
 												: value < 0
-													? 'bg-data-down/10 text-data-down'
+													? 'bg-data-down-tint text-data-down'
 													: 'bg-surface-elevated-1 text-secondary'
 									return (
 										<td key={period.key} className={`rounded-md px-2 py-2 text-center label-sm ${tone}`}>

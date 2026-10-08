@@ -96,7 +96,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					onClick={open}
 					accessibleWhenDisabled
 					aria-busy={isUploading || undefined}
-					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
+					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
 				>
 					{isUploading ? <LoadingSpinner size={14} /> : <Icon name="file-text" className="size-5" />}
 					<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>

@@ -153,7 +153,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 					type="button"
 					data-umami-event="export-csv"
 					data-umami-event-page={router.pathname}
-					className={`${className ?? ''} aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+					className={`${className ?? ''} aria-disabled:cursor-not-allowed aria-disabled:text-disabled`}
 					onClick={handleButtonClick}
 					disabled={disabled || !isClient || isLoading}
 					accessibleWhenDisabled={csv.status === 'pending' || props.isLoading}

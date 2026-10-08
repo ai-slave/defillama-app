@@ -82,7 +82,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 									<TypeBadge kind={col.kind} />
 									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary/80">{col.type}</span>
+								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary">{col.type}</span>
 							</div>
 						)
 					})}
@@ -95,7 +95,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="row"
 								key={v.index}
-								className={`absolute inset-x-0 grid mono-sm tabular-nums transition-colors hover:bg-brand/5 ${
+								className={`absolute inset-x-0 grid mono-sm tabular-nums transition-colors hover:bg-brand-faint ${
 									zebra ? 'bg-pro-app-bg/25' : ''
 								}`}
 								style={{
@@ -115,7 +115,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 											key={col.columnIndex}
 											className={`border-subtle/30 flex items-center truncate border-l px-2.5 first:border-l-0 ${
 												isNumeric ? 'justify-end text-pro-text-primary' : 'text-pro-text-primary'
-											} ${isNull ? 'text-pro-text-tertiary/50' : ''}`}
+											} ${isNull ? 'text-pro-text-tertiary' : ''}`}
 											title={isNull || isList ? '' : cellToTitle(value)}
 										>
 											{isList ? (

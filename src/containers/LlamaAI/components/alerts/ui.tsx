@@ -38,7 +38,7 @@ export const alertFieldLabelClass = 'label-sm text-secondary'
 /** The 32px tile that leads every alerts dialog header. */
 export function AlertsHeaderIcon() {
 	return (
-		<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+		<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
 			<Icon name="calendar-plus" className="size-4" aria-hidden="true" />
 		</span>
 	)
@@ -129,11 +129,11 @@ export function StatusChip({
 }) {
 	const toneClass =
 		tone === 'success'
-			? 'bg-success/10 text-success'
+			? 'bg-success-tint text-success'
 			: tone === 'error'
-				? 'bg-error/10 text-error'
+				? 'bg-error-tint text-error'
 				: tone === 'warning'
-					? 'bg-warning/10 text-warning'
+					? 'bg-warning-tint text-warning'
 					: 'bg-surface-elevated-2 text-tertiary'
 	return (
 		<span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 label-xs capitalize ${toneClass}`}>

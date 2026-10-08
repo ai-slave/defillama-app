@@ -203,7 +203,7 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 									)}
 									<span>· {formatVerified(a.date)}</span>
 									{formal ? (
-										<span className="rounded-full border border-data-up/30 bg-data-up/10 px-1.5 py-px label-xs text-primary">
+										<span className="rounded-full border border-data-up-muted bg-data-up-tint px-1.5 py-px label-xs text-primary">
 											formal verification
 										</span>
 									) : null}

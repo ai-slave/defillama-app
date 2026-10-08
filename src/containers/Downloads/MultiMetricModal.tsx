@@ -765,7 +765,7 @@ function ParamPickerEmpty({
 	return (
 		<div className="flex flex-1 items-center justify-center px-6 py-8">
 			<div className="flex w-full max-w-md flex-col items-center gap-4 text-center">
-				<div className="flex size-11 items-center justify-center rounded-full bg-brand/10">
+				<div className="flex size-11 items-center justify-center rounded-full bg-brand-tint">
 					<Icon name="layers" className="size-5 text-link" />
 				</div>
 				<div className="flex flex-col gap-1">
@@ -824,7 +824,7 @@ function EmptyState({
 	return (
 		<div className="flex flex-1 items-center justify-center px-6">
 			<div className="flex max-w-sm flex-col items-center gap-3 text-center">
-				<div className="flex size-10 items-center justify-center rounded-full bg-brand/10">
+				<div className="flex size-10 items-center justify-center rounded-full bg-brand-tint">
 					<Icon name="layers" className="size-5 text-link" />
 				</div>
 				<div className="flex flex-col gap-1">

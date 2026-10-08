@@ -13,9 +13,9 @@ export function ChainWarningBanners({
 				<p
 					className={`relative rounded-md border p-2 text-center body-sm text-primary ${
 						banner.level === 'rug'
-							? 'border-error bg-error/20'
+							? 'border-error bg-error-tint-strong'
 							: banner.level === 'alert'
-								? 'border-warning bg-warning/20'
+								? 'border-warning bg-warning-tint-strong'
 								: 'border-(--bg-color) bg-surface-elevated-1'
 					}`}
 					key={`${banner.message}-${banner.level}-${chainName}`}

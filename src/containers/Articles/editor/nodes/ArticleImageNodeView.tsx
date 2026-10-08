@@ -23,7 +23,7 @@ function ImageDetailsPopover({
 		<Ariakit.PopoverProvider placement="bottom-end">
 			<Ariakit.PopoverDisclosure render={<Button variant="ghost" size="sm" />}>
 				{label}
-				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-tertiary/40'}`} />
+				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-border-strong'}`} />
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" heading={title} fixed gutter={8} className="w-80">
 				<div className="p-3">{children}</div>
@@ -224,9 +224,9 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 				{isUploading ? (
 					<div
 						role="status"
-						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/40 label-sm text-secondary"
+						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-veil label-sm text-secondary"
 					>
-						<span className="rounded-md bg-surface/95 px-3 py-1.5 shadow-sm">Uploading…</span>
+						<span className="rounded-md bg-surface-glass px-3 py-1.5 shadow-sm">Uploading…</span>
 					</div>
 				) : null}
 				{isEditable && !isUploading ? (

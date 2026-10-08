@@ -120,7 +120,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 						<div className="dl-feed-reveal mt-8" style={{ animationDelay: '190ms' }}>
 							<a
 								href={feedSchemeUrl(RESEARCH_FEED_URL)}
-								className="inline-flex items-center gap-2.5 rounded-lg border border-medium px-5 py-2.5 title-md text-primary transition-[color,background-color,border-color,transform] duration-150 hover:border-link/50 hover:bg-surface motion-safe:active:scale-[0.98]"
+								className="inline-flex items-center gap-2.5 rounded-lg border border-medium px-5 py-2.5 title-md text-primary transition-[color,background-color,border-color,transform] duration-150 hover:border-brand-strong hover:bg-surface motion-safe:active:scale-[0.98]"
 							>
 								<RssMark size={16} />
 								Open in your RSS app

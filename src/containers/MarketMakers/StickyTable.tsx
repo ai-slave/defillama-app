@@ -30,9 +30,7 @@ function stickyStyle(index: number): CSSProperties | undefined {
 
 export function SortArrow({ dir }: { dir: false | 'asc' | 'desc' }) {
 	return (
-		<span className={`shrink-0 label-xs ${dir ? 'text-primary' : 'text-tertiary opacity-40'}`}>
-			{dir === 'asc' ? '↑' : '↓'}
-		</span>
+		<span className={`shrink-0 label-xs ${dir ? 'text-primary' : 'text-tertiary'}`}>{dir === 'asc' ? '↑' : '↓'}</span>
 	)
 }
 

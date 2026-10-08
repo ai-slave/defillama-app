@@ -17,7 +17,7 @@ export function RWAFlowValueShimmer({ label = 'Loading flow value' }: { label?: 
 		<span
 			role="status"
 			aria-label={label}
-			className="inline-block h-3 w-12 animate-pulse rounded-sm bg-tertiary opacity-20"
+			className="inline-block h-3 w-12 animate-pulse rounded-sm bg-surface-elevated-2"
 		/>
 	)
 }

@@ -53,7 +53,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 					>
 						<div className="flex flex-col justify-between gap-6">
 							{excerpt ? (
-								<div className="body-md text-primary/90 dark:text-research-ink">
+								<div className="body-md text-primary dark:text-research-ink">
 									<p className="mb-2 whitespace-break-spaces last:mb-0">{excerpt}</p>
 								</div>
 							) : null}

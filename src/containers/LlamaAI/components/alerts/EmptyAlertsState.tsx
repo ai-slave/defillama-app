@@ -25,9 +25,9 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('price')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-warning/30 not-disabled:not-aria-disabled:hover:bg-warning/3"
+					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-warning-muted not-disabled:not-aria-disabled:hover:bg-warning-faint"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-warning/10 text-warning">
+					<span className="flex size-9 items-center justify-center rounded-lg bg-warning-tint text-warning">
 						<Icon name="trending-up" className="size-4" />
 					</span>
 					<span className="label-md text-primary">Watch a price</span>
@@ -43,9 +43,9 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('schedule')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-link/30 not-disabled:not-aria-disabled:hover:bg-link/3"
+					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-brand-muted not-disabled:not-aria-disabled:hover:bg-brand-faint"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-link/10 text-link">
+					<span className="flex size-9 items-center justify-center rounded-lg bg-brand-tint text-link">
 						<Icon name="calendar" className="size-4" />
 					</span>
 					<span className="label-md text-primary">Any question, on a schedule</span>
@@ -70,7 +70,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 							key={chip.text}
 							type="button"
 							onClick={() => onChipSelect(chip.text, chip.variant)}
-							className="rounded-full border border-medium px-3 py-1.5 body-sm text-secondary not-disabled:not-aria-disabled:hover:border-link/40 not-disabled:not-aria-disabled:hover:bg-link/4 not-disabled:not-aria-disabled:hover:text-link"
+							className="rounded-full border border-medium px-3 py-1.5 body-sm text-secondary not-disabled:not-aria-disabled:hover:border-brand-muted not-disabled:not-aria-disabled:hover:bg-brand-faint not-disabled:not-aria-disabled:hover:text-link"
 						>
 							{chip.text}
 						</button>

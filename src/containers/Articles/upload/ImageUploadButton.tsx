@@ -73,7 +73,7 @@ export function ImageUploadButton({
 							accessibleWhenDisabled
 							aria-busy={isUploading || undefined}
 							aria-label={`Replace ${name}`}
-							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium transition-[border-color] not-aria-disabled:hover:border-link/50 aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60"
+							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium transition-[border-color] not-aria-disabled:hover:border-brand-strong aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60"
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
@@ -92,7 +92,7 @@ export function ImageUploadButton({
 							disabled={isUploading}
 							accessibleWhenDisabled
 							aria-busy={isUploading || undefined}
-							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
+							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
 						>
 							{isUploading ? <LoadingSpinner size={14} /> : <Icon name="image-plus" className="size-5" />}
 							<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload'}</span>
@@ -137,7 +137,7 @@ export function ImageUploadButton({
 								accessibleWhenDisabled
 								aria-busy={isUploading || undefined}
 								aria-label={`Replace ${name}`}
-								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium transition-[border-color] not-aria-disabled:hover:border-link/50 aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed"
+								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium transition-[border-color] not-aria-disabled:hover:border-brand-strong aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed"
 							>
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
@@ -179,7 +179,7 @@ export function ImageUploadButton({
 							accessibleWhenDisabled
 							aria-busy={isUploading || undefined}
 							onClick={open}
-							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
+							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
 						>
 							{isUploading ? <LoadingSpinner size={14} /> : <Icon name="image-plus" className="size-5" />}
 							<span className="label-sm">{isUploading ? 'Uploading…' : `Upload ${name}`}</span>

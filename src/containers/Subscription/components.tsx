@@ -37,7 +37,7 @@ const cardInnerStyles = {
 		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[24px] bg-white px-5 py-6 dark:bg-sub-surface-dark sm:px-4'
 }
 
-export const SELECTED_COLUMN_HIGHLIGHT = 'bg-brand/6 dark:bg-sub-brand-primary/5'
+export const SELECTED_COLUMN_HIGHLIGHT = 'bg-brand-faint dark:bg-sub-brand-primary/5'
 
 const selectedColumnStyles = {
 	active: SELECTED_COLUMN_HIGHLIGHT,
@@ -238,7 +238,7 @@ function PricingCardCta({
 					{isTrial ? 'Current plan (trial)' : 'Current plan'}
 				</p>
 				{isCancelPending ? (
-					<div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+					<div className="flex flex-col gap-2 rounded-lg border border-warning-muted bg-warning-tint p-3">
 						<p className="text-center label-sm text-warning">Cancellation scheduled</p>
 						<p className="text-center body-sm text-sub-text-muted">
 							Your plan stays active until the end of the billing period.
@@ -438,7 +438,7 @@ export function PricingCardContent({
 						</div>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<div className="mt-1 flex items-center gap-1.5">
-								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 title-sm text-success ring-1 ring-emerald-200 dark:bg-success/10 dark:ring-emerald-500/30">
+								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 title-sm text-success ring-1 ring-emerald-200 dark:bg-success-tint dark:ring-emerald-500/30">
 									7-day free trial available
 								</span>
 							</div>

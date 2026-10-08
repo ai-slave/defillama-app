@@ -212,7 +212,7 @@ export default Support
 function SuccessScreen({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) {
 	return (
 		<Card padding="md" className="flex w-full flex-col gap-4 text-center">
-			<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/15">
+			<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success-tint-strong">
 				<svg
 					className="size-8 text-success"
 					fill="none"

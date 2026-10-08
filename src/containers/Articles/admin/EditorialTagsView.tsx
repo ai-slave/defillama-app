@@ -169,13 +169,13 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			</div>
 
 			{error ? (
-				<div role="alert" className="rounded-md border border-error/30 bg-error/5 px-3 py-2 body-sm text-error">
+				<div role="alert" className="rounded-md border border-error-muted bg-error-faint px-3 py-2 body-sm text-error">
 					<p>{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}</p>
 				</div>
 			) : isLoading ? (
 				<p className="body-md text-tertiary">Loading…</p>
 			) : items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-medium bg-page/40 p-3 text-center body-sm text-tertiary">
+				<div className="rounded-md border border-dashed border-medium bg-page p-3 text-center body-sm text-tertiary">
 					<p>No articles tagged as {definition.label.toLowerCase()} yet.</p>
 				</div>
 			) : canReorder ? (
@@ -191,7 +191,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 					reorderPending={reorderMutation.isPending}
 				/>
 			) : (
-				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-page/40">
+				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-page">
 					{items.map((article) => (
 						<EditorialTagRow
 							key={article.id}
@@ -366,7 +366,7 @@ export function ReportHighlightControls({
 				</div>
 			</div>
 
-			<div className="grid gap-2 bg-page/40 p-3">
+			<div className="grid gap-2 bg-page p-3">
 				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Current highlight</span>
 				<div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-start">
 					<div className="grid gap-2">

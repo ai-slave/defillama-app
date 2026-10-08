@@ -38,7 +38,7 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 } as const
 
 const CHECKBOX_INDICATOR_STYLES =
-	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent group-hover:border-medium data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand'
+	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent group-hover:border-medium data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand group-has-disabled:border-disabled group-has-disabled:data-[checked=true]:border-disabled group-has-disabled:data-[checked=true]:bg-disabled group-has-disabled:data-[checked=true]:text-disabled'
 
 /** Controlled only: the caller owns `checked` and updates it in onChange. The hidden input's own keyboard focus draws
     the ring on the label (has-focus-visible). */
@@ -52,7 +52,7 @@ export function Checkbox({ ref, children, variant, ...props }: CheckboxProps) {
 	return (
 		<label
 			// A disabled box reads as disabled the way a disabled Button does.
-			className={`${CHECKBOX_WRAPPER_VARIANTS[variant]} has-disabled:cursor-not-allowed has-disabled:opacity-60`}
+			className={`${CHECKBOX_WRAPPER_VARIANTS[variant]} has-disabled:cursor-not-allowed has-disabled:text-disabled`}
 		>
 			<Ariakit.VisuallyHidden>
 				<Ariakit.Checkbox {...props} ref={ref} />

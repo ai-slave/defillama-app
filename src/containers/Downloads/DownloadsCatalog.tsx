@@ -276,11 +276,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'dataset', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
-															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 																{disabled ? (
 																	<LoadingSpinner size={18} />
 																) : (
@@ -312,10 +312,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								onClick={() => {
 									setOpened(isTrial ? { kind: 'trialLimit' } : { kind: 'multiMetric' })
 								}}
-								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand/30 bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand/60 hover:from-brand/12 hover:to-brand/4"
+								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand-muted bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand-strong hover:from-brand/12 hover:to-brand/4"
 							>
 								<div className="flex items-start gap-3">
-									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/15">
+									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint-strong">
 										<Icon name="layers" className="size-5 text-link" />
 									</div>
 									<div className="flex flex-col gap-0.5">
@@ -343,11 +343,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'chart', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
-															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 																{disabled ? (
 																	<LoadingSpinner size={18} />
 																) : (
@@ -606,7 +606,7 @@ function RecentDownloadsStrip({
 											{style.label}
 										</span>
 										{i === 0 ? (
-											<span className="ml-auto rounded-sm bg-brand/15 px-1 py-px label-sm tracking-wide text-link uppercase">
+											<span className="ml-auto rounded-sm bg-brand-tint-strong px-1 py-px label-sm tracking-wide text-link uppercase">
 												New
 											</span>
 										) : null}
@@ -723,7 +723,7 @@ function SavedDownloadsContent({
 function SavedEmptyState() {
 	return (
 		<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-subtle px-6 py-12 text-center">
-			<div className="flex size-14 items-center justify-center rounded-full bg-brand/10 text-link">
+			<div className="flex size-14 items-center justify-center rounded-full bg-brand-tint text-link">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
@@ -795,7 +795,7 @@ function SavedDownloadRow({
 					<span className="truncate text-pro-text-secondary">{sourceLabel}</span>
 					{description ? (
 						<>
-							<span aria-hidden="true" className="text-pro-text-tertiary/50">
+							<span aria-hidden="true" className="text-pro-text-tertiary">
 								·
 							</span>
 							<span className="truncate">{description}</span>
@@ -807,7 +807,7 @@ function SavedDownloadRow({
 			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}
 			<div className="pointer-events-none relative flex h-8 shrink-0 items-center justify-end gap-2 pl-2 sm:min-w-[12rem]">
 				<span className="label-sm text-pro-text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
-					<span className="hidden text-pro-text-tertiary/60 sm:inline">{timestamp.prefix} </span>
+					<span className="hidden text-pro-text-tertiary sm:inline">{timestamp.prefix} </span>
 					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 

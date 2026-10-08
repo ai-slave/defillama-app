@@ -8,7 +8,7 @@ export function GenericCard({ article }: { article: ArticleDocument }) {
 	return (
 		<Link
 			href={articleHref(article)}
-			className="group grid content-start gap-3 rounded-md border border-medium bg-surface/40 p-4 transition-colors hover:border-link/40"
+			className="group grid content-start gap-3 rounded-md border border-medium bg-surface p-4 transition-colors hover:border-brand-muted"
 		>
 			<div className="flex items-center justify-between gap-3 label-xs tracking-[0.18em] text-tertiary uppercase">
 				<span>{primaryTag?.replace(/-/g, ' ') || 'Story'}</span>

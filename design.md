@@ -40,18 +40,23 @@ Class composition:
 
 `semantics.css` owns every value; these tables say when to use each utility.
 
-| Background              | Use                                                                                          |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `bg-page`               | Page background                                                                              |
-| `bg-surface`            | Cards and panels                                                                             |
-| `bg-surface-elevated-1` | Nested emphasis inside a surface; canvas dialogs and sheets whose body is `bg-surface` cards |
-| `bg-surface-elevated-2` | Second elevation step                                                                        |
-| `bg-overlay`            | Popovers, menus, tooltips, content dialogs, toasts                                           |
-| `bg-brand`              | Primary actions and brand fills                                                              |
-| `bg-brand-muted`        | Brand tint for selected states                                                               |
-| `bg-brand-faint`        | Lightest brand wash                                                                          |
-| `bg-screen-dim`         | Dialog and drawer backdrops                                                                  |
-| `bg-equity-logo`        | Fixed light canvas behind company logos, in both modes                                       |
+| Background                                                     | Use                                                                                                                                                                                            |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bg-page`                                                      | Page background                                                                                                                                                                                |
+| `bg-surface`                                                   | Cards and panels                                                                                                                                                                               |
+| `bg-surface-elevated-1`                                        | Nested emphasis inside a surface; canvas dialogs and sheets whose body is `bg-surface` cards                                                                                                   |
+| `bg-surface-elevated-2`                                        | Second elevation step                                                                                                                                                                          |
+| `bg-overlay`                                                   | Popovers, menus, tooltips, content dialogs, toasts                                                                                                                                             |
+| `bg-brand`                                                     | Primary actions and brand fills                                                                                                                                                                |
+| `bg-brand-muted`                                               | Selected states (blue step 4); takes no hover wash                                                                                                                                             |
+| `bg-brand-faint`                                               | Lightest brand wash (blue step 2)                                                                                                                                                              |
+| `bg-{role}-faint` / `bg-{role}-tint` / `bg-{role}-tint-strong` | Tints on ramp steps 2, 3 and 4 for `brand`, `error`, `warning`, `success`, `data-up`, `data-down`: banners, badges, soft buttons; a tinted control rests on `tint` and hovers to `tint-strong` |
+| `bg-disabled`                                                  | A disabled filled control or field                                                                                                                                                             |
+| `bg-page-glass` / `bg-surface-glass`                           | A frosted sticky bar over scrolling content, with `backdrop-blur`                                                                                                                              |
+| `bg-veil`                                                      | A veil over content that is loading                                                                                                                                                            |
+| `bg-on-brand-control` / `-hover`                               | A control sitting on the brand-blue header                                                                                                                                                     |
+| `bg-screen-dim`                                                | Dialog and drawer backdrops                                                                                                                                                                    |
+| `bg-equity-logo`                                               | Fixed light canvas behind company logos, in both modes                                                                                                                                         |
 
 | Text                                      | Use                                                                                        |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -67,14 +72,15 @@ Class composition:
 | `text-error` / `text-success`             | Feedback on the reader's own action: validation, destructive rows, failed and done actions |
 | `text-verified`                           | The verified mark on yields                                                                |
 
-| Border               | Use                                                                        |
-| -------------------- | -------------------------------------------------------------------------- |
-| `border-very-subtle` | Faint separation wider than a hairline; never a 1px divider                |
-| `border-subtle`      | Card and panel outlines, row and section dividers                          |
-| `border-medium`      | Controls, inputs, overlays, chips and badges; never page cards or dividers |
-| `border-strong`      | High-emphasis outlines and unchecked checkboxes                            |
-| `border-brand`       | Focus, active and brand outlines                                           |
-| `border-error-muted` | A destructive control's outline                                            |
+| Border                                         | Use                                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `border-very-subtle`                           | Faint separation wider than a hairline; never a 1px divider                                 |
+| `border-subtle`                                | Card and panel outlines, row and section dividers                                           |
+| `border-medium`                                | Controls, inputs, overlays, chips and badges; never page cards or dividers                  |
+| `border-strong`                                | High-emphasis outlines and unchecked checkboxes                                             |
+| `border-brand`                                 | Focus, active and brand outlines                                                            |
+| `border-{role}-muted` / `border-{role}-strong` | Hued borders on ramp steps 7 and 8; a destructive control's outline is `border-error-muted` |
+| `border-disabled`                              | A disabled outlined control or field                                                        |
 
 | State                                | Use                                                                                |
 | ------------------------------------ | ---------------------------------------------------------------------------------- |
@@ -91,7 +97,8 @@ Usage rules:
 - Surfaces step `page → surface → elevated-1 → elevated-2`. Cards sit on `bg-surface`; elevation steps are for nested emphasis, never page-level fills.
 - Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode with surface lift.
 - Text tiers are text-only: never `bg-primary`.
-- Use solid colors for text and fills, translucent ones for borders, dividers and hover washes. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`), use the ramp step for that role.
+- Use solid colors for text, fills and tints, translucent ones for neutral borders, dividers, hover washes, glass, veils and seams. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`): use the ramp step for that role.
+- The `opacity` utility is for imagery, decoration and show/hide motion, never for text or a control's state. Dimmed text takes the next text tier. A disabled control takes `text-disabled`, plus `bg-disabled` when filled and `border-disabled` when outlined, in every variant (`disabled-opacity`). Only a disabled composite whose children carry their own colors or imagery (an avatar picker, a logo row, a dataset card) keeps `opacity-60` on the whole.
 - Movement uses `text-data-up`/`text-data-down`, with a sign or arrow where the direction matters. A price drop is never `text-error`.
 - Brand blue and every other palette value come only from tokens, never from a literal.
 - `bg-brand` is a fill. Blue text is `text-link`, never `text-brand`, which fails AA in dark mode (`brand-fill-as-text`).
@@ -106,8 +113,8 @@ Text tiers: if removing the text would change what the reader knows or can do, i
 Hover has two mechanisms, picked by the resting background:
 
 - `hover:bg-hover-row` replaces the background, so it goes only on elements that rest transparent.
-- `hover-wash` stacks the wash over the resting color and skips disabled elements, so it goes on anything tinted or opaque. Never put `hover:bg-hover-row` on `bg-brand-muted`: it replaces the tint.
-- A control's hover, focus and pressed states come from its own hue. Neutral controls take the neutral wash; destructive buttons and menu rows tint with `bg-error-muted`; a selected control keeps `bg-brand-muted` under the wash. Brand blue marks selection and primary actions, never a hover.
+- `hover-wash` stacks the wash over the resting color and skips disabled and selected elements (`data-active`, `aria-selected`, `aria-pressed`), so it goes on anything opaque. Never put `hover:bg-hover-row` on `bg-brand-muted`: it replaces the tint.
+- A control's hover, focus and pressed states come from its own hue. Neutral controls take the neutral wash; a tinted control rests on `bg-{role}-tint` and hovers to `bg-{role}-tint-strong`; destructive buttons and menu rows hover with `bg-error-tint`; a brand-outlined control (`outline`, `filter`) hovers to `bg-brand-tint`; a selected control sits on `bg-brand-muted` and takes no wash. Brand blue never hovers a neutral control.
 - A trigger resting on `bg-surface-elevated-1` may hover to `bg-surface-elevated-2` instead. Never combine that step with a wash.
 
 Focus and selection:
@@ -137,9 +144,18 @@ Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emera
 
 - Because steps line up across hues, the pairs are guaranteed: step 11 text passes AA on steps 1–4 of any hue, and white text passes on every step 9.
 - A semantic token maps to a step once (`--text-link: var(--blue-11)`) and needs no dark override: the ramp flips with the mode.
-- A tinted control uses its hue's steps: rest on 3, hover on 4, text on 11, border on 7. That is how `ProButton` and the destructive states are built.
+- A tinted control uses its hue's steps: rest on 3, hover on 4, text on 11, border on 7. That is how `ProButton`, the row-link pills and the destructive states are built.
+- Disabled controls sit on the neutral ramp: `bg-disabled` is step 3, `border-disabled` step 5 and `text-disabled` step 8. Disabled text is exempt from AA; it has to read as unavailable, not pass.
 - Colors ship as hex, so browsers, chart canvases and exports render the same value.
 - Fixed chart accents (`--green-500`, `--red-500`, …) stay outside the ramps until the chart palettes move onto them.
+
+### Always-dark surfaces
+
+A surface that keeps its dark look in light mode (the Sheets landing) sets `theme-dark` on its root. Its subtree then resolves every ramp step, semantic token and `dark:` variant to its dark value in either mode, so `text-link`, the text tiers, borders and controls inside it keep their contrast.
+
+- Never paint a fixed dark fill (a `sub-dark-*` token, LlamaAI ink, `bg-black`, a dark hex) under theme-aware tokens without the scope: in light mode the text takes its light value on the dark fill. `fixed-dark-fill` counts these fills, so a new one fails until the root is scoped and the baseline updated.
+- Inside the scope, use the core tokens (`text-tertiary`, `text-link`, `Button`), not a product's fixed grays.
+- LlamaAI's image lightbox stays on its own mode-invariant ink tokens with `ai-white` text (`src/styles/themes/llamaai.css`); it needs no scope.
 
 ## Typography
 
@@ -389,13 +405,13 @@ Chart data contracts: `docs/charts.md`.
 
 [`scripts/policies/check-design-tokens.mjs`](scripts/policies/check-design-tokens.mjs) is a ratchet: it counts each rule's matches against `scripts/policies/design-token-baseline.json`, in separate `core` and `product` buckets, and fails when a count rises or falls.
 
-| Group             | Rules                                                                                                                                                                                                                                                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Color             | `hex-in-classname`, `dark-hex-variant`, `arbitrary-color-function`, `builtin-palette-color`, `brand-fill-as-text`, `opacity-color-modifier`, `interim-token`, `prefixed-design-token`, `product-token-leak`, `product-utility-leak`, `implicit-border-color` |
-| Type              | `arbitrary-font-size`, `raw-type-pair`, `raw-type-size`, `conflicting-named-typography`, `unknown-named-typography`, `off-scale-mono-weight`, `ascii-ellipsis`                                                                                               |
-| Spacing and shape | `arbitrary-spacing`, `arbitrary-standard-radius`, `arbitrary-shadow`, `explicit-thin-scrollbar`, `deprecated-tailwind-spelling`                                                                                                                              |
-| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `raw-echarts-init`                                        |
-| Toolbars          | `toolbar-justify-override`, `chart-toolbar-auto-margin`                                                                                                                                                                                                      |
+| Group             | Rules                                                                                                                                                                                                                                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Color             | `hex-in-classname`, `dark-hex-variant`, `arbitrary-color-function`, `builtin-palette-color`, `brand-fill-as-text`, `opacity-color-modifier`, `disabled-opacity`, `neutral-hover-on-hued-control`, `fixed-dark-fill`, `interim-token`, `prefixed-design-token`, `product-token-leak`, `product-utility-leak`, `implicit-border-color` |
+| Type              | `arbitrary-font-size`, `raw-type-pair`, `raw-type-size`, `conflicting-named-typography`, `unknown-named-typography`, `off-scale-mono-weight`, `ascii-ellipsis`                                                                                                                                                                       |
+| Spacing and shape | `arbitrary-spacing`, `arbitrary-standard-radius`, `arbitrary-shadow`, `explicit-thin-scrollbar`, `deprecated-tailwind-spelling`                                                                                                                                                                                                      |
+| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `raw-echarts-init`                                                                                                                |
+| Toolbars          | `toolbar-justify-override`, `chart-toolbar-auto-margin`                                                                                                                                                                                                                                                                              |
 
 - After removing debt, run `bun scripts/policies/check-design-tokens.mjs --update` in the same change. Run it only when nothing fails and the counts dropped, because it rewrites rising counts too.
 - [`scripts/policies/check-color-contrast.mjs`](scripts/policies/check-color-contrast.mjs) resolves the semantic tokens through the ramps in both modes and fails when a text token drops below 4.5:1 on any surface, hover wash or tint, or a ramp breaks its pair rules.

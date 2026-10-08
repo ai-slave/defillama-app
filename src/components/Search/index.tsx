@@ -89,7 +89,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 			</BasicLink>
 			{searchTrigger ?? (
 				<Ariakit.DialogProvider store={siteSearchStore}>
-					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
+					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden">
 						<span className="sr-only">Search</span>
 						<Icon name="search" height={16} width={16} />
 					</Ariakit.DialogDisclosure>
@@ -409,7 +409,7 @@ function SeeMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: ()
 			disabled={isLoading}
 			accessibleWhenDisabled
 			aria-busy={isLoading || undefined}
-			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:opacity-60"
+			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:text-disabled"
 		>
 			{isLoading ? (
 				<>

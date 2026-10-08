@@ -49,7 +49,7 @@ export function SeriesChip({
 	}
 
 	return (
-		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
+		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row px-1.5 py-0.5">
 			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
 			<span className="truncate mono-sm text-pro-text-primary" style={{ maxWidth: '14ch' }}>
 				{name}

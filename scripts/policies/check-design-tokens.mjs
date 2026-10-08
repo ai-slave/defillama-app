@@ -467,6 +467,22 @@ function withoutLandingDisplay(content) {
 	return source.replace(STRING_LITERAL, (literal) => (isDisplaySet(literal) ? blank(literal) : literal))
 }
 
+// A control is hued at rest (a brand, error, warning or success border or tint) and hovers to the neutral wash in the
+// same class string. Its states come from its own hue (design.md → Tokens → Hover). A conditional
+// `selected ? hued : neutral hover` keeps the two in separate literals, so it does not match.
+const HUED_REST =
+	/(?<![\w:-])(?:border-(?:brand|link|error|warning|success|data-up|data-down)(?:-muted|-strong)?|bg-(?:brand|error|warning|success|data-up|data-down)-(?:faint|tint|tint-strong)|bg-brand-faint|bg-brand-muted)(?![\w-])/
+const NEUTRAL_HOVER =
+	/(?<![\w-])(?:hover-wash(?:-card)?|(?:[\w\-[\]=]+:)*(?:hover|focus-visible):(?:[\w-]+:)*bg-(?:hover-row|hover-card))(?![\w-])/
+function matchNeutralHoverOnHuedControl(content) {
+	const found = []
+	for (const [literal] of content.matchAll(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g)) {
+		if (literal.includes('${')) continue
+		if (HUED_REST.test(literal) && NEUTRAL_HOVER.test(literal)) found.push(literal.slice(0, 80))
+	}
+	return found.length > 0 ? found : null
+}
+
 function matchChartToolbarAutoMargin(content) {
 	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
 	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
@@ -544,6 +560,29 @@ const RULES = [
 			'a /NN opacity modifier on a color utility; use the ramp step or token for that role (tints, borders and text tiers in design.md → Color ramps)',
 		pattern:
 			/(?<![\w-])(?:bg|text|border(?:-[trblxyse])?|from|to|via|ring|fill|stroke|divide|outline|decoration|placeholder|shadow|caret|accent)-(?!(?:xs|sm|base|lg|xl|\dxl)\/)(?:[a-z][\w-]*|\([^)\s]*\)|\[[^\]\s]*\])\/(?:\d{1,3}|\[[^\]\s]+\])(?![\w-])/g,
+		skipTests: true
+	},
+	{
+		id: 'disabled-opacity',
+		description:
+			'a disabled state drawn with opacity; controls take text-disabled, border-disabled and bg-disabled (design.md → Color ramps). Only a composite whose children carry their own colors or imagery keeps opacity',
+		pattern:
+			/(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)?(?:has-|group-has-)?(?:\[[^\]\s]*\]:)?(?:aria-)?disabled[\w\-[\]=]*:(?:[\w-]+:)*opacity-\d+(?![\w-])/g,
+		skipTests: true
+	},
+	{
+		id: 'neutral-hover-on-hued-control',
+		description:
+			'a control that rests on a hued border or tint hovers to the neutral wash; it hovers to its own tint (bg-brand-tint, bg-error-tint, …), design.md → Tokens',
+		match: matchNeutralHoverOnHuedControl,
+		skipTests: true
+	},
+	{
+		id: 'fixed-dark-fill',
+		description:
+			'a dark fill that ignores the theme (a fixed product dark token, LlamaAI ink, stock black or a dark hex). An always-dark surface sets `theme-dark` on its root so the text, borders and controls inside it take their dark values in light mode too (design.md → Always-dark surfaces); after checking that, update the baseline',
+		pattern:
+			/(?<![\w-]|dark:)(?:(?!dark:)[\w\-[\]=]+:)?bg-(?:sub-dark-[\w-]+|sub-surface-dark[\w-]*|ai-ink(?:-raised)?|ai-black|research-black|black|\[#[0-2][0-9a-fA-F]{5}\])(?:\/\d+)?(?![\w-])/g,
 		skipTests: true
 	},
 	{

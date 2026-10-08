@@ -1165,7 +1165,7 @@ function StatusStrip({
 						<span className="text-pro-text-tertiary"> rows</span>
 					</span>
 				) : (
-					<span className="text-pro-text-tertiary/80">idle</span>
+					<span className="text-pro-text-tertiary">idle</span>
 				)}
 			</span>
 		</div>
@@ -1262,7 +1262,7 @@ function SavedQueriesTab({
 
 	if (savedQueries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-12 text-center">
 				<Icon name="bookmark" className="size-6 text-pro-text-tertiary" />
 				<p className="body-md text-pro-text-secondary">No saved queries yet.</p>
 				<p className="max-w-sm body-sm text-pro-text-tertiary">

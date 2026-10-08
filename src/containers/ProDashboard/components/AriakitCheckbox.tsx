@@ -28,7 +28,7 @@ export function AriakitCheckbox({
 					className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 						checked
 							? 'border-brand bg-brand text-on-brand'
-							: 'border-pro-cards-border bg-surface-elevated-1 hover:border-brand/60'
+							: 'border-pro-cards-border bg-surface-elevated-1 hover:border-brand-strong'
 					} ${disabled ? 'cursor-not-allowed' : ''}`}
 				>
 					{checked ? <Icon name="check" width={10} height={10} /> : null}

@@ -16,7 +16,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 
 	return (
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues}>
-			<ComboboxSelectTrigger className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25">
+			<ComboboxSelectTrigger className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover">
 				<span className="sr-only">Open Settings Menu</span>
 				<Icon name="settings" height={16} width={16} />
 			</ComboboxSelectTrigger>

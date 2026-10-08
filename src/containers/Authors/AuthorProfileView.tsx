@@ -224,15 +224,15 @@ function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }
 function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 4) : []
 	return (
-		<div className="group relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-link/50">
-			<div className="absolute inset-x-0 top-0 z-10 h-1 bg-link/70 opacity-0 transition-opacity group-hover:opacity-100" />
+		<div className="group relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-brand-strong">
+			<div className="absolute inset-x-0 top-0 z-10 h-1 bg-brand opacity-0 transition-opacity group-hover:opacity-100" />
 			<AuthorDashboardPreview dashboard={dashboard} className="border-b border-pro-cards-border" />
 			<div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
 				<div className="flex items-start justify-between gap-3">
 					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-primary group-hover:text-link">
 						{dashboardName(dashboard)}
 					</h2>
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-medium text-tertiary transition-colors group-hover:border-link/40 group-hover:text-link">
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-medium text-tertiary transition-colors group-hover:border-brand-muted group-hover:text-link">
 						<Icon name="arrow-up-right" className="size-4" />
 					</span>
 				</div>
@@ -268,8 +268,8 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 6) : []
 	return (
-		<section className="group relative isolate overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/50">
-			<div className="absolute inset-x-0 top-0 h-1 bg-link/70" />
+		<section className="group relative isolate overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-strong">
+			<div className="absolute inset-x-0 top-0 h-1 bg-brand" />
 			<div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-7">
 				<div className="grid content-start gap-3">
 					<p className="label-xs tracking-[0.2em] text-link uppercase">Featured dashboard</p>
@@ -348,7 +348,7 @@ function AuthorHero({
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-link/25 bg-research-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
+						<span className="rounded-md border border-brand-muted bg-research-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
 							Dashboard author
 						</span>
 						<span className="body-md text-tertiary">@{author.slug}</span>
@@ -370,7 +370,7 @@ function AuthorHero({
 						{isOwnProfile ? (
 							<BasicLink
 								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-link/30 bg-research-tint px-3 py-2 label-sm text-link transition-colors hover:border-link/60 hover:bg-research-tint-hover"
+								className="inline-flex items-center gap-1.5 rounded-md border border-brand-muted bg-research-tint px-3 py-2 label-sm text-link transition-colors hover:border-brand-strong hover:bg-research-tint-hover"
 							>
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
@@ -384,7 +384,7 @@ function AuthorHero({
 								href={value}
 								target="_blank"
 								rel="noreferrer noopener"
-								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 label-sm text-secondary transition-colors hover:border-link/50 hover:text-link"
+								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 label-sm text-secondary transition-colors hover:border-brand-strong hover:text-link"
 								{...(key === 'website'
 									? {
 											'data-umami-event': 'author-website-click',
@@ -401,7 +401,7 @@ function AuthorHero({
 					</div>
 				</div>
 
-				<aside className="grid content-between gap-6 border-t border-medium bg-page/60 p-5 sm:p-6 lg:border-t-0 lg:border-l lg:p-8">
+				<aside className="grid content-between gap-6 border-t border-medium bg-page p-5 sm:p-6 lg:border-t-0 lg:border-l lg:p-8">
 					<div className="grid gap-2">
 						<p className="label-xs tracking-[0.22em] text-tertiary uppercase">Published dashboards</p>
 						<div className="flex items-end gap-3">

@@ -95,7 +95,7 @@ export function SurfaceLoadingOverlay({ label }: { label: string }) {
 		<div
 			role="status"
 			aria-live="polite"
-			className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-page/60 backdrop-blur-[1px]"
+			className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-veil backdrop-blur-[1px]"
 		>
 			<div className="flex items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
 				<LoadingSpinner size={12} />

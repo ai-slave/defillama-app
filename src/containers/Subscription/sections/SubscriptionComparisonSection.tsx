@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 /* ── Style maps ────────────────────────────────────────────────────── */
 
 const planHeadStyles = {
-	selected: 'border-x border-sub-brand-primary bg-brand/6 dark:bg-sub-brand-primary/5 md:rounded-t-[16px]',
+	selected: 'border-x border-sub-brand-primary bg-brand-faint dark:bg-sub-brand-primary/5 md:rounded-t-[16px]',
 	default: 'border-sub-mobile-table-border md:border-sub-desktop-table-border md:bg-white dark:md:bg-transparent'
 }
 

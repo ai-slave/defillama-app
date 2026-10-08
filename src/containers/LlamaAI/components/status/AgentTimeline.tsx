@@ -416,7 +416,7 @@ function ToolRow({
 				) : null}
 			</span>
 			{step.isPremium || execution?.costUsd ? (
-				<span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-px label-xs text-warning">
+				<span className="shrink-0 rounded-full bg-warning-tint px-1.5 py-px label-xs text-warning">
 					Premium{Number.isFinite(parsedCost) ? ` ${formatStepCost(parsedCost)}` : ''}
 				</span>
 			) : null}

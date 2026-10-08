@@ -7,14 +7,14 @@ export const authWalletPickerStyles = 'min-h-62 sm:min-h-58'
 // Kept off ~/ui/Input: `peer` drives the FieldError sibling and user-invalid draws the error border from native
 // validation without React state, and the 40px field seats the 32px password-eye button inside it.
 export const authInputStyles =
-	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 body-lg sm:body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error aria-invalid:border-error aria-invalid:focus:border-error disabled:opacity-60'
+	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 body-lg sm:body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error aria-invalid:border-error aria-invalid:focus:border-error disabled:text-disabled disabled:border-disabled disabled:bg-disabled'
 // Sign-in method buttons keep a centred label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
 // so no label moves to make room at any width. A pending spinner takes the icon's slot.
 export const authProviderButtonStyles =
-	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
+	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled disabled:border-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled aria-disabled:border-disabled'
 // Wallet picker rows list choices with their tags, so they read left to right.
 export const authWalletRowStyles =
-	'relative flex min-h-10 w-full items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
+	'relative flex min-h-10 w-full items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled disabled:border-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled aria-disabled:border-disabled'
 export const authProviderIconSlotStyles = 'flex size-5 shrink-0 items-center justify-center'
 
 /** The auth header: the title takes focus on every mount (callers key it by step), so a step change is announced. */

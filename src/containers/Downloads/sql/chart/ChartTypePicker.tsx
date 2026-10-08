@@ -191,7 +191,7 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 											? 'bg-brand text-on-brand shadow-sm'
 											: available
 												? 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-												: 'cursor-not-allowed text-pro-text-tertiary/50'
+												: 'cursor-not-allowed text-pro-text-tertiary'
 									}`}
 								>
 									<Ariakit.Radio

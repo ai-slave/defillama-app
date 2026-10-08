@@ -198,7 +198,7 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 					{...controlProps}
 					className={clsx(
 						controlProps.className,
-						'disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
+						'disabled:cursor-not-allowed disabled:text-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled'
 					)}
 				/>
 			) : (
@@ -206,7 +206,7 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 					className={clsx(
 						button,
 						buttonClassName,
-						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-60',
+						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:text-disabled',
 						variant === 'solid' && 'inline-flex items-center justify-center',
 						(variant === 'solid' || variant === 'solid-responsive') &&
 							'data-[active=true]:has-focus-visible:focus-ring-on-brand'

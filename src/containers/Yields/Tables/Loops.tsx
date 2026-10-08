@@ -78,7 +78,7 @@ function LeverageCell({ value }: { value: number | null | undefined }) {
 	return (
 		<span>
 			{formatRatio(value, { maximumFractionDigits: 1 })}
-			<span className="opacity-70">x</span>
+			<span className="text-tertiary">x</span>
 		</span>
 	)
 }

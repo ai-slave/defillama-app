@@ -84,7 +84,7 @@ function HeaderWithTooltip({
 			onClick(event)
 		}
 		const buttonClassName =
-			'inline-flex items-center gap-1 whitespace-nowrap aria-disabled:cursor-not-allowed aria-disabled:opacity-70'
+			'inline-flex items-center gap-1 whitespace-nowrap aria-disabled:cursor-not-allowed aria-disabled:text-disabled'
 
 		if (!content) {
 			return (

@@ -63,7 +63,7 @@ export function BannersListView() {
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banners'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
 				<h1 className="heading-sm text-primary">Couldn't load banners</h1>
 				<p className="body-md text-secondary">{message}</p>
 			</div>
@@ -141,7 +141,7 @@ export function BannersListView() {
 									</span>
 									<span
 										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-xs tracking-[0.18em] uppercase ${
-											banner.enabled ? 'bg-success/10 text-success' : 'bg-tertiary/10 text-tertiary'
+											banner.enabled ? 'bg-success-tint text-success' : 'bg-surface-elevated-1 text-tertiary'
 										}`}
 									>
 										<span aria-hidden className="size-1 rounded-full bg-current" />

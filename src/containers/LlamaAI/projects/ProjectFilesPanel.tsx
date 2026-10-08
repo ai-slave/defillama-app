@@ -222,7 +222,7 @@ export function ProjectFilesPanel({
 							// The upload it starts keeps focus on it; the hidden loading and failed states leave the tab order.
 							accessibleWhenDisabled={!isInitialLoading && !filesFailed}
 							aria-hidden={isInitialLoading || filesFailed || undefined}
-							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
+							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
 						>
 							<Icon name="file-plus" height={16} width={16} className="text-tertiary" />
 							<span>Drop files here or choose files</span>

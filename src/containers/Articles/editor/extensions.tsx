@@ -59,7 +59,7 @@ const calloutToneStyles: Record<ArticleCalloutTone, { wrap: string; tone: string
 		tone: 'text-tertiary'
 	},
 	data: {
-		wrap: 'border-link/40 bg-research-tint',
+		wrap: 'border-brand-muted bg-research-tint',
 		tone: 'text-link'
 	},
 	warning: {
@@ -67,7 +67,7 @@ const calloutToneStyles: Record<ArticleCalloutTone, { wrap: string; tone: string
 		tone: 'text-callout-accent dark:text-research-gold'
 	},
 	pullquote: {
-		wrap: 'border-y border-x-0 border-link/30 bg-transparent rounded-none px-2',
+		wrap: 'border-y border-x-0 border-brand-muted bg-transparent rounded-none px-2',
 		tone: 'text-link'
 	},
 	bio: {
@@ -141,7 +141,7 @@ function ChartCaptionEditor({
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent body-md text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent body-md text-secondary placeholder:text-tertiary hover:border-medium focus:text-primary"
 		/>
 	)
 }

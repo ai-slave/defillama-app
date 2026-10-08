@@ -19,7 +19,7 @@ export default function Sheets() {
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 			</Head>
 			<LinkPreviewCard />
-			<div className="col-span-full flex min-h-screen w-full flex-col bg-sub-dark-panel text-on-brand">
+			<div className="theme-dark col-span-full flex min-h-screen w-full flex-col bg-sub-dark-panel text-on-brand">
 				<header className="sticky top-0 z-50 border-b border-sub-line/40 bg-sub-dark-panel/80 backdrop-blur-md">
 					<div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">

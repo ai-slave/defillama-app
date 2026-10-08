@@ -100,8 +100,8 @@ export function NotebookCell({
 			}}
 			className={`group relative flex flex-col gap-2 rounded-md border px-3 py-2 transition-colors ${
 				focused
-					? 'border-brand/50 bg-surface ring-1 ring-brand/20'
-					: 'border-subtle bg-surface/60 hover:border-subtle hover:bg-surface'
+					? 'border-brand-strong bg-surface ring-1 ring-brand/20'
+					: 'border-subtle bg-surface hover:border-subtle hover:bg-surface'
 			}`}
 		>
 			{staleGutter ? (
@@ -211,7 +211,7 @@ function CellTypeBadge({ type }: { type: CellType }) {
 	const label = type === 'sql' ? 'SQL' : type === 'markdown' ? 'MD' : 'CHART'
 	const tone =
 		type === 'sql'
-			? 'bg-brand/15 text-link'
+			? 'bg-brand-tint-strong text-link'
 			: type === 'markdown'
 				? 'bg-pro-ai-300/15 text-pro-ai-300'
 				: 'bg-pro-premium-300/15 text-pro-premium-300'

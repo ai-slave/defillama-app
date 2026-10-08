@@ -95,7 +95,7 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
 				<h1 className="heading-sm text-primary">Couldn't load this topic</h1>
 				<p className="body-md text-secondary">{message}</p>
 			</div>

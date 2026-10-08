@@ -403,7 +403,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			</div>
 			<div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[300px_1fr]">
 				<aside
-					className={`min-h-0 flex-col border-medium bg-page/40 md:flex md:border-r ${pane === 'series' ? 'flex' : 'hidden'}`}
+					className={`min-h-0 flex-col border-medium bg-page md:flex md:border-r ${pane === 'series' ? 'flex' : 'hidden'}`}
 				>
 					<div className="grid gap-2 px-3 pt-3 pb-2">
 						<SegmentedControl
@@ -583,7 +583,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 
 							<div className="relative shrink-0 grow border-t border-medium bg-page">
 								<div className="pointer-events-none absolute top-3 left-5 z-10 flex items-center gap-2">
-									<span className="rounded-full border border-medium bg-surface/80 px-2 py-0.5 label-xs tracking-wide text-tertiary uppercase backdrop-blur">
+									<span className="rounded-full border border-medium bg-surface-glass px-2 py-0.5 label-xs tracking-wide text-tertiary uppercase backdrop-blur">
 										Preview
 									</span>
 								</div>

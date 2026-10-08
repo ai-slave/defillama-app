@@ -545,7 +545,7 @@ export function OnboardingWalkthrough({
 
 							<div className="p-6">
 								<div className="mb-4 flex flex-col items-center gap-1 text-center">
-									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-success/12">
+									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-success-tint">
 										<Icon name="check" height={14} width={14} className="text-success" />
 									</div>
 									<Ariakit.DialogHeading className="title-md text-primary">Research mode is on</Ariakit.DialogHeading>

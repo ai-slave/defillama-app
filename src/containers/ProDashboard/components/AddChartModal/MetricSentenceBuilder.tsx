@@ -534,7 +534,7 @@ export function MetricSentenceBuilder({
 													data-umami-event="dashboard-parameter-bind-metric-subject"
 													className={`flex items-center justify-between gap-2 rounded-md border border-pro-cards-border px-2.5 py-1.5 text-left label-md transition-colors ${
 														subjectParameter.boundVariable?.id === variable.id
-															? 'bg-brand/10 text-pro-text-primary'
+															? 'bg-brand-tint text-pro-text-primary'
 															: 'text-pro-text-secondary hover:bg-pro-cards-bg'
 													}`}
 												>
@@ -571,7 +571,7 @@ export function MetricSentenceBuilder({
 																	closePopover()
 																}}
 																className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																	isActive ? 'bg-brand/10 text-pro-text-primary' : 'text-pro-text-secondary'
+																	isActive ? 'bg-brand-tint text-pro-text-primary' : 'text-pro-text-secondary'
 																}`}
 																style={{
 																	position: 'absolute',
@@ -620,7 +620,7 @@ export function MetricSentenceBuilder({
 																closePopover()
 															}}
 															className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																isActive ? 'bg-brand/10 text-pro-text-primary' : 'text-pro-text-secondary'
+																isActive ? 'bg-brand-tint text-pro-text-primary' : 'text-pro-text-secondary'
 															}`}
 															style={{
 																position: 'absolute',
@@ -678,7 +678,7 @@ export function MetricSentenceBuilder({
 		<div className="flex flex-col gap-2.5 sm:gap-3">
 			<div className="rounded-lg border border-pro-cards-border bg-linear-to-br from-pro-cards-bg via-pro-cards-bg to-pro-cards-bg p-2.5 shadow-sm sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
-					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/12 text-link sm:size-8">
+					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link sm:size-8">
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
 					</div>
 					<div className="min-w-0">

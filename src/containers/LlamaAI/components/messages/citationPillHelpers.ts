@@ -33,8 +33,8 @@ export function iconFor(sourceType?: string): 'layers' | 'earth' | 'sparkles' | 
 const ACCENT = {
 	data: {
 		text: 'text-link',
-		marker: 'border-brand/35 bg-brand/10 text-link',
-		chip: 'bg-brand/10 text-link',
+		marker: 'border-brand-muted bg-brand-tint text-link',
+		chip: 'bg-brand-tint text-link',
 		bar: 'bg-brand'
 	},
 	computed: {

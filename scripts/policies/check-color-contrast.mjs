@@ -6,8 +6,8 @@ import { contrast } from '../generate-color-ramps.mjs'
  * and refuses a value change that drops text below WCAG AA where the app puts it:
  *
  * 1. Every text token at 4.5:1 or more on every surface, on the neutral hover wash over each surface, on the
- *    selected brand tint (resting and hovered) and on the error tints.
- * 2. text-on-brand at 4.5:1 or more on bg-brand.
+ *    selected brand tint and on every faint, tint and tint-strong token.
+ * 2. text-on-brand at 4.5:1 or more on bg-brand, and border-strong at 3:1 or more on every surface.
  * 3. Every ramp keeps its pair rules: step 11 at 4.5:1 or more on steps 1–4, and white at 4.5:1 or more on step 9.
  *
  *   bun scripts/policies/check-color-contrast.mjs
@@ -33,8 +33,10 @@ const RAMPS = ['neutral', 'blue', 'emerald', 'crimson', 'amber', 'violet']
 // Top-level declarations per selector. The token files hold only flat `:root` and `html.dark` blocks.
 function declarations(css, selector) {
 	const out = {}
-	const block = new RegExp(`(?:^|\\n)${selector.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'g')
-	for (const [, body] of css.matchAll(block)) {
+	// A block whose selector list names the selector: `html.dark,\n.theme-dark {` counts for html.dark.
+	const block = /(?:^|\n)([^{}\n][^{}]*?)\s*\{([^}]*)\}/g
+	for (const [, selectors, body] of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(block)) {
+		if (!selectors.split(',').some((s) => s.trim() === selector)) continue
 		for (const [, name, value] of body.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/--([\w-]+):\s*([^;]+);/g)) {
 			out[name] = value.trim()
 		}
@@ -81,11 +83,13 @@ for (const mode of ['light', 'dark']) {
 	}
 	for (const surface of ['bg-page', 'bg-surface']) {
 		const tint = paint(color('bg-brand-muted'), color(surface))
+		// A selected control takes no hover wash (semantics.css → hover-wash), so only the resting tint counts.
 		grounds[`bg-brand-muted over ${surface}`] = tint
-		grounds[`hover-row over bg-brand-muted over ${surface}`] = paint(color('hover-row'), tint)
 	}
-	grounds['bg-error-muted'] = color('bg-error-muted')
-	grounds['bg-error/10 over bg-surface'] = over(color('error'), 0.1, color('bg-surface'))
+	// Every tint token: text of any role may sit on any tint (a badge, a banner, a soft button).
+	for (const name of Object.keys(map).filter((token) => /^bg-[\w-]+-(faint|tint|tint-strong)$/.test(token))) {
+		grounds[`--${name}`] = color(name)
+	}
 
 	for (const text of TEXT) {
 		for (const [ground, hex] of Object.entries(grounds)) {
@@ -95,6 +99,12 @@ for (const mode of ['light', 'dark']) {
 	}
 	const onBrand = contrast(color('text-on-brand'), color('bg-brand'))
 	if (onBrand < 4.5) failures.push(`${mode}: --text-on-brand on --bg-brand is ${onBrand.toFixed(2)}:1`)
+
+	// Unchecked checkboxes and other high-emphasis outlines need 3:1 against the surface they sit on.
+	for (const surface of SURFACES) {
+		const ratio = contrast(paint(color('border-strong'), color(surface)), color(surface))
+		if (ratio < 3) failures.push(`${mode}: --border-strong on --${surface} is ${ratio.toFixed(2)}:1`)
+	}
 
 	for (const ramp of RAMPS) {
 		for (const step of [1, 2, 3, 4]) {

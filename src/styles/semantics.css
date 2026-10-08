@@ -10,9 +10,15 @@
    selector, not the token name. A token mapped to a ramp step
    (var(--blue-11)) needs no dark override: the ramps in primitives.css
    flip with the mode.
+
+   `.theme-dark` marks a surface that is always dark (the Sheets landing):
+   its subtree resolves every token to the dark value in either mode. The
+   light block is redeclared on it so var() tokens resolve against the dark
+   ramps there, and the dark block, which comes later, wins.
 ---------------------------------------------------------------------------- */
 
-:root {
+:root,
+.theme-dark {
 	/* Background */
 	--bg-page: #f7f7f7;
 	--bg-surface: #ffffff;
@@ -25,8 +31,9 @@
 	   the dark value equals bg-surface-elevated-1. */
 	--bg-overlay: #ffffff;
 	--bg-brand: var(--blue-9);
-	--bg-brand-muted: #1f67d21f;
-	--bg-brand-faint: #1f67d20f;
+	/* Selection and the lightest brand wash, on the blue ramp. */
+	--bg-brand-muted: var(--blue-4);
+	--bg-brand-faint: var(--blue-2);
 	/* Dialog and drawer backdrop. */
 	--bg-screen-dim: #090b0c66;
 
@@ -36,7 +43,7 @@
 	/* Colored and tertiary text sit on ramp step 11: AA on every surface,
 	   hover wash and tint (steps 1–4 of any hue). */
 	--text-tertiary: var(--neutral-11);
-	--text-disabled: #dedede;
+	--text-disabled: var(--neutral-8);
 	--text-link: var(--blue-11);
 	--text-on-brand: #ffffff;
 	--text-data-up: var(--emerald-11);
@@ -51,9 +58,49 @@
 	--success: var(--text-data-up);
 	--error: var(--text-data-down);
 	--warning: var(--text-warning);
-	/* A destructive control's own states: hover and focus tint, and its outline. */
-	--bg-error-muted: var(--crimson-3);
+	/* Tints and hued borders on the ramps (design.md → Color ramps): faint is
+	   step 2, tint 3, tint-strong 4, a muted border 7, a strong border 8. */
+	--bg-brand-tint: var(--blue-3);
+	--bg-brand-tint-strong: var(--blue-4);
+	--bg-data-down-tint: var(--crimson-3);
+	--bg-data-down-tint-strong: var(--crimson-4);
+	--bg-data-up-tint: var(--emerald-3);
+	--bg-data-up-tint-strong: var(--emerald-4);
+	--bg-error-faint: var(--crimson-2);
+	--bg-error-tint: var(--crimson-3);
+	--bg-error-tint-strong: var(--crimson-4);
+	--bg-success-faint: var(--emerald-2);
+	--bg-success-tint: var(--emerald-3);
+	--bg-success-tint-strong: var(--emerald-4);
+	--bg-warning-faint: var(--amber-2);
+	--bg-warning-tint: var(--amber-3);
+	--bg-warning-tint-strong: var(--amber-4);
+	--border-brand-muted: var(--blue-7);
+	--border-brand-strong: var(--blue-8);
+	--border-data-down-muted: var(--crimson-7);
+	--border-data-down-strong: var(--crimson-8);
+	--border-data-up-muted: var(--emerald-7);
+	--border-data-up-strong: var(--emerald-8);
 	--border-error-muted: var(--crimson-7);
+	--border-error-strong: var(--crimson-8);
+	--border-success-muted: var(--emerald-7);
+	--border-warning-muted: var(--amber-7);
+	--border-warning-strong: var(--amber-8);
+
+	/* Translucency that has to stay translucent, as tokens: frosted sticky
+	   bars over scrolling content, a veil over content that is loading, and
+	   controls that sit on the brand-blue header. */
+	--bg-page-glass: color-mix(in srgb, var(--bg-page) 85%, transparent);
+	--bg-surface-glass: color-mix(in srgb, var(--bg-surface) 85%, transparent);
+	--bg-veil: color-mix(in srgb, var(--bg-surface) 65%, transparent);
+	--bg-on-brand-control: color-mix(in srgb, var(--bg-surface) 15%, transparent);
+	--bg-on-brand-control-hover: color-mix(in srgb, var(--bg-surface) 25%, transparent);
+	/* The seam between joined buttons on a brand fill (a split button). */
+	--border-on-brand-seam: color-mix(in srgb, var(--text-on-brand) 25%, transparent);
+
+	/* Disabled controls: one neutral look for every variant. */
+	--bg-disabled: var(--neutral-3);
+	--border-disabled: var(--neutral-5);
 
 	/* Stroke (alpha-based: layers correctly on any surface) */
 	--border-very-subtle: #090b0c08;
@@ -64,9 +111,8 @@
 
 	/* Neutral hover washes: a dark wash in light, a white lift in dark. Brand
 	   blue marks selection only, so a hovered destructive or selected control
-	   keeps its own hue. The light wash is the strongest that keeps text-link
-	   at AA on a hovered bg-brand-muted pill. Focus-visible may keep the wash;
-	   the focus ring is the indicator. */
+	   keeps its own hue. Focus-visible may keep the wash; the focus ring is the
+	   indicator. */
 	--hover-row: #090b0c0f; /* popover, menu and table rows */
 	--hover-card: #090b0c08; /* interactive cards */
 
@@ -83,7 +129,7 @@
 	--chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
 	/* Axis labels use the tertiary tier, quieter than full ink. */
 	--chart-axis-label: #6f6f6f;
-	/* Matches Table/SortIcon: text-link when active, text-tertiary/50 otherwise. */
+	/* The page arrows' active state matches Table/SortIcon's active caret (text-link). */
 	--chart-legend-page-active: var(--text-link);
 	--chart-legend-page-inactive: #6f6f6f80;
 	--chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
@@ -110,28 +156,25 @@
 	--chart-down-alt: var(--violet-500);
 }
 
-html.dark {
+html.dark,
+.theme-dark {
 	/* Background */
 	--bg-page: #090b0c;
 	--bg-surface: #131516;
 	--bg-surface-elevated-1: #181a1b;
 	--bg-surface-elevated-2: var(--neutral-4);
 	--bg-overlay: #181a1b;
-	--bg-brand-muted: #1f67d233;
-	/* One alpha step below muted. */
-	--bg-brand-faint: #1f67d21f;
 
 	/* Text */
 	--text-primary: #ffffff;
 	--text-secondary: #c6c6c6;
-	--text-disabled: #2f3336;
 	--text-verified: #3b82f6;
 
 	/* Stroke */
 	--border-very-subtle: #ffffff08;
 	--border-subtle: #ffffff0f;
 	--border-medium: #ffffff1f;
-	--border-strong: #ffffff29;
+	--border-strong: #ffffff57; /* 3:1 on every dark surface: unchecked checkboxes */
 
 	/* States */
 	--bg-screen-dim: #090b0cb3; /* stronger in dark, where shadows are invisible */
@@ -188,7 +231,6 @@ html.dark {
 	--color-primary: var(--text-primary);
 	--color-secondary: var(--text-secondary);
 	--color-tertiary: var(--text-tertiary);
-	--color-disabled: var(--text-disabled);
 	--color-link: var(--text-link);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
@@ -233,11 +275,112 @@ html.dark {
 @utility bg-border-strong {
 	background-color: var(--border-strong);
 }
-@utility bg-error-muted {
-	background-color: var(--bg-error-muted);
+@utility bg-brand-tint {
+	background-color: var(--bg-brand-tint);
+}
+@utility bg-brand-tint-strong {
+	background-color: var(--bg-brand-tint-strong);
+}
+@utility bg-data-down-tint {
+	background-color: var(--bg-data-down-tint);
+}
+@utility bg-data-down-tint-strong {
+	background-color: var(--bg-data-down-tint-strong);
+}
+@utility bg-data-up-tint {
+	background-color: var(--bg-data-up-tint);
+}
+@utility bg-data-up-tint-strong {
+	background-color: var(--bg-data-up-tint-strong);
+}
+@utility bg-error-faint {
+	background-color: var(--bg-error-faint);
+}
+@utility bg-error-tint {
+	background-color: var(--bg-error-tint);
+}
+@utility bg-error-tint-strong {
+	background-color: var(--bg-error-tint-strong);
+}
+@utility bg-success-faint {
+	background-color: var(--bg-success-faint);
+}
+@utility bg-success-tint {
+	background-color: var(--bg-success-tint);
+}
+@utility bg-success-tint-strong {
+	background-color: var(--bg-success-tint-strong);
+}
+@utility bg-warning-faint {
+	background-color: var(--bg-warning-faint);
+}
+@utility bg-warning-tint {
+	background-color: var(--bg-warning-tint);
+}
+@utility bg-warning-tint-strong {
+	background-color: var(--bg-warning-tint-strong);
+}
+@utility border-brand-muted {
+	border-color: var(--border-brand-muted);
+}
+@utility border-brand-strong {
+	border-color: var(--border-brand-strong);
+}
+@utility border-data-down-muted {
+	border-color: var(--border-data-down-muted);
+}
+@utility border-data-down-strong {
+	border-color: var(--border-data-down-strong);
+}
+@utility border-data-up-muted {
+	border-color: var(--border-data-up-muted);
+}
+@utility border-data-up-strong {
+	border-color: var(--border-data-up-strong);
 }
 @utility border-error-muted {
 	border-color: var(--border-error-muted);
+}
+@utility border-error-strong {
+	border-color: var(--border-error-strong);
+}
+@utility border-success-muted {
+	border-color: var(--border-success-muted);
+}
+@utility border-warning-muted {
+	border-color: var(--border-warning-muted);
+}
+@utility border-warning-strong {
+	border-color: var(--border-warning-strong);
+}
+@utility bg-page-glass {
+	background-color: var(--bg-page-glass);
+}
+@utility bg-surface-glass {
+	background-color: var(--bg-surface-glass);
+}
+@utility bg-veil {
+	background-color: var(--bg-veil);
+}
+@utility bg-on-brand-control {
+	background-color: var(--bg-on-brand-control);
+}
+@utility bg-on-brand-control-hover {
+	background-color: var(--bg-on-brand-control-hover);
+}
+@utility border-l-on-brand-seam {
+	border-left-color: var(--border-on-brand-seam);
+}
+/* Disabled text is a text-only utility: a theme color would also emit bg-disabled and border-disabled, which
+   must come from their own neutral steps below. */
+@utility text-disabled {
+	color: var(--text-disabled);
+}
+@utility bg-disabled {
+	background-color: var(--bg-disabled);
+}
+@utility border-disabled {
+	border-color: var(--border-disabled);
 }
 @utility bg-screen-dim {
 	background-color: var(--bg-screen-dim);
@@ -264,9 +407,15 @@ html.dark {
    interactive element whose resting bg is tinted or opaque (bg-brand-muted
    pills, elevated triggers) — hover:bg-hover-row REPLACES the background
    and strips the tint. Transparent-resting elements (popover and table
-   rows) may keep hover:bg-hover-row. */
-.hover-wash:not(:disabled):not([aria-disabled='true']):hover,
-.hover-wash:not(:disabled):not([aria-disabled='true']):focus-visible {
+   rows) may keep hover:bg-hover-row. A selected control takes no wash: the
+   selection is its state, and the wash would drop its text under AA on the
+   selected tint. A tinted control hovers to the next ramp step instead. */
+.hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
+		[aria-pressed='true']
+	):hover,
+.hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
+		[aria-pressed='true']
+	):focus-visible {
 	background-image: linear-gradient(var(--hover-row), var(--hover-row));
 }
 

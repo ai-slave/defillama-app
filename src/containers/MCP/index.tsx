@@ -126,7 +126,7 @@ function TerminalMock() {
 						<span className="text-tertiary">→ </span>
 						<span className="text-secondary">What are the top 5 protocols by TVL?</span>
 					</div>
-					<div className="rounded-md border border-brand/20 bg-brand-faint px-3 py-2">
+					<div className="rounded-md border border-brand-muted bg-brand-faint px-3 py-2">
 						<span className="text-link">⚡ get_protocol_metrics</span>
 						<span className="text-tertiary"> sort_by: &quot;tvl_base desc&quot;, limit: 5</span>
 					</div>
@@ -476,7 +476,7 @@ export default function MCPContainer() {
 				<a
 					href="/ai"
 					onClick={() => trackUmamiEvent('mcp-llamaai-upsell-click')}
-					className="group mt-10 flex flex-col gap-4 rounded-md border border-warning/30 bg-warning/5 p-5 transition-colors hover:border-warning/50 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+					className="group mt-10 flex flex-col gap-4 rounded-md border border-warning-muted bg-warning-faint p-5 transition-colors hover:border-warning-strong sm:flex-row sm:items-center sm:justify-between sm:p-6"
 				>
 					<div className="flex items-start gap-4">
 						<img
@@ -496,7 +496,7 @@ export default function MCPContainer() {
 							</p>
 						</div>
 					</div>
-					<span className="shrink-0 self-start rounded-md border border-warning/40 px-4 py-2 label-md text-warning transition-colors group-hover:bg-warning/10 sm:self-center">
+					<span className="shrink-0 self-start rounded-md border border-warning-muted px-4 py-2 label-md text-warning transition-colors group-hover:bg-warning-tint sm:self-center">
 						Explore LlamaAI
 					</span>
 				</a>

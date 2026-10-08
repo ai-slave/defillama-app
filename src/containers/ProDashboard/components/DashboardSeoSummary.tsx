@@ -71,7 +71,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 							{seo.tags.map((tag) => (
 								<li
 									key={tag}
-									className="rounded-md border border-pro-cards-border bg-surface-elevated-1/50 px-2 py-1 body-sm text-pro-text-label"
+									className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 body-sm text-pro-text-label"
 								>
 									{tag}
 								</li>
@@ -80,7 +80,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 					) : null}
 				</div>
 
-				<dl className="grid grid-cols-2 overflow-hidden rounded-md border border-pro-cards-border bg-surface-elevated-1/45 body-md sm:grid-cols-4 xl:grid-cols-2">
+				<dl className="grid grid-cols-2 overflow-hidden rounded-md border border-pro-cards-border bg-surface-elevated-1 body-md sm:grid-cols-4 xl:grid-cols-2">
 					{metrics.map((metric, index) => (
 						<div
 							key={metric.label}

@@ -63,8 +63,8 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 							aria-pressed={active}
 							className={`group flex h-full flex-col gap-1 rounded-lg border p-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
 								active
-									? 'border-brand bg-brand/12 shadow-brand-soft'
-									: 'border-pro-cards-border hover:border-brand hover:bg-brand/6'
+									? 'border-brand bg-brand-tint shadow-brand-soft'
+									: 'border-pro-cards-border hover:border-brand hover:bg-brand-faint'
 							}`}
 						>
 							<span className="flex items-center gap-1.5">

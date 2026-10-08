@@ -155,7 +155,7 @@ function ExpandedExamplesPanel({
 						value={filter}
 						onChange={(e) => setFilter(e.target.value)}
 						placeholder="Filter queries…"
-						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 body-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
+						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 body-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 					/>
 					{filter ? (
 						<Button
@@ -232,7 +232,7 @@ function ExpandedExamplesPanel({
 						<span className="font-semibold text-pro-text-secondary">{activeBlurb.name}.</span> {activeBlurb.blurb}
 					</span>
 				</p>
-				<p className="mt-1 body-sm text-pro-text-tertiary/80">
+				<p className="mt-1 body-sm text-pro-text-tertiary">
 					Click an example to load tables and run it.
 					{totalVisible !== EXAMPLE_QUERIES.length ? ` · ${totalVisible} shown` : ''}
 				</p>
@@ -260,7 +260,7 @@ function PlaybookItem({
 		<li
 			className={`group/item relative border-b border-subtle last:border-b-0 ${
 				isDisabled ? 'opacity-60' : ''
-			} ${isBusy ? 'bg-brand/5' : ''}`}
+			} ${isBusy ? 'bg-brand-faint' : ''}`}
 		>
 			<span
 				aria-hidden

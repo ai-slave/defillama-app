@@ -42,7 +42,7 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 		return (
 			<div
 				style={{ width: config.width * scale, height: SLOT_HEIGHT * scale }}
-				className="flex items-center justify-center rounded-[4px] border border-dashed border-medium bg-page/60"
+				className="flex items-center justify-center rounded-[4px] border border-dashed border-medium bg-page"
 			>
 				<span className="body-sm text-tertiary">Empty quote</span>
 			</div>

@@ -42,7 +42,7 @@ function getUnconfirmedPurchaseMessage(subscriptions: Array<TeamSubscription>, t
 
 // Radio labels host a visually hidden Ariakit.Radio, so the label draws the focus ring.
 const radioOptionStyles =
-	'relative flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg label-sm transition-colors has-focus-visible:focus-ring has-[input[aria-disabled=true]]:cursor-not-allowed has-[input[aria-disabled=true]]:opacity-60'
+	'relative flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg label-sm transition-colors has-focus-visible:focus-ring has-[input[aria-disabled=true]]:cursor-not-allowed has-[input[aria-disabled=true]]:border-disabled has-[input[aria-disabled=true]]:text-disabled'
 const radioOptionSelectedStyles = 'border border-brand bg-brand-muted text-link'
 const radioOptionIdleStyles = 'border border-medium text-primary'
 

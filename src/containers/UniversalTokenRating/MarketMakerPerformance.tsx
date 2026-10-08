@@ -441,7 +441,7 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 												<td className="px-4 py-2.5 text-right">
 													<span
 														className={`rounded-full px-2 py-1 body-xs ${
-															achieved ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
+															achieved ? 'bg-success-tint-strong text-success' : 'bg-error-tint-strong text-error'
 														}`}
 													>
 														{achieved ? 'Achieved' : 'Lagging'}

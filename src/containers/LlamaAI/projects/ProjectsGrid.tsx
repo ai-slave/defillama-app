@@ -75,7 +75,7 @@ export function ProjectsGrid() {
 	if (isLocked) {
 		return (
 			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
-				<div className="flex size-16 items-center justify-center rounded-full bg-brand/12">
+				<div className="flex size-16 items-center justify-center rounded-full bg-brand-tint">
 					<Icon name="folder-plus" height={28} width={28} className="text-link" />
 				</div>
 				<div className="flex flex-col gap-2">

@@ -104,7 +104,7 @@ function TableChip({
 	return (
 		<div
 			className={`group flex items-stretch overflow-hidden rounded-md border transition-colors ${
-				open ? 'border-brand/60 bg-brand/5' : 'border-subtle bg-surface hover:border-brand/40'
+				open ? 'border-brand-strong bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
 			}`}
 		>
 			<button
@@ -156,10 +156,10 @@ function PendingChip({ table }: { table: PendingTable }) {
 			title={table.label}
 			className={`flex items-center gap-1.5 overflow-hidden rounded-md border border-dashed px-2.5 py-1 body-sm transition-colors ${
 				failed
-					? 'border-error/50 bg-error/5 text-error'
+					? 'border-error-strong bg-error-faint text-error'
 					: loading
-						? 'border-brand/40 bg-brand/5 text-pro-text-primary'
-						: 'border-subtle bg-surface/40 text-pro-text-secondary'
+						? 'border-brand-muted bg-brand-faint text-pro-text-primary'
+						: 'border-subtle bg-surface text-pro-text-secondary'
 			} ${loading ? 'animate-pulse' : ''}`}
 		>
 			<span className="flex size-3 shrink-0 items-center justify-center">
@@ -173,9 +173,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 			</span>
 			<span className="max-w-[180px] truncate font-mono">{table.name}</span>
 			<span
-				className={`body-xs tracking-wide uppercase tabular-nums ${
-					failed ? 'text-error/80' : 'text-pro-text-tertiary'
-				}`}
+				className={`body-xs tracking-wide uppercase tabular-nums ${failed ? 'text-error' : 'text-pro-text-tertiary'}`}
 			>
 				{failed ? 'failed' : loading ? 'loading' : 'queued'}
 			</span>
@@ -238,7 +236,7 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface/60 px-3 py-2 body-sm text-pro-text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-pro-text-secondary">
 			<span className="text-pro-text-primary">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>

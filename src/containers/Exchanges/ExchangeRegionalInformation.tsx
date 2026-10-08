@@ -80,22 +80,22 @@ const STATUS_PRESENTATION: Record<
 > = {
 	available: {
 		label: 'Available',
-		chipClassName: 'border-data-up bg-data-up/10 text-data-up',
+		chipClassName: 'border-data-up bg-data-up-tint text-data-up',
 		sentence: (exchange, country) => `${exchange} is available in ${country}.`
 	},
 	restricted: {
 		label: 'Restricted',
-		chipClassName: 'border-warning bg-warning/10 text-warning',
+		chipClassName: 'border-warning bg-warning-tint text-warning',
 		sentence: (exchange, country) => `${exchange} has restrictions in ${country}.`
 	},
 	leaving: {
 		label: 'Leaving',
-		chipClassName: 'border-warning bg-warning/10 text-warning',
+		chipClassName: 'border-warning bg-warning-tint text-warning',
 		sentence: (exchange, country) => `${exchange} is leaving ${country}.`
 	},
 	unavailable: {
 		label: 'Unavailable',
-		chipClassName: 'border-data-down bg-data-down/10 text-data-down',
+		chipClassName: 'border-data-down bg-data-down-tint text-data-down',
 		sentence: (exchange, country) => `${exchange} is not available in ${country}.`
 	}
 }
@@ -167,7 +167,7 @@ export function ExchangeRegionalInformation({
 		return (
 			<Card as="section" padding="none" className="overflow-hidden">
 				<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-data-down/10 text-data-down">
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-data-down-tint text-data-down">
 						<Icon name="circle-x" height={17} width={17} />
 					</span>
 					<h2 className="label-lg">Not available in {country}</h2>

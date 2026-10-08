@@ -227,7 +227,9 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 
 function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' }) {
 	const styles =
-		tone === 'live' ? 'border-success/40 bg-success/10 text-success' : 'border-warning/40 bg-warning/10 text-warning'
+		tone === 'live'
+			? 'border-success-muted bg-success-tint text-success'
+			: 'border-warning-muted bg-warning-tint text-warning'
 	return (
 		<span className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px label-xs ${styles}`}>
 			<span
@@ -999,7 +1001,7 @@ function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 						<dt className="label-sm text-tertiary">{change.label}</dt>
 						<dd className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
 							<MetaValue value={change.before} tone="remove" />
-							<span aria-hidden className="hidden mono-sm text-tertiary/60 sm:inline">
+							<span aria-hidden className="hidden mono-sm text-tertiary sm:inline">
 								→
 							</span>
 							<MetaValue value={change.after} tone="add" />
@@ -1013,12 +1015,12 @@ function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 
 function MetaValue({ value, tone }: { value: string | null; tone: 'add' | 'remove' }) {
 	if (value == null) {
-		return <span className="mono-sm text-tertiary/60 italic">empty</span>
+		return <span className="mono-sm text-tertiary italic">empty</span>
 	}
 	const styles =
 		tone === 'remove'
-			? 'border-error/30 bg-error/5 text-error dark:text-error line-through'
-			: 'border-emerald-500/30 bg-success/5 text-success dark:text-success'
+			? 'border-error-muted bg-error-faint text-error dark:text-error line-through'
+			: 'border-emerald-500/30 bg-success-faint text-success dark:text-success'
 	return (
 		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 body-sm ${styles}`}>{value}</span>
 	)
@@ -1045,7 +1047,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	if (op.type === 'equal') {
 		return (
 			<div className={`${baseClasses} text-secondary`}>
-				<span aria-hidden className="pt-0.5 text-center mono-sm text-tertiary/60">
+				<span aria-hidden className="pt-0.5 text-center mono-sm text-tertiary">
 					·
 				</span>
 				<p className="body-md">{op.value}</p>
@@ -1054,7 +1056,9 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	}
 	if (op.type === 'add') {
 		return (
-			<div className={`${baseClasses} bg-success/7.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}>
+			<div
+				className={`${baseClasses} bg-success-faint.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}
+			>
 				<span aria-hidden className="pt-0.5 text-center mono-sm text-success">
 					+
 				</span>
@@ -1065,7 +1069,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	if (op.type === 'remove') {
 		return (
 			<div
-				className={`${baseClasses} bg-error/6 text-error/85 line-through ring-1 ring-red-500/20 ring-inset dark:text-error/85`}
+				className={`${baseClasses} bg-error-faint text-error line-through ring-1 ring-red-500/20 ring-inset dark:text-error`}
 			>
 				<span aria-hidden className="pt-0.5 text-center mono-sm text-error no-underline">
 					−
@@ -1075,7 +1079,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 		)
 	}
 	return (
-		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-warning/20 ring-inset`}>
+		<div className={`${baseClasses} bg-warning-faint text-primary ring-1 ring-warning/20 ring-inset`}>
 			<span aria-hidden className="pt-0.5 text-center mono-sm text-warning">
 				~
 			</span>
@@ -1085,14 +1089,17 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 					if (word.type === 'equal') return <span key={idx}>{word.value}</span>
 					if (word.type === 'add')
 						return (
-							// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
-							<span key={idx} className="rounded-[2px] bg-success/15 px-0.5 text-emerald-700 dark:text-emerald-300">
+							<span
+								// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
+								key={idx}
+								className="rounded-[2px] bg-success-tint-strong px-0.5 text-emerald-700 dark:text-emerald-300"
+							>
 								{word.value}
 							</span>
 						)
 					return (
 						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
-						<span key={idx} className="rounded-[2px] bg-error/12 px-0.5 text-error line-through dark:text-error">
+						<span key={idx} className="rounded-[2px] bg-error-tint px-0.5 text-error line-through dark:text-error">
 							{word.value}
 						</span>
 					)

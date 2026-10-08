@@ -276,7 +276,7 @@ function FeatureTile({
 }) {
 	return (
 		<div className="group flex gap-4 border-t border-subtle py-5 transition-colors hover:border-sub-brand-primary/40">
-			<span className="mono-sm-bold text-pro-text-tertiary/70 tabular-nums">{String(index).padStart(2, '0')}</span>
+			<span className="mono-sm-bold text-pro-text-tertiary tabular-nums">{String(index).padStart(2, '0')}</span>
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-center gap-2">
 					<Icon name={icon} className="size-3.5 text-link" />
@@ -318,7 +318,7 @@ function TabStrip({ id }: { id: string }) {
 				<Tab
 					key={tab.key}
 					id={`${id}-${tab.key}`}
-					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-pro-text-secondary transition-colors hover:bg-hover-row/40 hover:text-pro-text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-pro-text-primary"
+					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-pro-text-primary"
 				>
 					<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
 						{tab.dirty ? <span className="size-1.5 rounded-full bg-pro-premium-300" /> : null}
@@ -488,7 +488,7 @@ function ChartNotebookCell() {
 					<span className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2 py-0.5 mono-sm text-pro-text-secondary">
 						<span className="text-pro-text-tertiary">source</span>
 						<span className="text-pro-text-primary">cell_2</span>
-						<span aria-hidden className="text-pro-text-tertiary/60">
+						<span aria-hidden className="text-pro-text-tertiary">
 							·
 						</span>
 						<span className="tabular-nums">7 × 5</span>
@@ -515,7 +515,7 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 			className={`relative rounded-md border transition-colors ${
 				focused
 					? 'border-sub-brand-primary/45 bg-surface shadow-sub-brand-ring'
-					: 'border-subtle bg-surface/60 hover:border-subtle'
+					: 'border-subtle bg-surface hover:border-subtle'
 			}`}
 		>
 			{children}
@@ -526,7 +526,7 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md' | 'chart'; action?: ReactNode }) {
 	return (
 		<div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
-			<Icon name="menu" className="size-3 shrink-0 text-pro-text-tertiary/35" />
+			<Icon name="menu" className="size-3 shrink-0 text-pro-text-tertiary" />
 			<span className="mono-sm text-pro-text-tertiary">{name}</span>
 			<CellTypeBadge kind={badge} />
 			{action ? <div className="ml-auto flex items-center gap-1.5">{action}</div> : null}
@@ -583,11 +583,11 @@ function QueryBody() {
 				<span className="flex shrink-0 items-center gap-2 body-sm">
 					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
 					<span className="font-mono tracking-[0.12em] text-pro-success-300 uppercase">ready</span>
-					<span aria-hidden className="text-pro-text-tertiary/40">
+					<span aria-hidden className="text-pro-text-tertiary">
 						·
 					</span>
 					<span className="font-mono text-pro-text-tertiary tabular-nums">412ms</span>
-					<span aria-hidden className="hidden text-pro-text-tertiary/40 sm:inline">
+					<span aria-hidden className="hidden text-pro-text-tertiary sm:inline">
 						·
 					</span>
 					<span className="hidden sm:inline-flex">
@@ -704,7 +704,7 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 									<TypeBadge kind={col.kind} />
 									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary/80">{col.type}</span>
+								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary">{col.type}</span>
 							</div>
 						)
 					})}
@@ -715,7 +715,7 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- This table only renders fixed demonstration datasets.
 							key={i}
-							className={`grid mono-sm tabular-nums transition-colors hover:bg-brand/5 ${
+							className={`grid mono-sm tabular-nums transition-colors hover:bg-brand-faint ${
 								zebra ? 'bg-pro-app-bg/25' : ''
 							}`}
 							style={{ gridTemplateColumns: gridTemplate, height: 28 }}

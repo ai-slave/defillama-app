@@ -461,7 +461,7 @@ function TokenRightsOverviewView({
 					) : null}
 
 					{hasPrimaryValueAccrual ? (
-						<div className="rounded-lg border border-success/30 bg-success/10 p-2">
+						<div className="rounded-lg border border-success-muted bg-success-tint p-2">
 							<div className="label-sm text-secondary uppercase">Primary Value Accrual</div>
 							{valueAccrual.primary !== null ? (
 								<div className="mt-1.5 label-lg text-success">{valueAccrual.primary}</div>
@@ -563,7 +563,7 @@ function SectionCard({ title, badge, children }: { title: string; badge?: string
 
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
-		<section className="flex flex-col gap-2 rounded-lg border border-success/30 bg-success/10 p-2">
+		<section className="flex flex-col gap-2 rounded-lg border border-success-muted bg-success-tint p-2">
 			<Tooltip content={tooltip} render={<h2 />} className="w-fit label-lg text-success underline decoration-dotted">
 				{title}
 			</Tooltip>

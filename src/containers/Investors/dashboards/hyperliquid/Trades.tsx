@@ -71,7 +71,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 					const pct = (level.sz / maxSize) * 100
 					return (
 						<div key={`a-${level.px}`} className="relative grid grid-cols-3 py-0.75">
-							<div className="absolute inset-y-0 right-0 bg-error/10" style={{ width: `${pct}%` }} />
+							<div className="absolute inset-y-0 right-0 bg-error-tint" style={{ width: `${pct}%` }} />
 							<span className="relative text-error">{formatNumber(level.px)}</span>
 							<span className="relative text-right text-pro-text-primary">
 								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
@@ -102,7 +102,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 					const pct = (level.sz / maxSize) * 100
 					return (
 						<div key={`b-${level.px}`} className="relative grid grid-cols-3 py-0.75">
-							<div className="absolute inset-y-0 right-0 bg-success/10" style={{ width: `${pct}%` }} />
+							<div className="absolute inset-y-0 right-0 bg-success-tint" style={{ width: `${pct}%` }} />
 							<span className="relative text-success">{formatNumber(level.px)}</span>
 							<span className="relative text-right text-pro-text-primary">
 								{formatCompactNumber(level.sz, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}

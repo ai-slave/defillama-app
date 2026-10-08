@@ -37,7 +37,7 @@ export function ArticleEditorPreview({
 
 	return (
 		<section className="article-editor-preview relative left-1/2 mt-5 -translate-x-1/2 border-t border-medium">
-			<div className="sticky top-0 z-30 border-b border-medium bg-page/95 backdrop-blur supports-[backdrop-filter]:bg-page/82">
+			<div className="sticky top-0 z-30 border-b border-medium bg-page-glass backdrop-blur">
 				<div className="mx-auto flex w-full max-w-[1300px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
 					<div className="flex min-w-[min(100%,18rem)] flex-1 items-start gap-3">
 						<div className="grid size-9 shrink-0 place-items-center rounded-md border border-medium bg-surface">

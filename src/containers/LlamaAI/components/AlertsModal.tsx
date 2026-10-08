@@ -460,7 +460,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 		? 'bg-surface-elevated-2 text-tertiary'
 		: isPriceAlert
 			? 'bg-page text-secondary'
-			: 'bg-link/10 text-link'
+			: 'bg-brand-tint text-link'
 
 	return (
 		<AlertCard ref={cardRef}>
@@ -506,7 +506,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 							<button
 								type="button"
 								onClick={rearmIntoEditor}
-								className="mr-1 hidden items-center gap-1 rounded-lg bg-warning/10 px-2 py-1 label-sm text-warning not-disabled:not-aria-disabled:hover:bg-warning/20 sm:flex"
+								className="mr-1 hidden items-center gap-1 rounded-lg bg-warning-tint px-2 py-1 label-sm text-warning not-disabled:not-aria-disabled:hover:bg-warning-tint-strong sm:flex"
 							>
 								<Icon name="repeat" className="size-3" />
 								Re-arm

@@ -95,7 +95,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 							aria-pressed={selectedRating === 'good'}
 							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
 								selectedRating === 'good'
-									? 'border-success bg-success/12 text-success'
+									? 'border-success bg-success-tint text-success'
 									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-success not-disabled:not-aria-disabled:hover:text-success'
 							}`}
 						>
@@ -109,7 +109,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 							aria-pressed={selectedRating === 'bad'}
 							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
 								selectedRating === 'bad'
-									? 'border-error bg-error/12 text-error'
+									? 'border-error bg-error-tint text-error'
 									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-error not-disabled:not-aria-disabled:hover:text-error'
 							}`}
 						>

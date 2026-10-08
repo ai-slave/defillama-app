@@ -26,8 +26,9 @@ const TARGETS = {
 	dark: [1.08, 1.13, 1.22, 1.3, 1.45, 1.65, 2.0, 2.7, 3.69, 4.3, 7.0, 15]
 }
 
-// Share of the hue's chroma per step: tints stay quiet, fills and text carry the hue.
-const CHROMA_SHARE = [0.12, 0.2, 0.32, 0.42, 0.52, 0.62, 0.72, 0.85, 1, 1, 0.95, 0.55]
+// Share of the hue's chroma per step: tints and borders stay quiet so status colors do not
+// outshout the data around them; fills and text carry the hue.
+const CHROMA_SHARE = [0.05, 0.08, 0.13, 0.18, 0.24, 0.34, 0.45, 0.75, 1, 1, 0.95, 0.55]
 
 // hue and chroma in OKLCH. Neutral is achromatic in light and keeps the dark
 // surfaces' cool bias in dark.
@@ -118,7 +119,7 @@ function block(ramps) {
 		Object.entries(ramps[mode])
 			.map(([name, steps]) => steps.map((hex, i) => `\t--${name}-${i + 1}: ${hex};`).join('\n'))
 			.join('\n\n')
-	return `${START}\n:root {\n${lines('light')}\n}\n\nhtml.dark {\n${lines('dark')}\n}\n${END}`
+	return `${START}\n:root {\n${lines('light')}\n}\n\nhtml.dark,\n.theme-dark {\n${lines('dark')}\n}\n${END}`
 }
 
 if (import.meta.main) {

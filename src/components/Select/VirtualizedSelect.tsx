@@ -226,7 +226,7 @@ function OptionList({
 				{virtualizer.items.map((row) => {
 					const itemProps = {
 						id: `${rowIdPrefix}-${row.index}`,
-						className: `${popoverMeasuredRowStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
+						className: `${popoverMeasuredRowStyles} aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${
 							row.index < count - 1 ? 'border-b border-subtle' : ''
 						}`
 					}

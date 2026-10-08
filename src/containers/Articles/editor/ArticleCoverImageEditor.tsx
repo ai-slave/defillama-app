@@ -96,7 +96,7 @@ export function ArticleCoverImageEditor({
 												() => editor.querySelector('button')
 											)
 										}}
-										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft p-1.5 text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error/60 not-aria-disabled:hover:bg-error/70 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft p-1.5 text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error-strong not-aria-disabled:hover:bg-error/70 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 									/>
 								}
 							>
@@ -152,7 +152,7 @@ export function ArticleCoverImageEditor({
 					onClick={openCoverPicker}
 					accessibleWhenDisabled
 					aria-busy={isUploadingCover || undefined}
-					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
+					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
 				>
 					{isUploadingCover ? <LoadingSpinner size={24} /> : <SharedIcon name="image-plus" className="size-6" />}
 					<span className="label-md">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>

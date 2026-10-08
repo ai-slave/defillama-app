@@ -56,7 +56,9 @@ function SynthTable({ rows }: { rows: Array<PegRow> }) {
 							<td className="px-3 py-2.5 text-right">
 								<span
 									className={`rounded-sm px-2 py-0.5 title-sm ${
-										r.kyberSupported ? 'bg-success/15 text-success' : 'bg-pro-cards-border text-pro-text-secondary'
+										r.kyberSupported
+											? 'bg-success-tint-strong text-success'
+											: 'bg-pro-cards-border text-pro-text-secondary'
 									}`}
 								>
 									{r.kyberSupported ? 'yes' : 'no'}

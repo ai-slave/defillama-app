@@ -13,7 +13,7 @@ export function RiskCallout<T extends ElementType = 'div'>({
 	const Component = (as ?? 'div') as ElementType
 	return (
 		<Component
-			className={`rounded-lg border border-warning/30 bg-warning/10 ${padding === 'sm' ? 'p-2' : 'p-3'} ${className ?? ''}`.trim()}
+			className={`rounded-lg border border-warning-muted bg-warning-tint ${padding === 'sm' ? 'p-2' : 'p-3'} ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

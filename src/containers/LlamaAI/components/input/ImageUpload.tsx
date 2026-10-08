@@ -43,7 +43,7 @@ function UploadStatus({
 					<Ariakit.PopoverDisclosure
 						aria-label={`Upload error for ${name}`}
 						aria-describedby={errorId}
-						className="flex h-6 items-center gap-1 rounded-sm body-sm text-error hover:bg-error/10"
+						className="flex h-6 items-center gap-1 rounded-sm body-sm text-error hover:bg-error-tint"
 					>
 						Failed <Icon name="help-circle" height={14} width={14} />
 					</Ariakit.PopoverDisclosure>

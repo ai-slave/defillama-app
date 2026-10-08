@@ -31,7 +31,7 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 	return (
 		<>
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-6 text-center">
-				<div className="flex size-12 items-center justify-center rounded-full bg-brand/10">
+				<div className="flex size-12 items-center justify-center rounded-full bg-brand-tint">
 					<Icon name="file-lock-2" height={24} width={24} className="text-link" />
 				</div>
 				<div className="space-y-2">

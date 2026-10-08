@@ -542,7 +542,7 @@ export function YieldsChartTab({
 														closePoolPicker()
 													}}
 													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
-														isSelected ? 'bg-brand/10' : ''
+														isSelected ? 'bg-brand-tint' : ''
 													}`}
 													style={{
 														position: 'absolute',

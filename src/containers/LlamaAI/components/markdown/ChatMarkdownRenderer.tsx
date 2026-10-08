@@ -421,7 +421,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 						href={normalizedUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="group flex items-start gap-2.5 rounded-lg border border-subtle p-2 hover:border-brand hover:bg-brand/12 focus-visible:border-brand focus-visible:bg-brand/12"
+						className="group flex items-start gap-2.5 rounded-lg border border-subtle p-2 hover:border-brand hover:bg-brand-tint focus-visible:border-brand focus-visible:bg-brand-tint"
 					>
 						<span className="rounded-sm bg-surface-elevated-2 px-1.5 text-link">{citationNumber}</span>
 						<span className="truncate">{normalizedUrl}</span>

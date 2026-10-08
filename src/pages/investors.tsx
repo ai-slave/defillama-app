@@ -502,7 +502,7 @@ export default function InvestorsPage() {
 				<h1 className="ir-rise relative mt-8 max-w-2xl text-center text-[28px] leading-tight text-pro-text-primary [animation-delay:60ms] sm:text-3xl">
 					Investor Relations built on <span className="font-semibold text-sl-accent">verified data</span>
 				</h1>
-				<p className="ir-rise relative mt-3 max-w-[560px] text-center body-md tracking-[0.12em] text-pro-text-primary/80 [animation-delay:110ms]">
+				<p className="ir-rise relative mt-3 max-w-[560px] text-center body-md tracking-[0.12em] text-pro-text-primary [animation-delay:110ms]">
 					A dedicated hub where DeFi protocols publish official, DefiLlama-attested metrics, reports, and calls — one
 					canonical link for everything your investors need.
 				</p>
@@ -536,7 +536,7 @@ export default function InvestorsPage() {
 								{prop.icon}
 								{prop.title}
 							</h2>
-							<p className="max-w-[160px] body-sm tracking-[0.12em] text-pro-text-primary/90 capitalize">
+							<p className="max-w-[160px] body-sm tracking-[0.12em] text-pro-text-primary capitalize">
 								{prop.description}
 							</p>
 						</div>
@@ -592,7 +592,7 @@ export default function InvestorsPage() {
 							<h2 className="text-[23px] leading-tight font-bold text-pro-text-primary">
 								Want an IR dashboard for your protocol?
 							</h2>
-							<p className="max-w-[545px] text-base leading-normal text-pro-text-primary/85 sm:text-lg">
+							<p className="max-w-[545px] text-base leading-normal text-pro-text-primary sm:text-lg">
 								Verified metrics, investor reports, and calls hosted in one place. Powered by DefiLlama.{' '}
 								<span className="font-semibold text-pro-text-primary">Get in touch now!</span>
 							</p>

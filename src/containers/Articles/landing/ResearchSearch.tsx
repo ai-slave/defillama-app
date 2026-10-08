@@ -510,7 +510,7 @@ export default function ResearchSearch() {
 
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
 			{failed ? (
-				<div className="grid justify-items-start gap-3 border border-error/30 bg-error/5 p-6">
+				<div className="grid justify-items-start gap-3 border border-error-muted bg-error-faint p-6">
 					<h2 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h2>
 					<p role="alert" className="body-md text-error">
 						{error instanceof ArticleApiError ? error.message : 'Failed to load articles'}

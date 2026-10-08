@@ -12,11 +12,11 @@ interface PresetSelectorProps {
 
 const CATEGORY_CONFIG: Record<FilterPresetCategory, { label: string; color: string }> = {
 	quick: { label: 'Quick', color: 'bg-gray-500/20 text-tertiary' },
-	size: { label: 'Size', color: 'bg-brand/20 text-link' },
-	growth: { label: 'Growth', color: 'bg-success/20 text-success' },
+	size: { label: 'Size', color: 'bg-brand-tint-strong text-link' },
+	growth: { label: 'Growth', color: 'bg-success-tint-strong text-success' },
 	activity: { label: 'Activity', color: 'bg-purple-500/20 text-purple-400' },
-	revenue: { label: 'Revenue', color: 'bg-success/20 text-success' },
-	investment: { label: 'Investment', color: 'bg-warning/20 text-warning' },
+	revenue: { label: 'Revenue', color: 'bg-success-tint-strong text-success' },
+	investment: { label: 'Investment', color: 'bg-warning-tint-strong text-warning' },
 	category: { label: 'Category', color: 'bg-cyan-500/20 text-cyan-400' }
 }
 

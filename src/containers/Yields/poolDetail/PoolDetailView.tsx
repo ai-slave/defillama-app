@@ -314,7 +314,7 @@ export function PoolDetailView({
 			{exploited ? (
 				<p
 					role="alert"
-					className="flex items-start gap-3 rounded-lg border border-l-4 border-error/30 border-l-error bg-error/10 p-3 body-md"
+					className="flex items-start gap-3 rounded-lg border border-l-4 border-error-muted border-l-error bg-error-tint p-3 body-md"
 				>
 					<Icon name="alert-triangle-filled" height={20} width={20} className="mt-px shrink-0 text-error" />
 					<span className="flex flex-col">

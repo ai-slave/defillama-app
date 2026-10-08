@@ -45,7 +45,7 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 
 type BindMode = 'matching' | 'all' | 'none'
 
-const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-pro-text-primary has-disabled:cursor-not-allowed has-disabled:opacity-50`
+const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-pro-text-primary has-disabled:cursor-not-allowed has-disabled:text-disabled`
 
 function cardsLabel(count: number) {
 	return `${count} ${count === 1 ? 'card' : 'cards'}`

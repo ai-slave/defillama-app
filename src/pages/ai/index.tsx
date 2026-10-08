@@ -762,7 +762,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-subtle bg-surface-elevated-1">
 									<div className="border-b border-subtle px-3 py-2">
 										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded-sm bg-brand/15">
+											<div className="flex size-5 items-center justify-center rounded-sm bg-brand-tint-strong">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													width="11"

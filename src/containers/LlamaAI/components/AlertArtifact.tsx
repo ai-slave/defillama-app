@@ -250,7 +250,7 @@ export function AlertArtifact({
 	if (!isAuthenticated) {
 		return (
 			<div className="my-2 flex items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
 					<Icon name="calendar-plus" className="size-4" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -273,11 +273,11 @@ export function AlertArtifact({
 	return (
 		<div
 			className={`my-2 flex flex-col gap-3 rounded-lg border bg-surface p-3 ${
-				isSaved ? 'border-subtle' : 'border-warning/50 ring-2 ring-warning/15'
+				isSaved ? 'border-subtle' : 'border-warning-strong ring-2 ring-warning/15'
 			}`}
 		>
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
 					<Icon name="calendar-plus" className="size-4" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">

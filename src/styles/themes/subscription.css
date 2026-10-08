@@ -9,8 +9,6 @@
 
 @theme {
 	--shadow-sub-live: 0 0 6px rgb(74 222 128 / 0.55);
-	--shadow-sub-google: 0 4px 16px rgb(52 168 83 / 0.2);
-	--shadow-sub-google-deep: 0 4px 16px rgb(33 115 70 / 0.2);
 	--shadow-sub-purple-glow: 0 0 24px rgb(92 92 249 / 0.2);
 	--shadow-sub-blue-glow: 0 0 24px rgb(31 103 210 / 0.25);
 	--shadow-sub-brand-ring: 0 0 0 2px color-mix(in oklch, var(--sub-brand-primary) 10%, transparent);

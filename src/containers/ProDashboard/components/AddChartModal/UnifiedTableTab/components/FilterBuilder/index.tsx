@@ -124,27 +124,27 @@ function activeFilterToTableFilters(
 }
 
 const CATEGORY_COLORS: Record<FilterCategory, string> = {
-	metrics: 'bg-brand/15 text-link border-brand/30',
+	metrics: 'bg-brand-tint-strong text-link border-brand-muted',
 	volume: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-	fees: 'bg-success/15 text-success border-success/30',
-	revenue: 'bg-success/15 text-success border-emerald-500/30',
+	fees: 'bg-success-tint-strong text-success border-success-muted',
+	revenue: 'bg-success-tint-strong text-success border-emerald-500/30',
 	changes: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
 	dominance: 'bg-pink-500/15 text-pink-400 border-pink-500/30',
 	aggregators: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
 	'chain-metrics': 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
-	flags: 'bg-warning/15 text-warning border-warning/30'
+	flags: 'bg-warning-tint-strong text-warning border-warning-muted'
 }
 
 const CATEGORY_BADGE_COLORS: Record<FilterCategory, string> = {
-	metrics: 'bg-brand/20 text-link',
+	metrics: 'bg-brand-tint-strong text-link',
 	volume: 'bg-purple-500/20 text-purple-400',
-	fees: 'bg-success/20 text-success',
-	revenue: 'bg-success/20 text-success',
+	fees: 'bg-success-tint-strong text-success',
+	revenue: 'bg-success-tint-strong text-success',
 	changes: 'bg-orange-500/20 text-orange-400',
 	dominance: 'bg-pink-500/20 text-pink-400',
 	aggregators: 'bg-cyan-500/20 text-cyan-400',
 	'chain-metrics': 'bg-indigo-500/20 text-indigo-400',
-	flags: 'bg-warning/20 text-warning'
+	flags: 'bg-warning-tint-strong text-warning'
 }
 
 const CATEGORY_LABELS: Record<FilterCategory, string> = {

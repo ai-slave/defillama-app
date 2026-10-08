@@ -18,7 +18,7 @@ export default function MCP() {
 			</Head>
 			<LinkPreviewCard />
 			<div className="col-span-full flex min-h-screen w-full flex-col bg-page font-inter text-primary">
-				<header className="sticky top-0 z-50 border-b border-subtle bg-page/80 backdrop-blur-md">
+				<header className="sticky top-0 z-50 border-b border-subtle bg-page-glass backdrop-blur-md">
 					<div className="mx-auto flex h-14 max-w-[1100px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={28} height={28} className="rounded-full" />

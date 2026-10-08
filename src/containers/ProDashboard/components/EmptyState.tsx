@@ -82,7 +82,7 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, e
 					{EDITOR_HINTS.map((hint) => (
 						<li
 							key={hint.title}
-							className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-surface-elevated-1/45 p-3 text-left"
+							className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-surface-elevated-1 p-3 text-left"
 						>
 							<span className="flex items-center gap-2 label-md text-pro-text-primary">
 								<Icon name={hint.icon} height={16} width={16} className="text-pro-text-label" />

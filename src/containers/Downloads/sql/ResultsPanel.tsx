@@ -48,7 +48,7 @@ export function ResultsPanel({
 
 	if (!result && !busy) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-10 text-center">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-10 text-center">
 				<Icon name="bar-chart-2" className="size-5 text-pro-text-tertiary" />
 				<p className="body-md text-pro-text-secondary">
 					Run a query to see results here. Press{' '}

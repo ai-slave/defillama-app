@@ -37,7 +37,7 @@ export function Switch({
 }) {
 	return (
 		<label
-			className={`relative isolate flex flex-nowrap items-center gap-2 label-sm ${disabled ? 'cursor-not-allowed opacity-60' : isLoading ? 'cursor-progress' : 'cursor-pointer'} ${className ?? ''}`}
+			className={`relative isolate flex flex-nowrap items-center gap-2 label-sm ${disabled ? 'cursor-not-allowed text-disabled' : isLoading ? 'cursor-progress' : 'cursor-pointer'} ${className ?? ''}`}
 		>
 			<input
 				type="checkbox"
@@ -53,10 +53,10 @@ export function Switch({
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span
-				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
+				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${disabled ? 'bg-disabled' : checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
 			>
 				<span
-					className={`block size-4 rounded-full bg-white shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
+					className={`block size-4 rounded-full shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${disabled ? 'bg-current text-disabled' : 'bg-white'} ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
 				/>
 				{isLoading ? (
 					<span

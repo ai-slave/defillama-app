@@ -40,7 +40,7 @@ function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) 
 	const trackClick = () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel)
 
 	const frame = (
-		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40">
+		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-muted">
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img src={imageUrl} alt={alt} className="block h-auto w-full" loading="lazy" />
 		</div>

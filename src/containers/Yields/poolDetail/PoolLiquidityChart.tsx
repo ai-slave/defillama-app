@@ -457,7 +457,7 @@ function WithdrawWhatIf({
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-2 body-md text-secondary">
 				<label htmlFor={POSITION_INPUT_ID}>If you wanted to withdraw</label>
 				<span
-					className={`${readoutFieldStyles} inline-flex items-center gap-1 ${sizeDisabled ? 'opacity-60' : ''}`.trim()}
+					className={`${readoutFieldStyles} inline-flex items-center gap-1 ${sizeDisabled ? 'text-disabled' : ''}`.trim()}
 				>
 					<span className="text-tertiary">$</span>
 					<input

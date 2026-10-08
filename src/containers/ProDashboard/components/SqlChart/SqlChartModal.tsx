@@ -407,7 +407,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						{queryError ? (
 							<div
 								role="alert"
-								className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 body-sm text-error"
+								className="shrink-0 rounded-md border border-error-muted bg-error-tint px-3 py-2 body-sm text-error"
 							>
 								{queryError}
 							</div>
@@ -417,7 +417,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex ${pane === 'results' ? 'flex' : 'hidden'}`}
 					>
 						{resultRowCount !== null && resultRowCount > rowCap ? (
-							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 body-sm text-pro-text-secondary">
+							<div className="shrink-0 rounded-md border border-warning-muted bg-warning-tint px-3 py-2 body-sm text-pro-text-secondary">
 								Result has {formatNumber(resultRowCount)} rows. The card will show the first {formatNumber(rowCap)}{' '}
 								rows.
 							</div>

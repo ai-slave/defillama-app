@@ -770,7 +770,7 @@ export function UnifiedTableTab({
 				>
 					<div className="mb-3 flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10">
+							<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint">
 								<Icon name={heroCard.icon} height={22} width={22} className="text-link" />
 							</div>
 							<h3 className="heading-xs text-pro-text-primary">{heroCard.label}</h3>
@@ -787,7 +787,7 @@ export function UnifiedTableTab({
 						{heroCard.tags.map((tag) => (
 							<span
 								key={tag}
-								className="rounded-full px-2.5 py-1 label-sm text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-link"
+								className="rounded-full px-2.5 py-1 label-sm text-pro-text-secondary transition-colors group-hover:bg-brand-tint group-hover:text-link"
 							>
 								{tag}
 							</span>
@@ -827,7 +827,7 @@ export function UnifiedTableTab({
 									}}
 									className="group flex items-start gap-2.5 rounded-lg border border-pro-cards-border p-3 text-left transition-all hover:border-pro-accent/40"
 								>
-									<div className="flex size-8 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-brand/10">
+									<div className="flex size-8 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-brand-tint">
 										<Icon
 											name={isProLocked ? 'file-lock-2' : card.icon}
 											height={16}

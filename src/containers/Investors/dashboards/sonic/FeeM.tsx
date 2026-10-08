@@ -201,7 +201,9 @@ const columns = columnHelper.columns([
 					)}
 					<span className="truncate font-medium">{displayName}</span>
 					{!row.isActive && (
-						<span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 label-xs text-warning">Inactive</span>
+						<span className="shrink-0 rounded-sm bg-warning-tint-strong px-1.5 py-0.5 label-xs text-warning">
+							Inactive
+						</span>
 					)}
 				</div>
 			)

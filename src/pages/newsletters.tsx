@@ -184,7 +184,7 @@ export default function NewslettersPage() {
 											accessibleWhenDisabled
 											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
 												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
-											} ${on ? 'border-link bg-research-tint' : 'border-medium bg-surface hover:border-link/50'}`}
+											} ${on ? 'border-link bg-research-tint' : 'border-medium bg-surface hover:border-brand-strong'}`}
 										>
 											<span className="flex min-h-16 items-center justify-start">
 												<img

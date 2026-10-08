@@ -236,7 +236,7 @@ export function TrustedByAdminView() {
 				{logosQuery.isLoading ? (
 					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
 				) : logosQuery.error ? (
-					<div className="rounded-md border border-error/30 bg-error/5 p-6">
+					<div className="rounded-md border border-error-muted bg-error-faint p-6">
 						<p className="body-md text-secondary">
 							{logosQuery.error instanceof ArticleApiError ? logosQuery.error.message : 'Failed to load logos'}
 						</p>
@@ -285,7 +285,7 @@ export function TrustedByAdminView() {
 				{mentionsQuery.isLoading ? (
 					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
 				) : mentionsQuery.error ? (
-					<div className="rounded-md border border-error/30 bg-error/5 p-6">
+					<div className="rounded-md border border-error-muted bg-error-faint p-6">
 						<p className="body-md text-secondary">
 							{mentionsQuery.error instanceof ArticleApiError ? mentionsQuery.error.message : 'Failed to load mentions'}
 						</p>
@@ -406,7 +406,7 @@ function SlideBoundary({
 	if (!show) return <>{children}</>
 	return (
 		<>
-			<li className="bg-page/60 px-4 py-1.5">
+			<li className="bg-page px-4 py-1.5">
 				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Slide {slideNumber}</span>
 			</li>
 			{children}
@@ -450,7 +450,7 @@ function SortableLogoRow({
 				type="button"
 				disabled={disabled}
 				accessibleWhenDisabled
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label={`Drag ${logo.name}`}
 				{...attributes}
 				{...listeners}
@@ -535,7 +535,7 @@ function SortableMentionRow({
 				type="button"
 				disabled={disabled}
 				accessibleWhenDisabled
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label="Drag mention"
 				{...attributes}
 				{...listeners}

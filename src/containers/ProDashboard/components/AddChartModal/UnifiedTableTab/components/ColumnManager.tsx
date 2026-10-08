@@ -587,7 +587,7 @@ export function ColumnManager({
 				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
 						<h4 className="title-sm text-pro-text-primary">Selected</h4>
-						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-link">{selectedColumns.length}</span>
+						<span className="rounded-sm bg-brand-tint px-1.5 py-0.5 text-link">{selectedColumns.length}</span>
 					</div>
 					{selectedColumns.length > 0 ? (
 						<Button variant="link" onClick={handleClearAll}>
@@ -630,7 +630,7 @@ export function ColumnManager({
 					</div>
 					<DragOverlay>
 						{activeColumn ? (
-							<div className="rounded-md border border-brand bg-brand/20 px-2 py-1 label-sm text-link shadow-lg">
+							<div className="rounded-md border border-brand bg-brand-tint-strong px-2 py-1 label-sm text-link shadow-lg">
 								{activeColumn.header}
 							</div>
 						) : null}
@@ -692,14 +692,16 @@ export function ColumnManager({
 										aria-pressed={isSelected}
 										onClick={() => handleToggleColumn(column.id)}
 										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
-											isSelected ? 'border-brand/30 bg-brand/5' : 'border-transparent hover:border-pro-cards-border'
+											isSelected
+												? 'border-brand-muted bg-brand-faint'
+												: 'border-transparent hover:border-pro-cards-border'
 										}`}
 									>
 										<div
 											className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
 													? 'border-brand bg-brand text-on-brand'
-													: 'border-pro-cards-border group-hover:border-brand/50'
+													: 'border-pro-cards-border group-hover:border-brand-strong'
 											}`}
 										>
 											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
@@ -893,7 +895,9 @@ export function ColumnManager({
 						{customExpression ? (
 							<div
 								className={`rounded-md border p-2 body-sm ${
-									expressionValidation.isValid ? 'border-success/30 bg-success/5' : 'border-error/30 bg-error/5'
+									expressionValidation.isValid
+										? 'border-success-muted bg-success-faint'
+										: 'border-error-muted bg-error-faint'
 								}`}
 							>
 								<div className="flex items-center justify-between">
@@ -905,7 +909,7 @@ export function ColumnManager({
 									)}
 								</div>
 								{usedVariables.length > 0 ? (
-									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success/20 pt-1">
+									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success-muted pt-1">
 										{usedVariables.map((v) => (
 											<span key={v.key} className="body-sm text-pro-text-tertiary">
 												<code>{v.key}</code>={v.formatted}
@@ -933,7 +937,7 @@ export function ColumnManager({
 						{customColumns.map((col) => (
 							<div
 								key={col.id}
-								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand/5' : 'border-pro-cards-border'}`}
+								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand-faint' : 'border-pro-cards-border'}`}
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
@@ -1014,7 +1018,7 @@ function SortableChip({
 			style={style}
 			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 body-sm transition-colors ${
 				isFirst
-					? 'border-brand/50 bg-brand/10'
+					? 'border-brand-strong bg-brand-tint'
 					: isCustom
 						? 'border-purple-500/30 bg-purple-500/5'
 						: 'border-pro-cards-border'
@@ -1083,7 +1087,7 @@ function SortingSection({
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 body-sm transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 body-sm transition-colors hover:border-brand-muted focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span className={`truncate ${currentSortColumn ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
 							{selectedLabel}
@@ -1107,7 +1111,7 @@ function SortingSection({
 									popover.setOpen(false)
 								}}
 								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-									!currentSortColumn ? 'bg-brand/10 text-link' : 'text-pro-text-secondary'
+									!currentSortColumn ? 'bg-brand-tint text-link' : 'text-pro-text-secondary'
 								}`}
 							>
 								<span>No sorting</span>
@@ -1126,7 +1130,7 @@ function SortingSection({
 											popover.setOpen(false)
 										}}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-											isActive ? 'bg-brand/10 text-link' : 'text-pro-text-secondary'
+											isActive ? 'bg-brand-tint text-link' : 'text-pro-text-secondary'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>

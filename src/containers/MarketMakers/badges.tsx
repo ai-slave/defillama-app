@@ -2,15 +2,15 @@ import type { ReactNode } from 'react'
 import type { CompositeGrade } from './format'
 
 const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
-	full: 'border-success bg-success/10 text-success',
-	partial: 'border-warning bg-warning/10 text-warning',
-	none: 'border-error bg-error/10 text-error'
+	full: 'border-success bg-success-tint text-success',
+	partial: 'border-warning bg-warning-tint text-warning',
+	none: 'border-error bg-error-tint text-error'
 }
 
 export function AccentBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
 	return (
 		<span
-			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-brand/30 bg-brand-muted px-2.5 label-sm text-link ${className}`}
+			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-brand-muted bg-brand-muted px-2.5 label-sm text-link ${className}`}
 		>
 			{children}
 		</span>

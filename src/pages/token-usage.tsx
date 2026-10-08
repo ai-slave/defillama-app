@@ -410,7 +410,7 @@ export function TokenUsageSearch() {
 								focusOnHover
 								hideOnClick={false}
 								setValueOnClick
-								className={`${popoverRowWithBorderStyles} justify-start gap-4 aria-disabled:opacity-50`}
+								className={`${popoverRowWithBorderStyles} justify-start gap-4 aria-disabled:text-disabled`}
 							>
 								{tokenResult?.logo ? (
 									<TokenLogo src={tokenResult?.logo} alt={`Logo of ${tokenResult?.name ?? ''}`} />

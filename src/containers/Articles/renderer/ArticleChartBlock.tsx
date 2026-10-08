@@ -141,7 +141,7 @@ export function ArticleChartBlock({
 
 	return (
 		<figure className="article-chart-figure not-prose my-10 grid gap-3">
-			<header className="flex items-end justify-between gap-4 border-t border-primary/80 pt-3">
+			<header className="flex items-end justify-between gap-4 border-t border-strong pt-3">
 				<div className="flex min-w-0 items-center gap-3">
 					{uniqueEntities.length > 1 ? (
 						<span className="flex shrink-0 -space-x-2">

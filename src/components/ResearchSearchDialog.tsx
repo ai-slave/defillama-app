@@ -49,7 +49,7 @@ const SECTION_ICONS = {
 
 const SEARCH_TRIGGER_STYLES: Record<SearchDialogVariant, string> = {
 	mobile:
-		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-surface/15 text-on-brand shadow transition-colors hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden',
+		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-on-brand-control text-on-brand shadow transition-colors hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden',
 	article:
 		'hidden h-11 min-w-[113px] items-center justify-center gap-2 rounded-full border border-medium bg-surface px-4 label-md text-primary transition-colors hover:border-brand hover:text-link lg:inline-flex',
 	desktop:
@@ -251,7 +251,7 @@ function FeaturedResult({ item, label, onSelect }: { item: ResearchSearchItem; l
 			target={item.external ? '_blank' : undefined}
 			rel={item.external ? 'noreferrer noopener' : undefined}
 			onClick={onSelect}
-			className="hover-wash group grid grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-xl bg-brand-faint p-2.5 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4 sm:p-3"
+			className="group grid grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-xl bg-brand-faint p-2.5 hover:bg-brand-tint focus-visible:bg-brand-tint sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4 sm:p-3"
 		>
 			<ResultVisual item={item} featured />
 			<span className="flex min-w-0 flex-col justify-center gap-2 py-0.5 sm:py-1">

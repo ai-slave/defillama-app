@@ -36,7 +36,7 @@ const PILL_DOT: Record<SavePillState, string> = {
 	saved: 'bg-success',
 	unsaved: 'bg-warning',
 	error: 'bg-error',
-	idle: 'bg-tertiary/50'
+	idle: 'bg-border-strong'
 }
 
 type ArticleEditorHeaderProps = {
@@ -103,7 +103,7 @@ export function ArticleEditorHeader({
 	return (
 		<header
 			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
-				isPublished ? 'border-success/25' : 'border-medium'
+				isPublished ? 'border-success-muted' : 'border-medium'
 			}`}
 		>
 			<nav className="flex min-w-0 items-center gap-2.5 body-md">
@@ -113,13 +113,13 @@ export function ArticleEditorHeader({
 				>
 					Admin
 				</Link>
-				<span aria-hidden className="text-tertiary/50">
+				<span aria-hidden className="text-tertiary">
 					›
 				</span>
 				<Link href="/research/mine" className="text-tertiary hover:text-primary">
 					Articles
 				</Link>
-				<span aria-hidden className="text-tertiary/50">
+				<span aria-hidden className="text-tertiary">
 					›
 				</span>
 				{slugEditing ? (
@@ -163,7 +163,7 @@ export function ArticleEditorHeader({
 						</span>
 					</Button>
 				)}
-				<span aria-hidden className="text-tertiary/40">
+				<span aria-hidden className="text-tertiary">
 					·
 				</span>
 				{articleIsScheduled ? (
@@ -211,9 +211,9 @@ export function ArticleEditorHeader({
 							onClick={() => void saveArticle()}
 							className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 mono-sm tracking-tight transition-colors aria-disabled:cursor-default ${
 								pillState === 'error'
-									? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
+									? 'border-error-muted bg-error-faint text-error hover:bg-error-tint'
 									: pillState === 'unsaved'
-										? 'border-warning/35 bg-warning/5 text-warning hover:bg-warning/10 dark:text-warning'
+										? 'border-warning-muted bg-warning-faint text-warning hover:bg-warning-tint dark:text-warning'
 										: 'border-transparent text-secondary hover:border-medium hover:bg-hover-row aria-disabled:hover:border-transparent aria-disabled:hover:bg-transparent'
 							}`}
 						/>

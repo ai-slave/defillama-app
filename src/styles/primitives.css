@@ -7,7 +7,8 @@
    Each step has the same contrast against the canvas in every hue and holds
    one role in every hue (design.md → "Color ramps"). Light values sit on
    :root and dark values under html.dark, so a semantic token maps to a step
-   once and follows the mode.
+   once and follows the mode. `.theme-dark` gets the dark values in either
+   mode, for a surface that is always dark.
 
    The *-500 accents below are fixed across modes (chart series and the
    scrollbar thumb). Do not promote the --sub-* product ramps into this file.
@@ -42,73 +43,74 @@
 	--neutral-11: #5e5e5e;
 	--neutral-12: #2b2b2b;
 
-	--blue-1: #f3f7ff;
-	--blue-2: #e4efff;
-	--blue-3: #d8e7ff;
-	--blue-4: #cadeff;
-	--blue-5: #b9d5ff;
-	--blue-6: #a5c8ff;
-	--blue-7: #85b5ff;
-	--blue-8: #5b97f5;
+	--blue-1: #f4f7fd;
+	--blue-2: #e8eff8;
+	--blue-3: #dde7f6;
+	--blue-4: #d0def3;
+	--blue-5: #c3d5f0;
+	--blue-6: #afc8ef;
+	--blue-7: #94b4e7;
+	--blue-8: #6499eb;
 	--blue-9: #1f67d2;
 	--blue-10: #165fca;
 	--blue-11: #145abe;
 	--blue-12: #082a5d;
 
-	--emerald-1: #ecfbf0;
-	--emerald-2: #dcf5e3;
-	--emerald-3: #c9f0d5;
-	--emerald-4: #b5e9c6;
-	--emerald-5: #a1e1b7;
-	--emerald-6: #8ad8a5;
-	--emerald-7: #69c68c;
-	--emerald-8: #32ab6a;
+	--emerald-1: #f2f8f4;
+	--emerald-2: #e7f0ea;
+	--emerald-3: #daeade;
+	--emerald-4: #cde2d3;
+	--emerald-5: #bddac6;
+	--emerald-6: #a8d0b4;
+	--emerald-7: #89bf9b;
+	--emerald-8: #46a970;
 	--emerald-9: #007b45;
 	--emerald-10: #007340;
 	--emerald-11: #016d3c;
 	--emerald-12: #00341a;
 
 	--crimson-1: #fff5f5;
-	--crimson-2: #ffe9e9;
-	--crimson-3: #fedfde;
-	--crimson-4: #ffd3d1;
-	--crimson-5: #ffc5c3;
-	--crimson-6: #ffb4b2;
-	--crimson-7: #ff9696;
-	--crimson-8: #f9686f;
+	--crimson-2: #faeaea;
+	--crimson-3: #f9e1e0;
+	--crimson-4: #f7d5d4;
+	--crimson-5: #f5c8c7;
+	--crimson-6: #f5b7b6;
+	--crimson-7: #ed9e9e;
+	--crimson-8: #f07074;
 	--crimson-9: #d11b3b;
 	--crimson-10: #c90734;
 	--crimson-11: #bd0a31;
 	--crimson-12: #5d0715;
 
-	--amber-1: #fff5ee;
-	--amber-2: #ffebda;
-	--amber-3: #ffe0c7;
-	--amber-4: #ffd5b3;
-	--amber-5: #fdc99c;
-	--amber-6: #f7ba85;
-	--amber-7: #eaa465;
-	--amber-8: #d58533;
+	--amber-1: #fcf7f2;
+	--amber-2: #f5ece6;
+	--amber-3: #f1e4d9;
+	--amber-4: #ecd9ca;
+	--amber-5: #e7cfba;
+	--amber-6: #e2c0a4;
+	--amber-7: #d6aa85;
+	--amber-8: #ce8844;
 	--amber-9: #9f5a00;
 	--amber-10: #955400;
 	--amber-11: #8c4e01;
 	--amber-12: #442400;
 
-	--violet-1: #f8f7ff;
-	--violet-2: #efecff;
-	--violet-3: #e8e3fe;
-	--violet-4: #e1d8ff;
-	--violet-5: #d8ccff;
-	--violet-6: #cdbefe;
-	--violet-7: #bca5ff;
-	--violet-8: #a683f9;
+	--violet-1: #f8f6fe;
+	--violet-2: #efecf8;
+	--violet-3: #e7e3f7;
+	--violet-4: #dfd9f4;
+	--violet-5: #d6cef1;
+	--violet-6: #cbc0f1;
+	--violet-7: #b9aaea;
+	--violet-8: #a386ee;
 	--violet-9: #7d4dd7;
 	--violet-10: #7746ce;
 	--violet-11: #6f41c2;
 	--violet-12: #351e5f;
 }
 
-html.dark {
+html.dark,
+.theme-dark {
 	--neutral-1: #131516;
 	--neutral-2: #181a1b;
 	--neutral-3: #1f2123;
@@ -122,66 +124,66 @@ html.dark {
 	--neutral-11: #989b9c;
 	--neutral-12: #dee1e2;
 
-	--blue-1: #0f161f;
-	--blue-2: #0f1a2a;
-	--blue-3: #0f213c;
-	--blue-4: #0d264b;
-	--blue-5: #0d2d5c;
-	--blue-6: #0d3470;
-	--blue-7: #114088;
-	--blue-8: #1954ab;
+	--blue-1: #131519;
+	--blue-2: #161a21;
+	--blue-3: #1a222c;
+	--blue-4: #1c2636;
+	--blue-5: #212f44;
+	--blue-6: #233757;
+	--blue-7: #28436e;
+	--blue-8: #2355a1;
 	--blue-9: #1f67d2;
 	--blue-10: #2b73df;
 	--blue-11: #599aff;
 	--blue-12: #cfe2ff;
 
-	--emerald-1: #0d1811;
-	--emerald-2: #0b1d12;
-	--emerald-3: #042713;
-	--emerald-4: #002c15;
-	--emerald-5: #00361c;
-	--emerald-6: #014022;
-	--emerald-7: #004e2a;
+	--emerald-1: #121614;
+	--emerald-2: #151c17;
+	--emerald-3: #18241c;
+	--emerald-4: #19291e;
+	--emerald-5: #1b3323;
+	--emerald-6: #193e28;
+	--emerald-7: #174c2e;
 	--emerald-8: #016337;
 	--emerald-9: #007b45;
 	--emerald-10: #03884d;
 	--emerald-11: #12b167;
 	--emerald-12: #abf0c2;
 
-	--crimson-1: #201111;
-	--crimson-2: #2c1213;
-	--crimson-3: #3d1315;
-	--crimson-4: #4b1015;
-	--crimson-5: #5c0f19;
-	--crimson-6: #6f0d1c;
-	--crimson-7: #870f24;
-	--crimson-8: #ab1730;
+	--crimson-1: #1a1413;
+	--crimson-2: #221817;
+	--crimson-3: #2e1c1c;
+	--crimson-4: #381f1f;
+	--crimson-5: #462425;
+	--crimson-6: #582829;
+	--crimson-7: #712e31;
+	--crimson-8: #a12735;
 	--crimson-9: #d11a3b;
 	--crimson-10: #de2d46;
 	--crimson-11: #ff686f;
 	--crimson-12: #fed8d6;
 
-	--amber-1: #1c130c;
-	--amber-2: #25160a;
-	--amber-3: #331b04;
-	--amber-4: #3c1e00;
-	--amber-5: #482500;
-	--amber-6: #542d01;
-	--amber-7: #663800;
+	--amber-1: #181512;
+	--amber-2: #1e1814;
+	--amber-3: #281f17;
+	--amber-4: #312418;
+	--amber-5: #3c2a1a;
+	--amber-6: #4c3118;
+	--amber-7: #5f3b17;
 	--amber-8: #824801;
 	--amber-9: #9f5a00;
 	--amber-10: #ae6302;
 	--amber-11: #de841d;
 	--amber-12: #ffdaba;
 
-	--violet-1: #16131f;
-	--violet-2: #1c172b;
-	--violet-3: #251b3d;
-	--violet-4: #2c1d4c;
-	--violet-5: #36215f;
-	--violet-6: #412672;
-	--violet-7: #4f308b;
-	--violet-8: #653eaf;
+	--violet-1: #161519;
+	--violet-2: #1a1921;
+	--violet-3: #221e2c;
+	--violet-4: #282337;
+	--violet-5: #312a44;
+	--violet-6: #3b3058;
+	--violet-7: #4a3a70;
+	--violet-8: #6344a4;
 	--violet-9: #7d4dd7;
 	--violet-10: #8859e3;
 	--violet-11: #a884ff;

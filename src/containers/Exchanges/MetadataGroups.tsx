@@ -48,9 +48,9 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 }
 
 const TONE_CLASSES: Record<ExchangeMetadataTone, string> = {
-	positive: 'border-data-up bg-data-up/10 text-data-up',
-	caution: 'border-warning bg-warning/10 text-warning',
-	negative: 'border-data-down bg-data-down/10 text-data-down',
+	positive: 'border-data-up bg-data-up-tint text-data-up',
+	caution: 'border-warning bg-warning-tint text-warning',
+	negative: 'border-data-down bg-data-down-tint text-data-down',
 	neutral: 'border-subtle bg-surface-elevated-1 text-secondary'
 }
 
@@ -374,7 +374,7 @@ function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {
 			</span>
 			<h2 className="label-lg">{presentation.title}</h2>
 			{group.fromProofOfReserves ? (
-				<span className="rounded-md border border-data-up bg-data-up/10 px-2 py-0.5 label-sm text-data-up">
+				<span className="rounded-md border border-data-up bg-data-up-tint px-2 py-0.5 label-sm text-data-up">
 					Live reserves data
 				</span>
 			) : null}

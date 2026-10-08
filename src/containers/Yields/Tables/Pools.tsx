@@ -67,7 +67,7 @@ function ApyStabilityIndicator({
 					<span>{formatPercent(sigma, YIELD_PERCENT_OPTIONS)}</span>
 				</span>
 			) : null}
-			<span className="body-xs opacity-50">Score = 100 / (1 + σ/avg)</span>
+			<span className="body-xs text-tertiary">Score = 100 / (1 + σ/avg)</span>
 		</span>
 	)
 	return (

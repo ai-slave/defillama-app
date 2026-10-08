@@ -468,7 +468,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					type="button"
 					onClick={handleContinue}
 					disabled={selectedFeatures.size === 0}
-					className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+					className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled disabled:shadow-none"
 				>
 					Get started
 				</button>

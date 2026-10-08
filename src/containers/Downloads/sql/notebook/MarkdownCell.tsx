@@ -50,7 +50,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 					}
 				}}
 				placeholder="Write markdown… ⌘↵ to render"
-				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 mono-sm text-pro-text-primary outline-hidden placeholder:text-pro-text-tertiary/70"
+				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 mono-sm text-pro-text-primary outline-hidden placeholder:text-pro-text-tertiary"
 			/>
 		)
 	}

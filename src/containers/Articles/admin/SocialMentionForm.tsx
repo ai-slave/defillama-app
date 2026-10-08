@@ -112,7 +112,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 	// A failed list read is not a missing mention: say so and offer the retry.
 	if (mentionId && queryReadFailed(mentionsQuery) && !mentionsQuery.data) {
 		return (
-			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error-muted bg-error-faint p-6">
 				<h1 className="heading-sm text-primary">Couldn't load the mentions</h1>
 				<Button
 					size="sm"
@@ -131,7 +131,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 
 	if (mentionId && !mention) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
 				<h1 className="heading-sm text-primary">Couldn't find this mention</h1>
 			</div>
 		)
@@ -234,7 +234,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 				</p>
 			</div>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page-glass px-2 py-3 backdrop-blur">
 				{conflict ? <SavedChangedNotice noun="mention" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 body-sm text-tertiary">

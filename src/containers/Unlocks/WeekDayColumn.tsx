@@ -74,9 +74,7 @@ export function WeekDayColumn({ dayInfo, unlocksData, isToday }: WeekDayColumnPr
 						</BasicLink>
 					))
 				) : (
-					<div className="flex grow items-center justify-center text-center body-sm text-secondary opacity-75">
-						No unlocks
-					</div>
+					<div className="flex grow items-center justify-center text-center body-sm text-tertiary">No unlocks</div>
 				)}
 			</div>
 		</div>

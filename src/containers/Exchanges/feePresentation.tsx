@@ -14,8 +14,8 @@ const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
 const PERP_FEE_TIER_LIMITS = { low: 0.0003, medium: 0.0006 }
 
 export const FEE_TONE_CLASS: Record<FeeTone, string> = {
-	low: 'border-data-up bg-data-up/10 text-data-up',
-	medium: 'border-warning bg-warning/10 text-warning',
+	low: 'border-data-up bg-data-up-tint text-data-up',
+	medium: 'border-warning bg-warning-tint text-warning',
 	high: 'border-data-down bg-surface text-data-down'
 }
 
@@ -24,9 +24,9 @@ export type ValueTone = FeeTone | 'positive' | 'caution' | 'negative'
 
 const VALUE_TONE_CLASS: Record<ValueTone, string> = {
 	...FEE_TONE_CLASS,
-	positive: 'border-data-up bg-data-up/10 text-data-up',
-	caution: 'border-warning bg-warning/10 text-warning',
-	negative: 'border-data-down bg-data-down/10 text-data-down'
+	positive: 'border-data-up bg-data-up-tint text-data-up',
+	caution: 'border-warning bg-warning-tint text-warning',
+	negative: 'border-data-down bg-data-down-tint text-data-down'
 }
 
 /** The badge box every Exchanges value cell shares, so a row of fees, statuses and requirement chips lines up. */

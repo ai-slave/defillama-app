@@ -47,7 +47,7 @@ export function SelectTypeStep() {
 							aria-pressed={isSelected}
 							onClick={() => actions.setComparisonType(option.type)}
 							className={`flex flex-col items-center gap-4 rounded-lg border p-6 text-center transition-colors ${
-								isSelected ? 'border-brand bg-brand-faint' : 'border-subtle bg-surface hover:border-brand/40'
+								isSelected ? 'border-brand bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
 							}`}
 						>
 							<div

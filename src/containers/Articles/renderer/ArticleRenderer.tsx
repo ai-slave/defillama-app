@@ -243,7 +243,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		return (
 			<aside
 				key={key}
-				className="article-pullquote my-8 border-y border-link/30 px-2 py-6 text-center text-xl leading-snug font-medium text-primary [&_p]:my-0"
+				className="article-pullquote my-8 border-y border-brand-muted px-2 py-6 text-center text-xl leading-snug font-medium text-primary [&_p]:my-0"
 			>
 				{renderChildren(node, key, ctx)}
 			</aside>
@@ -263,7 +263,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		tone === 'warning'
 			? 'border-callout-border/60 bg-callout-bg text-callout-text dark:text-research-gold'
 			: tone === 'data'
-				? 'border-link/40 bg-research-tint'
+				? 'border-brand-muted bg-research-tint'
 				: 'border-medium bg-surface'
 	const toneText =
 		tone === 'warning' ? 'text-callout-accent dark:text-research-gold' : tone === 'data' ? 'text-link' : 'text-tertiary'
@@ -639,7 +639,7 @@ function CompactTocBar({
 			type="button"
 			onClick={onJumpToTop}
 			aria-label={`Currently reading: ${currentEntry?.text ?? 'article'}. Return to top of article.`}
-			className="group relative flex w-full flex-col gap-3 border-y border-medium py-3.5 text-left transition-colors hover:bg-surface/40"
+			className="group relative flex w-full flex-col gap-3 border-y border-medium py-3.5 text-left transition-colors hover:bg-hover-row"
 		>
 			<div className="flex items-center justify-between gap-3">
 				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">On this page</span>
@@ -651,7 +651,7 @@ function CompactTocBar({
 			<div className="flex items-baseline gap-3">
 				<span className="mono-sm tracking-tight text-tertiary tabular-nums">
 					{displayNumber}
-					<span className="text-tertiary/50">/{displayTotal}</span>
+					<span className="text-tertiary">/{displayTotal}</span>
 				</span>
 				<span className="min-w-0 flex-1 truncate label-md text-primary">{currentEntry?.text ?? '—'}</span>
 			</div>
@@ -778,7 +778,7 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 	const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
 	const dim = size === 'sm' ? 'size-9' : 'size-11'
 	const iconDim = size === 'sm' ? 'size-4' : 'size-5'
-	const buttonClass = `flex ${dim} items-center justify-center rounded-full border border-medium bg-surface text-primary transition-colors hover:border-link/50 hover:text-link`
+	const buttonClass = `flex ${dim} items-center justify-center rounded-full border border-medium bg-surface text-primary transition-colors hover:border-brand-strong hover:text-link`
 	return (
 		<div className="flex items-center gap-1.5">
 			<Tooltip
@@ -1036,9 +1036,7 @@ export function ArticleRenderer({
 							<figcaption className="grid gap-1 body-sm text-tertiary">
 								{coverHeadline ? <span className="font-medium text-secondary">{coverHeadline}</span> : null}
 								{coverCaption ? <span>{coverCaption}</span> : null}
-								{coverMetaParts.length > 0 ? (
-									<span className="text-tertiary/80">{coverMetaParts.join(' · ')}</span>
-								) : null}
+								{coverMetaParts.length > 0 ? <span className="text-tertiary">{coverMetaParts.join(' · ')}</span> : null}
 							</figcaption>
 						) : null}
 					</figure>

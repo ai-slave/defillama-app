@@ -265,7 +265,7 @@ function YSeriesPicker({
 													() => next
 												)
 											}}
-											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 mono-sm text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 mono-sm text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled"
 										>
 											<Icon name="plus" className="size-3 text-pro-text-tertiary" />
 											<span className="truncate">{name}</span>

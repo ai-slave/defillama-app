@@ -236,7 +236,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 				return (
 					<span
 						className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
-							deposit ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
+							deposit ? 'bg-success-tint text-success' : 'bg-error-tint text-error'
 						}`}
 					>
 						<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
@@ -656,7 +656,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				{formError ? (
 					<div
 						role="alert"
-						className="col-span-full flex items-center gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2 body-md text-error"
+						className="col-span-full flex items-center gap-2 rounded-md border border-error-muted bg-error-tint px-3 py-2 body-md text-error"
 					>
 						<Icon name="alert-triangle" height={14} width={14} />
 						<p>{formError}</p>
@@ -735,7 +735,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 			{!isPending && transactionResult.truncated ? (
 				<div
 					role="status"
-					className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 body-md text-primary"
+					className="flex items-start gap-2 rounded-md border border-warning-muted bg-warning-tint px-3 py-2 body-md text-primary"
 				>
 					<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-warning" />
 					<p>

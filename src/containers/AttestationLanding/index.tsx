@@ -183,7 +183,7 @@ const secondaryCtaStyles =
 
 function SiteHeader() {
 	return (
-		<header className="sticky top-0 z-50 border-b border-subtle bg-surface/80 backdrop-blur-md">
+		<header className="sticky top-0 z-50 border-b border-subtle bg-surface-glass backdrop-blur-md">
 			<div className="mx-auto flex h-16 w-full max-w-[1140px] items-center justify-between gap-4 px-4 sm:px-6 md:px-8">
 				<BasicLink
 					href="/"
@@ -766,14 +766,14 @@ function ReconciliationLedger() {
 function CadenceCompare() {
 	const days = Array.from({ length: 30 }, (_, i) => i)
 	return (
-		<div className="mt-8 rounded-lg border border-subtle bg-surface-elevated-1/50 p-6 dark:bg-surface/50">
+		<div className="mt-8 rounded-lg border border-subtle bg-surface-elevated-1 p-6">
 			<div className="grid items-center gap-x-5 gap-y-4 sm:grid-cols-[170px_1fr_auto]">
 				<span className="label-md text-secondary">Monthly PDF</span>
 				<span className="flex items-center gap-1">
 					{days.map((d) => (
 						<span
 							key={d}
-							className={`w-full max-w-2 rounded-full ${d === 0 ? 'h-5 bg-warning/80' : 'h-1 bg-border-medium'}`}
+							className={`w-full max-w-2 rounded-full ${d === 0 ? 'h-5 bg-warning' : 'h-1 bg-border-medium'}`}
 						/>
 					))}
 				</span>
@@ -781,7 +781,7 @@ function CadenceCompare() {
 				<span className="label-md text-secondary">Verified by DefiLlama</span>
 				<span className="flex items-center gap-1">
 					{days.map((d) => (
-						<span key={d} className="h-5 w-full max-w-2 rounded-full bg-data-up/70" />
+						<span key={d} className="h-5 w-full max-w-2 rounded-full bg-data-up" />
 					))}
 				</span>
 				<span className="label-md text-data-up">checked hourly</span>
@@ -793,7 +793,7 @@ function CadenceCompare() {
 function VenueFlow() {
 	const venues = ['Deribit', 'Hyperliquid', 'CEX spot', 'Broker', 'Bank', 'Onchain']
 	return (
-		<div className="mt-8 rounded-lg border border-subtle bg-surface-elevated-1/50 p-6 dark:bg-surface/50">
+		<div className="mt-8 rounded-lg border border-subtle bg-surface-elevated-1 p-6">
 			<div className="flex flex-wrap items-center justify-center gap-2.5">
 				{venues.map((v) => (
 					<span
@@ -1077,7 +1077,7 @@ function SourceRegister({
 						<li
 							key={source.id}
 							className={`grid gap-3 px-5 py-4 transition-colors sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(7rem,.72fr)_minmax(6rem,.55fr)] sm:items-center sm:gap-4 sm:px-6 ${
-								isAffected ? 'bg-surface-elevated-1/60' : ''
+								isAffected ? 'bg-surface-elevated-1' : ''
 							}`}
 						>
 							<div className="flex min-w-0 items-start justify-between gap-4 sm:block">
@@ -1110,7 +1110,7 @@ function SourceRegister({
 				})}
 			</ul>
 
-			<div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-subtle bg-surface-elevated-1/40 px-5 py-3 label-xs text-secondary sm:px-6">
+			<div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-subtle bg-surface-elevated-1 px-5 py-3 label-xs text-secondary sm:px-6">
 				<p className="flex flex-wrap items-center gap-x-2 gap-y-1">
 					<span key={state.scope} className="attn-register-change font-semibold text-primary">
 						{state.scope}
@@ -1459,7 +1459,7 @@ export default function VerifiedLanding() {
 							</div>
 						</div>
 						<p
-							className="pointer-events-none absolute inset-x-0 -bottom-[0.16em] text-center text-[clamp(3.5rem,15vw,12.5rem)] leading-none font-extrabold tracking-[-0.04em] whitespace-nowrap text-primary/6 select-none"
+							className="pointer-events-none absolute inset-x-0 -bottom-[0.16em] text-center text-[clamp(3.5rem,15vw,12.5rem)] leading-none font-extrabold tracking-[-0.04em] whitespace-nowrap text-primary select-none"
 							aria-hidden
 						>
 							DEFILLAMA

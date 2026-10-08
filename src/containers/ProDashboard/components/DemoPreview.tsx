@@ -499,7 +499,7 @@ export function DemoPreview() {
 
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
-							<div className="flex flex-col rounded-sm border border-medium bg-page/50 px-6 py-8 text-center dark:border-subtle dark:bg-pro-glass-bg">
+							<div className="flex flex-col rounded-sm border border-medium bg-page px-6 py-8 text-center dark:border-subtle dark:bg-pro-glass-bg">
 								<h3 className="mb-3 heading-sm text-secondary dark:text-pro-text-primary">Free Account</h3>
 								<div className="mb-6 heading-lg text-gray-800 dark:text-pro-text-primary">
 									$0

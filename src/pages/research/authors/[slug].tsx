@@ -115,13 +115,13 @@ function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
 		<>
 			<BasicLink
 				href="/research/profile"
-				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-link/40 hover:text-link"
+				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
 			>
 				Edit profile
 			</BasicLink>
 			<BasicLink
 				href="/research/mine"
-				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-link/40 hover:text-link"
+				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
 			>
 				Your research
 			</BasicLink>
@@ -470,7 +470,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							<section>
 								<BasicLink
 									href={articleHref(lead)}
-									className="group grid overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
+									className="group grid overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-muted md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
 										<div className="flex items-center gap-2 body-sm tracking-wide text-tertiary uppercase">

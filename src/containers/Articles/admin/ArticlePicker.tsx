@@ -89,7 +89,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				resetValueOnHide
 			>
 				<div
-					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error/60' : 'border-medium'}`}
+					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error-strong' : 'border-medium'}`}
 				>
 					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox

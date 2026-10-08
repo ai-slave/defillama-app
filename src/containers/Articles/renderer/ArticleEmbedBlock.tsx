@@ -118,7 +118,7 @@ function LinkCard({ config, action }: { config: ArticleEmbedConfig; action: stri
 			href={config.sourceUrl}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="group flex flex-col gap-2 rounded-md border border-medium bg-page p-5 no-underline transition-colors hover:border-link/50"
+			className="group flex flex-col gap-2 rounded-md border border-medium bg-page p-5 no-underline transition-colors hover:border-brand-strong"
 		>
 			<div className="flex items-baseline justify-between gap-4">
 				<div className="min-w-0 flex-1 title-lg text-primary group-hover:text-link">

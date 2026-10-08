@@ -61,7 +61,7 @@ export function ReorderableEditorialTagList({
 		<div className="grid gap-2">
 			<DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
 				<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-					<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-page/40">
+					<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-page">
 						{items.map((article, index) => (
 							<SortableEditorialTagRow
 								key={article.id}
@@ -118,7 +118,7 @@ function SortableEditorialTagRow({
 					type="button"
 					disabled={disabled}
 					accessibleWhenDisabled
-					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 					aria-label={`Drag ${article.title}`}
 					{...attributes}
 					{...listeners}

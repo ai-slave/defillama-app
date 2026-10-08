@@ -80,7 +80,7 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 	return (
 		<Link
 			href={articleHref(article)}
-			className="group grid content-start gap-3 rounded-md border border-medium bg-surface/40 p-4 transition-colors hover:border-link/40"
+			className="group grid content-start gap-3 rounded-md border border-medium bg-surface p-4 transition-colors hover:border-brand-muted"
 		>
 			<div className="flex items-center justify-between gap-3 label-xs tracking-[0.18em] text-tertiary uppercase">
 				<span>Interview</span>
@@ -138,7 +138,7 @@ function SectionLandingContent({
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
 				<h1 className="heading-sm text-primary">Couldn't load this section</h1>
 				<p className="body-md text-secondary">{message}</p>
 			</div>
@@ -172,7 +172,7 @@ function SectionLandingContent({
 				</header>
 
 				{items.length === 0 ? (
-					<div className="mx-auto grid max-w-xl gap-2 rounded-md border border-medium bg-surface/50 p-8 text-center">
+					<div className="mx-auto grid max-w-xl gap-2 rounded-md border border-medium bg-surface p-8 text-center">
 						<p className="body-md text-secondary">Nothing here yet.</p>
 						<Link href="/research" className="body-md text-link hover:underline">
 							Browse all research →

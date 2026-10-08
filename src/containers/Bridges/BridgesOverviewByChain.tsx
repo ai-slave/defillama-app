@@ -554,7 +554,7 @@ export function BridgesOverviewByChain({
 						{activeTab === 'largeTxs' ? (
 							<>
 								<div className="flex flex-wrap items-center justify-end gap-2">
-									<p className="px-4 text-right italic opacity-60">
+									<p className="px-4 text-right text-tertiary italic">
 										Displaying {largeTxsData.length} transactions from the past {selectedChain === 'All' ? '1d' : '7d'}
 									</p>
 								</div>

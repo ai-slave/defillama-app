@@ -213,7 +213,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 								{hasSavedTokens ? 'No ranking data for your saved tokens' : 'No tokens in your watchlist'}
 							</p>
 							{!hasSavedTokens ? (
-								<p className="mt-1 body-sm text-secondary opacity-75">Use the selector above to add tokens</p>
+								<p className="mt-1 body-sm text-tertiary">Use the selector above to add tokens</p>
 							) : null}
 						</SurfaceBodyStatus>
 					)}

@@ -293,7 +293,7 @@ export function BannerForm({ banner }: Props) {
 									aria-label="Banner section"
 									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 body-md transition-colors data-[state=open]:border-brand ${
 										errors.section
-											? 'border-error/60 text-primary'
+											? 'border-error-strong text-primary'
 											: state.section
 												? 'border-medium text-primary'
 												: 'border-medium text-tertiary'
@@ -709,7 +709,7 @@ export function BannerForm({ banner }: Props) {
 				</label>
 			</Section>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page-glass px-2 py-3 backdrop-blur">
 				{conflict ? <SavedChangedNotice noun="banner" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 body-sm text-tertiary">

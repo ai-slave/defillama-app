@@ -39,15 +39,16 @@ export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:c
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 
-const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-focus-visible:focus-ring max-sm:min-h-11`
+const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm aria-disabled:cursor-not-allowed aria-disabled:text-disabled data-focus-visible:focus-ring max-sm:min-h-11`
 
 export const popoverMenuItemStyles = `${menuItemRowStyles} text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
 
 /* Its own recipe, not `text-error` appended to the row: Tailwind emits `.text-primary` after `.text-error`, so an
    appended color class never wins. A destructive row highlights in its own red, like the destructive button. */
-export const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error hover:bg-error-muted focus-visible:bg-error-muted data-active-item:bg-error-muted`
+export const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error hover:bg-error-tint focus-visible:bg-error-tint data-active-item:bg-error-tint`
 
-export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row max-sm:min-h-11`
+/* The current row (`data-active`) is a selection: brand tint and link text, and it takes no hover wash. */
+export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary not-data-[active=true]:hover:bg-hover-row not-data-[active=true]:focus-visible:bg-hover-row not-data-[active=true]:data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-brand-muted data-[active=true]:text-link max-sm:min-h-11`
 
 /* The list under a PopoverHeader scrolls on its own, so the title row and header stay put when Ariakit
    scrolls the selected option into view on open, or the user scrolls a long list. Neither reserves a
@@ -65,7 +66,7 @@ export const nestedMenuSelectRowStyles = tw`grid min-h-11 w-full cursor-pointer 
 
 export const nestedMenuSeeMoreStyles = tw`min-h-11 w-full cursor-pointer px-4 py-2.5 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:opacity-40`
+export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled`
 
 export const nestedMenuDisclosureIconStyles = tw`size-4 justify-self-end text-tertiary`
 

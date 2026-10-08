@@ -24,7 +24,7 @@ export function MetaSwitch({
 }) {
 	const id = useId()
 	return (
-		<label className="group flex cursor-pointer items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-page/40">
+		<label className="group flex cursor-pointer items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-hover-row">
 			<span className="grid min-w-0 gap-0.5">
 				<span id={`${id}-label`} className="label-md text-primary">
 					{label}

@@ -275,7 +275,7 @@ function MyArticlesContent() {
 			</header>
 
 			{error ? (
-				<div className="rounded-md border border-error/30 bg-error/5 p-4 body-md text-error">
+				<div className="rounded-md border border-error-muted bg-error-faint p-4 body-md text-error">
 					{error instanceof Error ? error.message : 'Failed to load research'}
 				</div>
 			) : null}
@@ -325,7 +325,7 @@ function MyArticlesContent() {
 									<span
 										aria-hidden
 										className={`absolute top-2 bottom-2 left-0 w-[2px] rounded-r ${
-											scheduled ? 'bg-brand/70' : article.status === 'draft' ? 'bg-warning/70' : 'bg-transparent'
+											scheduled ? 'bg-brand' : article.status === 'draft' ? 'bg-warning' : 'bg-transparent'
 										}`}
 									/>
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">

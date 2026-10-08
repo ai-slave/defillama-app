@@ -76,7 +76,7 @@ export function ErrorBanner({
 	const padCls = density === 'compact' ? 'px-2.5 py-2' : 'px-3 py-2.5'
 
 	return (
-		<div className={`flex flex-col gap-2 rounded-md border border-error/30 bg-error/5 ${padCls} text-error`}>
+		<div className={`flex flex-col gap-2 rounded-md border border-error-muted bg-error-faint ${padCls} text-error`}>
 			<div className="flex flex-wrap items-center gap-2 body-sm">
 				<span className="inline-flex items-center gap-1.5 font-semibold">
 					<Icon name="alert-triangle" className="size-3.5" />
@@ -84,7 +84,7 @@ export function ErrorBanner({
 				</span>
 				{location ? (
 					<>
-						<span className="text-error/50">·</span>
+						<span className="text-error">·</span>
 						<button
 							type="button"
 							onClick={() => onJump(location.line, location.column)}
@@ -97,8 +97,8 @@ export function ErrorBanner({
 				) : null}
 				{analysis.offendingIdentifier ? (
 					<>
-						<span className="text-error/50">·</span>
-						<code className="rounded-sm bg-error/10 px-1.5 py-px mono-sm text-error">
+						<span className="text-error">·</span>
+						<code className="rounded-sm bg-error-tint px-1.5 py-px mono-sm text-error">
 							{analysis.offendingIdentifier}
 						</code>
 					</>
@@ -107,31 +107,31 @@ export function ErrorBanner({
 
 			{analysis.suggestions.length > 0 && analysis.offendingIdentifier ? (
 				<div className="flex flex-wrap items-center gap-1.5 body-sm">
-					<span className="text-error/90 dark:text-error/80">Did you mean</span>
+					<span className="text-error dark:text-error">Did you mean</span>
 					{analysis.suggestions.map((s) => (
 						<button
 							key={s}
 							type="button"
 							onClick={() => onApplyFix(analysis.offendingIdentifier!, s)}
-							className="inline-flex items-center gap-1 rounded-sm border border-error/30 bg-error/5 px-1.5 py-0.5 mono-sm text-error transition-colors hover:border-error/60 hover:bg-error/10"
+							className="inline-flex items-center gap-1 rounded-sm border border-error-muted bg-error-faint px-1.5 py-0.5 mono-sm text-error transition-colors hover:border-error-strong hover:bg-error-tint"
 						>
 							<Icon name="arrow-right" className="size-2.5" />
 							{s}
 						</button>
 					))}
-					<span className="text-error/70 dark:text-error/60">?</span>
+					<span className="text-error dark:text-error">?</span>
 				</div>
 			) : null}
 
 			<pre className="overflow-x-auto mono-sm whitespace-pre-wrap">{error}</pre>
 
 			{hints.length > 0 ? (
-				<div className="flex flex-col gap-1.5 border-t border-error/20 pt-2">
+				<div className="flex flex-col gap-1.5 border-t border-error-muted pt-2">
 					<button
 						type="button"
 						onClick={() => setExpanded((v) => !v)}
 						aria-expanded={expanded}
-						className="inline-flex items-center gap-1.5 self-start label-sm text-error/80 transition-colors hover:text-error dark:text-error/80"
+						className="inline-flex items-center gap-1.5 self-start label-sm text-error transition-colors hover:text-error dark:text-error"
 					>
 						<Icon
 							name="chevron-right"
@@ -140,7 +140,7 @@ export function ErrorBanner({
 						Common causes
 					</button>
 					{expanded ? (
-						<ul className="flex flex-col gap-1 pl-4 body-sm text-error/90 dark:text-red-200/90">
+						<ul className="flex flex-col gap-1 pl-4 body-sm text-error dark:text-red-200/90">
 							{hints.map((h, i) => (
 								// oxlint-disable-next-line react/no-array-index-key -- Hints are fixed prose slots for the selected error family.
 								<li key={i} className="list-disc">

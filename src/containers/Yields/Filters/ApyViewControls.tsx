@@ -255,7 +255,7 @@ function ComponentRow({
 function ComponentToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
 	return (
 		<Button type="button" variant="toggle" size="md" aria-pressed={active} data-active={active} onClick={onClick}>
-			<span aria-hidden className="opacity-70">
+			<span aria-hidden className="text-tertiary">
 				+
 			</span>
 			{label}

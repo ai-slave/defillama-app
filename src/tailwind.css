@@ -16,7 +16,7 @@
 @source not '../design.md';
 @source not '../scripts';
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));
 
 /* Controls in a phone sheet's rows (DialogBody, DialogToolbar, a drawer's search) take the 44px touch
    height; the row marks itself with data-sheet. Desktop, page toolbars and the sheet header keep 32px. */

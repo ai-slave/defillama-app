@@ -117,7 +117,7 @@ export function ProjectSessionItem({
 					type="button"
 					onClick={() => onSelect()}
 					disabled={isBusy}
-					className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 text-left disabled:opacity-60 sm:min-h-9"
+					className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 text-left disabled:text-disabled sm:min-h-9"
 				>
 					{s.hasUnseenCompletion ? (
 						<Tooltip

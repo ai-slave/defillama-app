@@ -44,7 +44,7 @@ import { tw } from './tw'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 body-lg text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error aria-invalid:focus:border-error`
+const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 body-lg text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-disabled aria-invalid:border-error aria-invalid:focus:border-error`
 
 export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 

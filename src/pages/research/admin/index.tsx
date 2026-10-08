@@ -29,7 +29,7 @@ export default function ResearchAdminHubPage() {
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Link
 								href="/research/new"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Authoring</span>
 								<span className="heading-xs text-primary group-hover:text-link">Write new article</span>
@@ -37,7 +37,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/mine"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Authoring</span>
 								<span className="heading-xs text-primary group-hover:text-link">My articles</span>
@@ -47,7 +47,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/admin/curation"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Editorial</span>
 								<span className="heading-xs text-primary group-hover:text-link">Curation</span>
@@ -57,7 +57,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/admin/banners"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Promotions</span>
 								<span className="heading-xs text-primary group-hover:text-link">Banners</span>
@@ -67,7 +67,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/admin/trusted-by"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Promotions</span>
 								<span className="heading-xs text-primary group-hover:text-link">Trusted By</span>
@@ -77,7 +77,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/admin/reports"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Reports</span>
 								<span className="heading-xs text-primary group-hover:text-link">Report PDFs</span>
@@ -87,7 +87,7 @@ export default function ResearchAdminHubPage() {
 							</Link>
 							<Link
 								href="/research/admin/sponsors"
-								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-brand-muted"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Clients</span>
 								<span className="heading-xs text-primary group-hover:text-link">Clients</span>

@@ -124,7 +124,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						<div
 							key={chart.id}
 							className={`relative flex flex-col gap-2 rounded-lg border p-3 transition-colors ${
-								selected ? 'border-brand bg-brand/5' : 'border-pro-cards-border hover:border-brand/50'
+								selected ? 'border-brand bg-brand-faint' : 'border-pro-cards-border hover:border-brand-strong'
 							}`}
 						>
 							<div className="flex items-start gap-2">

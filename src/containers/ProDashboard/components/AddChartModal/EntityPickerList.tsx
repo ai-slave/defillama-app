@@ -152,7 +152,7 @@ export function EntityPickerList({
 									aria-pressed={isSelected}
 									onClick={() => onToggle(entity.value)}
 									className={`flex w-full items-center gap-3 py-2 pr-3 text-left label-sm transition-all ${
-										isSelected ? 'bg-brand/10' : ''
+										isSelected ? 'bg-brand-tint' : ''
 									} ${isChild ? 'pl-8' : 'pl-3'}`}
 									style={{
 										position: 'absolute',

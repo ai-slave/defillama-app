@@ -3,10 +3,11 @@ import type { ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
+import { Button } from '~/ui/Button'
 
 function CheckIcon() {
 	return (
-		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/12">
+		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint">
 			<svg
 				viewBox="0 0 24 24"
 				className="size-3"
@@ -43,7 +44,7 @@ const highlightFormula = (formula: string) => {
 					)
 				return (
 					// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
-					<span key={i} className="text-sub-text-muted">
+					<span key={i} className="text-tertiary">
 						{part}
 					</span>
 				)
@@ -243,7 +244,7 @@ function HeroMock() {
 	return (
 		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-dark-panel shadow-brand-glow-combo">
 			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 body-sm">
-				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center mono-sm text-sub-text-muted">
+				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center mono-sm text-tertiary">
 					B2
 				</span>
 				<span className="max-w-full min-w-0 truncate mono-sm">{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}</span>
@@ -253,10 +254,10 @@ function HeroMock() {
 				style={{ gridTemplateColumns: heroGridCols }}
 			>
 				<div className="border-r border-sub-line/40 px-3 py-2.5" />
-				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 title-sm tracking-[0.5px] text-sub-text-muted uppercase">
+				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 title-sm tracking-[0.5px] text-tertiary uppercase">
 					A
 				</div>
-				<div className="flex items-center px-3 py-2.5 title-sm tracking-[0.5px] text-sub-text-muted uppercase">B</div>
+				<div className="flex items-center px-3 py-2.5 title-sm tracking-[0.5px] text-tertiary uppercase">B</div>
 			</div>
 			{heroRows.map((row) => (
 				<div
@@ -264,7 +265,7 @@ function HeroMock() {
 					className="grid border-b border-sub-line/40 last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 body-sm text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 body-sm text-tertiary tabular-nums">
 						{row.num}
 					</div>
 					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 mono-sm">
@@ -362,13 +363,13 @@ function MockTable({
 					className="border-b border-sub-line/40 bg-sub-dark-card/40"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
 						<div
 							key={label}
-							className={`flex items-center px-2.5 py-1.75 label-xs tracking-[0.3px] text-sub-text-muted uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex items-center px-2.5 py-1.75 label-xs tracking-[0.3px] text-tertiary uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
 						>
 							{label}
 						</div>
@@ -381,7 +382,7 @@ function MockTable({
 					className="border-b border-sub-line/40 last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
@@ -398,7 +399,7 @@ function MockTable({
 			))}
 			{footer ? (
 				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-tertiary tabular-nums">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
@@ -437,11 +438,11 @@ function TemplatesSection() {
 						data-umami-event-template={tpl.title}
 						className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-dark-panel p-7 transition-all hover:border-brand hover:shadow-brand-glow"
 					>
-						<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
+						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 							{tpl.icon}
 						</div>
 						<h3 className="title-md">{tpl.title}</h3>
-						<p className="body-md text-sub-text-muted">{tpl.desc}</p>
+						<p className="body-md text-tertiary">{tpl.desc}</p>
 						<span className="mt-auto flex items-center gap-1 label-md text-link">View template &rarr;</span>
 					</a>
 				))}
@@ -479,24 +480,24 @@ export default function SheetsContainer() {
 						Custom functions that pull TVL, fees, yields, stablecoin stats and historical data for 6,000+ protocols.
 					</p>
 					<div className="mt-1 flex flex-col gap-3 sm:flex-row">
-						<button
-							type="button"
+						<Button
+							variant="primary"
+							size="lg"
 							onClick={onGoogleSheetsButtonClick}
 							data-umami-event="sheets-google-sheets-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 label-md text-on-brand transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-sub-google"
 						>
 							<img src="/assets/google-sheets.svg" alt="" className="size-[18px]" />
 							Google Sheets
-						</button>
-						<button
-							type="button"
+						</Button>
+						<Button
+							variant="primary"
+							size="lg"
 							onClick={onExcelButtonClick}
 							data-umami-event="sheets-excel-addin-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 label-md text-on-brand transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-sub-google-deep"
 						>
 							<img src="/assets/microsoft-excel-v2.svg" alt="" className="size-[18px]" />
 							Excel Add-in
-						</button>
+						</Button>
 					</div>
 				</div>
 				<HeroMock />

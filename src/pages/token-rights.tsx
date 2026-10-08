@@ -729,7 +729,7 @@ function TokenPills({ tokens }: { tokens: Array<string> }) {
 			{tokens.map((token) => (
 				<span
 					key={token}
-					className="rounded-md border border-success/40 bg-success/10 px-2 py-0.5 label-sm text-success"
+					className="rounded-md border border-success-muted bg-success-tint px-2 py-0.5 label-sm text-success"
 				>
 					{token}
 				</span>
@@ -745,7 +745,9 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 				<span key={labels[index]} className="flex items-center gap-2">
 					<span
 						className={
-							active ? 'size-2 rounded-full bg-success shadow-sub-live' : 'size-2 rounded-full border border-success/40'
+							active
+								? 'size-2 rounded-full bg-success shadow-sub-live'
+								: 'size-2 rounded-full border border-success-muted'
 						}
 					/>
 					<span>
@@ -772,7 +774,9 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 				<span
 					key={labels[index]}
 					className={
-						active ? 'size-3 rounded-full bg-success shadow-sub-live' : 'size-3 rounded-full border-2 border-success/40'
+						active
+							? 'size-3 rounded-full bg-success shadow-sub-live'
+							: 'size-3 rounded-full border-2 border-success-muted'
 					}
 				/>
 			))}
@@ -812,11 +816,11 @@ type StatusPillTone = 'positive' | 'negative' | 'pending' | 'neutral'
 function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
 	const toneClassName =
 		tone === 'positive'
-			? 'border-success/40 bg-success/10 text-success'
+			? 'border-success-muted bg-success-tint text-success'
 			: tone === 'negative'
-				? 'border-error/40 bg-error/10 text-error'
+				? 'border-error-muted bg-error-tint text-error'
 				: tone === 'pending'
-					? 'border-warning/40 bg-warning/10 text-warning'
+					? 'border-warning-muted bg-warning-tint text-warning'
 					: 'border-medium bg-page text-secondary'
 
 	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 label-sm ${toneClassName} ${extraClassName}`
@@ -867,7 +871,7 @@ function TokenRightsLegend() {
 				Active
 			</span>
 			<span className="inline-flex items-center gap-2">
-				<span className="size-3 rounded-full border-2 border-success/40" />
+				<span className="size-3 rounded-full border-2 border-success-muted" />
 				Inactive
 			</span>
 			<span className="inline-flex items-center gap-2">

@@ -10,10 +10,12 @@ import { LoadingSpinner } from './Loaders'
    - secondary:   transparent + border-medium (default toolbar/action button)
    - primary:     bg-brand + text-on-brand (one per view: Done, Sign-in, …;
                   a dismissible banner's single CTA, an empty state's CTA and
-                  a repeated cell's Run may also be primary)
-   - outline:     border-brand + text-link
+                  a repeated cell's Run may also be primary; so may two equal
+                  alternatives side by side, such as the Sheets hero's
+                  Google Sheets and Excel)
+   - outline:     border-brand + text-link; hovers to its own blue tint
    - destructive: border-error-muted + text-error for irreversible actions;
-                  hover and focus tint in its own red (bg-error-muted), never
+                  hover and focus tint in its own red (bg-error-tint), never
                   the neutral row wash
    - ghostDestructive: a quiet icon-only delete in a dense row (trash on a
                   saved query, draft or preset); turns error red, on the
@@ -21,7 +23,8 @@ import { LoadingSpinner } from './Loaders'
                   clear a selection or remove a filter stay ghost
    - ghost:       borderless quiet trigger; `data-active` gives it the
                   brand-muted fill and text-link
-   - filter:      rounded-full brand-border pill; `data-active` tints it.
+   - filter:      rounded-full brand-border pill; hovers to bg-brand-tint,
+                  `data-active` selects it with bg-brand-muted (no hover).
                   Metrics-directory category filters and removable
                   active-filter pills (label + x) use `filter` size="sm";
                   never hand-roll the pill classes
@@ -131,25 +134,45 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'border border-medium text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
 	primary:
 		'border border-transparent bg-brand text-on-brand not-disabled:not-aria-disabled:hover:brightness-110 not-disabled:not-aria-disabled:focus-visible:brightness-110 focus-visible:focus-ring-on-brand',
-	outline: 'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
+	outline:
+		'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-brand-tint focus-visible:bg-brand-tint',
 	destructive:
-		'border border-error-muted text-error not-disabled:not-aria-disabled:hover:bg-error-muted focus-visible:bg-error-muted',
+		'border border-error-muted text-error not-disabled:not-aria-disabled:hover:bg-error-tint focus-visible:bg-error-tint',
 	ghost:
-		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link text-secondary not-disabled:not-aria-disabled:hover:text-primary focus-visible:text-primary',
-	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',
+		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link text-secondary not-data-[active=true]:not-disabled:not-aria-disabled:hover:text-primary not-data-[active=true]:focus-visible:text-primary',
+	filter:
+		'border border-brand text-primary not-data-[active=true]:not-disabled:not-aria-disabled:hover:bg-brand-tint not-data-[active=true]:focus-visible:bg-brand-tint data-[active=true]:bg-brand-muted',
 	toggle:
 		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link',
-	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary',
-	// Hidden until the pointer enters the rail or the arrow takes focus. A disabled arrow (at the rail's end) stays
-	// hidden there too, because the disabled opacity-60 would otherwise outrank opacity-0.
+	metricBrowse:
+		'border border-dashed border-brand bg-brand-tint text-primary not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong',
+	// Hidden until the pointer enters the rail or the arrow takes focus.
 	overlay:
-		'hover-wash border border-medium bg-surface text-primary shadow-overlay-sm opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 aria-disabled:not-group-hover/rail:not-focus-visible:opacity-0',
+		'hover-wash border border-medium bg-surface text-primary shadow-overlay-sm opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
 	ghostDestructive:
-		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-muted not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-muted focus-visible:text-error'
+		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error'
+}
+
+/* Every variant disables to one neutral look (design.md → Color ramps): disabled text, plus the disabled fill on
+   filled variants and the disabled border on outlined ones, never the variant's own colors at reduced opacity.
+   A pending button (aria-busy) keeps its look. */
+const DISABLED_FILL = 'disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:bg-disabled'
+const DISABLED_BORDER = 'disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:border-disabled'
+const DISABLED_CLASSES: Record<ButtonVariant, string> = {
+	secondary: DISABLED_BORDER,
+	primary: DISABLED_FILL,
+	outline: DISABLED_BORDER,
+	destructive: DISABLED_BORDER,
+	ghost: '',
+	filter: DISABLED_BORDER,
+	toggle: `${DISABLED_FILL} ${DISABLED_BORDER}`,
+	metricBrowse: `${DISABLED_FILL} ${DISABLED_BORDER}`,
+	overlay: DISABLED_BORDER,
+	ghostDestructive: ''
 }
 
 const LINK_CLASSES =
-	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline-offset-2 not-disabled:not-aria-disabled:hover:underline focus-visible:underline disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress'
+	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline-offset-2 not-disabled:not-aria-disabled:hover:underline focus-visible:underline disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress'
 
 /* min-h pins the control heights (sm 24, md 32) so rows of
    mixed content (16px icons vs 16px text lines) stay exactly level; padding
@@ -187,7 +210,7 @@ type ButtonLook =
 function buttonStyles(look: ButtonLook): string {
 	if (look.variant === 'link') return LINK_CLASSES
 	const { variant = 'secondary', size, square = false } = look
-	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
+	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress ${DISABLED_CLASSES[variant]} ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
@@ -287,7 +310,7 @@ export function ButtonGroup({ label, children }: { label: string; children: Reac
 		<div
 			role="group"
 			aria-label={label}
-			className="inline-flex *:not-first:rounded-l-none *:not-first:border-l-on-brand/25 *:not-last:rounded-r-none"
+			className="inline-flex *:not-first:rounded-l-none *:not-first:border-l-on-brand-seam *:not-last:rounded-r-none"
 		>
 			{children}
 		</div>

@@ -149,7 +149,7 @@ function AuthorProfileSetupNotice() {
 	if (dismissed) return null
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-pro-link-button-bg px-3 py-2">
+		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand-muted bg-pro-link-button-bg px-3 py-2">
 			<div className="flex min-w-0 items-start gap-2">
 				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
 				<div className="min-w-0">

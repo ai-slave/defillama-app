@@ -294,7 +294,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				}}
 				disabled={deletion.isPending || isRestoring}
 				accessibleWhenDisabled
-				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:opacity-60"
+				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:text-disabled"
 			>
 				{session.isPinned ? <Icon name="pin" height={14} width={14} className="shrink-0 text-tertiary" /> : null}
 				{terminalSymbol ? (
@@ -473,7 +473,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				/>
 			) : null}
 			{isRestoring ? (
-				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-surface/70">
+				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-veil">
 					<LoadingSpinner size={12} />
 				</span>
 			) : null}

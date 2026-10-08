@@ -154,8 +154,8 @@ function recalculateFromCache(containerWidth: number, cached: CachedLayout, link
 // Initial measurement renders all links (hidden by CSS) to cache widths, then trims.
 // Resize uses cached widths for instant recalculation — no DOM churn.
 //
-// Pill: rounded-sm px-2 py-1 label-sm, resting bg-brand-muted + text-link, active bg-brand + text-on-brand,
-// hover-wash for hover and focus. When the active link sits in the overflow menu, the "Others" trigger takes the active
+// Pill: rounded-sm px-2 py-1 label-sm, resting bg-brand-tint + text-link, hover and focus bg-brand-tint-strong,
+// active bg-brand + text-on-brand. When the active link sits in the overflow menu, the "Others" trigger takes the active
 // fill and its chevron turns text-on-brand with the label, because the resting tertiary chevron vanishes on bg-brand.
 export function LinksWithDropdown({
 	links = EMPTY_LINKS,
@@ -306,7 +306,7 @@ function LinkItem({
 	return (
 		<BasicLink
 			href={option.to}
-			className="hover-wash rounded-sm bg-brand-muted px-2 py-1 label-sm whitespace-nowrap text-link data-[active=true]:bg-brand data-[active=true]:text-on-brand"
+			className="rounded-sm bg-brand-tint px-2 py-1 label-sm whitespace-nowrap text-link not-data-[active=true]:hover:bg-brand-tint-strong not-data-[active=true]:focus-visible:bg-brand-tint-strong data-[active=true]:bg-brand data-[active=true]:text-on-brand"
 			data-active={isActive}
 			aria-current={isActive ? 'page' : undefined}
 			{...props}

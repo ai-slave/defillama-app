@@ -114,7 +114,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 				<h3 className="title-md text-pro-text-primary">Fee Switch</h3>
 				<span
 					className={`rounded-full px-2 py-0.5 label-sm ${
-						isActive ? 'bg-success/15 text-success' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'
+						isActive ? 'bg-success-tint-strong text-success' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'
 					}`}
 				>
 					{feeSwitch.status}

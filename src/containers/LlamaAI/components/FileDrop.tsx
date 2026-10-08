@@ -40,7 +40,7 @@ export function FileDropOverlay() {
 	return (
 		<div
 			role="status"
-			className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand bg-brand/10 text-primary backdrop-blur-[2px]"
+			className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand bg-brand-tint text-primary backdrop-blur-[2px]"
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
 				<path

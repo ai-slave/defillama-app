@@ -42,7 +42,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					// Focusable while a pick links: the pick disables the field that holds focus.
 					disabled={disabled}
 					accessibleWhenDisabled
-					className={`${inputStyles} w-full pl-9 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+					className={`${inputStyles} w-full pl-9 aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled`}
 				/>
 			</div>
 			<ComboboxSurface

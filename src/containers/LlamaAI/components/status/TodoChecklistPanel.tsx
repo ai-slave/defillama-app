@@ -79,7 +79,7 @@ export function TodoChecklistPanel({
 				</span>
 				<p className="m-0 flex-1 truncate label-sm text-primary">Progress</p>
 				{interrupted ? (
-					<p className="m-0 shrink-0 rounded-sm bg-error/10 px-1.5 py-0.5 label-xs text-error">stopped early</p>
+					<p className="m-0 shrink-0 rounded-sm bg-error-tint px-1.5 py-0.5 label-xs text-error">stopped early</p>
 				) : null}
 				<p className="m-0 shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary tabular-nums">
 					{completed}/{total} done
