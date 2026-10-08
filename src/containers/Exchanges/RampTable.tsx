@@ -34,10 +34,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 	// USD is always offered even where no visible venue publishes a USD rail, so the
 	// default selection is never absent from its own dropdown.
 	const currencyOptions = React.useMemo(
-		() =>
-			[...new Set([DEFAULT_RAMP_CURRENCY, ...rampCurrencyOptions(rows, size)])]
-				.sort()
-				.map((code) => ({ key: code, name: code })),
+		() => [...new Set([DEFAULT_RAMP_CURRENCY, ...rampCurrencyOptions(rows, size)])].sort(),
 		[rows, size]
 	)
 

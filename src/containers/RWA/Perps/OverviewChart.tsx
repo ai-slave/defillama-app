@@ -42,9 +42,9 @@ const CHART_TYPE_OPTIONS: Array<{ key: RWAPerpsChartMetricKey; label: string }> 
 
 const VALID_CHART_TYPES = new Set<RWAPerpsChartMetricKey>(CHART_TYPE_OPTIONS.map(({ key }) => key))
 const DEFAULT_CHART_TYPE: RWAPerpsChartMetricKey = 'openInterest'
-const TIME_SERIES_MODE_OPTIONS: Array<{ key: RWAPerpsTimeSeriesMode; label: string }> = [
-	{ key: 'grouped', label: 'Total' },
-	{ key: 'breakdown', label: 'Breakdown' }
+const TIME_SERIES_MODE_OPTIONS: Array<{ key: RWAPerpsTimeSeriesMode; name: string }> = [
+	{ key: 'grouped', name: 'Total' },
+	{ key: 'breakdown', name: 'Breakdown' }
 ]
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
@@ -340,10 +340,10 @@ export function RWAPerpsOverviewChart({
 				/>
 				<Select
 					heading="Series"
-					allValues={TIME_SERIES_MODE_OPTIONS.map(({ key, label }) => ({ key, name: label }))}
+					allValues={TIME_SERIES_MODE_OPTIONS}
 					selectedValues={timeSeriesMode}
 					setSelectedValues={onSelectTimeSeriesMode}
-					label={TIME_SERIES_MODE_OPTIONS.find(({ key }) => key === timeSeriesMode)?.label ?? 'Total'}
+					label={TIME_SERIES_MODE_OPTIONS.find(({ key }) => key === timeSeriesMode)?.name ?? 'Total'}
 					labelType="none"
 					variant="filter"
 					size="md"

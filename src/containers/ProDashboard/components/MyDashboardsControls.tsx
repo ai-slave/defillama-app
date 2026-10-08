@@ -81,7 +81,7 @@ export function MyDashboardsControls({
 
 			<SegmentedControl
 				variant="default"
-				options={MY_DASHBOARDS_VISIBILITY_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+				options={MY_DASHBOARDS_VISIBILITY_OPTIONS}
 				label="Visibility"
 				value={visibility}
 				onValueChange={onVisibilityChange}

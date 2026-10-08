@@ -67,15 +67,14 @@ export function DefiWatchlistContainer({
 
 	const { savedProtocols: savedChains, addProtocol: addChain, removeProtocol: removeChain } = useBookmarks('chains')
 
-	const { protocolOptions, selectedProtocolNames, watchedNames } = useMemo(() => {
+	const { selectedProtocolNames, watchedNames } = useMemo(() => {
 		const selected = Array.from(savedProtocols)
 		return {
-			protocolOptions: protocolNames.map((name) => ({ key: name, name })),
 			selectedProtocolNames: selected,
 			// Stable query key: the same saved set always resolves to the same request.
 			watchedNames: [...selected].sort()
 		}
-	}, [protocolNames, savedProtocols])
+	}, [savedProtocols])
 
 	const { data: protocolRowsData, isLoading: isLoadingProtocolRows } = useQuery({
 		queryKey: ['watchlist-protocol-rows', watchedNames],
@@ -109,14 +108,13 @@ export function DefiWatchlistContainer({
 		for (const name of toRemove) removeProtocol(name)
 	}
 
-	const { chainOptions, selectedChainNames, watchedChainNames } = useMemo(() => {
+	const { selectedChainNames, watchedChainNames } = useMemo(() => {
 		const selected = Array.from(savedChains)
 		return {
-			chainOptions: chainNames.map((name) => ({ key: name, name })),
 			selectedChainNames: selected,
 			watchedChainNames: [...selected].sort()
 		}
-	}, [chainNames, savedChains])
+	}, [savedChains])
 
 	const { data: chainRowsData, isLoading: isLoadingChainRows } = useQuery({
 		queryKey: ['watchlist-chain-rows', watchedChainNames],
@@ -174,7 +172,7 @@ export function DefiWatchlistContainer({
 							</p>
 						</div>
 						<SelectWithCombobox
-							allValues={protocolOptions}
+							allValues={protocolNames}
 							selectedValues={selectedProtocolNames}
 							setSelectedValues={handleProtocolSelection}
 							label={selectedProtocolNames.length > 0 ? 'Protocols' : 'Add protocols'}
@@ -205,7 +203,7 @@ export function DefiWatchlistContainer({
 							</p>
 						</div>
 						<SelectWithCombobox
-							allValues={chainOptions}
+							allValues={chainNames}
 							selectedValues={selectedChainNames}
 							setSelectedValues={handleChainSelection}
 							label={selectedChainNames.length > 0 ? 'Chains' : 'Add chains'}
@@ -822,13 +820,6 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 		return movers
 	}, [protocols, showPositive, showNegative, selectedChainsSet, showsAllChains])
 
-	const chainOptions = useMemo(() => {
-		return availableChains.map((chain) => ({
-			key: chain,
-			name: chain
-		}))
-	}, [availableChains])
-
 	return (
 		<Card padding="none">
 			<TableToolbar>
@@ -855,7 +846,7 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 
 				{availableChains.length > 0 ? (
 					<SelectWithCombobox
-						allValues={chainOptions}
+						allValues={availableChains}
 						selectedValues={selectedChains}
 						setSelectedValues={setSelectedChains}
 						label={

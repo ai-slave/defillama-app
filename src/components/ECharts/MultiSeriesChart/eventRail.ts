@@ -7,7 +7,7 @@ import { asTooltipDataRecord } from '../shared/tooltip'
 import type { MultiSeriesChartArrayRow, MultiSeriesYAxisOption } from './types'
 
 const EVENT_DOT_SIZE = 16
-const EVENT_DOT_FILL_POINTS = [
+const EVENT_DOT_FILL_POLYGON_POINTS: Array<[number, number]> = [
 	[8, 0],
 	[12, 4],
 	[16, 4],
@@ -15,8 +15,8 @@ const EVENT_DOT_FILL_POINTS = [
 	[0, 16],
 	[0, 4],
 	[4, 4]
-] as const
-const EVENT_DOT_BORDER_POINTS = [
+]
+const EVENT_DOT_BORDER_POLYGON_POINTS: Array<[number, number]> = [
 	[8, 0.5],
 	[11.5, 4],
 	[15.5, 4],
@@ -24,7 +24,7 @@ const EVENT_DOT_BORDER_POINTS = [
 	[0.5, 15.5],
 	[0.5, 4],
 	[4.5, 4]
-] as const
+]
 
 const EVENT_BODY_CENTER_Y = 10
 const EVENT_STAR_ICON_SIZE = 9.5
@@ -41,9 +41,6 @@ const EVENT_MARKLINE_GRAPHIC_ID = 'echarts-hallmark-markline'
 
 const EVENT_STAR_PATH = 'M50 12 L62 42 L94 42 L68 61 L78 92 L50 73 L22 92 L32 61 L6 42 L38 42 Z'
 const DANGER_KEYWORDS = ['depeg', 'hack', 'exploit', 'attack']
-
-const EVENT_DOT_FILL_POLYGON_POINTS = EVENT_DOT_FILL_POINTS.map(([x, y]): [number, number] => [x, y])
-const EVENT_DOT_BORDER_POLYGON_POINTS = EVENT_DOT_BORDER_POINTS.map(([x, y]): [number, number] => [x, y])
 
 export type EventRailDatum = {
 	value: [number, number]

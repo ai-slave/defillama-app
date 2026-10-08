@@ -138,15 +138,15 @@ const industryColumns = industryColumnHelper.columns([
 	}),
 	...(
 		[
-			'priceChangePercentage1d',
-			'priceChangePercentage7d',
-			'priceChangePercentage1m',
-			'priceChangePercentageYtd'
+			['priceChangePercentage1d', '1D'],
+			['priceChangePercentage7d', '7D'],
+			['priceChangePercentage1m', '1M'],
+			['priceChangePercentageYtd', 'YTD']
 		] as const
-	).map((field, index) =>
+	).map(([field, header]) =>
 		industryColumnHelper.accessor((row) => row[field] ?? undefined, {
 			id: field,
-			header: ['1D', '7D', '1M', 'YTD'][index]!,
+			header,
 			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
 			meta: { headerClassName: 'w-18', align: 'end' }
 		})

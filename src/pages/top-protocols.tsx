@@ -104,8 +104,6 @@ export const getStaticProps = withPerformanceLogging('top-protocols', async () =
 const pageName = ['Top Protocols']
 
 export default function TopProtocols({ data, chains, uniqueCategories }) {
-	const columnOptions = uniqueCategories.map((cat) => ({ name: cat, key: cat }))
-
 	const router = useRouter()
 	const { rows, columnVisibility } = React.useMemo(
 		() => selectTopProtocolsView(data, chains, uniqueCategories, router.query),
@@ -216,7 +214,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						size="md"
 					/>
 					<SelectWithCombobox
-						allValues={columnOptions}
+						allValues={uniqueCategories}
 						includeQueryKey="column"
 						excludeQueryKey="excludeColumn"
 						nestedMenu={false}

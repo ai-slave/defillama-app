@@ -41,12 +41,11 @@ type ActiveFilter =
 	| RangeFilter
 
 // A saved filter stores only a minimum and a maximum, so strict > and < would come back as >= and <=.
-const OPERATORS: Array<{ value: NumericOperator; label: string }> = [
-	{ value: '>=', label: '>=' },
-	{ value: '<=', label: '<=' },
-	{ value: 'between', label: 'between' }
+const OPERATOR_OPTIONS: Array<{ key: NumericOperator; name: string }> = [
+	{ key: '>=', name: '>=' },
+	{ key: '<=', name: '<=' },
+	{ key: 'between', name: 'between' }
 ]
-const OPERATOR_OPTIONS = OPERATORS.map((option) => ({ key: option.value, name: option.label }))
 
 function parseNumberWithAbbreviation(input: string): number | undefined {
 	const cleaned = input.trim().toLowerCase()
@@ -405,7 +404,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				heading="Operator"
 				selectedValues={filter.operator}
 				setSelectedValues={(value) => {
-					const operator = OPERATORS.find((option) => option.value === value)?.value
+					const operator = OPERATOR_OPTIONS.find((option) => option.key === value)?.key
 					if (!operator) throw new Error(`Unsupported numeric filter operator: ${value}`)
 					handleOperatorChange(filter, operator)
 				}}

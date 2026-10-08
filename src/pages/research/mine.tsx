@@ -31,12 +31,6 @@ const FETCH_LIMIT = 100
 const PAGE_SIZE = 12
 const EMPTY_ARTICLES: Array<ArticleDocument> = []
 
-const STATUS_FILTERS: ReadonlyArray<{ value: StatusFilter; label: string }> = [
-	{ value: 'all', label: 'All' },
-	{ value: 'draft', label: 'Drafts' },
-	{ value: 'published', label: 'Published' }
-]
-
 const SORT_LABELS: Record<SortKey, string> = {
 	updated: 'Recently updated',
 	created: 'Recently created',
@@ -217,17 +211,32 @@ function MyArticlesContent() {
 						label="Status"
 						variant="default"
 						size="md"
-						options={STATUS_FILTERS.map(({ value, label }) => ({
-							value,
-							label: (
-								<>
-									{label}{' '}
-									<span className="tabular-nums opacity-70">
-										{value === 'all' ? totalCount : value === 'draft' ? draftCount : publishedCount}
-									</span>
-								</>
-							)
-						}))}
+						options={[
+							{
+								value: 'all',
+								label: (
+									<>
+										All <span className="tabular-nums opacity-70">{totalCount}</span>
+									</>
+								)
+							},
+							{
+								value: 'draft',
+								label: (
+									<>
+										Drafts <span className="tabular-nums opacity-70">{draftCount}</span>
+									</>
+								)
+							},
+							{
+								value: 'published',
+								label: (
+									<>
+										Published <span className="tabular-nums opacity-70">{publishedCount}</span>
+									</>
+								)
+							}
+						]}
 						value={statusFilter}
 						onValueChange={setStatusFilter}
 					/>

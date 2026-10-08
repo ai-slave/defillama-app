@@ -14,10 +14,6 @@ import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
 const SERIES_TYPES = ['line', 'bar', 'area'] as const
-const METRIC_CLASS_OPTIONS = [
-	{ value: 'flow', label: 'Sum per period' },
-	{ value: 'stock', label: 'End-of-period value' }
-] as const
 
 // Only offer type swaps the current data shape can actually render — otherwise the chart says
 // "no data available" (e.g. scatter needs a numeric x; pie/hbar need categories).
@@ -494,11 +490,8 @@ export function ChartStyleEditor({
 														Aggregation: choose
 													</option>
 												) : null}
-												{METRIC_CLASS_OPTIONS.map((option) => (
-													<option key={option.value} value={option.value}>
-														{option.label}
-													</option>
-												))}
+												<option value="flow">Sum per period</option>
+												<option value="stock">End-of-period value</option>
 											</select>
 										) : null}
 										{isCombo ? (

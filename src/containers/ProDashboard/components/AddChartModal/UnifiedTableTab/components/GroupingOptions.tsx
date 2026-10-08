@@ -6,12 +6,6 @@ type IconName = ComponentProps<typeof Icon>['name']
 
 const PROTOCOL_ROW_HEADER_ORDER: Array<UnifiedRowHeaderType> = ['chain', 'category', 'parent-protocol']
 
-const GROUPING_ICON_BY_KEY: Partial<Record<UnifiedRowHeaderType, IconName>> = {
-	chain: 'chain',
-	category: 'tag',
-	'parent-protocol': 'protocol'
-}
-
 const formatGroupingLabel = (header: UnifiedRowHeaderType) => {
 	if (header === 'parent-protocol') {
 		return 'Protocol'
@@ -23,17 +17,16 @@ const formatGroupingLabel = (header: UnifiedRowHeaderType) => {
 		.join(' ')
 }
 
-const GROUPING_OPTIONS = PROTOCOL_ROW_HEADER_ORDER.map((header) => ({
-	value: header,
-	label: formatGroupingLabel(header),
-	icon: GROUPING_ICON_BY_KEY[header],
-	description:
-		header === 'chain'
-			? 'Group rows by blockchain ecosystem.'
-			: header === 'category'
-				? 'Break protocols down by sector classification.'
-				: 'Combine child protocols under their parent project.'
-}))
+const GROUPING_OPTIONS: Array<{ value: UnifiedRowHeaderType; label: string; icon: IconName; description: string }> = [
+	{ value: 'chain', label: 'Chain', icon: 'chain', description: 'Group rows by blockchain ecosystem.' },
+	{ value: 'category', label: 'Category', icon: 'tag', description: 'Break protocols down by sector classification.' },
+	{
+		value: 'parent-protocol',
+		label: 'Protocol',
+		icon: 'protocol',
+		description: 'Combine child protocols under their parent project.'
+	}
+]
 
 interface GroupingOptionsProps {
 	rowHeaders: Array<UnifiedRowHeaderType>
@@ -68,14 +61,12 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 							}`}
 						>
 							<span className="flex items-center gap-1.5">
-								{option.icon ? (
-									<Icon
-										height={13}
-										width={13}
-										name={option.icon}
-										className={active ? 'text-link' : 'text-pro-text-tertiary'}
-									/>
-								) : null}
+								<Icon
+									height={13}
+									width={13}
+									name={option.icon}
+									className={active ? 'text-link' : 'text-pro-text-tertiary'}
+								/>
 								<span className="title-sm text-pro-text-primary">{option.label}</span>
 								{active ? <Icon name="check" height={11} width={11} className="text-link" /> : null}
 							</span>

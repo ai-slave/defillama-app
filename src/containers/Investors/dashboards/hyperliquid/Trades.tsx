@@ -363,17 +363,11 @@ export default function Trades() {
 					onChange={(e) => setCoin(e.target.value)}
 					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-md text-pro-text-primary outline-hidden"
 				>
-					{coinOptions.length > 0
-						? coinOptions.map((value) => (
-								<option key={value} value={value}>
-									{value}
-								</option>
-							))
-						: ['BTC', 'ETH', 'SOL'].map((value) => (
-								<option key={value} value={value}>
-									{value}
-								</option>
-							))}
+					{(coinOptions.length > 0 ? coinOptions : ['BTC', 'ETH', 'SOL']).map((value) => (
+						<option key={value} value={value}>
+							{value}
+						</option>
+					))}
 				</select>
 
 				<select

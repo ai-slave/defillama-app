@@ -16,20 +16,26 @@ export const ARTICLE_EDITOR_VIEWS = ['write', 'preview'] as const
 export type ArticleEditorViewMode = (typeof ARTICLE_EDITOR_VIEWS)[number]
 
 // Below sm the label is screen-reader only, so a phone shows just the icon and the tab keeps its name.
-const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorViewMode>> = (
-	[
-		{ value: 'write', icon: 'pencil', text: 'Write' },
-		{ value: 'preview', icon: 'eye', text: 'Preview' }
-	] as const
-).map(({ value, icon, text }) => ({
-	value,
-	label: (
-		<>
-			<Icon name={icon} className="size-3.5" />
-			<span className="max-sm:sr-only">{text}</span>
-		</>
-	)
-}))
+const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorViewMode>> = [
+	{
+		value: 'write',
+		label: (
+			<>
+				<Icon name="pencil" className="size-3.5" />
+				<span className="max-sm:sr-only">Write</span>
+			</>
+		)
+	},
+	{
+		value: 'preview',
+		label: (
+			<>
+				<Icon name="eye" className="size-3.5" />
+				<span className="max-sm:sr-only">Preview</span>
+			</>
+		)
+	}
+]
 
 const PILL_DOT: Record<SavePillState, string> = {
 	saving: 'bg-secondary animate-pulse',

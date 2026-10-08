@@ -82,9 +82,9 @@ type BridgesOverviewByChainProps = Omit<BridgeOverviewPageData, 'chain'> & { sel
 const EMPTY_CHAINS: Array<string> = []
 const EMPTY_PROTOCOLS: BridgeOverviewPageData['filteredBridges'] = []
 const CHART_VIEW_OPTIONS = [
-	{ key: 'netflow' as const, label: 'Net Flows By Chain' },
-	{ key: 'volume' as const, label: 'Bridge Volume' }
-]
+	{ value: 'netflow', label: 'Net Flows By Chain' },
+	{ value: 'volume', label: 'Bridge Volume' }
+] as const
 const TABLE_VIEWS = ['bridges', 'messaging', 'largeTxs'] as const
 type TableView = (typeof TABLE_VIEWS)[number]
 const TABLE_VIEW_OPTIONS: ReadonlyArray<{ value: TableView; label: string }> = [
@@ -141,7 +141,7 @@ export function BridgesOverviewByChain({
 	const [chartType, setChartType] = React.useState<BridgeOverviewChartType>(
 		selectedChain === 'All' ? 'Volumes' : 'Bridge Volume'
 	)
-	const [chartView, setChartView] = React.useState<'default' | 'netflow' | 'volume'>('netflow')
+	const [chartView, setChartView] = React.useState<'netflow' | 'volume'>('netflow')
 	const [activeTab, setActiveTab] = React.useState<TableView>('bridges')
 	const [includeMessaging, setIncludeMessaging] = React.useState(false)
 	const [searchValue, setSearchValue] = React.useState('')
@@ -361,8 +361,8 @@ export function BridgesOverviewByChain({
 							<ChartPanelToolbar>
 								<SegmentedControl
 									value={chartView}
-									onValueChange={(value) => setChartView(value as typeof chartView)}
-									options={CHART_VIEW_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+									onValueChange={(value) => setChartView(value)}
+									options={CHART_VIEW_OPTIONS}
 									label="Chart view"
 									variant="default"
 									size="md"

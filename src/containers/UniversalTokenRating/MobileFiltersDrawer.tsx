@@ -104,7 +104,7 @@ export function MobileFiltersDrawer({
 				/>
 				<FilterSection
 					title="Sort by"
-					options={UTR_SORT_OPTIONS.map((option) => ({ key: option.key, name: option.name }))}
+					options={UTR_SORT_OPTIONS}
 					selected={[sort.key]}
 					onToggle={(key) => setSort({ key: key as UtrSortKey, desc: key !== 'rank' })}
 				/>

@@ -184,19 +184,6 @@ export default function Rates() {
 		'borrow'
 	)
 
-	const rateComparisonRows = useMemo<Array<RateComparisonRow>>(
-		() =>
-			sortedAssetReserves.map((r) => ({
-				chain: r.chain,
-				market: r.market,
-				supplyApy: r.supplyApy,
-				borrowApy: r.borrowApy,
-				utilization: r.utilization,
-				sizeUsd: r.sizeUsd
-			})),
-		[sortedAssetReserves]
-	)
-
 	const rateCurveDataset = useMemo<MultiSeriesChartDataset | null>(() => {
 		if (!primaryReserve) return null
 		const { baseVariableBorrowRate, variableRateSlope1, variableRateSlope2, optimalUsageRate } = primaryReserve
@@ -364,7 +351,7 @@ export default function Rates() {
 			{marketsLoading ? (
 				<CardSkeleton title="Rate Comparison Across Chains" />
 			) : (
-				<RateComparisonTable data={rateComparisonRows} />
+				<RateComparisonTable data={sortedAssetReserves} />
 			)}
 		</div>
 	)

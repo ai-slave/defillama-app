@@ -93,10 +93,16 @@ const constituentColumns = constituentColumnHelper.columns([
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	}),
-	...(['priceChangePercentage1d', 'priceChangePercentage7d', 'priceChangePercentage1m'] as const).map((field, index) =>
+	...(
+		[
+			['priceChangePercentage1d', '1D'],
+			['priceChangePercentage7d', '7D'],
+			['priceChangePercentage1m', '1M']
+		] as const
+	).map(([field, header]) =>
 		constituentColumnHelper.accessor((row) => row[field] ?? undefined, {
 			id: field,
-			header: ['1D', '7D', '1M'][index]!,
+			header,
 			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
 			meta: { headerClassName: 'w-20', align: 'end' }
 		})

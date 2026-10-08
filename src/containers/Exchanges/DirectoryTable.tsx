@@ -28,9 +28,9 @@ import {
 import { SegmentToggleLabel } from './segmentPresentation'
 
 const KIND_OPTIONS = [
-	{ value: 'all', label: 'All' },
-	{ value: 'cex', label: 'CEX' },
-	{ value: 'dex', label: 'DEX' }
+	{ key: 'all', name: 'All' },
+	{ key: 'cex', name: 'CEX' },
+	{ key: 'dex', name: 'DEX' }
 ] as const
 
 const SCOPE_OPTIONS = [
@@ -41,11 +41,11 @@ const SCOPE_OPTIONS = [
 ] as const
 
 const GROUP_OPTIONS = [
-	{ value: 'activity', label: 'Activity' },
-	{ value: 'transparency', label: 'Transparency' },
-	{ value: 'fees', label: 'Fees' },
-	{ value: 'funding', label: 'Funding' },
-	{ value: 'compliance', label: 'Compliance' }
+	{ key: 'activity', name: 'Activity' },
+	{ key: 'transparency', name: 'Transparency' },
+	{ key: 'fees', name: 'Fees' },
+	{ key: 'funding', name: 'Funding' },
+	{ key: 'compliance', name: 'Compliance' }
 ] as const
 
 const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, Array<string>> = {
@@ -268,7 +268,7 @@ export function DirectoryTable({
 							size="md"
 						/>
 						<SelectWithCombobox
-							allValues={KIND_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+							allValues={KIND_OPTIONS}
 							selectedValues={[kind]}
 							setSelectedValues={(values) => {
 								const nextKind = values[0] as DirectoryKind | undefined
@@ -291,7 +291,7 @@ export function DirectoryTable({
 							onCountryChange={onCountryChange}
 						/>
 						<SelectWithCombobox
-							allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+							allValues={GROUP_OPTIONS}
 							selectedValues={[group]}
 							setSelectedValues={(values) => {
 								const nextGroup = values[0] as DirectoryColumnGroup | undefined

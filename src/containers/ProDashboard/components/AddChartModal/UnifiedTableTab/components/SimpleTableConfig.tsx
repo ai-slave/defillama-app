@@ -250,13 +250,7 @@ export function SimpleTableConfig({
 	}, [tokenSearchInput, tokenOptions, defaultTokens, selectedTokens])
 
 	const datasetSelectOptions = useMemo(() => {
-		return tableTypeOptions
-			.filter((option) => hasActiveSubscription || !PRO_ONLY_TABLE_TYPES.has(option.value))
-			.map((option) => ({
-				value: option.value,
-				label: option.label,
-				description: option.description
-			}))
+		return tableTypeOptions.filter((option) => hasActiveSubscription || !PRO_ONLY_TABLE_TYPES.has(option.value))
 	}, [hasActiveSubscription])
 
 	const chainCategoryOptions = CHAIN_CATEGORY_OPTIONS

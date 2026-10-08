@@ -19,8 +19,6 @@ const SCALE_BUCKETS = [
 
 const ICON_ONLY_BUCKETS = [{ icon: 12 }, { icon: 8 }] as const
 
-const TEXT_BUCKETS = SCALE_BUCKETS.map(({ ticker, chg }) => ({ ticker, chg }))
-
 export const ICON_SIZES = [
 	...new Set<number>([...SCALE_BUCKETS.map((b) => b.icon), ...ICON_ONLY_BUCKETS.map((b) => b.icon)])
 ]
@@ -62,7 +60,7 @@ export function pickLeafLabel(
 		}
 		return ''
 	}
-	for (const bucket of TEXT_BUCKETS) {
+	for (const bucket of SCALE_BUCKETS) {
 		if (
 			cellHeight >= lineHeightOf(bucket.ticker) + lineHeightOf(bucket.chg) + FIT_SLACK &&
 			cellWidth >= MIN_TEXT_WIDTH
@@ -70,7 +68,7 @@ export function pickLeafLabel(
 			return [`{ticker${bucket.ticker}|${name}}`, `{chg${bucket.chg}|${changeLabel}}`].join('\n')
 		}
 	}
-	for (const bucket of TEXT_BUCKETS) {
+	for (const bucket of SCALE_BUCKETS) {
 		if (cellHeight >= lineHeightOf(bucket.ticker) && cellWidth >= MIN_TEXT_WIDTH) {
 			return `{ticker${bucket.ticker}|${name}}`
 		}

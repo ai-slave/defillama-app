@@ -471,7 +471,7 @@ export function DonutCard({
 	return (
 		<ChartCard title={dist.title ?? ''} subtitle={subtitle}>
 			<PieChart
-				chartData={dist.data.map((d) => ({ name: d.name, value: d.value }))}
+				chartData={dist.data}
 				stackColors={colorMap(dist.data.map((d) => d.name))}
 				valueSymbol={valueSymbol}
 				radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}

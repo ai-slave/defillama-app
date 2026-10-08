@@ -362,12 +362,7 @@ export default function TokenPage(props: InferGetServerSidePropsType<typeof getS
 	return (
 		<Layout title={props.seoTitle} description={props.seoDescription} canonicalUrl={props.canonicalUrl}>
 			<div className="flex flex-col gap-2">
-				<TokenPageSectionNav
-					sections={props.sections.map((section) => ({
-						id: section.id,
-						label: section.label
-					}))}
-				/>
+				<TokenPageSectionNav sections={props.sections} />
 				{props.sections.map((section) => (
 					<TokenPageSectionRenderer key={`token-page-${section.id}`} section={section} />
 				))}

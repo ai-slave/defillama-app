@@ -32,14 +32,12 @@ import {
 
 const COLLAPSED_KEY = 'sql-schema-collapsed-categories'
 
-const FILTER_KINDS = ['all', 'flat', 'timeseries'] as const
-type FilterKind = (typeof FILTER_KINDS)[number]
-
-const FILTER_LABELS: Record<FilterKind, string> = {
-	all: 'All',
-	flat: 'Datasets',
-	timeseries: 'Time series'
-}
+const FILTER_OPTIONS = [
+	{ value: 'all', label: 'All' },
+	{ value: 'flat', label: 'Datasets' },
+	{ value: 'timeseries', label: 'Time series' }
+] as const
+type FilterKind = (typeof FILTER_OPTIONS)[number]['value']
 
 export interface SchemaBrowserProps {
 	chartOptionsMap: ChartOptionsMap
@@ -247,7 +245,7 @@ function BrowserHeader({
 					size="md"
 					value={filter}
 					onValueChange={onFilterChange}
-					options={FILTER_KINDS.map((kind) => ({ value: kind, label: FILTER_LABELS[kind] }))}
+					options={FILTER_OPTIONS}
 				/>
 				<p className="body-sm text-tertiary">
 					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable} tables`}
@@ -423,9 +421,7 @@ function FlatRow({
 	const loadedCols = loaded?.columns ?? []
 	const typeByName = new Map(loadedCols.map((c) => [c.name, c.type]))
 	const columns =
-		staticFields.length > 0
-			? staticFields.map((name) => ({ name, type: typeByName.get(name) }))
-			: loadedCols.map((c) => ({ name: c.name, type: c.type }))
+		staticFields.length > 0 ? staticFields.map((name) => ({ name, type: typeByName.get(name) })) : loadedCols
 
 	return (
 		<div className="flex flex-col gap-2 py-3">
@@ -494,7 +490,7 @@ function TsRow({
 	const typeByName = new Map(loadedCols.map((c) => [c.name, c.type]))
 	let columns: Array<{ name: string; type?: string }> = []
 	if (shape === 'dynamic') {
-		columns = loadedCols.map((c) => ({ name: c.name, type: c.type }))
+		columns = loadedCols
 	} else {
 		columns = shape.map((name) => ({ name, type: typeByName.get(name) }))
 	}

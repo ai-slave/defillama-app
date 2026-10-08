@@ -6,8 +6,6 @@ import type { RWAOverviewInclusionDefaults } from './constants'
 import { getRwaInclusionQueryValue, resolveRWAOverviewInclusionFlag } from './filterState'
 import { getRwaInclusionDefault, RWA_INCLUSION_OPTIONS } from './inclusion'
 
-const OPTIONS = RWA_INCLUSION_OPTIONS.map((option) => ({ key: option.key, name: option.name }))
-
 /** The home page's Include in TVL dropdown, bound to the four scope flags in the URL. */
 export function RWAIncludeInTvlSelect({
 	defaultInclusion,
@@ -23,7 +21,7 @@ export function RWAIncludeInTvlSelect({
 
 	return (
 		<Select
-			allValues={OPTIONS}
+			allValues={RWA_INCLUSION_OPTIONS}
 			selectedValues={selectedValues}
 			setSelectedValues={(values: Array<string>) => {
 				const selected = new Set(values)

@@ -897,12 +897,7 @@ export const getProtocolOverviewPageData = async ({
 		otherProtocols: protocolData.otherProtocols ?? null,
 		...(relationship.children.length > 0
 			? {
-					childProtocols: relationship.children.map((child) => ({
-						name: child.name,
-						href: child.href,
-						category: child.category,
-						chains: child.chains
-					}))
+					childProtocols: relationship.children
 				}
 			: {}),
 		deprecated: protocolData.deprecated ?? false,

@@ -20,15 +20,14 @@ import { HelpDefs, HelpIcon } from './ui'
 //
 // Inline dials from `sm` up; below that one trigger opening a sheet with the same controls.
 
-const WINDOW_OPTIONS: Array<{ value: ApyWindow; label: string; tip: string }> = [
-	{ value: 'current', label: 'Now', tip: 'Latest snapshot' },
-	{ value: 'avg_7d', label: '7d', tip: '7-day average' },
-	{ value: 'avg_30d', label: '30d', tip: '30-day average' }
+const WINDOW_OPTIONS: Array<{ value: ApyWindow; label: string; tooltip: string }> = [
+	{ value: 'current', label: 'Now', tooltip: 'Latest snapshot' },
+	{ value: 'avg_7d', label: '7d', tooltip: '7-day average' },
+	{ value: 'avg_30d', label: '30d', tooltip: '30-day average' }
 ]
 
 const WINDOW_LABELS: Record<ApyWindow, string> = { current: 'Now', avg_7d: '7d', avg_30d: '30d' }
 
-const WINDOW_OPTIONS_WITH_TIPS = WINDOW_OPTIONS.map(({ value, label, tip }) => ({ value, label, tooltip: tip }))
 // The sheet prints the definition under the control, so a tooltip there is just noise.
 const WINDOW_OPTIONS_PLAIN = WINDOW_OPTIONS.map(({ value, label }) => ({ value, label }))
 
@@ -141,7 +140,7 @@ export function ApyViewControls({ ready = true }: { ready?: boolean }) {
 				<SegmentedControl
 					value={window}
 					onValueChange={setWindow}
-					options={WINDOW_OPTIONS_WITH_TIPS}
+					options={WINDOW_OPTIONS}
 					label="APY window"
 					variant="default"
 					size="md"

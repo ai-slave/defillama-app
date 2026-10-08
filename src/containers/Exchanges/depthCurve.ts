@@ -152,9 +152,7 @@ export function aggregateEntries(venues: Array<DepthCurveVenue>): Array<DepthCur
  * silently disappears.
  */
 export function venueEntries(venues: Array<DepthCurveVenue>, limit: number): Array<DepthCurveEntry> {
-	const entries: Array<DepthCurveEntry> = venues
-		.slice(0, limit)
-		.map((venue) => ({ name: venue.name, ladder: venue.ladder }))
+	const entries: Array<DepthCurveEntry> = venues.slice(0, limit)
 	const tail = venues.slice(limit)
 	const others = tail.length > 0 ? sumLadders(tail.map((venue) => venue.ladder)) : null
 	if (others) entries.push({ name: `${OTHERS_LABEL} (${tail.length})`, ladder: others })
