@@ -24,10 +24,10 @@ const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorVie
 ).map(({ value, icon, text }) => ({
 	value,
 	label: (
-		<span className="inline-flex items-center gap-1.5">
+		<>
 			<Icon name={icon} className="size-3.5" />
 			<span className="max-sm:sr-only">{text}</span>
-		</span>
+		</>
 	)
 }))
 

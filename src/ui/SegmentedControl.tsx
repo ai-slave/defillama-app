@@ -40,6 +40,9 @@ import { Tooltip } from './Tooltip'
    are 44px with a 4px inset and body-md labels. A disabled option dims to
    60% with the not-allowed cursor, like Button; its reason stays in visible
    text or the option's `tooltip`.
+   An option's label is plain text or a fragment (icon, text, count): every
+   segment lays its children out as one centered row with its own gap, so a
+   label never brings a wrapper span.
 
    `semantics` picks what the control announces; the look is the same:
    - radio (default): a value that reconfigures one region (a period, a
@@ -63,7 +66,7 @@ export const TAG_GROUP_VARIANTS = {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'touch-target before:inset-x-0 hover-wash inline-flex shrink-0 items-center justify-center gap-1 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	mode: {
 		container: 'body-sm grid shrink-0 auto-cols-fr gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
@@ -73,7 +76,7 @@ export const TAG_GROUP_VARIANTS = {
 	chips: {
 		container: 'flex w-fit max-w-full flex-wrap items-center gap-1.5',
 		button:
-			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'touch-target hover-wash inline-flex shrink-0 items-center justify-center gap-1 rounded-full border border-medium px-3 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {

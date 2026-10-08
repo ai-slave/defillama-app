@@ -18,19 +18,19 @@ const CHART_MODE_OPTIONS: Array<SegmentedControlOption<ChartModeType>> = [
 	{
 		value: 'builder',
 		label: (
-			<span className="inline-flex items-center gap-1.5">
+			<>
 				<Icon name="pencil-ruler" width={14} height={14} />
 				Top-N breakdown
-			</span>
+			</>
 		)
 	},
 	{
 		value: 'manual',
 		label: (
-			<span className="inline-flex items-center gap-1.5">
+			<>
 				<Icon name="layers" width={14} height={14} />
 				Manual
-			</span>
+			</>
 		)
 	}
 ]

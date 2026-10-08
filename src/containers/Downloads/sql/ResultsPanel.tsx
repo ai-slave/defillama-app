@@ -122,9 +122,9 @@ export function ResultsPanel({
 
 function ViewLabel({ icon, label }: { icon: 'layout-grid' | 'bar-chart-2'; label: string }) {
 	return (
-		<span className="inline-flex items-center gap-1.5">
+		<>
 			<Icon name={icon} className="size-3.5" />
 			{label}
-		</span>
+		</>
 	)
 }
