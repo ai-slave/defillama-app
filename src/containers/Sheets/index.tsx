@@ -242,7 +242,7 @@ function HeroMock() {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-subtle bg-surface shadow-brand-glow-combo">
+		<div className="overflow-hidden rounded-2xl border border-subtle bg-surface shadow-raised">
 			<div className="flex items-center gap-2.5 border-b border-subtle px-4 py-2 body-sm">
 				<span className="min-w-[36px] rounded-sm border border-medium bg-page px-2 py-0.75 text-center mono-sm text-tertiary">
 					B2
@@ -348,7 +348,7 @@ function MockTable({
 	}
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-subtle bg-surface shadow-pop">
+		<div className="overflow-hidden rounded-xl border border-subtle bg-surface shadow-raised">
 			{formulaBar ? (
 				<div className="grid grid-cols-[28px_1fr] border-b border-subtle">
 					<div className="border-r border-subtle bg-surface-elevated-1 px-2.5 py-2" />
@@ -433,7 +433,7 @@ function TemplatesSection() {
 						rel="noopener noreferrer"
 						data-umami-event="sheets-templates-click"
 						data-umami-event-template={tpl.title}
-						className="flex flex-col gap-2.5 rounded-2xl border border-subtle bg-surface p-7 transition-all hover:border-brand hover:shadow-brand-glow"
+						className="flex flex-col gap-2.5 rounded-2xl border border-subtle bg-surface p-7 transition-all hover:border-brand"
 					>
 						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-link [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 							{tpl.icon}

@@ -37,6 +37,13 @@
 	/* Dialog and drawer backdrop. */
 	--bg-screen-dim: #090b0c66;
 
+	/* Elevation, picked by how far a surface sits from the page (design.md → Elevation): raised stays in the
+	   flow but reads as distinct, overlay floats over nearby content, dialog sits over the whole UI. Cards and
+	   in-flow panels take none. */
+	--elevation-raised: 0 1px 2px rgb(0 0 0 / 0.06), 0 2px 8px rgb(0 0 0 / 0.06);
+	--elevation-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.25);
+	--elevation-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.45);
+
 	/* Text */
 	--text-primary: #090b0c;
 	--text-secondary: #484848;
@@ -55,9 +62,8 @@
 
 	/* Feedback on the reader's own action (validation, destructive rows,
 	   toasts). Same values as the data and warning tones. */
-	--success: var(--text-data-up);
-	--error: var(--text-data-down);
-	--warning: var(--text-warning);
+	--text-success: var(--text-data-up);
+	--text-error: var(--text-data-down);
 	/* Tints and hued borders on the ramps (design.md → Color ramps): faint is
 	   step 2, tint 3, tint-strong 4, a muted border 7, a strong border 8. */
 	--bg-brand-tint: var(--blue-3);
@@ -98,6 +104,9 @@
 	/* The seam between joined buttons on a brand fill (a split button). */
 	--border-on-brand-seam: color-mix(in srgb, var(--text-on-brand) 25%, transparent);
 
+	/* A loading placeholder: the same 1.35:1 against a card in both modes (elevation-2 is fainter in dark). */
+	--bg-skeleton: var(--neutral-4);
+
 	/* A switch knob: white on both the brand and the neutral track, in both modes. */
 	--bg-knob: #ffffff;
 
@@ -116,12 +125,8 @@
 	   blue marks selection only, so a hovered destructive or selected control
 	   keeps its own hue. Focus-visible may keep the wash; the focus ring is the
 	   indicator. */
-	--hover-row: #090b0c0f; /* popover, menu and table rows */
-	--hover-card: #090b0c08; /* interactive cards */
-
-	/* Chips */
-	--chip-bg: #dedede;
-	--chip-text: #484848;
+	--bg-hover-row: #090b0c0f; /* popover, menu and table rows */
+	--bg-hover-card: #090b0c08; /* interactive cards */
 
 	/* ------------------------------------------------------------------
 	   Chart tokens, read on canvas through
@@ -182,12 +187,15 @@ html.dark,
 	/* States */
 	--bg-screen-dim: #090b0cb3; /* stronger in dark, where shadows are invisible */
 
-	--hover-row: #ffffff0f;
-	--hover-card: #ffffff08;
+	--bg-skeleton: var(--neutral-5);
 
-	/* Chips */
-	--chip-bg: var(--neutral-4);
-	--chip-text: #c6c6c6;
+	/* Dark surfaces carry elevation with their lighter fill; raised and dialog shadows deepen so they still separate. */
+	--elevation-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.3);
+	--elevation-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.25);
+	--elevation-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.6);
+
+	--bg-hover-row: #ffffff0f;
+	--bg-hover-card: #ffffff08;
 
 	/* Chart chrome */
 	--chart-text: rgba(255, 255, 255, 1);
@@ -226,6 +234,9 @@ html.dark,
 	--color-surface-elevated-2: var(--bg-surface-elevated-2);
 	--color-equity-logo: var(--bg-equity-logo);
 	--color-overlay: var(--bg-overlay);
+	--shadow-raised: var(--elevation-raised);
+	--shadow-overlay: var(--elevation-overlay);
+	--shadow-dialog: var(--elevation-dialog);
 	--color-brand: var(--bg-brand);
 	--color-brand-muted: var(--bg-brand-muted);
 	--color-brand-faint: var(--bg-brand-faint);
@@ -241,11 +252,11 @@ html.dark,
 	--color-data-down-alt: var(--text-data-down-alt);
 	--color-verified: var(--text-verified);
 	--color-warning: var(--text-warning);
-	--color-error: var(--error);
-	--color-success: var(--success);
+	--color-error: var(--text-error);
+	--color-success: var(--text-success);
 	/* State overlays — painted over bg-surface; also used for focus-visible */
-	--color-hover-row: var(--hover-row);
-	--color-hover-card: var(--hover-card);
+	--color-hover-row: var(--bg-hover-row);
+	--color-hover-card: var(--bg-hover-card);
 }
 
 /* Border-color utilities get explicit names ("--color-border-subtle" would
@@ -365,6 +376,9 @@ html.dark,
 @utility bg-veil {
 	background-color: var(--bg-veil);
 }
+@utility bg-skeleton {
+	background-color: var(--bg-skeleton);
+}
 @utility bg-knob {
 	background-color: var(--bg-knob);
 }
@@ -422,17 +436,17 @@ html.dark,
 .hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
 		[aria-pressed='true']
 	):focus-visible {
-	background-image: linear-gradient(var(--hover-row), var(--hover-row));
+	background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
 }
 
-/* Card-strength variant (--hover-card) for interactive tiles. */
+/* Card-strength variant (--bg-hover-card) for interactive tiles. */
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):hover,
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):focus-visible {
-	background-image: linear-gradient(var(--hover-card), var(--hover-card));
+	background-image: linear-gradient(var(--bg-hover-card), var(--bg-hover-card));
 }
 
 /* Row-hover companion for cells that must keep an opaque bg (sticky table
    columns): washes when the ancestor .group is hovered. */
 .group:hover .group-hover-wash {
-	background-image: linear-gradient(var(--hover-row), var(--hover-row));
+	background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
 }

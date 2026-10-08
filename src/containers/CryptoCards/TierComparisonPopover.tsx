@@ -145,7 +145,7 @@ export function TierComparisonPopover({ row, field }: { row: CardTableRow; field
 				fitViewport
 				gutter={6}
 				overflowPadding={16}
-				className="z-50 flex max-h-[min(32rem,var(--popover-available-height))] w-[min(36rem,var(--popover-available-width))] flex-col overflow-hidden rounded-xl border border-medium bg-overlay text-primary shadow-overlay-sm"
+				className="z-50 flex max-h-[min(32rem,var(--popover-available-height))] w-[min(36rem,var(--popover-available-width))] flex-col overflow-hidden rounded-xl border border-medium bg-overlay text-primary shadow-overlay"
 			>
 				<div className="flex shrink-0 items-start gap-3 border-b border-medium px-3 py-2">
 					<div className="min-w-0 flex-1">

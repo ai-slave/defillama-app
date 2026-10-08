@@ -20,7 +20,7 @@ export function EnterpriseDataAnnouncement({ track }: { track: AnnouncementTrack
 			contentClassName="text-center"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-data-announcement-badge-text shadow-sm">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-data-announcement-badge-text shadow-raised">
 					<Icon name="code" height={12} width={12} />
 					API
 				</span>

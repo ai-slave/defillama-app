@@ -24,7 +24,7 @@ export function PreviewPaywall() {
 					<p className="body-sm text-tertiary">Get access to all rows, all columns, and unlimited CSV downloads</p>
 					<Link
 						href="/subscribe"
-						className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 title-md text-on-brand shadow-md transition-all hover:brightness-110"
+						className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 title-md text-on-brand transition-all hover:brightness-110"
 					>
 						<Icon name="arrow-up-right" className="size-4" />
 						Subscribe

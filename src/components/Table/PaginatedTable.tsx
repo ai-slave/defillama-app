@@ -330,7 +330,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 			<div className={`flex flex-col ${className ?? ''}`} style={style}>
 				{stickyHeader ? (
 					<div data-sticky-table-header className="sticky top-0 z-30 h-0">
-						<div className="w-full overflow-clip bg-surface shadow-xs">
+						<div className="w-full overflow-clip bg-surface shadow-raised">
 							<div
 								ref={stickyHeaderContentRef}
 								className={`w-full ${tableClassName ?? ''}`}

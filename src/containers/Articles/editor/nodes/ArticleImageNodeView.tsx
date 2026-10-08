@@ -226,13 +226,13 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						role="status"
 						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-veil label-sm text-secondary"
 					>
-						<span className="rounded-md bg-surface-glass px-3 py-1.5 shadow-sm">Uploading…</span>
+						<span className="rounded-md bg-surface-glass px-3 py-1.5 shadow-raised">Uploading…</span>
 					</div>
 				) : null}
 				{isEditable && !isUploading ? (
 					<div
 						contentEditable={false}
-						className={`absolute top-3 right-3 left-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap items-center gap-1 rounded-md border border-medium bg-surface p-1 shadow-md ${selected ? '' : 'opacity-0 group-focus-within/image:opacity-100 group-hover/image:opacity-100 pointer-coarse:opacity-100'}`}
+						className={`absolute top-3 right-3 left-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap items-center gap-1 rounded-md border border-medium bg-overlay p-1 shadow-overlay ${selected ? '' : 'opacity-0 group-focus-within/image:opacity-100 group-hover/image:opacity-100 pointer-coarse:opacity-100'}`}
 					>
 						<ImageDetailsPopover label="Alt" title="Image alt text" hasValue={Boolean(attrs.alt)}>
 							<AltForm key={attrs.alt} alt={attrs.alt} save={(alt) => updateAttributes({ alt })} />

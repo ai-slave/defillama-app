@@ -526,7 +526,7 @@ export function DemoPreview() {
 								</Link>
 							</div>
 
-							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand-faint to-pro-ai-tint px-6 py-8 text-center shadow-overlay-sm transition-transform hover:scale-[1.02]">
+							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand-faint to-pro-ai-tint px-6 py-8 text-center shadow-overlay transition-transform hover:scale-[1.02]">
 								<h3 className="mb-3 bg-linear-to-r from-link to-pro-ai-text bg-clip-text heading-sm text-transparent">
 									Pro
 								</h3>
@@ -560,7 +560,7 @@ export function DemoPreview() {
 									</li>
 								</ul>
 								<Link href={createAccountHref}>
-									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-pro-ai px-8 py-3 font-semibold text-on-brand shadow-lg transition-[filter] hover:brightness-110">
+									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-pro-ai px-8 py-3 font-semibold text-on-brand transition-[filter] hover:brightness-110">
 										<Icon name="sparkles" height={16} width={16} />
 										Upgrade to Pro
 									</span>

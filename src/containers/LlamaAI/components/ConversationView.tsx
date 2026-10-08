@@ -659,7 +659,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					}}
 				/>
 			}
-			className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay-sm not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+			className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 		>
 			<Icon name="arrow-down" height={16} width={16} />
 			<span className="sr-only">Scroll to bottom</span>

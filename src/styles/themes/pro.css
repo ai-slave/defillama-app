@@ -85,6 +85,8 @@
 /* Inline so each utility reads the ramp where it is used (html.dark, .theme-dark,
    .investors-dashboard), not the value computed at :root. */
 @theme inline {
+	/* A partner card's hover glow in its own brand color (set per card by .ir-card-accent). */
+	--shadow-ir-card-glow: 0 10px 15px -3px var(--card-accent-glow), 0 4px 6px -4px var(--card-accent-glow);
 	/* Pro's AI accent on the violet ramp: step 9 fill, step 3 tint and step 4
 	   on hover, step 11 text, so a label passes AA on the tint in both modes. */
 	--color-pro-ai: var(--violet-9);

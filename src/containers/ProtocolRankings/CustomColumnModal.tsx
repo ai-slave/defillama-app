@@ -258,7 +258,7 @@ function CustomColumnForm({
 								id={`${fieldId}-suggestions`}
 								role="listbox"
 								aria-label="Formula suggestions"
-								className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay-sm"
+								className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay"
 							>
 								{state.suggestions.map((s, i) => (
 									<div

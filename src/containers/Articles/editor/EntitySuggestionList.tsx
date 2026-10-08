@@ -197,7 +197,7 @@ export function EntitySuggestionList({
 
 	return (
 		<div
-			className="article-mention-pop flex w-[22rem] max-w-full flex-col overflow-hidden rounded-md border border-medium bg-surface shadow-xl"
+			className="article-mention-pop flex w-[22rem] max-w-full flex-col overflow-hidden rounded-md border border-medium bg-overlay shadow-overlay"
 			style={{ maxHeight: 'var(--popover-available-height)' }}
 		>
 			<div className="flex shrink-0 items-center justify-between gap-2 border-b border-medium px-3 py-1.5 body-sm text-tertiary">

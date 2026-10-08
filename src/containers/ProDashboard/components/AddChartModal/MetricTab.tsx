@@ -128,7 +128,7 @@ export function MetricTab(props: MetricTabProps) {
 				className={`w-full flex-col border border-subtle max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px] ${pane === 'configure' ? 'flex' : 'hidden'}`}
 			>
 				<div className="flex flex-col gap-3 p-2.5 sm:p-3">
-					<div className="rounded-lg border border-subtle bg-surface p-2.5 shadow-sm sm:p-3">
+					<div className="rounded-lg border border-subtle bg-surface p-2.5 sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">
 							<div>
 								<label htmlFor={nameId} className="block label-sm text-primary">

@@ -59,7 +59,7 @@ import { tw } from './tw'
    container, so adding chips never narrows the list. Results that are
    always visible use an inline `Ariakit.ComboboxList` in the page flow.
 
-   Surface: bg-overlay, border-medium, rounded-xl, the `shadow-overlay-sm`
+   Surface: bg-overlay, border-medium, rounded-xl, the `shadow-overlay`
    token, no padding. The surface owns background, border, radius and
    overflow; search blocks (PopoverHeader), rows, action rows and footers own
    their spacing. Action and footer rows stay inside the popover width with
@@ -104,11 +104,11 @@ const menuSurfaceHeightStyles =
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-(--sheet-height) max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-const popoverSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
+const popoverSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-const menuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
+const menuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-const nestedMenuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
+const nestedMenuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 /* Mobile drawers dim the page behind them so a short sheet at the bottom is
    still noticed. The scrim is a pseudo-element on the positioning wrapper:
@@ -314,7 +314,7 @@ export function ComboboxSurface({
 			{...(variant === 'search-results'
 				? {
 						className: join(
-							'z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm',
+							'z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay',
 							className
 						),
 						// Results match their field's edges. The default 8px viewport padding is wider than the 4px

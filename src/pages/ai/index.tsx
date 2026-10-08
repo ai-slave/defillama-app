@@ -278,7 +278,7 @@ function MobileAppCard() {
 				width={760}
 				height={1245}
 				loading="lazy"
-				className="pointer-events-none absolute top-6 -right-6 hidden w-40 -rotate-6 rounded-3xl border border-subtle shadow-xl sm:block"
+				className="pointer-events-none absolute top-6 -right-6 hidden w-40 -rotate-6 rounded-3xl border border-subtle shadow-raised sm:block"
 			/>
 		</div>
 	)
@@ -390,9 +390,9 @@ function ExampleShowcase() {
 				rel="noopener noreferrer"
 				onClick={() => trackUmamiEvent('llamaai-landing-showcase-click', { example: example.id })}
 				className={clsx(
-					'group relative block overflow-hidden rounded-2xl border border-subtle shadow-card-soft transition-all duration-500',
+					'group relative block overflow-hidden rounded-2xl border border-subtle shadow-raised transition-all duration-500',
 					'hover:-translate-y-1 hover:border-ai-gold-muted hover:shadow-ai-gold-wash',
-					'dark:shadow-modal-soft dark:hover:shadow-ai-gold-wash-faint'
+					'dark:hover:shadow-ai-gold-wash-faint'
 				)}
 			>
 				<div
@@ -734,7 +734,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<p className="body-xs text-tertiary">Daily at 9 AM UTC</p>
 										</div>
 										<div className="h-3.5 w-6 shrink-0 rounded-full bg-brand p-0.5">
-											<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-sm" />
+											<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-raised" />
 										</div>
 									</div>
 								</div>
@@ -780,7 +780,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 												<p className="label-sm text-secondary">Remember my preferences</p>
 											</div>
 											<div className="h-3.5 w-6 shrink-0 rounded-full bg-brand p-0.5">
-												<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-sm" />
+												<div className="size-2.5 translate-x-2.5 rounded-full bg-on-brand shadow-raised" />
 											</div>
 										</div>
 									</div>
@@ -852,7 +852,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</h2>
 							<p className="body-lg text-tertiary">Watch a full walkthrough of LlamaAI</p>
 						</div>
-						<div className="group relative overflow-hidden rounded-2xl border border-subtle shadow-card-lg dark:shadow-modal-soft">
+						<div className="group relative overflow-hidden rounded-2xl border border-subtle shadow-raised">
 							<div className="relative aspect-video w-full">
 								{!isVideoPlaying ? (
 									<button

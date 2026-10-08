@@ -663,6 +663,12 @@ const RULES = [
 		pattern: /(?<![\w-])shadow-\[(?!#|var\(|rgba?\(|hsla?\(|oklch\()[^\]]+\]/g
 	},
 	{
+		id: 'stock-shadow',
+		description:
+			'stock Tailwind shadow (shadow-xs … shadow-2xl, shadow-inner) — pick the elevation level: none for cards and in-flow panels, shadow-raised, shadow-overlay or shadow-dialog (design.md → Elevation)',
+		pattern: /(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|inner)(?![\w-])/g
+	},
+	{
 		id: 'product-utility-leak',
 		description:
 			'product-theme utility class (pro-*/sub-*/sl-*/ai-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',

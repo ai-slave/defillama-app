@@ -360,7 +360,7 @@ export function OnboardingWalkthrough({
 					backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
 					className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 data-leave:pointer-events-none motion-safe:animate-[fadein_0.3s_ease-out] data-leave:motion-safe:animate-[intro-exit_0.25s_ease-in_forwards]"
 				>
-					<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
+					<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog">
 						<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold to-transparent opacity-60" />
 						<div className="p-6">
 							<div className="mb-5 flex flex-col items-center gap-3 text-center">
@@ -476,7 +476,7 @@ export function OnboardingWalkthrough({
 									style={{ fill: 'var(--bg-overlay)', stroke: 'var(--border-medium)' }}
 								/>
 
-								<div className="overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay-sm">
+								<div className="overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay">
 									<div
 										className="h-px w-full bg-linear-to-r from-transparent to-transparent"
 										style={{
@@ -540,7 +540,7 @@ export function OnboardingWalkthrough({
 						backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
 						className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 motion-safe:animate-ai-fade-in"
 					>
-						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
+						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog">
 							<div className="h-px w-full bg-linear-to-r from-transparent via-success to-transparent opacity-50" />
 
 							<div className="p-6">

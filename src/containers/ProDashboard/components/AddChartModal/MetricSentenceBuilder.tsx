@@ -549,7 +549,7 @@ export function MetricSentenceBuilder({
 										})}
 									</div>
 								) : null}
-								<div className="rounded-lg border border-dashed border-medium bg-surface p-2.5 shadow-inner">
+								<div className="rounded-lg border border-dashed border-medium bg-surface p-2.5">
 									<div className="relative mb-1.5">
 										<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
 										<Combobox
@@ -681,7 +681,7 @@ export function MetricSentenceBuilder({
 
 	return (
 		<div className="flex flex-col gap-2.5 sm:gap-3">
-			<div className="rounded-lg border border-subtle bg-linear-to-br from-surface via-surface to-surface p-2.5 shadow-sm sm:p-3">
+			<div className="rounded-lg border border-subtle bg-linear-to-br from-surface via-surface to-surface p-2.5 sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
 					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link sm:size-8">
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
@@ -744,7 +744,7 @@ export function MetricSentenceBuilder({
 				store={popover}
 				modal={false}
 				data-metric-token="true"
-				className="z-50 rounded-lg border border-subtle bg-surface shadow-lg"
+				className="z-50 rounded-lg border border-subtle bg-overlay shadow-overlay"
 				style={{
 					width: popoverWidth,
 					maxWidth: 'calc(100vw - 16px)',

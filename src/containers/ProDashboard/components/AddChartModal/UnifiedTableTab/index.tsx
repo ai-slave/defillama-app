@@ -515,7 +515,7 @@ export function UnifiedTableTab({
 	const tabContent: Record<TabKey, React.ReactNode> = {
 		setup: (
 			<div className="flex flex-col gap-3">
-				<CollapsibleSection title="Grouping" badge="Protocols" className="shadow-sm">
+				<CollapsibleSection title="Grouping" badge="Protocols" className="">
 					<div className="flex flex-col gap-3">
 						<div>
 							<h4 className="mb-2 title-sm text-secondary">Configure grouping</h4>
@@ -524,7 +524,7 @@ export function UnifiedTableTab({
 					</div>
 				</CollapsibleSection>
 
-				<CollapsibleSection title="Data views" badge={activePreset?.name} className="shadow-sm">
+				<CollapsibleSection title="Data views" badge={activePreset?.name} className="">
 					<div className="flex flex-col gap-3">
 						{recommendedPresets.length > 0 ? (
 							<div className="flex flex-col gap-2">
@@ -555,7 +555,7 @@ export function UnifiedTableTab({
 		),
 		columns: (
 			<div className="flex flex-col gap-3">
-				<CollapsibleSection title="Columns" badge={`${visibleColumnsCount} selected`} className="shadow-sm">
+				<CollapsibleSection title="Columns" badge={`${visibleColumnsCount} selected`} className="">
 					<div className="flex flex-col gap-2">
 						<div className="flex flex-wrap items-center justify-end gap-2 label-sm">
 							<Button variant="link" onClick={handleResetToPreset} disabled={!isModified} accessibleWhenDisabled>
@@ -582,7 +582,7 @@ export function UnifiedTableTab({
 			</div>
 		),
 		filters: (
-			<CollapsibleSection title="Filters" badge={totalFilterCount || undefined} className="shadow-sm">
+			<CollapsibleSection title="Filters" badge={totalFilterCount || undefined} className="">
 				<div className="flex flex-col gap-5">
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">

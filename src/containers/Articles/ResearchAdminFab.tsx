@@ -18,7 +18,7 @@ export function ResearchAdminFab() {
 	if (landingLoading) return null
 
 	return (
-		<div className="fixed top-[74px] right-3 z-30 rounded-lg bg-surface shadow-lg lg:top-3 lg:right-4">
+		<div className="fixed top-[74px] right-3 z-30 rounded-lg bg-overlay shadow-overlay lg:top-3 lg:right-4">
 			<Button as={BasicLink} href="/research/admin" variant="secondary" size="md" aria-label="Open research admin">
 				<ResearchIcon name="research-admin" className="size-3.5" aria-hidden />
 				Admin

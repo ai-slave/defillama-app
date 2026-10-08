@@ -631,7 +631,7 @@ export function DataTable<Row extends object>({
 		: keyedOccurrences(rows, getOccurrenceKey)
 
 	const pinnedCol = 'sticky left-0 border-r border-subtle bg-(--sl-frozen-bg)'
-	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--hover-row),var(--hover-row))]'
+	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--bg-hover-row),var(--bg-hover-row))]'
 	const headCell = (first: boolean) =>
 		freeze === 'panes'
 			? `sticky top-0 border-b border-subtle bg-(--sl-frozen-bg) ${first ? `${pinnedCol} z-30` : 'z-20'}`

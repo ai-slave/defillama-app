@@ -279,8 +279,9 @@ for (const [index, column] of MICA_COLUMNS.entries()) {
 		cellStyle: (row) =>
 			row.exchange === PINNED_MICA_EXCHANGE
 				? {
-						background: 'color-mix(in oklch, var(--success) 16%, var(--bg-surface))',
-						boxShadow: index === 0 ? 'inset 3px 0 0 0 color-mix(in oklch, var(--success) 85%, black 15%)' : undefined
+						background: 'color-mix(in oklch, var(--text-success) 16%, var(--bg-surface))',
+						boxShadow:
+							index === 0 ? 'inset 3px 0 0 0 color-mix(in oklch, var(--text-success) 85%, black 15%)' : undefined
 					}
 				: undefined
 	}

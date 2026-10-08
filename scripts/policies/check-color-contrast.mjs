@@ -24,8 +24,8 @@ const TEXT = [
 	'text-data-up-alt',
 	'text-data-down-alt',
 	'text-warning',
-	'success',
-	'error'
+	'text-success',
+	'text-error'
 ]
 const SURFACES = ['bg-page', 'bg-surface', 'bg-surface-elevated-1', 'bg-surface-elevated-2', 'bg-overlay']
 const RAMPS = ['neutral', 'blue', 'emerald', 'crimson', 'amber', 'violet']
@@ -79,7 +79,7 @@ for (const mode of ['light', 'dark']) {
 		grounds[surface] = color(surface)
 		// Elevation 2 is itself a hover step for triggers on elevation 1 and never takes a wash (design.md → Tokens).
 		if (surface !== 'bg-surface-elevated-2')
-			grounds[`hover-row over ${surface}`] = paint(color('hover-row'), color(surface))
+			grounds[`hover-row over ${surface}`] = paint(color('bg-hover-row'), color(surface))
 	}
 	for (const surface of ['bg-page', 'bg-surface']) {
 		const tint = paint(color('bg-brand-muted'), color(surface))

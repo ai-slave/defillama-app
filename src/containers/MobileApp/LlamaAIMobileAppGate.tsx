@@ -93,7 +93,7 @@ function MobileAppPromotion() {
 						alt="LlamaAI in the DefiLlama mobile app"
 						width={760}
 						height={1245}
-						className="relative w-44 rounded-[1.4rem] border border-subtle shadow-xl shadow-sub-glow"
+						className="relative w-44 rounded-[1.4rem] border border-subtle shadow-dialog shadow-sub-glow"
 					/>
 				</div>
 

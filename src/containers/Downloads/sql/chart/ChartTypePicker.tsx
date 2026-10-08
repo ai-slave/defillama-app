@@ -188,7 +188,7 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 									title={available ? opt.label : `${opt.label} (not compatible with current columns)`}
 									className={`relative flex h-6 w-7 cursor-pointer items-center justify-center rounded-[4px] transition-colors has-focus-visible:focus-ring ${
 										active
-											? 'bg-brand text-on-brand shadow-sm'
+											? 'bg-brand text-on-brand '
 											: available
 												? 'text-secondary hover:bg-hover-row hover:text-primary'
 												: 'cursor-not-allowed text-tertiary'

@@ -148,7 +148,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'border border-dashed border-brand bg-brand-tint text-primary not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong',
 	// Hidden until the pointer enters the rail or the arrow takes focus.
 	overlay:
-		'hover-wash border border-medium bg-surface text-primary shadow-overlay-sm opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
+		'hover-wash border border-medium bg-surface text-primary shadow-overlay opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
 	ghostDestructive:
 		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error'
 }

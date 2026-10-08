@@ -423,9 +423,7 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 	return (
 		<div
 			className={`group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-subtle bg-surface transition-[border-color,box-shadow] duration-200 ${
-				content
-					? 'ir-card-accent hover:border-(--card-accent-border) hover:shadow-lg hover:shadow-(color:--card-accent-glow)'
-					: 'hover:border-brand'
+				content ? 'ir-card-accent hover:border-(--card-accent-border) hover:shadow-ir-card-glow' : 'hover:border-brand'
 			}`}
 			style={content ? ({ '--card-accent': content.brandColor } as CSSProperties) : undefined}
 		>

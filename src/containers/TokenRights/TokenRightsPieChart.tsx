@@ -36,9 +36,9 @@ const PIE_SLICES = [
 ] as const
 
 const PIE_TONE_COLORS: Record<TokenRightsPieTone, string> = {
-	positive: 'var(--success)',
-	negative: 'var(--error)',
-	warning: 'var(--warning)'
+	positive: 'var(--text-success)',
+	negative: 'var(--text-error)',
+	warning: 'var(--text-warning)'
 }
 
 export function TokenRightsPieChart({

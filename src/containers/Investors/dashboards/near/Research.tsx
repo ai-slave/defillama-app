@@ -83,7 +83,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted hover:shadow-md"
+			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted"
 		>
 			<div
 				className="flex size-10 shrink-0 items-center justify-center rounded-lg"
@@ -128,7 +128,7 @@ function PaperCard({
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted hover:shadow-md"
+			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted"
 		>
 			<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 				<span className="title-md text-link">{icon}</span>
@@ -156,7 +156,7 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-5 py-3.5 transition-all hover:border-brand-muted hover:shadow-sm"
+			className="group flex items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-5 py-3.5 transition-all hover:border-brand-muted"
 		>
 			<span className="label-md text-primary transition-colors group-hover:text-link">{title}</span>
 			<svg

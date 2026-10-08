@@ -95,11 +95,11 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 							: 'opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100'
 					}`}
 				>
-					<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-xs">
+					<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-raised">
 						<Icon name="sparkles" className="size-3 text-link" />
 						LlamaAI · {config?.type ?? 'chart'}
 					</span>
-					<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-xs">
+					<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-raised">
 						<Button
 							type="button"
 							variant="secondary"

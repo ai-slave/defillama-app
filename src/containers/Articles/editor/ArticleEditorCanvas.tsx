@@ -149,7 +149,7 @@ export function ArticleEditorCanvas({
 						className="article-bubble-menu z-40"
 					>
 						{/* The URL field has no border of its own, so the bubble's border shows its focus, like Input's border-brand. */}
-						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface-glass p-1 shadow-raised backdrop-blur has-[input:focus]:border-brand">
+						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface-glass p-1 shadow-overlay backdrop-blur has-[input:focus]:border-brand">
 							{linkEdit ? (
 								// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape bubbles from the link controls to cancel their shared editor.
 								<form
@@ -385,7 +385,7 @@ export function ArticleEditorCanvas({
 
 			{editor ? (
 				<div className="pointer-events-none sticky bottom-6 z-30 mt-10 flex justify-center">
-					<div className="article-editor-rail pointer-events-auto inline-flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-medium bg-surface-glass p-1.5 shadow-modal backdrop-blur">
+					<div className="article-editor-rail pointer-events-auto inline-flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-medium bg-surface-glass p-1.5 shadow-overlay backdrop-blur">
 						<div className="flex shrink-0 items-center gap-1 pl-1">
 							<RailButton label="Undo" disabled={!flags.canUndo} onClick={() => editor.chain().focus().undo().run()}>
 								<Icon name="undo" className="size-4" />

@@ -631,7 +631,7 @@ export function ColumnManager({
 					</div>
 					<DragOverlay>
 						{activeColumn ? (
-							<div className="rounded-md border border-brand bg-brand-tint-strong px-2 py-1 label-sm text-link shadow-lg">
+							<div className="rounded-md border border-brand bg-brand-tint-strong px-2 py-1 label-sm text-link shadow-overlay">
 								{activeColumn.header}
 							</div>
 						) : null}
@@ -816,7 +816,7 @@ export function ColumnManager({
 									</div>
 								) : null}
 								{showAutocomplete && filteredSuggestions.length > 0 ? (
-									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-lg">
+									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-overlay">
 										{filteredSuggestions.map((suggestion, index) => (
 											<button
 												key={`${suggestion.type}-${suggestion.value}`}
@@ -1080,7 +1080,7 @@ function SortingSection({
 						portal
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-medium bg-overlay shadow-lg"
+						className="z-50 rounded-md border border-medium bg-overlay shadow-overlay"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto p-1">

@@ -130,7 +130,7 @@ export function TextSelectionPopup({
 			autoFocusOnHide={false}
 			preserveTabOrderAnchor={anchor}
 			getAnchorRect={() => selectionRange?.getBoundingClientRect() ?? null}
-			className="z-9999 flex max-w-[calc(100vw-16px)] flex-wrap items-stretch overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay-sm"
+			className="z-9999 flex max-w-[calc(100vw-16px)] flex-wrap items-stretch overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay"
 		>
 			<Ariakit.Button onClick={handleClick} className={actionButton}>
 				<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-3.5" />

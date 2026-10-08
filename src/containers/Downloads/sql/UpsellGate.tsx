@@ -218,7 +218,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: boolean; subscriptionHref: string }) {
 	return (
-		<div className="flex flex-col gap-6 rounded-xl border border-brand-muted bg-surface p-6 shadow-sm lg:sticky lg:top-4">
+		<div className="flex flex-col gap-6 rounded-xl border border-brand-muted bg-surface p-6 lg:sticky lg:top-4">
 			<div className="flex items-center gap-2">
 				<span aria-hidden className="inline-block size-1.5 rounded-full bg-brand" />
 				<span className="label-xs tracking-[0.18em] text-link uppercase">API plan</span>
@@ -291,7 +291,7 @@ function FeatureTile({
 function ShowcasePane() {
 	const id = useId()
 	return (
-		<div className="flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-sm">
+		<div className="flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface">
 			<TabProvider defaultSelectedId={`${id}-notebook`} selectOnMove={false}>
 				<TabStrip id={id} />
 				<TabPanel tabId={`${id}-notebook`} unmountOnHide>

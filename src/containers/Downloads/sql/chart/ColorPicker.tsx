@@ -23,7 +23,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 		<Ariakit.PopoverProvider placement="bottom-start">
 			<Ariakit.PopoverDisclosure
 				aria-label={`Color for ${name}`}
-				className="size-3 shrink-0 rounded-sm border border-medium shadow-sm transition-transform hover:scale-110"
+				className="size-3 shrink-0 rounded-sm border border-medium shadow-raised transition-transform hover:scale-110"
 				style={{ background: active }}
 			/>
 			<PopoverSurface variant="panel" heading={`Color for ${name}`} aria-label={`Color for ${name}`}>

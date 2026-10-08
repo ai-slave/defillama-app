@@ -51,7 +51,7 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string; tool
 							<circle cx="12" cy="12" r="10" strokeWidth="2" />
 							<path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round" />
 						</svg>
-						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-subtle bg-surface p-2 body-sm text-secondary shadow-lg group-hover:block">
+						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-subtle bg-overlay p-2 body-sm text-secondary shadow-overlay group-hover:block">
 							{tooltip}
 						</span>
 					</span>

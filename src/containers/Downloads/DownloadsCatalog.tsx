@@ -276,7 +276,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'dataset', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										</p>
 									</div>
 								</div>
-								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand shadow-sm transition-transform group-hover:translate-x-0.5">
+								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand transition-transform group-hover:translate-x-0.5">
 									Open builder
 									<Icon name="arrow-up-right" className="size-3.5" />
 								</span>
@@ -343,7 +343,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													type="button"
 													disabled={disabled}
 													onClick={() => openCard({ kind: 'chart', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
@@ -844,7 +844,7 @@ function SavedDownloadRow({
 					</Tooltip>
 					<span
 						aria-hidden="true"
-						className="ml-1 hidden items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand shadow-sm pointer-fine:inline-flex"
+						className="ml-1 hidden items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand pointer-fine:inline-flex"
 					>
 						<Icon name="download-cloud" className="size-3.5" />
 						Run

@@ -158,7 +158,7 @@ function buildSupplyModel(chart: ChartData | undefined): CartesianChartModel | u
 
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted hover:shadow-md">
+		<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted">
 			<span className="label-sm tracking-wide text-secondary">{label}</span>
 			<span className="mono-xl tracking-tight text-primary">{value}</span>
 			<span className="body-sm text-secondary">{description}</span>

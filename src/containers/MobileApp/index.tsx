@@ -247,13 +247,13 @@ function HeroPhone() {
 				alt="LlamaAI in the DefiLlama app answering “Should I buy ETH right now?” with a full investment thesis"
 				width={760}
 				height={1245}
-				className="relative w-full max-w-[300px] rounded-[2rem] border border-subtle shadow-2xl shadow-sub-glow md:max-w-[360px]"
+				className="relative w-full max-w-[300px] rounded-[2rem] border border-subtle shadow-dialog shadow-sub-glow md:max-w-[360px]"
 			/>
 
 			{FLOATING_CHIPS.map((chip) => (
 				<div
 					key={chip.label}
-					className={`absolute hidden items-center gap-2.5 rounded-2xl border border-medium bg-surface-glass py-2.5 pr-4 pl-3 shadow-overlay-sm backdrop-blur-md motion-safe:animate-float lg:flex ${chip.className}`}
+					className={`absolute hidden items-center gap-2.5 rounded-2xl border border-medium bg-surface-glass py-2.5 pr-4 pl-3 shadow-overlay backdrop-blur-md motion-safe:animate-float lg:flex ${chip.className}`}
 				>
 					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand to-sub-brand-soft text-on-brand">
 						<Icon name={chip.icon} height={15} width={15} />
@@ -349,7 +349,7 @@ function Previews() {
 							width={760}
 							height={1245}
 							loading="lazy"
-							className="w-full rounded-3xl border border-subtle shadow-xl transition-transform duration-300 md:hover:-translate-y-1.5"
+							className="w-full rounded-3xl border border-subtle shadow-dialog transition-transform duration-300 md:hover:-translate-y-1.5"
 						/>
 						<figcaption className="text-center label-lg text-secondary">{preview.caption}</figcaption>
 					</figure>

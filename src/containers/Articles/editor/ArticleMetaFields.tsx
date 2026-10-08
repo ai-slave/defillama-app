@@ -54,7 +54,7 @@ export function MetaSwitch({
 				}`}
 			>
 				<span
-					className={`block size-4 rounded-full bg-white shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''}`}
+					className={`block size-4 rounded-full bg-white shadow-raised motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''}`}
 				/>
 			</span>
 		</label>

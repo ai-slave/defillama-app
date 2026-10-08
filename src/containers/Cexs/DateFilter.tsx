@@ -81,7 +81,7 @@ export function DateFilter({
 					aria-busy={isLoading}
 				>
 					{isLoading ? (
-						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-medium bg-surface shadow-xs">
+						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-medium bg-surface shadow-raised">
 							<LoadingSpinner size={12} />
 							<span className="sr-only">Loading custom range inflows</span>
 						</span>

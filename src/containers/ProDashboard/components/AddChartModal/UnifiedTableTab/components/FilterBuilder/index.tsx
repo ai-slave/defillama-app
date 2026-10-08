@@ -319,7 +319,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 
 	if (filter.type === 'numeric-single') {
 		return (
-			<div className="flex flex-col gap-1.5 rounded-md border border-brand bg-surface-elevated-1 p-2 text-primary shadow-sm">
+			<div className="flex flex-col gap-1.5 rounded-md border border-brand bg-surface-elevated-1 p-2 text-primary">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-1.5">
 						<span className="truncate title-sm">{config.label}</span>
@@ -355,7 +355,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	}
 
 	return (
-		<div className="flex flex-col gap-1.5 rounded-md border border-brand bg-surface-elevated-1 p-2 text-primary shadow-sm">
+		<div className="flex flex-col gap-1.5 rounded-md border border-brand bg-surface-elevated-1 p-2 text-primary">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate title-sm">{config.label}</span>

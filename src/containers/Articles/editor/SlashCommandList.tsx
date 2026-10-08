@@ -59,7 +59,7 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 
 	return (
 		<div
-			className="flex w-72 max-w-full flex-col overflow-hidden rounded-md border border-medium bg-surface shadow-xl"
+			className="flex w-72 max-w-full flex-col overflow-hidden rounded-md border border-medium bg-overlay shadow-overlay"
 			style={{ maxHeight: 'var(--popover-available-height)' }}
 		>
 			<div id={listId} aria-label="Insert a block" className="max-h-80 min-h-0 overflow-y-auto py-1" role="listbox">

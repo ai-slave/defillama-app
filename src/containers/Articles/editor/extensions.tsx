@@ -199,11 +199,11 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, e
 					selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
 				}`}
 			>
-				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-xs">
+				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-raised">
 					<Icon name="bar-chart-2" className="size-3 text-link" />
 					{tagLabel}
 				</span>
-				<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-xs">
+				<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-raised">
 					<Button
 						type="button"
 						variant="secondary"
@@ -350,7 +350,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 				<div
 					ref={popRef}
 					contentEditable={false}
-					className="absolute top-full left-0 z-50 mt-1 grid w-72 gap-1.5 rounded-md border border-medium bg-surface p-2.5 font-sans shadow-xl"
+					className="absolute top-full left-0 z-50 mt-1 grid w-72 gap-1.5 rounded-md border border-medium bg-overlay p-2.5 font-sans shadow-overlay"
 				>
 					<div className="flex items-center gap-1.5">
 						<label

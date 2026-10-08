@@ -142,7 +142,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 									<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
 								</Ariakit.HovercardAnchor>
 								<Ariakit.Hovercard
-									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay-sm"
+									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay"
 									unmountOnHide
 									hideOnInteractOutside
 									overflowPadding={16}

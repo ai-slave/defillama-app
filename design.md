@@ -52,6 +52,7 @@ Class composition:
 | `bg-brand-faint`                                               | Lightest brand wash (blue step 2)                                                                                                                                                              |
 | `bg-{role}-faint` / `bg-{role}-tint` / `bg-{role}-tint-strong` | Tints on ramp steps 2, 3 and 4 for `brand`, `error`, `warning`, `success`, `data-up`, `data-down`: banners, badges, soft buttons; a tinted control rests on `tint` and hovers to `tint-strong` |
 | `bg-disabled`                                                  | A disabled filled control or field                                                                                                                                                             |
+| `bg-skeleton`                                                  | A loading placeholder (`Skeleton`); 1.35:1 against a card in both modes                                                                                                                        |
 | `bg-knob`                                                      | A switch knob, white on either track in both modes                                                                                                                                             |
 | `bg-page-glass` / `bg-surface-glass`                           | A frosted sticky bar over scrolling content, with `backdrop-blur`                                                                                                                              |
 | `bg-veil`                                                      | A veil over content that is loading                                                                                                                                                            |
@@ -91,7 +92,18 @@ Class composition:
 | `group-hover-wash`                   | Row hover on a cell that keeps an opaque background, such as a sticky table column |
 | `focus-ring` / `focus-ring-on-brand` | Focus for Ariakit virtual focus and for solid brand fills                          |
 
-Shadows come from the `--shadow-*` tokens in `src/tailwind.css`, such as `shadow-overlay-sm` on popovers and menus and `shadow-dialog` / `dark:shadow-dialog-deep` on dialogs and sheets.
+Elevation is picked by how far a surface sits from the page, not by how much shadow looks right. If two surfaces overlap, the one on top takes the higher level; a surface that overlaps nothing is never `overlay` or `dialog`.
+
+| Level   | Shadow           | Use                                                                                                |
+| ------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| none    | —                | Cards, panels, buttons and everything in the page flow; hover uses `hover-wash-card`, never a lift |
+| raised  | `shadow-raised`  | In the flow but distinct: a switch knob, a sticky table header, a hero card on a marketing landing |
+| overlay | `shadow-overlay` | Floats over nearby content: menus, popovers, tooltips, hovercards, floating toolbars and buttons   |
+| dialog  | `shadow-dialog`  | Over the whole UI: dialogs, sheets, modals, full-screen overlays                                   |
+
+- Each token carries its own dark value, so never add a `dark:` shadow fork. Stock Tailwind shadows (`shadow-sm` … `shadow-2xl`, `shadow-inner`) are not used (`stock-shadow`).
+- A floating surface takes `bg-overlay` with `shadow-overlay`; in dark mode its lighter fill carries the lift.
+- Product glows (Research, LlamaAI gold, Subscription, investor accents) are accents in their theme files, not elevation.
 
 Usage rules:
 

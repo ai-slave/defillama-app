@@ -20,13 +20,13 @@ export function Toast() {
 				},
 				success: {
 					iconTheme: {
-						primary: 'var(--success)',
+						primary: 'var(--text-success)',
 						secondary: 'var(--bg-overlay)'
 					}
 				},
 				error: {
 					iconTheme: {
-						primary: 'var(--error)',
+						primary: 'var(--text-error)',
 						secondary: 'var(--bg-overlay)'
 					}
 				}

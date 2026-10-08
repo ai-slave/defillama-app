@@ -26,7 +26,7 @@ export function FigureTable({ src, alt, caption }: { src: string; alt: string; c
 					src={src}
 					alt={alt}
 					loading="lazy"
-					className="absolute top-5 left-[30px] w-[calc(100%-60px)] rounded-t-lg bg-equity-logo shadow-lg"
+					className="absolute top-5 left-[30px] w-[calc(100%-60px)] rounded-t-lg bg-equity-logo"
 				/>
 			</div>
 			<FigureCaption caption={caption} />
@@ -43,7 +43,7 @@ export function FigureRadar({ src, alt, caption }: { src: string; alt: string; c
 					src={src}
 					alt={alt}
 					loading="lazy"
-					className="absolute top-5 left-1/2 w-[68%] -translate-x-1/2 rounded-t-lg bg-equity-logo shadow-lg"
+					className="absolute top-5 left-1/2 w-[68%] -translate-x-1/2 rounded-t-lg bg-equity-logo"
 				/>
 			</div>
 			<FigureCaption caption={caption} />

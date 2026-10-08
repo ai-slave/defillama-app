@@ -131,7 +131,7 @@
 
 /* The pricing card's free-trial CTA. Inside it, Button primary takes the success green. */
 .sub-trial-accent {
-	--bg-brand: var(--success);
+	--bg-brand: var(--text-success);
 }
 
 /* Pricing's independent pre-paint assignment. A's layout and account-state recipes remain intact. */

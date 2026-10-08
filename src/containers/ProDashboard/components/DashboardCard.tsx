@@ -197,7 +197,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	return (
 		<div
 			ref={focusNeighbourOnLeave}
-			className={`${proCardShellStyles} group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-180 ease-out-quart hover:-translate-y-0.5 hover:border-brand-muted hover:shadow-overlay-sm ${className ?? ''}`}
+			className={`${proCardShellStyles} hover-wash-card group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color] duration-180 ease-out-quart hover:border-brand-muted ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (
 				<div className="relative">

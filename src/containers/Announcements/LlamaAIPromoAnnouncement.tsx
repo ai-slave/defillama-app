@@ -20,7 +20,7 @@ export function LlamaAIPromoAnnouncement({ track }: { track: AnnouncementTrackin
 		>
 			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-(image:--llamaai-announcement-shimmer)" />
 			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center rounded-full bg-(image:--llamaai-announcement-badge-bg) px-2.5 py-0.5 title-sm tracking-wide text-llamaai-announcement-badge-text shadow-sm">
+				<span className="inline-flex items-center rounded-full bg-(image:--llamaai-announcement-badge-bg) px-2.5 py-0.5 title-sm tracking-wide text-llamaai-announcement-badge-text shadow-raised">
 					✦ NEW
 				</span>
 				<span className="font-medium">{`Ask LlamaAI anything about DeFi — ${WELCOME_WEEK_ALLOWANCE}.`}</span>

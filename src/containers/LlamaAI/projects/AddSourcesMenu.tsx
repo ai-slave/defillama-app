@@ -96,7 +96,7 @@ export function AddSourcesMenu({
 			/>
 			{isUploading || feedback ? (
 				<Ariakit.Portal>
-					<div className="fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg bg-surface shadow-lg">
+					<div className="fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg bg-overlay shadow-overlay">
 						{isUploading ? (
 							<p role="status" className="p-3 body-sm text-secondary">
 								Uploading project files…

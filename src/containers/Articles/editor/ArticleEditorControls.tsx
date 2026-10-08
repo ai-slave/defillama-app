@@ -127,7 +127,7 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 			autoFocusOnHide={false}
 			hideOnInteractOutside={false}
 			hideOnEscape={false}
-			className="article-table-overlay z-40 max-w-[calc(100vw-16px)] overflow-x-auto rounded-lg border border-medium bg-surface-glass p-1 shadow-raised backdrop-blur"
+			className="article-table-overlay z-40 max-w-[calc(100vw-16px)] overflow-x-auto rounded-lg border border-medium bg-surface-glass p-1 shadow-overlay backdrop-blur"
 		>
 			<div role="group" aria-label="Table controls" className="flex w-max items-center gap-0.5">
 				<span className="px-1.5 label-xs tracking-[0.18em] text-tertiary uppercase">Table</span>

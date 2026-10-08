@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 
 /* ----------------------------------------------------------------------------
-   Skeleton — the one loading placeholder shape. Neutral elevated fill, pulse
+   Skeleton — the one loading placeholder shape. bg-skeleton fill (1.35:1 on a card in both modes), pulse
    only when motion is allowed. Callers pass size and radius as layout
    (h-3 w-40, size-10 rounded-lg …); never a color. `style` is for measured
    widths that mirror the content being loaded. `still` drops the pulse for a
@@ -15,7 +15,7 @@ export function Skeleton({ className, style, still }: { className: string; style
 			style={style}
 			// The 4px default applies only when the caller passes no radius: a base `rounded-sm` would win over the
 			// caller's `rounded-lg` or `rounded-full`, which Tailwind emits earlier in the stylesheet.
-			className={`block bg-surface-elevated-2 ${still ? '' : 'motion-safe:animate-pulse'} ${/(?:^|\s)rounded-/.test(className) ? '' : 'rounded-sm'} ${className}`}
+			className={`block bg-skeleton ${still ? '' : 'motion-safe:animate-pulse'} ${/(?:^|\s)rounded-/.test(className) ? '' : 'rounded-sm'} ${className}`}
 		/>
 	)
 }

@@ -41,7 +41,7 @@ type PermanentAnnouncementProps = {
 const DISMISS_TOKENS = {
 	'--text-secondary': 'currentColor',
 	'--text-primary': 'currentColor',
-	'--hover-row': 'color-mix(in srgb, currentColor 12%, transparent)'
+	'--bg-hover-row': 'color-mix(in srgb, currentColor 12%, transparent)'
 } as React.CSSProperties
 
 type AnnouncementProps = DismissibleAnnouncementProps | PermanentAnnouncementProps

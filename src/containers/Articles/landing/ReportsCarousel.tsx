@@ -420,7 +420,7 @@ export function ReportsCarousel(props: ReportsCarouselProps) {
 
 	const getSlideClasses = () => {
 		return clsx(
-			'absolute cursor-pointer rounded-xl border border-medium shadow-xl transition-all duration-300 ease-out',
+			'absolute cursor-pointer rounded-xl border border-medium shadow-overlay transition-all duration-300 ease-out',
 			isMobile ? 'w-[266px]' : 'w-[294px]',
 			isTransitioning && 'pointer-events-none'
 		)

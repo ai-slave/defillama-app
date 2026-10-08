@@ -58,7 +58,7 @@ function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 			href={`https://paragraph.com/@spark-11/${post.slug}`}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface transition-all duration-200 hover:border-brand hover:shadow-xl"
+			className="group flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface transition-all duration-200 hover:border-brand"
 		>
 			{/* Image */}
 			{post.imageUrl && (
@@ -160,7 +160,7 @@ export default function PressReleases() {
 								href={`https://paragraph.com/@spark-11/${post.slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="group flex flex-col overflow-hidden rounded-xl border-2 border-brand-muted bg-linear-to-br from-brand-faint to-transparent transition-all duration-200 hover:border-brand-strong hover:shadow-xl"
+								className="group flex flex-col overflow-hidden rounded-xl border-2 border-brand-muted bg-linear-to-br from-brand-faint to-transparent transition-all duration-200 hover:border-brand-strong"
 							>
 								{/* Image */}
 								{post.imageUrl && (

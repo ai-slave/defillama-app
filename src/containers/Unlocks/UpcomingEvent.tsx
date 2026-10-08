@@ -519,7 +519,7 @@ export function UpcomingEvent({
 				</Ariakit.HovercardAnchor>
 				<Ariakit.HovercardDisclosure />
 				<Ariakit.Hovercard
-					className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay-sm"
+					className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay"
 					unmountOnHide
 					hideOnInteractOutside
 					overflowPadding={16}

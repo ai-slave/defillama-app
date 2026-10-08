@@ -100,7 +100,7 @@ function ImagePreviewContent({
 					Couldn’t load this image. Use Open to try it in a new tab.
 				</p>
 			) : (
-				<div className="shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-ink-wash">
+				<div className="shrink-0 overflow-hidden rounded-xl shadow-dialog ring-1 ring-ai-ink-wash">
 					<img
 						src={imageUrl}
 						alt="Preview"

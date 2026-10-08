@@ -63,7 +63,7 @@ function ComingSoonSection({ label }: { label: string }) {
 		<div className="relative">
 			<SkeletonTable still />
 			<div className="absolute inset-0 flex items-center justify-center">
-				<span className="rounded-full border border-medium bg-surface px-5 py-2.5 title-md tracking-wide text-secondary shadow-lg">
+				<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary shadow-overlay">
 					{label} — Coming Soon
 				</span>
 			</div>
