@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
-import { OtpRequestError } from '~/auth/emailVerification'
+import { InvalidCodeError, OtpRequestError } from '~/auth/emailVerification'
 import type { GoogleLinkChallenge, SignInFlowStore } from '~/auth/signInFlowStore'
 import { refreshNowSeconds, useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
@@ -29,9 +29,10 @@ export function GoogleLinkForm({
 	const { confirmGoogleLink, resendGoogleLink } = useAuthContext()
 	const confirmGoogleLinkMutation = useMutation({ mutationFn: confirmGoogleLink })
 	const resendGoogleLinkMutation = useMutation({ mutationFn: resendGoogleLink })
-	const errorId = useId()
 	const [code, setCode] = useState('')
 	const [submitted, setSubmitted] = useState(false)
+	// The server refused the last code; the next edit or a new code clears it.
+	const [codeRefusal, setCodeRefusal] = useState<string | null>(null)
 	const codeError = code.length === 6 ? null : 'Enter the 6-digit code.'
 	const pending = confirmGoogleLinkMutation.isPending || resendGoogleLinkMutation.isPending
 
@@ -56,7 +57,8 @@ export function GoogleLinkForm({
 
 	const handleSubmit = async (event: FormSubmitEvent) => {
 		event.preventDefault()
-		if (codeError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+		const form = event.currentTarget
+		if (codeError) return showFieldErrors(form, () => setSubmitted(true))
 		store.dispatch({ kind: 'requestStarted' })
 		const signal = store.beginAuthRequest()
 		await confirmGoogleLinkMutation
@@ -67,9 +69,11 @@ export function GoogleLinkForm({
 				onAuthenticated: onVerified
 			})
 			.catch((caughtError) => {
-				if (!signal.aborted)
+				if (signal.aborted) return null
+				if (caughtError instanceof InvalidCodeError) showFieldErrors(form, () => setCodeRefusal(caughtError.message))
+				else
 					store.dispatch({
-						error: caughtError instanceof Error ? caughtError.message : 'Invalid or expired code.',
+						error: caughtError instanceof Error ? caughtError.message : 'Could not verify the code.',
 						kind: 'failed'
 					})
 				return null
@@ -107,6 +111,7 @@ export function GoogleLinkForm({
 		store.dispatch({ challenge: nextChallenge, kind: 'googleLinkUpdated' })
 		setCode('')
 		setSubmitted(false)
+		setCodeRefusal(null)
 	}
 
 	return (
@@ -115,14 +120,10 @@ export function GoogleLinkForm({
 				This Google account uses an email managed outside Google. Enter the 6-digit code sent to your email to confirm
 				the account link.
 			</p>
-			<Field label="Verification code" error={submitted ? codeError : null}>
+			<Field label="Verification code" error={(submitted ? codeError : null) ?? codeRefusal}>
 				{(control) => (
 					<input
 						{...control}
-						// The request error describes the field too: a wrong code is fixed here.
-						aria-describedby={
-							[control['aria-describedby'], error ? errorId : null].filter(Boolean).join(' ') || undefined
-						}
 						type="text"
 						name="code"
 						// Read-only rather than disabled while a request runs, so the field keeps focus.
@@ -135,7 +136,10 @@ export function GoogleLinkForm({
 						placeholder="000000"
 						className={`${oneTimeCodeInputStyles} w-full`}
 						value={code}
-						onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+						onChange={(event) => {
+							setCode(event.target.value.replace(/\D/g, '').slice(0, 6))
+							setCodeRefusal(null)
+						}}
 					/>
 				)}
 			</Field>
@@ -149,11 +153,7 @@ export function GoogleLinkForm({
 			>
 				Verify account
 			</Button>
-			{error ? (
-				<div id={errorId}>
-					<InlineStatus variant="error">{error}</InlineStatus>
-				</div>
-			) : null}
+			{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 			<div className="flex flex-col items-center gap-3 body-sm">
 				{/* Focusable while it waits: a sent code starts the wait while the button still has focus. */}
 				<Button

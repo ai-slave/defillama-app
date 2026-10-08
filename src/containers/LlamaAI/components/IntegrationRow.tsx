@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
+import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
@@ -52,19 +53,23 @@ export function IntegrationRow({
 
 	const [codeDraft, setCodeDraft] = useState('')
 	const [submitted, setSubmitted] = useState(false)
-	// The server refused the last code; the next edit clears it.
-	const [codeRejected, setCodeRejected] = useState(false)
+	// Why the last confirm failed: the server refused the code (any 4xx), or the request itself failed (a 5xx, going
+	// offline). The next edit clears it.
+	const [confirmFailure, setConfirmFailure] = useState<'code' | 'request' | null>(null)
 	const codeError =
 		submitted && codeDraft.length !== 6
 			? 'Enter the 6-digit code from Telegram.'
-			: codeRejected
+			: confirmFailure === 'code'
 				? "That code didn't work. Check it in Telegram and try again."
 				: null
 	const confirming = link.state.status === 'confirming' ? link.state.step : null
 	const linkedHandle = link.state.status === 'linked' ? formatHandle(link.state.username) : ''
 	const [disconnectHandle, setDisconnectHandle] = useState<string | null>(null)
 	const rowRef = useRef<HTMLDivElement>(null)
-	const error = link.startError ?? (link.state.status === 'error' ? link.state.message : null)
+	const error =
+		link.startError ??
+		(link.state.status === 'error' ? link.state.message : null) ??
+		(confirmFailure === 'request' ? "Couldn't confirm the code. Try again." : null)
 	// Once unlinked there is nothing left to confirm.
 	if (disconnectHandle !== null && link.state.status !== 'linked') setDisconnectHandle(null)
 
@@ -146,12 +151,21 @@ export function IntegrationRow({
 						e.preventDefault()
 						const form = e.currentTarget
 						if (codeDraft.length !== 6) return showFieldErrors(form, () => setSubmitted(true))
+						setConfirmFailure(null)
 						link
 							.confirmCode(codeDraft)
 							.then((result) => {
 								if (result && 'linked' in result && result.linked) onInitialStateConsumed?.()
 							})
-							.catch(() => showFieldErrors(form, () => setCodeRejected(true)))
+							.catch((caughtError: unknown) => {
+								if (
+									caughtError instanceof LlamaAITransportError &&
+									caughtError.status >= 400 &&
+									caughtError.status < 500
+								) {
+									showFieldErrors(form, () => setConfirmFailure('code'))
+								} else setConfirmFailure('request')
+							})
 					}}
 					className="mt-3"
 				>
@@ -168,7 +182,7 @@ export function IntegrationRow({
 											value={codeDraft}
 											onChange={(e) => {
 												setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))
-												setCodeRejected(false)
+												setConfirmFailure(null)
 											}}
 											placeholder="123456"
 											maxLength={6}

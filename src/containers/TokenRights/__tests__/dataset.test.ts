@@ -50,6 +50,15 @@ test('publishes and reads entries through both on-disk indexes', async () => {
 	expect(http.requests).toHaveLength(1)
 })
 
+test('drops a blank Airtable row, which arrives as {} with no protocol name', async () => {
+	http.serve({ [`${SERVER_URL}/token-rights`]: [entry, {}, chainEntry] })
+	const { fileDatasetSnapshotStore } = await import('~/server/datasetSnapshots/fileStore.server')
+	const { buildTokenRightsDomain } = await import('../server/dataset.builder.server')
+	await fileDatasetSnapshotStore.publish('token-rights', buildTokenRightsDomain)
+	const api = await import('../server/dataset.server')
+	expect(await api.fetchTokenRightsEntries()).toEqual([entry, chainEntry])
+})
+
 test('falls through to the next id within one generation when a refresh adds the first id between lookups', async () => {
 	const { fileDatasetSnapshotStore } = await import('~/server/datasetSnapshots/fileStore.server')
 	await fileDatasetSnapshotStore.publish('token-rights', tokenRightsGeneration([entry]))

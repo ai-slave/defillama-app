@@ -5,20 +5,21 @@ import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
 import { formatPriceAlertSummary, formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import {
+	type ArtifactSaveBody,
 	buildArtifactSaveBody,
 	buildScheduleExpressionRaw,
 	formatNextRunAt,
 	getArtifactSubtitle,
 	getDeliveryError,
 	getDeliveryReadinessBlock,
+	getSlackListGate,
 	getUpsellCopy,
 	isAlertCapReachedError,
 	resolveSlackChannelName,
 	resolveSlackTarget,
 	roundPriceValue,
-	validatePrice,
-	type ArtifactSaveBody,
-	type SlackTarget
+	type SlackTarget,
+	validatePrice
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import {
 	DAYS_OF_WEEK,
@@ -218,10 +219,18 @@ export function AlertArtifact({
 		})
 	}
 	const shown = submitted ? errors : null
+	const slackGate = getSlackListGate({
+		channel: deliveryChannel,
+		slackTeamId,
+		slackChannelId,
+		workspacesLoading: slackWorkspacesQuery.isLoading,
+		channelsLoading: slackChannelsQuery.isLoading,
+		channelsFailed: queryReadFailed(slackChannelsQuery)
+	})
 
 	const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (!messageId || isSaving) return
+		if (!messageId || isSaving || slackGate) return
 		if (errors.title || errors.price || errors.delivery) {
 			return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		}
@@ -609,8 +618,10 @@ export function AlertArtifact({
 						type="submit"
 						size="md"
 						variant="primary"
-						disabled={!messageId}
-						pendingLabel={isSaving ? 'Saving…' : null}
+						// A failed channel list holds Save; its notice and Try again sit in the delivery field.
+						disabled={!messageId || slackGate === 'channelsFailed'}
+						accessibleWhenDisabled={slackGate === 'channelsFailed'}
+						pendingLabel={isSaving ? 'Saving…' : slackGate === 'channelsFailed' ? null : slackGate}
 						className="w-full"
 					>
 						<Icon name="calendar-plus" className="size-3.5" />

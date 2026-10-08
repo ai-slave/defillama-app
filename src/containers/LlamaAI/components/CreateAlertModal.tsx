@@ -17,15 +17,16 @@ import {
 	getDeliveryError,
 	getDeliveryReadinessBlock,
 	getPriceCaption,
+	getSlackListGate,
 	getUpsellCopy,
-	resolveSlackTarget,
 	isAlertCapReachedError,
-	roundPriceValue,
-	validatePrice,
-	validatePrompt,
 	type PriceOp,
+	resolveSlackTarget,
+	roundPriceValue,
 	type SlackTarget,
-	type TriggerType
+	type TriggerType,
+	validatePrice,
+	validatePrompt
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { ALERTS_QUERY_KEY } from '~/containers/LlamaAI/components/alerts/queryKeys'
 import {
@@ -280,6 +281,14 @@ function CreateAlertModalForm({
 		})
 	}
 	const shown = submitted ? errors : null
+	const slackGate = getSlackListGate({
+		channel: deliveryChannel,
+		slackTeamId,
+		slackChannelId,
+		workspacesLoading: slackWorkspacesQuery.isLoading,
+		channelsLoading: slackChannelsQuery.isLoading,
+		channelsFailed: queryReadFailed(slackChannelsQuery)
+	})
 
 	const isPending = createAlertMutation.isPending
 	const isUpsell = alertsUsage?.allowed === false || isAlertCapReachedError(createAlertMutation.error)
@@ -294,7 +303,7 @@ function CreateAlertModalForm({
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (isPending) return
+		if (isPending || slackGate) return
 		if (errors.prompt || errors.token || errors.price || errors.delivery) {
 			return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		}
@@ -716,7 +725,15 @@ function CreateAlertModalForm({
 				leading={<p className="min-w-0 truncate body-sm text-secondary">{`${triggerSummary} → ${channelSummary}`}</p>}
 				dismiss={<DialogCancelButton />}
 			>
-				<Button type="submit" variant="primary" size="md" pendingLabel={isPending ? 'Creating…' : null}>
+				{/* A failed channel list holds Create; its notice and Try again sit in the delivery field. */}
+				<Button
+					type="submit"
+					variant="primary"
+					size="md"
+					disabled={slackGate === 'channelsFailed'}
+					accessibleWhenDisabled
+					pendingLabel={isPending ? 'Creating…' : slackGate === 'channelsFailed' ? null : slackGate}
+				>
 					Create alert
 				</Button>
 			</DialogFooter>

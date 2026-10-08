@@ -26,6 +26,7 @@ import {
 import {
 	deriveAlertTitle,
 	getDeliveryError,
+	getSlackListGate,
 	getUpsellCopy,
 	type TriggerType
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
@@ -788,6 +789,14 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 		slackChannelId,
 		slackWorkspaceCount: slackWorkspaces.length
 	})
+	const slackGate = getSlackListGate({
+		channel: deliveryChannel,
+		slackTeamId,
+		slackChannelId,
+		workspacesLoading: slackWorkspacesQuery.isLoading,
+		channelsLoading: slackChannelsQuery.isLoading,
+		channelsFailed: queryReadFailed(slackChannelsQuery)
+	})
 	const slackFields = {
 		slack_team_id: deliveryChannel === 'slack' ? slackTeamId : null,
 		slack_channel_id: deliveryChannel === 'slack' ? slackChannelId : null,
@@ -951,7 +960,7 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 			noValidate
 			onSubmit={(e) => {
 				e.preventDefault()
-				if (updateAlertMutation.isPending) return
+				if (updateAlertMutation.isPending || slackGate) return
 				if (deliveryError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 				const fd = new FormData(e.currentTarget)
 				trackUmamiEvent('llamaai-alert-edit')
@@ -1036,11 +1045,14 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 				<Button type="button" size="md" disabled={updateAlertMutation.isPending} onClick={onClose}>
 					Cancel
 				</Button>
+				{/* A failed channel list holds Save; its notice and Try again sit in the delivery field. */}
 				<Button
 					type="submit"
 					variant="primary"
 					size="md"
-					pendingLabel={updateAlertMutation.isPending ? 'Saving…' : null}
+					disabled={slackGate === 'channelsFailed'}
+					accessibleWhenDisabled
+					pendingLabel={updateAlertMutation.isPending ? 'Saving…' : slackGate === 'channelsFailed' ? null : slackGate}
 				>
 					Save
 				</Button>

@@ -426,6 +426,50 @@ test('switching the alert type after a failed submit opens the other type quiet;
 	expect(alertCreations()).toEqual([])
 })
 
+test('Create waits while the Slack channels load and holds beside their failure, with no error under a missing picker', async () => {
+	const firstLoad = Promise.withResolvers<Response>()
+	session.serve({
+		[`${AI}/slack/workspaces`]: {
+			workspaces: [{ team_id: 'T1', team_name: 'Llama Research', default_channel_id: null, revoked: false }]
+		}
+	})
+	session.serveInOrder(`${AI}/slack/channels?team_id=T1`, [
+		() => firstLoad.promise,
+		() => Response.json({ channels: [{ id: 'C1', name: 'alerts', is_private: false }] })
+	])
+	await mountModal()
+	await input('textarea', 'Daily TVL movers')
+	await press(radio('Delivery channel', 'Email'), 'End')
+	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
+	// Field and FieldGroup errors are described by their control; the load failure's own notice is not one of them.
+	const fieldErrors = () =>
+		[...document.querySelectorAll('[aria-describedby]')].flatMap((el) =>
+			el
+				.getAttribute('aria-describedby')!
+				.split(' ')
+				.map((id) => document.getElementById(id))
+				.filter((node) => node?.classList.contains('text-error'))
+				.map((node) => node!.textContent)
+		)
+	await waitForUi(() => expect(submit().textContent).toContain('Loading channels…'))
+	await act(async () => submit().click())
+	expect(fieldErrors()).toEqual([])
+
+	await act(async () => firstLoad.resolve(Response.json({ error: 'upstream' }, { status: 500 })))
+	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load Slack channels."))
+	expect(submit().getAttribute('aria-disabled')).toBe('true')
+	await act(async () => submit().click())
+	expect(fieldErrors()).toEqual([])
+	expect(alertCreations()).toEqual([])
+
+	const retry = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Try again')!
+	await act(async () => retry.click())
+	await waitForUi(() => expect(document.querySelector('[aria-label="Slack channel"]')).not.toBeNull())
+	expect(submit().getAttribute('aria-disabled')).toBeNull()
+	await act(async () => submit().click())
+	expect(fieldErrors()).toEqual(['Choose a Slack channel.'])
+})
+
 test('a missing Slack workspace or channel focuses that picker, not the delivery channel toggle', async () => {
 	session.serve({
 		[`${AI}/slack/workspaces`]: {

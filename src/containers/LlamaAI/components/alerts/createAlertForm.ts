@@ -113,6 +113,24 @@ export function getDeliveryError(delivery: {
 	return null
 }
 
+/** Slack delivery picks from lists that load after the form opens. While the list the next pick needs is loading,
+    or after its channel list failed, that pick has no control to fix, so Save waits or holds beside the failure and its
+    Try again instead of erroring (docs/focus-and-errors.md, "Validating a form"). */
+export function getSlackListGate(delivery: {
+	channel: DeliveryChannel
+	slackTeamId: string
+	slackChannelId: string
+	workspacesLoading: boolean
+	channelsLoading: boolean
+	channelsFailed: boolean
+}): 'Loading workspaces…' | 'Loading channels…' | 'channelsFailed' | null {
+	if (delivery.channel !== 'slack') return null
+	if (!delivery.slackTeamId) return delivery.workspacesLoading ? 'Loading workspaces…' : null
+	if (delivery.slackChannelId) return null
+	if (delivery.channelsLoading) return 'Loading channels…'
+	return delivery.channelsFailed ? 'channelsFailed' : null
+}
+
 export function getArtifactSubtitle(channel: DeliveryChannel, slackChannelName: string | null): string {
 	if (channel === 'telegram') return 'Get this data delivered to your Telegram'
 	if (channel === 'slack') {

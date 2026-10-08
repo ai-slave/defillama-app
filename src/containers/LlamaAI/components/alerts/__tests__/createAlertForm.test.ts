@@ -11,6 +11,7 @@ import {
 	getDeliveryError,
 	getDeliveryReadinessBlock,
 	getPriceCaption,
+	getSlackListGate,
 	isAlertCapReachedError,
 	normalizePriceInput,
 	resolveSlackChannelName,
@@ -620,4 +621,22 @@ describe('resolveSlackChannelName', () => {
 	test('gives no name for a channel missing from the loaded list', () => {
 		expect(resolveSlackChannelName({ channelId: 'C7', channels })).toBeNull()
 	})
+})
+
+test('Slack delivery waits on the list its next pick needs and holds after a failed channel list', () => {
+	const slack = {
+		channel: 'slack' as const,
+		slackTeamId: 'T1',
+		slackChannelId: '',
+		workspacesLoading: false,
+		channelsLoading: false,
+		channelsFailed: false
+	}
+	expect(getSlackListGate({ ...slack, slackTeamId: '', workspacesLoading: true })).toBe('Loading workspaces…')
+	expect(getSlackListGate({ ...slack, channelsLoading: true })).toBe('Loading channels…')
+	expect(getSlackListGate({ ...slack, channelsFailed: true })).toBe('channelsFailed')
+	// A picked channel, a list that loaded, and another delivery channel are left to validation.
+	expect(getSlackListGate({ ...slack, slackChannelId: 'C1', channelsFailed: true })).toBeNull()
+	expect(getSlackListGate(slack)).toBeNull()
+	expect(getSlackListGate({ ...slack, channel: 'email', channelsLoading: true })).toBeNull()
 })

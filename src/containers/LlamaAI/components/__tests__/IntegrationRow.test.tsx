@@ -212,6 +212,26 @@ test('a short code says so under the field; a wrong code says so until the code 
 	expect(errorOf(code)).toBeNull()
 })
 
+test('a server failure on confirm says the request failed, not that the code is wrong, and Confirm retries', async () => {
+	session.serve({ [`${TELEGRAM}/status`]: unlinked })
+	session.serveInOrder(`${TELEGRAM}/link/confirm`, [
+		() => Response.json({ error: 'upstream down' }, { status: 503 }),
+		() => Response.json({ linked: true, telegramUsername: 'llama' })
+	])
+	await renderRow({ initialStatus: unlinked, initialTgloginToken: 'token' })
+	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await typeCode('123456')
+	await press(button('Confirm')!)
+	await waitForUi(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't confirm the code. Try again.")
+	)
+	expect(errorOf(code)).toBeNull()
+	expect(code.getAttribute('aria-invalid')).toBeNull()
+	await press(button('Confirm')!)
+	await waitForUi(() => expect(container.textContent).toContain('Linked as @llama'))
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+})
+
 test('a confirmed switch hands focus to the linked account', async () => {
 	session.serve({ [`${TELEGRAM}/status`]: unlinked })
 	session.serveInOrder(`${TELEGRAM}/link/confirm`, [

@@ -7,7 +7,7 @@ import { type AuthRequest, runAuthRequest } from '~/auth/authRequest'
 import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from '~/auth/authStore'
 import { signInWithPassword } from '~/auth/emailSignIn'
 import { signupWithEmail, type SignupRequest } from '~/auth/emailSignup'
-import { OtpRequestError, sendVerificationCode } from '~/auth/emailVerification'
+import { InvalidCodeError, OtpRequestError, sendVerificationCode } from '~/auth/emailVerification'
 import { authenticateGithub } from '~/auth/githubAuth'
 import { readGoogleAuthResult, type GoogleAuthResult, type GoogleAuthSession } from '~/auth/googleAuth'
 import { rememberSignIn } from '~/auth/lastSignIn'
@@ -340,7 +340,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				}).catch((error) => {
 					throw new Error('Could not verify the code. Check your connection.', { cause: error })
 				})
-				if (!response.ok) throw new Error(await getAuthErrorMessageFromResponse(response, 'Invalid or expired code.'))
+				// features-server answers 400 for a wrong or expired code; 409, 429 and 5xx are about the request.
+				if (response.status === 400) throw new InvalidCodeError('This code is wrong or has expired.')
+				if (!response.ok) throw new Error(await getAuthErrorMessageFromResponse(response, 'Could not verify the code.'))
 				const result = readGoogleAuthResult(await response.json())
 				if (result.kind !== 'authenticated') throw new Error('Invalid Google link response')
 				return result
