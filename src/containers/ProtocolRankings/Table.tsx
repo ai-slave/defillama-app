@@ -570,29 +570,39 @@ function ChainProtocolsTableInner({
 								{customColumns.map((column) => (
 									<li key={column.id} className="flex items-center gap-1 px-3">
 										<span className="mr-auto min-w-0 truncate body-sm">{column.name}</span>
-										<Button
-											type="button"
-											variant="ghost"
-											size="md"
-											square
-											aria-label={`Edit ${column.name}`}
-											onClick={() => setEditingColumn({ id: column.id })}
+										<Tooltip
+											content={`Edit ${column.name}`}
+											render={
+												<Button
+													type="button"
+													variant="ghost"
+													size="md"
+													square
+													aria-label={`Edit ${column.name}`}
+													onClick={() => setEditingColumn({ id: column.id })}
+												/>
+											}
 										>
 											<Icon name="settings" height={16} width={16} />
-										</Button>
-										<Button
-											type="button"
-											variant="ghost"
-											size="md"
-											square
-											aria-label={`Delete ${column.name}`}
-											onClick={() => {
-												deleteFinalFocusRef.current = null
-												setDeletingColumn(column)
-											}}
+										</Tooltip>
+										<Tooltip
+											content={`Delete ${column.name}`}
+											render={
+												<Button
+													type="button"
+													variant="ghostDestructive"
+													size="md"
+													square
+													aria-label={`Delete ${column.name}`}
+													onClick={() => {
+														deleteFinalFocusRef.current = null
+														setDeletingColumn(column)
+													}}
+												/>
+											}
 										>
 											<Icon name="trash-2" height={16} width={16} />
-										</Button>
+										</Tooltip>
 									</li>
 								))}
 							</ul>

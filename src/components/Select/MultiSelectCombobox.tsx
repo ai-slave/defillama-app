@@ -2,6 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -98,17 +100,26 @@ export function MultiSelectCombobox({
 				{selectedValues.length > 0 ? (
 					<div className="flex flex-wrap items-center gap-1 pl-1">
 						{selectedValues.map((value) => (
-							<button
-								type="button"
+							<Button
+								variant="filter"
+								size="sm"
+								data-active
 								key={`mutliselectcombobox-selected-${value}`}
-								className="hover-wash flex items-center gap-1 rounded-md border border-brand bg-brand-muted p-1.5 label-sm text-link"
-								onClick={() => {
-									setSelectedValues(selectedValues.filter((v) => v !== value))
+								aria-label={`Remove ${labelsByValue.get(value) ?? value}`}
+								onClick={(event) => {
+									// The pill leaves: the next pill takes focus, else the search field.
+									const next =
+										neighbourRowControl(event.currentTarget, event.currentTarget) ??
+										anchorRef.current?.querySelector('input')
+									keepFocus(
+										() => setSelectedValues(selectedValues.filter((v) => v !== value)),
+										() => next
+									)
 								}}
 							>
 								<span>{labelsByValue.get(value) ?? value}</span>
-								<Icon name="x" className="size-3" />
-							</button>
+								<Icon name="x" className="size-3.5" />
+							</Button>
 						))}
 					</div>
 				) : null}

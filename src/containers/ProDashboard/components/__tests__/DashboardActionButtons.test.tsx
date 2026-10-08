@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
-import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from '../DashboardActionButtons'
+import { CopyDashboardButton, EditDoneButton, UndoAIGenerationButton } from '../DashboardActionButtons'
 import { Rating } from '../Rating'
 
 const push = vi.hoisted(() => vi.fn())
@@ -37,9 +37,15 @@ afterEach(async () => {
 async function render(node: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 }
+// A pending Button keeps its idle label in the DOM, aria-hidden, to hold its width; the name is the visible text.
+function visibleText(el: Element) {
+	const clone = el.cloneNode(true) as Element
+	for (const hidden of clone.querySelectorAll('[aria-hidden="true"]')) hidden.remove()
+	return clone.textContent?.trim()
+}
 function button(name: string) {
 	return [...container.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => el.textContent?.trim() === name || el.getAttribute('aria-label') === name
+		(el) => visibleText(el) === name || el.getAttribute('aria-label') === name
 	)!
 }
 async function click(name: string) {
@@ -85,8 +91,8 @@ test('undo blocks another request while pending and keeps failure beside the ret
 	const undo = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
 	await render(<UndoAIGenerationButton onUndo={undo} />)
 	await click('Undo AI changes')
-	await waitForUi(() => expect(button('Undo AI changes').getAttribute('aria-disabled')).toBe('true'))
-	await click('Undo AI changes')
+	await waitForUi(() => expect(button('Undoing…').getAttribute('aria-disabled')).toBe('true'))
+	await click('Undoing…')
 	expect(undo).toHaveBeenCalledOnce()
 	await act(async () => pending.reject(new Error('Undo unavailable')))
 	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Undo unavailable'))
@@ -98,42 +104,39 @@ test('undo blocks another request while pending and keeps failure beside the ret
 		expect(button('Undo AI changes').getAttribute('aria-disabled')).not.toBe('true')
 	})
 })
-test.each(['Skip', 'Dismiss rating'])(
-	'%s blocks all rating actions and failure preserves feedback for retry',
-	async (action) => {
-		const pending = Promise.withResolvers<void>()
-		const submit = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
-		await render(<Rating sessionId="first" mode="create" onSubmit={submit} />)
-		await act(async () => container.querySelector<HTMLInputElement>('[aria-label="4 stars"]')!.click())
-		container.querySelector('textarea')!.value = 'Keep this feedback'
-		button(action).focus()
-		await click(action)
-		await waitForUi(() => expect(button(action).getAttribute('aria-disabled')).toBe('true'))
-		expect(document.activeElement).toBe(button(action))
-		await click('Submit Rating')
-		await click('Skip')
-		await click('Dismiss rating')
-		expect(submit).toHaveBeenCalledExactlyOnceWith('first', { skipped: true })
-		await act(async () => pending.reject(new Error('Rating unavailable')))
-		await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Rating unavailable'))
-		expect(container.querySelector('textarea')!.value).toBe('Keep this feedback')
-		await click('Submit Rating')
-		await waitForUi(() =>
-			expect(submit).toHaveBeenLastCalledWith('first', { rating: 4, feedback: 'Keep this feedback' })
-		)
-		await render(<Rating sessionId="second" mode="iterate" onSubmit={submit} />)
-		expect(container.querySelector('textarea')).toBeNull()
-		expect(container.querySelector('[role="alert"]')).toBeNull()
-		expect([...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].some((el) => el.checked)).toBe(
-			false
-		)
-	}
-)
+// Skip shows its pending label while either action runs; the icon-only Dismiss keeps its aria-label.
+test.each([
+	['Skip', 'Skipping…'],
+	['Dismiss rating', 'Dismiss rating']
+])('%s blocks all rating actions and failure preserves feedback for retry', async (action, pendingName) => {
+	const pending = Promise.withResolvers<void>()
+	const submit = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
+	await render(<Rating sessionId="first" mode="create" onSubmit={submit} />)
+	await act(async () => container.querySelector<HTMLInputElement>('[aria-label="4 stars"]')!.click())
+	container.querySelector('textarea')!.value = 'Keep this feedback'
+	button(action).focus()
+	await click(action)
+	await waitForUi(() => expect(button(pendingName).getAttribute('aria-disabled')).toBe('true'))
+	expect(document.activeElement).toBe(button(pendingName))
+	await click('Submit Rating')
+	await click('Skipping…')
+	await click('Dismiss rating')
+	expect(submit).toHaveBeenCalledExactlyOnceWith('first', { skipped: true })
+	await act(async () => pending.reject(new Error('Rating unavailable')))
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Rating unavailable'))
+	expect(container.querySelector('textarea')!.value).toBe('Keep this feedback')
+	await click('Submit Rating')
+	await waitForUi(() => expect(submit).toHaveBeenLastCalledWith('first', { rating: 4, feedback: 'Keep this feedback' }))
+	await render(<Rating sessionId="second" mode="iterate" onSubmit={submit} />)
+	expect(container.querySelector('textarea')).toBeNull()
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect([...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].some((el) => el.checked)).toBe(false)
+})
 
 test('opening the editor blocks repeated navigation and exposes a retry after failure', async () => {
 	const route = Promise.withResolvers<boolean>()
 	push.mockReturnValueOnce(route.promise).mockResolvedValueOnce(true)
-	await render(<EditDashboardButton href="/pro/example/edit" />)
+	await render(<EditDoneButton editing={false} href="/pro/example/edit" onDone={vi.fn()} donePendingLabel={null} />)
 	button('Edit').focus()
 	await click('Edit')
 	await waitForUi(() => expect(button('Opening editor…')?.getAttribute('aria-disabled')).toBe('true'))

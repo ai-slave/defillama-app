@@ -1,7 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import { isValidAnnotationDate } from '../dashboardConfig/migrate'
 import {
 	DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH,
@@ -9,7 +12,7 @@ import {
 	MAX_DASHBOARD_ANNOTATIONS
 } from '../dashboardTypes'
 import { useProDashboardAnnotations } from '../ProDashboardAPIContext'
-import { ProBadge, ProButton } from '../ui'
+import { ProBadge } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
 
 const INPUT_STYLES =
@@ -19,6 +22,7 @@ export function AnnotationsPopover() {
 	const { annotations, setAnnotations } = useProDashboardAnnotations()
 	const [date, setDate] = useState('')
 	const [label, setLabel] = useState('')
+	const dateInputRef = useRef<HTMLInputElement>(null)
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
 	const atLimit = annotations.length >= MAX_DASHBOARD_ANNOTATIONS
 	const trimmedLabel = label.trim()
@@ -31,16 +35,26 @@ export function AnnotationsPopover() {
 		setLabel('')
 	}
 
-	const removeAnnotation = (id: string) => {
-		setAnnotations(annotations.filter((annotation) => annotation.id !== id))
+	// The next row's delete takes focus, else the previous row's; after the last row, the date field that adds one.
+	const removeAnnotation = (id: string, button: HTMLElement) => {
+		const next = neighbourRowControl(button.closest('li')!, button) ?? dateInputRef.current
+		keepFocus(
+			() => setAnnotations(annotations.filter((annotation) => annotation.id !== id)),
+			() => next
+		)
 	}
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure render={<ProButton type="button" variant="ghost" />} title="Dashboard annotations">
+			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="ghost" />}>
 				<Icon name="pin" height={14} width={14} />
 				<span>Annotations</span>
-				{annotations.length > 0 ? <ProBadge tone="info">{annotations.length}</ProBadge> : null}
+				{/* Unpadded, the count fits the md button's 32px height instead of growing it. */}
+				{annotations.length > 0 ? (
+					<ProBadge tone="info" className="py-0!">
+						{annotations.length}
+					</ProBadge>
+				) : null}
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" gutter={8} dismiss="own">
 				<div className="flex w-[340px] max-w-full flex-col">
@@ -62,16 +76,21 @@ export function AnnotationsPopover() {
 								>
 									<span className="shrink-0 font-jetbrains text-xs text-pro-text-secondary">{annotation.date}</span>
 									<span className="min-w-0 flex-1 truncate text-pro-text-primary">{annotation.label}</span>
-									<ProButton
-										type="button"
-										size="sm"
-										square
-										variant="ghost"
-										aria-label={`Delete annotation ${annotation.label}`}
-										onClick={() => removeAnnotation(annotation.id)}
+									<Tooltip
+										content="Delete annotation"
+										render={
+											<Button
+												type="button"
+												size="sm"
+												square
+												variant="ghostDestructive"
+												aria-label={`Delete annotation ${annotation.label}`}
+												onClick={(event) => removeAnnotation(annotation.id, event.currentTarget)}
+											/>
+										}
 									>
-										<Icon name="trash-2" height={14} width={14} />
-									</ProButton>
+										<Icon name="trash-2" className="size-4" />
+									</Tooltip>
 								</li>
 							))}
 						</ul>
@@ -85,6 +104,7 @@ export function AnnotationsPopover() {
 					>
 						<div className="flex gap-2">
 							<input
+								ref={dateInputRef}
 								type="date"
 								aria-label="Annotation date"
 								className={`${INPUT_STYLES} shrink-0`}
@@ -110,7 +130,7 @@ export function AnnotationsPopover() {
 									? `Limit of ${MAX_DASHBOARD_ANNOTATIONS} reached. Delete one to add another.`
 									: `${annotations.length}/${MAX_DASHBOARD_ANNOTATIONS}`}
 							</span>
-							<ProButton
+							<Button
 								type="submit"
 								size="sm"
 								variant="primary"
@@ -120,7 +140,7 @@ export function AnnotationsPopover() {
 							>
 								<Icon name="plus" height={14} width={14} />
 								<span>Add</span>
-							</ProButton>
+							</Button>
 						</div>
 					</form>
 				</div>

@@ -1,5 +1,13 @@
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { describe, expect, test } from 'vitest'
-import { buildHistoryStrip, type HistoryIncident, type ProtocolIncidentInput } from '../components/HistoryStrip'
+import {
+	buildHistoryStrip,
+	HistoryStrip,
+	type HistoryIncident,
+	type ProtocolIncidentInput
+} from '../components/HistoryStrip'
 import type { Audit } from '../types'
 import { makeAudit } from './factories'
 
@@ -201,4 +209,30 @@ describe('buildHistoryStrip', () => {
 		expect(frontend.recovered).toBe(true)
 		expect(frontend.money).toContain('before depositors lost anything')
 	})
+})
+
+test('closing a marker’s detail hands focus back to the marker that opened it', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	await act(async () =>
+		root.render(
+			<HistoryStrip
+				audits={[]}
+				incidents={[incident({ date: '2024-06-01', usdLost: 10, title: 'pool loss' })]}
+				nowIso="2026-06-25"
+			/>
+		)
+	)
+	const marker = container.querySelector<HTMLButtonElement>('[data-hs-pt]')!
+	await act(async () => marker.click())
+	const close = container.querySelector<HTMLButtonElement>('button[aria-label="Close detail"]')!
+	await act(async () => {
+		close.focus()
+		close.click()
+	})
+	expect(container.querySelector('[role="region"]')).toBeNull()
+	expect(document.activeElement).toBe(marker)
+	await act(async () => root.unmount())
+	container.remove()
 })

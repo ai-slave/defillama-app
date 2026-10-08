@@ -1,4 +1,7 @@
+import { Button } from '~/ui/Button'
+import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 export interface UploadSelectionFeedback {
 	added: number
@@ -8,6 +11,12 @@ export interface UploadSelectionFeedback {
 export function formatUploadSelectionSummary({ added, skipped }: UploadSelectionFeedback) {
 	return `${added} ${added === 1 ? 'file' : 'files'} added${skipped.length > 0 ? ` · ${skipped.length} skipped` : ''}`
 }
+
+// Dismiss removes the notice with its own button: a composer's prompt field takes focus, else the page content.
+// Inside a dialog the dialog's net (catchLostFocus) takes it instead.
+const dismissFocusOnLeave = passFocusOnLeave(
+	(node) => node.closest('form')?.querySelector('textarea') ?? (node.closest('[data-dialog]') ? null : pageContent())
+)
 
 export function UploadSelectionNotice({
 	feedback,
@@ -19,12 +28,12 @@ export function UploadSelectionNotice({
 	if (!feedback) return null
 	const label = formatUploadSelectionSummary(feedback)
 	return (
-		<div className="relative px-1 py-1 pr-8 text-xs leading-5 text-secondary">
+		<div className="flex items-start gap-2 px-1 py-1 text-xs leading-5 text-secondary">
 			{feedback.skipped.length > 0 ? (
-				<details>
-					<summary className="flex cursor-pointer flex-wrap items-center gap-x-2 rounded-sm focus-visible:focus-ring">
+				<details className="flex-1">
+					<summary className="flex cursor-pointer flex-wrap items-center gap-x-2 rounded-sm">
 						<span role="status">{label}</span>
-						<span className="text-brand">View skipped files</span>
+						<span className="text-link">View skipped files</span>
 					</summary>
 					<ul className="mt-2 flex max-h-40 flex-col gap-2 overflow-auto">
 						{feedback.skipped.map(({ filename, reason }) => (
@@ -35,16 +44,25 @@ export function UploadSelectionNotice({
 					</ul>
 				</details>
 			) : (
-				<p role="status">{label}</p>
+				<p role="status" className="flex-1">
+					{label}
+				</p>
 			)}
-			<button
-				type="button"
-				aria-label="Dismiss file selection details"
-				onClick={onDismiss}
-				className="absolute top-0 right-0 flex size-6 items-center justify-center rounded-md hover:bg-hover-row focus-visible:focus-ring"
+			<Tooltip
+				content="Dismiss"
+				render={
+					<Button
+						ref={dismissFocusOnLeave}
+						variant="ghost"
+						size="sm"
+						square
+						aria-label="Dismiss file selection details"
+						onClick={onDismiss}
+					/>
+				}
 			>
-				<Icon name="x" height={14} width={14} />
-			</button>
+				<Icon name="x" className="size-4" />
+			</Tooltip>
 		</div>
 	)
 }

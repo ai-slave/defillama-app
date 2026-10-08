@@ -317,16 +317,12 @@ function CustomColumnForm({
 				</div>
 				<div className="flex flex-col gap-1">
 					<p className="label-sm text-secondary">Available fields</p>
-					<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-lg border border-medium bg-page p-2">
+					<ul className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-medium bg-page p-2">
 						{AVAILABLE_FIELDS.map((f) => (
 							<li key={f}>
-								<button
-									type="button"
-									className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 font-mono text-link"
-									onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
-								>
-									{f}
-								</button>
+								<Button size="sm" onClick={() => handleSuggestionClick({ name: f, type: 'field' })}>
+									<span className="font-mono">{f}</span>
+								</Button>
 							</li>
 						))}
 					</ul>

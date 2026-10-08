@@ -450,7 +450,7 @@ export const datTransactionColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const v = getValue()
 			return (
-				<Tooltip className="inline truncate" content={v}>
+				<Tooltip content={v} render={<span />}>
 					{v}
 				</Tooltip>
 			)

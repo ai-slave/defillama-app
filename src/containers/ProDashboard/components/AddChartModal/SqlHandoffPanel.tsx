@@ -1,6 +1,6 @@
+import { Button } from '~/ui/Button'
 import { useDialogLeave } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { ProButton } from '../../ui'
 
 interface SqlHandoffPanelProps {
 	onOpenSqlEditor: () => void
@@ -18,10 +18,10 @@ export function SqlHandoffPanel({ onOpenSqlEditor }: SqlHandoffPanelProps) {
 			<p className="text-sm text-pro-text-secondary">
 				When the query returns what you want, add it to this dashboard without leaving the editor.
 			</p>
-			<ProButton type="button" onClick={() => leave(onOpenSqlEditor)} variant="primary">
-				<Icon name="code" height={16} width={16} />
+			<Button onClick={() => leave(onOpenSqlEditor)} variant="primary" size="md">
+				<Icon name="code" className="size-3.5" />
 				Open SQL editor
-			</ProButton>
+			</Button>
 		</div>
 	)
 }

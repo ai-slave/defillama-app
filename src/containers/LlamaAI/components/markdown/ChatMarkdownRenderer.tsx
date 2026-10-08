@@ -35,6 +35,7 @@ import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
@@ -198,15 +199,20 @@ function TableWrapper({
 				</DialogBody>
 			</Dialog>
 			<div className="ml-auto flex flex-nowrap items-center justify-end gap-2" id="ai-table-download">
-				<Button
-					size="md"
-					square
-					onClick={openTableFullscreen}
-					disabled={isStreaming}
-					aria-label="View table fullscreen"
+				<Tooltip
+					content="View table fullscreen"
+					render={
+						<Button
+							size="md"
+							square
+							onClick={openTableFullscreen}
+							disabled={isStreaming}
+							aria-label="View table fullscreen"
+						/>
+					}
 				>
 					<Icon name="expand" className="size-4 shrink-0" />
-				</Button>
+				</Tooltip>
 				<TableImageButtons
 					getSource={getImageSource}
 					disabled={isStreaming}
@@ -344,18 +350,23 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 					{language}
 				</span>
 			) : null}
-			<Button
-				type="button"
-				size="sm"
-				variant="ghost"
-				square
-				onClick={handleCopy}
-				aria-label={copied ? 'Copied' : 'Copy code'}
-				data-copied={copied || undefined}
-				className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-copied:opacity-100"
+			<Tooltip
+				content={copied ? 'Copied' : 'Copy code'}
+				render={
+					<Button
+						type="button"
+						size="sm"
+						variant="ghost"
+						square
+						onClick={handleCopy}
+						aria-label={copied ? 'Copied' : 'Copy code'}
+						data-copied={copied || undefined}
+						className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-copied:opacity-100"
+					/>
+				}
 			>
 				<Icon name={copied ? 'check' : 'copy'} height={16} width={16} />
-			</Button>
+			</Tooltip>
 			<pre {...props} className={`${language ? 'pt-8!' : ''} ${className ?? ''}`}>
 				{children}
 			</pre>

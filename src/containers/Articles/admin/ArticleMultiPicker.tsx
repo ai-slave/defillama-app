@@ -1,13 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
@@ -81,9 +84,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 		onChange([...value, article.id])
 	}
 
-	const removeArticle = (id: string) => {
-		onChange(value.filter((entry) => entry !== id))
-	}
+	const inputRef = useRef<HTMLInputElement>(null)
 
 	return (
 		<div className="grid gap-2">
@@ -93,12 +94,13 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div className="relative flex items-center rounded-md border border-medium bg-page focus-within:border-link/60">
+				<div className="relative flex items-center rounded-md border border-medium bg-page">
 					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
+						ref={inputRef}
 						placeholder="Search articles by title…"
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 text-sm text-primary placeholder:text-tertiary"
 					/>
 				</div>
 				<ComboboxSurface
@@ -140,22 +142,35 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					{value.map((id) => (
 						<span
 							key={id}
-							className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-medium bg-surface py-1 pr-1 pl-2.5 text-xs text-primary"
+							className="inline-flex max-w-full items-center gap-0.5 rounded-md border border-medium bg-surface pl-2.5 body-sm text-primary"
 						>
 							<span className="truncate">{titles[id] ?? id}</span>
-							<button
-								type="button"
-								onClick={() => removeArticle(id)}
-								aria-label="Remove article"
-								className="flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary"
+							<Tooltip
+								content="Remove"
+								render={
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										aria-label={`Remove ${titles[id] ?? 'article'}`}
+										onClick={(event) => {
+											// The chip takes its button with it: the next chip's takes focus, else the search field.
+											const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
+											keepFocus(
+												() => onChange(value.filter((entry) => entry !== id)),
+												() => next ?? inputRef.current
+											)
+										}}
+									/>
+								}
 							>
-								<Icon name="x" height={11} width={11} />
-							</button>
+								<Icon name="x" className="size-4" />
+							</Tooltip>
 						</span>
 					))}
 				</div>
 			) : null}
-			{hint ? <p className="text-xs text-tertiary">{hint}</p> : null}
+			{hint ? <p className="body-sm text-tertiary">{hint}</p> : null}
 		</div>
 	)
 }

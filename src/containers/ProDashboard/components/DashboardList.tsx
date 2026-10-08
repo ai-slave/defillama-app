@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import type { Dashboard } from '../dashboardTypes'
 import { ProButton, proPanelStyles } from '../ui'
@@ -29,9 +30,9 @@ export function DashboardList({
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 					<Icon name="search" height={32} width={32} className="text-pro-text-tertiary" />
 					<p className="text-center text-sm text-pro-text-secondary">{emptyMessage.title}</p>
-					<ProButton type="button" variant="secondary" onClick={emptyMessage.onClearFilters}>
+					<Button size="md" type="button" variant="secondary" onClick={emptyMessage.onClearFilters}>
 						Clear filters
-					</ProButton>
+					</Button>
 				</div>
 			) : dashboards.length === 0 ? (
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>

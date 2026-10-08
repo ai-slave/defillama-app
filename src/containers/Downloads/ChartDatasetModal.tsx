@@ -1078,7 +1078,7 @@ export function ChartDatasetModal({
 						) : null}
 						{isBulk ? (
 							<Button
-								variant="filter"
+								variant="toggle"
 								size="md"
 								data-active={showSelected}
 								aria-pressed={showSelected}
@@ -1132,9 +1132,9 @@ export function ChartDatasetModal({
 								</div>
 							) : sortedRows.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
+									<div className="flex flex-col items-center gap-2 text-center body-md">
 										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">
+										<p className="text-pro-text-secondary">
 											{dateRange && rows.length > 0
 												? 'No rows in selected date range'
 												: deferredSearch.length > 0
@@ -1142,8 +1142,9 @@ export function ChartDatasetModal({
 													: 'No matching rows'}
 										</p>
 										{dateRange && rows.length > 0 ? (
-											<button
-												type="button"
+											<Button
+												variant="secondary"
+												size="sm"
 												// Clearing removes this button; focus returns to the range picker it cleared.
 												onClick={() =>
 													keepFocus(
@@ -1151,10 +1152,9 @@ export function ChartDatasetModal({
 														() => dateRangeTriggerRef.current
 													)
 												}
-												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 											>
 												Clear date range
-											</button>
+											</Button>
 										) : null}
 									</div>
 								</div>
@@ -1214,6 +1214,11 @@ export function ChartDatasetModal({
 																		{column.header}
 																	</span>
 																	<SortIcon dir={isSorted} />
+																	{isSorted ? (
+																		<span className="sr-only">
+																			{isSorted === 'asc' ? ', sorted ascending' : ', sorted descending'}
+																		</span>
+																	) : null}
 																</button>
 															</div>
 														</div>

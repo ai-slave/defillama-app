@@ -518,7 +518,7 @@ export function UnifiedTableTab({
 				<CollapsibleSection title="Grouping" badge="Protocols" className="shadow-sm">
 					<div className="flex flex-col gap-3">
 						<div>
-							<h4 className="mb-2 text-xs font-semibold text-pro-text-secondary">Configure grouping</h4>
+							<h4 className="mb-2 title-sm text-pro-text-secondary">Configure grouping</h4>
 							<GroupingOptions rowHeaders={rowHeaders} onToggleRowHeader={handleToggleRowHeader} />
 						</div>
 					</div>
@@ -557,20 +557,10 @@ export function UnifiedTableTab({
 			<div className="flex flex-col gap-3">
 				<CollapsibleSection title="Columns" badge={`${visibleColumnsCount} selected`} className="shadow-sm">
 					<div className="flex flex-col gap-2">
-						<div className="flex flex-wrap items-center justify-end gap-2 text-xs">
-							<Ariakit.Button
-								type="button"
-								onClick={handleResetToPreset}
-								disabled={!isModified}
-								accessibleWhenDisabled
-								className={`rounded-md border px-2 py-0.5 text-xs transition ${
-									isModified
-										? 'border-brand text-brand hover:bg-brand/10'
-										: 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary'
-								}`}
-							>
+						<div className="flex flex-wrap items-center justify-end gap-2 label-sm">
+							<Button variant="link" onClick={handleResetToPreset} disabled={!isModified} accessibleWhenDisabled>
 								Reset to preset
-							</Ariakit.Button>
+							</Button>
 						</div>
 						<ColumnManager
 							rowHeaders={rowHeaders}
@@ -678,34 +668,19 @@ export function UnifiedTableTab({
 
 		return (
 			<div className="flex h-full flex-col gap-4">
-				<button
-					type="button"
-					onClick={handleBackToTypeSelector}
-					className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-				>
-					<span>←</span>
-					<span>Back to table type selection</span>
-				</button>
+				<Button variant="link" onClick={handleBackToTypeSelector} className="self-start">
+					<Icon name="arrow-left" className="size-3.5" />
+					Back to table type selection
+				</Button>
 
-				<div className="flex items-center gap-1.5 rounded-lg border border-pro-cards-border p-1">
-					{RWA_TABS.map((tab) => {
-						const isActive = tab.value === activeRwaTab
-						return (
-							<button
-								key={tab.value}
-								type="button"
-								onClick={() => handleRwaTabChange(tab.value)}
-								className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
-									isActive
-										? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
-								}`}
-							>
-								{tab.label}
-							</button>
-						)
-					})}
-				</div>
+				<SegmentedControl
+					label="RWA table"
+					variant="field"
+					size="md"
+					options={RWA_TABS}
+					value={activeRwaTab}
+					onValueChange={handleRwaTabChange}
+				/>
 
 				{activeRwaTab === 'rwa-selected-chain' ? (
 					<VirtualizedSelect
@@ -740,34 +715,19 @@ export function UnifiedTableTab({
 
 		return (
 			<div className="flex h-full flex-col gap-4">
-				<button
-					type="button"
-					onClick={handleBackToTypeSelector}
-					className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-				>
-					<span>←</span>
-					<span>Back to table type selection</span>
-				</button>
+				<Button variant="link" onClick={handleBackToTypeSelector} className="self-start">
+					<Icon name="arrow-left" className="size-3.5" />
+					Back to table type selection
+				</Button>
 
-				<div className="flex items-center gap-1.5 rounded-lg border border-pro-cards-border p-1">
-					{EQUITIES_TABS.map((tab) => {
-						const isActive = tab.value === activeEquitiesTab
-						return (
-							<button
-								key={tab.value}
-								type="button"
-								onClick={() => handleEquitiesTabChange(tab.value)}
-								className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
-									isActive
-										? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
-								}`}
-							>
-								{tab.label}
-							</button>
-						)
-					})}
-				</div>
+				<SegmentedControl
+					label="Equities table"
+					variant="field"
+					size="md"
+					options={EQUITIES_TABS}
+					value={activeEquitiesTab}
+					onValueChange={handleEquitiesTabChange}
+				/>
 
 				{needsTicker ? (
 					<VirtualizedSelect
@@ -836,9 +796,7 @@ export function UnifiedTableTab({
 				</button>
 
 				<div className="mt-4">
-					<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
-						Other datasets
-					</span>
+					<span className="mb-2.5 block title-sm text-pro-text-secondary">Other datasets</span>
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						{otherCards.map((card) => {
 							const isProLocked =
@@ -928,14 +886,10 @@ export function UnifiedTableTab({
 			<div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
 				<header className="flex shrink-0 flex-col gap-1 pb-3">
 					{!tableEditItem ? (
-						<button
-							type="button"
-							onClick={handleBackToTypeSelector}
-							className="mb-2 flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-						>
-							<span>←</span>
-							<span>Back to table type selection</span>
-						</button>
+						<Button variant="link" onClick={handleBackToTypeSelector} className="self-start">
+							<Icon name="arrow-left" className="size-3.5" />
+							Back to table type selection
+						</Button>
 					) : null}
 				</header>
 

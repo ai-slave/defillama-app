@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, createRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardSearch } from '../DashboardSearch'
@@ -42,7 +42,7 @@ const pushedQueries = () => router.push.mock.calls.map(([url]) => (url as { quer
 
 describe('dashboard search', () => {
 	test('pushes the last typed query once the typing pauses', () => {
-		act(() => root.render(<DashboardSearch />))
+		act(() => root.render(<DashboardSearch ref={createRef()} />))
 		type('aa')
 		type('aave')
 		act(() => vi.advanceTimersByTime(299))
@@ -52,7 +52,7 @@ describe('dashboard search', () => {
 	})
 
 	test('clearing drops the query at once and the pending search never lands', () => {
-		act(() => root.render(<DashboardSearch />))
+		act(() => root.render(<DashboardSearch ref={createRef()} />))
 		type('aave')
 		clickClear()
 		act(() => vi.advanceTimersByTime(1000))

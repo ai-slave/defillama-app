@@ -396,10 +396,12 @@ export function AlertArtifact({
 					) : null}
 
 					{openAlertsModal ? (
-						<Button type="button" size="sm" variant="ghost" onClick={handleManageAlerts} className="self-start">
-							Manage alerts
-							<Icon name="arrow-right" className="size-3.5" />
-						</Button>
+						<span className="self-start label-sm">
+							<Button type="button" variant="link" onClick={handleManageAlerts}>
+								Manage alerts
+								<Icon name="arrow-right" className="size-3.5" />
+							</Button>
+						</span>
 					) : null}
 				</>
 			) : (
@@ -419,13 +421,11 @@ export function AlertArtifact({
 								{prompt}
 							</p>
 							{prompt.length > 140 ? (
-								<button
-									type="button"
-									onClick={() => setPromptExpanded((v) => !v)}
-									className="self-start text-xs font-medium text-link not-disabled:not-aria-disabled:hover:underline"
-								>
-									{promptExpanded ? 'Show less' : 'Show more'}
-								</button>
+								<span className="self-start label-sm">
+									<Button variant="link" onClick={() => setPromptExpanded((v) => !v)} aria-expanded={promptExpanded}>
+										{promptExpanded ? 'Show less' : 'Show more'}
+									</Button>
+								</span>
 							) : null}
 						</div>
 					) : null}

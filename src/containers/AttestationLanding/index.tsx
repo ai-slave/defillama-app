@@ -7,6 +7,7 @@ import { ResearchIcon } from '~/components/ResearchIcon'
 import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Button } from '~/ui/Button'
 import { StaleText } from '~/ui/StaleText'
+import { Tooltip } from '~/ui/Tooltip'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
@@ -403,14 +404,14 @@ function DemoFrame({
 					<span className="flex size-7 items-center justify-center rounded-full bg-brand-muted label-xs font-semibold text-link-on-tint">
 						AC
 					</span>
-					<button
-						type="button"
-						onClick={replay}
-						className="flex size-8 items-center justify-center rounded-lg text-tertiary transition-colors hover:bg-hover-row hover:text-primary focus-visible:focus-ring"
-						aria-label="Replay example verification"
+					<Tooltip
+						content="Replay example verification"
+						render={
+							<Button variant="ghost" size="md" square aria-label="Replay example verification" onClick={replay} />
+						}
 					>
-						<ReplayIcon className="size-3.5" />
-					</button>
+						<ReplayIcon className="size-4" />
+					</Tooltip>
 				</div>
 			</div>
 			{children}
@@ -992,7 +993,7 @@ const proofStateDurations: Record<ProofState, number> = {
 
 function PlaybackIcon({ isPlaying }: { isPlaying: boolean }) {
 	return (
-		<svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+		<svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
 			{isPlaying ? (
 				<>
 					<path d="M8 5v14" />
@@ -1026,11 +1027,7 @@ function SourceRegister({
 	onTogglePlayback: () => void
 }) {
 	const state = proofStates[proofState]
-	const playbackLabel = autoplayDisabled
-		? 'Autoplay disabled by reduced motion preference'
-		: isPlaying
-			? 'Pause verification record slideshow'
-			: 'Play verification record slideshow'
+	const playbackLabel = isPlaying ? 'Pause verification record slideshow' : 'Play verification record slideshow'
 	return (
 		<div className="overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1">
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-subtle px-5 py-4 sm:px-6">
@@ -1053,16 +1050,15 @@ function SourceRegister({
 					>
 						<span className={`size-2 rounded-full ${state.dotTone}`} aria-hidden /> {state.headline}
 					</p>
-					<button
-						type="button"
-						onClick={onTogglePlayback}
-						disabled={autoplayDisabled}
-						className="flex size-7 shrink-0 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-40"
-						aria-label={playbackLabel}
-						title={playbackLabel}
-					>
-						<PlaybackIcon isPlaying={isPlaying && !autoplayDisabled} />
-					</button>
+					{/* Reduced motion never autoplays, so there is nothing to play or pause; the state buttons still step through. */}
+					{autoplayDisabled ? null : (
+						<Tooltip
+							content={playbackLabel}
+							render={<Button variant="ghost" size="sm" square aria-label={playbackLabel} onClick={onTogglePlayback} />}
+						>
+							<PlaybackIcon isPlaying={isPlaying} />
+						</Tooltip>
+					)}
 				</div>
 			</div>
 

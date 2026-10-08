@@ -1,8 +1,8 @@
 import { Icon } from '~/ui/Icon'
-import type { SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartRuntimeView } from '../../chartRuntime'
-import { ProMeta, ProSegmented } from '../../ui'
+import { ProMeta } from '../../ui'
 import { CategoryChartForm } from './CategoryChartForm'
 import { ChartBuilderTab } from './ChartBuilderTab'
 import type { ChartModeType, ModalState } from './types'
@@ -52,7 +52,13 @@ export function ChartTab({ state, actions, computed, composerItems, isEditingIte
 		<Tabs value={chartMode} values={CHART_MODES} onValueChange={actions.setChartMode}>
 			<div className="flex h-full flex-col">
 				<div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-					<ProSegmented semantics="tabs" size="md" label="Chart creation" options={CHART_MODE_OPTIONS} />
+					<SegmentedControl
+						semantics="tabs"
+						variant="default"
+						size="md"
+						label="Chart creation"
+						options={CHART_MODE_OPTIONS}
+					/>
 					<ProMeta className="min-w-0" items={[CHART_MODE_HINTS[chartMode]]} />
 				</div>
 				<TabPanel value={chartMode} className="flex min-h-0 flex-1 flex-col">

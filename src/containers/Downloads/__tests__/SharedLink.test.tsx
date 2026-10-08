@@ -83,7 +83,7 @@ describe('a subscriber', () => {
 			)
 			await waitForUi(() => expect(selectedColumns()).toEqual(['name', 'tokenSymbol', 'tvl', 'chainId']))
 			await click(document.querySelector<HTMLInputElement>('input[aria-label="Include tokenSymbol column"]')!)
-			await click(button('tvl'))
+			await click(button('tvl, sorted descending'))
 			link = await copiedLink()
 			expect(link).toBe('http://localhost:3000/downloads?k=dataset&s=chains&c=name%2Ctvl%2CchainId&sort=tvl%3Aasc')
 		} finally {

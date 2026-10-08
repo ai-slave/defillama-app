@@ -1,5 +1,6 @@
 import type { Ref } from 'react'
 import { useId, useImperativeHandle, useMemo, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
@@ -162,9 +163,7 @@ export function EntitySuggestionList({
 				id={optionId(item.id)}
 				tabIndex={-1}
 				aria-selected={active}
-				className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-					active ? 'bg-research-tint' : 'hover:bg-research-tint-hover'
-				}`}
+				className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-hover-row aria-selected:bg-hover-row"
 				onMouseMove={() => setSelectedId(item.id)}
 				onClick={() => command(item)}
 				onMouseDown={(event) => {
@@ -229,28 +228,23 @@ export function EntitySuggestionList({
 				className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-medium px-2 py-1.5"
 			>
 				{FILTER_ORDER.map((f) => {
-					const enabled = f.key === 'all' || availableTypes.has(f.key)
 					const active = f.key === filter
+					// A type with no hits has no pill; the active one stays so the reader can see why the list is empty.
+					if (f.key !== 'all' && !active && !availableTypes.has(f.key)) return null
 					return (
-						<button
+						<Button
 							key={f.key}
-							type="button"
-							disabled={!enabled}
+							variant="toggle"
+							size="sm"
 							aria-pressed={active}
+							data-active={active}
 							onClick={() => setFilter(f.key)}
 							onMouseDown={(event) => {
 								event.preventDefault()
 							}}
-							className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase transition-colors ${
-								active
-									? 'border-link bg-link text-on-brand'
-									: enabled
-										? 'border-medium text-secondary hover:bg-research-tint-hover'
-										: 'border-medium/50 text-tertiary/50'
-							}`}
 						>
 							{f.label}
-						</button>
+						</Button>
 					)
 				})}
 			</div>

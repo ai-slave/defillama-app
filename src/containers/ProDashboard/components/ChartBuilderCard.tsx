@@ -8,7 +8,9 @@ import { Select } from '~/components/Select/Select'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
@@ -25,7 +27,7 @@ import {
 } from '../ProDashboardAPIContext'
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
 import type { ChartBuilderConfig } from '../types'
-import { ProBadge, ProButton, ProMeta, ProSegmented } from '../ui'
+import { ProBadge, ProMeta } from '../ui'
 import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
@@ -402,7 +404,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				controls={
 					<>
 						{hasRenderableData && config.chartType !== 'treemap' ? (
-							<ProSegmented
+							<SegmentedControl
+								variant="default"
 								size="sm"
 								label="Grouping"
 								options={DASHBOARD_GROUPING_SEGMENTS}
@@ -431,7 +434,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 											: 'Line'
 							}
 							labelType="none"
-							variant="pro"
+							variant="filter"
 						/>
 
 						{config.chartType === 'treemap' && !isSnapshotChart ? (
@@ -443,7 +446,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								setSelectedValues={(value: string) => handleTreemapValueChange(value)}
 								label={treemapLabel}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 						{config.chartType !== 'treemap' && hasExactRemainder ? (
@@ -457,20 +460,21 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								}}
 								label={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 
 						{hasRenderableData ? (
-							<ProButton
+							<Button
 								size="sm"
-								variant={effectiveShowColors ? 'primary' : 'secondary'}
+								variant="toggle"
+								data-active={effectiveShowColors}
 								data-btn="colors"
 								onClick={() => setShowColors((prev) => !prev)}
 								aria-pressed={effectiveShowColors}
 							>
 								Colors
-							</ProButton>
+							</Button>
 						) : null}
 						{hasExactRemainder &&
 						(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
@@ -484,7 +488,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								}}
 								label={config.hideOthers ? `Top ${config.limit}` : 'All'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : !hasExactRemainder ? (
 							<ProBadge tone="neutral">Top {config.limit}</ProBadge>
@@ -530,7 +534,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										aria-label={`Select color for ${series.name}`}
 									/>
 									{/* Reset disables itself once used; it stays focusable so focus does not drop to the page. */}
-									<ProButton
+									<Button
 										size="sm"
 										variant="ghost"
 										accessibleWhenDisabled
@@ -538,11 +542,11 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										onClick={() => handleSeriesColorReset(series.name)}
 									>
 										Reset
-									</ProButton>
+									</Button>
 								</div>
 							)
 						})}
-						<ProButton
+						<Button
 							size="sm"
 							variant="secondary"
 							accessibleWhenDisabled
@@ -550,7 +554,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							onClick={handleResetAllSeriesColors}
 						>
 							Reset All
-						</ProButton>
+						</Button>
 					</div>
 				) : null}
 			</div>

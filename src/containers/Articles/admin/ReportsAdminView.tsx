@@ -1,9 +1,9 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { SavedChangedNotice, sameValue, useSavedDraft, type SameField } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
@@ -16,6 +16,8 @@ import {
 import type { ArticleDocument, ArticleImage, ArticlePdf } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { PdfUploadButton } from '~/containers/Articles/upload/PdfUploadButton'
+import { Button } from '~/ui/Button'
+import { textareaStyles } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 
 function articleEditHref(article: ArticleDocument): string {
@@ -134,32 +136,31 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					</p>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<Ariakit.Button
-						type="button"
+					<Button
+						variant="secondary"
+						size="sm"
 						disabled={!dirty || isMutating}
 						accessibleWhenDisabled
+						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 						onClick={() => saveMutation.mutate(state)}
-						className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					>
-						{saveMutation.isPending ? 'Saving…' : 'Save'}
-					</Ariakit.Button>
+						Save
+					</Button>
 					{isPublished ? (
-						<Ariakit.Button
-							type="button"
+						<Button
+							variant="primary"
+							size="sm"
 							disabled={isMutating || (!dirty && !hasPending)}
 							accessibleWhenDisabled
+							pendingLabel={publishMutation.isPending ? 'Publishing…' : null}
 							onClick={() => publishMutation.mutate({ submitted: state, save: dirty })}
-							className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
-							{publishMutation.isPending ? 'Publishing…' : 'Save & publish'}
-						</Ariakit.Button>
+							Save &amp; publish
+						</Button>
 					) : null}
-					<Link
-						href={articleEditHref(article)}
-						className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-link"
-					>
+					<Button as={BasicLink} variant="ghost" size="sm" href={articleEditHref(article)}>
 						Open editor →
-					</Link>
+					</Button>
 				</div>
 			</div>
 
@@ -238,7 +239,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					placeholder="Shown on hover over the report card on /research."
 					rows={3}
 					maxLength={600}
-					className="resize-none rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+					className={`${textareaStyles} resize-none`}
 				/>
 			</label>
 		</li>

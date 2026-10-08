@@ -125,6 +125,17 @@ describe('Select on the Combobox module', () => {
 		expect(optionByText('TVL').getAttribute('aria-selected')).toBe('false')
 	})
 
+	test('"Only" is its own option in the row and selects just that value', async () => {
+		const setSelectedValues = vi.fn()
+		await act(async () => root.render(<ControlledMetrics onChange={setSelectedValues} />))
+
+		await click(trigger())
+		const only = document.querySelector<HTMLElement>('[role="option"][aria-label="Only Fees"]')!
+		expect(only.closest('[role="option"]:not([aria-label])')).toBeNull()
+		await click(only)
+		expect(setSelectedValues).toHaveBeenLastCalledWith(['fees'])
+	})
+
 	test('selects a single value and closes the popover', async () => {
 		const setSelectedValues = vi.fn()
 		await act(async () =>
@@ -161,11 +172,16 @@ describe('Select on the Combobox module', () => {
 		)
 
 		await click(trigger())
-		expect(options().map((option) => option.textContent)).toEqual(
-			['Option 1', 'Option 2', 'Option 3', 'Option 4', 'Option 5', 'Option 6', 'Option 7', 'Option 8'].map(
-				(name) => `${name}Only`
-			)
-		)
+		expect(options().map((option) => option.textContent)).toEqual([
+			'Option 1',
+			'Option 2',
+			'Option 3',
+			'Option 4',
+			'Option 5',
+			'Option 6',
+			'Option 7',
+			'Option 8'
+		])
 	})
 })
 

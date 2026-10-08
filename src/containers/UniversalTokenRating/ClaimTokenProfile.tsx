@@ -11,6 +11,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
@@ -249,16 +250,23 @@ function InlineTableSection({
 											/>
 										</td>
 									))}
-									<td className="w-10 px-2 py-2">
-										<Button
-											type="button"
-											size="sm"
-											square
-											aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
-											onClick={(event) => deleteRow(rowIndex, event.currentTarget)}
+									{/* The md square matches the 32px inputs beside it; w-12 holds it inside the cell padding. */}
+									<td className="w-12 px-2 py-2">
+										<Tooltip
+											content="Delete row"
+											render={
+												<Button
+													type="button"
+													variant="ghostDestructive"
+													size="md"
+													square
+													aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
+													onClick={(event) => deleteRow(rowIndex, event.currentTarget)}
+												/>
+											}
 										>
-											<Icon name="trash-2" height={14} width={14} />
-										</Button>
+											<Icon name="trash-2" className="size-4" />
+										</Tooltip>
 									</td>
 								</tr>
 							))}
@@ -352,17 +360,23 @@ function AttachDocuments({
 					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
 						<span
 							key={key}
-							className="flex items-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-3 py-1 mono-sm"
+							className="flex items-center gap-1 rounded-full border border-medium bg-surface-elevated-1 py-0.5 pr-1 pl-3 mono-sm"
 						>
 							{receipt.fileName}
-							<button
-								type="button"
-								aria-label={`Remove ${receipt.fileName}`}
-								className="cursor-pointer text-secondary hover:text-primary"
-								onClick={(event) => removeReceipt(index, event.currentTarget)}
+							<Tooltip
+								content="Remove"
+								render={
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										aria-label={`Remove ${receipt.fileName}`}
+										onClick={(event) => removeReceipt(index, event.currentTarget)}
+									/>
+								}
 							>
-								<Icon name="x" height={12} width={12} />
-							</button>
+								<Icon name="x" className="size-4" />
+							</Tooltip>
 						</span>
 					))}
 				</div>
@@ -370,9 +384,9 @@ function AttachDocuments({
 			{status.state === 'failed' ? (
 				<div data-utr-claim-error className="flex items-center gap-2 body-sm text-error">
 					<span>{status.error}</span>
-					<button type="button" className="underline" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
+					<Button variant="link" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
 						Dismiss
-					</button>
+					</Button>
 				</div>
 			) : null}
 		</div>

@@ -2,7 +2,10 @@ import { common, createLowlight } from 'lowlight'
 import Link from 'next/link'
 import { createElement, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { Button } from '~/ui/Button'
+import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import styles from '../ArticleStyles.module.css'
 import { validateArticleChartConfig } from '../chartAdapters'
@@ -212,17 +215,19 @@ function renderCitation(node: TiptapJson, key: string) {
 	const className =
 		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-research-tint px-1 text-[11px] leading-4 text-link no-underline'
 	if (citation.url) {
+		const link = <a href={citation.url} target="_blank" rel="noreferrer noopener" className={className} />
+		// Tooltip renders only its children when content is empty, which would drop the link.
+		if (!citation.title) {
+			return (
+				<a key={key} href={citation.url} target="_blank" rel="noreferrer noopener" className={className}>
+					[{citation.label}]
+				</a>
+			)
+		}
 		return (
-			<a
-				key={key}
-				href={citation.url}
-				target="_blank"
-				rel="noreferrer noopener"
-				title={citation.title}
-				className={className}
-			>
+			<Tooltip key={key} content={citation.title} render={link}>
 				[{citation.label}]
-			</a>
+			</Tooltip>
 		)
 	}
 	return (
@@ -634,7 +639,7 @@ function CompactTocBar({
 			type="button"
 			onClick={onJumpToTop}
 			aria-label={`Currently reading: ${currentEntry?.text ?? 'article'}. Return to top of article.`}
-			className="group relative flex w-full flex-col gap-3 border-y border-medium py-3.5 text-left transition-colors hover:bg-surface/40 focus-visible:ring-1 focus-visible:ring-link/60 focus-visible:outline-hidden"
+			className="group relative flex w-full flex-col gap-3 border-y border-medium py-3.5 text-left transition-colors hover:bg-surface/40"
 		>
 			<div className="flex items-center justify-between gap-3">
 				<span className="text-[10px] leading-none font-semibold tracking-[0.18em] text-tertiary uppercase">
@@ -717,15 +722,16 @@ function TocList({
 									>
 										{group.text}
 									</a>
-									<button
-										type="button"
+									<Button
+										variant="ghost"
+										size="sm"
+										square
 										onClick={() => toggle(group.id)}
 										aria-expanded={!isCollapsed}
 										aria-label={`${group.text} subsections`}
-										className="grid size-6 shrink-0 place-items-center rounded-sm text-secondary hover:text-link"
 									>
-										<Icon name={isCollapsed ? 'chevron-right' : 'chevron-down'} className="size-3" />
-									</button>
+										<Icon name={isCollapsed ? 'chevron-right' : 'chevron-down'} className="size-4" />
+									</Button>
 								</div>
 							) : (
 								<a
@@ -771,45 +777,51 @@ function TocList({
 }
 
 function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; size?: 'sm' | 'md' }) {
-	const [copied, setCopied] = useState(false)
+	const { copied, copy } = useCopy()
 	const tweetUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`
 	const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
-	const onCopy = async () => {
-		if (typeof navigator === 'undefined' || !navigator.clipboard) return
-		try {
-			await navigator.clipboard.writeText(url)
-			setCopied(true)
-			setTimeout(() => setCopied(false), 1500)
-		} catch {
-			// Clipboard access can be denied; the copy control just does nothing.
-		}
-	}
 	const dim = size === 'sm' ? 'size-9' : 'size-11'
 	const iconDim = size === 'sm' ? 'size-4' : 'size-5'
 	const buttonClass = `flex ${dim} items-center justify-center rounded-full border border-medium bg-surface text-primary transition-colors hover:border-link/50 hover:text-link`
 	return (
 		<div className="flex items-center gap-1.5">
-			<a
-				href={tweetUrl}
-				target="_blank"
-				rel="noreferrer noopener"
-				aria-label="Share on X/Twitter"
-				className={buttonClass}
+			<Tooltip
+				content="Share on X"
+				render={
+					<a
+						href={tweetUrl}
+						target="_blank"
+						rel="noreferrer noopener"
+						aria-label="Share on X/Twitter"
+						className={buttonClass}
+					/>
+				}
 			>
 				<Icon name="twitter" className={iconDim} />
-			</a>
-			<a
-				href={linkedInUrl}
-				target="_blank"
-				rel="noreferrer noopener"
-				aria-label="Share on LinkedIn"
-				className={buttonClass}
+			</Tooltip>
+			<Tooltip
+				content="Share on LinkedIn"
+				render={
+					<a
+						href={linkedInUrl}
+						target="_blank"
+						rel="noreferrer noopener"
+						aria-label="Share on LinkedIn"
+						className={buttonClass}
+					/>
+				}
 			>
 				<ResearchIcon name="linkedin-square" className={iconDim} aria-hidden="true" />
-			</a>
-			<button type="button" onClick={onCopy} aria-label="Copy link" className={buttonClass}>
+			</Tooltip>
+			<Tooltip
+				content={copied ? 'Copied' : 'Copy link'}
+				render={<button type="button" onClick={() => void copy(url)} aria-label="Copy link" className={buttonClass} />}
+			>
 				<Icon name={copied ? 'check-circle' : 'link'} className={iconDim} />
-			</button>
+			</Tooltip>
+			<span role="status" className="sr-only">
+				{copied ? 'Link copied' : ''}
+			</span>
 		</div>
 	)
 }

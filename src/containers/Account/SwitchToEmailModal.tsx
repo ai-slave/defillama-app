@@ -16,6 +16,7 @@ import {
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import pb from '~/utils/pocketbase'
 import { ResendCooldown } from './ResendCooldown'
 
@@ -317,14 +318,22 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 									placeholder="At least 8 characters"
 									className="w-full pr-10"
 								/>
-								<button
-									type="button"
-									onClick={() => setShowPassword(!showPassword)}
-									aria-label={showPassword ? 'Hide password' : 'Show password'}
-									className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary"
+								<Tooltip
+									content={showPassword ? 'Hide password' : 'Show password'}
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											onClick={() => setShowPassword(!showPassword)}
+											aria-label="Show password"
+											aria-pressed={showPassword}
+											className="absolute top-1/2 right-2 -translate-y-1/2"
+										/>
+									}
 								>
-									<Icon name={showPassword ? 'eye-off' : 'eye'} height={16} width={16} />
-								</button>
+									<Icon name={showPassword ? 'eye-off' : 'eye'} className="size-4" />
+								</Tooltip>
 							</div>
 							{error?.field === 'password' ? (
 								<p id={`${fieldId}-password-error`} role="alert" className="body-sm text-data-down">
@@ -353,14 +362,22 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 									placeholder="Re-enter your password"
 									className="w-full pr-10"
 								/>
-								<button
-									type="button"
-									onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-									aria-label={showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'}
-									className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary"
+								<Tooltip
+									content={showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'}
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+											aria-label="Show password confirmation"
+											aria-pressed={showPasswordConfirm}
+											className="absolute top-1/2 right-2 -translate-y-1/2"
+										/>
+									}
 								>
-									<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} height={16} width={16} />
-								</button>
+									<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} className="size-4" />
+								</Tooltip>
 							</div>
 							{error?.field === 'passwordConfirm' ? (
 								<p id={`${fieldId}-confirm-error`} role="alert" className="body-sm text-data-down">

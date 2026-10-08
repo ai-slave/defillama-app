@@ -2,6 +2,7 @@ import { Children, useReducer, useRef, useState } from 'react'
 import { useResize } from '~/hooks/useResize'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface PaginationProps {
 	items: Array<React.ReactNode>
@@ -183,17 +184,22 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 				onTouchEnd={onTouchEnd}
 			>
 				{totalPages > 1 ? (
-					<Button
-						variant="ghost"
-						size="md"
-						square
-						className="max-md:hidden"
-						type="button"
-						onClick={handlePrevPage}
-						aria-label="Previous page"
+					<Tooltip
+						content="Previous page"
+						render={
+							<Button
+								variant="ghost"
+								size="md"
+								square
+								className="max-md:hidden"
+								type="button"
+								onClick={handlePrevPage}
+								aria-label="Previous page"
+							/>
+						}
 					>
 						<Icon name="arrow-left" height={16} width={16} />
-					</Button>
+					</Tooltip>
 				) : null}
 				<div className="min-w-0 overflow-hidden">
 					<div className={contentClassName} style={contentStyle}>
@@ -204,49 +210,64 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 					</div>
 				</div>
 				{totalPages > 1 ? (
-					<Button
-						variant="ghost"
-						size="md"
-						square
-						className="max-md:hidden"
-						type="button"
-						onClick={handleNextPage}
-						aria-label="Next page"
+					<Tooltip
+						content="Next page"
+						render={
+							<Button
+								variant="ghost"
+								size="md"
+								square
+								className="max-md:hidden"
+								type="button"
+								onClick={handleNextPage}
+								aria-label="Next page"
+							/>
+						}
 					>
 						<Icon name="arrow-right" height={16} width={16} />
-					</Button>
+					</Tooltip>
 				) : null}
 			</div>
 
 			{totalPages > 1 ? (
 				<div className="mt-2 flex items-center justify-center gap-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						square
-						className="md:hidden"
-						type="button"
-						onClick={handlePrevPage}
-						aria-label="Previous page"
+					<Tooltip
+						content="Previous page"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="md:hidden"
+								type="button"
+								onClick={handlePrevPage}
+								aria-label="Previous page"
+							/>
+						}
 					>
-						<Icon name="arrow-left" height={14} width={14} />
-					</Button>
+						<Icon name="arrow-left" height={16} width={16} />
+					</Tooltip>
 
 					<span className="label-sm text-secondary">
 						{currentPage + 1} / {totalPages}
 					</span>
 
-					<Button
-						variant="ghost"
-						size="sm"
-						square
-						className="md:hidden"
-						type="button"
-						onClick={handleNextPage}
-						aria-label="Next page"
+					<Tooltip
+						content="Next page"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="md:hidden"
+								type="button"
+								onClick={handleNextPage}
+								aria-label="Next page"
+							/>
+						}
 					>
-						<Icon name="arrow-right" height={14} width={14} />
-					</Button>
+						<Icon name="arrow-right" height={16} width={16} />
+					</Tooltip>
 				</div>
 			) : null}
 		</>

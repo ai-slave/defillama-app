@@ -12,6 +12,7 @@ import { NoResults } from '~/ui/NoResults'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { Tag } from '~/ui/Tag'
+import { Tooltip } from '~/ui/Tooltip'
 
 /* ----------------------------------------------------------------------------
    FilterBuilderDialog — the table filter builder: a Filters button with the
@@ -249,33 +250,38 @@ export function ActiveFilterCard({
 				<span className="min-w-0 truncate label-sm text-primary">{label}</span>
 				{description ? <QuestionHelper text={description} /> : null}
 				<Tag>{category}</Tag>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					square
-					aria-label={`Remove ${label} filter`}
-					onClick={(event) => {
-						// The card leaves with its button. Focus moves to the next card's remove button, else the previous
-						// card's, else the first control that adds a filter back, found after the filter returns to that list.
-						const pane = event.currentTarget.closest('[data-filter-pane]')!
-						const removes = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
-						const index = removes.indexOf(event.currentTarget)
-						const next = removes[index + 1] ?? removes[index - 1]
-						keepFocus(
-							onRemove,
-							() =>
-								next ??
-								pane.parentElement!.querySelector<HTMLElement>(
-									'[data-filter-pane="browse"] input, [data-filter-pane="browse"] [data-filter-chip]'
+				<Tooltip
+					content={`Remove ${label} filter`}
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							square
+							aria-label={`Remove ${label} filter`}
+							onClick={(event) => {
+								// The card leaves with its button. Focus moves to the next card's remove button, else the previous
+								// card's, else the first control that adds a filter back, found after the filter returns to that list.
+								const pane = event.currentTarget.closest('[data-filter-pane]')!
+								const removes = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
+								const index = removes.indexOf(event.currentTarget)
+								const next = removes[index + 1] ?? removes[index - 1]
+								keepFocus(
+									onRemove,
+									() =>
+										next ??
+										pane.parentElement!.querySelector<HTMLElement>(
+											'[data-filter-pane="browse"] input, [data-filter-pane="browse"] [data-filter-chip]'
+										)
 								)
-						)
-					}}
-					data-filter-remove
-					className="ml-auto"
+							}}
+							data-filter-remove
+							className="ml-auto"
+						/>
+					}
 				>
-					<Icon name="x" className="size-3.5" aria-hidden="true" />
-				</Button>
+					<Icon name="x" className="size-4" aria-hidden="true" />
+				</Tooltip>
 			</div>
 			{children}
 		</Card>

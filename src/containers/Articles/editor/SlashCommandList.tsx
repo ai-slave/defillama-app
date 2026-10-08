@@ -90,9 +90,7 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 								onMouseDown={(event) => {
 									event.preventDefault()
 								}}
-								className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-									active ? 'bg-research-tint' : 'hover:bg-research-tint-hover'
-								}`}
+								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-hover-row aria-selected:bg-hover-row"
 							>
 								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-medium bg-page font-jetbrains text-[11px] text-secondary">
 									{item.icon}

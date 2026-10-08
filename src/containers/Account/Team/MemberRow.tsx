@@ -3,6 +3,7 @@ import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { AssignSubscriptionModal } from './AssignSubscriptionModal'
 import type { TeamMember } from './types'
 import { useTeam } from './useTeam'
@@ -74,18 +75,23 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 							</Button>
 						)}
 						{!isCurrentUser && !isAdminMember && (
-							<Button
-								type="button"
-								size="md"
-								square
-								onClick={(event) => {
-									removeFocusRef.current = event.currentTarget
-									setOpenDialog('remove')
-								}}
-								aria-label={`Remove ${member.email}`}
+							<Tooltip
+								content={`Remove ${member.email}`}
+								render={
+									<Button
+										type="button"
+										size="md"
+										square
+										onClick={(event) => {
+											removeFocusRef.current = event.currentTarget
+											setOpenDialog('remove')
+										}}
+										aria-label={`Remove ${member.email}`}
+									/>
+								}
 							>
 								<Icon name="trash-2" height={16} width={16} />
-							</Button>
+							</Tooltip>
 						)}
 					</div>
 				)}

@@ -27,6 +27,16 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 7. A button disabled by its position (a pager at its first or last page, move up or down at an edge, undo with no
  *    history; STEP_LIMIT): pressing it is what moves it to that limit, so it disables itself while it has focus. Pass
  *    `accessibleWhenDisabled` (Button, ProButton or `Ariakit.Button`; a raw `button` cannot keep focus while disabled).
+ * 8. A `Tooltip` without `render` whose `className` sets the anchor's own display, shrink or overflow (ANCHOR_BOX): the
+ *    default span is `flex shrink-0`, so `min-w-0`, `flex-1` or `truncate` there never shrink it or draw an ellipsis,
+ *    and a display class only wins by CSS order. Pass the anchor as `render` with the classes it needs.
+ * 9. A native `title=` on a control (CONTROL_TAGS, any `Ariakit.*`): touch and keyboard readers never see it. Name the
+ *    control with `aria-label` and show the text in a `Tooltip` (design.md → Icons).
+ * 10. An icon-only `Button`/`ProButton` (`square`) that no Tooltip, Hovercard or menu renders as its anchor (it is not a
+ *    `render` value): sighted mouse readers get no name. Exceptions named in design.md: a disclosure chevron
+ *    (`aria-expanded`), a composer's send arrow (`type="submit"`) and a field's clear ✕ (`aria-label` starting "Clear").
+ * 11. A retry rendered as a link (`variant="link"` labelled Retry or Try again): a retry is a small secondary Button
+ *    beside the error (docs/focus-and-errors.md).
  *
  * "Pending flag" means the `disabled` expression names something pending or saving (isPending, pending, isSaving,
  * saving, submitting). Other reasons to disable are outside this check.
@@ -36,6 +46,8 @@ const root = path.resolve(import.meta.dirname, '../..')
 const sourceRoot = path.join(root, 'src')
 
 const PENDING_NAME = /\b(?:is)?(?:pending|saving|submitting)\b|\.isPending\b|Pending\b/i
+const ANCHOR_BOX =
+	/(?:^|[\s`'"{:])(?:min-w-0|flex-1|grow|shrink|truncate|block!?|inline(?:-block|-flex)?|line-clamp-\d+|overflow-[a-z-]+)(?=[\s`'"}$]|$)/
 const FIELD_TAGS = new Set(['input', 'textarea', 'Input'])
 const BUTTON_TAGS = new Set(['button', 'Button'])
 const NON_TEXT_TYPES = new Set(['checkbox', 'radio', 'file'])
@@ -88,7 +100,7 @@ export function scanSource(relative: string, source: string): Array<string> {
 	const violations: Array<string> = []
 	const at = (node: ts.Node) => `${relative}:${sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1}`
 
-	const visit = (node: ts.Node, insideLockedFieldset: boolean) => {
+	const visit = (node: ts.Node, insideLockedFieldset: boolean, isRenderValue: boolean) => {
 		let locked = insideLockedFieldset
 		const opening = ts.isJsxElement(node) ? node.openingElement : ts.isJsxSelfClosingElement(node) ? node : null
 		if (opening) {
@@ -106,6 +118,12 @@ export function scanSource(relative: string, source: string): Array<string> {
 					`${at(opening)} wraps a Button in Ariakit.Button; Button is Ariakit's Button already, so pass its props to it`
 				)
 			}
+			const tooltipClassName = tag === 'Tooltip' && !render ? attribute(opening, 'className') : undefined
+			if (tooltipClassName && ANCHOR_BOX.test(tooltipClassName.getText())) {
+				violations.push(
+					`${at(opening)} sizes Tooltip's default span with className; pass the anchor as render with those classes`
+				)
+			}
 			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
 				for (const child of node.children) {
 					const childOpening = ts.isJsxElement(child)
@@ -117,6 +135,29 @@ export function scanSource(relative: string, source: string): Array<string> {
 						violations.push(`${at(opening)} wraps a control in Tooltip's span; pass the control as render`)
 					}
 				}
+			}
+			if (attribute(opening, 'title') && (CONTROL_TAGS.has(tag) || tag.startsWith('Ariakit.'))) {
+				violations.push(`${at(opening)} names a control with a native title=; use aria-label and a Tooltip`)
+			}
+			const ariaLabel = attribute(opening, 'aria-label')
+			if (
+				(tag === 'Button' || tag === 'ProButton') &&
+				attribute(opening, 'square') &&
+				!isRenderValue &&
+				!attribute(opening, 'aria-expanded') &&
+				!isSubmit(opening) &&
+				!(ariaLabel && /^[`'"]?Clear\b/.test(expressionText(ariaLabel)))
+			) {
+				violations.push(`${at(opening)} is an icon-only control without a Tooltip; pass it as a Tooltip's render`)
+			}
+			const variant = attribute(opening, 'variant')
+			if (
+				variant &&
+				expressionText(variant) === 'link' &&
+				ts.isJsxElement(node) &&
+				/\b(?:Retry|Try again)\b/i.test(node.children.map((child) => child.getText()).join(' '))
+			) {
+				violations.push(`${at(opening)} renders a retry as a link; use a secondary sm Button labelled Try again`)
 			}
 			const tabIndex = attribute(opening, 'tabIndex')
 			const className = attribute(opening, 'className')
@@ -150,9 +191,11 @@ export function scanSource(relative: string, source: string): Array<string> {
 				}
 			}
 		}
-		ts.forEachChild(node, (child) => visit(child, locked))
+		// An element passed as `render` is the anchor of the Tooltip, Hovercard or menu that renders it.
+		const rendersChildren = ts.isJsxAttribute(node) && node.name.getText() === 'render'
+		ts.forEachChild(node, (child) => visit(child, locked, rendersChildren || (isRenderValue && !opening)))
 	}
-	visit(sourceFile, false)
+	visit(sourceFile, false, false)
 	return violations
 }
 
@@ -261,6 +304,65 @@ if (process.argv.includes('--self-test')) {
 			name: 'Tooltip around text',
 			source:
 				'export const F = () => <Tooltip content="Total value locked"><span className="underline">TVL</span></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'native title on a button',
+			source: 'export const F = () => <button type="button" title="Delete">x</button>',
+			violation: true
+		},
+		{
+			name: 'icon-only Button without a Tooltip',
+			source: 'export const F = () => <Button size="sm" square aria-label="Delete"><Icon name="trash" /></Button>',
+			violation: true
+		},
+		{
+			name: 'icon-only Button as a Tooltip render',
+			source:
+				'export const F = () => <Tooltip content="Delete" render={<Button size="sm" square aria-label="Delete" />}><Icon name="trash" /></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'icon-only disclosure chevron',
+			source:
+				'export const F = () => <Button size="sm" square aria-label="Expand row" aria-expanded={open}><Icon name="chevron-down" /></Button>',
+			violation: false
+		},
+		{
+			name: 'field clear',
+			source: 'export const F = () => <Button size="sm" square aria-label="Clear search"><Icon name="x" /></Button>',
+			violation: false
+		},
+		{
+			name: 'retry as a link',
+			source: 'export const F = () => <Button variant="link" onClick={retry}>Try again</Button>',
+			violation: true
+		},
+		{
+			name: 'back as a link',
+			source: 'export const F = () => <Button variant="link" onClick={back}>Back to history</Button>',
+			violation: false
+		},
+		{
+			name: 'Tooltip shrinking its default span',
+			source:
+				'export const F = () => <Tooltip content="Weight" className="min-w-0"><span className="truncate">Execution</span></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'Tooltip truncating its default span',
+			source: 'export const F = () => <Tooltip content={v} className={`inline truncate ${tone}`}>{v}</Tooltip>',
+			violation: true
+		},
+		{
+			name: 'Tooltip placing its default span',
+			source: 'export const F = () => <Tooltip content={v} className="ms-auto w-fit sm:shrink-0">{v}</Tooltip>',
+			violation: false
+		},
+		{
+			name: 'Tooltip truncating its render anchor',
+			source:
+				'export const F = () => <Tooltip content={v} render={<span className="min-w-0 truncate" />}>{v}</Tooltip>',
 			violation: false
 		},
 		{

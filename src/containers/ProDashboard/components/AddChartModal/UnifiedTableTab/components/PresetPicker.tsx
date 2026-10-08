@@ -24,6 +24,7 @@ export function PresetPicker({
 					<button
 						type="button"
 						key={preset.id}
+						aria-pressed={isActive}
 						onClick={() => onSelect(preset.id)}
 						className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-3 text-left transition ${
 							isActive ? 'border-brand bg-brand/10' : 'border-pro-cards-border hover:border-brand'

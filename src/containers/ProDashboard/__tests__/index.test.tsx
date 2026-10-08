@@ -154,7 +154,9 @@ async function renderDashboard({
 	await act(async () => {})
 }
 function button(label: string) {
-	return Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
+	return Array.from(document.body.querySelectorAll('button')).find(
+		(node) => node.textContent?.trim() === label || node.getAttribute('aria-label') === label
+	)
 }
 function menuItem(label: string) {
 	return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
@@ -345,6 +347,34 @@ describe('an editor', () => {
 		expect(cardEditor()?.querySelector('textarea')?.value).toBe('')
 	})
 
+	test('closing a new card editor that Quick add opened returns focus to the Add card button', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		await act(async () => button('Add card')!.focus())
+		await openQuickAddTextDraft()
+		await pressKey(cardEditor()!, 'Escape')
+		await waitForUi(() => expect(cardEditor()).toBeUndefined())
+		await waitForUi(() => expect(document.activeElement).toBe(button('Add card')))
+	})
+
+	// Phones hide the toolbar's Add card, so the editor returns to the control Quick add came from: the Actions button.
+	test('a new card editor that the phone menu opened returns focus to the Actions button', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		await act(async () => button('Actions')!.focus())
+		await openPhoneMenu()
+		await act(async () => phoneMenuItem('Add card').click())
+		const input = await waitForUi(() => {
+			const field = document.querySelector<HTMLInputElement>('input[aria-label="Quick add"]')
+			if (!field) throw new Error('Expected quick add')
+			return field
+		})
+		await act(async () => typeInto(input, 'text'))
+		await pressKey(input, 'Enter')
+		await waitForUi(() => expect(dialogTitle()).toBe('Add card'))
+		await pressKey(cardEditor()!, 'Escape')
+		await waitForUi(() => expect(cardEditor()).toBeUndefined())
+		await waitForUi(() => expect(document.activeElement).toBe(button('Actions')))
+	})
+
 	test('an empty editor reaches settings from the dashboard menu and the empty state', async () => {
 		await renderDashboard({ items: [], mode: 'edit' })
 		expect(button('Parameter')).toBeUndefined()
@@ -465,5 +495,40 @@ describe('an editor', () => {
 		await renderDashboard({ items: [note], owned: {}, save: { state: { status: 'error' } as never } })
 		expect(button('Retry save')).toBeDefined()
 		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Changes couldn')
+	})
+
+	test('Edit and Done keep focus through the mode change they start', async () => {
+		await renderDashboard({ items: [note], owned: {} })
+		await act(async () => {
+			button('Edit')!.focus()
+			button('Edit')!.click()
+		})
+		await renderDashboard({ items: [note], mode: 'edit', owned: {} })
+		expect(document.activeElement).toBe(button('Done'))
+		await act(async () => button('Done')!.click())
+		await renderDashboard({ items: [note], owned: {} })
+		expect(document.activeElement).toBe(button('Edit'))
+	})
+
+	test('dismissing the author profile notice hands focus to the page content', async () => {
+		session.serve({
+			'/authors/me': { author: { slug: 'llama-0123456789ab', displayName: 'Llama 012345', socials: {} } }
+		})
+		const main = document.body.appendChild(document.createElement('main'))
+		try {
+			await renderDashboard({ items: [note], owned: {} })
+			const dismiss = await waitForUi(() => {
+				expect(button('Dismiss profile setup notice')).toBeDefined()
+				return button('Dismiss profile setup notice')!
+			})
+			await act(async () => {
+				dismiss.focus()
+				dismiss.click()
+			})
+			expect(container.textContent).not.toContain('Set up your dashboard author profile')
+			expect(document.activeElement).toBe(main)
+		} finally {
+			main.remove()
+		}
 	})
 })

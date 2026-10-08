@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { act, type ReactElement } from 'react'
+import { act, useState, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -130,5 +130,45 @@ describe('article pickers keep known titles', () => {
 
 		await render(<ArticlePicker value="article-a" onChange={vi.fn()} />)
 		expect(selectedLabel()).toBe('Alpha report')
+	})
+
+	function SinglePicker() {
+		const [value, setValue] = useState<string | null>('article-a')
+		return <ArticlePicker value={value} onChange={(next) => setValue(next?.id ?? null)} />
+	}
+
+	function MultiPicker() {
+		const [value, setValue] = useState(['article-a', 'article-b'])
+		return <ArticleMultiPicker value={value} onChange={setValue} />
+	}
+
+	async function press(button: HTMLElement) {
+		await act(async () => {
+			button.focus()
+			button.click()
+		})
+	}
+
+	test('clearing the single picker hands focus to its search field', async () => {
+		answerArticles({ items: [alpha] })
+		await render(<SinglePicker />)
+		await flush()
+
+		await press(container.querySelector<HTMLElement>('[aria-label="Clear selection"]')!)
+
+		expect(container.querySelector('[aria-label="Clear selection"]')).toBeNull()
+		expect(document.activeElement).toBe(container.querySelector('[role="combobox"]'))
+	})
+
+	test('removing a chip hands focus to the next chip, and the last one to the search field', async () => {
+		answerArticles({ items: [alpha, beta] })
+		await render(<MultiPicker />)
+		await flush()
+
+		await press(container.querySelector<HTMLElement>('[aria-label="Remove Alpha report"]')!)
+		expect(document.activeElement).toBe(container.querySelector('[aria-label="Remove Beta report"]'))
+
+		await press(container.querySelector<HTMLElement>('[aria-label="Remove Beta report"]')!)
+		expect(document.activeElement).toBe(container.querySelector('[role="combobox"]'))
 	})
 })

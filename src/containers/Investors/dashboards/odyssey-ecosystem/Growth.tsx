@@ -2,7 +2,7 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
@@ -486,7 +486,8 @@ export default function Growth() {
 						title={`${spendVenue} — weekly spend vs pool TVL`}
 						subtitle="Compare incentive outlay against the TVL it attracted"
 					>
-						<ProSegmented
+						<SegmentedControl
+							variant="default"
 							size="sm"
 							label="Spend venue"
 							className="mb-3"

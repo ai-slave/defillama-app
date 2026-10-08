@@ -10,7 +10,7 @@ export function RaisesTotal({ totalUsd, undisclosedCount }: RaisesSummary) {
 		<Tooltip
 			content={`Sum of disclosed funding amounts. Excludes ${undisclosedCount} ${undisclosedCount === 1 ? 'round with an undisclosed amount' : 'rounds with undisclosed amounts'}, so this is not the complete total.`}
 			tabIndex={0}
-			className="inline-flex cursor-help underline decoration-dotted"
+			render={<span className="cursor-help underline decoration-dotted" />}
 		>
 			{amount}
 		</Tooltip>

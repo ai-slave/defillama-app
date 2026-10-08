@@ -14,13 +14,14 @@ import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
-import { neighbourRowControl } from '~/ui/focus'
+import { focusRegionOnLeave, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
 import { AddSourcesMenu } from './AddSourcesMenu'
@@ -156,17 +157,20 @@ export function ProjectLanding({
 				</p>
 				{notFound ? null : (
 					<Button
-						type="button"
-						size="md"
+						ref={focusRegionOnLeave}
+						variant="secondary"
+						size="sm"
 						pendingLabel={project.isFetching ? 'Retrying…' : null}
 						onClick={() => void project.refetch()}
 					>
 						Try again
 					</Button>
 				)}
-				<Button as={BasicLink} href="/ai/projects" size="sm" variant="ghost">
-					Back to projects
-				</Button>
+				<span className="label-sm">
+					<Button as={BasicLink} href="/ai/projects" variant="link">
+						Back to projects
+					</Button>
+				</span>
 			</div>
 		)
 	}
@@ -242,8 +246,8 @@ export function ProjectLanding({
 		<SessionListFocusContext.Provider value={projectMenuRef}>
 			<div className="size-full overflow-y-auto overscroll-contain px-4 pt-4 pb-8 sm:px-6">
 				<div className="mx-auto flex w-full max-w-[760px] flex-col">
-					<header className="flex items-center justify-between gap-3 pb-2">
-						<Button size="sm" variant="ghost" as={BasicLink} href="/ai/projects" className="-ml-2">
+					<header className="flex items-center justify-between gap-3 pb-2 label-sm">
+						<Button variant="link" as={BasicLink} href="/ai/projects">
 							<Icon name="chevron-left" height={14} width={14} />
 							All projects
 						</Button>
@@ -344,16 +348,21 @@ export function ProjectLanding({
 										projectId={projectId}
 										onAddPhotosFiles={imageUpload.openFilePicker}
 										trigger={
-											<Button
-												type="button"
-												size="md"
-												variant="ghost"
-												square
-												aria-label="Add files"
-												className="self-end!"
+											<Tooltip
+												content="Add files"
+												render={
+													<Button
+														type="button"
+														size="md"
+														variant="ghost"
+														square
+														aria-label="Add files"
+														className="self-end!"
+													/>
+												}
 											>
 												<Icon name="plus" height={16} width={16} />
-											</Button>
+											</Tooltip>
 										}
 									/>
 									<textarea
@@ -368,18 +377,23 @@ export function ProjectLanding({
 										placeholder="New chat in this project…"
 										className="block min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-6 text-primary placeholder:text-tertiary focus:outline-hidden"
 									/>
-									<button
+									<Button
 										type="submit"
+										variant="primary"
+										size="md"
+										square
+										// Sending clears the prompt and starts a stream, which disables the button that was pressed.
 										disabled={
 											!!imageUpload.uploadMessage ||
 											(!prompt.trim() && imageUpload.selectedImages.length === 0) ||
 											isStreaming
 										}
+										accessibleWhenDisabled
+										pendingLabel={send === 'sending' ? 'Sending…' : null}
 										aria-label="Send message"
-										className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand focus-visible:focus-ring-on-brand enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
 									>
 										<Icon name="arrow-up" height={16} width={16} />
-									</button>
+									</Button>
 								</div>
 								{send === 'readFailed' ? (
 									<div className="mt-2">
@@ -394,12 +408,13 @@ export function ProjectLanding({
 									<div role="alert" className="mb-3 flex flex-wrap items-center gap-2 body-sm text-error">
 										<p>Couldn&apos;t load chats.</p>
 										<Button
-											type="button"
+											ref={focusRegionOnLeave}
+											variant="secondary"
 											size="sm"
 											pendingLabel={projectSessions.isFetching ? 'Retrying…' : null}
 											onClick={() => void projectSessions.refetch()}
 										>
-											Retry chats
+											Try again
 										</Button>
 									</div>
 								) : null}

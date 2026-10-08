@@ -1,11 +1,9 @@
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
-import { Icon } from '~/ui/Icon'
-import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { CHAIN_CHART_TYPES, getProDashboardChartTypeConfig, PROTOCOL_CHART_TYPES } from '../../types'
-import { ProSegmented } from '../../ui'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 import { CategoryCardsGrid } from './CategoryCardsGrid'
 import { CategoryFormHeader } from './CategoryFormHeader'
@@ -13,31 +11,10 @@ import { ChartCreationModeToggle } from './ChartCreationModeToggle'
 import { ChartTypePills } from './ChartTypePills'
 import { CombinedChartPreview } from './CombinedChartPreview'
 import { EntityPickerList } from './EntityPickerList'
-import { ADD_CARD_PANES, type AddCardPane } from './panes'
+import { ADD_CARD_PANES, type AddCardPane, SUBJECT_OPTIONS } from './panes'
 import { ComposerChips, ComposerNameField, SelectionFooter } from './SelectionFooter'
 import { SeparateChartsPreview } from './SeparateChartsPreview'
 import type { ChartTabType } from './types'
-
-const SUBJECT_OPTIONS: Array<SegmentedControlOption<'chain' | 'protocol'>> = [
-	{
-		value: 'chain',
-		label: (
-			<span className="inline-flex items-center gap-1.5">
-				<Icon name="chain" width={14} height={14} />
-				Chains
-			</span>
-		)
-	},
-	{
-		value: 'protocol',
-		label: (
-			<span className="inline-flex items-center gap-1.5">
-				<Icon name="protocol" width={14} height={14} />
-				Protocols
-			</span>
-		)
-	}
-]
 
 interface UnifiedChartTabProps {
 	selectedChartTab: ChartTabType
@@ -337,10 +314,10 @@ export function UnifiedChartTab({
 					{subjectParameter.boundVariable ? (
 						<BoundParameterChip label={subjectParameter.boundVariable.label} onUnbind={subjectParameter.unbind} />
 					) : null}
-					<ProSegmented
-						className="shrink-0"
-						label="Chart subject"
+					<SegmentedControl
+						variant="field"
 						size="md"
+						label="Chart subject"
 						options={SUBJECT_OPTIONS}
 						value={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
 						onValueChange={handleSubjectTabChange}

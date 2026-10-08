@@ -381,7 +381,7 @@ test.each([
 	expect(deletedPaths()).toEqual([path, path])
 })
 
-test('deletion stays pending through the list refresh, then hands focus to the page content once its row disappears', async () => {
+test('deletion stays pending through the list refresh, then hands focus to Add logo once its row disappears', async () => {
 	const refreshed = Promise.withResolvers<unknown>()
 	deletions.push(() => {
 		logosReply = () => refreshed.promise
@@ -399,5 +399,5 @@ test('deletion stays pending through the list refresh, then hands focus to the p
 	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => refreshed.resolve({ logos: [] }))
 	await waitForUi(() => expect(dialog()).toBeUndefined())
-	await waitForUi(() => expect(document.activeElement?.tagName).toBe('MAIN'))
+	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add logo'))
 })

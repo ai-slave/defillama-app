@@ -116,3 +116,36 @@ test('Clear filters empties the box, and the search typed before it never lands'
 	expect(search().value).toBe('')
 	expect(container.textContent).not.toContain('No dashboards match')
 })
+
+test('Next page keeps the pager, and focus on it, while the next page loads', async () => {
+	const secondPage = Promise.withResolvers<unknown>()
+	session.serve({
+		[`${FEATURES_SERVER}/dashboards`]: (url: URL) =>
+			url.searchParams.get('page') === '2'
+				? secondPage.promise
+				: { items: [lending], page: 1, perPage: 20, totalItems: 21, totalPages: 2 }
+	})
+	const renderPage = () =>
+		act(async () =>
+			root.render(
+				<session.Wrapper>
+					<HomePage initialDiscoveryCategories={{}} />
+				</session.Wrapper>
+			)
+		)
+	await renderPage()
+	await waitForUi(() => expect(container.textContent).toContain('Showing 1 of 21 dashboards'))
+	const next = container.querySelector<HTMLButtonElement>('[aria-label="Next page"]')!
+	await act(async () => next.focus())
+	router.query = { tab: 'my-dashboards', page: '2' }
+	onTestFinished(() => void (router.query = { tab: 'my-dashboards' }))
+	await renderPage()
+	expect(next.isConnected).toBe(true)
+	expect(document.activeElement).toBe(next)
+
+	await act(async () =>
+		secondPage.resolve({ items: [{ ...lending, id: 'fees' }], page: 2, perPage: 20, totalItems: 21, totalPages: 2 })
+	)
+	await waitForUi(() => expect(next.getAttribute('aria-disabled')).toBe('true'))
+	expect(document.activeElement).toBe(next)
+})

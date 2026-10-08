@@ -2,8 +2,10 @@
    Pro Dashboard product theme (ProDashboard, Downloads, AddToDashboard) and
    the embedded Investors dashboards (--sl-*).
 
-   A standing product palette, separate from the design system's tokens in
-   semantics.css — add tokens here as the product evolves. `pro-dashboard`
+   Pro's card, panel and text surface tokens, separate from the design
+   system's tokens in semantics.css. Pro's controls are the app's Button,
+   SegmentedControl and Select; only ProButton's create/generate tints read
+   the pro-info and pro-ai colours here. `pro-dashboard`
    and `.investors-dashboard` re-scope the --pro-* base tokens (defined at
    :root at the bottom of this file) with the product's own values; never
    rewrite those names' callsites to semantic utilities — the alias→semantic
@@ -408,10 +410,6 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	.pro-dashboard &:hover {
 		background-color: rgba(17, 30, 78, 0.25);
 	}
-}
-
-@utility pro-btn-primary {
-	@apply bg-pro-info-100 text-pro-info-400 hover:bg-pro-info-300/20 focus-visible:bg-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200 hover:dark:bg-pro-info-300/30 focus-visible:dark:bg-pro-info-300/30;
 }
 
 /* ----------------------------------------------------------------------------

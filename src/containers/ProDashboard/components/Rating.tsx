@@ -3,10 +3,11 @@ import { useMutation } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardRatingDecision } from '../dashboardTypes'
-import { ProButton } from '../ui/ProButton'
 
 interface RatingProps {
 	sessionId: string
@@ -58,17 +59,24 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 					{mode === 'create' ? 'Rate this AI-generated dashboard' : 'Rate this AI improvement'}
 				</h3>
 				<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} />
-				<ProButton
-					type="button"
-					variant="ghost"
-					square
-					className="ml-auto"
-					onClick={handleSkip}
-					disabled={submission.isPending}
-					accessibleWhenDisabled
-					aria-label="Dismiss rating"
-					icon={<Icon name="x" height={16} width={16} />}
-				/>
+				<Tooltip
+					content="Dismiss rating"
+					render={
+						<Button
+							size="md"
+							type="button"
+							variant="ghost"
+							square
+							className="ml-auto"
+							onClick={handleSkip}
+							disabled={submission.isPending}
+							accessibleWhenDisabled
+							aria-label="Dismiss rating"
+						/>
+					}
+				>
+					<Icon name="x" height={16} width={16} />
+				</Tooltip>
 			</div>
 
 			<p className="text-sm text-pro-text-label">
@@ -101,20 +109,28 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 			) : null}
 
 			<div className="mt-6 flex items-center justify-center gap-3">
-				<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
+				<Button
+					size="md"
+					type="button"
+					variant="ghost"
+					onClick={handleSkip}
+					pendingLabel={skipping ? 'Skipping…' : null}
+					disabled={saving}
+				>
 					Skip
-				</ProButton>
+				</Button>
 
 				{rating > 0 ? (
-					<ProButton
+					<Button
+						size="md"
 						type="submit"
 						variant="primary"
-						loading={saving}
+						pendingLabel={saving ? 'Submitting…' : null}
 						disabled={skipping}
-						icon={<Icon name="sparkles" height={14} width={14} />}
 					>
+						<Icon name="sparkles" height={14} width={14} />
 						Submit Rating
-					</ProButton>
+					</Button>
 				) : null}
 			</div>
 			<span role="status" className="sr-only">

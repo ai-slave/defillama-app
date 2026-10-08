@@ -93,7 +93,7 @@ const seriesTypes = (option: Record<string, any>) =>
 
 async function clickButton(text: string) {
 	const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(candidate) => candidate.textContent?.trim() === text || candidate.title === text
+		(candidate) => candidate.textContent?.trim() === text || candidate.getAttribute('aria-label') === text
 	)
 	if (!button) throw new Error(`Expected ${text} button`)
 	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))

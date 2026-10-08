@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, useState, type RefObject } from 'react'
+import { composerField, focusComposerOnLeave } from '~/containers/LlamaAI/components/ComposerTray'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
 import { type AttachmentUpload, CHAT_FILE_ACCEPT, isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
@@ -41,21 +43,30 @@ function UploadStatus({
 					<Ariakit.PopoverDisclosure
 						aria-label={`Upload error for ${name}`}
 						aria-describedby={errorId}
-						className="flex h-6 items-center gap-1 rounded-sm text-xs text-error hover:bg-error/10 focus-visible:focus-ring"
+						className="flex h-6 items-center gap-1 rounded-sm text-xs text-error hover:bg-error/10"
 					>
 						Failed <Icon name="help-circle" height={14} width={14} />
 					</Ariakit.PopoverDisclosure>
 					{upload.retryable !== false ? (
-						<button
-							type="button"
-							onClick={onRetry}
-							disabled={disabled}
-							aria-label={`Retry upload ${name}`}
-							aria-describedby={errorId}
-							className="flex h-6 items-center gap-1 rounded-sm px-1 text-xs text-brand hover:bg-brand/10 focus-visible:focus-ring disabled:opacity-50"
+						<Tooltip
+							content="Try again"
+							render={
+								<Button
+									type="button"
+									variant="secondary"
+									size="sm"
+									square
+									// Retrying replaces the failed strip, Retry with it; the composer's prompt field takes focus.
+									ref={focusComposerOnLeave}
+									onClick={onRetry}
+									disabled={disabled}
+									aria-label={`Retry upload ${name}`}
+									aria-describedby={errorId}
+								/>
+							}
 						>
-							<Icon name="repeat" height={14} width={14} /> Retry
-						</button>
+							<Icon name="repeat" className="size-4" />
+						</Tooltip>
 					) : null}
 				</div>
 				<PopoverSurface variant="panel" heading={`Upload error for ${name}`} className="sm:max-w-64">
@@ -155,7 +166,7 @@ export function TextChip({
 	textContent: string
 	isPasted: boolean
 	onOpen?: () => void | Promise<void>
-	onRemove?: () => void
+	onRemove?: (button: HTMLButtonElement) => void
 	upload?: AttachmentUpload
 	onRetry?: () => void
 	disabled?: boolean
@@ -221,7 +232,13 @@ export function TextChip({
 			) : null}
 			{upload && onRetry ? <UploadStatus name={name} upload={upload} onRetry={onRetry} disabled={disabled} /> : null}
 			{onRemove ? (
-				<button type="button" onClick={onRemove} aria-label={removeLabel} className={ATTACHMENT_REMOVE_BUTTON}>
+				<button
+					type="button"
+					data-attachment-remove
+					onClick={(event) => onRemove(event.currentTarget)}
+					aria-label={removeLabel}
+					className={ATTACHMENT_REMOVE_BUTTON}
+				>
 					<Icon name="x" height={14} width={14} />
 				</button>
 			) : null}
@@ -229,8 +246,16 @@ export function TextChip({
 	)
 }
 
+/** The attachment leaves with its remove button: the next attachment's remove takes focus, else the previous one's,
+    else the prompt field. Image and file attachments differ in layout, so the neighbour's remove is found by name. */
+function removeAttachment(button: HTMLElement, remove: () => void) {
+	const row = button.closest('[data-attachment]')!
+	const next = neighbourRowControl(row, row)?.querySelector<HTMLElement>('[data-attachment-remove]')
+	keepFocus(remove, () => next ?? composerField())
+}
+
 const ATTACHMENT_REMOVE_BUTTON =
-	'absolute top-1 right-1 flex size-6 items-center justify-center rounded-md bg-surface text-secondary hover:bg-hover-row hover:text-primary focus-visible:focus-ring'
+	'absolute top-1 right-1 flex size-6 items-center justify-center rounded-md bg-surface text-secondary hover:bg-hover-row hover:text-primary'
 
 export function ImageUpload({
 	disabled = false,
@@ -263,7 +288,7 @@ export function ImageUpload({
 
 						if (!isImage) {
 							return (
-								<div key={id} className="max-w-full">
+								<div key={id} data-attachment className="max-w-full">
 									<TextChip
 										upload={upload}
 										onRetry={() => retryUpload(id)}
@@ -279,14 +304,14 @@ export function ImageUpload({
 													}
 												: undefined
 										}
-										onRemove={disabled ? undefined : () => removeImage(idx)}
+										onRemove={disabled ? undefined : (button) => removeAttachment(button, () => removeImage(idx))}
 									/>
 								</div>
 							)
 						}
 
 						return (
-							<div key={id} className="relative w-20 overflow-hidden rounded-lg">
+							<div key={id} data-attachment className="relative w-20 overflow-hidden rounded-lg">
 								<button
 									type="button"
 									aria-label={`Preview ${file.name}`}
@@ -301,7 +326,8 @@ export function ImageUpload({
 								{disabled ? null : (
 									<button
 										type="button"
-										onClick={() => removeImage(idx)}
+										data-attachment-remove
+										onClick={(event) => removeAttachment(event.currentTarget, () => removeImage(idx))}
 										aria-label={`Remove ${file.name}`}
 										className={ATTACHMENT_REMOVE_BUTTON}
 									>

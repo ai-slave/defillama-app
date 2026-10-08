@@ -418,8 +418,9 @@ export function CompareBars({
 }) {
 	if (value == null || benchmark == null || !(scale > 0)) return null
 	const width = (n: number) => `${Math.max(2, Math.min(100, (n / scale) * 100))}%`
+	// `relative` keeps the sr-only label inside the table's scroll box; positioned from the page column, it widened a phone page.
 	return (
-		<span className="flex w-full min-w-[110px] flex-col gap-1" role="img" aria-label={labels.value}>
+		<span className="relative flex w-full min-w-[110px] flex-col gap-1" role="img" aria-label={labels.value}>
 			<span className={`block h-1.5 rounded-sm ${KPK_MINT_BG}`} style={{ width: width(value) }} />
 			<span className={`block h-1.5 rounded-sm ${KPK_BENCH_BG}`} style={{ width: width(benchmark) }} />
 			<span className="sr-only">{labels.benchmark}</span>
@@ -489,15 +490,19 @@ export function RowLink({ href, label, size = 'md' }: { href: string | undefined
 	if (!href) return null
 	const isSmall = size === 'sm'
 	return (
-		<a
-			href={href}
-			target="_blank"
-			rel="noopener noreferrer"
-			title={`Open ${label}`}
-			aria-label={`Open ${label} in a new tab`}
-			className={`inline-flex shrink-0 items-center justify-center rounded-md border border-pro-cards-border text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-sl-accent ${
-				isSmall ? 'size-[18px] align-text-bottom' : 'size-6'
-			}`}
+		<Tooltip
+			content={`Open ${label}`}
+			render={
+				<a
+					href={href}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={`Open ${label} in a new tab`}
+					className={`inline-flex shrink-0 items-center justify-center rounded-md border border-pro-cards-border text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-sl-accent ${
+						isSmall ? 'size-[18px] align-text-bottom' : 'size-6'
+					}`}
+				/>
+			}
 		>
 			<svg
 				viewBox="0 0 12 12"
@@ -510,7 +515,7 @@ export function RowLink({ href, label, size = 'md' }: { href: string | undefined
 				<path d="M3.6 8.4 8.4 3.6" />
 				<path d="M4.4 3.6H8.4V7.6" />
 			</svg>
-		</a>
+		</Tooltip>
 	)
 }
 

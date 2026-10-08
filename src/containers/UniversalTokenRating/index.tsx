@@ -8,6 +8,7 @@ import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
@@ -185,9 +186,14 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							))}
 						</datalist>
 					</label>
-					<Button type="button" size="md" square aria-label="Find token in leaderboard" onClick={searchProject}>
-						<Icon name="search" height={14} width={14} />
-					</Button>
+					<Tooltip
+						content="Find token in leaderboard"
+						render={
+							<Button type="button" size="md" square aria-label="Find token in leaderboard" onClick={searchProject} />
+						}
+					>
+						<Icon name="search" height={16} width={16} />
+					</Tooltip>
 				</div>
 				{searchError ? (
 					<span id="utr-search-error" role="alert" className="w-full body-sm text-error lg:order-last">
@@ -246,19 +252,20 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			{filterChips.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-1.5 lg:hidden">
 					{filterChips.map((chip) => (
-						<button
+						<Button
 							key={chip.key}
-							type="button"
+							variant="filter"
+							size="sm"
+							data-active="true"
 							onClick={chip.onRemove}
 							// The chip leaves once the URL drops its filter. It hands focus to the next chip, else the previous
 							// one, else the Filter button.
 							ref={passFocusOnLeave((node) => neighbourRowControl(node, node) ?? filterButtonRef.current)}
-							className="flex cursor-pointer items-center gap-1.5 rounded-full border border-medium bg-surface px-3 py-1 label-sm text-link"
 						>
 							<span className="sr-only">Remove </span>
 							{chip.label}
-							<Icon name="x" height={12} width={12} />
-						</button>
+							<Icon name="x" className="size-3.5" aria-hidden="true" />
+						</Button>
 					))}
 				</div>
 			) : null}

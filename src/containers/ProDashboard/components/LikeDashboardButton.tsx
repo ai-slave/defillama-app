@@ -1,9 +1,9 @@
 import { useAuthContext } from '~/auth'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
-import { ProButton } from '../ui'
 
 export function LikeDashboardButton({
 	currentDashboard,
@@ -22,20 +22,19 @@ export function LikeDashboardButton({
 		<Tooltip
 			content="Star dashboard"
 			render={
-				<ProButton
+				<Button
+					size="md"
 					aria-label="Star dashboard"
 					aria-pressed={isLiked}
 					type="button"
 					variant="ghost"
 					onClick={() => toggleLike()}
 					disabled={!isAuthenticated}
-					icon={
-						<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />
-					}
-					{...(isLiking ? { loading: true } : {})}
+					pendingLabel={isLiking ? 'Saving…' : null}
 				/>
 			}
 		>
+			<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />
 			<span>{likeCount ?? currentDashboard.likeCount ?? 0}</span>
 			<span className="sr-only">Stars</span>
 		</Tooltip>

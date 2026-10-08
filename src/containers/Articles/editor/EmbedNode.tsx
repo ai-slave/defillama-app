@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react'
+import { Button } from '~/ui/Button'
 import { getEmbedProviderLabel } from '../embedProviders'
 import type { ArticleEmbedConfig } from '../types'
 import { useArticleEditable } from './useArticleEditable'
@@ -24,28 +25,29 @@ function EmbedNodeView({ node, selected, deleteNode, getPos, editor }: NodeViewP
 	return (
 		<NodeViewWrapper
 			data-article-embed
-			className={`my-4 overflow-hidden rounded-md border bg-surface ${selected ? 'border-link' : 'border-medium'}`}
+			className={`my-4 overflow-hidden rounded-md border bg-surface ${selected ? 'border-brand' : 'border-medium'}`}
 		>
 			<div className="flex items-start justify-between gap-3 px-4 py-3">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2 text-xs text-tertiary">
+					<div className="flex items-center gap-2 body-sm text-tertiary">
 						<span className="shrink-0 rounded-sm border border-medium bg-page px-1.5 py-0.5 font-jetbrains text-[10px] tracking-wider text-secondary uppercase">
 							{providerLabel}
 						</span>
 						<span className="truncate">{config.sourceUrl}</span>
 					</div>
-					{config.title ? <div className="mt-1 truncate text-sm font-medium text-primary">{config.title}</div> : null}
-					{config.caption ? <p className="mt-2 text-sm text-secondary">{config.caption}</p> : null}
+					{config.title ? <div className="mt-1 truncate label-md text-primary">{config.title}</div> : null}
+					{config.caption ? <p className="mt-2 body-md text-secondary">{config.caption}</p> : null}
 				</div>
 				{isEditable ? (
 					// oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- selects the node inside a contenteditable; TipTap owns keyboard navigation there.
 					<div
 						contentEditable={false}
-						className="flex shrink-0 items-center gap-1.5"
+						className="flex shrink-0 items-center gap-1"
 						onMouseDown={(e) => e.stopPropagation()}
 					>
-						<button
-							type="button"
+						<Button
+							variant="secondary"
+							size="sm"
 							onMouseDown={(e) => {
 								e.preventDefault()
 								e.stopPropagation()
@@ -54,12 +56,12 @@ function EmbedNodeView({ node, selected, deleteNode, getPos, editor }: NodeViewP
 								e.stopPropagation()
 								handleEdit()
 							}}
-							className="rounded-md border border-medium px-2 py-1 text-xs text-secondary hover:bg-research-tint-hover hover:text-primary"
 						>
 							Edit
-						</button>
-						<button
-							type="button"
+						</Button>
+						<Button
+							variant="secondary"
+							size="sm"
 							onMouseDown={(e) => {
 								e.preventDefault()
 								e.stopPropagation()
@@ -69,10 +71,9 @@ function EmbedNodeView({ node, selected, deleteNode, getPos, editor }: NodeViewP
 								deleteNode()
 								editor.commands.focus()
 							}}
-							className="rounded-md border border-medium px-2 py-1 text-xs text-tertiary hover:bg-research-tint-hover hover:text-primary"
 						>
 							Remove
-						</button>
+						</Button>
 					</div>
 				) : null}
 			</div>

@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-hot-toast'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { RESEARCH_FEED_URL } from '~/containers/Articles/researchFeed'
+import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { feedSchemeUrl } from './readers'
 import { RssMark } from './RssMark'
@@ -26,33 +25,22 @@ const REVEAL_STYLES = `
 `
 
 function CopyFeedUrlButton({ value }: { value: string }) {
-	const [copied, setCopied] = useState(false)
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-	useEffect(() => {
-		return () => {
-			if (timeoutRef.current) clearTimeout(timeoutRef.current)
-		}
-	}, [])
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText(value)
-			setCopied(true)
-			if (timeoutRef.current) clearTimeout(timeoutRef.current)
-			timeoutRef.current = setTimeout(() => setCopied(false), 2000)
-		} catch {
-			toast.error('Failed to copy')
-		}
-	}
+	const { copied, copy } = useCopy()
 	return (
-		<button
-			type="button"
-			onClick={() => void copy()}
-			aria-label="Copy feed URL"
-			className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-live px-5 py-2.5 text-sm font-semibold text-research-heading transition-[background-color,transform] duration-150 hover:bg-research-live/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-live motion-safe:active:scale-[0.97] sm:w-auto"
-		>
-			<Icon name={copied ? 'check' : 'copy'} height={15} width={15} />
-			{copied ? 'Copied' : 'Copy'}
-		</button>
+		<>
+			<button
+				type="button"
+				onClick={() => void copy(value)}
+				aria-label="Copy feed URL"
+				className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-live px-5 py-2.5 text-sm font-semibold text-research-heading transition-[background-color,transform] duration-150 hover:bg-research-live/90 motion-safe:active:scale-[0.97] sm:w-auto"
+			>
+				<Icon name={copied ? 'check' : 'copy'} height={15} width={15} />
+				{copied ? 'Copied' : 'Copy'}
+			</button>
+			<span role="status" className="sr-only">
+				{copied ? 'Feed URL copied' : ''}
+			</span>
+		</>
 	)
 }
 

@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { cloneElement, isValidElement } from 'react'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 interface ITooltip extends Ariakit.TooltipOptions {
@@ -9,6 +10,8 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	className?: string
 	tabIndex?: number
 	placement?: Ariakit.TooltipProviderProps['placement']
+	/** false renders the tooltip in place, for an anchor inside a layer stacked above the z-50 portal (a toast). */
+	portal?: boolean
 }
 
 /* Tooltip — plain short text on hover, focus and tap, on the 6px tooltip surface. Structured or long content is a
@@ -22,8 +25,9 @@ interface ITooltip extends Ariakit.TooltipOptions {
    the tap logic above sees it and `aria-describedby` lands on it (policy: check-focus-handoff).
 
    The default span is a trigger box (`flex shrink-0 items-center`): it centers an icon beside its text and a long
-   sibling never squeezes it. A `render` anchor keeps only its own classes and lays out as it would without the
-   Tooltip. No anchor clips, because `overflow: hidden` cuts a control's 44px `touch-target` area. Text that should
+   sibling never squeezes it, so its `className` only places it (ms-auto, w-fit); classes that shrink, truncate or
+   change its display belong on a `render` anchor (policy: check-focus-handoff). A `render` anchor keeps only its own
+   classes and lays out as it would without the Tooltip. No anchor clips, because `overflow: hidden` cuts a control's 44px `touch-target` area. Text that should
    ellipsize: a `render` anchor takes `min-w-0 truncate` itself; in the default span, which is a flex box where
    `text-overflow` draws no ellipsis, wrap the text in `<span className="truncate">` and limit the span's width. */
 
@@ -31,10 +35,11 @@ interface ITooltip extends Ariakit.TooltipOptions {
 const TAP_ACTION_SELECTOR =
 	'a[href], button, summary, input, select, textarea, label, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]'
 
-export function Tooltip({ content, children, placement = 'top-start', className, ...props }: ITooltip) {
+export function Tooltip({ content, children, placement = 'top-start', className, portal = true, ...props }: ITooltip) {
 	const store = Ariakit.useTooltipStore({ placement })
 
-	if (!content || content === '') return <>{children}</>
+	// Without content there is no tooltip, but a `render` anchor is still the control: keep it.
+	if (!content) return isValidElement(props.render) ? cloneElement(props.render, undefined, children) : <>{children}</>
 
 	return (
 		<Ariakit.TooltipProvider store={store}>
@@ -57,7 +62,7 @@ export function Tooltip({ content, children, placement = 'top-start', className,
 				store={store}
 				className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap data-[fullwidth=true]:max-w-(--popover-available-width)`}
 				unmountOnHide
-				portal
+				portal={portal}
 				data-fullwidth={props['data-fullwidth']}
 			>
 				<div className="p-2">{content}</div>

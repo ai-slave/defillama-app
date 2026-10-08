@@ -162,6 +162,7 @@ const protocolsColumns = columnHelper.columns([
 							size="sm"
 							variant="ghost"
 							square
+							aria-expanded={row.getIsExpanded()}
 							type="button"
 							className="absolute -left-1.5"
 							{...{

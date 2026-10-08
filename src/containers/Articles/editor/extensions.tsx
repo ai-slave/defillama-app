@@ -15,6 +15,7 @@ import { common, createLowlight } from 'lowlight'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
 import { ArticleChartBlock } from '../renderer/ArticleChartBlock'
@@ -140,12 +141,12 @@ function ChartCaptionEditor({
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary outline-hidden placeholder:text-tertiary/70 hover:border-medium focus:border-link/60 focus:text-primary"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
 		/>
 	)
 }
 
-function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }: NodeViewProps) {
+function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, editor }: NodeViewProps) {
 	const rawConfig = node.attrs.config as ArticleChartConfig
 	const config = validateArticleChartConfig(rawConfig) ?? rawConfig
 
@@ -233,6 +234,8 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 						onClick={(e) => {
 							e.stopPropagation()
 							deleteNode()
+							// The button leaves with the node; the editor takes focus back at the deletion point.
+							editor.commands.focus()
 						}}
 					>
 						<Icon name="trash-2" className="size-3.5" />
@@ -268,30 +271,26 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 	)
 }
 
+const CALLOUT_TONE_OPTIONS = (['note', 'data', 'warning', 'pullquote', 'bio'] as Array<ArticleCalloutTone>).map(
+	(value) => ({ value, label: calloutToneLabels[value] })
+)
+
 function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 	const tone = (node.attrs.tone as ArticleCalloutTone) || 'note'
 	const styles = calloutToneStyles[tone] ?? calloutToneStyles.note
 	return (
 		<NodeViewWrapper className={`my-4 rounded-md border p-4 ${styles.wrap}`}>
-			<div className="mb-2 flex items-center justify-between gap-2">
+			<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
 				<span className={`text-xs font-medium ${styles.tone}`}>{calloutToneLabels[tone]}</span>
-				<div className="flex rounded-sm border border-medium p-0.5">
-					{(['note', 'data', 'warning', 'pullquote', 'bio'] as Array<ArticleCalloutTone>).map((value) => {
-						const active = value === tone
-						return (
-							<button
-								key={value}
-								type="button"
-								onClick={() => updateAttributes({ tone: value })}
-								className={`rounded-sm px-2 py-0.5 text-xs transition-colors ${
-									active ? 'bg-research-tint text-link' : 'text-tertiary hover:text-primary'
-								}`}
-							>
-								{calloutToneLabels[value]}
-							</button>
-						)
-					})}
-				</div>
+				<SegmentedControl
+					label="Callout tone"
+					variant="chips"
+					size="sm"
+					options={CALLOUT_TONE_OPTIONS}
+					value={tone}
+					onValueChange={(value) => updateAttributes({ tone: value })}
+					contentEditable={false}
+				/>
 			</div>
 			<NodeViewContent className="article-callout-content min-h-6" />
 		</NodeViewWrapper>
@@ -320,18 +319,27 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 	return (
 		<NodeViewWrapper
 			as="span"
-			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border align-baseline font-jetbrains text-[10px] leading-none ${
-				selected ? 'border-link bg-research-tint' : 'border-medium bg-research-tint/60 text-link'
+			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border bg-brand-muted align-baseline font-jetbrains text-[10px] leading-none text-link-on-tint ${
+				selected ? 'border-brand' : 'border-medium'
 			}`}
 		>
-			<button type="button" onClick={() => editable && setOpen((o) => !o)} className="px-1 py-0.5 tracking-wider">
+			<button
+				type="button"
+				aria-expanded={open && editable}
+				onClick={() => editable && setOpen((o) => !o)}
+				className="px-1 py-0.5 tracking-wider"
+			>
 				[{label}]
 			</button>
 			{selected && editable ? (
 				<button
 					type="button"
 					className="border-l border-medium px-1 py-0.5 text-tertiary hover:text-primary"
-					onClick={deleteNode}
+					onClick={() => {
+						deleteNode()
+						// The button leaves with the citation; the editor takes focus back at the deletion point.
+						editor.commands.focus()
+					}}
 					aria-label="Remove citation"
 				>
 					×
@@ -354,7 +362,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							id={`${fieldId}-label`}
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary focus:border-link focus:outline-hidden"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -369,7 +377,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -384,7 +392,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary"
 						/>
 					</div>
 				</div>

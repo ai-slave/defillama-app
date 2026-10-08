@@ -19,6 +19,7 @@ import { LoadingDots } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
@@ -121,7 +122,7 @@ function SiteSearchPalette({ onSelect }: { onSelect: () => void }) {
 			}}
 		>
 			<DialogSearchHeader title="Search">
-				<Ariakit.Combobox placeholder="Search..." aria-label="Search" className={inputStyles} />
+				<Ariakit.Combobox placeholder="Search…" aria-label="Search" className={inputStyles} />
 			</DialogSearchHeader>
 			<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} p-2`} alwaysVisible>
 				<SearchResults searchValue={searchValue} onSelect={onSelect} />
@@ -275,31 +276,30 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 				}}
 			>
 				<span className="relative isolate hidden w-full lg:inline-block lg:max-w-[50vw]">
-					<button
-						type="button"
-						onClick={() => setOpen((prev) => !prev)}
-						className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
+					<Tooltip
+						content={open ? 'Close search' : 'Open search'}
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="absolute top-1/2 left-2 -translate-y-1/2"
+								aria-label={open ? 'Close search' : 'Open search'}
+								aria-expanded={open}
+								onClick={() => setOpen((prev) => !prev)}
+							/>
+						}
 					>
-						{open ? (
-							<>
-								<span className="sr-only">Close Search</span>
-								<Icon name="x" height={16} width={16} />
-							</>
-						) : (
-							<>
-								<span className="sr-only">Open Search</span>
-								<Icon name="search" height={16} width={16} />
-							</>
-						)}
-					</button>
+						<Icon name={open ? 'x' : 'search'} className="size-4" />
+					</Tooltip>
 					<Ariakit.Combobox
 						id="desktop-search-input"
-						placeholder="Search..."
+						placeholder="Search…"
 						aria-label="Search"
 						ref={inputField}
 						// The default list loads with the popover; starting it on focus has it ready by the first open.
 						onFocus={() => void queryClient.prefetchQuery(defaultSearchListQuery)}
-						className={`${inputStyles} w-full pr-14 pl-8`}
+						className={`${inputStyles} w-full pr-14 pl-9`}
 					/>
 					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center justify-center rounded-md bg-brand-muted px-1.5 label-xs text-link">
 						⌘K

@@ -68,3 +68,14 @@ test('the proof slideshow does not advance for a reader who prefers reduced moti
 	await act(async () => vi.advanceTimersByTime(12_000))
 	expect(shownState()).toBe('Current')
 })
+
+test('reduced motion hides the play control, since the slideshow never plays on its own', async () => {
+	await act(async () => root.render(<VerifiedLanding />))
+	expect(container.querySelector('[aria-label="Pause verification record slideshow"]')).not.toBeNull()
+	await act(async () => root.unmount())
+
+	reducedMotion = true
+	root = createRoot(container)
+	await act(async () => root.render(<VerifiedLanding />))
+	expect(container.querySelector('[aria-label*="verification record slideshow"]')).toBeNull()
+})

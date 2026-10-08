@@ -2,6 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -39,8 +41,10 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				return (
 					<li
 						key={query.id}
-						className={`group flex items-center gap-1 border-b border-(--border-subtle)/40 last:border-b-0 ${
-							isDisabled ? 'opacity-40' : ''
+						// A tap focuses the row, which reveals its actions on screens that cannot hover.
+						tabIndex={-1}
+						className={`group/row flex items-center gap-1 border-b border-(--border-subtle)/40 last:border-b-0 ${
+							isDisabled ? 'opacity-60' : ''
 						}`}
 					>
 						{isRenaming ? (
@@ -86,25 +90,46 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								</span>
 							</Tooltip>
 						)}
-						<span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-							<button
-								type="button"
-								onClick={() => setRenamingId(query.id)}
-								aria-label={`Rename ${query.name}`}
-								disabled={!!busyTaskId || isRenaming}
-								className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+						<span className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 pointer-coarse:opacity-100">
+							<Tooltip
+								content="Rename"
+								render={
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										onClick={() => setRenamingId(query.id)}
+										aria-label={`Rename ${query.name}`}
+										disabled={!!busyTaskId || isRenaming}
+										accessibleWhenDisabled
+									/>
+								}
 							>
-								<Icon name="pencil" className="size-3" />
-							</button>
-							<button
-								type="button"
-								onClick={() => deleteDownload(query.id)}
-								aria-label={`Delete ${query.name}`}
-								disabled={!!busyTaskId}
-								className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
+								<Icon name="pencil" className="size-4" />
+							</Tooltip>
+							<Tooltip
+								content="Delete"
+								render={
+									<Button
+										variant="ghostDestructive"
+										size="sm"
+										square
+										onClick={(event) => {
+											// The row leaves the list, so its neighbour's delete takes focus.
+											const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+											keepFocus(
+												() => deleteDownload(query.id),
+												() => next
+											)
+										}}
+										aria-label={`Delete ${query.name}`}
+										disabled={!!busyTaskId}
+										accessibleWhenDisabled
+									/>
+								}
 							>
-								<Icon name="trash-2" className="size-3" />
-							</button>
+								<Icon name="trash-2" className="size-4" />
+							</Tooltip>
 						</span>
 					</li>
 				)

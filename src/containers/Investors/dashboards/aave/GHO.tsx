@@ -3,7 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
 	formatPercent,
 	formatUsd,
@@ -201,7 +201,9 @@ export default function GHO() {
 			<div>
 				<div className="mb-4 flex items-center justify-between">
 					<SectionHeader title="GHO Borrow APY History" />
-					<ProSegmented<TimeWindow>
+					<SegmentedControl<TimeWindow>
+						variant="default"
+						size="md"
 						label="GHO borrow APY window"
 						options={WINDOW_OPTIONS}
 						value={selectedWindow}

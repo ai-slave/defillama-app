@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from './endTrialHold'
 
@@ -30,14 +31,17 @@ export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 						))}
 					</ul>
 				</div>
-				<button
-					type="button"
+				{/* The hold starts in the dialog this button opened, and that dialog returns focus here on close. */}
+				<Button
+					variant="primary"
+					size="md"
 					onClick={onUpgrade}
 					disabled={isApplying}
-					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-60"
+					accessibleWhenDisabled
+					className="w-full"
 				>
 					Upgrade to Pro
-				</button>
+				</Button>
 				{isApplying ? <p className="text-xs leading-4 text-sub-text-muted">{END_TRIAL_APPLYING_REASON}</p> : null}
 			</div>
 		</div>

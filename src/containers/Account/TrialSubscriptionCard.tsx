@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
 
@@ -60,13 +61,9 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 						before then.
 					</p>
 					<div className="flex gap-2">
-						<button
-							type="button"
-							onClick={onCancel}
-							className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 label-sm whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
-						>
+						<Button variant="secondary" size="md" onClick={onCancel}>
 							Cancel free trial
-						</button>
+						</Button>
 					</div>
 				</>
 			)}

@@ -83,7 +83,7 @@ describe('without Pro', () => {
 	test('a custom column preset offers the upgrade instead of opening the form', async () => {
 		await renderManager()
 		await act(async () => button('TVL/MCap').click())
-		expect(container.querySelector('[aria-label="Custom column name"]')).toBeNull()
+		expect(container.querySelector('input[placeholder="e.g., TVL to market cap"]')).toBeNull()
 	})
 
 	test('the column group radio narrows the column list to that group', async () => {

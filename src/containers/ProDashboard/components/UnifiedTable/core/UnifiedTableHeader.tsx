@@ -1,7 +1,11 @@
 import { type ReactNode, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { ProBadge, ProButton, ProChip, ProMeta } from '../../../ui'
+import { Tag } from '~/ui/Tag'
+import { Tooltip } from '~/ui/Tooltip'
+import { ProBadge, ProMeta } from '../../../ui'
 import { proInputStyles } from '../../../ui/styles'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 import { ProCardHeader } from '../../ProCardHeader'
@@ -51,20 +55,25 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 
 	if (!expanded) {
 		return (
-			<ProButton
-				ref={(node) => {
-					if (!node || !restoreFocusRef.current) return
-					restoreFocusRef.current = false
-					node.focus()
-				}}
-				size="sm"
-				square
-				variant="ghost"
-				aria-label="Search table rows"
-				onClick={() => setExpanded(true)}
+			<Tooltip
+				content="Search table rows"
+				render={
+					<Button
+						ref={(node) => {
+							if (!node || !restoreFocusRef.current) return
+							restoreFocusRef.current = false
+							node.focus()
+						}}
+						size="sm"
+						square
+						variant="ghost"
+						aria-label="Search table rows"
+						onClick={() => setExpanded(true)}
+					/>
+				}
 			>
-				<Icon name="search" height={14} width={14} />
-			</ProButton>
+				<Icon name="search" height={16} width={16} />
+			</Tooltip>
 		)
 	}
 	return (
@@ -123,6 +132,7 @@ export function UnifiedTableHeader({
 		? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
 		: ''
 	const groupingLabel = groupingOptions?.find((option) => option.id === groupingSelectValue)?.label ?? ''
+	const filtersButtonRef = useRef<HTMLButtonElement>(null)
 
 	return (
 		<div className="mb-2 flex flex-col gap-2">
@@ -135,10 +145,21 @@ export function UnifiedTableHeader({
 					<>
 						<TableSearchField onSearchChange={onSearchChange} />
 						{onFiltersClick ? (
-							<ProButton size="sm" variant={activeFilterCount ? 'primary' : 'secondary'} onClick={onFiltersClick}>
+							<Button
+								ref={filtersButtonRef}
+								size="sm"
+								variant="filter"
+								data-active={activeFilterCount > 0}
+								onClick={onFiltersClick}
+							>
 								Filters
-								{activeFilterCount ? <ProBadge tone="info">{activeFilterCount}</ProBadge> : null}
-							</ProButton>
+								{/* Unpadded, the count fits the sm button's 24px row; padded, it grew the button to 28px. */}
+								{activeFilterCount ? (
+									<ProBadge tone="info" className="py-0!">
+										{activeFilterCount}
+									</ProBadge>
+								) : null}
+							</Button>
 						) : null}
 					</>
 				}
@@ -148,7 +169,7 @@ export function UnifiedTableHeader({
 							<Select
 								heading="Group rows by"
 								size="sm"
-								variant="pro"
+								variant="filter"
 								label={groupingLabel}
 								labelType="none"
 								allValues={groupingOptions.map((option) => ({ key: option.id, name: option.label }))}
@@ -158,11 +179,11 @@ export function UnifiedTableHeader({
 							/>
 						) : null}
 						{onCustomizeColumns ? (
-							<ProButton size="sm" variant="secondary" onClick={onCustomizeColumns}>
-								<Icon name="layout-grid" height={14} width={14} />
+							<Button size="sm" variant="secondary" onClick={onCustomizeColumns}>
+								<Icon name="layout-grid" className="size-3.5" />
 								Columns
 								<span className="sr-only">Customize columns</span>
-							</ProButton>
+							</Button>
 						) : null}
 					</>
 				}
@@ -178,30 +199,47 @@ export function UnifiedTableHeader({
 			/>
 			{hasFilters ? (
 				<div className="flex flex-wrap items-center gap-2 px-3">
-					{filterChips.map((chip) =>
-						canMutateFilters ? (
-							<ProChip
-								key={chip.id}
-								as="button"
-								type="button"
-								onClick={() => onFilterRemove?.(chip)}
-								aria-label={`Remove filter: ${chip.label}`}
-							>
-								<span className="font-medium text-pro-text-primary">{chip.label}</span>
-								{chip.value ? <span>: {chip.value}</span> : null}
-								<Icon name="x" height={12} width={12} />
-							</ProChip>
-						) : (
-							<ProChip key={chip.id}>
-								<span className="font-medium text-pro-text-primary">{chip.label}</span>
-								{chip.value ? <span>: {chip.value}</span> : null}
-							</ProChip>
-						)
-					)}
+					{/* Its own row, so a removed chip's neighbour is a chip and never Clear all. */}
+					<div className="contents">
+						{filterChips.map((chip) =>
+							canMutateFilters ? (
+								<Button
+									key={chip.id}
+									variant="filter"
+									size="sm"
+									data-active
+									onClick={(event) => {
+										// The next chip takes focus, else the previous one; after the last, the Filters button, else the card.
+										const removed = event.currentTarget
+										const next =
+											neighbourRowControl(removed, removed) ??
+											filtersButtonRef.current ??
+											removed.parentElement?.closest<HTMLElement>('[tabindex]')
+										keepFocus(
+											() => onFilterRemove?.(chip),
+											() => next
+										)
+									}}
+									aria-label={`Remove filter: ${chip.label}`}
+								>
+									<span>
+										{chip.label}
+										{chip.value ? `: ${chip.value}` : null}
+									</span>
+									<Icon name="x" className="size-3" />
+								</Button>
+							) : (
+								<Tag key={chip.id}>
+									<span className="font-medium text-primary">{chip.label}</span>
+									{chip.value ? <span>: {chip.value}</span> : null}
+								</Tag>
+							)
+						)}
+					</div>
 					{canMutateFilters && onClearFilters ? (
-						<ProButton size="sm" variant="ghost" onClick={onClearFilters}>
+						<Button size="sm" variant="ghost" onClick={onClearFilters}>
 							Clear all filters
-						</ProButton>
+						</Button>
 					) : null}
 				</div>
 			) : null}

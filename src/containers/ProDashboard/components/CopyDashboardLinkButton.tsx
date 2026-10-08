@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
-import { ProButton } from '../ui'
+import { Tooltip } from '~/ui/Tooltip'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
 import { buildEmbedIframeSnippet, dashboardEmbedPath, EMBED_ORIGIN } from './EmbedSnippetDialog'
 
@@ -100,7 +101,7 @@ export function CopyDashboardLinkButton({
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure render={<ProButton type="button" variant="secondary" />}>
+			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="secondary" />}>
 				<Icon name={isPrivate ? 'link' : 'share'} height={14} width={14} />
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
@@ -110,19 +111,19 @@ export function CopyDashboardLinkButton({
 					<div className="flex flex-col gap-2 p-3">
 						<p className="text-xs text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
 						{onMakePublic ? (
-							<ProButton
+							<Button
 								type="button"
 								size="sm"
 								variant="primary"
 								onClick={() => void makePublic()}
-								loading={makingPublic}
+								pendingLabel={makingPublic ? 'Making public…' : null}
 								data-umami-event="dashboard-make-public"
 							>
-								{makingPublic ? 'Making public…' : 'Make public'}
-							</ProButton>
+								Make public
+							</Button>
 						) : null}
 						{manageAction ? (
-							<ProButton
+							<Button
 								type="button"
 								size="sm"
 								variant="secondary"
@@ -132,11 +133,14 @@ export function CopyDashboardLinkButton({
 								}}
 							>
 								{manageAction.label}
-							</ProButton>
+							</Button>
 						) : null}
 					</div>
 				) : (
 					<div className="flex flex-col gap-3 p-3">
+						<span role="status" className="sr-only">
+							{copied === 'link' ? 'Link copied' : copied === 'embed' ? 'Embed code copied' : ''}
+						</span>
 						<div className="flex flex-col gap-1.5">
 							<p className="text-xs font-medium text-pro-text-label">Share Link</p>
 							<div className="flex gap-2">
@@ -146,28 +150,32 @@ export function CopyDashboardLinkButton({
 									readOnly
 									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
 								/>
-								<ProButton
-									type="button"
-									size="sm"
-									square
-									variant="secondary"
-									ref={(node) => {
-										if (!node || !pendingCopyLinkFocusRef.current) return
-										pendingCopyLinkFocusRef.current = false
-										node.focus()
-									}}
-									onClick={() => {
-										void handleCopyLink()
-									}}
-									title="Copy link"
-									aria-label="Copy link"
+								<Tooltip
+									content={copied === 'link' ? 'Copied' : 'Copy link'}
+									render={
+										<Button
+											type="button"
+											size="sm"
+											square
+											variant="secondary"
+											ref={(node) => {
+												if (!node || !pendingCopyLinkFocusRef.current) return
+												pendingCopyLinkFocusRef.current = false
+												node.focus()
+											}}
+											onClick={() => {
+												void handleCopyLink()
+											}}
+											aria-label="Copy link"
+										/>
+									}
 								>
 									{copied === 'link' ? (
-										<Icon name="check-circle" height={14} width={14} className="text-success" />
+										<Icon name="check-circle" height={16} width={16} className="text-success" />
 									) : (
-										<Icon name="copy" height={14} width={14} />
+										<Icon name="copy" height={16} width={16} />
 									)}
-								</ProButton>
+								</Tooltip>
 							</div>
 						</div>
 
@@ -183,55 +191,57 @@ export function CopyDashboardLinkButton({
 									onFocus={(event) => event.currentTarget.select()}
 									className="flex-1 resize-none rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 font-mono text-xs"
 								/>
-								<ProButton
-									type="button"
-									size="sm"
-									square
-									variant="secondary"
-									onClick={() => {
-										void handleCopyEmbed()
-									}}
-									data-umami-event="embed-dashboard"
-									className="self-start"
-									title="Copy embed code"
-									aria-label="Copy embed code"
+								<Tooltip
+									content={copied === 'embed' ? 'Copied' : 'Copy embed code'}
+									render={
+										<Button
+											type="button"
+											size="sm"
+											square
+											variant="secondary"
+											onClick={() => {
+												void handleCopyEmbed()
+											}}
+											data-umami-event="embed-dashboard"
+											className="self-start"
+											aria-label="Copy embed code"
+										/>
+									}
 								>
 									{copied === 'embed' ? (
-										<Icon name="check-circle" height={14} width={14} className="text-success" />
+										<Icon name="check-circle" height={16} width={16} className="text-success" />
 									) : (
-										<Icon name="code" height={14} width={14} />
+										<Icon name="code" height={16} width={16} />
 									)}
-								</ProButton>
+								</Tooltip>
 							</div>
 						</div>
 
 						<div className="flex flex-col gap-1.5">
 							<p className="text-xs font-medium text-pro-text-label">Share on</p>
 							<div className="flex gap-2">
-								<ProButton
+								<Button
 									type="button"
 									size="sm"
 									variant="secondary"
 									onClick={() => handleShareTo('twitter')}
 									className="flex-1"
-									title="Share on X/Twitter"
 								>
 									<Icon name="twitter" height={16} width={16} />
 									<span>X/Twitter</span>
-								</ProButton>
-								<ProButton
+								</Button>
+								<Button
 									type="button"
 									size="sm"
 									variant="secondary"
 									onClick={() => handleShareTo('telegram')}
 									className="flex-1"
-									title="Share on Telegram"
 								>
 									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 										<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
 									</svg>
 									<span>Telegram</span>
-								</ProButton>
+								</Button>
 							</div>
 						</div>
 					</div>

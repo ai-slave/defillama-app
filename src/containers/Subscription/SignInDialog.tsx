@@ -26,6 +26,7 @@ import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import type { WalletSignInProps } from './WalletSignIn'
 
@@ -235,7 +236,7 @@ function Captcha({ disabled, onToken }: { disabled: boolean; onToken: (token: st
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<span>The security check failed.</span>
 						<Button
-							type="button"
+							variant="secondary"
 							size="sm"
 							onClick={() => {
 								setFailed(false)
@@ -290,17 +291,22 @@ function PasswordField({
 				/>
 				{/* sm, centred: an md square grows to 44px in a phone sheet and would hang out of the 40px field.
 				    touch-target keeps its 44px hit area. */}
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					square
-					className="absolute top-1/2 right-2 -translate-y-1/2"
-					onClick={() => setVisible((value) => !value)}
-					aria-label={visible ? 'Hide password' : 'Show password'}
+				<Tooltip
+					content={visible ? 'Hide password' : 'Show password'}
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							square
+							className="absolute top-1/2 right-2 -translate-y-1/2"
+							onClick={() => setVisible((value) => !value)}
+							aria-label={visible ? 'Hide password' : 'Show password'}
+						/>
+					}
 				>
 					<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
-				</Button>
+				</Tooltip>
 				<FieldError>{error}</FieldError>
 			</div>
 			{action ? <div className="col-start-2 row-start-1 mb-1.5 body-sm">{action}</div> : null}
@@ -485,15 +491,13 @@ function AuthScreen({
 	)
 
 	return (
-		<>
+		<div className="flex flex-col gap-5">
 			{state.pendingGoogleLink ? (
-				<button
-					type="button"
-					className="mb-4 w-full text-center body-sm text-link"
-					onClick={() => store.dispatch({ kind: 'resumeGoogleLink' })}
-				>
-					Continue Google email verification
-				</button>
+				<p className="text-center body-sm">
+					<Button variant="link" onClick={() => store.dispatch({ kind: 'resumeGoogleLink' })}>
+						Continue Google email verification
+					</Button>
+				</p>
 			) : null}
 			{signupLayout ? (
 				<>
@@ -503,8 +507,8 @@ function AuthScreen({
 							Create an account
 						</button>
 					</div>
-					<div className="my-5 border-t border-subtle" aria-hidden />
-					<p className="mb-4 label-md text-primary">Already have an account?</p>
+					<div className="border-t border-subtle" aria-hidden />
+					<p className="label-md text-primary">Already have an account?</p>
 				</>
 			) : null}
 			{isSignup ? (
@@ -627,9 +631,8 @@ function AuthScreen({
 						readOnly={isPending}
 						autoComplete="current-password"
 						action={
-							<button
-								type="button"
-								className="text-link"
+							<Button
+								variant="link"
 								form={formId}
 								onClick={(event) =>
 									store.dispatch({
@@ -640,7 +643,7 @@ function AuthScreen({
 								}
 							>
 								Forgot password?
-							</button>
+							</Button>
 						}
 					/>
 
@@ -666,7 +669,7 @@ function AuthScreen({
 				</form>
 			)}
 
-			<div className="my-5 border-t border-subtle" aria-hidden />
+			<div className="border-t border-subtle" aria-hidden />
 
 			<div className="flex flex-col gap-3">
 				{signupLayout ? null : googleSignIn}
@@ -713,18 +716,17 @@ function AuthScreen({
 				) : null}
 			</div>
 			{signupLayout ? null : (
-				<p className="mt-5 text-center body-sm text-secondary">
+				<p className="text-center body-sm text-secondary">
 					{isSignup ? 'Already have an account? ' : 'New to DefiLlama? '}
-					<button
-						type="button"
-						className="text-link"
+					<Button
+						variant="link"
 						onClick={isSignup ? () => store.dispatch({ kind: 'navigate', screen: 'signin' }) : navigateToSignup}
 					>
 						{isSignup ? 'Sign in' : 'Create an account'}
-					</button>
+					</Button>
 				</p>
 			)}
-		</>
+		</div>
 	)
 }
 
@@ -776,16 +778,17 @@ function ForgotPasswordScreen({
 					>
 						Back to sign in
 					</Button>
-					<button
-						type="button"
-						className="body-sm text-link"
-						onClick={() => {
-							reset.reset()
-							store.dispatch({ kind: 'navigate', screen: 'forgot', email: '' })
-						}}
-					>
-						Use another email
-					</button>
+					<p className="text-center body-sm">
+						<Button
+							variant="link"
+							onClick={() => {
+								reset.reset()
+								store.dispatch({ kind: 'navigate', screen: 'forgot', email: '' })
+							}}
+						>
+							Use another email
+						</Button>
+					</p>
 				</DialogBody>
 			</>
 		)

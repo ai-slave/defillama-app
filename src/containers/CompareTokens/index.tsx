@@ -7,9 +7,11 @@ import { fetchCoinPrices } from '~/api/pricing'
 import { Select } from '~/components/Select/Select'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -97,26 +99,31 @@ export function CompareTokens({
 		<>
 			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center heading-sm lg:-left-[116px]">Compare Tokens</h1>
 			<div className="relative mx-auto flex w-full max-w-sm flex-col items-center gap-2 lg:-left-[116px]">
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+				{/* On wider screens the labels share one row and the fields the next, so the swap centers on the fields. */}
+				<div className="flex flex-col gap-4 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:grid-rows-[auto_auto] sm:gap-x-4 sm:gap-y-1.5">
 					<CoinPicker
 						label="First token"
 						coin={selectedCoins[0]}
 						dialogStore={dialogStore}
 						onPick={() => setPickingSlot(0)}
 					/>
-					<button
-						type="button"
-						onClick={() => {
-							const [base, quote] = coins
-							if (base !== undefined && quote !== undefined) {
-								void pushShallowQuery(router, { coin: [quote, base] })
-							}
-						}}
-						className="flex shrink-0 items-center justify-center p-1"
+					<Tooltip
+						content="Switch tokens"
+						render={
+							<Button
+								variant="ghost"
+								size="md"
+								square
+								className="sm:col-start-2 sm:row-start-2"
+								disabled={coins.length !== 2}
+								accessibleWhenDisabled
+								aria-label="Switch tokens"
+								onClick={() => void pushShallowQuery(router, { coin: [coins[1], coins[0]] })}
+							/>
+						}
 					>
-						<Icon name="repeat" height={16} width={16} />
-						<span className="sr-only">Switch tokens</span>
-					</button>
+						<Icon name="repeat" className="size-4" />
+					</Tooltip>
 					<CoinPicker
 						label="Second token"
 						coin={selectedCoins[1]}
@@ -207,7 +214,7 @@ function CoinPicker({
 	onPick: () => void
 }) {
 	return (
-		<div className="flex w-full flex-col gap-1.5 sm:max-w-[280px]">
+		<div className="flex w-full flex-col gap-1.5 sm:row-span-2 sm:grid sm:grid-rows-subgrid">
 			<span className="body-sm text-secondary">{label}</span>
 			<Ariakit.DialogDisclosure
 				store={dialogStore}

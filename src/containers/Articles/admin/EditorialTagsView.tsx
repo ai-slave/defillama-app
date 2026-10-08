@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -27,7 +26,9 @@ import {
 } from '~/containers/Articles/editorialTags'
 import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
+import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
+import { textareaStyles } from '~/ui/Input'
 
 export function EditorialTagsView() {
 	return (
@@ -124,6 +125,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 
 	const items = data?.items ?? []
 	const pending = setMutation.isPending || unsetMutation.isPending || reorderMutation.isPending
+	const removingId = unsetMutation.isPending ? unsetMutation.variables : null
 	const canReorder = isEditorialTagReorderable(definition.slug) && items.length > 1
 
 	return (
@@ -132,7 +134,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				<div>
 					<div className="flex items-center gap-2">
 						<h2 className="text-xl font-semibold text-primary">{definition.label}</h2>
-						<span className="inline-flex items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
+						<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link-on-tint uppercase">
 							{definition.cardinality === 'singleton' ? '1 article' : 'Many articles'}
 						</span>
 					</div>
@@ -185,6 +187,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 						unsetMutation.mutate(articleId)
 					}}
 					pending={pending}
+					removingId={removingId}
 					reorderPending={reorderMutation.isPending}
 				/>
 			) : (
@@ -198,6 +201,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 								unsetMutation.mutate(article.id)
 							}}
 							pending={pending}
+							removing={removingId === article.id}
 						/>
 					))}
 				</ul>
@@ -306,32 +310,34 @@ export function ReportHighlightControls({
 						placeholder="Custom text shown on the right side of the Report highlight block."
 						rows={4}
 						maxLength={2000}
-						className="resize-none rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+						className={`${textareaStyles} resize-none`}
 					/>
 					<div className="flex flex-wrap items-center gap-2">
-						<Ariakit.Button
-							type="button"
+						<Button
+							variant="secondary"
+							size="sm"
 							disabled={!textDirty || pending || metadataMutation.isPending}
 							accessibleWhenDisabled
+							pendingLabel={metadataMutation.isPending && metadataMutation.variables.trim() ? 'Saving…' : null}
 							onClick={() => metadataMutation.mutate(highlightText)}
-							className="rounded-md border border-medium px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
-							{metadataMutation.isPending ? 'Saving…' : 'Save highlight text'}
-						</Ariakit.Button>
+							Save highlight text
+						</Button>
 						{currentText ? (
-							<Ariakit.Button
+							<Button
 								ref={focusHighlightFieldOnLeave}
-								type="button"
+								variant="ghost"
+								size="sm"
 								disabled={pending || metadataMutation.isPending}
 								accessibleWhenDisabled
+								pendingLabel={metadataMutation.isPending && !metadataMutation.variables.trim() ? 'Clearing…' : null}
 								onClick={() => {
 									setHighlightText('')
 									metadataMutation.mutate('')
 								}}
-								className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 							>
 								Clear override
-							</Ariakit.Button>
+							</Button>
 						) : null}
 					</div>
 				</label>

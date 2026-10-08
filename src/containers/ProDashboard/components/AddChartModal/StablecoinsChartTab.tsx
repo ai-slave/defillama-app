@@ -31,6 +31,7 @@ import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -54,6 +55,11 @@ interface StablecoinsChartTabProps {
 	onSelectedStablecoinAssetIdChange: (id: string | null) => void
 	onSelectedStablecoinAssetChartTypeChange: (chartType: StablecoinAssetChartType) => void
 }
+
+const STABLECOIN_MODE_OPTIONS: Array<SegmentedControlOption<'chain' | 'asset'>> = [
+	{ value: 'chain', label: 'By chain' },
+	{ value: 'asset', label: 'By asset' }
+]
 
 const STABLECOIN_CHAIN_CHART_TYPES: Array<{ value: StablecoinChartType; label: string }> = [
 	{ value: 'totalMcap', label: 'Total Market Cap' },
@@ -445,30 +451,14 @@ export function StablecoinsChartTab({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
-				<div className="flex rounded-md border border-pro-cards-border p-0.5">
-					<button
-						type="button"
-						onClick={() => onStablecoinModeChange('chain')}
-						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
-							stablecoinMode === 'chain'
-								? 'bg-pro-cards-bg text-pro-text-primary shadow-sm'
-								: 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						By chain
-					</button>
-					<button
-						type="button"
-						onClick={() => onStablecoinModeChange('asset')}
-						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
-							stablecoinMode === 'asset'
-								? 'bg-pro-cards-bg text-pro-text-primary shadow-sm'
-								: 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						By asset
-					</button>
-				</div>
+				<SegmentedControl
+					variant="field"
+					size="md"
+					label="Stablecoin chart mode"
+					options={STABLECOIN_MODE_OPTIONS}
+					value={stablecoinMode}
+					onValueChange={onStablecoinModeChange}
+				/>
 
 				{stablecoinMode === 'chain' ? (
 					<>

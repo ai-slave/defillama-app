@@ -1,7 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkChartColors, kpkCompositionChartOptions } from './chartDefaults'
@@ -133,11 +133,20 @@ export function CompositionSection({
 			<SectionHeader title={title}>
 				{/* Omitted rather than rendered empty while the payload is still in flight. */}
 				{options.length > 0 && (
-					<ProSegmented label={`${title} breakdown`} options={options} value={breakdown} onValueChange={setPicked} />
+					<SegmentedControl
+						variant="default"
+						size="md"
+						label={`${title} breakdown`}
+						options={options}
+						value={breakdown}
+						onValueChange={setPicked}
+					/>
 				)}
 				{/* A single span is not a choice, so it gets no control. */}
 				{ranges.length > 1 && range && (
-					<ProSegmented<KpkRangeKey>
+					<SegmentedControl<KpkRangeKey>
+						variant="default"
+						size="md"
 						label={`${title} range`}
 						options={ranges}
 						value={range}

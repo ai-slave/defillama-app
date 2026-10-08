@@ -78,3 +78,19 @@ test('keyboard selection adds a protocol and preserves the previous chip', async
 	)
 	expect(input().value).toBe('')
 })
+
+test('removing a chip hands focus to the next chip, and the last chip to the search field', async () => {
+	await search('aave')
+	await pressKey('ArrowDown')
+	await pressKey('Enter')
+	await waitForUi(() => expect(host.querySelectorAll('button')).toHaveLength(2))
+	const curve = host.querySelector<HTMLButtonElement>('button[aria-label="Remove Curve"]')!
+	await act(async () => {
+		curve.focus()
+		curve.click()
+	})
+	expect(document.activeElement?.getAttribute('aria-label')).toBe('Remove Aave')
+	await act(async () => (document.activeElement as HTMLButtonElement).click())
+	expect(host.querySelectorAll('button')).toHaveLength(0)
+	expect(document.activeElement).toBe(input())
+})

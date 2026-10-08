@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon as SharedIcon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
@@ -101,7 +103,7 @@ export function ArticleEditorHeader({
 	return (
 		<header
 			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
-				isPublished ? 'border-emerald-500/25' : 'border-medium'
+				isPublished ? 'border-success/25' : 'border-medium'
 			}`}
 		>
 			<nav className="flex min-w-0 items-center gap-2.5 text-sm">
@@ -136,67 +138,88 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className="w-[24ch] rounded-sm border border-link/40 bg-page px-1.5 py-0.5 font-jetbrains text-xs text-primary focus:border-link focus:outline-hidden"
+						className="w-[24ch] rounded-sm border border-medium bg-page px-1.5 py-0.5 font-jetbrains text-xs text-primary"
 					/>
 				) : (
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="sm"
 						onClick={beginSlugEdit}
-						title="Click to edit slug"
-						className={`group flex ${
-							hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
-						} items-center gap-1 truncate rounded-sm px-1 py-0.5 font-jetbrains text-xs tracking-tight text-secondary hover:bg-research-tint-hover hover:text-primary`}
+						aria-label={`Edit slug ${article.slug}`}
+						className="group"
 					>
-						<span className="truncate">{article.slug}</span>
-						<span aria-hidden className="text-tertiary opacity-0 transition-opacity group-hover:opacity-100">
+						<span
+							className={`truncate font-jetbrains tracking-tight ${
+								hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
+							}`}
+						>
+							{article.slug}
+						</span>
+						<span
+							aria-hidden
+							className="text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
+						>
 							✎
 						</span>
-					</button>
+					</Button>
 				)}
 				<span aria-hidden className="text-tertiary/40">
 					·
 				</span>
-				<span
-					className={`font-jetbrains text-[10px] tracking-[0.22em] uppercase ${isPublished ? 'text-success' : articleIsScheduled ? 'text-link' : 'text-warning'}`}
-					title={articleIsScheduled ? `Scheduled for ${formatArticleDate(article.goLiveAt)}` : undefined}
-				>
-					{articleIsScheduled ? 'draft · scheduled' : article.status}
-				</span>
+				{articleIsScheduled ? (
+					<Tooltip
+						content={`Scheduled for ${formatArticleDate(article.goLiveAt)}`}
+						tabIndex={0}
+						render={<span className="font-jetbrains text-[10px] tracking-[0.22em] text-link uppercase" />}
+					>
+						draft · scheduled
+					</Tooltip>
+				) : (
+					<span
+						className={`font-jetbrains text-[10px] tracking-[0.22em] uppercase ${isPublished ? 'text-success' : 'text-warning'}`}
+					>
+						{article.status}
+					</span>
+				)}
 			</nav>
 
 			{/* Wraps instead of shrinking: a published article with pending edits has more actions than a phone row fits. */}
 			<div className="flex flex-wrap items-center gap-2">
-				<Ariakit.Button
-					type="button"
-					aria-live="polite"
-					aria-label={
-						pillState === 'error'
-							? 'Save failed — retry'
-							: pillState === 'unsaved'
-								? 'Save now'
-								: pillState === 'saving'
-									? 'Saving'
-									: pillState === 'saved'
-										? `Saved ${savedLabel ?? ''} — save again`
-										: 'Save'
-					}
-					title={
+				<Tooltip
+					content={
 						pillState === 'error'
 							? 'Click to retry. Cmd/Ctrl+S also saves.'
 							: pillState === 'saved' && savedExactLabel
 								? `Saved ${savedExactLabel}. Cmd/Ctrl+S to save.`
 								: 'Cmd/Ctrl+S to save'
 					}
-					disabled={pillState === 'saving' || pillState === 'idle'}
-					accessibleWhenDisabled
-					onClick={() => void saveArticle()}
-					className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors aria-disabled:cursor-default ${
-						pillState === 'error'
-							? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
-							: pillState === 'unsaved'
-								? 'border-warning/35 bg-warning/5 text-warning hover:bg-warning/10 dark:text-warning'
-								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover aria-disabled:hover:border-transparent aria-disabled:hover:bg-transparent'
-					}`}
+					render={
+						<Ariakit.Button
+							type="button"
+							aria-live="polite"
+							aria-label={
+								pillState === 'error'
+									? 'Save failed — retry'
+									: pillState === 'unsaved'
+										? 'Save now'
+										: pillState === 'saving'
+											? 'Saving'
+											: pillState === 'saved'
+												? `Saved ${savedLabel ?? ''} — save again`
+												: 'Save'
+							}
+							disabled={pillState === 'saving' || pillState === 'idle'}
+							accessibleWhenDisabled
+							onClick={() => void saveArticle()}
+							className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors aria-disabled:cursor-default ${
+								pillState === 'error'
+									? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
+									: pillState === 'unsaved'
+										? 'border-warning/35 bg-warning/5 text-warning hover:bg-warning/10 dark:text-warning'
+										: 'border-transparent text-secondary hover:border-medium hover:bg-hover-row aria-disabled:hover:border-transparent aria-disabled:hover:bg-transparent'
+							}`}
+						/>
+					}
 				>
 					<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${PILL_DOT[pillState]}`} />
 					{/* Narrow headers keep only the dot, so the save state stays visible without crowding the actions. */}
@@ -211,7 +234,7 @@ export function ArticleEditorHeader({
 							⌘S
 						</kbd>
 					) : null}
-				</Ariakit.Button>
+				</Tooltip>
 
 				<SegmentedControl
 					semantics="tabs"
@@ -222,43 +245,36 @@ export function ArticleEditorHeader({
 				/>
 
 				{article.id ? (
-					<button
-						type="button"
-						onClick={onOpenHistory}
-						aria-label="Revision history"
-						title="Revision history"
-						className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
+					<Tooltip
+						content="Revision history"
+						render={
+							<Button variant="secondary" size="md" square onClick={onOpenHistory} aria-label="Revision history" />
+						}
 					>
 						<SharedIcon name="clock" className="size-4" />
-					</button>
+					</Tooltip>
 				) : null}
 
 				{isPublished ? (
 					<>
 						{hasPendingEdits ? (
 							<>
-								<button
-									type="button"
-									disabled={isPublishing}
-									onClick={handleDiscardPending}
-									className="flex h-9 items-center gap-1.5 rounded-md border border-medium bg-surface px-3 text-xs font-medium text-secondary transition-colors hover:border-error/50 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
-								>
+								<Button variant="secondary" size="md" disabled={isPublishing} onClick={handleDiscardPending}>
 									Discard
-								</button>
-								<Ariakit.Button
-									type="button"
-									disabled={isPublishing}
+								</Button>
+								<Button
+									variant="primary"
+									size="md"
+									pendingLabel={isPublishing ? 'Publishing…' : null}
 									onClick={handlePublish}
-									accessibleWhenDisabled
-									className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 								>
-									<span>{isPublishing ? 'Publishing…' : 'Publish update'}</span>
+									Publish update
 									<span aria-hidden>→</span>
-								</Ariakit.Button>
+								</Button>
 							</>
 						) : null}
 						<Ariakit.MenuProvider>
-							<Ariakit.MenuButton className="flex h-9 items-center gap-1.5 rounded-md border border-medium bg-surface px-3 text-xs font-medium text-primary transition-colors hover:border-link/40">
+							<Ariakit.MenuButton render={<Button variant="secondary" size="md" />}>
 								<span
 									aria-hidden
 									className={`size-1.5 rounded-full ${hasPendingEdits ? 'animate-pulse bg-warning' : 'bg-success'}`}
@@ -303,36 +319,31 @@ export function ArticleEditorHeader({
 				) : article.id ? (
 					<>
 						{!article.section ? (
-							<button
-								type="button"
-								onClick={onOpenMeta}
-								title="Set a section"
-								className="flex h-9 items-center gap-1.5 rounded-md border border-dashed border-medium bg-transparent px-3 text-xs font-medium text-tertiary transition-colors hover:border-link/40 hover:text-secondary"
-							>
+							<Button variant="secondary" size="md" onClick={onOpenMeta}>
 								<Icon name="sliders" className="size-3.5" />
 								<span>Set section</span>
-							</button>
+							</Button>
 						) : null}
 						{isOwner ? (
-							<button
-								type="button"
-								aria-label="Delete draft"
-								title="Delete draft"
-								onClick={handleDeleteArticle}
-								className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-tertiary transition-colors hover:border-error/40 hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+							<Tooltip
+								content="Delete draft"
+								render={
+									<Button
+										variant="ghostDestructive"
+										size="md"
+										square
+										onClick={handleDeleteArticle}
+										aria-label="Delete draft"
+									/>
+								}
 							>
-								<Icon name="trash" className="size-3.5" />
-							</button>
+								<Icon name="trash" className="size-4" />
+							</Tooltip>
 						) : null}
-						<button
-							type="button"
-							disabled={isPublishing}
-							onClick={onOpenMeta}
-							className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<span>Publish</span>
+						<Button variant="primary" size="md" pendingLabel={isPublishing ? 'Publishing…' : null} onClick={onOpenMeta}>
+							Publish
 							<span aria-hidden>→</span>
-						</button>
+						</Button>
 					</>
 				) : null}
 			</div>

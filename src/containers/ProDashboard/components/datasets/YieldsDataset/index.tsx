@@ -76,6 +76,9 @@ export function YieldsDataset({
 		onFiltersChange
 	})
 
+	const filtersToggleRef = React.useRef<HTMLButtonElement>(null)
+	const columnsToggleRef = React.useRef<HTMLButtonElement>(null)
+
 	return (
 		<div className="isolate flex h-full w-full flex-col">
 			<YieldsTableHeader
@@ -90,6 +93,8 @@ export function YieldsDataset({
 				showFiltersPanel={!isLoading && !error && showFiltersPanel}
 				setShowFiltersPanel={isLoading || error ? NOOP : setShowFiltersPanel}
 				activeFilterCount={isLoading || error ? 0 : activeFilterCount}
+				filtersToggleRef={filtersToggleRef}
+				columnsToggleRef={columnsToggleRef}
 			/>
 
 			{isLoading ? (
@@ -112,6 +117,7 @@ export function YieldsDataset({
 						toggleColumnVisibility={toggleColumnVisibility}
 						moveColumnUp={moveColumnUp}
 						moveColumnDown={moveColumnDown}
+						toggleRef={columnsToggleRef}
 					/>
 
 					{showFiltersPanel ? (
@@ -125,6 +131,7 @@ export function YieldsDataset({
 							onApplyFilters={applyFilters}
 							onResetFilters={resetFilters}
 							activeFilterCount={activeFilterCount}
+							toggleRef={filtersToggleRef}
 						/>
 					) : null}
 

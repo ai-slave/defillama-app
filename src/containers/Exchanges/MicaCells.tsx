@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -93,8 +94,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 	return (
 		<Hovercard
 			placement="right-start"
-			className="hover-wash size-7 justify-center rounded-lg border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
-			render={<button type="button" aria-label={`${venue.name} promotion: ${promotion.label}`} />}
+			render={<Button size="md" square aria-label={`${venue.name} promotion: ${promotion.label}`} />}
 			contentClassName="w-72 overflow-hidden p-0"
 			content={
 				<>
@@ -137,7 +137,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 				</>
 			}
 		>
-			<Icon name="gift" height={15} width={15} />
+			<Icon name="gift" className="size-4" />
 		</Hovercard>
 	)
 }

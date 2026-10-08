@@ -7,7 +7,7 @@ import {
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TabStatus } from '~/containers/Investors/TabStatus'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
@@ -213,7 +213,11 @@ export default function Revenue() {
 
 			<div className="flex items-center justify-between">
 				<SectionHeader>Dashboard Timeframe</SectionHeader>
-				<ProSegmented<Timeframe>
+				<SegmentedControl<Timeframe>
+					variant="default"
+					size="md"
+					// Holds its width so the heading wraps instead; shrinking, it clipped "All" at 375px.
+					className="shrink-0"
 					label="Dashboard timeframe"
 					value={globalTimeframe}
 					onValueChange={(v) => setGlobalTimeframe(getValidTimeframeForAggregation(v, aggregation) as Timeframe)}
@@ -255,7 +259,9 @@ export default function Revenue() {
 
 			<div className="flex items-center justify-between">
 				<SectionHeader>Data Aggregation</SectionHeader>
-				<ProSegmented<Aggregation>
+				<SegmentedControl<Aggregation>
+					variant="default"
+					size="md"
 					label="Data aggregation"
 					value={aggregation}
 					onValueChange={(nextAggregation) => {
@@ -311,7 +317,9 @@ export default function Revenue() {
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
 					<SectionHeader>Revenue vs Emissions</SectionHeader>
-					<ProSegmented<typeof emissionsView>
+					<SegmentedControl<typeof emissionsView>
+						variant="default"
+						size="md"
 						label="Revenue vs emissions view"
 						value={emissionsView}
 						onValueChange={setEmissionsView}

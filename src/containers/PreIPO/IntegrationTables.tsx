@@ -21,7 +21,6 @@ function IntegrationLink({ href, label }: { href: string; label: string }) {
 			href={href}
 			target="_blank"
 			rel="noopener noreferrer"
-			title={label}
 			className="inline-flex max-w-full items-center gap-1 text-link hover:underline"
 		>
 			<span className="truncate">{label}</span>

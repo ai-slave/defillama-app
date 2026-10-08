@@ -184,9 +184,13 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 					value={
 						<Tooltip
 							content={`${formatUsd(stablecoins.change7dUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
-							className={`ml-auto justify-end truncate mono-md underline decoration-dotted ${
-								+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
-							}`}
+							render={
+								<span
+									className={`mono-md underline decoration-dotted ${
+										+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
+									}`}
+								/>
+							}
 						>
 							{formatPercentChange(stablecoins.change7d)}
 						</Tooltip>

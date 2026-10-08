@@ -25,7 +25,9 @@ vi.mock('@marsidev/react-turnstile', () => ({
 		useImperativeHandle(ref, () => ({ reset: () => setVerified(false) }))
 		return (
 			<div>
-				<span role="status">{verified ? 'Verification complete' : 'Verification required'}</span>
+				<span role="status" data-turnstile-status>
+					{verified ? 'Verification complete' : 'Verification required'}
+				</span>
 				<button type="button" onClick={onError}>
 					Fail verification
 				</button>
@@ -150,8 +152,13 @@ test('requires verification and an explicit reveal, then shows the code and dest
 	])
 	expect(document.querySelector('a')?.href).toBe('https://www.qfex.com/')
 	expect(document.body.textContent).toContain('Try again in 60 min.')
-	await act(async () => document.querySelector<HTMLButtonElement>('button[aria-label="Copy invite code"]')!.click())
+	const copyButton = document.querySelector<HTMLButtonElement>('button[aria-label="Copy invite code"]')!
+	expect(copyButton.nextElementSibling?.textContent).toBe('')
+	await act(async () => copyButton.click())
 	expect(await navigator.clipboard.readText()).toBe('ABCD1234')
+	// The icon swap is silent, so the status beside the button announces the copy.
+	expect(copyButton.nextElementSibling?.getAttribute('role')).toBe('status')
+	expect(copyButton.nextElementSibling?.textContent).toBe('Copied')
 })
 
 test('offers an in-place retry when verification fails to load', async () => {
@@ -192,7 +199,7 @@ test('allows an explicit refresh after the cooldown with a fresh verification', 
 	await click('Reveal my code')
 	await waitForText('ABCD1234')
 	expect(isDisabled(button('Try another code'))).toBe(true)
-	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
+	expect(document.querySelector('[data-turnstile-status]')?.textContent).toBe('Verification required')
 	await click('Verify qfex_invite')
 	claimResponse = { status: 'assigned', code: 'WXYZ5678', refreshAt: new Date(Date.now() + 3_600_000).toISOString() }
 	await click('Try another code')
@@ -234,7 +241,7 @@ test('handles a non-JSON service outage and permits retrying after verification'
 	vi.mocked(fetch).mockResolvedValueOnce(new Response('<html>Unavailable</html>', { status: 502 }))
 	await click('Reveal my code')
 	await waitForText('Invite codes are temporarily unavailable. Please try again later.')
-	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
+	expect(document.querySelector('[data-turnstile-status]')?.textContent).toBe('Verification required')
 	expect(isDisabled(button('Try again'))).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Try again')
@@ -276,7 +283,7 @@ test('keeps verification checked until a pending claim reveals the code', async 
 	)
 	await click('Reveal my code')
 	expect(button('Getting your code…').getAttribute('aria-busy')).toBe('true')
-	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification complete')
+	expect(document.querySelector('[data-turnstile-status]')?.textContent).toBe('Verification complete')
 	await act(async () => finish(Response.json(claimResponse)))
 	await waitForText('ABCD1234')
 	expect(document.querySelector('output')?.textContent).toBe('ABCD1234')

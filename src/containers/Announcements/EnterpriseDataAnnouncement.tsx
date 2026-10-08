@@ -18,7 +18,6 @@ export function EnterpriseDataAnnouncement({ track }: { track: AnnouncementTrack
 			dismissTracking={track.dismiss}
 			className="border border-data-announcement-border bg-(image:--data-announcement-bg) text-data-announcement-text shadow-data-announcement"
 			contentClassName="text-center"
-			dismissButtonClassName="hover:bg-data-announcement-dismiss"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
 				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-data-announcement-badge-text shadow-sm">

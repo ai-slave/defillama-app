@@ -69,12 +69,18 @@ export function ReportIncorrectData({
 			{dataType ? (
 				<Tooltip
 					content="Report incorrect data"
-					render={<button type="button" />}
-					onClick={() => setOpen(true)}
-					className={className}
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							className={className}
+							aria-label={`Report incorrect ${dataType} data`}
+							onClick={() => setOpen(true)}
+						/>
+					}
 				>
-					<Icon name="flag" height={14} width={14} />
-					<span className="sr-only">{`Report incorrect ${dataType} data`}</span>
+					<Icon name="flag" className="size-4" />
 				</Tooltip>
 			) : (
 				<Button type="button" size="md" className="mt-auto mr-auto" onClick={() => setOpen(true)}>

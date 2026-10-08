@@ -84,3 +84,31 @@ test('an overflowing rail offers a scroll button only once it holds more than th
 		vi.restoreAllMocks()
 	}
 })
+
+test('a scroll arrow pressed to the end of the rail stays in place, disabled, so it keeps focus', async () => {
+	let scrollLeft = 0
+	vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(1200)
+	vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600)
+	vi.spyOn(HTMLElement.prototype, 'scrollLeft', 'get').mockImplementation(() => scrollLeft)
+	try {
+		await render(['a', 'b', 'c', 'd'].map(makeDashboard))
+		const right = await waitForUi(() => {
+			const button = container.querySelector<HTMLButtonElement>('[aria-label="Scroll Trending Today right"]')
+			expect(button).not.toBeNull()
+			return button!
+		})
+		const left = container.querySelector('[aria-label="Scroll Trending Today left"]')!
+		expect(left.getAttribute('aria-disabled')).toBe('true')
+		await act(async () => right.focus())
+		scrollLeft = 600
+		// The rail is the scrolling element; a scroll event on every element reaches it without naming its classes.
+		await act(async () => {
+			for (const element of container.querySelectorAll('div')) element.dispatchEvent(new Event('scroll'))
+		})
+		await waitForUi(() => expect(right.getAttribute('aria-disabled')).toBe('true'))
+		expect(right.isConnected).toBe(true)
+		expect(left.getAttribute('aria-disabled')).toBeNull()
+	} finally {
+		vi.restoreAllMocks()
+	}
+})

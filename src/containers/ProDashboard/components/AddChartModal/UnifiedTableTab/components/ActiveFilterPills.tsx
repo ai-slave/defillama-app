@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 export interface FilterPill {
@@ -18,16 +19,11 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
 	return (
 		<div className="flex flex-wrap gap-2">
 			{pills.map((pill) => (
-				<button
-					type="button"
-					key={pill.id}
-					onClick={pill.onRemove}
-					className="group flex items-center gap-1 rounded-full border border-pro-cards-border px-3 py-1 text-xs font-medium text-pro-text-secondary transition hover:border-brand hover:text-brand"
-					aria-label={`Remove filter ${pill.label}`}
-				>
+				<Button key={pill.id} variant="filter" size="sm" data-active="true" onClick={pill.onRemove}>
+					<span className="sr-only">Remove filter </span>
 					<span className="max-w-[140px] truncate">{pill.label}</span>
-					<Icon name="x" height={10} width={10} className="text-pro-text-tertiary group-hover:text-brand" />
-				</button>
+					<Icon name="x" className="size-3.5" aria-hidden="true" />
+				</Button>
 			))}
 		</div>
 	)

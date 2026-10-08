@@ -3,8 +3,9 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
@@ -116,14 +117,16 @@ function AllocatedAssetsSection({
 				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
 					<h3 className="text-sm font-medium text-pro-text-label">{allocatedAssets.title}</h3>
 					<div className="flex flex-wrap items-center gap-2">
-						<ProSegmented<typeof view>
+						<SegmentedControl<typeof view>
+							variant="default"
 							size="sm"
 							label="Allocated assets view"
 							options={AA_VIEW_OPTIONS}
 							value={view}
 							onValueChange={setView}
 						/>
-						<ProSegmented
+						<SegmentedControl
+							variant="default"
 							size="sm"
 							label="Allocated assets grouping"
 							options={AA_DIMENSION_OPTIONS}
@@ -149,26 +152,39 @@ function AllocatedAssetsSection({
 								{currentEntries.map((entry, idx) => {
 									const hasChildren = entry.children && entry.children.length > 0
 									const isOpen = expandedRows.has(idx)
-									const color = pieColors[entry.name] || '#8b949e'
+									const color = pieColors[entry.name] || 'var(--pro-text-tertiary)'
+									const row = (
+										<>
+											<span className="flex w-4 shrink-0 justify-center">
+												{hasChildren ? (
+													<Icon
+														name="chevron-right"
+														className={`size-3.5 text-pro-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
+													/>
+												) : null}
+											</span>
+											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
+											<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary">{entry.name}</span>
+											<span className="shrink-0 label-md text-pro-text-primary">{entry.formatted}</span>
+											<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
+												{formatPercent(entry.pct, { input: 'percent' })}
+											</span>
+										</>
+									)
 									return (
 										<div key={entry.name} className="border-b border-pro-cards-border last:border-b-0">
-											<button
-												type="button"
-												disabled={!hasChildren}
-												aria-expanded={hasChildren ? isOpen : undefined}
-												className={`flex w-full items-center gap-2 py-2.5 text-left ${hasChildren ? 'cursor-pointer hover:opacity-80' : ''}`}
-												onClick={() => hasChildren && toggleRow(idx)}
-											>
-												<span className="w-4 shrink-0 text-[10px] text-pro-text-label">
-													{hasChildren ? (isOpen ? '▼' : '▶') : ''}
-												</span>
-												<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-												<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary">{entry.name}</span>
-												<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{entry.formatted}</span>
-												<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
-													{formatPercent(entry.pct, { input: 'percent' })}
-												</span>
-											</button>
+											{hasChildren ? (
+												<button
+													type="button"
+													aria-expanded={isOpen}
+													className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-sl-hover-bg"
+													onClick={() => toggleRow(idx)}
+												>
+													{row}
+												</button>
+											) : (
+												<div className="flex w-full items-center gap-2 px-1 py-2.5">{row}</div>
+											)}
 											{isOpen && entry.children && (
 												<div className="pb-2 pl-8">
 													{entry.children.map((child) => (
@@ -632,7 +648,7 @@ export default function Financials() {
 											<td className="py-2.5 text-sm text-pro-text-primary">
 												<span
 													className="mr-2 inline-block size-2 rounded-full"
-													style={{ background: data.breakdownColors[item.name] || '#8b949e' }}
+													style={{ background: data.breakdownColors[item.name] || 'var(--pro-text-tertiary)' }}
 												/>
 												{item.name}
 											</td>

@@ -24,7 +24,7 @@ const click = (element: HTMLElement) =>
 	act(async () => element.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 // The calendar and the treemap both offer "Month"; the treemap's period picker comes second.
 const openTreemapMonth = () => click(Array.from(host().querySelectorAll<HTMLElement>('input[value="Month"]')).at(-1)!)
-const shownMonth = () => host().querySelector('[aria-label="Previous Month"]')?.nextElementSibling?.textContent
+const shownMonth = () => host().querySelector('[aria-label="Previous month"]')?.nextElementSibling?.textContent
 const tick = () => act(async () => vi.advanceTimersByTime(30_000))
 
 async function mountAt(nowMs: number) {
@@ -91,7 +91,7 @@ test('the treemap month view follows the calendar into the next month', async ()
 test('a month the reader stepped to stays when the calendar crosses into the next month', async () => {
 	await mountAt(Date.UTC(2026, 9, 31, 23, 59, 50))
 	await openTreemapMonth()
-	await click(host().querySelector<HTMLButtonElement>('[aria-label="Previous Month"]')!)
+	await click(host().querySelector<HTMLButtonElement>('[aria-label="Previous month"]')!)
 	expect(shownMonth()).toBe('September 2026')
 
 	await tick()

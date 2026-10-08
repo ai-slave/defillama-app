@@ -68,16 +68,19 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 																width: column_getSize(header.column)
 															}}
 														>
-															{header.isPlaceholder && header.rowSpan === 1 ? null : (
+															{header.isPlaceholder && header.rowSpan === 1 ? null : sortable ? (
 																<button
 																	type="button"
-																	disabled={!sortable}
-																	onClick={sortable ? () => column_toggleSorting(sortable) : undefined}
-																	className={`flex w-full items-center justify-center gap-1 px-3 ${sortable ? 'cursor-pointer' : 'cursor-default'}`}
+																	onClick={() => column_toggleSorting(sortable)}
+																	className="flex w-full cursor-pointer items-center justify-center gap-1 px-3"
 																>
 																	<FlexRender header={header} />
-																	{sortable ? <SortIcon dir={column_getIsSorted(sortable)} /> : null}
+																	<SortIcon dir={column_getIsSorted(sortable)} />
 																</button>
+															) : (
+																<div className="flex w-full items-center justify-center gap-1 px-3">
+																	<FlexRender header={header} />
+																</div>
 															)}
 														</th>
 													)

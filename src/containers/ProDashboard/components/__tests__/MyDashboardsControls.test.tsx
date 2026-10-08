@@ -35,7 +35,7 @@ function Controls() {
 
 test('clearing the search hands focus back to the search box', async () => {
 	await act(async () => root.render(<Controls />))
-	const clear = [...container.querySelectorAll('button')].find((node) => node.textContent === 'Clear search')!
+	const clear = container.querySelector<HTMLButtonElement>('button[aria-label="Clear search"]')!
 	await act(async () => {
 		clear.focus()
 		clear.click()

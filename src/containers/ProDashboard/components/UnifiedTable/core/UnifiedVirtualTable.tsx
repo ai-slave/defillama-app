@@ -108,19 +108,28 @@ export function UnifiedVirtualTable({
 												: ''
 										}`}
 									>
-										<button
-											type="button"
-											className={`relative flex w-full flex-nowrap items-center justify-start gap-1 font-medium *:whitespace-nowrap data-[align=center]:justify-center data-[align=end]:justify-end ${header.column.getCanSort() ? 'cursor-pointer' : ''}`}
-											data-align={meta?.align ?? (isGroupRow ? 'center' : 'start')}
-											onClick={header.column.getCanSort() ? () => header.column.toggleSorting() : undefined}
-										>
-											{header.isPlaceholder ? null : (
-												<HeaderWithTooltip content={meta?.headerHelperText}>{value}</HeaderWithTooltip>
-											)}
-											{!header.isPlaceholder && header.column.getCanSort() ? (
-												<SortIcon dir={header.column.getIsSorted()} />
-											) : null}
-										</button>
+										{header.column.getCanSort() ? (
+											<button
+												type="button"
+												className={HEADER_CONTENT_STYLES}
+												data-align={meta?.align ?? (isGroupRow ? 'center' : 'start')}
+												onClick={() => header.column.toggleSorting()}
+											>
+												{header.isPlaceholder ? null : (
+													<HeaderWithTooltip content={meta?.headerHelperText}>{value}</HeaderWithTooltip>
+												)}
+												{header.isPlaceholder ? null : <SortIcon dir={header.column.getIsSorted()} />}
+											</button>
+										) : (
+											<div
+												className={HEADER_CONTENT_STYLES}
+												data-align={meta?.align ?? (isGroupRow ? 'center' : 'start')}
+											>
+												{header.isPlaceholder ? null : (
+													<HeaderWithTooltip content={meta?.headerHelperText}>{value}</HeaderWithTooltip>
+												)}
+											</div>
+										)}
 									</div>
 								)
 							})}
@@ -191,6 +200,9 @@ export function UnifiedVirtualTable({
 		</div>
 	)
 }
+
+const HEADER_CONTENT_STYLES =
+	'relative flex w-full flex-nowrap items-center justify-start gap-1 font-medium *:whitespace-nowrap data-[align=center]:justify-center data-[align=end]:justify-end'
 
 interface HeaderWithTooltipProps {
 	children: React.ReactNode

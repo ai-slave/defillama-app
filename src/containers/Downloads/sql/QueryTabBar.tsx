@@ -4,6 +4,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tab, tabIds } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import type { QueryTab } from './useSqlTabs'
 
 interface QueryTabBarProps {
@@ -249,13 +250,17 @@ export function QueryTabBar({
 function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNotebook: () => void }) {
 	return (
 		<Ariakit.MenuProvider>
-			<Ariakit.MenuButton
-				aria-label="New tab"
-				title="New tab (⌘T)"
-				className="mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-pro-app-bg text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+			<Tooltip
+				content="New tab (⌘T)"
+				render={
+					<Ariakit.MenuButton
+						aria-label="New tab"
+						className="mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-pro-app-bg text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+					/>
+				}
 			>
-				<Icon name="plus" className="size-3.5" />
-			</Ariakit.MenuButton>
+				<Icon name="plus" className="size-4" />
+			</Tooltip>
 			<MenuSurface variant="actions" gutter={4}>
 				<MenuItem onClick={onNewTab}>
 					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />

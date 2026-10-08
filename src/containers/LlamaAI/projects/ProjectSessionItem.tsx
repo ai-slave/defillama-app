@@ -85,17 +85,22 @@ export function ProjectSessionItem({
 					>
 						Save
 					</Button>
-					<Button
-						type="button"
-						size="md"
-						variant="ghost"
-						square
-						onClick={() => closeRename()}
-						disabled={isBusy}
-						aria-label="Cancel rename"
+					<Tooltip
+						content="Cancel rename"
+						render={
+							<Button
+								type="button"
+								size="md"
+								variant="ghost"
+								square
+								onClick={() => closeRename()}
+								disabled={isBusy}
+								aria-label="Cancel rename"
+							/>
+						}
 					>
 						<Icon name="x" height={16} width={16} />
-					</Button>
+					</Tooltip>
 				</form>
 				{renameError ? (
 					<p role="alert" className="mt-1 body-sm text-error">

@@ -1,8 +1,9 @@
 import * as React from 'react'
+import { Button } from '~/ui/Button'
 import type { Dashboard } from '../dashboardTypes'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
-import { ProChip, ProMeta } from '../ui'
+import { ProMeta } from '../ui'
 import { isLowQualityDashboardName } from './discoveryQuality'
 import { DiscoverySection } from './DiscoverySection'
 import { dedupeShelves, DISCOVERY_RAIL_SIZE } from './discoveryShelves'
@@ -83,9 +84,10 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 			<div className="flex scrollbar-none items-center gap-2 overflow-x-auto pb-1">
 				<ProMeta className="shrink-0" items={['Trending']} />
 				{trendingTags.map((tag) => (
-					<ProChip
-						as="button"
+					<Button
 						type="button"
+						variant="secondary"
+						size="sm"
 						key={tag}
 						onClick={() => onTagClick(tag)}
 						data-umami-event="dashboard-tag-click"
@@ -93,7 +95,7 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 						className="shrink-0"
 					>
 						{tag}
-					</ProChip>
+					</Button>
 				))}
 			</div>
 

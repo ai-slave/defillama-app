@@ -1,5 +1,5 @@
-import { Hovercard } from '~/ui/Hovercard'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
+import { ValueBadge } from './feePresentation'
 import type { CryptoRailRowModel, CryptoRailsModel } from './models'
 
 export function cryptoRailSummary(rails: CryptoRailsModel): string {
@@ -71,15 +71,9 @@ function CryptoRailTable({ label, rows }: { label: string; rows: Array<CryptoRai
 export function CryptoRailsValue({ name, rails }: { name: string; rails: CryptoRailsModel | null }) {
 	if (rails === null) return <span className="text-tertiary">–</span>
 	return (
-		<Hovercard
-			placement="left-start"
-			className="rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
-			render={
-				<button
-					type="button"
-					aria-label={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
-				/>
-			}
+		<ValueBadge
+			tone="info"
+			ariaLabel={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
 			contentClassName="w-[760px] p-3"
 			content={
 				<div className="flex flex-col gap-4">
@@ -90,6 +84,6 @@ export function CryptoRailsValue({ name, rails }: { name: string; rails: CryptoR
 			}
 		>
 			{cryptoRailSummary(rails)}
-		</Hovercard>
+		</ValueBadge>
 	)
 }

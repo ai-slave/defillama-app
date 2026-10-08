@@ -40,7 +40,9 @@ function button(name: string) {
 }
 
 const deletePortfolioButton = () =>
-	document.querySelector<HTMLButtonElement>('button[title="Delete current portfolio"]')
+	[...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(candidate) => candidate.textContent === 'Delete' && !candidate.closest('[role="dialog"], [role="alertdialog"]')
+	)
 const portfolioToolbar = () => document.querySelector('h1')!.parentElement!.textContent
 
 const waitFor = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 })

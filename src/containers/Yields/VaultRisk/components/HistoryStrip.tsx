@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -406,17 +407,22 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 						{selection.p.classification}
 					</span>
 				) : null}
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					square
-					onClick={onClose}
-					aria-label="Close detail"
-					className="-mr-1 ml-auto"
+				<Tooltip
+					content="Close detail"
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							square
+							onClick={onClose}
+							aria-label="Close detail"
+							className="-mr-1 ml-auto"
+						/>
+					}
 				>
-					<Icon name="x" className="size-3" />
-				</Button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 			</div>
 			{selection.kind === 'incident' ? (
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 body-sm text-secondary">
@@ -560,7 +566,19 @@ export function HistoryStrip({
 				</div>
 			</div>
 
-			{selection ? <DetailPanel selection={selection} onClose={() => setSelectedKey(null)} /> : null}
+			{selection ? (
+				<DetailPanel
+					selection={selection}
+					onClose={() => {
+						// The detail leaves with its close button; the marker that opened it takes focus back.
+						const marker = document.querySelector<HTMLElement>(`[aria-controls="${DETAIL_ID}"]`)
+						keepFocus(
+							() => setSelectedKey(null),
+							() => marker
+						)
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

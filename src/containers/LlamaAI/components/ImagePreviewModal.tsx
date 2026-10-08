@@ -118,7 +118,8 @@ function ImagePreviewContent({
 					}}
 					disabled={copy.isPending}
 					accessibleWhenDisabled
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-disabled:opacity-50"
+					aria-busy={copy.isPending || undefined}
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-busy:cursor-progress"
 				>
 					{copy.isPending ? (
 						<LoadingSpinner size={14} />
@@ -132,7 +133,8 @@ function ImagePreviewContent({
 					onClick={(event) => download.mutate(event.currentTarget)}
 					disabled={download.isPending}
 					accessibleWhenDisabled
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-disabled:opacity-50"
+					aria-busy={download.isPending || undefined}
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-busy:cursor-progress"
 				>
 					{download.isPending ? (
 						<LoadingSpinner size={14} />
@@ -145,7 +147,7 @@ function ImagePreviewContent({
 					href={imageUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 hover:bg-ai-white/10 hover:text-ai-white"
+					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white/80 hover:bg-ai-white/10 hover:text-ai-white"
 				>
 					<Icon name="external-link" height={14} width={14} />
 					<span>

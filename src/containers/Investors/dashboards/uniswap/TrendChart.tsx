@@ -3,8 +3,8 @@ import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/co
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
 	BUCKET_DAYS,
 	type Bucket,
@@ -208,7 +208,8 @@ export function SeriesTrendChart({
 			control={
 				<>
 					{extraControl}
-					<ProSegmented<View>
+					<SegmentedControl<View>
+						variant="default"
 						size="sm"
 						label={`${title} period`}
 						options={viewOptions}

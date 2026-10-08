@@ -46,7 +46,6 @@
 	--ai-research-bright: #8a8aff;
 	--ai-mention: #8b5cf6;
 	--ai-slack: #4a154b;
-	--ai-slack-deep: #3a1140;
 
 	/* Status */
 	--ai-warning: #d97706;
@@ -89,8 +88,6 @@ html.dark {
 	--color-ai-research-bright: var(--ai-research-bright);
 	--color-ai-research: var(--ai-research);
 	--color-ai-mention: var(--ai-mention);
-	--color-ai-slack: var(--ai-slack);
-	--color-ai-slack-deep: var(--ai-slack-deep);
 	--color-ai-warning: var(--ai-warning);
 	--color-ai-warning-bright: var(--ai-warning-bright);
 	--color-ai-error: var(--ai-error);
@@ -135,4 +132,9 @@ html.dark {
 /* The LlamaAI CTA gold gradient fill (nav buttons, landing CTAs) */
 @utility bg-ai-gold-cta {
 	background-image: var(--ai-gold-gradient);
+}
+
+/* Slack integration actions. Inside it, Button primary takes the Slack aubergine. */
+.ai-slack-accent {
+	--bg-brand: var(--ai-slack);
 }

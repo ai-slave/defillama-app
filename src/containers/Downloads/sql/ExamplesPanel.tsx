@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo, useRef, useState, type RefObject } from 'react'
+import { useId, useMemo, useRef, useState, type RefObject } from 'react'
+import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
 
 interface ExamplesPanelProps {
@@ -31,28 +33,22 @@ function CollapsedExamplesRail({
 }) {
 	return (
 		<aside className="flex flex-col items-stretch gap-2 rounded-md border border-subtle bg-surface p-1.5">
-			<button
-				ref={toggleRef}
-				type="button"
-				onClick={onExpand}
-				title="Expand playbook"
-				aria-label="Expand playbook"
-				className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+			<Tooltip
+				content="Expand playbook"
+				render={
+					<Button ref={toggleRef} variant="ghost" size="md" square onClick={onExpand} aria-label="Expand playbook" />
+				}
 			>
-				<Icon name="panel-left-open" className="size-3.5 rotate-180" />
-			</button>
+				<Icon name="panel-left-open" className="size-4 rotate-180" />
+			</Tooltip>
 			<button
 				type="button"
 				onClick={onExpand}
-				title={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
 				aria-label={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
-				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-brand"
+				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 label-sm text-pro-text-tertiary transition-colors hover:text-brand"
 			>
 				<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary transition-colors group-hover:text-brand" />
-				<span
-					className="font-semibold tracking-[0.16em] uppercase [writing-mode:vertical-rl]"
-					style={{ transform: 'rotate(180deg)' }}
-				>
+				<span className="tracking-widest uppercase [writing-mode:vertical-rl]" style={{ transform: 'rotate(180deg)' }}>
 					Playbook
 				</span>
 				<span className="tabular-nums">{EXAMPLE_QUERIES.length}</span>
@@ -73,6 +69,8 @@ function ExpandedExamplesPanel({
 	toggleRef: RefObject<HTMLButtonElement | null>
 }) {
 	const [filter, setFilter] = useState('')
+	const filterId = useId()
+	const filterRef = useRef<HTMLInputElement>(null)
 	const [hoveredGroup, setHoveredGroup] = useState<ExampleSubcategory | null>(null)
 
 	const filteredGroups = useMemo(() => {
@@ -121,43 +119,63 @@ function ExpandedExamplesPanel({
 				<div className="flex items-center gap-1">
 					<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary" />
 					{onCollapse ? (
-						<button
-							ref={toggleRef}
-							type="button"
-							onClick={onCollapse}
-							title="Collapse playbook"
-							aria-label="Collapse playbook"
-							className="flex size-5 items-center justify-center rounded-sm text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+						<Tooltip
+							content="Collapse playbook"
+							render={
+								<Button
+									ref={toggleRef}
+									variant="ghost"
+									size="sm"
+									square
+									onClick={onCollapse}
+									aria-label="Collapse playbook"
+								/>
+							}
 						>
-							<Icon name="panel-left-close" className="size-3 rotate-180" />
-						</button>
+							<Icon name="panel-left-close" className="size-4 rotate-180" />
+						</Tooltip>
 					) : null}
 				</div>
 			</header>
 
-			<div className="relative">
-				<Icon
-					name="search"
-					className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-pro-text-tertiary"
-				/>
-				<input
-					type="text"
-					value={filter}
-					onChange={(e) => setFilter(e.target.value)}
-					aria-label="Filter example queries"
-					placeholder="Filter queries…"
-					className="w-full border-b border-subtle bg-transparent pr-5 pb-1.5 pl-5 text-xs text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
-				/>
-				{filter ? (
-					<button
-						type="button"
-						onClick={() => setFilter('')}
-						aria-label="Clear filter"
-						className="absolute top-1/2 right-0 flex size-4 -translate-y-1/2 items-center justify-center rounded-sm text-pro-text-tertiary hover:text-pro-text-primary"
-					>
-						<Icon name="x" className="size-3" />
-					</button>
-				) : null}
+			{/* An underline field, not SearchField: a boxed field outweighs this dense 256px rail. */}
+			<div className="flex flex-col gap-1">
+				<label htmlFor={filterId} className="label-sm text-pro-text-secondary">
+					Filter
+				</label>
+				<div className="relative">
+					<Icon
+						name="search"
+						className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-pro-text-tertiary"
+					/>
+					<input
+						ref={filterRef}
+						id={filterId}
+						type="text"
+						value={filter}
+						onChange={(e) => setFilter(e.target.value)}
+						placeholder="Filter queries…"
+						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 text-xs text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
+					/>
+					{filter ? (
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							// The button leaves with the text, so focus goes back to the field.
+							onClick={() =>
+								keepFocus(
+									() => setFilter(''),
+									() => filterRef.current
+								)
+							}
+							aria-label="Clear filter"
+							className="absolute top-1/2 right-0 -translate-y-1/2"
+						>
+							<Icon name="x" className="size-4" />
+						</Button>
+					) : null}
+				</div>
 			</div>
 
 			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
@@ -241,7 +259,7 @@ function PlaybookItem({
 	return (
 		<li
 			className={`group/item relative border-b border-subtle last:border-b-0 ${
-				isDisabled ? 'opacity-40' : ''
+				isDisabled ? 'opacity-60' : ''
 			} ${isBusy ? 'bg-brand/5' : ''}`}
 		>
 			<span
@@ -254,27 +272,32 @@ function PlaybookItem({
 				style={{ background: accentColor }}
 			/>
 			{/* The pressed example turns busy under the reader's focus, so it stays focusable while it runs. */}
-			<Ariakit.Button
-				onClick={() => onApply(example)}
-				title={example.description}
-				disabled={isDisabled || isBusy}
-				accessibleWhenDisabled={isBusy}
-				aria-busy={isBusy}
-				className={`grid w-full grid-cols-[1.5rem_minmax(0,1fr)_0.75rem] items-center gap-2 py-1.5 text-left transition-transform duration-200 disabled:cursor-not-allowed ${
-					!isDisabled && !isBusy ? 'group-hover/item:translate-x-0.5' : ''
-				}`}
+			<Tooltip
+				content={example.description}
+				placement="right"
+				render={
+					<Ariakit.Button
+						onClick={() => onApply(example)}
+						disabled={isDisabled || isBusy}
+						accessibleWhenDisabled={isBusy}
+						aria-busy={isBusy}
+						className={`grid w-full grid-cols-[1.5rem_minmax(0,1fr)_0.75rem] items-center gap-2 py-1.5 text-left transition-transform duration-200 disabled:cursor-not-allowed ${
+							!isDisabled && !isBusy ? 'group-hover/item:translate-x-0.5' : ''
+						}`}
+					/>
+				}
 			>
 				<span className="flex size-4 items-center justify-center">
 					{isBusy ? (
 						<LoadingSpinner size={10} />
 					) : (
-						<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-colors group-hover/item:text-pro-text-primary">
+						<span className="label-sm text-pro-text-tertiary transition-colors group-hover/item:text-pro-text-primary">
 							{String(ordinal).padStart(2, '0')}
 						</span>
 					)}
 				</span>
 				<span
-					className={`truncate text-[12.5px] leading-snug transition-colors ${
+					className={`truncate label-sm transition-colors ${
 						isBusy ? 'text-brand' : 'text-pro-text-primary group-hover/item:text-brand'
 					}`}
 				>
@@ -288,7 +311,7 @@ function PlaybookItem({
 							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-brand group-hover/item:opacity-100'
 					}`}
 				/>
-			</Ariakit.Button>
+			</Tooltip>
 		</li>
 	)
 }

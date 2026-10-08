@@ -30,7 +30,10 @@ function ChangeValue({ stat, prominent = false }: { stat: ValidChangeStat; promi
 	return (
 		<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
 			<span className="text-secondary">Change ({stat.days}d)</span>
-			<Tooltip content={stat.absolute} className={`${color} truncate font-jetbrains underline decoration-dotted`}>
+			<Tooltip
+				content={stat.absolute}
+				render={<span className={`${color} min-w-0 truncate font-jetbrains underline decoration-dotted`} />}
+			>
 				{formatPercent(stat.percent, { input: 'percent' })}
 			</Tooltip>
 		</p>

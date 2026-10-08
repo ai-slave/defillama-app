@@ -50,7 +50,7 @@ export function SearchField({ label, value, onChange, className, autoFocus, ...p
 						event.currentTarget.parentElement?.querySelector('input')?.focus()
 					}}
 				>
-					<Icon name="x" className="size-3.5" aria-hidden="true" />
+					<Icon name="x" className="size-4" aria-hidden="true" />
 				</Button>
 			) : null}
 		</div>

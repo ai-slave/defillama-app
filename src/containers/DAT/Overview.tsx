@@ -159,7 +159,6 @@ const overviewColumns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink
 						href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
-						title={name}
 						className="truncate label-md text-link hover:underline"
 					>
 						{name}
@@ -192,11 +191,11 @@ const overviewColumns = columnHelper.columns([
 						placement="right-start"
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} />}
 						contentClassName="w-72 max-w-(--popover-available-width) p-3"
-						render={<button type="button" />}
-						className="h-5 w-full bg-surface-elevated-2 align-middle"
+						render={<button type="button" aria-label="Show asset breakdown" className="h-5 bg-surface-elevated-2" />}
+						className="w-full align-middle"
 					>
 						{assetBreakdown.map((asset) => (
-							<div
+							<span
 								key={asset.asset}
 								style={{ width: `${asset.dominance}%`, background: asset.color }}
 								className="h-5"

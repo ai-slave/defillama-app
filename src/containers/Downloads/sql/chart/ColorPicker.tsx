@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, useState } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
+import { Button } from '~/ui/Button'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 interface ColorPickerProps {
@@ -47,7 +48,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 							))}
 						</Ariakit.RadioGroup>
 					</Ariakit.RadioProvider>
-					<div className="flex items-center gap-1">
+					<div className="flex items-center gap-2 label-sm">
 						<input
 							type="text"
 							aria-label={`Custom color for ${name}`}
@@ -57,15 +58,11 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 								if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 							}}
 							placeholder="#2f73c6"
-							className="w-20 rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 font-mono text-[10.5px] text-pro-text-primary focus:border-brand focus:outline-hidden"
+							className="w-20 rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 mono-sm text-pro-text-primary focus:border-brand focus:outline-hidden"
 						/>
-						<button
-							type="button"
-							onClick={() => onChange(null)}
-							className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-pro-text-tertiary hover:bg-hover-row hover:text-pro-text-primary"
-						>
-							reset
-						</button>
+						<Button variant="link" onClick={() => onChange(null)}>
+							Reset
+						</Button>
 					</div>
 				</div>
 			</PopoverSurface>

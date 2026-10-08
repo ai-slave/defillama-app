@@ -455,6 +455,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 								size="sm"
 								variant="ghost"
 								square
+								aria-expanded={row.getIsExpanded()}
 								type="button"
 								className="absolute -left-1.5"
 								onClick={row.getToggleExpandedHandler()}
@@ -1215,7 +1216,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ getValue }) => {
 				const headquarters = getValue()
 				return headquarters ? (
-					<Tooltip content={headquarters} className="block! max-w-full truncate">
+					<Tooltip content={headquarters} render={<span className="block truncate" />}>
 						{headquarters}
 					</Tooltip>
 				) : (

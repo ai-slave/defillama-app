@@ -2,11 +2,12 @@ import type { ReactNode } from 'react'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 
+/** The composer's prompt field. One chat page has one. */
+export const composerField = () => document.querySelector<HTMLTextAreaElement>('textarea[name="prompt"]')
+
 /** A ref for a notice around the composer that its own action or new state removes (a dismissed tip, a retried
-    prompt): when it leaves holding focus, the composer's prompt field takes it. One chat page has one prompt field. */
-export const focusComposerOnLeave = passFocusOnLeave(() =>
-	document.querySelector<HTMLTextAreaElement>('textarea[name="prompt"]')
-)
+    prompt): when it leaves holding focus, the composer's prompt field takes it. */
+export const focusComposerOnLeave = passFocusOnLeave(composerField)
 
 /**
  * A strip docked on the composer's top edge for conversation state that blocks or shapes the next prompt, with

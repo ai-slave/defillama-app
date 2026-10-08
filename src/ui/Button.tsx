@@ -8,9 +8,15 @@ import { LoadingSpinner } from './Loaders'
 
    Variants:
    - secondary:   transparent + border-medium (default toolbar/action button)
-   - primary:     bg-brand + text-on-brand (one per view: Done, Sign-in, …)
+   - primary:     bg-brand + text-on-brand (one per view: Done, Sign-in, …;
+                  a dismissible banner's single CTA, an empty state's CTA and
+                  a repeated cell's Run may also be primary)
    - outline:     border-brand + text-link
-   - destructive: border-data-down + text-data-down for irreversible actions
+   - destructive: border-error + text-error for irreversible actions
+   - ghostDestructive: a quiet icon-only delete in a dense row (trash on a
+                  saved query, draft or preset); turns error red on hover,
+                  focus and touch screens. Red marks data loss only: unpin,
+                  clear a selection or remove a filter stay ghost
    - ghost:       borderless quiet trigger; `data-active` gives it the
                   brand-muted fill and text-link-on-tint
    - filter:      rounded-full brand-border pill; `data-active` tints it.
@@ -20,11 +26,33 @@ import { LoadingSpinner } from './Loaders'
    - toggle:      elevated neutral fill, brand border/tint/text-link-on-tint
                   when `data-active`: toolbar filters and selectable options
    - metricBrowse: dashed brand pill in the home metrics browse toolbar
+   - overlay:     opaque surface with a border and shadow, for a rail scroll
+                  arrow that floats over scrolling content. It owns its
+                  reveal: hidden until the pointer enters the `group/rail`
+                  container around it or it takes focus. The call site
+                  passes placement only
+   - link:        text-link with no padding, no height and no type of its own,
+                  so it inherits the sentence or label it sits in, case
+                  included (preflight resets a button's text-transform): "Back to
+                  history", "Use another sign-in method", "Sign out". A retry
+                  after an error is a secondary sm "Try again", never a link
+                  (docs/focus-and-errors.md). The row around a link carries a
+                  named type style (`label-sm`, `body-sm`), never a raw text-*.
+                  Takes no `size`. Anything aligned to a text edge or inside a
+                  sentence is a link; ghost is a quiet button among other
+                  buttons. Never pull a text action into line with a
+                  negative margin; that is what the link's missing padding is for.
+   Pick a pill by its job: a removable active filter or a filter picker is
+   `filter`; a pill that turns a list filter on or off is `toggle`; a pill
+   that runs or inserts something (a suggestion, a search topic, a formula
+   field) is `secondary` sm with no active state.
    Variants with a selected state use the additive `hover-wash`, so the
    active tint stays under hover. Variants never inject icons.
 
    Sizes: sm = min-h-6 px-2 py-0.5 rounded-md; md = min-h-8 px-3 py-1.5
-   rounded-lg; both label-sm. Heights are PADDING-DRIVEN, never fixed: every
+   rounded-lg; both label-sm. lg = min-h-11 px-4 py-2.5 label-md, only for a
+   standalone full-width conversion CTA (pricing, checkout, the API card);
+   a CTA beside an input stays md, level with the input. Heights are PADDING-DRIVEN, never fixed: every
    control in a row shares the same py, so mixed content lines up. `square`
    (icon-only) is p-0.5 / p-1.5. In a phone sheet's rows (`data-sheet`, the
    `sheet:` variant) md grows to 44px with a label-md label and a square md
@@ -55,7 +83,9 @@ import { LoadingSpinner } from './Loaders'
      a disabled <fieldset> around it also disables it (the `not-aria-busy`
      guards). Pass null once the action settles.
    - `accessibleWhenDisabled`: a control that disables itself when pressed (a
-     stepper at its limit, Resend during its cooldown, a pager at its end).
+     stepper at its limit, Resend during its cooldown, a pager at its end),
+     or a disabled icon-only control, so its Tooltip still names it; the
+     reason it is disabled still shows in visible text.
    A pending button is never natively disabled, even when the caller also
    passes `disabled`, because a native disable drops focus to the page.
    Disabled controls dim to 60% and keep their fill on hover. Never a spinner
@@ -79,7 +109,6 @@ import { LoadingSpinner } from './Loaders'
    `accessibleWhenDisabled` to Button. A link is `<Button as={BasicLink}>`.
    The class builder is private on purpose: a component whose trigger is a
    button renders Button itself rather than taking a class for it.
-   ProButton follows the same model with `loading`.
 ---------------------------------------------------------------------------- */
 
 type ButtonVariant =
@@ -91,7 +120,9 @@ type ButtonVariant =
 	| 'filter'
 	| 'toggle'
 	| 'metricBrowse'
-type ButtonSize = 'sm' | 'md'
+	| 'overlay'
+	| 'ghostDestructive'
+type ButtonSize = 'sm' | 'md' | 'lg'
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	secondary:
@@ -100,14 +131,23 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'border border-transparent bg-brand text-on-brand not-disabled:not-aria-disabled:hover:brightness-110 not-disabled:not-aria-disabled:focus-visible:brightness-110 focus-visible:focus-ring-on-brand',
 	outline: 'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
 	destructive:
-		'border border-data-down text-data-down not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
+		'border border-error text-error not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
 	ghost:
 		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint text-secondary not-disabled:not-aria-disabled:hover:text-primary focus-visible:text-primary',
 	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',
 	toggle:
 		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint',
-	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary'
+	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary',
+	// Hidden until the pointer enters the rail or the arrow takes focus. A disabled arrow (at the rail's end) stays
+	// hidden there too, because the disabled opacity-60 would otherwise outrank opacity-0.
+	overlay:
+		'hover-wash border border-medium bg-surface text-primary shadow-overlay-sm opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 aria-disabled:not-group-hover/rail:not-focus-visible:opacity-0',
+	ghostDestructive:
+		'hover-wash border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:text-error focus-visible:text-error'
 }
+
+const LINK_CLASSES =
+	'touch-target inline-flex cursor-pointer items-center gap-1 text-link [text-transform:inherit] underline-offset-2 not-disabled:not-aria-disabled:hover:underline focus-visible:underline disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress'
 
 /* min-h pins the control heights (sm 24, md 32) so rows of
    mixed content (16px icons vs 16px text lines) stay exactly level; padding
@@ -120,40 +160,39 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
    give every size a 44px touch target instead. */
 const SIZE_CLASSES: Record<ButtonSize, string> = {
 	sm: 'label-sm min-h-6 gap-1 px-2 py-0.5',
-	md: 'label-sm min-h-8 gap-1 px-3 py-1.5 sheet:min-h-11 sheet:label-md'
+	md: 'label-sm min-h-8 gap-1 px-3 py-1.5 sheet:min-h-11 sheet:label-md',
+	lg: 'label-md min-h-11 gap-1.5 px-4 py-2.5'
 }
 
 /** Icon-only buttons: aspect-square + self-center so flex rows can't stretch them. */
 const SQUARE_SIZE_CLASSES: Record<ButtonSize, string> = {
 	sm: 'aspect-square min-h-6 self-center p-0.5',
-	md: 'aspect-square min-h-8 self-center p-1.5 sheet:min-h-11'
+	md: 'aspect-square min-h-8 self-center p-1.5 sheet:min-h-11',
+	lg: 'aspect-square min-h-11 self-center p-2.5'
 }
 
 const RADIUS_CLASSES: Record<ButtonSize, string> = {
 	sm: 'rounded-md',
-	md: 'rounded-lg'
+	md: 'rounded-lg',
+	lg: 'rounded-lg'
 }
 
-function buttonStyles({
-	variant = 'secondary',
-	size,
-	square = false
-}: {
-	variant?: ButtonVariant
-	size: ButtonSize
-	square?: boolean
-}): string {
+/** A link has no size: it takes its type from the text around it. */
+type ButtonLook =
+	| { variant: 'link'; size?: never; square?: never }
+	| { variant?: ButtonVariant; size: ButtonSize; square?: boolean }
+
+function buttonStyles(look: ButtonLook): string {
+	if (look.variant === 'link') return LINK_CLASSES
+	const { variant = 'secondary', size, square = false } = look
 	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
 
-type ButtonProps<T extends ElementType> = {
+type ButtonProps<T extends ElementType> = ButtonLook & {
 	/** A link or other host keeps its own element and role; only the default button takes button behaviour. */
 	as?: T
-	variant?: ButtonVariant
-	size: ButtonSize
-	square?: boolean
 	/** Set while the button's action runs; the button shows a spinner and this label, keeps focus and ignores presses.
 	    Buttons only: a link (`as`) navigates and has nothing to wait on. */
 	pendingLabel?: string | null
@@ -161,25 +200,26 @@ type ButtonProps<T extends ElementType> = {
 	    focus while disabled, so pressing it never drops focus to the page. Other disabled buttons leave the tab order. */
 	accessibleWhenDisabled?: boolean
 	'aria-disabled'?: boolean | 'true' | 'false'
-	/** The selected state of ghost, filter and toggle buttons. */
+	/** The selected state of ghost, filter and toggle buttons, or a filter picker whose popover is open. */
 	'data-active'?: boolean | string
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
 
-export function Button<T extends ElementType = 'button'>({
-	as,
-	variant = 'secondary',
-	size,
-	square = false,
-	pendingLabel = null,
-	accessibleWhenDisabled = false,
-	'data-active': dataActive,
-	'aria-disabled': ariaDisabled,
-	className,
-	...props
-}: ButtonProps<T>) {
-	const classes = `${buttonStyles({ variant, size, square })} ${className ?? ''}`.trim()
+export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProps<T>) {
+	const {
+		as,
+		variant: _variant,
+		size: _size,
+		square = false,
+		pendingLabel = null,
+		accessibleWhenDisabled = false,
+		'data-active': dataActive,
+		'aria-disabled': ariaDisabled,
+		className,
+		...props
+	} = buttonProps
+	const classes = `${buttonStyles(buttonProps)} ${className ?? ''}`.trim()
 	if (as) {
 		const Component = as as ElementType
 		return <Component className={classes} data-active={dataActive} aria-disabled={ariaDisabled} {...props} />

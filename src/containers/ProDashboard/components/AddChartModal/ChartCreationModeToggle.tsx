@@ -1,5 +1,5 @@
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { MAX_MULTI_CHART_SERIES } from '../../types'
-import { ProSegmented } from '../../ui'
 
 const MODE_OPTIONS = [
 	{ value: 'combined', label: 'One chart' },
@@ -19,8 +19,9 @@ export function ChartCreationModeToggle({
 }: ChartCreationModeToggleProps) {
 	return (
 		<div className="flex shrink-0 flex-wrap items-center gap-2">
-			<ProSegmented
+			<SegmentedControl
 				label="Chart layout"
+				variant="default"
 				size="sm"
 				options={MODE_OPTIONS}
 				value={chartCreationMode}

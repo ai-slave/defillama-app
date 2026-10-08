@@ -8,6 +8,10 @@ import {
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import { createDatasetTableConfig } from '~/containers/ProDashboard/dashboardConfig/datasetTableConfig'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
+import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
+import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { CexAnalyticsDataset } from '../../../datasets/CexAnalyticsDataset'
 import { useEquitiesTickerOptions } from '../../../datasets/EquitiesDataset/useEquitiesTickerOptions'
 import { useTokenSearch } from '../../../datasets/TokenUsageDataset/useTokenSearch'
@@ -269,14 +273,10 @@ export function SimpleTableConfig({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				type="button"
-				onClick={onBackToTypeSelector}
-				className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-			>
-				<span>←</span>
-				<span>Back to table type selection</span>
-			</button>
+			<Button variant="link" onClick={onBackToTypeSelector} className="self-start">
+				<Icon name="arrow-left" className="size-3.5" />
+				Back to table type selection
+			</Button>
 
 			<VirtualizedSelect
 				variant="field"
@@ -403,46 +403,31 @@ export function SimpleTableConfig({
 											<div className="size-4 rounded-full bg-surface-elevated-2" />
 										)}
 										<span className="text-sm text-pro-text-primary">{option?.label ?? token}</span>
-										<button
-											type="button"
-											onClick={() => onTokensChange(selectedTokens.filter((t) => t !== token))}
-											className="ml-1 text-xs text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-											aria-label={`Remove ${option?.label ?? token}`}
+										<Tooltip
+											content={`Remove ${option?.label ?? token}`}
+											render={
+												<Button
+													variant="ghost"
+													size="sm"
+													square
+													onClick={() => onTokensChange(selectedTokens.filter((t) => t !== token))}
+													aria-label={`Remove ${option?.label ?? token}`}
+												/>
+											}
 										>
-											✕
-										</button>
+											<Icon name="x" className="size-4" />
+										</Tooltip>
 									</div>
 								)
 							})}
 						</div>
 					) : null}
-					<button
-						type="button"
-						className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border px-3 py-1.5 text-left text-pro-text-secondary transition-colors hover:bg-pro-hover-fill hover:text-pro-text-primary"
-						onClick={() => onIncludeCexChange(!includeCex)}
-					>
-						<div className="relative size-4">
-							<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
-							<div
-								className={`size-4 border-2 transition-all ${
-									includeCex
-										? 'border-pro-info-100 bg-pro-info-100 dark:border-pro-info-300/20 dark:bg-pro-info-300/20'
-										: 'border-pro-cards-border bg-transparent'
-								}`}
-							>
-								{includeCex ? (
-									<svg className="size-3 text-on-brand" fill="currentColor" viewBox="0 0 20 20">
-										<path
-											fillRule="evenodd"
-											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								) : null}
-							</div>
-						</div>
-						<span className="text-sm font-medium text-pro-text-secondary">Include CEXs</span>
-					</button>
+					{/* Checkbox takes no className; the wrapper keeps the bordered label at its own width in this column. */}
+					<div className="self-start">
+						<Checkbox variant="filter" checked={includeCex} onChange={() => onIncludeCexChange(!includeCex)}>
+							Include CEXs
+						</Checkbox>
+					</div>
 				</>
 			) : selectedTableType === 'rwa-selected-chain' ? (
 				<VirtualizedSelect

@@ -37,7 +37,6 @@ export function VerifiedApyAnnouncement({
 				version={VERIFIED_APY_ANNOUNCEMENT.version}
 				className="border border-verified-announcement-border bg-(image:--verified-announcement-bg) text-verified-announcement-text shadow-verified-announcement"
 				contentClassName="flex items-center gap-x-3 gap-y-2 py-0.5 pl-1.5 text-left sm:flex-wrap"
-				dismissButtonClassName="hover:bg-verified-announcement-dismiss"
 				dismissLabel="Dismiss"
 				dismissTracking={track?.dismiss}
 			>

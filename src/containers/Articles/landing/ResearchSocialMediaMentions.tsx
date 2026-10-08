@@ -287,6 +287,7 @@ function AutoplayCarousel({
 							key={idx}
 							type="button"
 							aria-label={`Go to slide ${idx + 1}`}
+							aria-current={idx === activeIndex || undefined}
 							onClick={() => setSelectedIndex(idx)}
 							className={`h-[8px] w-[8px] rounded-full transition-colors ${
 								idx === activeIndex ? 'bg-research-accent-strong' : 'bg-tertiary'

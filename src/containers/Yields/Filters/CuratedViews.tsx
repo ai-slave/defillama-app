@@ -229,7 +229,6 @@ export function CuratedViews({
 								key={preset.id}
 								type="button"
 								aria-pressed={active}
-								aria-label={`${active ? 'Clear' : 'Apply'} ${preset.label}`}
 								onClick={() => {
 									apply(preset)
 									menu?.hideAll()
@@ -285,7 +284,6 @@ export function CuratedViews({
 								<button
 									type="button"
 									aria-pressed={active}
-									aria-label={`${active ? 'Clear' : 'Apply'} ${preset.label}`}
 									onClick={() => apply(preset)}
 									className={metricOptionChipMdStyles}
 									data-active={active}

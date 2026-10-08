@@ -244,17 +244,22 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					>
 						Save
 					</Button>
-					<Button
-						type="button"
-						size="sm"
-						variant="ghost"
-						square
-						aria-label="Cancel session rename"
-						onClick={closeRename}
-						disabled={updateTitle.isPending}
+					<Tooltip
+						content="Cancel rename"
+						render={
+							<Button
+								type="button"
+								size="sm"
+								variant="ghost"
+								square
+								aria-label="Cancel session rename"
+								onClick={closeRename}
+								disabled={updateTitle.isPending}
+							/>
+						}
 					>
 						<Icon name="x" height={16} width={16} className="shrink-0" />
-					</Button>
+					</Tooltip>
 				</div>
 				{updateTitle.error ? (
 					<p role="alert" className="w-full p-1.5 body-sm text-error">

@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { type ChangeEvent, type FormEvent, useId, useState, useSyncExternalStore } from 'react'
+import { type ChangeEvent, type FormEvent, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
 import { ToggleSwitch } from '~/containers/Account/ToggleSwitch'
 import { isWalletEmail } from '~/containers/Account/utils'
@@ -10,7 +10,12 @@ import {
 	shouldShowNewsletterSignup,
 	useNewsletterSubscription
 } from '~/hooks/useNewsletterSubscription'
+import { Button } from '~/ui/Button'
+import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
+import { Tooltip } from '~/ui/Tooltip'
+
 interface NewsletterSignupProps {
 	layout: 'card' | 'strip'
 	className?: string
@@ -58,6 +63,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	const [selected, setSelected] = useState<Record<NewsletterKey, boolean>>({ newsletter: true, research: true })
 	const [succeeded, setSucceeded] = useState(false)
 	const [dismissed, setDismissed] = useState(false)
+	const emailRef = useRef<HTMLInputElement>(null)
 
 	if (accountEmail !== prevAccountEmail) {
 		setPrevAccountEmail(accountEmail)
@@ -68,6 +74,12 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	const selectedKeys = NEWSLETTERS.map((n) => n.key).filter((key) => selected[key])
 	const noneSelected = selectedKeys.length === 0
 	const canSubmit = !isPending && !noneSelected && email.trim().length > 0
+	// A disabled Subscribe says why in visible text beside it.
+	const disabledReason = noneSelected
+		? 'Choose at least one newsletter.'
+		: email.trim().length === 0
+			? 'Enter an email address.'
+			: null
 
 	const toggle = (key: NewsletterKey) => setSelected((s) => ({ ...s, [key]: !s[key] }))
 	const onEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -89,14 +101,20 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 			}
 		)
 	}
-	const handleDismiss = () => {
-		persistNewsletterDismissed()
-		setDismissed(true)
-	}
+	// Dismissing removes the whole strip, so focus moves on to the page content.
+	const handleDismiss = () =>
+		keepFocus(() => {
+			persistNewsletterDismissed()
+			setDismissed(true)
+		}, pageContent)
+	// Manage newsletters swaps the success pane back to the form; the email field takes the focus it held.
+	const handleReset = () =>
+		keepFocus(
+			() => setSucceeded(false),
+			() => emailRef.current
+		)
 
 	if (!isClient || !shouldShowNewsletterSignup(user)) return null
-
-	const spinner = <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
 
 	if (layout === 'strip') {
 		if (persistedDismissed || dismissed) return null
@@ -107,30 +125,37 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 				}`}
 			>
 				<div aria-hidden className="pointer-events-none absolute top-0 bottom-0 left-0 w-[3px] bg-sub-brand-primary" />
-				<button
-					type="button"
-					onClick={handleDismiss}
-					aria-label="Dismiss newsletter signup"
-					className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-secondary hover:bg-surface-elevated-1"
+				<Tooltip
+					content="Dismiss"
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={handleDismiss}
+							aria-label="Dismiss newsletter signup"
+							className="absolute top-2 right-2"
+						/>
+					}
 				>
-					<Icon name="x" height={16} width={16} />
-				</button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 				{succeeded ? (
-					<NewsletterSuccess layout="strip" email={email} onReset={() => setSucceeded(false)} />
+					<NewsletterSuccess layout="strip" email={email} onReset={handleReset} />
 				) : (
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
 						<div className="flex flex-col gap-1">
-							<span className="flex items-center gap-2 text-base font-bold tracking-tight text-primary @sm:text-lg">
+							<span className="flex items-center gap-2 title-lg text-primary">
 								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
 								Subscribe to the DefiLlama Newsletter
 							</span>
-							<span className="max-w-md text-sm text-primary/55">
+							<span className="max-w-md body-md text-secondary">
 								Get DefiLlama's newsletter, Research updates, or both, delivered to your inbox.
 							</span>
 						</div>
 						<form
 							onSubmit={handleSubmit}
-							className="flex flex-col gap-3 @sm:flex-row @sm:flex-wrap @sm:items-center @5xl:shrink-0 @5xl:justify-end"
+							className="flex flex-col gap-3 @sm:flex-row @sm:flex-wrap @sm:items-end @5xl:shrink-0 @5xl:justify-end"
 						>
 							<div className="flex flex-wrap items-center gap-2" role="group" aria-label="Newsletters">
 								{NEWSLETTERS.map(({ key, label }) => {
@@ -138,49 +163,49 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 									return (
 										<Ariakit.Checkbox
 											key={key}
-											render={<button type="button" aria-label={`Subscribe to ${label}`} />}
+											render={
+												<Button variant="toggle" size="md" data-active={on} aria-label={`Subscribe to ${label}`} />
+											}
 											checked={on}
 											onChange={() => toggle(key)}
 											disabled={isPending}
-											className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-												on
-													? 'border-sub-brand-primary bg-sub-brand-primary/10 text-sub-brand-primary'
-													: 'border-medium text-secondary hover:border-sub-brand-primary/50'
-											}`}
 										>
-											{on ? <Icon name="check" height={14} width={14} /> : null}
+											{on ? <Icon name="check" className="size-3.5" /> : null}
 											{label.replace('DefiLlama ', '')}
 										</Ariakit.Checkbox>
 									)
 								})}
 							</div>
-							<div className="flex flex-col gap-2 @sm:flex-row @sm:items-center">
-								<input
-									type="email"
-									required
-									aria-label="Email address"
-									value={email}
-									onChange={onEmailChange}
-									placeholder="you@example.com"
-									className="h-10 min-w-0 rounded-lg border border-medium bg-surface-elevated-1 px-3 text-sm text-primary outline-hidden focus-visible:border-sub-brand-primary @sm:w-56"
-								/>
-								<Ariakit.Button
+							<div className="flex flex-col gap-2 @sm:flex-row @sm:items-end">
+								<label className="flex min-w-0 flex-col gap-1 @sm:w-56">
+									<span className="label-sm text-secondary">Email</span>
+									<Input
+										ref={emailRef}
+										type="email"
+										required
+										value={email}
+										onChange={onEmailChange}
+										placeholder="you@example.com"
+									/>
+								</label>
+								<Button
 									type="submit"
-									aria-busy={isPending}
+									variant="primary"
+									size="md"
+									pendingLabel={isPending ? 'Subscribing…' : null}
+									aria-describedby={disabledReason ? helperId : undefined}
 									disabled={!canSubmit}
 									accessibleWhenDisabled
-									className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 								>
-									{isPending ? (
-										spinner
-									) : (
-										<>
-											Subscribe
-											<Icon name="arrow-right" height={16} width={16} />
-										</>
-									)}
-								</Ariakit.Button>
+									Subscribe
+									<Icon name="arrow-right" className="size-3.5" />
+								</Button>
 							</div>
+							{disabledReason ? (
+								<p id={helperId} className="body-sm text-secondary @sm:basis-full @5xl:text-right">
+									{disabledReason}
+								</p>
+							) : null}
 						</form>
 					</div>
 				)}
@@ -192,22 +217,22 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
 				<Icon name="mail-rounded" height={28} width={28} className="text-sub-text-primary" />
-				<span className="text-base font-medium text-sub-text-primary">Newsletters</span>
+				<span className="label-lg text-sub-text-primary">Newsletters</span>
 			</div>
 
 			{succeeded ? (
-				<NewsletterSuccess layout="card" email={email} onReset={() => setSucceeded(false)} />
+				<NewsletterSuccess layout="card" email={email} onReset={handleReset} />
 			) : (
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					<label className="flex flex-col gap-1">
-						<span className="text-xs text-sub-text-muted">Subscribing as</span>
-						<input
+						<span className="label-sm text-sub-text-muted">Subscribing as</span>
+						<Input
+							ref={emailRef}
 							type="email"
 							required
 							value={email}
 							onChange={onEmailChange}
 							placeholder="you@example.com"
-							className="rounded-lg border border-sub-border-slate-100 bg-surface-elevated-1 px-3 py-2 text-sm text-sub-text-primary outline-hidden focus-visible:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
@@ -215,7 +240,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						{NEWSLETTERS.map(({ key, label, description }) => (
 							<div key={key} className="flex flex-col gap-1">
 								<div className="flex items-center justify-between gap-4">
-									<span className="text-sm text-sub-text-primary">{label}</span>
+									<span className="body-md text-sub-text-primary">{label}</span>
 									<ToggleSwitch
 										checked={selected[key]}
 										onClick={() => toggle(key)}
@@ -223,32 +248,27 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 										aria-label={`Subscribe to ${label}`}
 									/>
 								</div>
-								<p className="max-w-[400px] text-xs leading-4 text-sub-text-muted">{description}</p>
+								<p className="max-w-[400px] body-sm text-sub-text-muted">{description}</p>
 							</div>
 						))}
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<Ariakit.Button
+						<Button
 							type="submit"
-							aria-busy={isPending}
-							aria-describedby={noneSelected ? helperId : undefined}
+							variant="primary"
+							size="md"
+							pendingLabel={isPending ? 'Subscribing…' : null}
+							aria-describedby={disabledReason ? helperId : undefined}
 							disabled={!canSubmit}
 							accessibleWhenDisabled
-							className="flex h-10 w-fit items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+							className="w-fit"
 						>
-							{isPending ? (
-								<>
-									{spinner}
-									Subscribing...
-								</>
-							) : (
-								'Subscribe'
-							)}
-						</Ariakit.Button>
-						{noneSelected ? (
-							<p id={helperId} className="text-xs text-sub-text-muted">
-								Choose at least one newsletter.
+							Subscribe
+						</Button>
+						{disabledReason ? (
+							<p id={helperId} className="body-sm text-sub-text-muted">
+								{disabledReason}
 							</p>
 						) : null}
 					</div>
@@ -269,7 +289,7 @@ function NewsletterSuccess({
 }) {
 	if (layout === 'strip') {
 		return (
-			<div role="status" className="flex items-center gap-2 text-sm text-primary">
+			<div role="status" className="flex items-center gap-2 body-md text-primary">
 				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
 				<span>Subscribed to selected newsletters.</span>
 			</div>
@@ -282,14 +302,16 @@ function NewsletterSuccess({
 				<Icon name="check-circle" height={28} width={28} className="text-sub-brand-primary" />
 			</div>
 			<div className="flex flex-col gap-1">
-				<span className="text-base font-medium text-sub-text-primary">You are subscribed</span>
-				<p className="max-w-[360px] text-xs leading-4 text-sub-text-muted">
+				<span className="label-lg text-sub-text-primary">You are subscribed</span>
+				<p className="max-w-[360px] body-sm text-sub-text-muted">
 					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
 				</p>
 			</div>
-			<button type="button" onClick={onReset} className="text-xs font-medium text-sub-brand-primary hover:underline">
-				Manage newsletters
-			</button>
+			<p className="body-sm">
+				<Button variant="link" onClick={onReset}>
+					Manage newsletters
+				</Button>
+			</p>
 		</div>
 	)
 }

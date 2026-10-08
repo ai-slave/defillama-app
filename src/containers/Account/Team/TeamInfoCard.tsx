@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { useTeam } from './useTeam'
 
 export function TeamInfoCard() {
@@ -83,15 +84,21 @@ export function TeamInfoCard() {
 								{team.name}
 							</span>
 							{isAdmin && (
-								<button
-									type="button"
-									ref={renameRef}
-									aria-label="Rename team"
-									onClick={startEditing}
-									className="flex size-8 shrink-0 items-center justify-center rounded-sm text-sub-text-muted transition-colors hover:text-sub-text-primary"
+								<Tooltip
+									content="Rename team"
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											ref={renameRef}
+											aria-label="Rename team"
+											onClick={startEditing}
+										/>
+									}
 								>
-									<Icon name="pencil" height={14} width={14} />
-								</button>
+									<Icon name="pencil" className="size-4" />
+								</Tooltip>
 							)}
 						</div>
 					)}

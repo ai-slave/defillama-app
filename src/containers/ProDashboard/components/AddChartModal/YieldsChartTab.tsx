@@ -428,29 +428,24 @@ export function YieldsChartTab({
 									</div>
 								</div>
 								<div className="flex items-center gap-2">
-									<button
-										type="button"
-										onClick={() => setChangingPool(true)}
-										className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-pro-text-primary"
-									>
+									<Button size="sm" onClick={() => setChangingPool(true)}>
 										Change pool
-									</button>
-									<button
-										type="button"
+									</Button>
+									<Button
+										size="sm"
 										onClick={() => {
 											onSelectedYieldPoolChange(null)
 											setChangingPool(false)
 										}}
-										className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-pro-text-tertiary transition-colors hover:border-error/40 hover:text-error"
 									>
 										Clear
-									</button>
+									</Button>
 								</div>
 							</div>
 						</div>
 					) : (
 						<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-							<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
+							<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-sm">
 								<div className="flex items-center gap-3">
 									<div className="relative">
 										<Icon
@@ -461,7 +456,7 @@ export function YieldsChartTab({
 										/>
 										<input
 											onInput={(e) => setPoolSearch(e.currentTarget.value)}
-											placeholder="Search pools..."
+											placeholder="Search pools…"
 											aria-label="Search pools"
 											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
 										/>
@@ -472,13 +467,9 @@ export function YieldsChartTab({
 									</span>
 								</div>
 								{selectedYieldPool ? (
-									<button
-										type="button"
-										onClick={closePoolPicker}
-										className="text-xs font-medium text-brand transition-colors hover:text-brand/80"
-									>
+									<Button variant="link" onClick={closePoolPicker}>
 										Cancel
-									</button>
+									</Button>
 								) : null}
 							</div>
 

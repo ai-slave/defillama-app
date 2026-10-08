@@ -1,18 +1,26 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/containers/Articles/api'
 import { bannerAudienceLabel } from '~/containers/Articles/bannerCountryGroups'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { neighbourRowControl } from '~/ui/focus'
 
 export function BannersListView() {
-	const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null)
+	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
+	const [deleteTarget, setDeleteTarget] = useState<{
+		banner: Banner
+		neighbour: HTMLElement | null | undefined
+	} | null>(null)
+	const returnFocusRef = useRef<HTMLElement | null>(null)
+	const newBannerRef = useRef<HTMLAnchorElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -80,35 +88,39 @@ export function BannersListView() {
 						/research, all articles, a section's articles, or a single article.
 					</p>
 				</div>
-				<Link
-					href="/research/admin/banners/new"
-					className="inline-flex min-h-9 items-center bg-link px-3 text-sm font-medium text-on-brand transition-opacity hover:opacity-90"
-				>
-					+ New banner
-				</Link>
+				<Button ref={newBannerRef} as={BasicLink} variant="primary" size="md" href="/research/admin/banners/new">
+					New banner
+				</Button>
 			</header>
 
 			{deleteTarget ? (
 				<ConfirmActionDialog
-					key={deleteTarget.id}
-					title={`Delete ${deleteTarget.imageAlt || BANNER_KIND_LABELS[deleteTarget.type]} banner?`}
+					key={deleteTarget.banner.id}
+					title={`Delete ${deleteTarget.banner.imageAlt || BANNER_KIND_LABELS[deleteTarget.banner.type]} banner?`}
 					description="This removes the banner from research pages. This cannot be undone."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
 					mutation={deleteBannerMutation}
-					variables={deleteTarget.id}
+					variables={deleteTarget.banner.id}
+					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
+					onSuccess={() => {
+						returnFocusRef.current = deleteTarget.neighbour ?? newBannerRef.current
+					}}
 				/>
 			) : null}
 			{items.length === 0 ? (
 				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
 					<p className="text-sm text-secondary">No banners yet.</p>
-					<Link
+					<Button
+						as={BasicLink}
+						variant="primary"
+						size="md"
 						href="/research/admin/banners/new"
-						className="mt-3 inline-flex min-h-9 items-center bg-link px-3 text-sm font-medium text-on-brand"
+						className="mx-auto mt-3 w-fit"
 					>
 						Create your first banner
-					</Link>
+					</Button>
 				</div>
 			) : (
 				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
@@ -121,7 +133,7 @@ export function BannersListView() {
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
-									<span className="inline-flex items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
+									<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link-on-tint uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
 									</span>
 									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-[0.12em] text-secondary uppercase">
@@ -174,29 +186,38 @@ export function BannersListView() {
 								)}
 							</div>
 							<div className="flex flex-wrap items-center gap-2 justify-self-end">
-								<Ariakit.Button
-									type="button"
+								<Button
+									variant="secondary"
+									size="sm"
 									onClick={() => toggleMutation.mutate({ id: banner.id, enabled: !banner.enabled })}
+									pendingLabel={
+										toggleMutation.isPending && toggleMutation.variables.id === banner.id
+											? banner.enabled
+												? 'Disabling…'
+												: 'Enabling…'
+											: null
+									}
 									disabled={toggleMutation.isPending}
-									accessibleWhenDisabled
-									className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:opacity-50"
 								>
 									{banner.enabled ? 'Disable' : 'Enable'}
-								</Ariakit.Button>
-								<Link
-									href={`/research/admin/banners/${banner.id}`}
-									className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary"
-								>
+								</Button>
+								<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/banners/${banner.id}`}>
 									Edit
-								</Link>
-								<button
-									type="button"
-									onClick={() => setDeleteTarget(banner)}
+								</Button>
+								<Button
+									variant="destructive"
+									size="sm"
+									onClick={(event) => {
+										returnFocusRef.current = null
+										setDeleteTarget({
+											banner,
+											neighbour: neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+										})
+									}}
 									disabled={deleteBannerMutation.isPending}
-									className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 								>
 									Delete
-								</button>
+								</Button>
 							</div>
 						</li>
 					))}

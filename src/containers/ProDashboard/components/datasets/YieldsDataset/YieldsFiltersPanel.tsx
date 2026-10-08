@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
+import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { formatNumber } from '~/utils/numberFormat'
 
 const EMPTY_CATEGORIES: Array<string> = []
@@ -17,6 +19,8 @@ interface YieldsFiltersPanelProps {
 	onApplyFilters: (filters?: YieldsFilters) => void
 	onResetFilters: () => void
 	activeFilterCount: number
+	/** Closing the panel removes the control that had focus, so focus goes back to the Filters toggle. */
+	toggleRef: React.RefObject<HTMLButtonElement | null>
 }
 
 const parseFormattedNumber = (value: string): number | undefined => {
@@ -34,7 +38,8 @@ export function YieldsFiltersPanel({
 	availableCategories,
 	onApplyFilters,
 	onResetFilters,
-	activeFilterCount
+	activeFilterCount,
+	toggleRef
 }: YieldsFiltersPanelProps) {
 	const [localFilters, setLocalFilters] = React.useState<YieldsFilters>(filters)
 	const tokenOptions = availableTokens.map((token) => ({ value: token, label: token }))
@@ -49,9 +54,14 @@ export function YieldsFiltersPanel({
 
 	const handleApply = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		setFilters(localFilters)
-		onApplyFilters(localFilters)
-		setShowFiltersPanel(false)
+		keepFocus(
+			() => {
+				setFilters(localFilters)
+				onApplyFilters(localFilters)
+				setShowFiltersPanel(false)
+			},
+			() => toggleRef.current
+		)
 	}
 
 	const handleReset = () => {
@@ -68,27 +78,31 @@ export function YieldsFiltersPanel({
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
 		>
 			<div className="mb-3 flex items-center justify-between">
-				<h4 className="text-sm font-medium text-pro-text-primary">Filter Yields</h4>
+				<h4 className="label-md text-pro-text-primary">Filter yields</h4>
 				<div className="flex items-center gap-2">
 					{activeFilterCount > 0 ? (
-						<button
-							type="button"
-							onClick={handleReset}
-							className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
+						<Button
+							variant="secondary"
+							size="sm"
+							// The button leaves once nothing is filtered; focus moves to the first filter field.
+							onClick={(event) => {
+								const form = event.currentTarget.form!
+								keepFocus(handleReset, () => form.querySelector('input'))
+							}}
 						>
-							Clear All ({activeFilterCount})
-						</button>
+							Clear all ({activeFilterCount})
+						</Button>
 					) : null}
 				</div>
 			</div>
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
 				<div>
-					<h5 className="mb-3 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">Yield Filters</h5>
+					<h5 className="mb-3 title-sm text-pro-text-secondary">Yield filters</h5>
 
 					<div className="space-y-3">
 						<div>
-							<p className="mb-2 block text-xs font-medium text-pro-text-secondary">Total APY Range</p>
+							<p className="mb-2 label-sm text-pro-text-secondary">Total APY range</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
@@ -111,7 +125,7 @@ export function YieldsFiltersPanel({
 						</div>
 
 						<div>
-							<p className="mb-2 block text-xs font-medium text-pro-text-secondary">Base APY Range</p>
+							<p className="mb-2 label-sm text-pro-text-secondary">Base APY range</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
@@ -165,11 +179,11 @@ export function YieldsFiltersPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-3 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">Pool Filters</h5>
+					<h5 className="mb-3 title-sm text-pro-text-secondary">Pool filters</h5>
 
 					<div className="space-y-3">
 						<div>
-							<p className="mb-2 block text-xs font-medium text-pro-text-secondary">TVL Range (USD)</p>
+							<p className="mb-2 label-sm text-pro-text-secondary">TVL range (USD)</p>
 							<div className="flex items-center gap-2">
 								<input
 									type="text"
@@ -194,7 +208,7 @@ export function YieldsFiltersPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-3 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">Pool Types</h5>
+					<h5 className="mb-3 title-sm text-pro-text-secondary">Pool types</h5>
 
 					<div className="space-y-2">
 						<label className="group flex cursor-pointer items-center gap-2">
@@ -227,7 +241,7 @@ export function YieldsFiltersPanel({
 						</label>
 
 						<div className="mt-4">
-							<p className="mb-3 block text-xs font-medium text-pro-text-secondary">Pool Categories</p>
+							<p className="mb-3 label-sm text-pro-text-secondary">Pool categories</p>
 							<div className="space-y-2">
 								{availableCategories.map((category) => (
 									<label key={category} className="group flex cursor-pointer items-center gap-2">
@@ -273,9 +287,7 @@ export function YieldsFiltersPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-3 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
-						Protocol & Token Filters
-					</h5>
+					<h5 className="mb-3 title-sm text-pro-text-secondary">Protocol & token filters</h5>
 
 					<div className="space-y-3">
 						<VirtualizedMultiSelect
@@ -298,19 +310,21 @@ export function YieldsFiltersPanel({
 			</div>
 
 			<div className="mt-4 flex items-center justify-between border-t border-pro-cards-border pt-3">
-				<button
-					type="button"
-					onClick={() => setShowFiltersPanel(false)}
-					className="px-3 py-1 text-xs text-pro-text-secondary"
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() =>
+						keepFocus(
+							() => setShowFiltersPanel(false),
+							() => toggleRef.current
+						)
+					}
 				>
 					Cancel
-				</button>
-				<button
-					type="submit"
-					className="rounded-md border border-brand bg-brand px-3 py-1 text-xs text-on-brand transition-colors hover:bg-brand-muted"
-				>
-					Apply Filters
-				</button>
+				</Button>
+				<Button type="submit" variant="primary" size="sm">
+					Apply filters
+				</Button>
 			</div>
 		</form>
 	)

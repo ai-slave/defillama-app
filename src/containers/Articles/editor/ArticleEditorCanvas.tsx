@@ -3,8 +3,10 @@ import { isNodeSelection } from '@tiptap/core'
 import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
+import { Button } from '~/ui/Button'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { NestedDrawerHeader } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ArticleCalloutTone } from '../types'
@@ -65,6 +67,10 @@ function CalloutMenu({
 	)
 }
 
+/* BubbleMenu places itself only on editor transactions, so a swap of its content (formatting toolbar to the wider
+   link form) dispatches this key's 'updatePosition' meta; otherwise the form keeps the toolbar's spot and runs off a phone. */
+export const ARTICLE_BUBBLE_MENU_KEY = 'articleBubbleMenu'
+
 type ArticleEditorCanvasProps = {
 	activeEntity: ActiveEntityLink | null
 	blockItems: Array<BlockItem>
@@ -118,7 +124,8 @@ export function ArticleEditorCanvas({
 				{editor ? (
 					<BubbleMenu
 						editor={editor}
-						options={{ placement: 'top' }}
+						pluginKey={ARTICLE_BUBBLE_MENU_KEY}
+						options={{ placement: 'top', shift: { padding: 8 } }}
 						shouldShow={({ editor: e, from, to, state }) => {
 							if (linkEdit) return true
 							if (isNodeSelection(state.selection)) return false
@@ -141,7 +148,8 @@ export function ArticleEditorCanvas({
 						}}
 						className="article-bubble-menu z-40"
 					>
-						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface p-1 shadow-raised backdrop-blur supports-[backdrop-filter]:bg-surface/95">
+						{/* The URL field has no border of its own, so the bubble's border shows its focus, like Input's border-brand. */}
+						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface p-1 shadow-raised backdrop-blur has-[input:focus]:border-brand supports-[backdrop-filter]:bg-surface/95">
 							{linkEdit ? (
 								// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape bubbles from the link controls to cancel their shared editor.
 								<form
@@ -166,48 +174,55 @@ export function ArticleEditorCanvas({
 										placeholder="Paste or type URL"
 										className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 text-sm text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
 									/>
-									<button
-										type="button"
-										role="switch"
-										aria-checked={linkEdit.newTab}
-										aria-label="Open in new tab"
-										title={linkEdit.newTab ? 'Opens in new tab' : 'Opens in same tab'}
+									<Button
+										variant="ghost"
+										size="sm"
+										aria-pressed={linkEdit.newTab}
+										data-active={linkEdit.newTab}
 										onClick={() => setLinkEdit({ url: linkEdit.url, newTab: !linkEdit.newTab })}
-										className={`flex h-7 items-center gap-1 rounded-md px-1.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
-											linkEdit.newTab
-												? 'bg-research-tint text-link'
-												: 'text-tertiary hover:bg-research-tint-hover hover:text-primary'
-										}`}
 									>
-										<Icon name="external" className="size-3" />
+										<Icon name="external" className="size-3.5" />
 										<span>New tab</span>
-									</button>
+									</Button>
 									<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-									<button
-										type="submit"
-										aria-label="Save link"
-										className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
+									<Tooltip
+										content="Save link"
+										render={<Button type="submit" variant="ghost" size="sm" square aria-label="Save link" />}
 									>
 										<Icon name="check" className="size-4" />
-									</button>
-									<button
-										type="button"
-										onClick={() => applyLink('', linkEdit.newTab)}
-										aria-label="Remove link"
-										className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
+									</Tooltip>
+									<Tooltip
+										content="Remove link"
+										render={
+											<Button
+												variant="ghost"
+												size="sm"
+												square
+												onClick={() => applyLink('', linkEdit.newTab)}
+												aria-label="Remove link"
+											/>
+										}
 									>
 										<Icon name="x" className="size-4" />
-									</button>
+									</Tooltip>
 									{flags.link && linkEdit.url ? (
-										<a
-											href={linkEdit.url}
-											target="_blank"
-											rel="noreferrer"
-											aria-label="Open link"
-											className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
+										<Tooltip
+											content="Open link"
+											render={
+												<Button
+													as="a"
+													variant="ghost"
+													size="sm"
+													square
+													href={linkEdit.url}
+													target="_blank"
+													rel="noreferrer"
+													aria-label="Open link"
+												/>
+											}
 										>
 											<Icon name="external" className="size-4" />
-										</a>
+										</Tooltip>
 									) : null}
 								</form>
 							) : flags.entityLink && activeEntity ? (
@@ -237,72 +252,63 @@ export function ArticleEditorCanvas({
 										</span>
 									</span>
 									<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-									<button
-										type="button"
-										aria-label="Change entity"
-										title="Change entity"
-										onClick={changeActiveEntityLink}
-										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-secondary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
-									>
-										<Icon name="pencil" className="size-3" />
+									<Button variant="ghost" size="sm" aria-label="Change entity" onClick={changeActiveEntityLink}>
+										<Icon name="pencil" className="size-3.5" />
 										<span>Change</span>
-									</button>
-									<button
-										type="button"
-										aria-label="Unlink entity"
-										title="Unlink entity"
-										onClick={unsetActiveEntityLink}
-										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
-									>
-										<Icon name="x" className="size-3" />
+									</Button>
+									<Button variant="ghost" size="sm" aria-label="Unlink entity" onClick={unsetActiveEntityLink}>
+										<Icon name="x" className="size-3.5" />
 										<span>Unlink</span>
-									</button>
+									</Button>
 									{activeEntity.route ? (
-										<button
-											type="button"
-											aria-label="Open entity"
-											title="Open entity in new tab"
+										<Button
+											variant="ghost"
+											size="sm"
+											aria-label="Open entity in new tab"
 											onClick={openActiveEntityLink}
-											className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
 										>
-											<Icon name="external" className="size-3" />
+											<Icon name="external" className="size-3.5" />
 											<span>Open</span>
-										</button>
+										</Button>
 									) : null}
 								</div>
 							) : (
 								<>
 									{markButtons.map((b) => (
-										<button
+										<Tooltip
 											key={b.name}
-											type="button"
-											aria-label={b.label}
-											aria-pressed={b.isActive()}
-											title={b.label}
-											onClick={b.toggle}
-											className={`flex size-7 items-center justify-center rounded-md transition-colors ${
-												b.isActive()
-													? 'bg-research-tint text-link'
-													: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
-											}`}
+											content={b.label}
+											render={
+												<Button
+													variant="ghost"
+													size="sm"
+													square
+													aria-label={b.label}
+													aria-pressed={b.isActive()}
+													data-active={b.isActive()}
+													onClick={b.toggle}
+												/>
+											}
 										>
-											<Icon name={b.icon} className="size-3.5" />
-										</button>
+											<Icon name={b.icon} className="size-4" />
+										</Tooltip>
 									))}
 									<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-									<button
-										type="button"
-										aria-label="Link"
-										title="Link"
-										onClick={openLinkEditor}
-										className={`flex size-7 items-center justify-center rounded-md transition-colors ${
-											flags.link
-												? 'bg-research-tint text-link'
-												: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
-										}`}
+									<Tooltip
+										content={flags.link ? 'Edit link' : 'Link'}
+										render={
+											<Button
+												variant="ghost"
+												size="sm"
+												square
+												aria-label={flags.link ? 'Edit link' : 'Link'}
+												data-active={flags.link}
+												onClick={openLinkEditor}
+											/>
+										}
 									>
-										<Icon name="link" className="size-3.5" />
-									</button>
+										<Icon name="link" className="size-4" />
+									</Tooltip>
 								</>
 							)}
 						</div>
@@ -318,12 +324,14 @@ export function ArticleEditorCanvas({
 						className="article-floating-menu z-30"
 					>
 						<Ariakit.MenuProvider>
-							<Ariakit.MenuButton
-								className="flex size-6 items-center justify-center rounded-full text-tertiary/50 transition-all hover:bg-research-tint-hover hover:text-primary data-[active]:bg-research-tint data-[active]:text-link"
-								aria-label="Insert block"
+							<Tooltip
+								content="Insert block"
+								render={
+									<Ariakit.MenuButton render={<Button variant="ghost" size="sm" square />} aria-label="Insert block" />
+								}
 							>
-								<Icon name="plus" className="size-3.5" />
-							</Ariakit.MenuButton>
+								<Icon name="plus" className="size-4" />
+							</Tooltip>
 							{/* Portalled like every surface, so its phone sheet is not trapped under the rail in FloatingMenu's z-30
 							    layer. Pressing "+" sets tiptap's preventHide, so the editor blur that opening the menu causes keeps it shown. */}
 							<MenuSurface variant="actions" gutter={6} className="min-w-[200px]">
@@ -448,22 +456,14 @@ export function ArticleEditorCanvas({
 						<RailDivider />
 
 						<div className="flex shrink-0 items-center gap-1">
-							<button
-								type="button"
-								onClick={onOpenChartPicker}
-								className="flex h-9 items-center gap-1.5 rounded-md bg-research-tint px-3 text-xs font-medium text-link transition-colors hover:opacity-90"
-							>
-								<Icon name="chart" className="size-4" />
+							<Button variant="secondary" size="md" onClick={onOpenChartPicker}>
+								<Icon name="chart" className="size-3.5" />
 								Chart
-							</button>
+							</Button>
 							<Ariakit.MenuProvider>
-								<Ariakit.MenuButton
-									aria-label="Insert block"
-									title="Insert"
-									className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
-								>
-									<Icon name="more" className="size-4" />
-									<span className="hidden sm:inline">Insert</span>
+								<Ariakit.MenuButton render={<Button variant="ghost" size="md" />}>
+									<Icon name="more" className="size-3.5" />
+									Insert
 								</Ariakit.MenuButton>
 								<MenuSurface variant="actions" className="min-w-[200px]">
 									<MenuItem

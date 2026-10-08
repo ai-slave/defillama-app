@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useCallback } from 'react'
 import { Button } from './Button'
+import { catchLostFocus } from './focus'
 import { Icon } from './Icon'
 import { surfaceMotionStyles } from './Popover'
+import { Tooltip } from './Tooltip'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
@@ -73,6 +75,11 @@ import { tw } from './tw'
 
    Gutters: PopoverSurface and ComboboxSurface default to `gutter={6}`,
    MenuSurface to 8, nested flyouts pass 4; Tooltip keeps Ariakit's default.
+
+   A PopoverSurface carries the dialogs' lost-focus net (catchLostFocus in
+   ./focus.ts): a control removed or disabled inside it hands focus to the
+   surface's first control, never to the page. The net is the floor; a row
+   that leaves still hands focus to its neighbour (neighbourRowControl).
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with
@@ -170,31 +177,25 @@ export function NestedDrawerHeader({
 		<div
 			className={`grid min-h-12 shrink-0 grid-cols-[2rem_1fr_2rem] items-center gap-2 px-2 pt-2 ${visibleFromSm ? '' : 'sm:hidden'}`}
 		>
-			<Button
-				type="button"
-				variant="ghost"
-				size="md"
-				square
-				aria-label={backLabel}
-				onClick={onBack}
-				className="shrink-0"
+			<Tooltip
+				content={backLabel}
+				render={
+					<Button variant="ghost" size="md" square aria-label={backLabel} onClick={onBack} className="shrink-0" />
+				}
 			>
 				<Icon name="chevron-left" className="size-4" aria-hidden="true" />
-			</Button>
+			</Tooltip>
 			<Ariakit.PopoverHeading className="min-w-0 truncate text-center label-md text-primary">
 				{title}
 			</Ariakit.PopoverHeading>
-			<Button
-				type="button"
-				variant="ghost"
-				size="md"
-				square
-				aria-label={closeLabel}
-				onClick={onClose}
-				className="shrink-0"
+			<Tooltip
+				content={closeLabel}
+				render={
+					<Button variant="ghost" size="md" square aria-label={closeLabel} onClick={onClose} className="shrink-0" />
+				}
 			>
 				<Icon name="x" className="size-4" aria-hidden="true" />
-			</Button>
+			</Tooltip>
 		</div>
 	)
 }
@@ -253,11 +254,27 @@ export function PopoverSurface({
 	gutter = 6,
 	portal = true,
 	unmountOnHide = true,
+	ref,
 	...props
 }: PopoverSurfaceProps) {
+	// Stable, so a render never resets the net in the commit that removes the focused control.
+	const surfaceRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			const release = catchLostFocus(node)
+			if (typeof ref === 'function') ref(node)
+			else if (ref) ref.current = node
+			return () => {
+				release?.()
+				if (typeof ref === 'function') ref(null)
+				else if (ref) ref.current = null
+			}
+		},
+		[ref]
+	)
 	return (
 		<Ariakit.Popover
 			{...props}
+			ref={surfaceRef}
 			gutter={gutter}
 			portal={portal}
 			unmountOnHide={unmountOnHide}

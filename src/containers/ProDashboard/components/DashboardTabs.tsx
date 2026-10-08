@@ -1,14 +1,15 @@
 import * as Ariakit from '@ariakit/react'
 import { type ReactNode, useCallback, useRef } from 'react'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
 import type { DashboardLayoutTab } from '../dashboardLayout/buildDashboardLayout'
-import { ProButton } from '../ui'
 import { proTabStyles } from '../ui/styles'
 
-const scrollButtonClassName = tw`absolute top-1/2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex`
+const scrollButtonClassName = tw`absolute top-1/2 z-10 hidden -translate-y-1/2 md:flex`
 
 export function DashboardTabs({
 	tabs,
@@ -44,20 +45,29 @@ export function DashboardTabs({
 	return (
 		<Tabs value={activeTabId} onValueChange={onChange} values={values} {...(id === undefined ? {} : { id })}>
 			<div className="group/rail relative">
-				{canScrollLeft ? (
+				{canScrollLeft || canScrollRight ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-10 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							size="sm"
-							square
-							variant="secondary"
-							aria-label="Scroll tabs left"
-							onClick={() => scrollByPage('left')}
-							className={`${scrollButtonClassName} left-0`}
+						{canScrollLeft ? (
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-10 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll left"
+							render={
+								<Button
+									type="button"
+									size="sm"
+									square
+									variant="overlay"
+									aria-label="Scroll tabs left"
+									disabled={!canScrollLeft}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('left')}
+									className={`${scrollButtonClassName} left-0`}
+								/>
+							}
 						>
 							<Icon name="chevron-left" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 				<Ariakit.TabList
@@ -79,20 +89,29 @@ export function DashboardTabs({
 						</Tab>
 					))}
 				</Ariakit.TabList>
-				{canScrollRight ? (
+				{canScrollLeft || canScrollRight ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-10 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							size="sm"
-							square
-							variant="secondary"
-							aria-label="Scroll tabs right"
-							onClick={() => scrollByPage('right')}
-							className={`${scrollButtonClassName} right-0`}
+						{canScrollRight ? (
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-10 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll right"
+							render={
+								<Button
+									type="button"
+									size="sm"
+									square
+									variant="overlay"
+									aria-label="Scroll tabs right"
+									disabled={!canScrollRight}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('right')}
+									className={`${scrollButtonClassName} right-0`}
+								/>
+							}
 						>
 							<Icon name="chevron-right" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 			</div>

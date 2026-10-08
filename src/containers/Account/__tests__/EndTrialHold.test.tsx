@@ -94,7 +94,11 @@ test('an upgrade still being applied disables every upgrade action and sends no 
 	await upgradeFromAccount()
 
 	expect(text()).toContain('Active free trial')
-	expect(button('Upgrade to Pro')!.disabled).toBe(true)
+	// The dialog it opened returns focus here, so it stays focusable while disabled.
+	expect([button('Upgrade to Pro')!.getAttribute('aria-disabled'), button('Upgrade to Pro')!.disabled]).toEqual([
+		'true',
+		false
+	])
 	expect(text()).toContain(APPLYING)
 	await act(async () => button('Upgrade to Pro')!.click())
 	expect(document.querySelector('[role=alertdialog]')).toBeNull()
@@ -127,7 +131,11 @@ test('a reload while the upgrade is being applied keeps the upgrade actions disa
 	await render()
 	await waitForUi(() => expect(button('Upgrade to Pro')).toBeDefined())
 
-	expect(button('Upgrade to Pro')!.disabled).toBe(true)
+	// The dialog it opened returns focus here, so it stays focusable while disabled.
+	expect([button('Upgrade to Pro')!.getAttribute('aria-disabled'), button('Upgrade to Pro')!.disabled]).toEqual([
+		'true',
+		false
+	])
 	expect(text()).toContain(APPLYING)
 	await act(async () => button('Upgrade to Pro')!.click())
 	expect(endTrialPosts()).toBe(0)

@@ -14,7 +14,9 @@ export function RWASuspiciousWarning({
 	return (
 		<Tooltip
 			content={warning}
-			render={<button type="button" aria-label={warning} className="cursor-help text-warning" />}
+			// A status mark, not an action: focusable so keyboard readers can open the explanation.
+			render={<span role="img" aria-label={warning} className="cursor-help text-warning" />}
+			tabIndex={0}
 		>
 			<Icon name="alert-triangle" height={16} width={16} aria-hidden="true" />
 		</Tooltip>

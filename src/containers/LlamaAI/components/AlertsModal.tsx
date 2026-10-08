@@ -400,25 +400,26 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 	const charts = selectedExec?.generated_charts || []
 	// The run's detail covers the row without unmounting it, so an open editor keeps its draft.
 	const execView = selectedExec ? (
-		<>
-			<button
-				// Replaces the history row that opened it.
-				autoFocus
-				type="button"
-				// The run's row comes back with the history it was opened from.
-				onClick={() =>
-					keepFocus(
-						() => setSelectedExecId(null),
-						() => document.getElementById(`alert-run-${selectedExecId}`)
-					)
-				}
-				className="mb-3 flex items-center gap-1 text-xs font-medium text-link not-disabled:not-aria-disabled:hover:underline"
-			>
-				<Icon name="arrow-left" className="size-3" />
-				Back to history
-			</button>
-			<div className="mb-3 flex items-center justify-between">
-				<span className="font-mono text-xs text-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
+		<div className="flex flex-col gap-3">
+			<span className="self-start label-sm">
+				<Button
+					// Replaces the history row that opened it.
+					autoFocus
+					variant="link"
+					// The run's row comes back with the history it was opened from.
+					onClick={() =>
+						keepFocus(
+							() => setSelectedExecId(null),
+							() => document.getElementById(`alert-run-${selectedExecId}`)
+						)
+					}
+				>
+					<Icon name="arrow-left" className="size-3.5" />
+					Back to history
+				</Button>
+			</span>
+			<div className="flex items-center justify-between">
+				<span className="mono-sm text-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
 				<StatusChip tone={execChipTone(selectedExec.status, !!selectedExec.error_message)}>
 					{execChipLabel(selectedExec.status)}
 				</StatusChip>
@@ -443,16 +444,16 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								key={c.id}
 								src={sanitizeUrl(c.url)!}
 								alt={c.title || 'Chart'}
-								className="my-2 max-w-full rounded-lg"
+								className="max-w-full self-start rounded-lg"
 							/>
 						))
 				: null}
 			{selectedExec.citations?.length ? (
-				<div className="mt-3 border-t border-subtle pt-3">
+				<div className="border-t border-subtle pt-3">
 					<SourcesList citations={selectedExec.citations} />
 				</div>
 			) : null}
-		</>
+		</div>
 	) : null
 
 	const typeTileClass = !alert.enabled
@@ -551,7 +552,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								content="Delete"
 								render={
 									<Button
-										variant="ghost"
+										variant="ghostDestructive"
 										size="md"
 										square
 										onClick={() => switchMode('deleting')}
@@ -559,7 +560,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 									/>
 								}
 							>
-								<Icon name="trash-2" className="size-4 text-error" />
+								<Icon name="trash-2" className="size-4" />
 							</Tooltip>
 						</div>
 						<Ariakit.MenuProvider placement="bottom-end">

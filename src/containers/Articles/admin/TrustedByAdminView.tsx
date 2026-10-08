@@ -12,9 +12,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import type * as React from 'react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
@@ -31,7 +32,9 @@ import {
 import { BlockContent, toMentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import { chunkMentions } from '~/containers/Articles/landing/utils'
 import type { SocialMention, TrustedLogo } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
@@ -51,7 +54,20 @@ function linkHost(linkUrl: string): string {
 }
 
 export function TrustedByAdminView() {
-	const [deleteTarget, setDeleteTarget] = useState<{ kind: 'logo' | 'mention'; id: string; name: string } | null>(null)
+	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
+	const [deleteTarget, setDeleteTarget] = useState<{
+		kind: 'logo' | 'mention'
+		id: string
+		name: string
+		neighbour: HTMLElement | null | undefined
+	} | null>(null)
+	const returnFocusRef = useRef<HTMLElement | null>(null)
+	const addLogoRef = useRef<HTMLAnchorElement>(null)
+	const addMentionRef = useRef<HTMLAnchorElement>(null)
+	const confirmDelete = (target: { kind: 'logo' | 'mention'; id: string; name: string }, control: HTMLElement) => {
+		returnFocusRef.current = null
+		setDeleteTarget({ ...target, neighbour: neighbourRowControl(control.closest('li')!, control) })
+	}
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidate = useResearchLandingRevalidation()
@@ -181,7 +197,12 @@ export function TrustedByAdminView() {
 					pendingLabel="Deleting…"
 					mutation={deleteTarget.kind === 'logo' ? deleteLogoMutation : deleteMentionMutation}
 					variables={deleteTarget.id}
+					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
+					onSuccess={() => {
+						returnFocusRef.current =
+							deleteTarget.neighbour ?? (deleteTarget.kind === 'logo' ? addLogoRef.current : addMentionRef.current)
+					}}
 				/>
 			) : null}
 			<header className="pt-2 pb-2">
@@ -200,12 +221,16 @@ export function TrustedByAdminView() {
 			<section className="grid gap-3">
 				<div className="flex flex-wrap items-end justify-between gap-3">
 					<h2 className="text-lg font-semibold text-primary">Logos</h2>
-					<Link
+					<Button
+						ref={addLogoRef}
+						as={BasicLink}
+						variant="secondary"
+						size="md"
 						href="/research/admin/trusted-by/logos/new"
-						className="inline-flex min-h-9 items-center bg-link px-3 text-sm font-medium text-on-brand transition-opacity hover:opacity-90"
 					>
-						+ Add logo
-					</Link>
+						<Icon name="plus" className="size-3.5" />
+						Add logo
+					</Button>
 				</div>
 
 				{logosQuery.isLoading ? (
@@ -231,7 +256,7 @@ export function TrustedByAdminView() {
 										disabled={reorderLogosMutation.isPending}
 										onToggle={(enabled) => toggleLogoMutation.mutate({ id: logo.id, enabled })}
 										togglePending={toggleLogoMutation.isPending}
-										onDelete={() => setDeleteTarget({ kind: 'logo', id: logo.id, name: logo.name })}
+										onDelete={(control) => confirmDelete({ kind: 'logo', id: logo.id, name: logo.name }, control)}
 										deletePending={deleteLogoMutation.isPending}
 									/>
 								))}
@@ -245,12 +270,16 @@ export function TrustedByAdminView() {
 			<section className="grid gap-3">
 				<div className="flex flex-wrap items-end justify-between gap-3">
 					<h2 className="text-lg font-semibold text-primary">Mentions</h2>
-					<Link
+					<Button
+						ref={addMentionRef}
+						as={BasicLink}
+						variant="secondary"
+						size="md"
 						href="/research/admin/trusted-by/mentions/new"
-						className="inline-flex min-h-9 items-center bg-link px-3 text-sm font-medium text-on-brand transition-opacity hover:opacity-90"
 					>
-						+ Add mention
-					</Link>
+						<Icon name="plus" className="size-3.5" />
+						Add mention
+					</Button>
 				</div>
 
 				{mentionsQuery.isLoading ? (
@@ -282,13 +311,16 @@ export function TrustedByAdminView() {
 												disabled={reorderMentionsMutation.isPending}
 												onToggle={(enabled) => toggleMentionMutation.mutate({ id: mention.id, enabled })}
 												togglePending={toggleMentionMutation.isPending}
-												onDelete={() => {
-													setDeleteTarget({
-														kind: 'mention',
-														id: mention.id,
-														name: mention.username || mention.xPostId || 'this mention'
-													})
-												}}
+												onDelete={(control) =>
+													confirmDelete(
+														{
+															kind: 'mention',
+															id: mention.id,
+															name: mention.username || mention.xPostId || 'this mention'
+														},
+														control
+													)
+												}
 												deletePending={deleteMentionMutation.isPending}
 											/>
 										</SlideBoundary>
@@ -305,13 +337,9 @@ export function TrustedByAdminView() {
 				<section className="grid min-w-0 gap-3">
 					<div className="flex flex-wrap items-end justify-between gap-3">
 						<h2 className="text-lg font-semibold text-primary">Slide preview</h2>
-						<button
-							type="button"
-							onClick={() => setShowFullPreview((prev) => !prev)}
-							className="inline-flex min-h-9 items-center border border-medium bg-surface px-3 text-sm font-medium text-primary transition-colors hover:border-link/40"
-						>
+						<Button variant="secondary" size="md" onClick={() => setShowFullPreview((prev) => !prev)}>
 							{showFullPreview ? 'Show quote cards only' : 'Load full preview with X posts'}
-						</button>
+						</Button>
 					</div>
 					<div className="grid gap-3">
 						{chunkMentions(enabledMentions).map((block, blockIndex) => (
@@ -398,7 +426,7 @@ function SortableLogoRow({
 	disabled: boolean
 	onToggle: (enabled: boolean) => void
 	togglePending: boolean
-	onDelete: () => void
+	onDelete: (control: HTMLElement) => void
 	deletePending: boolean
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -422,7 +450,7 @@ function SortableLogoRow({
 				type="button"
 				disabled={disabled}
 				accessibleWhenDisabled
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label={`Drag ${logo.name}`}
 				{...attributes}
 				{...listeners}
@@ -450,21 +478,18 @@ function SortableLogoRow({
 					/>
 					Enabled
 				</label>
-				<Link
-					href={`/research/admin/trusted-by/logos/${logo.id}`}
-					className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary"
-				>
+				<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/trusted-by/logos/${logo.id}`}>
 					Edit
-				</Link>
-				<button
-					type="button"
-					onClick={onDelete}
+				</Button>
+				<Button
+					variant="destructive"
+					size="sm"
+					onClick={(event) => onDelete(event.currentTarget)}
 					aria-label={`Delete ${logo.name}`}
 					disabled={deletePending}
-					className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 				>
 					Delete
-				</button>
+				</Button>
 			</div>
 		</li>
 	)
@@ -484,7 +509,7 @@ function SortableMentionRow({
 	disabled: boolean
 	onToggle: (enabled: boolean) => void
 	togglePending: boolean
-	onDelete: () => void
+	onDelete: (control: HTMLElement) => void
 	deletePending: boolean
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -510,7 +535,7 @@ function SortableMentionRow({
 				type="button"
 				disabled={disabled}
 				accessibleWhenDisabled
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label="Drag mention"
 				{...attributes}
 				{...listeners}
@@ -519,7 +544,7 @@ function SortableMentionRow({
 			</Ariakit.Button>
 
 			{slotLabel ? (
-				<span className="inline-flex shrink-0 items-center rounded-full bg-research-tint px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
+				<span className="inline-flex shrink-0 items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link-on-tint uppercase">
 					{slotLabel}
 				</span>
 			) : (
@@ -549,21 +574,18 @@ function SortableMentionRow({
 					/>
 					Enabled
 				</label>
-				<Link
-					href={`/research/admin/trusted-by/mentions/${mention.id}`}
-					className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary"
-				>
+				<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/trusted-by/mentions/${mention.id}`}>
 					Edit
-				</Link>
-				<button
-					type="button"
-					onClick={onDelete}
+				</Button>
+				<Button
+					variant="destructive"
+					size="sm"
+					onClick={(event) => onDelete(event.currentTarget)}
 					aria-label={`Delete mention ${mention.username || mention.xPostId || ''}`}
 					disabled={deletePending}
-					className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 				>
 					Delete
-				</button>
+				</Button>
 			</div>
 		</li>
 	)

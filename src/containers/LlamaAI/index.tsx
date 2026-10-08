@@ -128,7 +128,8 @@ import { SessionAliasContext } from '~/contexts/SessionAliasRegistry'
 import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { catchLostFocus } from '~/ui/focus'
+import { Button } from '~/ui/Button'
+import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { getABSeedFromCookie } from '~/utils/abTesting'
@@ -2988,8 +2989,15 @@ export function AgenticChat({
 														placement="bottom-end"
 														render={
 															<Ariakit.Button
+																id="terminal-chat-hide"
 																type="button"
-																onClick={() => setTerminalChatCollapsed(true)}
+																// The header leaves with this button; the rail's Show chat takes its place.
+																onClick={() =>
+																	keepFocus(
+																		() => setTerminalChatCollapsed(true),
+																		() => document.getElementById('terminal-chat-show')
+																	)
+																}
 																data-umami-event="llamaai-terminal-chat-collapse"
 																data-umami-event-action="collapse"
 															/>
@@ -3013,7 +3021,7 @@ export function AgenticChat({
 																data-umami-event-source="header_controls"
 															/>
 														}
-														className={`${HEADER_ICON_BUTTON} aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+														className={`${HEADER_ICON_BUTTON} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 													>
 														<Icon name="share" height={14} width={14} />
 														<span className="sr-only">{SHARE_TOOLTIP}</span>
@@ -3189,11 +3197,18 @@ export const ChatControls = memo(function ChatControls({
 			</Tooltip>
 			<Tooltip
 				content="New chat"
-				render={<button type="button" onClick={handleNewChat} />}
-				className="ml-auto flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white not-disabled:not-aria-disabled:hover:bg-brand focus-visible:bg-brand"
+				render={
+					<Button
+						variant="primary"
+						size="sm"
+						square
+						onClick={handleNewChat}
+						aria-label="New chat"
+						className="ml-auto"
+					/>
+				}
 			>
 				<Icon name="square-pen" height={16} width={16} />
-				<span className="sr-only">New chat</span>
 			</Tooltip>
 			{canShare ? (
 				<Tooltip
@@ -3208,7 +3223,7 @@ export const ChatControls = memo(function ChatControls({
 							data-umami-event-source="header_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+					className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 				>
 					<Icon name="share" height={14} width={14} />
 					<span className="sr-only">{SHARE_TOOLTIP}</span>

@@ -3,6 +3,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
+import { Tooltip } from '~/ui/Tooltip'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>
@@ -288,17 +289,22 @@ export function KeyMetricsPngExportButton({
 	}
 
 	return (
-		<Button
-			type="button"
-			size="sm"
-			onClick={() => {
-				void handleExport()
-			}}
-			pendingLabel={isLoading ? 'Exporting…' : null}
-			title="Download Key Metrics as PNG"
+		<Tooltip
+			content="Download Key Metrics as PNG"
+			render={
+				<Button
+					type="button"
+					size="sm"
+					onClick={() => {
+						void handleExport()
+					}}
+					pendingLabel={isLoading ? 'Exporting…' : null}
+					aria-label="Download Key Metrics as PNG"
+				/>
+			}
 		>
 			<Icon name="download-paper" height={12} width={12} />
 			<span>.png</span>
-		</Button>
+		</Tooltip>
 	)
 }

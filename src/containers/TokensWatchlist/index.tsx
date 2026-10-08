@@ -265,7 +265,7 @@ function TokensPortfolioSelection() {
 					className="min-w-[100px]"
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
-				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
+				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md">
 					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>
 				</Button>

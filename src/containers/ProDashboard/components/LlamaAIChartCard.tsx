@@ -12,7 +12,7 @@ import { formatDate } from '~/utils/dateFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
 import type { LlamaAIChartConfig } from '../types'
-import { ProBadge, ProButton, ProMeta } from '../ui'
+import { ProBadge, ProMeta } from '../ui'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
 import { useCardHeightScale } from './cardHeightContext'
 import {
@@ -183,10 +183,10 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				controls={
 					canRefresh ? (
 						// Loading keeps focus on the button, also when the confirmation hands it back mid-refresh.
-						<ProButton
+						<Button
 							size="sm"
 							variant="ghost"
-							loading={data.refreshPending || refreshMutation.isPending}
+							pendingLabel={data.refreshPending || refreshMutation.isPending ? 'Refreshing…' : null}
 							onClick={() => {
 								if (refreshConfirmation) {
 									// Each opening starts without the last attempt's error.
@@ -195,8 +195,8 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 								} else refreshMutation.mutate()
 							}}
 						>
-							{data.refreshPending || refreshMutation.isPending ? 'Refreshing…' : 'Refresh'}
-						</ProButton>
+							Refresh
+						</Button>
 					) : null
 				}
 			/>

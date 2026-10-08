@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { ProButton } from '../ui'
 
@@ -56,9 +57,9 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, e
 							Edit dashboard
 						</ProButton>
 					) : (
-						<ProButton as={BasicLink} href="/pro?tab=discover" size="lg" variant="secondary">
+						<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
 							Browse dashboards
-						</ProButton>
+						</Button>
 					)}
 				</div>
 			) : null}

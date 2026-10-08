@@ -1,4 +1,6 @@
 import type { RefObject } from 'react'
+import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 
 /**
  * Status footer for cursor-mode tables (useTablePages). The footer IS the
@@ -35,16 +37,19 @@ export function TablePagesStatus({
 	return (
 		<div
 			ref={sentinelRef}
+			tabIndex={-1}
 			role="status"
 			aria-live="polite"
-			className="flex min-h-8 items-center justify-center px-3 py-4 text-xs text-tertiary"
+			className="flex min-h-8 items-center justify-center gap-2 px-3 py-4 body-sm text-tertiary"
 		>
 			{error ? (
 				<>
 					{error === 'replace' ? replaceFailedLabel : `Couldn't load more ${noun}.`}
-					<button type="button" className="ml-1 underline" onClick={() => void retry?.()}>
-						Retry
-					</button>
+					{/* useTablePages clears the error as a retry starts, so the button leaves at once and the footer takes
+					    focus while the rows load; a pending label would never render. */}
+					<Button ref={focusRegionOnLeave} variant="secondary" size="sm" onClick={() => void retry?.()}>
+						Try again
+					</Button>
 				</>
 			) : isReplacing && replacingLabel !== null ? (
 				replacingLabel

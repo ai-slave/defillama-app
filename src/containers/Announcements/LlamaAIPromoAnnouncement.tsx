@@ -17,7 +17,6 @@ export function LlamaAIPromoAnnouncement({ track }: { track: AnnouncementTrackin
 			dismissTracking={track.dismiss}
 			className="relative overflow-hidden border border-llamaai-announcement-border bg-(image:--llamaai-announcement-bg) text-llamaai-announcement-text shadow-llamaai-announcement"
 			contentClassName="text-center"
-			dismissButtonClassName="hover:bg-llamaai-announcement-dismiss"
 		>
 			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-(image:--llamaai-announcement-shimmer)" />
 			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">

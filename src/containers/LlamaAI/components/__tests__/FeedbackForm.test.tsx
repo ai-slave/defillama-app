@@ -140,6 +140,7 @@ test('general feedback says a rating is needed until one is chosen', async () =>
 	expect(dialog()?.textContent).toContain('Choose Good or Bad to submit.')
 	expect(button('Submit').disabled).toBe(true)
 	await click('Good')
+	expect(button('Good').getAttribute('aria-pressed')).toBe('true')
 	expect(dialog()?.textContent).not.toContain('Choose Good or Bad to submit.')
 	expect(button('Submit').disabled).toBe(false)
 })

@@ -20,7 +20,6 @@ export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTr
 			dismissTracking={track.dismiss}
 			className="border border-ir-announcement-border bg-(image:--ir-announcement-bg) text-ir-announcement-text shadow-ir-announcement"
 			contentClassName="text-center"
-			dismissButtonClassName="hover:bg-ir-announcement-dismiss"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
 				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-ir-announcement-badge-text shadow-sm dark:ring-1 dark:ring-ir-announcement-ring">

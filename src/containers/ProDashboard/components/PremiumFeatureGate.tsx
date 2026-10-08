@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
-import { ProButton } from '../ui'
 import { DashboardPaywallModal, type PaywallReason } from './DashboardPaywallModal'
 
 interface PremiumFeatureGateProps {
@@ -40,18 +40,18 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 						This feature requires a Pro subscription. Upgrade to unlock it.
 					</p>
 				</div>
-				<ProButton
+				<Button
 					type="button"
 					onClick={() => {
 						setSignupSource('pro-dashboard')
 						setPaywallOpen(true)
 					}}
 					variant="primary"
-					size="lg"
+					size="md"
 				>
-					<Icon name="sparkles" height={16} width={16} />
+					<Icon name="sparkles" height={14} width={14} />
 					Upgrade to Pro
-				</ProButton>
+				</Button>
 			</div>
 
 			{paywallOpen ? <DashboardPaywallModal reason={paywallReason} onClose={() => setPaywallOpen(false)} /> : null}

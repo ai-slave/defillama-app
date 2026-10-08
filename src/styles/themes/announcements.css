@@ -36,7 +36,6 @@
 		);
 		--llamaai-announcement-text: var(--ai-on-gold);
 		--llamaai-announcement-shadow: 0 10px 30px rgb(201 154 74 / 14%);
-		--llamaai-announcement-dismiss: rgb(92 74 31 / 8%);
 		--llamaai-announcement-shimmer: linear-gradient(99.97deg, transparent, rgb(255 255 255 / 55%), transparent);
 		--llamaai-announcement-badge-bg: linear-gradient(var(--ai-gold-deep), var(--ai-gold-deep));
 		--llamaai-announcement-badge-text: var(--ai-white);
@@ -49,7 +48,6 @@
 		--app-announcement-bg: linear-gradient(100deg, #1f67d2 0%, #2b7de9 45%, #4f9cf9 100%);
 		--app-announcement-text: #ffffff;
 		--app-announcement-shadow: 0 10px 30px rgba(31, 103, 210, 0.35);
-		--app-announcement-dismiss: rgb(255 255 255 / 15%);
 		--app-announcement-shimmer: linear-gradient(99.97deg, transparent, rgba(255, 255, 255, 0.18), transparent);
 		--app-announcement-badge-bg: #ffffff;
 		--app-announcement-badge-text: #1f67d2;
@@ -61,7 +59,6 @@
 		--verified-announcement-bg: linear-gradient(100deg, #fff7dc 0%, #fdefc2 55%, #f9e5a8 100%);
 		--verified-announcement-text: #5c4300;
 		--verified-announcement-shadow: 0 10px 30px rgba(214, 160, 20, 0.2);
-		--verified-announcement-dismiss: rgb(92 67 0 / 10%);
 		--verified-announcement-seal: #a56f00;
 		--verified-announcement-button: #a56f00;
 		--verified-announcement-button-hover: #8f6000;
@@ -71,7 +68,6 @@
 		--ir-announcement-bg: linear-gradient(100deg, #4338ca 0%, #5b50e0 50%, #7c74f0 100%);
 		--ir-announcement-text: #ffffff;
 		--ir-announcement-shadow: 0 10px 30px rgba(67, 56, 202, 0.3);
-		--ir-announcement-dismiss: rgb(255 255 255 / 15%);
 		--ir-announcement-badge-bg: #ffffff;
 		--ir-announcement-badge-text: #4338ca;
 		--ir-announcement-ring: rgb(255 255 255 / 40%);
@@ -82,7 +78,6 @@
 		--data-announcement-bg: linear-gradient(100deg, #0e7490 0%, #0891b2 50%, #22b8cf 100%);
 		--data-announcement-text: #ffffff;
 		--data-announcement-shadow: 0 10px 30px rgba(8, 145, 178, 0.3);
-		--data-announcement-dismiss: rgb(255 255 255 / 15%);
 		--data-announcement-badge-bg: #ffffff;
 		--data-announcement-badge-text: #0e7490;
 		--data-announcement-ring: rgb(255 255 255 / 40%);
@@ -99,7 +94,6 @@
 		);
 		--llamaai-announcement-text: var(--ai-gold-soft);
 		--llamaai-announcement-shadow: 0 10px 30px rgb(0 0 0 / 50%);
-		--llamaai-announcement-dismiss: rgb(253 224 169 / 12%);
 		--llamaai-announcement-shimmer: linear-gradient(99.97deg, transparent, rgb(253 224 169 / 14%), transparent);
 		--llamaai-announcement-badge-bg: var(--ai-gold-gradient);
 		--llamaai-announcement-badge-text: var(--ai-on-gold-strong);
@@ -112,7 +106,6 @@
 		--app-announcement-bg: linear-gradient(100deg, #0d2a5c 0%, #154189 50%, #1d5cb8 100%);
 		--app-announcement-text: #eaf3ff;
 		--app-announcement-shadow: 0 10px 30px rgba(13, 42, 92, 0.5);
-		--app-announcement-dismiss: rgb(255 255 255 / 10%);
 		--app-announcement-badge-bg: rgb(255 255 255 / 15%);
 		--app-announcement-badge-text: #ffffff;
 		--app-announcement-ring: rgb(255 255 255 / 30%);
@@ -123,7 +116,6 @@
 		--verified-announcement-bg: linear-gradient(100deg, #33280a 0%, #453610 55%, #574314 100%);
 		--verified-announcement-text: #ffe9a8;
 		--verified-announcement-shadow: 0 10px 30px rgba(51, 40, 10, 0.5);
-		--verified-announcement-dismiss: rgb(255 255 255 / 10%);
 		--verified-announcement-seal: #d9a441;
 		--verified-announcement-button: #d9a441;
 		--verified-announcement-button-hover: #f0b94f;
@@ -133,7 +125,6 @@
 		--ir-announcement-bg: linear-gradient(100deg, #1e1b4b 0%, #2a2575 50%, #3730a3 100%);
 		--ir-announcement-text: #eef0ff;
 		--ir-announcement-shadow: 0 10px 30px rgba(30, 27, 75, 0.5);
-		--ir-announcement-dismiss: rgb(255 255 255 / 10%);
 		--ir-announcement-badge-bg: rgb(255 255 255 / 15%);
 		--ir-announcement-badge-text: #ffffff;
 		--ir-announcement-ring: rgb(255 255 255 / 30%);
@@ -144,7 +135,6 @@
 		--data-announcement-bg: linear-gradient(100deg, #083344 0%, #0b4f63 50%, #0e6b82 100%);
 		--data-announcement-text: #e6fbff;
 		--data-announcement-shadow: 0 10px 30px rgba(8, 51, 68, 0.5);
-		--data-announcement-dismiss: rgb(255 255 255 / 10%);
 		--data-announcement-badge-bg: rgb(255 255 255 / 15%);
 		--data-announcement-badge-text: #ffffff;
 		--data-announcement-ring: rgb(255 255 255 / 30%);
@@ -157,7 +147,6 @@
 	--shadow-llamaai-announcement: var(--llamaai-announcement-shadow);
 	--color-llamaai-announcement-border: var(--llamaai-announcement-border);
 	--color-llamaai-announcement-text: var(--llamaai-announcement-text);
-	--color-llamaai-announcement-dismiss: var(--llamaai-announcement-dismiss);
 	--color-llamaai-announcement-badge-text: var(--llamaai-announcement-badge-text);
 	--color-llamaai-announcement-link: var(--llamaai-announcement-link);
 	--color-llamaai-announcement-link-hover: var(--llamaai-announcement-link-hover);
@@ -167,7 +156,6 @@
 	--shadow-app-announcement: var(--app-announcement-shadow);
 	--color-app-announcement-border: var(--app-announcement-border);
 	--color-app-announcement-text: var(--app-announcement-text);
-	--color-app-announcement-dismiss: var(--app-announcement-dismiss);
 	--color-app-announcement-badge-bg: var(--app-announcement-badge-bg);
 	--color-app-announcement-badge-text: var(--app-announcement-badge-text);
 	--color-app-announcement-ring: var(--app-announcement-ring);
@@ -177,7 +165,6 @@
 	--shadow-verified-announcement: var(--verified-announcement-shadow);
 	--color-verified-announcement-border: var(--verified-announcement-border);
 	--color-verified-announcement-text: var(--verified-announcement-text);
-	--color-verified-announcement-dismiss: var(--verified-announcement-dismiss);
 	--color-verified-announcement-seal: var(--verified-announcement-seal);
 	--color-verified-announcement-button: var(--verified-announcement-button);
 	--color-verified-announcement-button-hover: var(--verified-announcement-button-hover);
@@ -186,7 +173,6 @@
 	--shadow-ir-announcement: var(--ir-announcement-shadow);
 	--color-ir-announcement-border: var(--ir-announcement-border);
 	--color-ir-announcement-text: var(--ir-announcement-text);
-	--color-ir-announcement-dismiss: var(--ir-announcement-dismiss);
 	--color-ir-announcement-badge-bg: var(--ir-announcement-badge-bg);
 	--color-ir-announcement-badge-text: var(--ir-announcement-badge-text);
 	--color-ir-announcement-ring: var(--ir-announcement-ring);
@@ -196,7 +182,6 @@
 	--shadow-data-announcement: var(--data-announcement-shadow);
 	--color-data-announcement-border: var(--data-announcement-border);
 	--color-data-announcement-text: var(--data-announcement-text);
-	--color-data-announcement-dismiss: var(--data-announcement-dismiss);
 	--color-data-announcement-badge-bg: var(--data-announcement-badge-bg);
 	--color-data-announcement-badge-text: var(--data-announcement-badge-text);
 	--color-data-announcement-ring: var(--data-announcement-ring);

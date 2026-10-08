@@ -1,11 +1,14 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Input, textareaStyles } from '~/ui/Input'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getMyDashboardAuthorProfile, TOP_AUTHORS_QUERY_KEY, updateMyDashboardAuthorProfile } from './api'
 import { avatarColorStyle } from './avatarColor'
@@ -123,30 +126,30 @@ function profileCompleteness(state: FormState): { percent: number; missing: Arra
 function ProfileCompletenessMeter({ state }: { state: FormState }) {
 	const { percent, missing } = profileCompleteness(state)
 	return (
-		<div className="mt-4 grid gap-2 border-t border-sub-border-slate-100 pt-4 dark:border-sub-border-strong">
+		<div className="mt-4 grid gap-2 border-t border-subtle pt-4">
 			<div className="flex items-center justify-between gap-2">
-				<span className="text-xs font-medium text-sub-text-primary">Profile completeness</span>
-				<span className="text-xs font-semibold text-sub-brand-primary tabular-nums">
+				<span className="text-xs font-medium text-primary">Profile completeness</span>
+				<span className="text-xs font-semibold text-link tabular-nums">
 					{formatPercent(percent, { input: 'percent', maximumFractionDigits: 0 })}
 				</span>
 			</div>
-			<div className="h-1.5 overflow-hidden rounded-full bg-sub-border-slate-100 dark:bg-sub-border-strong">
+			<div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated-2">
 				<div
-					className="h-full rounded-full bg-sub-brand-primary transition-[width] duration-300"
+					className="h-full rounded-full bg-brand transition-[width] duration-300"
 					style={{ width: `${percent}%` }}
 				/>
 			</div>
 			{missing.length > 0 ? (
 				<ul className="grid gap-1">
 					{missing.map((label) => (
-						<li key={label} className="flex items-center gap-1.5 text-xs text-sub-text-muted">
+						<li key={label} className="flex items-center gap-1.5 text-xs text-secondary">
 							<Icon name="plus" height={12} width={12} />
 							{label}
 						</li>
 					))}
 				</ul>
 			) : (
-				<p className="text-xs text-sub-text-muted">Your profile is complete and ready to gain followers.</p>
+				<p className="text-xs text-secondary">Your profile is complete and ready to gain followers.</p>
 			)}
 		</div>
 	)
@@ -155,7 +158,7 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 function CharCount({ value, max }: { value: string; max: number }) {
 	const near = value.length >= Math.floor(max * 0.9)
 	return (
-		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-sub-text-muted'}`}>
+		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
 			{formatNumber(value.length)}/{formatNumber(max)}
 		</span>
 	)
@@ -192,17 +195,9 @@ export function DashboardAuthorProfileCard() {
 	// profile in the cache, and unmounting the editor over it would throw away an unsaved draft.
 	if (!loadedProfile) {
 		if (profileError) {
-			return (
-				<div className="rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
-					<p className="text-sm text-sub-text-muted">Profile could not be loaded.</p>
-				</div>
-			)
+			return <PanelStatus variant="error">Profile could not be loaded.</PanelStatus>
 		}
-		return (
-			<div className="flex min-h-56 items-center justify-center rounded-2xl border border-sub-border-slate-100 bg-white dark:border-sub-border-strong dark:bg-sub-surface-dark">
-				<div className="size-7 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading profile" />
 	}
 
 	// Keyed by the saved profile: a successful save writes the new one into the cache, which rebuilds the
@@ -252,11 +247,11 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 	const publicHref = `/authors/${state.slug || profile.slug}`
 
 	return (
-		<div className="grid gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+		<Card padding="md" className="grid gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
-					<Icon name="users" height={24} width={24} className="text-sub-text-primary" />
-					<span className="text-base font-medium text-sub-text-primary">Public Profile</span>
+					<Icon name="users" height={24} width={24} className="text-primary" />
+					<span className="text-base font-medium text-primary">Public Profile</span>
 				</div>
 				{profile.slug ? (
 					<BasicLink href={publicHref} className="text-sm font-medium text-link hover:underline">
@@ -278,8 +273,8 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					/>
 
 					<label className="grid gap-1.5">
-						<span className="text-sm font-medium text-sub-text-primary">Display name</span>
-						<input
+						<span className="text-sm font-medium text-primary">Display name</span>
+						<Input
 							value={state.displayName}
 							maxLength={DISPLAY_NAME_MAX}
 							onChange={(e) => {
@@ -294,26 +289,24 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 										: prev
 								)
 							}}
-							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-sub-text-primary">Handle</span>
+							<span className="text-sm font-medium text-primary">Handle</span>
 							<CharCount value={state.slug} max={SLUG_MAX} />
 						</div>
-						<input
+						<Input
 							value={state.slug}
 							maxLength={SLUG_MAX}
 							onChange={(e) => setState((prev) => (prev ? { ...prev, slug: slugify(e.target.value) } : prev))}
-							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-sub-text-primary">Bio</span>
+							<span className="text-sm font-medium text-primary">Bio</span>
 							<CharCount value={state.bio} max={BIO_MAX} />
 						</div>
 						<textarea
@@ -321,17 +314,17 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 							maxLength={BIO_MAX}
 							rows={4}
 							onChange={(e) => setState((prev) => (prev ? { ...prev, bio: e.target.value } : prev))}
-							className="resize-y rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm leading-6 text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
+							className={`${textareaStyles} resize-y`}
 						/>
 					</label>
 
 					<div className="grid gap-3">
-						<span className="text-sm font-medium text-sub-text-primary">Links</span>
+						<span className="text-sm font-medium text-primary">Links</span>
 						<div className="grid gap-3 md:grid-cols-2">
 							{SOCIALS.map((social) => (
 								<label key={social.id} className="grid gap-1.5">
-									<span className="text-xs font-medium text-sub-text-muted">{social.label}</span>
-									<input
+									<span className="text-xs font-medium text-secondary">{social.label}</span>
+									<Input
 										value={state.socials[social.id] || ''}
 										maxLength={SOCIAL_VALUE_MAX}
 										placeholder={social.placeholder}
@@ -345,7 +338,6 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 													: prev
 											)
 										}
-										className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden placeholder:text-sub-text-muted focus:border-sub-brand-primary dark:border-sub-border-strong"
 									/>
 								</label>
 							))}
@@ -353,7 +345,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					</div>
 				</div>
 
-				<aside className="h-fit rounded-lg border border-sub-border-slate-100 bg-sub-surface-slate-50 p-4 dark:border-sub-border-strong dark:bg-black/10">
+				<aside className="h-fit rounded-lg border border-subtle bg-surface-elevated-1 p-4">
 					<div className="flex items-start gap-3">
 						{state.avatarUrl ? (
 							// eslint-disable-next-line @next/next/no-img-element
@@ -367,31 +359,32 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 							</div>
 						)}
 						<div className="min-w-0">
-							<p className="truncate text-sm font-semibold text-sub-text-primary">{displayName}</p>
-							<p className="truncate text-xs text-sub-text-muted">@{state.slug || 'handle'}</p>
+							<p className="truncate text-sm font-semibold text-primary">{displayName}</p>
+							<p className="truncate text-xs text-secondary">@{state.slug || 'handle'}</p>
 						</div>
 					</div>
 					{state.bio.trim() ? (
-						<p className="mt-3 line-clamp-4 text-sm leading-6 text-sub-text-muted">{state.bio.trim()}</p>
+						<p className="mt-3 line-clamp-4 text-sm leading-6 text-secondary">{state.bio.trim()}</p>
 					) : null}
 					<ProfileCompletenessMeter state={state} />
 				</aside>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-sub-border-slate-100 pt-4 dark:border-sub-border-strong">
-				<p className={`text-xs ${validationError ? 'text-warning' : 'text-sub-text-muted'}`}>
+			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle pt-4">
+				<p className={`text-xs ${validationError ? 'text-warning' : 'text-secondary'}`}>
 					{validationError || 'Profile changes appear on public dashboard pages after saving.'}
 				</p>
-				<Ariakit.Button
-					type="button"
-					disabled={!isDirty || updateMutation.isPending || !!validationError}
+				<Button
+					variant="primary"
+					size="md"
+					disabled={!isDirty || !!validationError}
 					accessibleWhenDisabled
+					pendingLabel={updateMutation.isPending ? 'Saving…' : null}
 					onClick={save}
-					className="rounded-lg bg-sub-brand-primary px-4 py-2 text-sm font-medium text-on-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
-					{updateMutation.isPending ? 'Saving…' : 'Save profile'}
-				</Ariakit.Button>
+					Save profile
+				</Button>
 			</div>
-		</div>
+		</Card>
 	)
 }

@@ -266,7 +266,6 @@ function ManualSetup() {
 							label="MCP client"
 							variant="default"
 							size="md"
-							className="max-w-full"
 							options={clientNames.map((name) => ({ value: name, label: name }))}
 						/>
 					</div>

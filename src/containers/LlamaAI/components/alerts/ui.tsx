@@ -5,7 +5,7 @@ import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/co
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
+import { TAG_GROUP_BUTTON_SIZES, TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 
 const settingsIntegrationsLinkClass =
 	'cursor-pointer underline decoration-dotted underline-offset-2 not-disabled:not-aria-disabled:hover:text-link'
@@ -109,7 +109,7 @@ export function SegmentedToggle<T extends string>({
 					<label
 						key={option.value}
 						data-active={value === option.value}
-						className={`${TAG_GROUP_VARIANTS.default.button} relative cursor-pointer capitalize has-focus-visible:focus-ring`}
+						className={`${TAG_GROUP_VARIANTS.default.button} ${TAG_GROUP_BUTTON_SIZES.default.md} relative cursor-pointer capitalize has-focus-visible:focus-ring`}
 					>
 						<Ariakit.Radio value={option.value} aria-label={option.label} className="sr-only" />
 						{option.label}

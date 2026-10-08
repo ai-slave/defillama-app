@@ -11,6 +11,7 @@ import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFoote
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import { scheduleConfirmationReads } from '../utils'
@@ -248,17 +249,22 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 								</label>
 								<div className="flex items-center gap-2">
 									{/* Focusable at 1 seat: the press that reaches it keeps focus. */}
-									<Button
-										type="button"
-										aria-label="Decrease seats"
-										size="md"
-										square
-										disabled={seatCount <= 1 || !canChangeTeamBilling}
-										accessibleWhenDisabled
-										onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
+									<Tooltip
+										content="Decrease seats"
+										render={
+											<Button
+												type="button"
+												aria-label="Decrease seats"
+												size="md"
+												square
+												disabled={seatCount <= 1 || !canChangeTeamBilling}
+												accessibleWhenDisabled
+												onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
+											/>
+										}
 									>
 										<Icon name="minus" className="size-4" aria-hidden="true" />
-									</Button>
+									</Tooltip>
 									<Input
 										id="seat-count"
 										type="number"
@@ -271,16 +277,21 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 										onChange={(e) => setSeatInput(e.target.value)}
 										className="w-20 text-center"
 									/>
-									<Button
-										type="button"
-										aria-label="Increase seats"
-										disabled={!canChangeTeamBilling}
-										onClick={() => setSeatInput(String(Math.max(1, seatCount + 1)))}
-										size="md"
-										square
+									<Tooltip
+										content="Increase seats"
+										render={
+											<Button
+												type="button"
+												aria-label="Increase seats"
+												disabled={!canChangeTeamBilling}
+												onClick={() => setSeatInput(String(Math.max(1, seatCount + 1)))}
+												size="md"
+												square
+											/>
+										}
 									>
 										<Icon name="plus" className="size-4" aria-hidden="true" />
-									</Button>
+									</Tooltip>
 								</div>
 							</div>
 

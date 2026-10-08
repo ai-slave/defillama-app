@@ -1,4 +1,6 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Skeleton } from '~/ui/Skeleton'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 interface ExternalDataBalanceCardProps {
@@ -25,12 +27,12 @@ export function ExternalDataBalanceCard({
 		return (
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
-					<div className="size-7 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
-					<div className="h-5 w-44 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
+					<Skeleton className="size-7" />
+					<Skeleton className="h-5 w-44" />
 				</div>
-				<div className="h-3 w-full animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
-				<div className="h-3 w-3/4 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
-				<div className="h-8 w-20 animate-pulse rounded-lg bg-sub-border-light dark:bg-sub-border-strong" />
+				<Skeleton className="h-3 w-full" />
+				<Skeleton className="h-3 w-3/4" />
+				<Skeleton className="h-8 w-20 rounded-lg" />
 			</div>
 		)
 	}
@@ -47,19 +49,15 @@ export function ExternalDataBalanceCard({
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Icon name="box" height={28} width={28} className="text-sub-text-primary" />
-					<span className="text-base leading-5 font-medium text-sub-text-primary">External Data Balance</span>
+					<span className="label-lg text-sub-text-primary">External Data Balance</span>
 				</div>
-				<button
-					type="button"
-					onClick={onTopUp}
-					className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
-				>
-					<Icon name="plus" height={14} width={14} />
+				<Button variant="primary" size="md" onClick={onTopUp}>
+					<Icon name="plus" className="size-3.5" />
 					Top up
-				</button>
+				</Button>
 			</div>
 
-			<p className="text-xs leading-4 text-sub-text-muted">
+			<p className="body-sm text-sub-text-muted">
 				Credits give LlamaAI access to premium data: onchain data, X profiles and posts, LinkedIn, and more. Pro
 				subscribers get $10 per month in credits.
 			</p>
@@ -69,8 +67,8 @@ export function ExternalDataBalanceCard({
 				{/* Free This Month */}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">Free this month</span>
-						<span className="text-xs text-sub-text-primary">
+						<span className="body-sm text-sub-text-muted">Free this month</span>
+						<span className="body-sm text-sub-text-primary">
 							{formatBalanceUsd(freeRemaining)}{' '}
 							<span className="text-sub-text-muted">/ {formatBalanceUsd(freeLimit)}</span>
 						</span>
@@ -83,7 +81,7 @@ export function ExternalDataBalanceCard({
 							}}
 						/>
 					</div>
-					<div className="flex items-center justify-between text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-between label-xs text-sub-text-muted">
 						<span>{formatBalanceUsd(freeSpent)} used</span>
 						<span>
 							{formatPercent(usagePercent, {
@@ -98,17 +96,15 @@ export function ExternalDataBalanceCard({
 
 				{/* Topped Up */}
 				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-text-muted">Topped up</span>
-					<span className="text-xs font-medium text-sub-text-primary">{formatBalanceUsd(toppedUpBalance)}</span>
+					<span className="body-sm text-sub-text-muted">Topped up</span>
+					<span className="label-sm text-sub-text-primary">{formatBalanceUsd(toppedUpBalance)}</span>
 				</div>
 			</div>
 
 			{/* Total */}
 			<div className="flex items-center justify-between">
-				<span className="text-sm text-sub-text-muted">Total available</span>
-				<span
-					className={`text-sm font-semibold ${isLowBalance ? 'text-sub-warning-text-dark' : 'text-sub-text-primary'}`}
-				>
+				<span className="body-md text-sub-text-muted">Total available</span>
+				<span className={`title-md ${isLowBalance ? 'text-sub-warning-text-dark' : 'text-sub-text-primary'}`}>
 					{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 				</span>
 			</div>

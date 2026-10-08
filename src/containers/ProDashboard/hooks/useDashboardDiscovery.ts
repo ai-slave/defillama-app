@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import type { Dashboard } from '../dashboardTypes'
@@ -47,6 +47,8 @@ export function useDashboardDiscovery(params: SearchParams) {
 				isAuthenticated ? authorizedFetch : undefined
 			)
 		},
+		// The pager stays mounted, with focus on it, while the next page loads.
+		placeholderData: keepPreviousData,
 		staleTime: 1000 * 60 * 5,
 		enabled: !isSearchMode
 	})
@@ -57,6 +59,7 @@ export function useDashboardDiscovery(params: SearchParams) {
 			if (!isSearchMode) return null
 			return await dashboardAPI.searchDashboards(params, isAuthenticated ? authorizedFetch : undefined)
 		},
+		placeholderData: keepPreviousData,
 		staleTime: 1000 * 60 * 2,
 		enabled: isSearchMode
 	})

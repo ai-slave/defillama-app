@@ -1,6 +1,6 @@
 import { lazy, useState } from 'react'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { BarListCard, ChartCard, KpiGrid, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
@@ -207,7 +207,8 @@ export default function Liquidity() {
 					subtitle={tvlView === 'chain' ? TVL_SUBTITLES[1] : TVL_SUBTITLES[0]}
 					subtitles={TVL_SUBTITLES}
 					control={
-						<ProSegmented<'total' | 'chain'>
+						<SegmentedControl<'total' | 'chain'>
+							variant="default"
 							size="sm"
 							label="TVL breakdown"
 							options={[
@@ -241,7 +242,8 @@ export default function Liquidity() {
 					{...(lpOptions.length > 1
 						? {
 								control: (
-									<ProSegmented<LpView>
+									<SegmentedControl<LpView>
+										variant="default"
 										size="sm"
 										label="LP positions breakdown"
 										options={lpOptions}

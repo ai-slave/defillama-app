@@ -6,6 +6,7 @@ import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { focusComposerOnLeave } from './ComposerTray'
 
 export function TipOrNotifyBanner({
@@ -43,16 +44,21 @@ function LowBalanceTip({ answerRunning }: { answerRunning: boolean }) {
 			<Button type="button" size="sm" onClick={() => actions.openSettingsModal?.('balance')}>
 				Top up
 			</Button>
-			<Button
-				type="button"
-				variant="ghost"
-				size="sm"
-				square
-				aria-label="Dismiss low balance notice"
-				onClick={() => setDismissed(true)}
+			<Tooltip
+				content="Dismiss"
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						square
+						aria-label="Dismiss low balance notice"
+						onClick={() => setDismissed(true)}
+					/>
+				}
 			>
 				<Icon name="x" height={14} width={14} />
-			</Button>
+			</Tooltip>
 		</div>
 	)
 }

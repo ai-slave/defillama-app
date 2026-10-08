@@ -3,10 +3,12 @@ import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { FollowAuthorButton } from '~/containers/Authors/FollowAuthorButton'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { useFollowingAuthors } from '../hooks/useFollowingAuthors'
 import type { FollowingShelf } from '../services/DashboardAPI'
-import { ProButton, proPanelStyles } from '../ui'
+import { proPanelStyles } from '../ui'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
@@ -15,19 +17,29 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 
 	return (
 		<div className="group/rail relative">
-			{canScrollLeft ? (
+			{canScrollLeft || canScrollRight ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-					<ProButton
-						type="button"
-						square
-						variant="secondary"
-						aria-label="Scroll dashboards left"
-						onClick={() => scrollByPage('left')}
-						className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+					{canScrollLeft ? (
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+					) : null}
+					<Tooltip
+						content="Scroll left"
+						render={
+							<Button
+								size="md"
+								type="button"
+								square
+								variant="overlay"
+								aria-label="Scroll dashboards left"
+								disabled={!canScrollLeft}
+								accessibleWhenDisabled
+								onClick={() => scrollByPage('left')}
+								className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 md:flex"
+							/>
+						}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
-					</ProButton>
+					</Tooltip>
 				</>
 			) : null}
 
@@ -38,19 +50,29 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 				{children}
 			</div>
 
-			{canScrollRight && itemCount > 3 ? (
+			{(canScrollLeft || canScrollRight) && itemCount > 3 ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-					<ProButton
-						type="button"
-						square
-						variant="secondary"
-						aria-label="Scroll dashboards right"
-						onClick={() => scrollByPage('right')}
-						className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+					{canScrollRight ? (
+						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+					) : null}
+					<Tooltip
+						content="Scroll right"
+						render={
+							<Button
+								size="md"
+								type="button"
+								square
+								variant="overlay"
+								aria-label="Scroll dashboards right"
+								disabled={!canScrollRight}
+								accessibleWhenDisabled
+								onClick={() => scrollByPage('right')}
+								className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 md:flex"
+							/>
+						}
 					>
 						<Icon name="chevron-right" height={16} width={16} />
-					</ProButton>
+					</Tooltip>
 				</>
 			) : null}
 		</div>
@@ -136,9 +158,9 @@ export function FollowingShelves() {
 					Follow authors and their public dashboards will show up here.
 				</p>
 				<div className="mt-7">
-					<ProButton as={BasicLink} href="/pro?tab=discover" size="lg" variant="secondary">
+					<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
 						Browse dashboards
-					</ProButton>
+					</Button>
 				</div>
 			</div>
 		)
@@ -152,17 +174,23 @@ export function FollowingShelves() {
 
 			{totalPages > 1 ? (
 				<div className="flex items-center justify-center gap-1">
-					<ProButton
-						type="button"
-						square
-						variant="ghost"
-						aria-label="Previous page"
-						onClick={() => goToPage(Math.max(1, page - 1))}
-						disabled={page === 1}
-						accessibleWhenDisabled
+					<Tooltip
+						content="Previous page"
+						render={
+							<Button
+								size="md"
+								type="button"
+								square
+								variant="ghost"
+								aria-label="Previous page"
+								onClick={() => goToPage(Math.max(1, page - 1))}
+								disabled={page === 1}
+								accessibleWhenDisabled
+							/>
+						}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
-					</ProButton>
+					</Tooltip>
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
 						let pageNum = i + 1
@@ -173,30 +201,37 @@ export function FollowingShelves() {
 							}
 						}
 						return (
-							<ProButton
+							<Button
+								size="md"
 								type="button"
-								square
-								variant={page === pageNum ? 'primary' : 'ghost'}
+								variant="ghost"
+								data-active={page === pageNum}
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								{...(page === pageNum ? { 'aria-current': 'page' as const } : {})}
 							>
 								{pageNum}
-							</ProButton>
+							</Button>
 						)
 					})}
 
-					<ProButton
-						type="button"
-						square
-						variant="ghost"
-						aria-label="Next page"
-						onClick={() => goToPage(Math.min(totalPages, page + 1))}
-						disabled={page === totalPages}
-						accessibleWhenDisabled
+					<Tooltip
+						content="Next page"
+						render={
+							<Button
+								size="md"
+								type="button"
+								square
+								variant="ghost"
+								aria-label="Next page"
+								onClick={() => goToPage(Math.min(totalPages, page + 1))}
+								disabled={page === totalPages}
+								accessibleWhenDisabled
+							/>
+						}
 					>
 						<Icon name="chevron-right" height={16} width={16} />
-					</ProButton>
+					</Tooltip>
 				</div>
 			) : null}
 		</div>

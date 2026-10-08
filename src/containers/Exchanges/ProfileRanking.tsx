@@ -112,11 +112,14 @@ function ExecSubRow({
 	const measured = score !== null
 	return (
 		<div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 pl-3 sm:flex sm:gap-3 sm:pl-6">
-			<Tooltip content={sub.what} className="min-w-0 sm:w-[8.5rem] sm:shrink-0">
-				<span className="flex items-baseline gap-1.5 underline decoration-dotted">
-					<span className="body-sm">{sub.label}</span>
-					{share ? <span className="body-sm text-tertiary">{share}%</span> : null}
-				</span>
+			<Tooltip
+				content={sub.what}
+				render={
+					<span className="flex min-w-0 items-baseline gap-1.5 underline decoration-dotted sm:w-[8.5rem] sm:shrink-0" />
+				}
+			>
+				<span className="body-sm">{sub.label}</span>
+				{share ? <span className="body-sm text-tertiary">{share}%</span> : null}
 			</Tooltip>
 			<div className="col-span-full row-start-2 h-1 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
 				<div

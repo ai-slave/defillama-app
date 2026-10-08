@@ -4,6 +4,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, resolveEmbeddedDashboardTabs } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
@@ -99,14 +100,13 @@ export function InvestorRelationsView({
 								/>
 								{tabs.map((tab) =>
 									tab.externalHref ? (
-										<ExternalLinkButton
+										<Tooltip
 											key={tab.id}
-											href={tab.externalHref}
-											title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
-											className="shrink-0"
+											content={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
+											render={<ExternalLinkButton href={tab.externalHref} className="shrink-0" />}
 										>
 											{tab.label}
-										</ExternalLinkButton>
+										</Tooltip>
 									) : null
 								)}
 							</div>

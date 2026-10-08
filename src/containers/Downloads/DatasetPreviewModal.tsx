@@ -678,6 +678,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 																	{column.header}
 																</span>
 																<SortIcon dir={isSorted} />
+																{isSorted ? (
+																	<span className="sr-only">
+																		{isSorted === 'asc' ? ', sorted ascending' : ', sorted descending'}
+																	</span>
+																) : null}
 															</button>
 														</div>
 													</div>

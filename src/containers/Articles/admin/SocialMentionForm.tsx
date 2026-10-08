@@ -14,6 +14,7 @@ import {
 import type { MentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import type { SocialMention, SocialMentionPayload } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
+import { Input, textareaStyles } from '~/ui/Input'
 import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
@@ -159,29 +160,29 @@ export function SocialMentionForm({ mentionId }: Props) {
 					onChange={(e) => update({ quote: e.target.value })}
 					rows={3}
 					placeholder="What they said about DefiLlama"
-					className="w-full resize-y rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className={`${textareaStyles} w-full resize-y`}
 				/>
 			</label>
 
 			<label className="grid gap-1.5">
 				<span className="text-sm font-medium text-primary">Username</span>
-				<input
+				<Input
 					type="text"
 					value={state.username}
 					onChange={(e) => update({ username: e.target.value })}
 					placeholder="handle without @"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 			</label>
 
 			<label className="grid gap-1.5">
 				<span className="text-sm font-medium text-primary">Social media name</span>
-				<input
+				<Input
 					type="text"
 					value={state.socialMediaName}
 					onChange={(e) => update({ socialMediaName: e.target.value })}
 					placeholder="X"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 			</label>
 
@@ -189,23 +190,23 @@ export function SocialMentionForm({ mentionId }: Props) {
 				<span className="text-sm font-medium text-primary">
 					Social media link <span className="font-normal text-tertiary">(optional)</span>
 				</span>
-				<input
+				<Input
 					type="url"
 					value={state.socialMediaLink}
 					onChange={(e) => update({ socialMediaLink: e.target.value })}
 					placeholder="https://x.com/…"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 			</label>
 
 			<label className="grid gap-1.5">
 				<span className="text-sm font-medium text-primary">X post id</span>
-				<input
+				<Input
 					type="text"
 					value={state.xPostId}
 					onChange={(e) => update({ xPostId: e.target.value })}
 					placeholder="2020885843125178639"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 				<p className="text-xs text-tertiary">numeric id from the X post URL, e.g. 2020885843125178639</p>
 			</label>

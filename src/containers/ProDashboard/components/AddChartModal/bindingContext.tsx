@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import type { VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import type { DashboardVariable, DashboardVariableKind } from '../../dashboardTypes'
 import { useProDashboardVariables } from '../../ProDashboardAPIContext'
@@ -64,14 +65,9 @@ export function BoundParameterChip({ label, onUnbind }: { label: string; onUnbin
 		<div className="flex flex-wrap items-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs text-pro-text-secondary">
 			<Icon name="link" height={12} width={12} className="text-brand" />
 			<span className="text-pro-text-primary">Bound to {label}</span>
-			<button
-				type="button"
-				onClick={onUnbind}
-				data-umami-event="dashboard-parameter-unbind"
-				className="ml-auto text-pro-text-tertiary transition-colors hover:text-error"
-			>
+			<Button variant="link" onClick={onUnbind} data-umami-event="dashboard-parameter-unbind" className="ml-auto">
 				Unbind
-			</button>
+			</Button>
 		</div>
 	)
 }

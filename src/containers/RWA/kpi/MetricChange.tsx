@@ -27,7 +27,7 @@ export function RwaMetricChange({ change, total }: { change: RWAValueWithPrior; 
 		.filter((part) => part != null)
 		.join(', ')
 	return (
-		<Tooltip content={note} className={`ml-auto justify-end truncate mono-md underline decoration-dotted ${tone}`}>
+		<Tooltip content={note} render={<span className={`ml-auto mono-md underline decoration-dotted ${tone}`} />}>
 			{formatPercentChange(percent)}
 		</Tooltip>
 	)

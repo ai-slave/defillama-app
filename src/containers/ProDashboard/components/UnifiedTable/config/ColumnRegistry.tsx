@@ -5,6 +5,7 @@ import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
@@ -158,17 +159,23 @@ export const getUnifiedTableColumns = ({
 						}}
 					>
 						{canExpand ? (
-							<button
-								type="button"
-								onClick={row.getToggleExpandedHandler()}
-								aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${display.displayName}`}
-								aria-expanded={isExpanded}
-								className="rounded-md p-1 transition-colors hover:bg-surface-elevated-2"
+							<Tooltip
+								content={`${isExpanded ? 'Collapse' : 'Expand'} ${display.displayName}`}
+								render={
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										onClick={row.getToggleExpandedHandler()}
+										aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${display.displayName}`}
+										aria-expanded={isExpanded}
+									/>
+								}
 							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={12} width={12} />
-							</button>
+								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-4" />
+							</Tooltip>
 						) : (
-							<span className="w-4" />
+							<span className="w-6" />
 						)}
 						{header !== 'category' ? (
 							shouldShowProtocolLogo || shouldShowChainIcon ? (

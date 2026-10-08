@@ -96,9 +96,12 @@ describe('Leaderboard', () => {
 		expect(gradeIndex).toBeGreaterThan(-1)
 		// The score maps to AAA; the API's explicit CCC grade must take precedence.
 		expect(container.querySelector('tbody tr')!.children[gradeIndex].textContent).toBe('CCC')
-		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Expand row"]')!.click())
+		const details = container.querySelector<HTMLButtonElement>('button[aria-label="Row details"]')!
+		await act(async () => details.click())
+		expect(details.getAttribute('aria-expanded')).toBe('true')
 		expect(container.textContent).toContain('Disclosures: Breakdown by Category')
-		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Collapse row"]')!.click())
+		await act(async () => details.click())
+		expect(details.getAttribute('aria-expanded')).toBe('false')
 		expect(container.textContent).not.toContain('Disclosures: Breakdown by Category')
 	})
 

@@ -3,16 +3,19 @@ import { useMutation } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { pageContent, passFocusOnLeave } from '~/ui/focus'
+import { neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { Tag, TagButton } from '~/ui/Tag'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
 import { countDashboardWidgets } from '../dashboardWidgets'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProBadge, ProChip, ProMeta, proCardShellStyles, ProButton } from '../ui'
+import { ProBadge, ProMeta, proCardShellStyles } from '../ui'
 import { CardLikeButton } from './CardLikeButton'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 import { DashboardPreview } from './DashboardPreview'
@@ -26,8 +29,15 @@ interface DashboardCardProps {
 	className?: string
 }
 
-// A confirmed delete closes onto the card's own control, and the list refetch removes the card after that.
-const focusPageOnLeave = passFocusOnLeave(pageContent)
+// A confirmed delete closes onto the card's own control, and the list refetch removes the card after that. Focus moves
+// to the neighbouring card's link (a direct child, unlike the author link); after the last card, to the list's region
+// (the tab panel), else the page content.
+const focusNeighbourOnLeave = passFocusOnLeave(
+	(card) =>
+		neighbourRowControl(card, card)?.querySelector<HTMLElement>(':scope > a') ??
+		card.parentElement?.closest<HTMLElement>('[tabindex]') ??
+		pageContent()
+)
 
 function DashboardCardGradientStrip() {
 	return <div className="h-1.5 w-full bg-linear-to-r from-pro-accent/20 via-pro-accent/10 to-transparent" />
@@ -65,7 +75,7 @@ function DashboardCardActionsMenu({ name, onDelete }: { name: string; onDelete: 
 		<Ariakit.MenuProvider placement="bottom-end">
 			<Ariakit.MenuButton
 				ref={triggerRef}
-				render={<ProButton size="sm" square variant="secondary" />}
+				render={<Button size="sm" square variant="secondary" />}
 				aria-label={`Actions for ${name}`}
 				className="absolute top-2 right-2 z-10"
 				onClick={(event: React.MouseEvent) => event.stopPropagation()}
@@ -162,32 +172,31 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 				{tags.slice(0, 2).map((tag) =>
 					// Without a tag filter on the page, a tag is a label and a click opens the dashboard like the rest.
 					onTagClick ? (
-						<ProChip
+						<TagButton
 							key={tag}
-							as="button"
 							type="button"
-							onClick={(event: React.MouseEvent) => {
+							onClick={(event) => {
 								event.stopPropagation()
 								event.preventDefault()
 								onTagClick(tag)
 							}}
-							className="z-10 max-w-40 truncate"
+							className="z-10 max-w-40"
 						>
-							{tag}
-						</ProChip>
+							<span className="truncate">{tag}</span>
+						</TagButton>
 					) : (
-						<ProChip key={tag} className="max-w-40 truncate">
-							{tag}
-						</ProChip>
+						<Tag key={tag} className="max-w-40">
+							<span className="truncate">{tag}</span>
+						</Tag>
 					)
 				)}
-				{tags.length > 2 ? <ProChip>+{tags.length - 2}</ProChip> : null}
+				{tags.length > 2 ? <Tag>+{tags.length - 2}</Tag> : null}
 			</div>
 		) : null
 
 	return (
 		<div
-			ref={focusPageOnLeave}
+			ref={focusNeighbourOnLeave}
 			className={`${proCardShellStyles} group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-180 ease-out-quart hover:-translate-y-0.5 hover:border-pro-accent/40 hover:shadow-overlay-sm ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (
@@ -217,21 +226,26 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					{tagRow}
 					<div className="ml-auto shrink-0">{meta}</div>
 					{canDelete ? (
-						<ProButton
-							type="button"
-							size="sm"
-							square
-							variant="ghost"
-							aria-label={`Delete ${name}`}
-							onClick={(event: React.MouseEvent) => {
-								event.stopPropagation()
-								event.preventDefault()
-								requestDelete(event.currentTarget as HTMLElement)
-							}}
-							className="z-10"
+						<Tooltip
+							content="Delete dashboard"
+							render={
+								<Button
+									type="button"
+									size="sm"
+									square
+									variant="ghostDestructive"
+									aria-label={`Delete ${name}`}
+									onClick={(event: React.MouseEvent) => {
+										event.stopPropagation()
+										event.preventDefault()
+										requestDelete(event.currentTarget as HTMLElement)
+									}}
+									className="z-10"
+								/>
+							}
 						>
-							<Icon name="trash-2" height={14} width={14} />
-						</ProButton>
+							<Icon name="trash-2" height={16} width={16} />
+						</Tooltip>
 					) : null}
 				</div>
 			)}

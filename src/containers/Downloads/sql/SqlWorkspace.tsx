@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
@@ -6,10 +7,12 @@ import { ViewTabs } from '~/components/ViewTabs'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { chartDatasets } from '../chart-datasets'
@@ -1209,35 +1212,21 @@ function EditorRunBar({
 				notebookCells={notebookCells}
 				notebookTitle={notebookTitle}
 			/>
-			<button
-				type="button"
-				onClick={onSave}
-				disabled={!canRun}
-				className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-pro-text-primary transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-			>
+			<Button variant="secondary" size="md" onClick={onSave} disabled={!canRun}>
 				<Icon name="bookmark" className="size-3.5" />
 				Save
-			</button>
+			</Button>
+			{/* Run and Stop share one slot, so React keeps the same button and its focus when they swap. */}
 			{running ? (
-				<button
-					type="button"
-					onClick={onCancel}
-					title="Cancel query"
-					className="inline-flex items-center gap-2 rounded-md border border-error/50 bg-error/10 px-3 py-1.5 text-xs font-medium text-error transition-colors hover:bg-error/20"
-				>
-					<LoadingSpinner size={12} />
-					<svg className="size-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+				<Button variant="secondary" size="md" onClick={onCancel}>
+					<LoadingSpinner size={14} />
+					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 						<rect x="6" y="6" width="12" height="12" rx="1" />
 					</svg>
 					Stop
-				</button>
+				</Button>
 			) : (
-				<button
-					type="button"
-					onClick={onRun}
-					disabled={!canRun}
-					className="inline-flex items-center gap-2 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-				>
+				<Button variant="primary" size="md" onClick={onRun} disabled={!canRun}>
 					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 						<path d="M8 5v14l11-7z" />
 					</svg>
@@ -1246,7 +1235,7 @@ function EditorRunBar({
 						<Keycap muted>⌘</Keycap>
 						<Keycap muted>↵</Keycap>
 					</span>
-				</button>
+				</Button>
 			)}
 		</div>
 	)
@@ -1292,12 +1281,14 @@ function SavedQueriesTab({
 					return (
 						<li
 							key={q.id}
-							className={`group flex items-center justify-between gap-3 py-3 ${isDim ? 'opacity-40' : ''}`}
+							className={`group flex items-center justify-between gap-3 py-3 ${isDim ? 'opacity-60' : ''}`}
 						>
-							<button
-								type="button"
+							{/* The pressed query turns busy under the reader's focus, so it stays focusable while it opens. */}
+							<Ariakit.Button
 								onClick={() => onOpen(q)}
 								disabled={busy}
+								accessibleWhenDisabled={isBusy}
+								aria-busy={isBusy}
 								className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
 							>
 								{isBusy ? (
@@ -1314,27 +1305,41 @@ function SavedQueriesTab({
 									</span>
 									<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
 								</span>
-							</button>
+							</Ariakit.Button>
 							{/* A touch screen cannot hover, so it always shows the actions. */}
 							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
-								<button
-									type="button"
-									onClick={() => setRenaming(q)}
-									aria-label={`Rename ${q.name}`}
-									disabled={busy}
-									className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+								<Tooltip
+									content="Rename"
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											onClick={() => setRenaming(q)}
+											aria-label={`Rename ${q.name}`}
+											disabled={busy}
+											accessibleWhenDisabled
+										/>
+									}
 								>
-									<Icon name="pencil" className="size-3.5" />
-								</button>
-								<button
-									type="button"
-									onClick={() => setDeleting(q)}
-									aria-label={`Delete ${q.name}`}
-									disabled={busy}
-									className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
+									<Icon name="pencil" className="size-4" />
+								</Tooltip>
+								<Tooltip
+									content="Delete"
+									render={
+										<Button
+											variant="ghostDestructive"
+											size="sm"
+											square
+											onClick={() => setDeleting(q)}
+											aria-label={`Delete ${q.name}`}
+											disabled={busy}
+											accessibleWhenDisabled
+										/>
+									}
 								>
-									<Icon name="trash-2" className="size-3.5" />
-								</button>
+									<Icon name="trash-2" className="size-4" />
+								</Tooltip>
 							</div>
 						</li>
 					)

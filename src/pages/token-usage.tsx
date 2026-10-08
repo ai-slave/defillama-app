@@ -29,15 +29,17 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInputStyles } from '~/ui/Input'
+import { inputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -356,29 +358,28 @@ export function TokenUsageSearch() {
 			setOpen={setOpen}
 		>
 			<span className="relative isolate w-full lg:max-w-[50vw]">
-				<button
-					type="button"
-					onClick={() => setOpen((prev) => !prev)}
-					className="absolute top-1 bottom-1 left-2 my-auto opacity-50"
+				<Tooltip
+					content={open ? 'Close search' : 'Open search'}
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							className="absolute top-1/2 left-2 -translate-y-1/2"
+							aria-label={open ? 'Close search' : 'Open search'}
+							aria-expanded={open}
+							onClick={() => setOpen((prev) => !prev)}
+						/>
+					}
 				>
-					{open ? (
-						<>
-							<span className="sr-only">Close Search</span>
-							<Icon name="x" height={18} width={18} />
-						</>
-					) : (
-						<>
-							<span className="sr-only">Open Search</span>
-							<Icon name="search" height={16} width={16} />
-						</>
-					)}
-				</button>
+					<Icon name={open ? 'x' : 'search'} className="size-4" />
+				</Tooltip>
 
 				<Ariakit.Combobox
 					id="token-usage-search-input"
-					placeholder="Search tokens..."
+					placeholder="Search tokens…"
 					autoSelect
-					className={searchFieldInputStyles}
+					className={`${inputStyles} w-full pl-9`}
 				/>
 			</span>
 

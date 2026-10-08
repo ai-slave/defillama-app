@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type { ChartConfig as DownloadChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -31,6 +32,8 @@ export interface AddChartModalProps {
 	initialUnifiedFocusSection?: UnifiedTableFocusSection | undefined
 	onOpenSqlModal?: () => void
 	placement?: DashboardItemPlacement | undefined
+	/** Where focus goes on close when the opener is gone, such as Quick add's "All card types…". */
+	finalFocus?: RefObject<HTMLElement | null>
 }
 
 export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'llamaai' | 'sql' | 'custom-data'

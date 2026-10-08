@@ -490,7 +490,7 @@ function TokenRightsPage({
 								onInput={(event) => {
 									setSearchValue(event.currentTarget.value)
 								}}
-								placeholder="Search protocol..."
+								placeholder="Search protocol…"
 								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
@@ -836,7 +836,9 @@ function TooltipStatusPill({
 	return (
 		<Tooltip
 			content={tooltip}
-			render={<button type="button" aria-label={label} />}
+			// A status label, not an action: focusable so keyboard readers can open its explanation.
+			render={<span />}
+			tabIndex={0}
 			className={getStatusPillClassName(tone, extraClassName)}
 		>
 			{label}

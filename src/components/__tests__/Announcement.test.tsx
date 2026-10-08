@@ -15,7 +15,7 @@ describe('Announcement dismissal', () => {
 	}
 
 	function dismissButton() {
-		return Array.from(container.querySelectorAll('button')).find((el) => el.textContent?.includes('Close'))
+		return container.querySelector<HTMLButtonElement>('button[aria-label="Close"]') ?? undefined
 	}
 
 	beforeEach(() => {
@@ -65,6 +65,21 @@ describe('Announcement dismissal', () => {
 			</Announcement>
 		)
 		expect(container.textContent).not.toContain('Heads up')
+	})
+
+	test('closing the banner hands focus to the page content', async () => {
+		await render(
+			<main>
+				<Announcement announcementId="test-announcement" version="v1">
+					Heads up
+				</Announcement>
+			</main>
+		)
+		const button = dismissButton()!
+		button.focus()
+		await act(async () => button.click())
+		expect(container.textContent).not.toContain('Heads up')
+		expect(document.activeElement).toBe(container.querySelector('main'))
 	})
 
 	test('a non-cancellable announcement has no dismiss control', async () => {

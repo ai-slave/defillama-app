@@ -38,9 +38,9 @@ afterEach(async () => {
 
 test('the header sign-in stays open after a sign-in from another tab, while its trigger gives way to My Account', async () => {
 	await waitForUi(() =>
-		expect([...document.querySelectorAll('button')].some((el) => el.textContent === 'Sign-in')).toBe(true)
+		expect([...document.querySelectorAll('button')].some((el) => el.textContent === 'Sign in')).toBe(true)
 	)
-	const signIn = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign-in')!
+	const signIn = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign in')!
 	await act(async () => signIn.click())
 	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Sign in'))
 	await act(async () => pb.authStore.save(session.token, session.record as never))

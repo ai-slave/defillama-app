@@ -291,7 +291,7 @@ describe('ChartRenderer', () => {
 		await act(async () =>
 			render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
 		)
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
 		if (!select) throw new Error('Expected aggregation select for promoted dates')
 		expect(select.value).toBe('unknown')
@@ -299,7 +299,7 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
 		await clickButton(document, 'Save')
 
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		await clickButton(document, 'Reset')
 		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
 		await clickButton(document, 'Save')
@@ -314,7 +314,7 @@ describe('ChartRenderer', () => {
 		await act(async () =>
 			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
 		)
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 		expect(document.querySelector('[aria-label$="aggregation"]')).toBeNull()
 	})
@@ -327,7 +327,7 @@ describe('ChartRenderer', () => {
 		await chooseView(container, 'Separate', 'Show stacked')
 		expect(viewLabels(container)).toContain('Stacked')
 
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
@@ -339,7 +339,7 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector('[role="dialog"]')).toBeNull()
 		expect(viewLabels(container)).toContain('Stacked')
 
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 	})
 
@@ -352,7 +352,7 @@ describe('ChartRenderer', () => {
 		expect(viewLabels(container)).toContain('Stacked')
 
 		await chooseView(container, 'Stacked', 'Show separate')
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
@@ -373,7 +373,7 @@ describe('ChartRenderer', () => {
 		)
 
 		await chooseGrouping(container, 'Month')
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
@@ -390,14 +390,14 @@ describe('ChartRenderer', () => {
 			})
 		)
 
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
 		const reopenedTitleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
 		if (!reopenedTitleInput) throw new Error('Expected chart title input')
 		await setInputValue(reopenedTitleInput, 'Discarded Draft')
 		await clickButton(document, 'Cancel')
 		await discardDraft()
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
 		await clickButton(document, 'Cancel')
 
@@ -419,7 +419,7 @@ describe('ChartRenderer', () => {
 		await act(async () =>
 			render(<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
 		)
-		await click(container, '[title="Edit chart style"]')
+		await click(container, '[aria-label="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 	})
 
@@ -427,7 +427,7 @@ describe('ChartRenderer', () => {
 		await act(async () =>
 			render(<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={vi.fn()} />)
 		)
-		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
+		const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Edit chart style"]')!
 		await act(async () => {
 			trigger.focus()
 			trigger.click()
@@ -456,7 +456,7 @@ describe('ChartRenderer', () => {
 				</Ariakit.Dialog>
 			)
 		)
-		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
+		const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Edit chart style"]')!
 		await act(async () => {
 			trigger.focus()
 			trigger.click()

@@ -12,17 +12,18 @@ function joinClasses(...classes: Array<string | undefined>) {
 }
 
 export function ThemeSwitch({ className, variant = 'default', size = 'md' }: ThemeSwitchProps) {
-	const [, toggleDarkMode] = useDarkModeManager()
+	const [isDarkMode, toggleDarkMode] = useDarkModeManager()
 
 	if (variant === 'pill') {
-		const controlSize = size === 'sm' ? 'size-7' : 'size-9'
 		const iconSize = size === 'sm' ? 16 : 24
 
 		return (
 			<button
 				type="button"
 				onClick={toggleDarkMode}
-				aria-label="Toggle theme"
+				aria-label="Dark mode"
+				data-menu-name="Toggle theme"
+				aria-pressed={isDarkMode}
 				className={joinClasses(
 					'hover-wash flex items-center gap-1 rounded-full p-0.5 transition-colors',
 					'bg-surface',
@@ -31,7 +32,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 			>
 				<span
 					className={joinClasses(
-						`flex ${controlSize} items-center justify-center rounded-full transition-colors`,
+						'flex items-center justify-center rounded-full p-1.5 transition-colors',
 						'bg-surface-elevated-2 text-primary dark:bg-transparent dark:text-secondary'
 					)}
 				>
@@ -39,7 +40,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 				</span>
 				<span
 					className={joinClasses(
-						`flex ${controlSize} items-center justify-center rounded-full transition-colors`,
+						'flex items-center justify-center rounded-full p-1.5 transition-colors',
 						'text-secondary dark:bg-surface-elevated-2 dark:text-primary'
 					)}
 				>
@@ -53,22 +54,14 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 		<button
 			type="button"
 			onClick={toggleDarkMode}
-			aria-label="Toggle theme"
+			aria-label="Dark mode"
+			data-menu-name="Toggle theme"
+			aria-pressed={isDarkMode}
 			className={joinClasses('mt-2 hidden w-fit items-center gap-2 lg:flex', className)}
 		>
-			<Icon
-				name="sun"
-				height={20}
-				width={20}
-				className="opacity-80 hover:opacity-100 dark:opacity-40 dark:hover:opacity-100"
-			/>
+			<Icon name="sun" height={20} width={20} className="text-primary dark:text-tertiary dark:hover:text-primary" />
 			<span>{' / '}</span>
-			<Icon
-				name="moon"
-				height={20}
-				width={20}
-				className="opacity-40 hover:opacity-100 dark:opacity-80 dark:hover:opacity-100"
-			/>
+			<Icon name="moon" height={20} width={20} className="text-tertiary hover:text-primary dark:text-primary" />
 		</button>
 	)
 }

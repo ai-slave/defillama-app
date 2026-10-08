@@ -3,7 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
 	formatPercent,
 	formatUsd,
@@ -271,7 +271,9 @@ export default function Rates() {
 					))}
 				</select>
 
-				<ProSegmented<TimeWindow>
+				<SegmentedControl<TimeWindow>
+					variant="default"
+					size="md"
 					label="Time window"
 					options={WINDOW_OPTIONS}
 					value={selectedWindow}
@@ -328,7 +330,7 @@ export default function Rates() {
 					<div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
 						<h3 className="text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase">
 							{activeAsset} Interest Rate Model{' '}
-							<span className="font-normal normal-case">\u00b7 {primaryReserve?.chain}</span>
+							<span className="font-normal normal-case">· {primaryReserve?.chain}</span>
 						</h3>
 						{kpis?.optimalUtil && (
 							<span className="text-[11px] text-pro-text-tertiary">

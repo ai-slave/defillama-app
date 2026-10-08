@@ -45,7 +45,7 @@ import { ARTICLE_SECTION_SLUGS } from '../types'
 import { type UploadResult, useImageUpload } from '../upload/useImageUpload'
 import { ArticleChartPickerDialog } from './ArticleChartPicker'
 import { ArticleCoverImageEditor } from './ArticleCoverImageEditor'
-import { ArticleEditorCanvas } from './ArticleEditorCanvas'
+import { ARTICLE_BUBBLE_MENU_KEY, ArticleEditorCanvas } from './ArticleEditorCanvas'
 import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } from './ArticleEditorControls'
 import { CoverDetailsDialog } from './ArticleEditorDialogs'
 import { ARTICLE_EDITOR_VIEWS, ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
@@ -386,7 +386,10 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		const previous = (attrs.href as string | undefined) ?? ''
 		const previousTarget = attrs.target as string | undefined
 		setLinkEdit({ url: previous, newTab: previousTarget !== '_self' })
-		setTimeout(() => linkInputRef.current?.focus(), 0)
+		setTimeout(() => {
+			editor.view.dispatch(editor.state.tr.setMeta(ARTICLE_BUBBLE_MENU_KEY, 'updatePosition'))
+			linkInputRef.current?.focus()
+		}, 0)
 	}, [editor])
 
 	const handleLinkRail = useCallback(() => {

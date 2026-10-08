@@ -31,12 +31,12 @@ import { Tooltip } from './Tooltip'
                  bg-brand selection. Only for explicit scope switches such as
                  All | Protocols | Chains. Class-only hosts compose
                  `TAG_GROUP_VARIANTS.solid` with `TAG_GROUP_SIZES.md`.
-   - pro:        ProDashboard's own look (ProSegmented).
-   Out of room: default and responsive scroll inside their own box; pro
-   scrolls in ProSegmented's wrapper; chips wrap; field never scrolls, so
-   keep it to a few short options (stack two fields on a phone); solid
-   clips, so keep its set short.
-   Toolbars use size md (32px). In a phone sheet's rows the padded variants
+   Out of room: default and responsive cap at their container's width and
+   scroll inside their own box, so never wrap them in a scroller; chips
+   wrap; field never scrolls, so keep it to a few short options (stack two
+   fields on a phone); solid clips, so keep its set short.
+   Toolbars use size md (32px); size sm (24px) sits beside sm Buttons and
+   Selects in dense card headers. In a phone sheet's rows the padded variants
    are 44px with a 4px inset and body-md labels. A disabled option dims to
    60% with the not-allowed cursor, like Button; its reason stays in visible
    text or the option's `tooltip`.
@@ -61,32 +61,32 @@ import { Tooltip } from './Tooltip'
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
+			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	mode: {
 		container: 'body-sm grid shrink-0 auto-cols-fr gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
 		button:
-			'touch-target hover-wash inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-surface-elevated-2 data-[active=true]:text-primary'
+			'touch-target hover-wash inline-flex items-center justify-center gap-1.5 rounded-md px-2 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-surface-elevated-2 data-[active=true]:text-primary'
 	},
 	chips: {
 		container: 'flex w-fit max-w-full flex-wrap items-center gap-1.5',
 		button:
-			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {
 		container:
 			'body-sm flex w-full flex-nowrap items-center gap-0.5 rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	responsive: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
+			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
@@ -98,10 +98,6 @@ export const TAG_GROUP_VARIANTS = {
 			'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle max-sm:w-full',
 		button:
 			'touch-target hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
-	},
-	pro: {
-		container: 'flex w-fit items-center rounded-md',
-		button: 'shrink-0 px-3 whitespace-nowrap'
 	}
 } as const
 
@@ -112,6 +108,18 @@ export const TAG_GROUP_SIZES = {
 	sm: 'min-h-6',
 	md: 'min-h-8'
 } as const
+
+/* Each size's segment padding, so a boxed row lands on its min-h: sm is 24px like sm Buttons and Selects (16px label,
+   1px padding, the box's 2px inset and 1px border), md 32px. Chips keep one pill height; solid segments stretch. */
+export const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof TAG_GROUP_SIZES, string>> = {
+	default: { sm: 'py-px', md: 'py-1' },
+	responsive: { sm: 'py-px', md: 'py-1' },
+	field: { sm: 'py-px', md: 'py-1' },
+	mode: { sm: 'py-px', md: 'py-1' },
+	chips: { sm: 'py-1.5', md: 'py-1.5' },
+	solid: { sm: '', md: '' },
+	'solid-responsive': { sm: '', md: '' }
+}
 
 export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`
 
@@ -163,7 +171,8 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 		onValueChange,
 		...rest
 	} = props
-	const { container, button } = TAG_GROUP_VARIANTS[variant]
+	const container = TAG_GROUP_VARIANTS[variant].container
+	const button = clsx(TAG_GROUP_VARIANTS[variant].button, TAG_GROUP_BUTTON_SIZES[variant][size])
 	const groupProps = {
 		'aria-label': label,
 		className: clsx(container, TAG_GROUP_SIZES[size], className)

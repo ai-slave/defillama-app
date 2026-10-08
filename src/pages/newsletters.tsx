@@ -4,6 +4,7 @@ import { useAuthContext } from '~/auth'
 import { isWalletEmail } from '~/containers/Account/utils'
 import { NEWSLETTERS, type NewsletterKey, useNewsletterSubscription } from '~/hooks/useNewsletterSubscription'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
@@ -119,8 +120,6 @@ export default function NewslettersPage() {
 			}
 		)
 	}
-
-	const spinner = <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
 
 	return (
 		<Layout
@@ -277,23 +276,17 @@ export default function NewslettersPage() {
 									/>
 								</label>
 
-								<Ariakit.Button
+								<Button
 									type="submit"
-									aria-busy={isPending}
+									variant="primary"
+									size="lg"
+									pendingLabel={isPending ? 'Subscribing…' : null}
 									aria-describedby={helperId}
 									disabled={!canSubmit}
 									accessibleWhenDisabled
-									className="flex h-12 items-center justify-center gap-2 rounded-lg bg-link px-5 text-sm font-semibold text-on-brand transition-[opacity,transform] hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 motion-safe:active:scale-[0.98]"
 								>
-									{isPending ? (
-										<>
-											{spinner}
-											Subscribing...
-										</>
-									) : (
-										buttonText
-									)}
-								</Ariakit.Button>
+									{buttonText}
+								</Button>
 
 								<div className="min-h-14">
 									{succeeded ? (

@@ -1,4 +1,4 @@
-import * as Ariakit from '@ariakit/react'
+import { Button } from '~/ui/Button'
 import { TagGroup } from '~/ui/SegmentedControl'
 
 interface TablePaginationProps {
@@ -39,35 +39,23 @@ export function TablePagination({
 	if (!shouldShowPagination && !showPageSizes) return null
 
 	return (
-		<div className="mt-2 flex w-full items-center justify-between">
+		<div className="mt-2 flex w-full flex-wrap items-center justify-between gap-2">
 			{shouldShowPagination ? (
 				<div className="flex items-center gap-2">
-					<Ariakit.Button
-						type="button"
-						onClick={previousPage}
-						disabled={!canPreviousPage}
-						accessibleWhenDisabled
-						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-					>
+					<Button size="md" onClick={previousPage} disabled={!canPreviousPage} accessibleWhenDisabled>
 						Previous
-					</Ariakit.Button>
-					<span className="text-xs text-pro-text-secondary">
+					</Button>
+					<span className="body-sm text-pro-text-secondary">
 						Page {pageIndex + 1} of {pageCount}
 					</span>
-					<Ariakit.Button
-						type="button"
-						onClick={nextPage}
-						disabled={!canNextPage}
-						accessibleWhenDisabled
-						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-					>
+					<Button size="md" onClick={nextPage} disabled={!canNextPage} accessibleWhenDisabled>
 						Next
-					</Ariakit.Button>
+					</Button>
 				</div>
 			) : null}
 			{showPageSizes ? (
-				<div className="flex items-center">
-					<span className="mr-2 text-xs">Per page</span>
+				<div className="flex items-center gap-2">
+					<span className="body-sm">Per page</span>
 					<TagGroup
 						variant="default"
 						size="md"

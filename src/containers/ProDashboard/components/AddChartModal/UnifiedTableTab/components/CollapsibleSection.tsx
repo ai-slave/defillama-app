@@ -15,6 +15,7 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 		<div className={`rounded-lg border border-pro-cards-border bg-pro-cards-bg ${className}`}>
 			<button
 				type="button"
+				aria-expanded={isExpanded}
 				onClick={() => setIsExpanded(!isExpanded)}
 				className="flex w-full items-center justify-between rounded-t-lg px-3 py-2.5 transition-colors"
 			>

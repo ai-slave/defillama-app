@@ -228,7 +228,7 @@ test('retains the listing dialog when its save fails', async () => {
 
 test('saves the committed slug rather than the previous render’s slug', async () => {
 	await mount()
-	await act(async () => container.querySelector<HTMLButtonElement>('button[title="Click to edit slug"]')!.click())
+	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label^="Edit slug"]')!.click())
 	const input = container.querySelector<HTMLInputElement>('nav input')!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'new-slug')

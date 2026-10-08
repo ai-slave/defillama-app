@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
@@ -116,15 +117,11 @@ export function EntityPickerList({
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (
-					<div className="ml-3 flex items-center gap-2">
-						<span className="text-xs font-medium text-pro-text-secondary">{selectedEntities.length} selected</span>
-						<button
-							type="button"
-							onClick={() => keepFocus(onClear, () => searchRef.current)}
-							className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
-						>
+					<div className="ml-3 flex items-center gap-2 label-sm">
+						<span className="text-pro-text-secondary">{selectedEntities.length} selected</span>
+						<Button variant="link" onClick={() => keepFocus(onClear, () => searchRef.current)}>
 							Clear
-						</button>
+						</Button>
 					</div>
 				) : null}
 			</div>
@@ -152,6 +149,7 @@ export function EntityPickerList({
 								<button
 									key={entity.value}
 									type="button"
+									aria-pressed={isSelected}
 									onClick={() => onToggle(entity.value)}
 									className={`flex w-full items-center gap-3 py-2 pr-3 text-left text-xs transition-all ${
 										isSelected ? 'bg-brand/10' : ''

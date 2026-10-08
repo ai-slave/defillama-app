@@ -222,3 +222,23 @@ test('closes image editing controls when the editor becomes read-only', async ()
 		document.querySelector<HTMLTextAreaElement>('[placeholder="Describe the image for screen readers"]')!.value
 	).toBe('Original description')
 })
+
+test('removing a selected citation hands focus back to the editor', async () => {
+	await mount({
+		type: 'doc',
+		content: [
+			{
+				type: 'paragraph',
+				content: [
+					{ type: 'text', text: 'Claim' },
+					{ type: 'citation', attrs: { id: 'c1', label: '1', url: 'https://example.com' } }
+				]
+			}
+		]
+	})
+	await act(async () => editor.commands.setNodeSelection(6))
+	await act(async () => button('Remove citation').focus())
+	await click('Remove citation')
+	expect(editor.getText()).toBe('Claim')
+	expect(document.activeElement).toBe(editor.view.dom)
+})

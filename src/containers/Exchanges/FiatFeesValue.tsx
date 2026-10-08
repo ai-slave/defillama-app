@@ -1,5 +1,5 @@
-import { Hovercard } from '~/ui/Hovercard'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
+import { ValueBadge } from './feePresentation'
 import type { ExchangeFiatFeeRow, ExchangeFiatFees } from './models'
 
 export function fiatFeeSummary(fees: ExchangeFiatFees): string {
@@ -69,15 +69,9 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 	if (fees === null) return <span className="text-tertiary">–</span>
 	const summary = fiatFeeSummary(fees)
 	return (
-		<Hovercard
-			placement="left-start"
-			className="rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
-			render={
-				<button
-					type="button"
-					aria-label={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
-				/>
-			}
+		<ValueBadge
+			tone="info"
+			ariaLabel={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
 			contentClassName="w-[900px] p-3"
 			content={
 				<div className="flex flex-col gap-4">
@@ -88,6 +82,6 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 			}
 		>
 			{summary}
-		</Hovercard>
+		</ValueBadge>
 	)
 }

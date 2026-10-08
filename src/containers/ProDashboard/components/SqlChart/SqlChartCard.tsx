@@ -6,13 +6,15 @@ import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
-import { ProButton, ProMeta, ProSegmented } from '../../ui'
+import { ProMeta } from '../../ui'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
 import { ProCardHeader } from '../ProCardHeader'
 import { ProCardEmpty, ProCardLoading, ProCardNotice } from '../ProCardStatus'
@@ -95,8 +97,9 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 						/>
 					}
 					viewerControls={
-						<ProSegmented<'output' | 'query'>
+						<SegmentedControl<'output' | 'query'>
 							semantics="tabs"
+							variant="default"
 							options={[
 								{ value: 'output', label: displayMode === 'table' ? 'Table' : 'Chart' },
 								{ value: 'query', label: 'SQL' }
@@ -108,9 +111,9 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					controls={
 						canRefresh ? (
 							<>
-								<ProButton size="sm" variant="ghost" onClick={refresh} loading={isRefreshing} title="Re-run the query">
-									{isRefreshing ? 'Refreshing…' : 'Refresh'}
-								</ProButton>
+								<Button size="sm" variant="ghost" onClick={refresh} pendingLabel={isRefreshing ? 'Refreshing…' : null}>
+									Refresh
+								</Button>
 								<Tooltip content={REFRESH_HINT} className="flex items-center">
 									<Icon name="help-circle" height={13} width={13} className="text-pro-text-tertiary" />
 								</Tooltip>

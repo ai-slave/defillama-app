@@ -14,8 +14,10 @@ import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { useMyTeam } from '~/containers/ProDashboard/hooks/useMyTeam'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
+import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -28,7 +30,7 @@ import { ChartGrid } from './components/ChartGrid'
 import { ChartSyncToggle } from './components/ChartSyncToggle'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
-import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
+import { CopyDashboardButton, EditDoneButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
 import { DashboardLoadProgress } from './components/DashboardLoadProgress'
 import { type DashboardMenuAction, DashboardOverflowMenu } from './components/DashboardOverflowMenu'
 import { DashboardVariablesBar } from './components/DashboardVariablesBar'
@@ -68,15 +70,7 @@ import {
 	useProDashboardVariables
 } from './ProDashboardAPIContext'
 import type { SectionConfig, SqlChartConfig } from './types'
-import {
-	InlineTextField,
-	ProBadge,
-	ProButton,
-	type ProButtonVariant,
-	ProChip,
-	ProDialogFallback,
-	ProSegmented
-} from './ui'
+import { InlineTextField, ProBadge, ProButton, ProDialogFallback } from './ui'
 import { type DashboardItemPlacement, toastRefusal } from './useDashboardActions'
 import { generateItemId } from './utils/dashboardUtils'
 
@@ -169,40 +163,64 @@ function AuthorProfileSetupNotice() {
 				<Button as={BasicLink} href="/account?tab=profile" variant="primary" size="md">
 					Open settings
 				</Button>
-				<Button
-					type="button"
-					variant="ghost"
-					size="md"
-					square
-					onClick={() => setDismissed(true)}
-					aria-label="Dismiss profile setup notice"
+				<Tooltip
+					content="Dismiss"
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							square
+							onClick={() => keepFocus(() => setDismissed(true), pageContent)}
+							aria-label="Dismiss profile setup notice"
+						/>
+					}
 				>
 					<Icon name="x" className="size-4" aria-hidden="true" />
-				</Button>
+				</Tooltip>
 			</div>
 		</div>
 	)
 }
 
 type DashboardToolbarAction = DashboardMenuAction & {
-	variant: ProButtonVariant
+	// `ai` is Pro's soft LlamaAI CTA (ProButton); the rest are ui/Button.
+	variant: 'secondary' | 'ghost' | 'ai'
 	square?: boolean
 	busy?: boolean
 }
 
 function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) {
+	if (action.variant === 'ai') {
+		return (
+			<Tooltip
+				content={action.title ?? action.label}
+				render={
+					<ProButton
+						type="button"
+						variant="ai"
+						aria-label={action.label}
+						icon={<Icon name={action.icon} height={16} width={16} />}
+						onClick={() => void action.onSelect()}
+					/>
+				}
+			>
+				<span>{action.label}</span>
+			</Tooltip>
+		)
+	}
 	return (
 		<Tooltip
 			content={action.title ?? action.label}
 			render={
-				<ProButton
+				<Button
+					size="md"
 					type="button"
 					variant={action.variant}
 					square={action.square ?? false}
 					aria-label={action.label}
 					aria-disabled={action.disabled || undefined}
-					icon={<Icon name={action.icon} height={16} width={16} />}
-					{...(action.busy ? { loading: true } : {})}
+					pendingLabel={action.busy ? action.label : null}
 					onClick={() => {
 						if (!action.disabled) void action.onSelect()
 					}}
@@ -210,7 +228,14 @@ function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) 
 				/>
 			}
 		>
-			{action.square ? null : <span>{action.label}</span>}
+			{action.square ? (
+				<Icon name={action.icon} height={16} width={16} />
+			) : (
+				<>
+					<Icon name={action.icon} height={14} width={14} />
+					<span>{action.label}</span>
+				</>
+			)}
 		</Tooltip>
 	)
 }
@@ -237,6 +262,9 @@ function ProDashboardContent() {
 		placement?: DashboardItemPlacement
 	} | null>(null)
 	const [addDraftItem, setAddDraftItem] = useState<DashboardItemConfig | null>(null)
+	// A new card's editor opens from Quick add, whose "All card types…" is gone by the time the editor closes, so it
+	// returns focus to the control that opened Quick add: the toolbar's Add card, or on phones the Actions button.
+	const addEditorFinalFocusRef = useRef<HTMLElement | null>(null)
 	const [editModalState, setEditModalState] = useState<{
 		item: DashboardItemConfig | null
 		focusSection?: UnifiedTableFocusSection
@@ -414,12 +442,18 @@ function ProDashboardContent() {
 	}
 	// Add card clears its state once its exit ends (onClosed); a SQL save with no Add card under it closes nothing.
 	const closeAddModalSession = () => setAddModalSession((current) => (current ? { ...current, open: false } : null))
-	const openQuickAdd = (placement?: DashboardItemPlacement) =>
-		setQuickAddSession((current) =>
-			current?.open
-				? current
-				: { key: (current?.key ?? 0) + 1, open: true, ...(placement === undefined ? {} : { placement }) }
-		)
+	const openQuickAdd = (placement?: DashboardItemPlacement) => {
+		if (quickAddSession?.open) return
+		// A phone menu row unmounts with its menu, so the menu's own button stands for it, as Ariakit does on close.
+		const opener = document.activeElement as HTMLElement
+		const menu = opener.closest('[role="menu"]')
+		addEditorFinalFocusRef.current = menu ? document.querySelector(`[aria-controls~="${menu.id}"]`) : opener
+		setQuickAddSession((current) => ({
+			key: (current?.key ?? 0) + 1,
+			open: true,
+			...(placement === undefined ? {} : { placement })
+		}))
+	}
 	const closeQuickAdd = () => setQuickAddSession((current) => (current ? { ...current, open: false } : null))
 	const clearQuickAddSession = () => setQuickAddSession(null)
 	const openFullEditorFromQuickAdd = ({
@@ -478,7 +512,8 @@ function ProDashboardContent() {
 			label: 'Add card',
 			icon: 'plus',
 			onSelect: () => openQuickAdd(),
-			variant: 'primary',
+			// Done is the edit view's primary action.
+			variant: 'secondary',
 			disabled: isLoadingDashboardEdits,
 			title: isLoadingDashboardEdits ? 'Loading dashboard…' : `Add a card (${quickAddShortcutLabel})`
 		},
@@ -578,11 +613,11 @@ function ProDashboardContent() {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2 p-2 pro-dashboard lg:px-0">
-			<div className="flex flex-wrap items-center gap-2">
-				<ProButton as={BasicLink} href="/pro" variant="ghost" className="-ml-3">
+			<div className="flex flex-wrap items-center gap-2 label-sm">
+				<Button as={BasicLink} href="/pro" variant="link">
 					<Icon name="arrow-left" height={14} width={14} />
 					Dashboards
-				</ProButton>
+				</Button>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1">
 					<Tooltip
 						content="Views"
@@ -644,19 +679,14 @@ function ProDashboardContent() {
 									{doneStatusLabel}
 								</span>
 							) : null}
-							{mode === 'view' && dashboardId && canEditDashboard ? (
-								<EditDashboardButton key={`edit-${dashboardId}`} href={dashboardModeHref('edit')} />
-							) : null}
-							{mode === 'edit' && dashboardId ? (
-								<ProButton
-									type="button"
-									variant="primary"
-									onClick={finishEditing}
-									icon={<Icon name="check" height={16} width={16} />}
-									{...(sqlRefreshActive ? { loading: true } : {})}
-								>
-									<span>{sqlRefreshActive ? 'Refreshing SQL…' : 'Done'}</span>
-								</ProButton>
+							{dashboardId && (mode === 'edit' || canEditDashboard) ? (
+								<EditDoneButton
+									key={`edit-${dashboardId}`}
+									editing={mode === 'edit'}
+									href={dashboardModeHref('edit')}
+									onDone={finishEditing}
+									donePendingLabel={sqlRefreshActive ? 'Refreshing SQL…' : null}
+								/>
 							) : null}
 							{isReadOnly && currentDashboard?.user !== user?.id ? (
 								<CopyDashboardButton
@@ -759,13 +789,15 @@ function ProDashboardContent() {
 					<ul aria-label="Dashboard tags" className="flex flex-wrap gap-1.5">
 						{dashboardTags.map((tag) => (
 							<li key={tag}>
-								<ProChip
+								<Button
 									as={BasicLink}
 									href={`/pro?tab=discover&tag=${encodeURIComponent(tag)}`}
+									variant="secondary"
+									size="sm"
 									data-umami-event="dashboard-tag-click"
 								>
 									{tag}
-								</ProChip>
+								</Button>
 							</li>
 						))}
 					</ul>
@@ -796,8 +828,9 @@ function ProDashboardContent() {
 								className="max-w-full"
 							>
 								<div className="flex max-w-full min-w-0 flex-wrap items-center gap-2">
-									<ProSegmented
-										className="min-w-0"
+									<SegmentedControl
+										variant="default"
+										size="md"
 										label="Time period"
 										options={timePeriods.map((period) => ({ ...period, disabled: !hasTimePeriodItems }))}
 										value={timePeriod}
@@ -865,6 +898,7 @@ function ProDashboardContent() {
 						onOpenSqlModal={openSqlModal}
 						{...(addPlacement ? { placement: addPlacement } : {})}
 						{...(addDraftItem ? { draftItem: addDraftItem } : {})}
+						{...(editModalState.item ? {} : { finalFocus: addEditorFinalFocusRef })}
 					/>
 				) : null}
 			</Suspense>

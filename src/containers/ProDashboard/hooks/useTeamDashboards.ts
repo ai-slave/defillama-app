@@ -28,6 +28,10 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 			}
 			return await dashboardAPI.listDashboardsPaginated({ page, limit, scope: 'team' }, authorizedFetch)
 		},
+		// The pager stays mounted, with focus on it, while the next page loads; never another account's list.
+		placeholderData: (previousData, previousQuery) => {
+			if (previousQuery && previousQuery.queryKey[2] === user?.id) return previousData
+		},
 		staleTime: 1000 * 60 * 5,
 		enabled: isAuthenticated && enabled
 	})

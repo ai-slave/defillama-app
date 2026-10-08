@@ -3,6 +3,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBackButton, DialogBody, DialogHeader, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { PillBody } from './CitationPill'
 import {
 	accentFor,
@@ -151,16 +152,21 @@ export function CitationDetailPanel({
 								Dashboard
 							</Button>
 						) : null}
-						<Button
-							type="button"
-							variant="ghost"
-							size="md"
-							square
-							onClick={closeDesktopPanel}
-							aria-label="Close source detail"
+						<Tooltip
+							content="Close source detail"
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="md"
+									square
+									onClick={closeDesktopPanel}
+									aria-label="Close source detail"
+								/>
+							}
 						>
 							<Icon name="x" className="size-4" />
-						</Button>
+						</Tooltip>
 					</div>
 				</div>
 				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-2.5 px-4 py-3.5`}>{verification}</div>

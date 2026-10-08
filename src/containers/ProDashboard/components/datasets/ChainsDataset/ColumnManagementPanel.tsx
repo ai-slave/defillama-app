@@ -1,6 +1,8 @@
 import * as React from 'react'
+import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface Column {
 	id: string
@@ -34,8 +36,8 @@ export function ColumnManagementPanel({
 		(column) => column.name && column.name.toLowerCase().includes(searchTerm.toLowerCase())
 	)
 	const columnGroups = [
-		{ title: 'Percentage Share', columns: filteredColumns.filter((col) => col.id.endsWith('_share')) },
-		{ title: 'Standard Metrics', columns: filteredColumns.filter((col) => !col.id.endsWith('_share')) }
+		{ title: 'Percentage share', columns: filteredColumns.filter((col) => col.id.endsWith('_share')) },
+		{ title: 'Standard metrics', columns: filteredColumns.filter((col) => !col.id.endsWith('_share')) }
 	].filter((group) => group.columns.length > 0)
 
 	// Hiding or adding a column moves its row to the other list; focus stays in the list the reader is working in.
@@ -50,22 +52,14 @@ export function ColumnManagementPanel({
 	return (
 		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h4 className="text-sm font-medium text-pro-text-primary">Customize Columns</h4>
+				<h4 className="label-md text-pro-text-primary">Customize columns</h4>
 				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						onClick={() => setAllColumnsVisible(true)}
-						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
-					>
-						Show All
-					</button>
-					<button
-						type="button"
-						onClick={() => setAllColumnsVisible(false)}
-						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
-					>
-						Hide All
-					</button>
+					<Button variant="secondary" size="sm" onClick={() => setAllColumnsVisible(true)}>
+						Show all
+					</Button>
+					<Button variant="secondary" size="sm" onClick={() => setAllColumnsVisible(false)}>
+						Hide all
+					</Button>
 				</div>
 			</div>
 
@@ -80,7 +74,7 @@ export function ColumnManagementPanel({
 					ref={searchRef}
 					type="text"
 					aria-label="Search columns"
-					placeholder="Search columns..."
+					placeholder="Search columns…"
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
 					className="w-full rounded-md border border-pro-cards-border bg-pro-glass-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 				/>
@@ -88,9 +82,9 @@ export function ColumnManagementPanel({
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
-						<Icon name="eye" height={12} width={12} />
-						Active Columns ({activeColumns.length})
+					<h5 className="mb-2 flex items-center gap-2 title-sm text-pro-text-secondary">
+						<Icon name="eye" className="size-3.5" />
+						Active columns ({activeColumns.length})
 					</h5>
 					<p className="mb-3 text-xs text-pro-text-tertiary">Use arrows to reorder • Click × to hide</p>
 					<div className="max-h-60 space-y-1 overflow-y-auto">
@@ -108,7 +102,7 @@ export function ColumnManagementPanel({
 									className="flex items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 transition-colors hover:bg-pro-hover-fill"
 								>
 									<div className="flex items-center gap-2">
-										<Icon name="check" height={12} width={12} className="text-success" />
+										<Icon name="check" className="size-3.5 text-success" />
 										<span className="text-xs text-pro-text-primary">{column.name}</span>
 										{columnId.endsWith('_share') ? (
 											<span className="rounded-md bg-pro-info-100 px-1 py-0.5 text-xs text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
@@ -117,39 +111,59 @@ export function ColumnManagementPanel({
 										) : null}
 									</div>
 									<div className="flex items-center gap-1">
-										<button
-											type="button"
-											aria-disabled={isFirst}
-											onClick={() => {
-												if (!isFirst) moveColumn(columnId, -1)
-											}}
-											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary aria-disabled:opacity-40"
-											aria-label={`Move ${column.name} up`}
-										>
-											<Icon name="chevron-up" height={10} width={10} />
-										</button>
-										<button
-											type="button"
-											aria-disabled={isLast}
-											onClick={() => {
-												if (!isLast) moveColumn(columnId, 1)
-											}}
-											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary aria-disabled:opacity-40"
-											aria-label={`Move ${column.name} down`}
-										>
-											<Icon name="chevron-down" height={10} width={10} />
-										</button>
-										<button
-											type="button"
-											onClick={(event) =>
-												toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnId)
+										<Tooltip
+											content="Move up"
+											render={
+												<Button
+													variant="ghost"
+													size="sm"
+													square
+													disabled={isFirst}
+													accessibleWhenDisabled
+													onClick={() => moveColumn(columnId, -1)}
+													aria-label={`Move ${column.name} up`}
+												/>
 											}
-											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-											disabled={columnId === 'name'}
-											aria-label={`Hide ${column.name}`}
 										>
-											<Icon name="x" height={12} width={12} />
-										</button>
+											<Icon name="chevron-up" className="size-4" />
+										</Tooltip>
+										<Tooltip
+											content="Move down"
+											render={
+												<Button
+													variant="ghost"
+													size="sm"
+													square
+													disabled={isLast}
+													accessibleWhenDisabled
+													onClick={() => moveColumn(columnId, 1)}
+													aria-label={`Move ${column.name} down`}
+												/>
+											}
+										>
+											<Icon name="chevron-down" className="size-4" />
+										</Tooltip>
+										{/* The chain name always shows, so it has nothing to hide. */}
+										{columnId === 'name' ? (
+											<span aria-hidden className="size-6 shrink-0" />
+										) : (
+											<Tooltip
+												content="Hide column"
+												render={
+													<Button
+														variant="ghost"
+														size="sm"
+														square
+														onClick={(event) =>
+															toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnId)
+														}
+														aria-label={`Hide ${column.name}`}
+													/>
+												}
+											>
+												<Icon name="x" className="size-4" />
+											</Tooltip>
+										)}
 									</div>
 								</div>
 							)
@@ -158,15 +172,15 @@ export function ColumnManagementPanel({
 				</div>
 
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
-						<Icon name="plus" height={12} width={12} />
-						Available Columns
+					<h5 className="mb-2 flex items-center gap-2 title-sm text-pro-text-secondary">
+						<Icon name="plus" className="size-3.5" />
+						Available columns
 					</h5>
 					<p className="mb-3 text-xs text-pro-text-tertiary">Click to add to table</p>
 					<div className="max-h-60 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => (
 							<div key={group.title}>
-								<h6 className="mb-1 text-xs font-medium text-pro-text-secondary">{group.title}</h6>
+								<h6 className="mb-1 label-sm text-pro-text-secondary">{group.title}</h6>
 								<div className="space-y-1">
 									{group.columns
 										.filter((col) => columnVisibility[col.id] === false)
@@ -177,7 +191,7 @@ export function ColumnManagementPanel({
 												onClick={(event) => toggleFromRow(event, event.currentTarget, column.id)}
 												className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 text-left transition-colors hover:bg-pro-hover-fill"
 											>
-												<Icon name="plus" height={10} width={10} className="text-pro-text-tertiary" />
+												<Icon name="plus" className="size-3.5" />
 												<span className="text-xs text-pro-text-primary">{column.name}</span>
 												{column.id.endsWith('_share') ? (
 													<span className="ml-auto rounded-md bg-pro-info-100 px-1 py-0.5 text-xs text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
@@ -197,13 +211,9 @@ export function ColumnManagementPanel({
 				<span className="text-pro-text-tertiary">
 					{activeColumns.length} of {columns.length} columns visible
 				</span>
-				<button
-					type="button"
-					onClick={onDone}
-					className="rounded-md border border-brand bg-brand px-3 py-1 text-on-brand transition-colors hover:bg-brand-muted"
-				>
+				<Button variant="primary" size="sm" onClick={onDone}>
 					Done
-				</button>
+				</Button>
 			</div>
 		</div>
 	)

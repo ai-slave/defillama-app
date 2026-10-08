@@ -4,6 +4,7 @@ import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'
@@ -234,6 +235,7 @@ function FooterMediaKit() {
 					placeholder="Email address"
 					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
+				{/* Sending leaves nothing to submit until the email changes, so the pressed button disables itself. */}
 				<Ariakit.Button
 					type="submit"
 					aria-busy={isPending}
@@ -244,7 +246,10 @@ function FooterMediaKit() {
 					}`}
 				>
 					{isPending ? (
-						<span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+						<>
+							<LoadingSpinner size={16} />
+							<span className="sr-only">Sending…</span>
+						</>
 					) : isSent ? (
 						'Sent'
 					) : (

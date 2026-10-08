@@ -291,9 +291,9 @@ test('the phone Selected toggle counts the selected protocols, says whether the 
 test('previewing a protocol from the phone Selected list switches back to the table', async () => {
 	await renderChart()
 	await press(await waitForUi(() => button('Selected (2)')))
-	await press(button('Preview Beta'))
+	await press(button('Beta'))
 	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('false')
-	expect(button('Preview Beta').getAttribute('aria-current')).toBe('true')
+	expect(button('Beta').getAttribute('aria-current')).toBe('true')
 })
 
 test('the phone Selected toggle counts the selected metrics and says whether the list is showing', async () => {

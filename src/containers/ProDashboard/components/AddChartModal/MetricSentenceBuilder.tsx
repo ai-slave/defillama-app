@@ -13,6 +13,7 @@ import type { Ref } from 'react'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -20,13 +21,14 @@ import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol }
 import { getProDashboardChartTypeConfig } from '../../types'
 import { getItemIconUrl } from '../../utils'
 import { useModalFieldBinding } from './bindingContext'
+import { SUBJECT_OPTIONS } from './panes'
 
 const CHART_TYPE_OPTIONS = [
 	{
 		value: 'sparkline',
 		label: (
 			<>
-				<Icon name="activity" width={12} height={12} />
+				<Icon name="activity" className="size-3.5" />
 				<span>Line</span>
 			</>
 		)
@@ -35,7 +37,7 @@ const CHART_TYPE_OPTIONS = [
 		value: 'bar',
 		label: (
 			<>
-				<Icon name="bar-chart-2" width={12} height={12} />
+				<Icon name="bar-chart-2" className="size-3.5" />
 				<span>Bar</span>
 			</>
 		)
@@ -44,7 +46,7 @@ const CHART_TYPE_OPTIONS = [
 		value: 'none',
 		label: (
 			<>
-				<Icon name="x" width={12} height={12} />
+				<Icon name="x" className="size-3.5" />
 				<span>None</span>
 			</>
 		)
@@ -131,21 +133,19 @@ interface TokenButtonProps {
 
 function TokenButton({ label, secondary, onClick, active, ref }: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
 	return (
-		<button
-			type="button"
+		<Button
+			variant="filter"
+			size="sm"
 			onClick={onClick}
 			data-metric-token="true"
+			data-active={active}
+			aria-expanded={active}
 			ref={ref}
-			className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150 focus:ring-2 focus:ring-brand/40 focus:outline-hidden sm:px-2.5 sm:py-1 sm:text-sm ${
-				active
-					? 'border-brand bg-brand/12 text-brand shadow-sm'
-					: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:border-brand/30 hover:text-pro-text-primary'
-			}`}
 		>
 			<span className="max-w-[100px] truncate sm:max-w-[180px]">{label}</span>
-			<Icon name="chevron-down" width={10} height={10} className="shrink-0 opacity-70 sm:size-3" />
+			<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 			{secondary ? <span className="sr-only">{secondary}</span> : null}
-		</button>
+		</Button>
 	)
 }
 
@@ -470,7 +470,7 @@ export function MetricSentenceBuilder({
 								value={searchTerm}
 								onChange={(event) => setSearchTerm(event.target.value)}
 								aria-label="Search metrics"
-								placeholder="Search metrics..."
+								placeholder="Search metrics…"
 								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</div>
@@ -506,57 +506,18 @@ export function MetricSentenceBuilder({
 					<ComboboxProvider store={subjectCombobox}>
 						<div className="w-full space-y-2.5 p-2.5 sm:space-y-3 sm:p-3" data-metric-token="true">
 							<div className="space-y-1.5">
-								<div className="text-xs font-semibold tracking-wide text-pro-text-tertiary uppercase">
-									Select subject
-								</div>
-								<div className="rounded-lg border border-pro-cards-border p-0.5 shadow-sm">
-									<div className="grid grid-cols-2 gap-1">
-										<button
-											type="button"
-											onClick={() => {
-												setSubjectTab('chain')
-												subjectCombobox.setInputValue('')
-											}}
-											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-												subjectTab === 'chain'
-													? 'bg-brand/12 text-brand shadow-sm'
-													: 'text-pro-text-secondary hover:bg-pro-cards-bg'
-											}`}
-										>
-											<div className="flex items-center justify-center gap-2">
-												<Icon
-													name="chain"
-													width={14}
-													height={14}
-													className={subjectTab === 'chain' ? 'text-brand' : 'text-pro-text-tertiary'}
-												/>
-												<span>Chains</span>
-											</div>
-										</button>
-										<button
-											type="button"
-											onClick={() => {
-												setSubjectTab('protocol')
-												subjectCombobox.setInputValue('')
-											}}
-											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-												subjectTab === 'protocol'
-													? 'bg-brand/12 text-brand shadow-sm'
-													: 'text-pro-text-secondary hover:bg-pro-cards-bg'
-											}`}
-										>
-											<div className="flex items-center justify-center gap-2">
-												<Icon
-													name="protocol"
-													width={14}
-													height={14}
-													className={subjectTab === 'protocol' ? 'text-brand' : 'text-pro-text-tertiary'}
-												/>
-												<span>Protocols</span>
-											</div>
-										</button>
-									</div>
-								</div>
+								<div className="label-sm text-pro-text-secondary">Select subject</div>
+								<SegmentedControl
+									variant="field"
+									size="md"
+									label="Subject type"
+									options={SUBJECT_OPTIONS}
+									value={subjectTab}
+									onValueChange={(value) => {
+										setSubjectTab(value)
+										subjectCombobox.setInputValue('')
+									}}
+								/>
 							</div>
 
 							<div className="space-y-2">
@@ -587,7 +548,7 @@ export function MetricSentenceBuilder({
 								<div className="rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-inner">
 									<Combobox
 										autoFocus
-										placeholder={subjectTab === 'chain' ? 'Search chains...' : 'Search protocols...'}
+										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
 										className="mb-1.5 w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 										aria-label="Search"
 									/>
@@ -764,17 +725,15 @@ export function MetricSentenceBuilder({
 						}}
 					/>
 				</div>
-				<div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-pro-cards-border px-2 py-1.5 sm:mt-3 sm:px-2.5">
-					<span className="text-xs font-medium text-pro-text-secondary">Chart:</span>
+				<div className="mt-2.5 flex items-center gap-2 rounded-md border border-dashed border-pro-cards-border px-2 py-1.5 sm:mt-3 sm:px-2.5">
+					<span className="label-sm text-pro-text-secondary">Chart</span>
 					<SegmentedControl
 						label="Chart type"
 						value={chartType}
 						onValueChange={onChartTypeChange}
 						options={CHART_TYPE_OPTIONS}
-						variant="default"
+						variant="field"
 						size="sm"
-						className="flex-1 border-0 bg-surface-elevated-1"
-						buttonClassName="flex flex-1 items-center justify-center gap-1 text-xs font-medium"
 					/>
 				</div>
 			</div>

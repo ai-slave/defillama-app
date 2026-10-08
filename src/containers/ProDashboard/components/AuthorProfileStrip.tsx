@@ -4,7 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults'
-import { ProButton } from '../ui'
+import { Button } from '~/ui/Button'
 
 export function AuthorProfileStrip() {
 	const { authorizedFetch, isAuthenticated, loaders, user } = useAuthContext()
@@ -38,10 +38,10 @@ export function AuthorProfileStrip() {
 					{profile.displayName} <span className="font-normal text-pro-text-tertiary">@{profile.slug}</span>
 				</p>
 				<div className="ml-auto flex shrink-0 items-center gap-1">
-					<ProButton as={BasicLink} href={`/authors/${profile.slug}`} size="sm" variant="ghost">
+					<Button as={BasicLink} href={`/authors/${profile.slug}`} size="sm" variant="ghost">
 						View profile
-					</ProButton>
-					<ProButton
+					</Button>
+					<Button
 						as={BasicLink}
 						href="/account?tab=profile"
 						size="sm"
@@ -49,7 +49,7 @@ export function AuthorProfileStrip() {
 						data-umami-event="dashboard-edit-author-profile"
 					>
 						{customized ? 'Edit profile' : 'Set up profile'}
-					</ProButton>
+					</Button>
 				</div>
 			</div>
 			{customized ? null : (

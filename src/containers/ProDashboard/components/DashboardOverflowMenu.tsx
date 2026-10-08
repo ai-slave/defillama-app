@@ -3,14 +3,15 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useId, useState, type ComponentProps } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { useProDashboardDashboard } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProButton } from '../ui'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
 /** An editor toolbar action. Phones reach it from this menu; desktop shows it as a toolbar button. */
@@ -163,13 +164,17 @@ export function DashboardOverflowMenu({
 		<>
 			{hasDashboardActions ? (
 				<Ariakit.MenuProvider placement="bottom-end">
-					<Ariakit.MenuButton
-						render={<ProButton type="button" square variant="secondary" className="max-md:hidden" />}
-						aria-label="Dashboard actions"
-						title="Dashboard actions"
+					<Tooltip
+						content="Dashboard actions"
+						render={
+							<Ariakit.MenuButton
+								render={<Button size="md" type="button" square variant="secondary" className="max-md:hidden" />}
+								aria-label="Dashboard actions"
+							/>
+						}
 					>
 						{triggerIcon}
-					</Ariakit.MenuButton>
+					</Tooltip>
 					<MenuSurface variant="actions" aria-label="Dashboard actions">
 						{dashboardItems}
 					</MenuSurface>
@@ -178,15 +183,16 @@ export function DashboardOverflowMenu({
 			<Ariakit.MenuProvider placement="bottom-end">
 				<Ariakit.MenuButton
 					render={
-						<ProButton
+						<Button
 							type="button"
 							variant="secondary"
+							size="md"
 							className="md:hidden"
-							icon={triggerIcon}
-							loading={selection.isPending}
+							pendingLabel={selection.isPending ? 'Running…' : null}
 						/>
 					}
 				>
+					{triggerIcon}
 					Actions
 				</Ariakit.MenuButton>
 				<MenuSurface variant="actions" aria-label="Dashboard actions">

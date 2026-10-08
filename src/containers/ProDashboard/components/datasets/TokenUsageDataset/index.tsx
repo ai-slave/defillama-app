@@ -6,11 +6,13 @@ import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
+import { Checkbox } from '~/ui/Checkbox'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { getColumns } from './columns'
@@ -79,7 +81,8 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
 
-	const { data: rawDataResponse, isLoading, isError, refetch } = useTokenUsageData(tokenSymbols, includeCex)
+	const usageQuery = useTokenUsageData(tokenSymbols, includeCex)
+	const { data: rawDataResponse, isLoading } = usageQuery
 
 	const rawData = rawDataResponse ?? EMPTY_USAGE_DATA
 	const deferredSearch = useDeferredValue(search)
@@ -161,30 +164,22 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 		)
 	}
 
-	if (isLoading) {
+	// A retry from an error moves the query back to loading; the error and its waiting Try again stay until it succeeds.
+	if (queryReadFailed(usageQuery) && !rawDataResponse) {
 		return (
 			<div className="flex size-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading token usage data…" />
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load token usage data" retry={usageQuery} />
 				</div>
 			</div>
 		)
 	}
 
-	if (isError) {
+	if (isLoading) {
 		return (
 			<div className="flex size-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col items-center justify-center gap-4">
-					<p className="mb-2 text-sm text-pro-text-secondary">Failed to load token usage data</p>
-					<button
-						type="button"
-						onClick={() => {
-							void refetch()
-						}}
-						className="rounded-sm bg-brand px-4 py-2 text-on-brand hover:bg-brand-muted"
-					>
-						Try again
-					</button>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading token usage data…" />
 				</div>
 			</div>
 		)
@@ -355,44 +350,15 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 						) : null}
 						<div className="order-1 flex items-center gap-2 sm:order-2 sm:gap-3">
 							{props.editable ? (
-								<button
-									type="button"
-									className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-pro-text-tertiary sm:px-3"
-									onClick={() => props.onConfigChange({ ...config, includeCex: !includeCex })}
+								<Checkbox
+									variant="filter"
+									checked={includeCex}
+									onChange={() => props.onConfigChange({ ...config, includeCex: !includeCex })}
 								>
-									<div className="relative size-4">
-										<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
-										<div
-											className={`size-4 border-2 transition-all ${
-												includeCex ? 'border-brand bg-brand' : 'border-pro-text-tertiary bg-transparent'
-											}`}
-										>
-											{includeCex ? (
-												<svg
-													className="size-3 text-on-brand"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-													aria-hidden="true"
-													focusable="false"
-												>
-													<path
-														fillRule="evenodd"
-														d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-														clipRule="evenodd"
-													/>
-												</svg>
-											) : null}
-										</div>
-									</div>
-									<span className="text-xs font-medium whitespace-nowrap text-pro-text-primary sm:text-sm">
-										Include CEXs
-									</span>
-								</button>
+									<span className="whitespace-nowrap">Include CEXs</span>
+								</Checkbox>
 							) : null}
-							<CSVExportButton
-								onClick={downloadCSV}
-								className="flex h-[38px] items-center gap-2 border border-pro-cards-border bg-surface px-3 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
-							/>
+							<CSVExportButton onClick={downloadCSV} />
 						</div>
 					</div>
 				</div>

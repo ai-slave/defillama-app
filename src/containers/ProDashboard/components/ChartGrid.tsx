@@ -691,6 +691,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		const next = removeSectionKeepingChildren(items, sectionId)
 		if (next === items) return
 		handleChartsReordered(next)
+		gridRef.current?.focus()
 		if (section?.kind === 'section' && section.displayAs === 'tab' && activeTabId === sectionId) {
 			const remainingTab = layout.tabs?.find((tab) => tab.section.id !== sectionId)
 			if (remainingTab) setActiveTab(remainingTab.section.id)
@@ -807,7 +808,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		<button
 			type="button"
 			onClick={() => onAddChartClick(placement)}
-			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border text-sm font-medium text-link hover:bg-pro-info-300/5"
+			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border text-sm font-medium text-link hover:bg-hover-row focus-visible:bg-hover-row"
 		>
 			<Icon name="plus" height={16} width={16} />
 			Add card

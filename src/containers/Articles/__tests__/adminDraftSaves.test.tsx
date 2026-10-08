@@ -219,4 +219,45 @@ describe('admin drafts around saves', () => {
 		await waitForUi(() => expect(container.textContent).not.toContain('Clear override'), { timeout: 500 })
 		expect(document.activeElement).toBe(textarea())
 	})
+
+	test('report row: Save stays focused and busy while its save runs, then disables itself', async () => {
+		const save = deferred<ArticleDocument>()
+		patches.report.push(save.promise)
+		await render(<ReportRow article={article} />)
+
+		await type('B')
+		const saveButton = button('Save')
+		await act(async () => {
+			saveButton.focus()
+			saveButton.click()
+		})
+
+		await waitForUi(() => expect(saveButton.getAttribute('aria-busy')).toBe('true'), { timeout: 500 })
+		expect(saveButton.textContent).toContain('Saving…')
+		expect(saveButton.disabled).toBe(false)
+
+		await act(async () => save.resolve({ ...article, reportDescription: 'B' }))
+		await waitForUi(() => expect(saveButton.getAttribute('aria-busy')).toBeNull(), { timeout: 500 })
+		expect(saveButton.disabled).toBe(false)
+		expect(saveButton.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(saveButton)
+	})
+
+	test('highlight controls: Save highlight text shows its save running and Clear override does not', async () => {
+		const save = deferred<unknown>()
+		patches.metadata.push(save.promise)
+		await render(<ReportHighlightControls article={article} pending={false} invalidate={vi.fn()} />)
+
+		await type('New highlight')
+		await click('Save highlight text')
+
+		await waitForUi(() => expect(container.querySelector('button[aria-busy="true"]')).not.toBeNull(), { timeout: 500 })
+		const saveButton = container.querySelector<HTMLButtonElement>('button[aria-busy="true"]')!
+		expect(saveButton.textContent).toContain('Saving…')
+		expect(saveButton.disabled).toBe(false)
+		expect(button('Clear override').getAttribute('aria-busy')).toBeNull()
+
+		await act(async () => save.resolve({ metadata: { highlightText: 'New highlight' } }))
+		await waitForUi(() => expect(container.querySelector('button[aria-busy="true"]')).toBeNull(), { timeout: 500 })
+	})
 })

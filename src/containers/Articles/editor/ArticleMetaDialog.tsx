@@ -13,6 +13,7 @@ import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
 import type {
 	ArticleClient,
@@ -497,7 +498,7 @@ function MetaSheet({
 								<span className="label-sm text-secondary">Editorial</span>
 								<div className="flex flex-wrap gap-1.5">
 									{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
-										<span key={slug} className="rounded-full bg-research-tint px-2 py-0.5 label-sm text-link">
+										<span key={slug} className="rounded-full bg-brand-muted px-2 py-0.5 label-sm text-link-on-tint">
 											{EDITORIAL_TAGS[slug].label}
 										</span>
 									))}
@@ -670,7 +671,7 @@ function MetaSheet({
 											) : (
 												<span
 													aria-hidden
-													className="grid size-7 shrink-0 place-items-center rounded-full bg-research-tint label-sm text-link"
+													className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-muted label-sm text-link-on-tint"
 												>
 													{entry.profile.displayName.slice(0, 2).toUpperCase()}
 												</span>
@@ -794,16 +795,21 @@ function MetaSheet({
 												value={guest.type}
 												onValueChange={(type) => updateGuestAuthor(index, { type })}
 											/>
-											<Button
-												type="button"
-												size="sm"
-												variant="ghost"
-												square
-												aria-label={`Remove guest co-author ${index + 1}`}
-												onClick={(event) => removeGuestAuthor(index, event.currentTarget)}
+											<Tooltip
+												content={`Remove guest co-author ${index + 1}`}
+												render={
+													<Button
+														type="button"
+														size="sm"
+														variant="ghost"
+														square
+														aria-label={`Remove guest co-author ${index + 1}`}
+														onClick={(event) => removeGuestAuthor(index, event.currentTarget)}
+													/>
+												}
 											>
-												<Icon name="x" className="size-3.5" />
-											</Button>
+												<Icon name="x" className="size-4" />
+											</Tooltip>
 										</div>
 										<div className="flex flex-col gap-1.5">
 											<label htmlFor={`${id}-guest-${guest.id}-name`} className="label-sm text-secondary">

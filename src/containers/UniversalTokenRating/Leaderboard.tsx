@@ -6,6 +6,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
@@ -46,20 +47,20 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 							as={BasicLink}
 							href={`/universal-token-rating/compare?token=${row.asset}`}
 							size="md"
-							className="flex-1 justify-center"
+							className="flex-1"
 						>
 							Compare
-							<Icon name="repeat" height={14} width={14} />
+							<Icon name="repeat" className="size-3.5" />
 						</Button>
 						<Button
 							as={BasicLink}
 							href={`/universal-token-rating/token/${row.asset}`}
 							variant="primary"
 							size="md"
-							className="flex-1 justify-center"
+							className="flex-1"
 						>
 							Details
-							<Icon name="arrow-right" height={14} width={14} />
+							<Icon name="arrow-right" className="size-3.5" />
 						</Button>
 					</div>
 				</div>
@@ -162,24 +163,19 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 				<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[260px] w-full" />
 			</div>
 			<div className="flex gap-3">
-				<Button
-					as={BasicLink}
-					href={`/universal-token-rating/compare?token=${row.asset}`}
-					size="md"
-					className="flex-1 justify-center"
-				>
+				<Button as={BasicLink} href={`/universal-token-rating/compare?token=${row.asset}`} size="md" className="flex-1">
 					Compare
-					<Icon name="repeat" height={14} width={14} />
+					<Icon name="repeat" className="size-3.5" />
 				</Button>
 				<Button
 					as={BasicLink}
 					href={`/universal-token-rating/token/${row.asset}`}
 					variant="primary"
 					size="md"
-					className="flex-1 justify-center"
+					className="flex-1"
 				>
 					Details
-					<Icon name="arrow-right" height={14} width={14} />
+					<Icon name="arrow-right" className="size-3.5" />
 				</Button>
 			</div>
 			{!row.claimed ? <ClaimProfileBanner asset={row.asset} /> : null}
@@ -320,7 +316,11 @@ export function Leaderboard({
 			<table className="w-full body-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
 				<thead>
 					<tr>
-						<th className="border-b border-subtle px-3 py-2.5 text-left" style={stickyStyle(0)}>
+						<th
+							className="border-b border-subtle px-3 py-2.5 text-left"
+							style={stickyStyle(0)}
+							aria-sort={sort.key === 'rank' ? (sort.desc ? 'descending' : 'ascending') : undefined}
+						>
 							<button
 								type="button"
 								className="flex cursor-pointer items-center gap-1 label-sm text-secondary"
@@ -337,7 +337,11 @@ export function Leaderboard({
 							Grade
 						</th>
 						{SORTABLE_COLUMNS.map((column) => (
-							<th key={column.key} className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap">
+							<th
+								key={column.key}
+								className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap"
+								aria-sort={sort.key === column.key ? (sort.desc ? 'descending' : 'ascending') : undefined}
+							>
 								<button
 									type="button"
 									className="flex cursor-pointer items-center gap-1 label-sm whitespace-nowrap text-secondary"
@@ -348,7 +352,7 @@ export function Leaderboard({
 								</button>
 							</th>
 						))}
-						<th aria-label="Expand row" className="border-b border-subtle" />
+						<th aria-label="Row details" className="border-b border-subtle" />
 					</tr>
 				</thead>
 				<tbody>
@@ -420,14 +424,15 @@ export function Leaderboard({
 										{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
 									</td>
 									<td className="border-b border-subtle px-3 py-2.5">
+										{/* A row's expand chevron needs no Tooltip: aria-expanded says what it does. */}
 										<Button
-											type="button"
 											size="sm"
 											square
-											aria-label={expanded ? 'Collapse row' : 'Expand row'}
+											aria-label="Row details"
+											aria-expanded={expanded}
 											onClick={() => toggleExpanded(row.asset)}
 										>
-											<Icon name={expanded ? 'chevron-up' : 'chevron-down'} height={14} width={14} />
+											<Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-4" />
 										</Button>
 									</td>
 								</tr>
@@ -453,28 +458,38 @@ export function Leaderboard({
 			{pageCount > 1 ? (
 				<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2.5">
 					<span className="flex items-center gap-1.5">
-						<Button
-							type="button"
-							size="sm"
-							square
-							disabled={currentPage === 0}
-							accessibleWhenDisabled
-							onClick={() => setPage(currentPage - 1)}
-							aria-label="Previous page"
+						<Tooltip
+							content="Previous page"
+							render={
+								<Button
+									type="button"
+									size="sm"
+									square
+									disabled={currentPage === 0}
+									accessibleWhenDisabled
+									onClick={() => setPage(currentPage - 1)}
+									aria-label="Previous page"
+								/>
+							}
 						>
-							<Icon name="arrow-left" height={14} width={14} />
-						</Button>
-						<Button
-							type="button"
-							size="sm"
-							square
-							disabled={currentPage + 1 >= pageCount}
-							accessibleWhenDisabled
-							onClick={() => setPage(currentPage + 1)}
-							aria-label="Next page"
+							<Icon name="arrow-left" className="size-4" />
+						</Tooltip>
+						<Tooltip
+							content="Next page"
+							render={
+								<Button
+									type="button"
+									size="sm"
+									square
+									disabled={currentPage + 1 >= pageCount}
+									accessibleWhenDisabled
+									onClick={() => setPage(currentPage + 1)}
+									aria-label="Next page"
+								/>
+							}
 						>
-							<Icon name="arrow-right" height={14} width={14} />
-						</Button>
+							<Icon name="arrow-right" className="size-4" />
+						</Tooltip>
 						<span className="body-sm text-secondary">
 							Page <strong className="text-primary">{currentPage + 1}</strong> of {pageCount}
 						</span>

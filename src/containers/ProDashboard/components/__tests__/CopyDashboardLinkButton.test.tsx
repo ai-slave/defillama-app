@@ -148,6 +148,17 @@ test('a public dashboard keeps its link and embed snippet', async () => {
 	expect(buttonLabelled('Make public')).toBeUndefined()
 })
 
+test('copying the link or the embed code says so to screen readers', async () => {
+	await act(async () => root.render(<CopyDashboardLinkButton dashboardVisibility="public" dashboardId="dashboard-1" />))
+	await openShare()
+	const status = document.body.querySelector('[role="status"]')!
+	expect(status.textContent).toBe('')
+	await act(async () => document.body.querySelector<HTMLButtonElement>('button[aria-label="Copy link"]')!.click())
+	expect(status.textContent).toBe('Link copied')
+	await act(async () => document.body.querySelector<HTMLButtonElement>('button[aria-label="Copy embed code"]')!.click())
+	expect(status.textContent).toBe('Embed code copied')
+})
+
 const copyLinkButton = () => document.body.querySelector<HTMLButtonElement>('button[aria-label="Copy link"]')
 
 // The dashboard turns public when its owner's save lands, which can commit before or after the save's promise resolves.

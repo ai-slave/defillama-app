@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Button } from '~/ui/Button'
-import { takeLostFocus } from '~/ui/focus'
+import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	FILTER_CATEGORIES,
@@ -273,7 +274,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	const hasValue = filterHasValue(filter)
 	const categoryLabel = CATEGORY_LABELS[config.category]
 	const categoryBadge = (
-		<span className="rounded-full bg-surface px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
+		<span className="rounded-full bg-surface px-1.5 py-0.5 label-xs text-pro-text-tertiary uppercase">
 			{categoryLabel}
 		</span>
 	)
@@ -281,12 +282,12 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (filter.type === 'boolean') {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
+				className={`flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
 			>
 				<div className="flex min-w-0 flex-col gap-0.5">
 					<div className="flex items-center gap-1.5">
 						<Icon name="check" className="size-3" />
-						<span className="truncate text-xs font-semibold">{config.label}</span>
+						<span className="truncate title-sm">{config.label}</span>
 						{config.description ? (
 							<Tooltip content={config.description} placement="top">
 								<Icon name="circle-help" className="size-3 opacity-50" />
@@ -296,14 +297,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					</div>
 					<span className="truncate text-xs opacity-80">{displayValue}</span>
 				</div>
-				<button
-					type="button"
-					onClick={onRemove}
-					aria-label={`Remove ${config.label} filter`}
-					className="rounded-sm p-0.5 opacity-0 transition-opacity group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100!"
+				<Tooltip
+					content="Remove filter"
+					render={
+						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
+					}
 				>
-					<Icon name="x" className="size-3" />
-				</button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 			</div>
 		)
 	}
@@ -311,7 +312,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (!isEditing && hasValue) {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
+				className={`flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
 			>
 				<button
 					ref={takeLostFocus}
@@ -321,7 +322,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				>
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<div className="flex items-center gap-1.5">
-							<span className="truncate text-xs font-semibold">{config.label}</span>
+							<span className="truncate title-sm">{config.label}</span>
 							{config.description ? (
 								<Tooltip content={config.description} placement="top">
 									<Icon name="circle-help" className="size-3 opacity-50" />
@@ -332,14 +333,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						<span className="truncate text-xs opacity-80">{displayValue}</span>
 					</div>
 				</button>
-				<button
-					type="button"
-					onClick={onRemove}
-					aria-label={`Remove ${config.label} filter`}
-					className="rounded-sm p-0.5 opacity-0 transition-opacity group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100!"
+				<Tooltip
+					content="Remove filter"
+					render={
+						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
+					}
 				>
-					<Icon name="x" className="size-3" />
-				</button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 			</div>
 		)
 	}
@@ -351,7 +352,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-1.5">
-						<span className="truncate text-xs font-semibold">{config.label}</span>
+						<span className="truncate title-sm">{config.label}</span>
 						{config.description ? (
 							<Tooltip content={config.description} placement="top">
 								<Icon name="circle-help" className="size-3 opacity-50" />
@@ -359,14 +360,20 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<button
-						type="button"
-						onClick={onRemove}
-						aria-label={`Remove ${config.label} filter`}
-						className="rounded-sm p-0.5 opacity-60 hover:opacity-100"
+					<Tooltip
+						content="Remove filter"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								onClick={onRemove}
+								aria-label={`Remove ${config.label} filter`}
+							/>
+						}
 					>
-						<Icon name="x" className="size-3" />
-					</button>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
 				</div>
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
@@ -396,17 +403,17 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 		>
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate text-xs font-semibold">{config.label}</span>
+					<span className="truncate title-sm">{config.label}</span>
 					{categoryBadge}
 				</div>
-				<button
-					type="button"
-					onClick={onRemove}
-					aria-label={`Remove ${config.label} filter`}
-					className="rounded-sm p-0.5 opacity-60 hover:opacity-100"
+				<Tooltip
+					content="Remove filter"
+					render={
+						<Button variant="ghost" size="sm" square onClick={onRemove} aria-label={`Remove ${config.label} filter`} />
+					}
 				>
-					<Icon name="x" className="size-3" />
-				</button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 			</div>
 			<Select
 				allValues={OPERATOR_OPTIONS}
@@ -477,6 +484,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 
 export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) {
 	const [search, setSearch] = useState('')
+	const searchRef = useRef<HTMLInputElement>(null)
 	const [expandedCategories, setExpandedCategories] = useState<Set<FilterCategory>>(new Set(['metrics', 'flags']))
 	const [pendingFilters, setPendingFilters] = useState<Array<ActiveFilter>>([])
 	const [editingFilterId, setEditingFilterId] = useState<string | null>(null)
@@ -596,59 +604,35 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	return (
 		<div className="grid grid-cols-1 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
 			<div className="flex min-w-0 flex-col gap-2">
-				<div className="flex items-center justify-between gap-2">
-					<div className="flex items-center gap-2">
-						<span className="text-xs font-semibold tracking-wide text-pro-text-secondary uppercase">
-							Browse filters
-						</span>
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<div className="flex min-w-0 items-center gap-2">
+						<span className="title-sm text-pro-text-secondary">Browse filters</span>
 						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-xs text-pro-text-tertiary">
 							{search
 								? `${visibleAvailableCount} match${visibleAvailableCount === 1 ? '' : 'es'}`
 								: `${inactiveFiltersCount} available`}
 						</span>
 					</div>
-					<div className="flex items-center gap-1">
-						<button
-							type="button"
-							onClick={expandAllCategories}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
-						>
+					<div className="ml-auto flex items-center gap-1">
+						<Button size="sm" onClick={expandAllCategories}>
 							Expand all
-						</button>
-						<button
-							type="button"
-							onClick={collapseAllCategories}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
-						>
+						</Button>
+						<Button size="sm" onClick={collapseAllCategories}>
 							Collapse
-						</button>
+						</Button>
 					</div>
 				</div>
-				<div className="relative">
-					<Icon name="search" className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-pro-text-tertiary" />
-					<input
-						type="text"
-						value={search}
-						onChange={(e) => {
-							setSearch(e.target.value)
-							// Each new query reveals all of its matches; the user can still collapse a category afterwards.
-							if (e.target.value) expandAllCategories()
-						}}
-						placeholder="Search filters..."
-						aria-label="Search filters"
-						className="h-8 w-full rounded-md border border-pro-cards-border bg-(--cards-bg2) pr-8 pl-8 text-xs text-pro-text-primary outline-hidden transition-colors focus:border-brand"
-					/>
-					{search ? (
-						<button
-							type="button"
-							onClick={() => setSearch('')}
-							aria-label="Clear search"
-							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm hover:bg-pro-cards-bg"
-						>
-							<Icon name="x" className="size-3 text-pro-text-tertiary" />
-						</button>
-					) : null}
-				</div>
+				<SearchField
+					ref={searchRef}
+					label="Search filters"
+					placeholder="Search filters…"
+					value={search}
+					onChange={(value) => {
+						setSearch(value)
+						// Each new query reveals all of its matches; the user can still collapse a category afterwards.
+						if (value) expandAllCategories()
+					}}
+				/>
 				<div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
 					{filteredCategories.map(({ category, label, filters: categoryFilters }) => {
 						const isExpanded = expandedCategories.has(category)
@@ -666,7 +650,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-pro-cards-border/30"
 								>
 									<div className="flex items-center gap-2">
-										<span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${badgeColor}`}>{label}</span>
+										<span className={`rounded-sm px-1.5 py-0.5 label-sm ${badgeColor}`}>{label}</span>
 										<span className="text-xs text-pro-text-tertiary">{availableFilters.length}</span>
 									</div>
 									<Icon
@@ -705,31 +689,31 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 					{filteredCategories.length === 0 ? (
 						<div className="flex items-center justify-between rounded-md border border-dashed border-pro-cards-border bg-(--cards-bg2) p-3 text-xs text-pro-text-tertiary">
 							<span>No filters match "{search}".</span>
-							<button
-								type="button"
-								onClick={() => setSearch('')}
-								className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
+							<Button
+								size="sm"
+								onClick={() =>
+									keepFocus(
+										() => setSearch(''),
+										() => searchRef.current
+									)
+								}
 							>
 								Clear search
-							</button>
+							</Button>
 						</div>
 					) : null}
 				</div>
 			</div>
 
 			<div className="flex min-w-0 flex-col gap-2">
-				<div className="flex items-center justify-between">
+				<div className="flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
-						<span className="text-xs font-medium text-pro-text-secondary">Active ({allActiveFilters.length})</span>
+						<span className="text-pro-text-secondary">Active ({allActiveFilters.length})</span>
 					</div>
 					{allActiveFilters.length > 0 ? (
-						<button
-							type="button"
-							onClick={handleClearAll}
-							className="cursor-pointer text-xs text-pro-text-tertiary transition-colors hover:text-error"
-						>
+						<Button variant="link" onClick={handleClearAll}>
 							Clear all
-						</button>
+						</Button>
 					) : null}
 				</div>
 				<div className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1">

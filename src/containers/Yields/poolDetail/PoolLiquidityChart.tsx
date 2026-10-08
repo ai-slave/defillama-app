@@ -601,31 +601,28 @@ export function PoolLiquidityChart({
 	return (
 		<>
 			<PanelHeader>
-				<PanelTitle>Exit history</PanelTitle>
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-					{currentModel.hasUnits ? (
-						<Tooltip
-							content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own."
-							render={
-								<button
-									type="button"
-									aria-pressed={unit === 'units'}
-									onClick={() => setQuery({ liqUnit: getLiquidityUnitQueryValue(unit === 'usd' ? 'native' : 'usd') })}
-									className={metricSeriesToggleStyles}
-									data-active={unit === 'units'}
-								/>
-							}
-						>
-							{unit === 'usd' ? `Show ${unitLabel(currentModel.symbol)}` : 'Show USD'}
-						</Tooltip>
-					) : null}
-					<PoolRangeControl kind="liquidity" />
-					<ChartExportButtons
-						chartInstance={() => chartRef.current}
-						filename={`yields-${poolId}-liquidity`}
-						csvSource={{ type: 'dataset', prepare: () => dataset }}
-					/>
-				</div>
+				<PanelTitle className="mr-auto">Exit history</PanelTitle>
+				{currentModel.hasUnits ? (
+					<Tooltip
+						content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own."
+						render={
+							<button
+								type="button"
+								onClick={() => setQuery({ liqUnit: getLiquidityUnitQueryValue(unit === 'usd' ? 'native' : 'usd') })}
+								className={metricSeriesToggleStyles}
+								data-active={unit === 'units'}
+							/>
+						}
+					>
+						{unit === 'usd' ? `Show ${unitLabel(currentModel.symbol)}` : 'Show USD'}
+					</Tooltip>
+				) : null}
+				<PoolRangeControl kind="liquidity" />
+				<ChartExportButtons
+					chartInstance={() => chartRef.current}
+					filename={`yields-${poolId}-liquidity`}
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
+				/>
 			</PanelHeader>
 
 			{!loading && !error ? (

@@ -3,6 +3,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { PaymentButton } from '~/containers/Subscription/Crypto'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 
@@ -39,7 +40,7 @@ export function SubscribeAPICard({
 	}
 
 	return (
-		<>
+		<div className="sub-api-accent contents">
 			<h2 className="relative z-10 text-center text-[2rem] font-extrabold whitespace-nowrap text-sub-purple">API</h2>
 			<div className="relative z-10 mt-1 flex flex-col items-center justify-center">
 				<div className="flex items-center">
@@ -98,29 +99,26 @@ export function SubscribeAPICard({
 						<span className="text-center font-bold text-success">Current plan</span>
 						{currentBillingInterval === 'month' || !currentBillingInterval ? (
 							<div className="flex flex-col gap-2">
-								<button
-									type="button"
-									className="w-full rounded-lg border border-sub-purple bg-sub-purple px-4 py-3 font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
+								<Button
+									variant="primary"
+									size="lg"
+									className="w-full"
 									onClick={handleUpgradeToYearly}
-									disabled={loading === 'stripe'}
+									pendingLabel={loading === 'stripe' ? 'Processing…' : null}
 								>
-									{loading === 'stripe' ? 'Processing...' : 'Upgrade to Yearly'}
-								</button>
-								<p className="text-center text-xs text-sub-text-muted">
+									Upgrade to yearly
+								</Button>
+								<p className="text-center body-sm text-sub-text-muted">
 									Switch to annual billing and get 2 months free
 								</p>
 							</div>
 						) : null}
 						{isCancelPending ? (
-							<p className="mt-2 text-center text-sm text-warning">Cancellation scheduled</p>
+							<p className="text-center body-md text-warning">Cancellation scheduled</p>
 						) : onCancelSubscription ? (
-							<button
-								type="button"
-								className="mt-2 w-full rounded-lg bg-sub-dark-card px-4 py-2 text-on-brand transition-colors hover:bg-sub-line"
-								onClick={onCancelSubscription}
-							>
-								Cancel Subscription
-							</button>
+							<Button variant="secondary" size="md" className="w-full" onClick={onCancelSubscription}>
+								Cancel subscription
+							</Button>
 						) : null}
 					</div>
 				) : context === 'account' || isLegacyActive ? (
@@ -138,7 +136,10 @@ export function SubscribeAPICard({
 					<>
 						{context === 'page' ? (
 							<>
-								<SignInModal trigger={<button type="button">Already a subscriber? Sign In</button>} />
+								{/* Same wrapper as the pricing cards' sign-in link; it collapses once the trigger hides. */}
+								<p className="text-center body-sm empty:hidden">
+									<SignInModal trigger={<Button variant="link">Already a subscriber? Sign in</Button>} />
+								</p>
 								<div
 									className={`grid gap-3 max-sm:w-full max-sm:grid-cols-1 ${billingInterval === 'year' ? 'grid-cols-1' : 'grid-cols-2'}`}
 								>
@@ -158,6 +159,6 @@ export function SubscribeAPICard({
 					<StripeCheckoutModal checkout={checkout} />
 				</Suspense>
 			) : null}
-		</>
+		</div>
 	)
 }

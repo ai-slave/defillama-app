@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import type { RWALinkGroup, RWAPanelRow } from './panelData'
 
@@ -26,13 +27,11 @@ export function Prose({ children }: { children: string }) {
 		<div className="flex max-w-[70ch] flex-col items-start gap-1">
 			<p className={`${expanded || !needsToggle ? '' : 'line-clamp-4 '}body-md text-secondary`}>{children}</p>
 			{needsToggle ? (
-				<button
-					type="button"
-					onClick={() => setExpanded((previous) => !previous)}
-					className="label-sm text-link hover:underline"
-				>
-					{expanded ? 'Show less' : 'Show more'}
-				</button>
+				<div className="label-sm">
+					<Button variant="link" onClick={() => setExpanded((previous) => !previous)} aria-expanded={expanded}>
+						{expanded ? 'Show less' : 'Show more'}
+					</Button>
+				</div>
 			) : null}
 		</div>
 	)

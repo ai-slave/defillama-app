@@ -9,6 +9,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
@@ -85,17 +87,26 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 			<Tooltip
 				content="Unpin from navigation"
 				render={
-					<button
-						type="button"
-						aria-label="Unpin from navigation"
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						aria-label={`Unpin ${page.name}`}
+						data-menu-name="Unpin from navigation"
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
-							mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route))
+							// The row leaves the list: its neighbour's drag handle takes focus.
+							const row = e.currentTarget.parentElement!
+							const next = neighbourRowControl(row, row.querySelector('button')!)
+							keepFocus(
+								() => mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route)),
+								() => next
+							)
 						}}
 					/>
 				}
-				className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md p-1 text-data-down group-focus-within:block group-hover:block hover:bg-hover-row focus-visible:bg-hover-row"
+				className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden"
 			>
 				<Icon name="x" className="size-4" />
 			</Tooltip>

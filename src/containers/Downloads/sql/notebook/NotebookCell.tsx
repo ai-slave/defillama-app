@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { Ref } from 'react'
 import { useCallback, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -113,29 +114,28 @@ export function NotebookCell({
 
 			<div className="flex flex-wrap items-center gap-2">
 				{onDragStart && total > 1 ? (
-					<button
-						type="button"
-						aria-label="Drag to reorder"
-						title="Drag to reorder"
+					// Mouse-only: keyboard readers move cells with Move up and Move down in the cell menu.
+					<span
+						aria-hidden
 						onMouseDown={() => setDraggable(true)}
 						onMouseUp={() => setDraggable(false)}
 						onMouseLeave={() => setDraggable(false)}
-						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
 					>
 						<Icon name="menu" className="size-3" />
-					</button>
+					</span>
 				) : null}
-				<span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-pro-text-tertiary">
+				<span className="inline-flex items-center gap-1.5 mono-sm text-pro-text-tertiary">
 					<span className="text-pro-text-secondary">{cellName}</span>
 					<CellTypeBadge type={cell.type} />
 				</span>
 				{cell.running && cell.loadingStage ? (
-					<span className="inline-flex items-center gap-1 text-[11px] text-pro-premium-300">
+					<span className="inline-flex items-center gap-1 label-sm text-pro-premium-300">
 						<LoadingSpinner size={10} />
 						{cell.loadingStage}
 					</span>
 				) : cell.runError ? (
-					<span className="inline-flex items-center gap-1 text-[11px] text-error">
+					<span className="inline-flex items-center gap-1 label-sm text-error">
 						<Icon name="alert-triangle" className="size-3" />
 						error
 					</span>
@@ -144,26 +144,17 @@ export function NotebookCell({
 				<div className="ml-auto flex items-center gap-1">
 					{cell.type === 'sql' ? (
 						cell.running ? (
-							<button
-								type="button"
-								onClick={onCancel}
-								title="Cancel query"
-								className="inline-flex items-center gap-1.5 rounded-md border border-error/50 bg-error/10 px-2 py-1 text-[11px] font-medium text-error transition-colors hover:bg-error/20"
-							>
-								<LoadingSpinner size={10} />
-								<svg className="size-2.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+							// Run and Stop share one slot, so React keeps the same button and its focus when they swap.
+							<Button variant="secondary" size="sm" onClick={onCancel}>
+								<LoadingSpinner size={14} />
+								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 									<rect x="6" y="6" width="12" height="12" rx="1" />
 								</svg>
 								Stop
-							</button>
+							</Button>
 						) : (
-							<button
-								type="button"
-								onClick={onRun}
-								disabled={!canRun || !cell.source.trim()}
-								className="inline-flex items-center gap-1.5 rounded-md bg-brand px-2 py-1 text-[11px] font-medium text-on-brand transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								<svg className="size-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+							<Button variant="primary" size="sm" onClick={onRun} disabled={!canRun || !cell.source.trim()}>
+								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 									<path d="M8 5v14l11-7z" />
 								</svg>
 								Run
@@ -171,7 +162,7 @@ export function NotebookCell({
 									<Keycap muted>⌘</Keycap>
 									<Keycap muted>↵</Keycap>
 								</span>
-							</button>
+							</Button>
 						)
 					) : null}
 

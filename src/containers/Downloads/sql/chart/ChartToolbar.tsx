@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef } from 'react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -188,12 +188,6 @@ function YSeriesPicker({
 	config: ChartConfig
 	onChange: (patch: Partial<ChartConfig>) => void
 }) {
-	const popoverRef = useRef<HTMLDivElement>(null)
-	const toggleSeries = (name: string) => {
-		// Adding/removing a series replaces the focused control. Keep focus in settings.
-		popoverRef.current?.focus()
-		onToggle(name)
-	}
 	const label = splitByActive
 		? 'split series'
 		: yCols.length === 0
@@ -221,7 +215,6 @@ function YSeriesPicker({
 				<PopoverSurface
 					variant="panel"
 					heading="Y series"
-					ref={popoverRef}
 					aria-label="Y series settings"
 					gutter={4}
 					className="w-[280px]"
@@ -240,7 +233,7 @@ function YSeriesPicker({
 										chartType={config.chartType}
 										config={config}
 										onChange={onChange}
-										onRemove={() => toggleSeries(name)}
+										onRemove={() => onToggle(name)}
 										dualAxisEligible={dualAxisEligible}
 										seriesKindEligible={seriesKindEligible}
 									/>
@@ -250,24 +243,37 @@ function YSeriesPicker({
 						) : null}
 
 						<span className="px-1 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">add</span>
+						{yCols.length >= 8 ? (
+							<p className="px-2 py-1 body-sm text-pro-text-secondary">Up to 8 series. Remove one to add another.</p>
+						) : null}
 						{available.filter((n) => !yCols.includes(n)).length === 0 ? (
 							<div className="px-2 py-1 text-[11px] text-pro-text-tertiary">No more numeric columns</div>
 						) : (
-							available
-								.filter((n) => !yCols.includes(n))
-								.map((name) => (
-									<button
-										type="button"
-										disabled={yCols.length >= 8}
-										aria-label={`Add ${name}`}
-										key={name}
-										onClick={() => toggleSeries(name)}
-										className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-									>
-										<Icon name="plus" className="size-3 text-pro-text-tertiary" />
-										<span className="truncate">{name}</span>
-									</button>
-								))
+							// `contents` keeps the rows in the column's gap; the wrapper makes them each other's only neighbours.
+							<div className="contents">
+								{available
+									.filter((n) => !yCols.includes(n))
+									.map((name) => (
+										<button
+											type="button"
+											disabled={yCols.length >= 8}
+											aria-label={`Add ${name}`}
+											key={name}
+											onClick={(event) => {
+												// The added column leaves this list: the next one takes focus, else the previous one.
+												const next = neighbourRowControl(event.currentTarget, event.currentTarget)
+												keepFocus(
+													() => onToggle(name),
+													() => next
+												)
+											}}
+											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+										>
+											<Icon name="plus" className="size-3 text-pro-text-tertiary" />
+											<span className="truncate">{name}</span>
+										</button>
+									))}
+							</div>
 						)}
 					</div>
 				</PopoverSurface>

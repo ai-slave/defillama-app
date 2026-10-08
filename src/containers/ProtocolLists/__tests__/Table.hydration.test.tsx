@@ -161,7 +161,7 @@ describe('RecentlyListedProtocolsTable', () => {
 		expect(container.textContent).toContain("Couldn't update results.")
 		expect(container.textContent).toContain('Newest')
 		expect(container.textContent).toContain('Older')
-		const retry = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Retry')!
+		const retry = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Try again')!
 		await act(async () => retry.click())
 		await resolvePage(['Base Match'])
 		expect(container.textContent).toContain('Base Match')

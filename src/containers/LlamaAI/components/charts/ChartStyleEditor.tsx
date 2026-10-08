@@ -9,6 +9,7 @@ import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHea
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
@@ -520,28 +521,38 @@ export function ChartStyleEditor({
 										) : null}
 										{canReorder ? (
 											<div className="flex shrink-0 gap-0.5">
-												<Button
-													type="button"
-													size="sm"
-													square
-													aria-label={`Move series ${i + 1} up`}
-													disabled={i === 0}
-													accessibleWhenDisabled
-													onClick={() => moveSeries(i, i - 1)}
+												<Tooltip
+													content="Move up"
+													render={
+														<Button
+															type="button"
+															size="sm"
+															square
+															aria-label={`Move series ${i + 1} up`}
+															disabled={i === 0}
+															accessibleWhenDisabled
+															onClick={() => moveSeries(i, i - 1)}
+														/>
+													}
 												>
 													<Icon name="chevron-up" height={16} width={16} />
-												</Button>
-												<Button
-													type="button"
-													size="sm"
-													square
-													aria-label={`Move series ${i + 1} down`}
-													disabled={i === draft.series.length - 1}
-													accessibleWhenDisabled
-													onClick={() => moveSeries(i, i + 1)}
+												</Tooltip>
+												<Tooltip
+													content="Move down"
+													render={
+														<Button
+															type="button"
+															size="sm"
+															square
+															aria-label={`Move series ${i + 1} down`}
+															disabled={i === draft.series.length - 1}
+															accessibleWhenDisabled
+															onClick={() => moveSeries(i, i + 1)}
+														/>
+													}
 												>
 													<Icon name="chevron-down" height={16} width={16} />
-												</Button>
+												</Tooltip>
 											</div>
 										) : null}
 									</div>
@@ -670,22 +681,27 @@ export function ChartStyleEditor({
 												})
 											}
 										/>
-										<Button
-											type="button"
-											size="sm"
-											square
-											variant="destructive"
-											onClick={() =>
-												update((d) => {
-													const hs = [...(d.hallmarks ?? [])]
-													hs.splice(i, 1)
-													d.hallmarks = hs
-												}, 'immediate')
+										<Tooltip
+											content="Remove annotation"
+											render={
+												<Button
+													type="button"
+													size="sm"
+													square
+													variant="destructive"
+													onClick={() =>
+														update((d) => {
+															const hs = [...(d.hallmarks ?? [])]
+															hs.splice(i, 1)
+															d.hallmarks = hs
+														}, 'immediate')
+													}
+													aria-label="Remove annotation"
+												/>
 											}
-											aria-label="Remove annotation"
 										>
 											<Icon name="x" height={16} width={16} />
-										</Button>
+										</Tooltip>
 									</div>
 								))}
 							</div>

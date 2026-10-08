@@ -1,3 +1,4 @@
+import { Hovercard } from '~/ui/Hovercard'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface MakerTakerFee {
@@ -16,6 +17,49 @@ export const FEE_TONE_CLASS: Record<FeeTone, string> = {
 	low: 'border-data-up bg-data-up/10 text-data-up',
 	medium: 'border-warning bg-warning/10 text-warning',
 	high: 'border-data-down bg-surface text-data-down'
+}
+
+/** Compliance statuses (EU availability, MiCA license) share the badge with fees. */
+export type ValueTone = FeeTone | 'positive' | 'caution' | 'negative'
+
+const VALUE_TONE_CLASS: Record<ValueTone, string> = {
+	...FEE_TONE_CLASS,
+	positive: 'border-data-up bg-data-up/10 text-data-up',
+	caution: 'border-warning bg-warning/10 text-warning',
+	negative: 'border-data-down bg-data-down/10 text-data-down'
+}
+
+/** The badge box every Exchanges value cell shares, so a row of fees, statuses and requirement chips lines up. */
+export function valueBadgeClass(tone: ValueTone | 'info' | null) {
+	return `inline-flex items-center gap-1 rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone === 'info' ? 'border-subtle text-link' : tone ? VALUE_TONE_CLASS[tone] : 'border-subtle text-primary'}`
+}
+
+/** A value cell whose breakdown opens in a Hovercard: a fee or status badge takes its tone, any other value (routes,
+ *  authored fiat fees, a fee with no tone) the neutral link look. Every Exchanges table cell with details uses it. */
+export function ValueBadge({
+	tone,
+	ariaLabel,
+	contentClassName,
+	content,
+	children
+}: {
+	/** A fee's or status's tone; `info` for route counts, which carry no fee; null when the fee is unknown. */
+	tone: ValueTone | 'info' | null
+	ariaLabel: string
+	contentClassName: string
+	content: React.ReactNode
+	children: React.ReactNode
+}) {
+	return (
+		<Hovercard
+			placement="left-start"
+			render={<button type="button" aria-label={ariaLabel} className={`hover-wash ${valueBadgeClass(tone)}`} />}
+			contentClassName={contentClassName}
+			content={content}
+		>
+			{children}
+		</Hovercard>
+	)
 }
 
 const FEE_TONE_LABEL: Record<FeeTone, string> = {
@@ -47,7 +91,7 @@ export function FeeValue({ fee, kind }: { fee: MakerTakerFee | null | undefined;
 	const tone = feeTone(fee, kind === 'spot' ? SPOT_FEE_TIER_LIMITS : PERP_FEE_TIER_LIMITS)
 	return (
 		<span
-			className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
+			className={valueBadgeClass(tone)}
 			aria-label={tone ? `${label}. ${FEE_TONE_LABEL[tone]}; lower fees are better.` : label}
 		>
 			{label}

@@ -5,6 +5,7 @@ import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { DASHBOARD_DESCRIPTION_MAX_LENGTH } from '../dashboardTypes'
 
 /* The fields every dashboard form shares (create, comparison, generate, settings), so each fact reads
@@ -144,24 +145,29 @@ export function TagsField({
 							className="flex max-w-full items-center gap-0.5 rounded-md border border-medium pl-2 body-sm text-secondary"
 						>
 							<span className="min-w-0 wrap-anywhere">{tag}</span>
-							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
-								square
-								disabled={disabled}
-								aria-label={`Remove tag ${tag}`}
-								onClick={(event) => {
-									// The removed tag takes its button with it: the next tag's takes focus, else the field.
-									const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
-									keepFocus(
-										() => onChange(tags.filter((t) => t !== tag)),
-										() => next ?? inputRef.current
-									)
-								}}
+							<Tooltip
+								content="Remove tag"
+								render={
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										square
+										disabled={disabled}
+										aria-label={`Remove tag ${tag}`}
+										onClick={(event) => {
+											// The removed tag takes its button with it: the next tag's takes focus, else the field.
+											const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+											keepFocus(
+												() => onChange(tags.filter((t) => t !== tag)),
+												() => next ?? inputRef.current
+											)
+										}}
+									/>
+								}
 							>
-								<Icon name="x" height={12} width={12} />
-							</Button>
+								<Icon name="x" height={16} width={16} />
+							</Tooltip>
 						</li>
 					))}
 				</ul>

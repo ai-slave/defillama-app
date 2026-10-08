@@ -445,18 +445,17 @@ function CreateAlertModalForm({
 							/>
 							<div className="flex flex-wrap gap-1.5">
 								{ALERT_PROMPT_SUGGESTIONS.map((suggestion) => (
-									<button
+									<Button
 										key={suggestion.label}
-										type="button"
+										variant="secondary"
+										size="sm"
 										onClick={() => {
 											setPrompt(suggestion.prompt)
 											trackUmamiEvent('llamaai-alert-suggestion', { label: suggestion.label })
 										}}
-										data-active={prompt === suggestion.prompt}
-										className="touch-target rounded-full border border-medium px-2.5 py-1 text-xs text-tertiary not-disabled:not-aria-disabled:hover:border-strong not-disabled:not-aria-disabled:hover:text-primary data-[active=true]:border-link/40 data-[active=true]:bg-link/6 data-[active=true]:text-link"
 									>
 										{suggestion.label}
-									</button>
+									</Button>
 								))}
 							</div>
 						</div>

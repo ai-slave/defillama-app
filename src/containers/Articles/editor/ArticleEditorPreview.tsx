@@ -1,3 +1,5 @@
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { Button } from '~/ui/Button'
 import { formatNumber } from '~/utils/numberFormat'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 import type { LocalArticleDocument } from '../types'
@@ -43,7 +45,7 @@ export function ArticleEditorPreview({
 						</div>
 						<div className="min-w-0 flex-1">
 							<div className="font-jetbrains text-[10px] tracking-[0.24em] text-tertiary uppercase">Rendered proof</div>
-							<div className="text-sm leading-snug font-medium break-words text-primary" title={article.title}>
+							<div className="text-sm leading-snug font-medium break-words text-primary">
 								{article.title || 'Untitled research'}
 							</div>
 						</div>
@@ -63,25 +65,15 @@ export function ArticleEditorPreview({
 						</div>
 
 						{canOpenLive ? (
-							<a
-								href={articleViewHref}
-								target="_blank"
-								rel="noreferrer"
-								className="hidden h-9 items-center gap-1.5 rounded-md border border-medium bg-surface px-3 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary sm:flex"
-							>
-								<Icon name="external" className="size-3.5" />
-								<span>Live</span>
-							</a>
+							<ExternalLinkButton href={articleViewHref} className="max-sm:hidden">
+								Live
+							</ExternalLinkButton>
 						) : null}
 
-						<button
-							type="button"
-							onClick={onEdit}
-							className="flex h-9 items-center gap-1.5 rounded-md bg-link px-3.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90"
-						>
+						<Button variant="primary" size="md" onClick={onEdit}>
 							<Icon name="pencil" className="size-3.5" />
 							<span>Edit</span>
-						</button>
+						</Button>
 					</div>
 				</div>
 			</div>

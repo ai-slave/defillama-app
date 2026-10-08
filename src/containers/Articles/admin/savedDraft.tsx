@@ -1,4 +1,7 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
+import { InlineStatus } from '~/ui/Status'
 
 type Fields = Record<string, unknown>
 
@@ -135,18 +138,22 @@ export function useSavedDraft<S, F extends Fields>(
 
 export function SavedChangedNotice({ noun, onLoadSaved }: { noun: string; onLoadSaved: () => void }) {
 	return (
-		<div
-			role="status"
-			className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-secondary"
-		>
-			<span>This {noun} was changed elsewhere while you were editing. Your unsaved edits are kept.</span>
-			<button
-				type="button"
-				onClick={onLoadSaved}
-				className="rounded-md border border-medium px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:border-link/40"
-			>
-				Load saved version
-			</button>
-		</div>
+		<InlineStatus variant="warning">
+			<span className="flex flex-wrap items-center justify-between gap-2">
+				<span>This {noun} was changed elsewhere while you were editing. Your unsaved edits are kept.</span>
+				<Button
+					variant="secondary"
+					size="sm"
+					onClick={(event) => {
+						// Loading the saved version removes this notice: the form's first field takes focus, to review what loaded.
+						const host =
+							event.currentTarget.closest('form') ?? event.currentTarget.closest('[role="status"]')!.parentElement!
+						keepFocus(onLoadSaved, () => host.querySelector<HTMLElement>('input, textarea, select'))
+					}}
+				>
+					Load saved version
+				</Button>
+			</span>
+		</InlineStatus>
 	)
 }

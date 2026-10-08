@@ -1,6 +1,9 @@
 import clsx from 'clsx'
 import * as React from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import type { UmamiEventAttributes } from '~/utils/analytics/umami'
 import {
 	createAnnouncementDismissalToken,
@@ -19,7 +22,6 @@ type DismissibleAnnouncementProps = {
 	notCancellable?: false
 	className?: string
 	contentClassName?: string
-	dismissButtonClassName?: string
 	dismissLabel?: string
 	/** Sends this event when the reader closes the banner. */
 	dismissTracking?: UmamiEventAttributes
@@ -30,25 +32,22 @@ type PermanentAnnouncementProps = {
 	notCancellable: true
 	className?: string
 	contentClassName?: string
-	dismissButtonClassName?: string
 	dismissLabel?: string
 	announcementId?: never
 	version?: never
 	dismissTracking?: never
 }
 
+const DISMISS_TOKENS = {
+	'--text-secondary': 'currentColor',
+	'--text-primary': 'currentColor',
+	'--hover-row': 'color-mix(in srgb, currentColor 12%, transparent)'
+} as React.CSSProperties
+
 type AnnouncementProps = DismissibleAnnouncementProps | PermanentAnnouncementProps
 
 export function Announcement(props: AnnouncementProps) {
-	const {
-		children,
-		notCancellable,
-		className,
-		contentClassName,
-		dismissButtonClassName,
-		dismissLabel = 'Close',
-		dismissTracking
-	} = props
+	const { children, notCancellable, className, contentClassName, dismissLabel = 'Close', dismissTracking } = props
 	const dismissalToken = props.notCancellable
 		? null
 		: createAnnouncementDismissalToken(props.announcementId, props.version)
@@ -76,7 +75,7 @@ export function Announcement(props: AnnouncementProps) {
 	return (
 		<div
 			className={clsx(
-				'flex min-h-[38px] items-center justify-between gap-2 rounded-md p-1.5 text-sm',
+				'flex min-h-9 items-center justify-between gap-2 rounded-md p-1.5 body-md',
 				className ?? 'border border-(--announcement-bg) bg-(--announcement-bg)',
 				dismissalToken ? `announcement-token--${dismissalToken}` : ''
 			)}
@@ -84,18 +83,26 @@ export function Announcement(props: AnnouncementProps) {
 		>
 			<div className={clsx('flex-1 text-center', contentClassName)}>{children}</div>
 			{!notCancellable ? (
-				<button
-					type="button"
-					{...dismissTracking}
-					className={clsx(
-						'flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1',
-						dismissButtonClassName
-					)}
-					onClick={closeAnnouncement}
-				>
-					<Icon name="x" height={16} width={16} />
-					<span className="sr-only">{dismissLabel}</span>
-				</button>
+				// Each banner paints its own text color on its own background, often light on dark, so the close
+				// button takes the banner's text color and a wash of it instead of the page's text tiers.
+				<span className="contents" style={DISMISS_TOKENS}>
+					<Tooltip
+						content={dismissLabel}
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								aria-label={dismissLabel}
+								{...dismissTracking}
+								// The banner leaves with its close button, so the page content takes focus.
+								onClick={() => keepFocus(closeAnnouncement, pageContent)}
+							/>
+						}
+					>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
+				</span>
 			) : null}
 		</div>
 	)

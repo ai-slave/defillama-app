@@ -4,6 +4,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ViewTabs } from '~/components/ViewTabs'
+import { Checkbox } from '../Checkbox'
 import { SegmentedControl } from '../SegmentedControl'
 import { Tabs, TabPanel } from '../Tabs'
 
@@ -253,4 +254,27 @@ describe('controlled selection primitives', () => {
 		expect(controls()[3].getAttribute('aria-selected')).toBe('true')
 		expect(onChange.mock.calls).toEqual([['chart']])
 	})
+})
+
+test('a checkbox toggles on click, never on Enter', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	function Toggle() {
+		const [checked, setChecked] = useState(false)
+		return (
+			<Checkbox variant="inline-sm" checked={checked} onChange={(event) => setChecked(event.target.checked)}>
+				Show legend
+			</Checkbox>
+		)
+	}
+	await act(async () => root.render(<Toggle />))
+	const box = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!
+	await act(async () => box.focus())
+	await press(box, 'Enter')
+	expect(box.checked).toBe(false)
+	await act(async () => box.click())
+	expect(box.checked).toBe(true)
+	await act(async () => root.unmount())
+	container.remove()
 })

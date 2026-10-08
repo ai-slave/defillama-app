@@ -176,14 +176,14 @@ test('a chart preset lists the saved protocols and columns it lost, except in ca
 test('switching or removing the active preview and toggling sum reset table controls but retain dates', async () => {
 	await renderChart()
 	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
-	await click(button('Preview Beta'))
+	await click(button('Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
 	expect(await sharedLink()).toMatchObject({
 		sort: { column: 'date', dir: 'desc' },
 		dateRange: { kind: 'custom', from: '2026-01-01', to: '2026-12-31' }
 	})
 	await click(column('other'))
-	await click(button('Preview Beta'))
+	await click(button('Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value'])
 	await click(button('Remove Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
@@ -255,7 +255,7 @@ test('dataset default sort initializes without a preset and remains user-editabl
 	await settle()
 	await waitForUi(() => expect(selectedColumns()).toEqual(['date', 'value', 'other']))
 	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'desc' } })
-	await click(button('value'))
+	await click(button('value, sorted descending'))
 	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await refreshCsv(`${csv}\n2026-09-03,50,2`)
 	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })

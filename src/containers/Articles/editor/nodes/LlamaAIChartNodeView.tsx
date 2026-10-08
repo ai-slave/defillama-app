@@ -44,7 +44,7 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary outline-hidden placeholder:text-tertiary/70 hover:border-medium focus:border-link/60 focus:text-primary"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
 		/>
 	)
 }

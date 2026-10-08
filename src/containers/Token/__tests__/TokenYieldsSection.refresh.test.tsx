@@ -95,7 +95,10 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 				kind === 'sort'
 					? [...container.querySelectorAll<HTMLButtonElement>('thead button')].find((b) => b.textContent === 'APY')
 					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')
-			await act(async () => control!.click())
+			await act(async () => {
+				control!.focus()
+				control!.click()
+			})
 		},
 		awaitRequests: (count: number) => waitForUi(() => expect(earnRequests()).toHaveLength(count)),
 		/** Replaces the in-flight response, as a retry does. */
@@ -105,6 +108,9 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		resolve: (rows: Array<IYieldTableRow>) => act(async () => pending.response.resolve(Response.json({ rows }))),
 		reject: (message: string) => act(async () => pending.response.reject(new Error(message))),
 		shownPools,
+		/** The Yields section, which takes focus when the full table replaces the deferred pager. */
+		focusedSection: () =>
+			document.activeElement === document.body ? null : document.activeElement?.querySelector('h2')?.textContent,
 		state: () => ({
 			pools: shownPools(),
 			noPools: container.textContent?.includes('No yield pools found.') ?? false,
@@ -114,7 +120,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 	}
 }
 
-test('a page change keeps the token pool matching rules and opens the requested page', async () => {
+test('a page change keeps the token pool matching rules, opens the requested page and keeps focus in the section', async () => {
 	const refresh = await mountRefresh({ filter: false })
 	try {
 		await refresh.trigger('next-page')
@@ -132,12 +138,13 @@ test('a page change keeps the token pool matching rules and opens the requested 
 				expect(refresh.state()).toEqual({ pools: ['held'], noPools: false, retry: false })
 			})
 		})
+		expect(refresh.focusedSection()).toBe('Yields')
 	} finally {
 		await refresh.unmount()
 	}
 })
 
-test('shows the empty state when a full-data refresh returns no pools', async () => {
+test('shows the empty state when a full-data refresh returns no pools, with focus kept in the section', async () => {
 	const refresh = await mountRefresh({ filter: false })
 	try {
 		await refresh.trigger('next-page')
@@ -149,6 +156,7 @@ test('shows the empty state when a full-data refresh returns no pools', async ()
 				expect(refresh.state()).toEqual({ pools: [], noPools: true, retry: false })
 			})
 		})
+		expect(refresh.focusedSection()).toBe('Yields')
 	} finally {
 		await refresh.unmount()
 	}

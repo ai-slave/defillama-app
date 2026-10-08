@@ -134,7 +134,7 @@ export const categoryColumn = columnHelper.accessor(
 							})}
 						</span>
 					}
-					className="inline-block max-w-full justify-end truncate"
+					render={<span className="inline-block max-w-full truncate" />}
 				>
 					{labels.join(', ')}
 				</Tooltip>

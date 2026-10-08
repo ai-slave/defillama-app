@@ -174,7 +174,7 @@ test('chat loading, failure and retry never present a false empty state', async 
 
 	let finishRetry = () => {}
 	sessionsReply = () => new Promise((resolve) => (finishRetry = () => resolve({ sessions: [] })))
-	const retry = button('Retry chats')
+	const retry = button('Try again')
 	await act(async () => retry.click())
 	await until(() => expect(accessibleName(retry)).toBe('Retrying…'))
 	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats.")
@@ -184,18 +184,20 @@ test('chat loading, failure and retry never present a false empty state', async 
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 })
 
-test('blank and streaming submissions are disabled; rejected submissions keep the draft', async () => {
+test('blank and streaming submissions are disabled but keep focus; rejected submissions keep the draft', async () => {
 	await renderLoaded()
 	const submit = container.querySelector<HTMLButtonElement>('[aria-label="Send message"]')!
-	expect(submit.disabled).toBe(true)
+	expect(submit.disabled).toBe(false)
+	expect(submit.getAttribute('aria-disabled')).toBe('true')
 	await act(async () => type(composer(), 'Question'))
 	await render(true)
-	expect(submit.disabled).toBe(true)
+	expect(submit.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => submit.click())
 	await act(async () => composer().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
 	expect(onSubmit).not.toHaveBeenCalled()
 	onSubmit.mockReturnValue(false)
 	await render()
-	expect(submit.disabled).toBe(false)
+	expect(submit.getAttribute('aria-disabled')).toBeNull()
 	await act(async () => submit.click())
 	expect(onSubmit).toHaveBeenLastCalledWith('Question', undefined, undefined)
 	expect(composer().value).toBe('Question')
@@ -214,6 +216,7 @@ test('a second Enter while a send is on its way sends it once and keeps the text
 	await act(async () => enter())
 	expect(onSubmit).toHaveBeenCalledTimes(1)
 	expect(composer().readOnly).toBe(true)
+	expect(container.querySelector('[aria-label="Send message"]')!.getAttribute('aria-busy')).toBe('true')
 	await act(async () => accepted.resolve(true))
 	expect(composer().value).toBe('')
 	expect(composer().readOnly).toBe(false)

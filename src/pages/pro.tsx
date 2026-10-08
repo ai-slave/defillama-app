@@ -44,8 +44,10 @@ import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import { ProButton, ProDialogFallback, ProMeta, proPanelStyles, proTabStyles } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({
@@ -469,68 +471,93 @@ function ProContent({
 
 						{!myDashboardsControlsActive && myDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
-								<ProButton
-									type="button"
-									square
-									variant="ghost"
-									aria-label="First page"
-									onClick={() => goToPage(1)}
-									disabled={selectedPage < 3}
-									accessibleWhenDisabled
+								<Tooltip
+									content="First page"
+									render={
+										<Button
+											type="button"
+											size="md"
+											square
+											variant="ghost"
+											aria-label="First page"
+											onClick={() => goToPage(1)}
+											disabled={selectedPage < 3}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevrons-left" height={16} width={16} />
-								</ProButton>
+								</Tooltip>
 
-								<ProButton
-									type="button"
-									square
-									variant="ghost"
-									aria-label="Previous page"
-									onClick={() => goToPage(Math.max(1, selectedPage - 1))}
-									disabled={selectedPage === 1}
-									accessibleWhenDisabled
+								<Tooltip
+									content="Previous page"
+									render={
+										<Button
+											type="button"
+											size="md"
+											square
+											variant="ghost"
+											aria-label="Previous page"
+											onClick={() => goToPage(Math.max(1, selectedPage - 1))}
+											disabled={selectedPage === 1}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevron-left" height={16} width={16} />
-								</ProButton>
+								</Tooltip>
 
 								{getDashboardPagesToShow(selectedPage, myDashboardsTotalPages).map((pageNum) => {
 									const isActive = selectedPage === pageNum
 									return (
-										<ProButton
+										<Button
 											type="button"
-											square
-											variant={isActive ? 'primary' : 'ghost'}
+											variant="ghost"
+											size="md"
+											data-active={isActive}
 											key={`my-dashboard-page-${pageNum}`}
 											onClick={() => goToPage(pageNum)}
 											{...(isActive ? { 'aria-current': 'page' as const } : {})}
 										>
 											{pageNum}
-										</ProButton>
+										</Button>
 									)
 								})}
 
-								<ProButton
-									type="button"
-									square
-									variant="ghost"
-									aria-label="Next page"
-									onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
-									disabled={selectedPage === myDashboardsTotalPages}
-									accessibleWhenDisabled
+								<Tooltip
+									content="Next page"
+									render={
+										<Button
+											type="button"
+											size="md"
+											square
+											variant="ghost"
+											aria-label="Next page"
+											onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
+											disabled={selectedPage === myDashboardsTotalPages}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevron-right" height={16} width={16} />
-								</ProButton>
-								<ProButton
-									type="button"
-									square
-									variant="ghost"
-									aria-label="Last page"
-									onClick={() => goToPage(myDashboardsTotalPages)}
-									disabled={selectedPage > myDashboardsTotalPages - 2}
-									accessibleWhenDisabled
+								</Tooltip>
+								<Tooltip
+									content="Last page"
+									render={
+										<Button
+											type="button"
+											size="md"
+											square
+											variant="ghost"
+											aria-label="Last page"
+											onClick={() => goToPage(myDashboardsTotalPages)}
+											disabled={selectedPage > myDashboardsTotalPages - 2}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevrons-right" height={16} width={16} />
-								</ProButton>
+								</Tooltip>
 							</div>
 						) : null}
 					</TabPanel>
@@ -568,16 +595,17 @@ function ProContent({
 								{getDashboardPagesToShow(selectedPage, teamDashboardsTotalPages).map((pageNum) => {
 									const isActive = selectedPage === pageNum
 									return (
-										<ProButton
+										<Button
 											type="button"
-											square
-											variant={isActive ? 'primary' : 'ghost'}
+											variant="ghost"
+											size="md"
+											data-active={isActive}
 											key={`team-dashboard-page-${pageNum}`}
 											onClick={() => goToTeamPage(pageNum)}
 											{...(isActive ? { 'aria-current': 'page' as const } : {})}
 										>
 											{pageNum}
-										</ProButton>
+										</Button>
 									)
 								})}
 							</div>

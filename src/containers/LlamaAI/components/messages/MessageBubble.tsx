@@ -90,7 +90,6 @@ function GeneratedImageBlock({
 	const [loaded, setLoaded] = useState(false)
 	const [errored, setErrored] = useState(false)
 	const aspect = parseAspectRatio(size)
-	const interactive = !errored && !!onImageClick
 
 	if (errored) {
 		return (
@@ -114,16 +113,10 @@ function GeneratedImageBlock({
 		)
 	}
 
-	return (
-		<button
-			type="button"
-			onClick={() => (interactive && url ? onImageClick?.(url) : undefined)}
-			title={prompt}
-			aria-label={prompt || 'Generated image'}
-			disabled={!interactive}
-			className={`group/genimg ${IMAGE_FRAME} block focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer not-disabled:not-aria-disabled:hover:border-strong' : 'cursor-default'}`}
-			style={aspect ? { aspectRatio: aspect } : undefined}
-		>
+	const frameClass = `group/genimg ${IMAGE_FRAME} block`
+	const style = aspect ? { aspectRatio: aspect } : undefined
+	const content = (
+		<>
 			{!loaded ? (
 				<div
 					aria-hidden="true"
@@ -139,7 +132,31 @@ function GeneratedImageBlock({
 				onError={() => setErrored(true)}
 				className={`block h-auto w-full motion-safe:transition-opacity motion-safe:duration-150 ${loaded ? 'opacity-100' : 'opacity-0'}`}
 			/>
-		</button>
+		</>
+	)
+	// Without a click handler the frame is not a control, so it is a plain box rather than a disabled button.
+	if (!onImageClick)
+		return (
+			<div className={frameClass} style={style}>
+				{content}
+			</div>
+		)
+	// The prompt shows nowhere else, so its tooltip is the only place to read it in full.
+	return (
+		<Tooltip
+			content={prompt}
+			render={
+				<button
+					type="button"
+					onClick={() => onImageClick(url)}
+					aria-label={prompt || 'Generated image'}
+					className={`${frameClass} cursor-pointer hover:border-strong`}
+					style={style}
+				/>
+			}
+		>
+			{content}
+		</Tooltip>
 	)
 }
 

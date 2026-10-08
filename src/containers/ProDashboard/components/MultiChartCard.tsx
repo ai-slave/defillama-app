@@ -6,6 +6,7 @@ import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricG
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -19,7 +20,7 @@ import {
 	limitMultiChartItems,
 	type MultiChartConfig
 } from '../types'
-import { ProMeta, ProSegmented } from '../ui'
+import { ProMeta } from '../ui'
 import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
@@ -293,7 +294,8 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				controls={
 					<>
 						{allChartsGroupable && hasAnyData ? (
-							<ProSegmented
+							<SegmentedControl
+								variant="default"
 								size="sm"
 								label="Grouping"
 								options={DASHBOARD_GROUPING_SEGMENTS}
@@ -316,7 +318,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 								}}
 								label={showCumulative ? 'Cumulative' : 'Individual'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 						{hasAnyData && !hasMultipleMetrics && canStack && !showCumulative && !showTreemap ? (
@@ -331,7 +333,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 								}}
 								label={showStacked ? 'Stacked' : 'Separate'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 						{hasAnyData && !hasMultipleMetrics && !showTreemap ? (
@@ -346,7 +348,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 								}}
 								label={showPercentage ? '% Percentage' : '$ Absolute'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 						{hasAnyData && !hasMultipleMetrics ? (
@@ -360,7 +362,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 								}}
 								label={showTreemap ? 'Tree Map' : 'Time Series'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 					</>

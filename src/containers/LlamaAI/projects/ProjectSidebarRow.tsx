@@ -11,6 +11,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Skeleton } from '~/ui/Skeleton'
+import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -109,18 +110,22 @@ export function ProjectSidebarRow({
 					<span className="min-w-0 flex-1 truncate">{project.name}</span>
 				</button>
 				<span className="flex items-center has-aria-expanded:opacity-100 lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100">
-					<Button
-						as={BasicLink}
-						href={`/ai/projects/${project.id}`}
-						onClick={onProjectClick}
-						aria-label={`New chat in ${project.name}`}
-						title={`New chat in ${project.name}`}
-						size="sm"
-						variant="ghost"
-						square
+					<Tooltip
+						content={`New chat in ${project.name}`}
+						render={
+							<Button
+								as={BasicLink}
+								href={`/ai/projects/${project.id}`}
+								onClick={onProjectClick}
+								aria-label={`New chat in ${project.name}`}
+								size="sm"
+								variant="ghost"
+								square
+							/>
+						}
 					>
 						<Icon name="square-pen" height={16} width={16} aria-hidden="true" />
-					</Button>
+					</Tooltip>
 					<Ariakit.MenuProvider>
 						<Ariakit.MenuButton
 							aria-label={`Actions for project ${project.name}`}

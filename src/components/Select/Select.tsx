@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import {
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles,
+	popoverRowStyles,
 	popoverRowWithBorderStyles,
 	popoverScrollAreaStyles,
 	popoverSingleSelectCheckStyles
@@ -16,6 +17,7 @@ import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
+import { gridRowStyles, onlyItemStyles } from './SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
 
@@ -279,48 +281,63 @@ export function Select(props: ISelect) {
 				{allValues.length > 0 ? (
 					<div className={popoverScrollAreaStyles}>
 						{showCheckboxes ? (
-							<Ariakit.ComboboxItem
-								value={SELECT_ALL_VALUE}
-								selectValueOnClick={false}
-								hideOnClick={false}
-								onClick={toggleSelectAll}
-								className={`${popoverRowWithBorderStyles} gap-2`}
-							>
-								{selectAllContent}
-							</Ariakit.ComboboxItem>
+							<Ariakit.ComboboxRow className={gridRowStyles}>
+								<Ariakit.ComboboxItem
+									value={SELECT_ALL_VALUE}
+									selectValueOnClick={false}
+									hideOnClick={false}
+									onClick={toggleSelectAll}
+									className={`${popoverRowStyles} flex-1 gap-2`}
+								>
+									{selectAllContent}
+								</Ariakit.ComboboxItem>
+							</Ariakit.ComboboxRow>
 						) : null}
-						{allValues.map((option) => (
-							<Ariakit.ComboboxItem
-								key={getOptionKey(option)}
-								value={getOptionKey(option)}
-								className={`${popoverRowWithBorderStyles} group justify-start gap-2`}
-							>
-								{typeof option === 'string' ? (
-									<span>{option}</span>
-								) : isSelectOption(option) && option.help ? (
-									<Tooltip content={option.help}>
-										<span className="mr-1">{option.name}</span>
-										<Icon name="help-circle" height={15} width={15} />
-									</Tooltip>
-								) : (
-									<span>{isSelectOption(option) ? option.name : option}</span>
-								)}
-
-								{showCheckboxes ? (
-									<button
-										type="button"
-										onClick={(e) => {
-											e.stopPropagation()
-											selectOnlyOne(getOptionKey(option))
-										}}
-										className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
+						{allValues.map((option) => {
+							const optionKey = getOptionKey(option)
+							const optionName = isSelectOption(option) ? option.name : option
+							const selectItem = (
+								<Ariakit.ComboboxItem
+									key={optionKey}
+									value={optionKey}
+									className={
+										showCheckboxes
+											? `${popoverRowStyles} min-w-0 flex-1 justify-start gap-2`
+											: `${popoverRowWithBorderStyles} justify-start gap-2`
+									}
+								>
+									{isSelectOption(option) && option.help ? (
+										<Tooltip content={option.help}>
+											<span className="mr-1">{option.name}</span>
+											<Icon name="help-circle" height={15} width={15} />
+										</Tooltip>
+									) : (
+										<span>{optionName}</span>
+									)}
+									{/* The space "Only" lies over, so a long name never runs under it. */}
+									{showCheckboxes ? <span aria-hidden className="ml-auto w-11 shrink-0 max-sm:w-14" /> : null}
+									{renderCheck(optionKey)}
+								</Ariakit.ComboboxItem>
+							)
+							if (!showCheckboxes) return selectItem
+							// "Only" is its own item in the option's row, so ArrowRight reaches it; a button inside an option would
+							// take only clicks.
+							return (
+								<Ariakit.ComboboxRow key={optionKey} className={gridRowStyles}>
+									{selectItem}
+									<Ariakit.ComboboxItem
+										value={`__only__${optionKey}`}
+										selectValueOnClick={false}
+										hideOnClick={false}
+										onClick={() => selectOnlyOne(optionKey)}
+										aria-label={`Only ${optionName}`}
+										className={onlyItemStyles}
 									>
 										Only
-									</button>
-								) : null}
-								{renderCheck(getOptionKey(option))}
-							</Ariakit.ComboboxItem>
-						))}
+									</Ariakit.ComboboxItem>
+								</Ariakit.ComboboxRow>
+							)
+						})}
 					</div>
 				) : (
 					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">

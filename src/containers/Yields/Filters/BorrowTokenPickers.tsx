@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { TokenOption } from '../data/types'
@@ -80,17 +81,23 @@ function TokenSearchField({
 					)}
 				</button>
 				{selected ? (
-					<Button
-						size="sm"
-						variant="ghost"
-						square
-						type="button"
-						onClick={() => select(undefined)}
-						className="-my-1 mr-1 -ml-1"
-						aria-label={`Clear ${label.toLowerCase()} token`}
+					<Tooltip
+						content={`Clear ${label.toLowerCase()} token`}
+						render={
+							<Button
+								size="sm"
+								variant="ghost"
+								square
+								// Clearing removes this button: the picker beside it takes focus.
+								ref={passFocusOnLeave((node) => node.previousElementSibling as HTMLElement)}
+								onClick={() => select(undefined)}
+								className="mr-1"
+								aria-label={`Clear ${label.toLowerCase()} token`}
+							/>
+						}
 					>
-						<Icon name="x" height={14} width={14} />
-					</Button>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
 				) : null}
 			</div>
 			{open ? (

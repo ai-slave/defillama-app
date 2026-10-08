@@ -89,3 +89,31 @@ test('a save with no edits during it shows the saved profile as saved', async ()
 	await waitForUi(() => expect(container.textContent).toContain('All changes saved'))
 	expect(field('Display name').value).toBe('Sam Lee')
 })
+
+test('adding and removing custom links keeps focus in the links section', async () => {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<AuthorProfileForm />
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(field('Display name').value).toBe('Sam'))
+	const press = (button: HTMLElement) =>
+		act(async () => {
+			button.focus()
+			button.click()
+		})
+	const buttonNamed = (text: string) =>
+		[...container.querySelectorAll<HTMLElement>('button')].find((button) => button.textContent?.trim() === text)!
+
+	await press(buttonNamed('+ add custom link'))
+	expect(document.activeElement).toBe(container.querySelector('input[placeholder="kind"]'))
+
+	await press(container.querySelector<HTMLElement>('button[aria-label^="Remove custom link"]')!)
+	expect(container.querySelector('input[placeholder="kind"]')).toBeNull()
+	expect(document.activeElement).toBe(buttonNamed('Add a custom link'))
+
+	await press(buttonNamed('Add a custom link'))
+	expect(document.activeElement).toBe(container.querySelector('input[placeholder="kind"]'))
+})

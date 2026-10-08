@@ -1,5 +1,9 @@
 import * as React from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { QuestionHelper } from '~/ui/QuestionHelper'
+import { Tooltip } from '~/ui/Tooltip'
 import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, YIELDS_IDENTITY_COLUMN_ID, type YieldColumnId } from './columns'
 
 const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: string }> = {
@@ -24,8 +28,8 @@ const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: s
 const columnGroups: Array<{ title: string; columns: Array<YieldColumnId> }> = [
 	{ title: 'Pool', columns: ['pool', 'project', 'chains', 'tvl'] },
 	{ title: 'Supply APY', columns: ['apy', 'apyBase', 'apyReward', 'apyMean30d', 'stabilityRating'] },
-	{ title: 'Pool Facts', columns: ['volumeUsd1d', 'ilRisk'] },
-	{ title: 'Borrow Market', columns: ['apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv'] }
+	{ title: 'Pool facts', columns: ['volumeUsd1d', 'ilRisk'] },
+	{ title: 'Borrow market', columns: ['apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv'] }
 ]
 
 interface YieldsColumnManagementPanelProps {
@@ -38,13 +42,20 @@ interface YieldsColumnManagementPanelProps {
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
 	moveColumnUp: (columnKey: string) => void
 	moveColumnDown: (columnKey: string) => void
+	/** Close hands focus back to the header's Customize table toggle. */
+	toggleRef: React.RefObject<HTMLButtonElement | null>
 }
 
 type ColumnButtonProps = {
 	columnKey: YieldColumnId
 	currentColumns: Record<string, boolean>
 	columnOrder: Array<string>
-	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
+	toggleFromRow: (
+		event: React.MouseEvent<HTMLButtonElement>,
+		row: Element,
+		columnKey: string,
+		isVisible: boolean
+	) => void
 } & (
 	| {
 			kind: 'active'
@@ -55,64 +66,92 @@ type ColumnButtonProps = {
 )
 
 function ColumnButton(props: ColumnButtonProps) {
-	const { columnKey, currentColumns, columnOrder, toggleColumnVisibility } = props
+	const { columnKey, currentColumns, columnOrder, toggleFromRow } = props
 	const metadata = yieldsColumnMetadata[columnKey]
 	const isActive = currentColumns[columnKey]
 	const visibleColumns = columnOrder.filter((key) => currentColumns[key])
 	const index = visibleColumns.indexOf(columnKey)
 
 	return isActive ? (
-		<div
-			className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2"
-			title={metadata.description}
-		>
+		<div className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2">
 			<div className="flex items-center gap-2">
-				<Icon name="check" className="size-3 text-success" />
-				<span className="text-xs text-primary">{metadata.name}</span>
+				<Icon name="check" className="size-3.5 text-success" />
+				<span className="body-sm text-primary">{metadata.name}</span>
+				<QuestionHelper text={metadata.description} />
 			</div>
 			<div className="flex items-center gap-1">
-				{props.kind === 'active' && index > 0 ? (
-					<button
-						type="button"
-						onClick={() => props.moveColumnUp(columnKey)}
-						className="p-1 text-tertiary hover:text-primary"
-						title="Move up"
-					>
-						<Icon name="chevron-up" className="size-2.5" />
-					</button>
+				{props.kind === 'active' ? (
+					<>
+						<Tooltip
+							content="Move up"
+							render={
+								<Button
+									variant="ghost"
+									size="sm"
+									square
+									disabled={index <= 0}
+									accessibleWhenDisabled
+									onClick={() => props.moveColumnUp(columnKey)}
+									aria-label={`Move ${metadata.name} up`}
+								/>
+							}
+						>
+							<Icon name="chevron-up" className="size-4" />
+						</Tooltip>
+						<Tooltip
+							content="Move down"
+							render={
+								<Button
+									variant="ghost"
+									size="sm"
+									square
+									disabled={index < 0 || index >= visibleColumns.length - 1}
+									accessibleWhenDisabled
+									onClick={() => props.moveColumnDown(columnKey)}
+									aria-label={`Move ${metadata.name} down`}
+								/>
+							}
+						>
+							<Icon name="chevron-down" className="size-4" />
+						</Tooltip>
+					</>
 				) : null}
-				{props.kind === 'active' && index >= 0 && index < visibleColumns.length - 1 ? (
-					<button
-						type="button"
-						onClick={() => props.moveColumnDown(columnKey)}
-						className="p-1 text-tertiary hover:text-primary"
-						title="Move down"
+				{columnKey === YIELDS_IDENTITY_COLUMN_ID ? (
+					<span aria-hidden className="size-6 shrink-0" />
+				) : (
+					<Tooltip
+						content="Remove column"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								onClick={(event) =>
+									toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnKey, false)
+								}
+								aria-label={`Remove ${metadata.name}`}
+							/>
+						}
 					>
-						<Icon name="chevron-down" className="size-2.5" />
-					</button>
-				) : null}
-				{columnKey === YIELDS_IDENTITY_COLUMN_ID ? null : (
-					<button
-						type="button"
-						onClick={() => toggleColumnVisibility(columnKey, false)}
-						className="p-1 text-tertiary hover:text-primary"
-						title="Remove column"
-					>
-						<Icon name="x" className="size-3" />
-					</button>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
 				)}
 			</div>
 		</div>
 	) : (
-		<button
-			type="button"
-			onClick={() => toggleColumnVisibility(columnKey, true)}
-			className="hover:bg-surface-secondary flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
-			title={metadata.description}
+		<Tooltip
+			content={metadata.description}
+			render={
+				<button
+					type="button"
+					onClick={(event) => toggleFromRow(event, event.currentTarget, columnKey, true)}
+					className="hover:bg-surface-secondary flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
+				/>
+			}
 		>
-			<Icon name="plus" className="size-2.5 text-tertiary" />
-			<span className="text-xs text-primary">{metadata.name}</span>
-		</button>
+			<Icon name="plus" className="size-3.5" />
+			<span className="body-sm text-primary">{metadata.name}</span>
+		</Tooltip>
 	)
 }
 
@@ -125,7 +164,8 @@ export function YieldsColumnManagementPanel({
 	columnOrder,
 	toggleColumnVisibility,
 	moveColumnUp,
-	moveColumnDown
+	moveColumnDown,
+	toggleRef
 }: YieldsColumnManagementPanelProps) {
 	const filteredColumns = React.useMemo(() => {
 		const lowerSearch = searchTerm.toLowerCase()
@@ -139,30 +179,57 @@ export function YieldsColumnManagementPanel({
 		})
 	}, [searchTerm])
 	const filteredColumnSet = new Set(filteredColumns)
+	const searchRef = React.useRef<HTMLInputElement>(null)
 
 	if (!showColumnPanel) return null
+
+	// Hiding or adding a column moves its row to the other list; focus stays in the list the reader is working in.
+	const toggleFromRow = (
+		event: React.MouseEvent<HTMLButtonElement>,
+		row: Element,
+		columnKey: string,
+		isVisible: boolean
+	) => {
+		const next = neighbourRowControl(row, event.currentTarget)
+		keepFocus(
+			() => toggleColumnVisibility(columnKey, isVisible),
+			() => next ?? searchRef.current
+		)
+	}
 
 	const visibleCount = YIELDS_COLUMN_IDS.filter((key) => currentColumns[key]).length
 
 	return (
 		<div className="relative mb-4 rounded-md border border-subtle bg-surface p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h4 className="text-sm font-medium text-primary">Customize columns</h4>
-				<button
-					type="button"
-					onClick={() => setShowColumnPanel(false)}
-					className="p-1 text-tertiary hover:text-primary"
-					aria-label="Close column customization"
-					title="Close"
+				<h4 className="label-md text-primary">Customize columns</h4>
+				<Tooltip
+					content="Close"
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={() =>
+								keepFocus(
+									() => setShowColumnPanel(false),
+									() => toggleRef.current
+								)
+							}
+							aria-label="Close column customization"
+						/>
+					}
 				>
 					<Icon name="x" className="size-4" />
-				</button>
+				</Tooltip>
 			</div>
 			<div className="relative mb-3">
 				<Icon name="search" className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-tertiary" />
 				<input
+					ref={searchRef}
 					type="text"
-					placeholder="Search columns..."
+					aria-label="Search columns"
+					placeholder="Search columns…"
 					value={searchTerm}
 					onChange={(event) => setSearchTerm(event.currentTarget.value)}
 					className="bg-surface-secondary w-full rounded-md border border-subtle py-2 pr-3 pl-9 text-sm text-primary"
@@ -170,7 +237,7 @@ export function YieldsColumnManagementPanel({
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<div>
-					<p className="mb-2 text-xs font-medium text-secondary">Active columns ({visibleCount})</p>
+					<p className="mb-2 label-sm text-secondary">Active columns ({visibleCount})</p>
 					<div className="max-h-64 space-y-1 overflow-y-auto">
 						{columnOrder
 							.filter((key): key is YieldColumnId => YIELDS_COLUMN_ID_SET.has(key) && Boolean(currentColumns[key]))
@@ -183,13 +250,13 @@ export function YieldsColumnManagementPanel({
 									columnOrder={columnOrder}
 									moveColumnUp={moveColumnUp}
 									moveColumnDown={moveColumnDown}
-									toggleColumnVisibility={toggleColumnVisibility}
+									toggleFromRow={toggleFromRow}
 								/>
 							))}
 					</div>
 				</div>
 				<div>
-					<p className="mb-2 text-xs font-medium text-secondary">Available columns</p>
+					<p className="mb-2 label-sm text-secondary">Available columns</p>
 					<div className="max-h-64 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => {
 							const columns = group.columns.filter((key) => filteredColumnSet.has(key))
@@ -205,7 +272,7 @@ export function YieldsColumnManagementPanel({
 												columnKey={columnKey}
 												currentColumns={currentColumns}
 												columnOrder={columnOrder}
-												toggleColumnVisibility={toggleColumnVisibility}
+												toggleFromRow={toggleFromRow}
 											/>
 										))}
 									</div>

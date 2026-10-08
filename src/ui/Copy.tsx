@@ -32,21 +32,28 @@ export function useCopy() {
 
 export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 	const { copied, copy } = useCopy()
+	// The icon swap is silent, so a polite status says the copy landed. It sits beside the button because the
+	// button's aria-label replaces anything inside it.
 	return (
-		<button
-			type="button"
-			className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary"
-			onClick={() => {
-				void copy(toCopy)
-			}}
-			aria-label="Copy"
-			{...props}
-		>
-			{copied ? (
-				<Icon name="check-circle" height={size} width={size} />
-			) : (
-				<Icon name="copy" height={size} width={size} />
-			)}
-		</button>
+		<>
+			<button
+				type="button"
+				className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary"
+				onClick={() => {
+					void copy(toCopy)
+				}}
+				aria-label="Copy"
+				{...props}
+			>
+				{copied ? (
+					<Icon name="check-circle" height={size} width={size} />
+				) : (
+					<Icon name="copy" height={size} width={size} />
+				)}
+			</button>
+			<span role="status" className="sr-only">
+				{copied ? 'Copied' : ''}
+			</span>
+		</>
 	)
 }

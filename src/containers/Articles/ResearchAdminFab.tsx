@@ -1,8 +1,9 @@
 import { useIsFetching } from '@tanstack/react-query'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { Button } from '~/ui/Button'
 import { isResearcher } from './ArticlesAccessGate'
 
 export function ResearchAdminFab() {
@@ -12,18 +13,16 @@ export function ResearchAdminFab() {
 
 	if (loaders.userLoading || !isAuthenticated || !isResearcher(user)) return null
 	if (router.pathname.startsWith('/research/admin')) return null
+	// The editor header already holds Publish and the admin actions, and the fab would cover them.
+	if (router.pathname.startsWith('/research/edit/') || router.pathname === '/research/new') return null
 	if (landingLoading) return null
 
 	return (
-		<div className="pointer-events-none fixed top-[74px] right-3 z-30 lg:top-3 lg:right-4">
-			<Link
-				href="/research/admin"
-				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-surface px-3 py-2 text-sm font-medium text-primary shadow-lg transition-colors hover:border-link/40 hover:text-link"
-				aria-label="Open research admin"
-			>
-				<ResearchIcon name="research-admin" className="size-4" aria-hidden />
+		<div className="fixed top-[74px] right-3 z-30 rounded-lg bg-surface shadow-lg lg:top-3 lg:right-4">
+			<Button as={BasicLink} href="/research/admin" variant="secondary" size="md" aria-label="Open research admin">
+				<ResearchIcon name="research-admin" className="size-3.5" aria-hidden />
 				Admin
-			</Link>
+			</Button>
 		</div>
 	)
 }

@@ -114,7 +114,7 @@ test('a read-only card shows a column the viewer adds over its saved columns', a
 	await act(async () => preset('Market Share').click())
 	const [columnOrder, columnVisibility] = onColumnsChange.mock.calls[0]!
 	await render({ columnOrder, columnVisibility })
-	await click('Customize Table')
+	await click('Customize table')
 	await click('Market Cap')
 
 	expect(headers()).toEqual([
@@ -128,12 +128,12 @@ test('a read-only card shows a column the viewer adds over its saved columns', a
 	])
 })
 
-test('Hide All leaves only the chain name and Show All then draws every column', async () => {
+test('Hide all leaves only the chain name and Show all then draws every column', async () => {
 	await render({})
-	await click('Customize Table')
-	await click('Hide All')
+	await click('Customize table')
+	await click('Hide all')
 	const hidden = headers()
-	await click('Show All')
+	await click('Show all')
 
 	expect(hidden).toEqual(['Chain'])
 	expect(headers()).toHaveLength(23)
@@ -141,7 +141,7 @@ test('Hide All leaves only the chain name and Show All then draws every column',
 
 test('removing a saved column that has no visibility entry hides it', async () => {
 	await render({ columnOrder: ['name', 'tvl'], columnVisibility: { name: true } })
-	await click('Customize Table')
+	await click('Customize table')
 	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Hide DeFi TVL"]')!.click())
 
 	expect(headers()).not.toContain('DeFi TVL')
@@ -161,18 +161,18 @@ test('moving a column swaps it with the next shown column, skipping hidden ones'
 		columnOrder: ['name', 'tvl', 'protocols', 'users'],
 		columnVisibility: { name: true, tvl: true, protocols: false, users: true }
 	})
-	await click('Customize Table')
+	await click('Customize table')
 	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Move DeFi TVL down"]')!.click())
 
 	expect(headers().slice(0, 3)).toEqual(['Chain', 'Active Addresses', 'DeFi TVL'])
 })
 
-test('Done hands focus back to Customize Table, which says whether the panel is open', async () => {
+test('Done hands focus back to Customize table, which says whether the panel is open', async () => {
 	await render({})
 	const customize = Array.from(container.querySelectorAll('button')).find((button) =>
-		button.textContent?.includes('Customize Table')
+		button.textContent?.includes('Customize table')
 	)!
-	await click('Customize Table')
+	await click('Customize table')
 	expect(customize.getAttribute('aria-expanded')).toBe('true')
 	const done = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Done')!
 	await act(async () => {

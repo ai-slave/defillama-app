@@ -74,7 +74,7 @@ test('an editable card header carries the grip, the pencil and the overflow menu
 
 	expect(container.textContent).toContain('Grouping')
 	expect(container.textContent).toContain('Series')
-	const pencil = buttons().find((node) => node.textContent?.trim() === 'Edit card')!
+	const pencil = buttons().find((node) => node.getAttribute('aria-label') === 'Edit card')!
 	await act(async () => pencil.click())
 	expect(onEdit).toHaveBeenCalledOnce()
 })

@@ -173,8 +173,11 @@ test('opening a saved custom column for editing without changing it leaves witho
 	})
 	await click(section('Columns ('))
 	await click(document.querySelector<HTMLButtonElement>('[aria-label="Edit Fee yield"]')!)
-	expect(document.querySelector<HTMLInputElement>('[aria-label="Custom column name"]')!.value).toBe('Fee yield')
+	const name = document.querySelector<HTMLInputElement>('input[placeholder="e.g., TVL to market cap"]')!
+	expect(name.value).toBe('Fee yield')
 
+	// From the form, not the Edit button: a focused icon button shows its tooltip, and Escape dismisses that first.
+	await act(async () => name.focus())
 	await pressEscape()
 	expect(onClose).toHaveBeenCalledTimes(1)
 	expect(discardQuestion()).toBeNull()
@@ -184,7 +187,7 @@ test('a half-typed custom column asks before Escape drops it and survives a visi
 	const onClose = await show(savedTable)
 	await click(section('Columns ('))
 	await click(button('Custom column'))
-	const name = () => document.querySelector<HTMLInputElement>('[aria-label="Custom column name"]')!
+	const name = () => document.querySelector<HTMLInputElement>('input[placeholder="e.g., TVL to market cap"]')!
 	await act(async () => {
 		name().focus()
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name(), 'Fee yield')
@@ -212,7 +215,7 @@ test('an edit to a saved custom column survives a visit to another section', asy
 	})
 	await click(section('Columns ('))
 	await click(document.querySelector<HTMLButtonElement>('[aria-label="Edit Fee yield"]')!)
-	const name = () => document.querySelector<HTMLInputElement>('[aria-label="Custom column name"]')!
+	const name = () => document.querySelector<HTMLInputElement>('input[placeholder="e.g., TVL to market cap"]')!
 	await act(async () => {
 		name().focus()
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name(), 'Fee ratio')

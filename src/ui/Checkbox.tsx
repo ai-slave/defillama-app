@@ -7,9 +7,13 @@ import type { ComponentProps, ReactNode } from 'react'
    `variant`:
    - default / filter / filter-borderless: rows in lists, menus and filters.
    - inline:  label-md, centred, for short one-line toggles.
+   - inline-sm: inline at label-sm, for a toggle inside a 12px panel
+              (a chart builder's options).
    - consent: body-sm text-secondary like the form copy around it, for a
               sentence-long agreement (claim consents, terms); the box stays
               on the label's first line when it wraps.
+   It toggles on Space, as a native checkbox does; Enter never toggles it
+   (it submits the form around it). Never pass Ariakit's `clickOnEnter`.
    Keyboard focus on the hidden input draws the ring and row wash on the
    label (`has-focus-visible:`), so callers never track focus. A disabled
    checkbox dims to 60% with the not-allowed cursor, like Button; its reason
@@ -22,6 +26,8 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 	// Unpadded labels inline with other text: the ring sits outside the label instead of over its box and words.
 	inline:
 		'group flex cursor-pointer flex-nowrap items-center gap-2 rounded-sm label-md text-secondary has-focus-visible:focus-ring has-focus-visible:outline-offset-2',
+	'inline-sm':
+		'group flex cursor-pointer flex-nowrap items-center gap-2 rounded-sm label-sm text-secondary has-focus-visible:focus-ring has-focus-visible:outline-offset-2',
 	// Sentence-long agreements in a form: dialog copy size, and the box stays on the first line when the label wraps.
 	consent:
 		'group flex cursor-pointer flex-nowrap items-start gap-2 rounded-sm body-sm text-secondary has-focus-visible:focus-ring has-focus-visible:outline-offset-2',
@@ -49,7 +55,7 @@ export function Checkbox({ ref, children, variant, ...props }: CheckboxProps) {
 			className={`${CHECKBOX_WRAPPER_VARIANTS[variant]} has-disabled:cursor-not-allowed has-disabled:opacity-60`}
 		>
 			<Ariakit.VisuallyHidden>
-				<Ariakit.Checkbox {...props} ref={ref} clickOnEnter />
+				<Ariakit.Checkbox {...props} ref={ref} />
 			</Ariakit.VisuallyHidden>
 			{/* mt-px centres the 14px box on body-sm's 16px first line. */}
 			<CheckboxIndicator checked={props.checked} className={variant === 'consent' ? 'mt-px' : undefined} />

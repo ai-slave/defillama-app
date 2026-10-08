@@ -93,7 +93,7 @@ export function DefinedValueCell({
 	if (!value) return null
 	if (definition) {
 		return (
-			<Tooltip content={definition} className={`inline-block max-w-full justify-end truncate ${className ?? ''}`}>
+			<Tooltip content={definition} render={<span className={`inline-block max-w-full truncate ${className ?? ''}`} />}>
 				{value}
 			</Tooltip>
 		)
@@ -110,7 +110,7 @@ export function DistinctListCell({ values, className }: { values: Array<string>;
 	if (values.length === 0) return null
 	const text = values.join(', ')
 	return values.length > 1 ? (
-		<Tooltip content={text} className={`inline-block max-w-full justify-end truncate ${className ?? ''}`.trim()}>
+		<Tooltip content={text} render={<span className={`inline-block max-w-full truncate ${className ?? ''}`} />}>
 			{text}
 		</Tooltip>
 	) : (

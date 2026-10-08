@@ -235,6 +235,19 @@
 	}
 }
 
+/* The API plan's accent. Inside it, Button primary takes sub-purple, so a CTA there is a
+   plain Button, not a raw button carrying the palette. Only the fill and border move;
+   outline and filter text stay brand blue. */
+.sub-api-accent {
+	--bg-brand: var(--sub-purple);
+	--border-brand: var(--sub-purple);
+}
+
+/* The pricing card's free-trial CTA. Inside it, Button primary takes the success green. */
+.sub-trial-accent {
+	--bg-brand: var(--success);
+}
+
 /* Pricing's independent pre-paint assignment. A's layout and account-state recipes remain intact. */
 @layer utilities {
 	.pricing-coverage {

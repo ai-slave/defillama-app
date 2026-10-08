@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { mergeSavedDraft, sameValue, useSavedDraft } from '../admin/savedDraft'
+import { mergeSavedDraft, SavedChangedNotice, sameValue, useSavedDraft } from '../admin/savedDraft'
 
 type Logo = { id: string; name: string; linkUrl: string; tags: Array<string> }
 type Form = { name: string; linkUrl: string; tags: Array<string> }
@@ -193,4 +193,32 @@ describe('useSavedDraft', () => {
 		expect(latest.dirty).toBe(false)
 		expect(container.querySelector('input')!.value).toBe('Fresh')
 	})
+})
+
+test('Load saved version hands focus to the first field once the notice leaves', async () => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	const container = document.createElement('div')
+	document.body.appendChild(container)
+	const root = createRoot(container)
+	function Form() {
+		const [conflict, setConflict] = useState(true)
+		return (
+			<form>
+				<input aria-label="Name" />
+				<footer>{conflict ? <SavedChangedNotice noun="logo" onLoadSaved={() => setConflict(false)} /> : null}</footer>
+			</form>
+		)
+	}
+	await act(async () => root.render(<Form />))
+	const load = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Load saved version')!
+
+	await act(async () => {
+		load.focus()
+		load.click()
+	})
+
+	expect(container.textContent).not.toContain('changed elsewhere')
+	expect(document.activeElement).toBe(container.querySelector('input'))
+	await act(async () => root.unmount())
+	container.remove()
 })

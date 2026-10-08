@@ -3,6 +3,7 @@
 import { useRouter } from 'next/router'
 import { Fragment, type ReactNode } from 'react'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -138,13 +139,9 @@ export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; c
 				</span>
 			))}
 			{content.detail ? <span className="text-secondary">{content.detail}</span> : null}
-			<button
-				type="button"
-				onClick={onUpgrade}
-				className="mt-0.5 w-fit rounded-lg bg-brand px-3 py-1.5 text-left label-sm text-on-brand hover:brightness-110 focus-visible:focus-ring-on-brand"
-			>
+			<Button variant="primary" size="md" className="mt-0.5 w-fit" onClick={onUpgrade}>
 				{content.cta}
-			</button>
+			</Button>
 		</span>
 	)
 }
@@ -243,13 +240,9 @@ export function MeasuredColumnHint() {
 								APYs without the seal are reported: what our adapters calculate.
 							</span>
 							{isDenied ? (
-								<button
-									type="button"
-									onClick={show}
-									className="mt-0.5 w-fit rounded-lg bg-brand px-3 py-1.5 text-left label-sm text-on-brand hover:brightness-110 focus-visible:focus-ring-on-brand"
-								>
+								<Button variant="primary" size="md" className="mt-0.5 w-fit" onClick={show}>
 									Unlock Verified APY
-								</button>
+								</Button>
 							) : null}
 						</span>
 					}
@@ -317,13 +310,9 @@ export function MeasuredExitColumnHint() {
 								It&apos;s a daily measurement at that day&apos;s block, not a live quote.
 							</span>
 							{isDenied ? (
-								<button
-									type="button"
-									onClick={show}
-									className="mt-0.5 w-fit rounded-lg bg-brand px-3 py-1.5 text-left label-sm text-on-brand hover:brightness-110 focus-visible:focus-ring-on-brand"
-								>
+								<Button variant="primary" size="md" className="mt-0.5 w-fit" onClick={show}>
 									Unlock Verified Exit Status
-								</button>
+								</Button>
 							) : null}
 						</span>
 					}

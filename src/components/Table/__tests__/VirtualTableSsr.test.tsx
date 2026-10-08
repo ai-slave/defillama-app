@@ -70,7 +70,7 @@ describe('VirtualTable SSR', () => {
 	test('makes helper text on a non-sortable header keyboard reachable', () => {
 		const html = renderToStaticMarkup(<TestVirtualTable />)
 
-		expect(html).toMatch(/<button[^>]*type="button"[^>]*>Name<\/button>/)
+		expect(html).toMatch(/<span[^>]*tabindex="0"[^>]*>Name<\/span>/)
 	})
 })
 

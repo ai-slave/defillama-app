@@ -16,10 +16,10 @@ import {
 } from '~/containers/ProDashboard/initialDashboard'
 import { ProDashboardAPIProvider, useProDashboardDashboard } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { type DashboardPageMode, getDashboardPageProps } from '~/containers/ProDashboard/server/dashboardPageProps'
-import { ProButton } from '~/containers/ProDashboard/ui'
 import type { DashboardSeo } from '~/containers/ProDashboard/utils/seo'
 import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -213,15 +213,15 @@ function DashboardPageContent({
 		if (loadError?.status === 401) {
 			return (
 				<DashboardPageNotice title="Sign In Required" message="Please sign in to edit this dashboard">
-					<ProButton
+					<Button
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 						variant="primary"
-						size="lg"
+						size="md"
 						className="mt-7"
 					>
 						Sign In
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -229,18 +229,18 @@ function DashboardPageContent({
 		if (loadError && loadError.status >= 500) {
 			return (
 				<DashboardPageNotice title="Failed to load dashboard">
-					<ProButton as={BasicLink} href={`/pro/${dashboardId}`} variant="primary" size="lg" className="mt-2">
+					<Button as={BasicLink} href={`/pro/${dashboardId}`} variant="primary" size="md" className="mt-2">
 						Back to dashboard
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
 
 		return (
 			<DashboardPageNotice title="Dashboard Not Found">
-				<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
+				<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
 					Browse Dashboards
-				</ProButton>
+				</Button>
 			</DashboardPageNotice>
 		)
 	}
@@ -249,9 +249,9 @@ function DashboardPageContent({
 		if (dashboardId !== 'new' && !currentDashboard && initialStatus === 404) {
 			return (
 				<DashboardPageNotice title="Dashboard Not Found" message="This dashboard does not exist.">
-					<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
+					<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
 						Browse Dashboards
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -259,15 +259,15 @@ function DashboardPageContent({
 		if (dashboardId !== 'new' && !currentDashboard && loadError?.status === 401) {
 			return (
 				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
-					<ProButton
+					<Button
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 						variant="primary"
-						size="lg"
+						size="md"
 						className="mt-7"
 					>
 						Sign In
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -278,9 +278,9 @@ function DashboardPageContent({
 					title="Failed to load dashboard"
 					message="Something went wrong while loading this dashboard. Please try again."
 				>
-					<ProButton type="button" onClick={reloadDashboard} variant="primary" size="lg" className="mt-2">
+					<Button type="button" onClick={reloadDashboard} variant="primary" size="md" className="mt-2">
 						Retry
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -291,9 +291,9 @@ function DashboardPageContent({
 					title="Dashboard Not Found"
 					message="This dashboard does not exist or you don't have permission to view it"
 				>
-					<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
+					<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
 						Browse Dashboards
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -301,15 +301,15 @@ function DashboardPageContent({
 		if (dashboardId === 'new' && !isAuthenticated) {
 			return (
 				<DashboardPageNotice title="Sign In Required" message="Please sign in to create a new dashboard">
-					<ProButton
+					<Button
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 						variant="primary"
-						size="lg"
+						size="md"
 						className="mt-7"
 					>
 						Sign In
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -317,15 +317,15 @@ function DashboardPageContent({
 		if (!isAuthenticated && dashboardVisibility === 'private') {
 			return (
 				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
-					<ProButton
+					<Button
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 						variant="primary"
-						size="lg"
+						size="md"
 						className="mt-7"
 					>
 						Sign In
-					</ProButton>
+					</Button>
 				</DashboardPageNotice>
 			)
 		}
@@ -363,14 +363,14 @@ function DashboardPageContent({
 						$49<span className="text-lg font-normal text-pro-text-secondary">/month</span>
 					</h2>
 
-					<ProButton
+					<Button
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 						variant="primary"
-						size="lg"
+						size="md"
 					>
 						Subscribe Now
-					</ProButton>
+					</Button>
 				</div>
 			)
 		}

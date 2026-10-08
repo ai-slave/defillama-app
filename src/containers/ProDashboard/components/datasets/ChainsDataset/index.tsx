@@ -247,7 +247,7 @@ export function ChainsDataset({
 		writeColumns(shownNow ? [...columnOrder, columnId] : columnOrder, newVisibility)
 	}
 
-	// Show All appends the newly shown columns to the order; Hide All keeps the chain name.
+	// Show all appends the newly shown columns to the order; Hide all keeps the chain name.
 	const setAllColumnsVisible = (visible: boolean) => {
 		const newVisibility: ColumnVisibilityState = {}
 		for (const id of CHAIN_COLUMN_IDS) newVisibility[id] = visible || id === 'name'

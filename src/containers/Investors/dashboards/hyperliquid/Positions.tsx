@@ -15,7 +15,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -421,7 +421,9 @@ function DataTable<T>({
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
-			<Table table={instance} />
+			{/* Auto layout sizes each column to its nowrap cells, so a phone scrolls the table sideways instead of
+			    squashing every column into the card's width. */}
+			<Table table={instance} tableLayout="auto" />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
 		</div>
 	)
@@ -526,7 +528,9 @@ export default function Positions() {
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Vault:</div>
-				<ProSegmented<VaultFilter>
+				<SegmentedControl<VaultFilter>
+					variant="default"
+					size="md"
 					label="Vault"
 					options={VAULT_OPTIONS}
 					value={vaultFilter}
@@ -549,7 +553,9 @@ export default function Positions() {
 
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Portfolio Window:</div>
-				<ProSegmented<typeof portfolioWindow>
+				<SegmentedControl<typeof portfolioWindow>
+					variant="default"
+					size="md"
 					label="Portfolio window"
 					options={PORTFOLIO_WINDOW_OPTIONS}
 					value={portfolioWindow}
@@ -561,7 +567,9 @@ export default function Positions() {
 
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Funding Window:</div>
-				<ProSegmented<typeof fundingWindow>
+				<SegmentedControl<typeof fundingWindow>
+					variant="default"
+					size="md"
 					label="Funding window"
 					options={FUNDING_WINDOW_OPTIONS}
 					value={fundingWindow}

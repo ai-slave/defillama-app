@@ -28,7 +28,11 @@ export function ArticleTableFrame({ children }: { children: ReactNode }) {
 		<div className="group relative mt-9 mb-6">
 			<div className="pointer-events-none absolute -top-8 right-0 z-20 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
 				<div className="pointer-events-auto">
-					<TableImageButtons getSource={getSource} buttonClassName={CONTROL_CLASS} triggerLabel="Export" />
+					<TableImageButtons
+						getSource={getSource}
+						trigger={<button type="button" className={CONTROL_CLASS} />}
+						triggerLabel="Export"
+					/>
 				</div>
 			</div>
 			<div ref={wrapRef} className="article-table-wrap not-prose relative overflow-x-auto">

@@ -6,8 +6,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import { ChartCard, DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
 
@@ -135,7 +135,14 @@ function TrendCard({
 			title={title}
 			{...(subtitle !== undefined ? { subtitle } : {})}
 			control={
-				<ProSegmented size="sm" label={`${title} period`} options={VIEWS} value={view} onValueChange={setView} />
+				<SegmentedControl
+					variant="default"
+					size="sm"
+					label={`${title} period`}
+					options={VIEWS}
+					value={view}
+					onValueChange={setView}
+				/>
 			}
 		>
 			{isLoading ? (

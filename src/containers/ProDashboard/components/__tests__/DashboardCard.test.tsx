@@ -188,22 +188,8 @@ test('cancelling a delete from the card menu returns focus to the menu button', 
 	await waitForUi(() => expect(document.activeElement).toBe(menuButton))
 })
 
-test('a deleted dashboard that leaves the list hands focus to the page content', async () => {
-	const dashboard = makeDashboard({})
-	const renderList = (dashboards: Array<Dashboard>) =>
-		act(async () =>
-			root.render(
-				<session.Wrapper>
-					<main>
-						{dashboards.map((item) => (
-							<DashboardCard key={item.id} dashboard={item} viewMode="grid" onDelete={async () => {}} />
-						))}
-					</main>
-				</session.Wrapper>
-			)
-		)
-	await renderList([dashboard])
-	const menuButton = container.querySelector<HTMLButtonElement>('[aria-label="Actions for Audit board"]')!
+async function deleteFromMenu(name: string) {
+	const menuButton = container.querySelector<HTMLButtonElement>(`[aria-label="Actions for ${name}"]`)!
 	await act(async () => {
 		menuButton.focus()
 		menuButton.click()
@@ -229,7 +215,39 @@ test('a deleted dashboard that leaves the list hands focus to the page content',
 	await act(async () => confirm.click())
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	await waitForUi(() => expect(document.activeElement).toBe(menuButton))
+}
+
+function renderList(dashboards: Array<Dashboard>) {
+	return act(async () =>
+		root.render(
+			<session.Wrapper>
+				<main>
+					<section aria-label="My dashboards" tabIndex={-1}>
+						<div>
+							{dashboards.map((item) => (
+								<DashboardCard key={item.id} dashboard={item} viewMode="grid" onDelete={async () => {}} />
+							))}
+						</div>
+					</section>
+				</main>
+			</session.Wrapper>
+		)
+	)
+}
+
+test('a deleted dashboard that leaves the list hands focus to the next card', async () => {
+	const first = makeDashboard({})
+	const second = makeDashboard({ id: 'dash-2', slug: 'dash-2-slug', data: { items: [], dashboardName: 'Fees board' } })
+	await renderList([first, second])
+	await deleteFromMenu('Audit board')
 	// The list refetch drops the deleted card after the confirmation has closed onto its menu button.
+	await renderList([second])
+	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('a[href="/pro/dash-2-slug"]')))
+})
+
+test('the last deleted dashboard hands focus to the list region', async () => {
+	await renderList([makeDashboard({})])
+	await deleteFromMenu('Audit board')
 	await renderList([])
-	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('main')))
+	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('section')))
 })

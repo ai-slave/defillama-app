@@ -92,14 +92,16 @@ describe('FreeUsageNote', () => {
 		act(() =>
 			root.render(
 				<session.Wrapper>
-					<FreeUsageNote usage={value} showBonus className="" />
+					<main>
+						<FreeUsageNote usage={value} showBonus className="" />
+					</main>
 				</session.Wrapper>
 			)
 		)
 		return container.textContent
 	}
 
-	test('the welcome card shows today’s count on a meter and when the week ends, and a dismissal lasts', async () => {
+	test('the welcome card shows today’s count on a meter and when the week ends, and a dismissal lasts and keeps focus on the page', async () => {
 		// Six days before the week ends, so the relative end time reads the same on every run.
 		vi.useFakeTimers({ toFake: ['Date'] })
 		vi.setSystemTime(new Date('2026-10-03T09:00:00.000Z'))
@@ -112,11 +114,15 @@ describe('FreeUsageNote', () => {
 		expect(meter.querySelectorAll('[data-state="remaining"]')).toHaveLength(3)
 
 		// The storage store notifies its readers in a batch one task after the write.
+		const dismiss = container.querySelector<HTMLButtonElement>('button[aria-label="Dismiss welcome week"]')!
 		await act(async () => {
-			container.querySelector<HTMLButtonElement>('button[aria-label="Dismiss welcome week"]')!.click()
+			dismiss.focus()
+			dismiss.click()
 			await new Promise((resolve) => setTimeout(resolve))
 		})
 		expect(container.textContent).toBe('')
+		// The card leaves with its button; the page content takes focus, not the body.
+		expect(document.activeElement).toBe(container.querySelector('main'))
 		expect(track).toHaveBeenCalledWith('llamaai-welcome-card-dismiss', { remaining: 3 })
 		expect(show(usage(typed(3, 5), { bonus }))).toBe('')
 	})

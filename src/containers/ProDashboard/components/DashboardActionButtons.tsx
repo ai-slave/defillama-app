@@ -3,28 +3,40 @@ import { useRouter } from 'next/router'
 import { useRef } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProButton } from '../ui'
 
-export function EditDashboardButton({ href }: { href: string }) {
+// One button for both modes: Edit and Done swap in place, so the element that had focus keeps it through the route
+// change. Two buttons would unmount the pressed one and drop focus to the page.
+export function EditDoneButton({
+	editing,
+	href,
+	onDone,
+	donePendingLabel
+}: {
+	editing: boolean
+	href: string
+	onDone: () => void
+	donePendingLabel: string | null
+}) {
 	const router = useRouter()
 	const navigation = useMutation({ mutationFn: () => router.push(href, undefined, { shallow: true }) })
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<ProButton
+			<Button
 				type="button"
 				variant="primary"
-				icon={<Icon name="pencil" height={16} width={16} />}
-				loading={navigation.isPending}
-				onClick={() => navigation.mutate()}
+				size="md"
+				pendingLabel={editing ? donePendingLabel : navigation.isPending ? 'Opening editor…' : null}
+				onClick={editing ? onDone : () => navigation.mutate()}
 			>
-				{navigation.isPending ? 'Opening editor…' : 'Edit'}
-			</ProButton>
-			{navigation.isError ? (
+				<Icon name={editing ? 'check' : 'pencil'} height={14} width={14} />
+				{editing ? 'Done' : 'Edit'}
+			</Button>
+			{!editing && navigation.isError ? (
 				<p role="alert" className="text-sm text-error">
 					Could not open the editor. Please try again.
 				</p>
@@ -50,12 +62,14 @@ export function CopyDashboardButton({
 	})
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<ProButton
+			<Button
 				type="button"
 				variant="primary"
+				size="md"
 				ref={buttonRef}
+				pendingLabel={copy.isPending ? 'Copying…' : null}
 				accessibleWhenDisabled
-				disabled={copy.isPending || copy.isSuccess}
+				disabled={copy.isSuccess}
 				onClick={() => {
 					if (copy.isPending || copy.isSuccess) return
 					if (onLimitReached) return onLimitReached()
@@ -68,13 +82,9 @@ export function CopyDashboardButton({
 					})
 				}}
 			>
-				{copy.isPending ? (
-					<LoadingSpinner size={16} />
-				) : (
-					<Icon name={copy.isSuccess ? 'check' : 'copy'} height={16} width={16} />
-				)}
-				{copy.isPending ? 'Copying…' : copy.isSuccess ? 'Copied' : 'Copy Dashboard'}
-			</ProButton>
+				<Icon name={copy.isSuccess ? 'check' : 'copy'} height={14} width={14} />
+				{copy.isSuccess ? 'Copied' : 'Copy Dashboard'}
+			</Button>
 			<span role="status" className="sr-only">
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}
 			</span>
@@ -105,17 +115,17 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 	})
 	return (
 		<div ref={focusPageOnLeave} className="flex min-w-0 flex-col gap-1">
-			<ProButton
+			<Button
 				type="button"
 				variant="secondary"
-				icon={<Icon name="arrow-left" height={16} width={16} />}
-				loading={undo.isPending}
+				size="md"
+				pendingLabel={undo.isPending ? 'Undoing…' : null}
 				ref={buttonRef}
 				onClick={() => undo.mutate()}
-				aria-label="Undo AI changes"
 			>
-				{undo.isPending ? 'Undoing…' : 'Undo AI changes'}
-			</ProButton>
+				<Icon name="arrow-left" height={14} width={14} />
+				Undo AI changes
+			</Button>
 			<span role="status" className="sr-only">
 				{undo.isPending ? 'Undoing AI changes' : ''}
 			</span>

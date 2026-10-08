@@ -12,6 +12,7 @@ import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/service
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 
 interface DashboardPanelProps {
@@ -169,16 +170,21 @@ function DashboardPanelInner({
 							>
 								Create dashboard
 							</Button>
-							<Button
-								type="button"
-								size="md"
-								variant="ghost"
-								square
-								onClick={onClose}
-								aria-label="Close dashboard panel"
+							<Tooltip
+								content="Close"
+								render={
+									<Button
+										type="button"
+										size="md"
+										variant="ghost"
+										square
+										onClick={onClose}
+										aria-label="Close dashboard panel"
+									/>
+								}
 							>
 								<Icon name="x" className="size-4" />
-							</Button>
+							</Tooltip>
 						</div>
 					</div>
 
@@ -195,33 +201,43 @@ function DashboardPanelInner({
 					{hasMultipleVersions ? (
 						<div className="flex items-center justify-center gap-3 border-t border-subtle px-4 py-2.5">
 							{/* Focusable at the ends, so stepping to the last version keeps focus on the arrow. */}
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								square
-								onClick={() => onVersionChange(versionIndex - 1)}
-								disabled={versionIndex === 0}
-								accessibleWhenDisabled
-								aria-label="Previous version"
+							<Tooltip
+								content="Previous version"
+								render={
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										square
+										onClick={() => onVersionChange(versionIndex - 1)}
+										disabled={versionIndex === 0}
+										accessibleWhenDisabled
+										aria-label="Previous version"
+									/>
+								}
 							>
 								<Icon name="chevron-left" className="size-3.5" />
-							</Button>
+							</Tooltip>
 							<span className="text-xs text-tertiary">
 								Version {versionIndex + 1} of {versions.length}
 							</span>
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								square
-								onClick={() => onVersionChange(versionIndex + 1)}
-								disabled={versionIndex === versions.length - 1}
-								accessibleWhenDisabled
-								aria-label="Next version"
+							<Tooltip
+								content="Next version"
+								render={
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										square
+										onClick={() => onVersionChange(versionIndex + 1)}
+										disabled={versionIndex === versions.length - 1}
+										accessibleWhenDisabled
+										aria-label="Next version"
+									/>
+								}
 							>
 								<Icon name="chevron-right" className="size-3.5" />
-							</Button>
+							</Tooltip>
 						</div>
 					) : null}
 				</div>

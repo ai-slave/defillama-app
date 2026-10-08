@@ -1,4 +1,6 @@
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig, ChartType } from '../chartConfig'
 import { ColorPicker } from './ColorPicker'
 
@@ -47,46 +49,65 @@ export function SeriesChip({
 	}
 
 	return (
-		<div className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
+		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
 			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
 			<span className="truncate font-mono text-[10.5px] text-pro-text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
 			{seriesKindEligible ? (
-				<button
-					type="button"
-					onClick={toggleKind}
-					aria-label={`Series ${name} type: ${kind}`}
-					title={`Series type: ${kind}`}
-					className="flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
+				<Tooltip
+					content={`Series type: ${kind}`}
+					render={
+						<button
+							type="button"
+							onClick={toggleKind}
+							aria-label={`Series ${name} type: ${kind}`}
+							className="touch-target flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
+						/>
+					}
 				>
 					{kind === 'line' ? '—' : '▮'}
-				</button>
+				</Tooltip>
 			) : null}
 			{dualAxisEligible ? (
-				<button
-					type="button"
-					onClick={toggleAxis}
-					aria-label={`Use right axis for ${name}`}
-					aria-pressed={isRight}
-					title={`Axis: ${isRight ? 'right' : 'left'}`}
-					className={`flex h-4 w-5 items-center justify-center rounded-sm border label-sm transition-colors ${
-						isRight
-							? 'border-brand bg-brand text-on-brand'
-							: 'border-subtle bg-pro-app-bg text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-					}`}
+				<Tooltip
+					content={`Axis: ${isRight ? 'right' : 'left'}`}
+					render={
+						<button
+							type="button"
+							onClick={toggleAxis}
+							aria-label={`Use right axis for ${name}`}
+							aria-pressed={isRight}
+							className={`touch-target flex h-4 w-5 items-center justify-center rounded-sm border label-sm transition-colors ${
+								isRight
+									? 'border-brand bg-brand text-on-brand'
+									: 'border-subtle bg-pro-app-bg text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
+							}`}
+						/>
+					}
 				>
 					{isRight ? 'R' : 'L'}
-				</button>
+				</Tooltip>
 			) : null}
-			<button
-				type="button"
-				onClick={onRemove}
-				aria-label={`Remove ${name}`}
-				className="flex size-4 items-center justify-center rounded-sm text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-error/10 hover:text-error focus:opacity-100"
+			{/* Sized like the L/R and type toggles beside it. Touch cannot hover, so it always shows the remove. */}
+			<Tooltip
+				content="Remove"
+				render={
+					<button
+						type="button"
+						onClick={(event) => {
+							// The chip leaves with its button: the next chip's remove takes focus, else the previous one's.
+							const button = event.currentTarget
+							const next = neighbourRowControl(button.closest('[data-series-chip]')!, button)
+							keepFocus(onRemove, () => next)
+						}}
+						aria-label={`Remove ${name}`}
+						className="touch-target flex h-4 w-5 items-center justify-center rounded-sm text-pro-text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-hover-row hover:text-pro-text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
+					/>
+				}
 			>
-				<Icon name="x" className="size-2.5" />
-			</button>
+				<Icon name="x" className="size-3" />
+			</Tooltip>
 		</div>
 	)
 }

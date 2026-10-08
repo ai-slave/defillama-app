@@ -7,6 +7,7 @@ import { ViewTabs } from '~/components/ViewTabs'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -14,6 +15,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -569,22 +571,15 @@ function RecentDownloadsStrip({
 	const items = recents.slice(0, 8)
 	return (
 		<section aria-label="Recent downloads" className="flex flex-col gap-2">
-			<header className="flex items-baseline justify-between gap-3 px-0.5">
+			<header className="flex items-baseline justify-between gap-3 px-0.5 label-sm">
 				<div className="flex items-baseline gap-2">
 					<Icon name="clock" className="size-3 self-center text-pro-text-tertiary" />
-					<h2 className="text-[11px] font-semibold tracking-[0.14em] text-pro-text-tertiary uppercase">Recent</h2>
-					<span className="text-[11px] text-pro-text-tertiary/70 tabular-nums">
-						{items.length === 1 ? '1 run' : `${items.length} runs`}
-					</span>
+					<h2 className="tracking-wider text-pro-text-tertiary uppercase">Recent</h2>
+					<span className="text-pro-text-tertiary">{items.length === 1 ? '1 run' : `${items.length} runs`}</span>
 				</div>
-				<button
-					ref={focusTypeTabOnLeave}
-					type="button"
-					onClick={onClear}
-					className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-				>
+				<Button ref={focusTypeTabOnLeave} variant="link" onClick={onClear}>
 					Clear all
-				</button>
+				</Button>
 			</header>
 			<div className="flex overflow-x-auto border-y border-subtle">
 				<ul className="flex min-w-full gap-0">
@@ -599,17 +594,14 @@ function RecentDownloadsStrip({
 								<button
 									type="button"
 									onClick={() => onRun(preset)}
-									title={`Run ${preset.name}`}
-									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden"
+									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-hover-row focus-visible:bg-hover-row"
 								>
 									<span
 										className={`absolute top-3 bottom-3 left-2 w-0.5 rounded-full ${style.accent} opacity-40 transition-opacity group-hover:opacity-100`}
 										aria-hidden="true"
 									/>
 									<span className="flex items-center gap-1.5">
-										<span
-											className={`inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase ${style.fg}`}
-										>
+										<span className={`inline-flex items-center gap-1 label-xs tracking-wider uppercase ${style.fg}`}>
 											<Icon name={kindIcon(preset.kind)} className="size-3" />
 											{style.label}
 										</span>
@@ -620,7 +612,7 @@ function RecentDownloadsStrip({
 										) : null}
 									</span>
 									<span className="truncate text-xs font-medium text-pro-text-primary">{preset.name}</span>
-									<span className="flex items-center justify-between gap-2 text-[11px] text-pro-text-tertiary tabular-nums">
+									<span className="flex items-center justify-between gap-2 label-sm text-pro-text-tertiary tabular-nums">
 										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
 											name="arrow-up-right"
@@ -781,9 +773,6 @@ function SavedDownloadRow({
 		? { prefix: 'ran', value: preset.lastRunAt }
 		: { prefix: 'saved', value: preset.createdAt }
 
-	const actionButton =
-		'pointer-events-auto flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors'
-
 	return (
 		<li className="group relative flex items-center gap-3 border-t border-subtle py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row">
 			<span
@@ -819,35 +808,47 @@ function SavedDownloadRow({
 
 			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}
 			<div className="pointer-events-none relative flex h-8 shrink-0 items-center justify-end gap-2 pl-2 sm:min-w-[12rem]">
-				<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
+				<span className="label-sm text-pro-text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
 					<span className="hidden text-pro-text-tertiary/60 sm:inline">{timestamp.prefix} </span>
 					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 
 				<div className="flex items-center gap-0.5 transition-opacity pointer-fine:absolute pointer-fine:inset-y-0 pointer-fine:right-0 pointer-fine:pl-2 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100">
-					<button
-						type="button"
-						onClick={() => onRenameRequest(preset)}
-						className={`${actionButton} hover:text-pro-text-primary focus-visible:text-pro-text-primary`}
-						aria-label={`Rename ${preset.name}`}
-						title="Rename"
+					<Tooltip
+						content="Rename"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								onClick={() => onRenameRequest(preset)}
+								aria-label={`Rename ${preset.name}`}
+								className="pointer-events-auto"
+							/>
+						}
 					>
-						<Icon name="pencil" className="size-3.5" />
-					</button>
-					<button
-						type="button"
-						onClick={() => onDeleteRequest(preset)}
-						className={`${actionButton} hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error`}
-						aria-label={`Delete ${preset.name}`}
-						title="Delete"
+						<Icon name="pencil" className="size-4" />
+					</Tooltip>
+					<Tooltip
+						content="Delete"
+						render={
+							<Button
+								variant="ghostDestructive"
+								size="sm"
+								square
+								onClick={() => onDeleteRequest(preset)}
+								aria-label={`Delete ${preset.name}`}
+								className="pointer-events-auto"
+							/>
+						}
 					>
-						<Icon name="trash-2" className="size-3.5" />
-					</button>
+						<Icon name="trash-2" className="size-4" />
+					</Tooltip>
 					<span
 						aria-hidden="true"
-						className="ml-1 hidden items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-[11px] font-medium text-on-brand shadow-sm pointer-fine:inline-flex"
+						className="ml-1 hidden items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand shadow-sm pointer-fine:inline-flex"
 					>
-						<Icon name="download-cloud" className="size-3" />
+						<Icon name="download-cloud" className="size-3.5" />
 						Run
 					</span>
 				</div>

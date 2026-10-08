@@ -8,6 +8,7 @@ import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -34,9 +35,22 @@ function filterSelectionKey(filters: Record<string, unknown>): string {
 	)
 }
 
+// Saved views re-render a task after a delete, so the delete button hands focus on as its row leaves: to the next
+// row's delete, else the previous one's, else the popover's name field (its heading only shows on phones, where this
+// popover never opens).
+const focusNeighbourOnLeave = passFocusOnLeave(
+	(node) =>
+		neighbourRowControl(node.closest('[data-saved-view]')!, node) ??
+		node.closest('[data-dialog]')!.querySelector<HTMLElement>('input')
+)
+
 // The "＋ Save view" pill: a single dashed-outline pill that opens ONE popover
 // containing a save-current form + the saved list (with per-entry load/delete).
-function SaveViewButton({ currentFilters }: { currentFilters: Record<string, string | Array<string> | undefined> }) {
+export function SaveViewButton({
+	currentFilters
+}: {
+	currentFilters: Record<string, string | Array<string> | undefined>
+}) {
 	const { savedFilters, saveFilter, deleteFilter } = useYieldFilters()
 	const router = useRouter()
 	const [name, setName] = React.useState('')
@@ -102,6 +116,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 						{savedFiltersEntries.map(([viewName]) => (
 							<div
 								key={viewName}
+								data-saved-view
 								className="flex items-center gap-2 rounded-md px-2 py-1.5 body-sm text-secondary hover:bg-hover-row"
 							>
 								<button
@@ -112,16 +127,22 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 									<Icon name="bookmark" height={14} width={14} className="shrink-0 text-tertiary" />
 									<span className="min-w-0 flex-1 truncate">{viewName}</span>
 								</button>
-								<Button
-									type="button"
-									variant="destructive"
-									size="sm"
-									square
-									aria-label={`Delete ${viewName}`}
-									onClick={() => deleteFilter(viewName)}
+								<Tooltip
+									content={`Delete ${viewName}`}
+									render={
+										<Button
+											type="button"
+											variant="ghostDestructive"
+											size="sm"
+											square
+											aria-label={`Delete ${viewName}`}
+											ref={focusNeighbourOnLeave}
+											onClick={() => deleteFilter(viewName)}
+										/>
+									}
 								>
-									<Icon name="x" className="size-3.5" />
-								</Button>
+									<Icon name="trash-2" className="size-4" />
+								</Tooltip>
 							</div>
 						))}
 					</div>

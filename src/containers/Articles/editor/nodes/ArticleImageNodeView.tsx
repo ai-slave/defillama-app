@@ -1,16 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { useState, type ReactNode } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input, textareaStyles } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { useArticleEditable } from '../useArticleEditable'
 import { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.shared'
-
-const BUTTON_CLASS =
-	'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary'
-const INPUT_CLASS =
-	'w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden'
-const SAVE_CLASS = 'rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link hover:brightness-110'
 
 function ImageDetailsPopover({
 	label,
@@ -25,10 +21,7 @@ function ImageDetailsPopover({
 }) {
 	return (
 		<Ariakit.PopoverProvider placement="bottom-end">
-			<Ariakit.PopoverDisclosure
-				title={title}
-				className={`${BUTTON_CLASS} data-open:bg-research-tint data-open:text-link`}
-			>
+			<Ariakit.PopoverDisclosure render={<Button variant="ghost" size="sm" />}>
 				{label}
 				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-tertiary/40'}`} />
 			</Ariakit.PopoverDisclosure>
@@ -42,10 +35,10 @@ function ImageDetailsPopover({
 function FormActions() {
 	return (
 		<div className="flex items-center justify-between">
-			<Ariakit.PopoverDismiss className={BUTTON_CLASS}>Cancel</Ariakit.PopoverDismiss>
-			<button type="submit" className={SAVE_CLASS}>
+			<Ariakit.PopoverDismiss render={<Button variant="secondary" size="sm" />}>Cancel</Ariakit.PopoverDismiss>
+			<Button type="submit" variant="primary" size="sm">
 				Save
-			</button>
+			</Button>
 		</div>
 	)
 }
@@ -69,7 +62,7 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 					onChange={(event) => setDraft(event.target.value)}
 					rows={3}
 					placeholder="Describe the image for screen readers"
-					className={`${INPUT_CLASS} resize-none`}
+					className={`${textareaStyles} w-full resize-none`}
 					onKeyDown={(event) => {
 						if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
 							event.preventDefault()
@@ -97,26 +90,27 @@ function LinkForm({ href, save }: { href: string; save: (href: string) => void }
 		>
 			<label className="grid gap-1.5">
 				<span className="text-xs font-medium text-secondary">Image link</span>
-				<input
+				<Input
 					type="text"
 					inputMode="url"
 					value={draft}
 					onChange={(event) => setDraft(event.target.value)}
 					placeholder="https://…"
-					className={INPUT_CLASS}
+					className="w-full"
 				/>
 			</label>
 			{href ? (
-				<button
-					type="button"
+				<Button
+					variant="secondary"
+					size="sm"
 					onClick={() => {
 						save('')
 						store.hide()
 					}}
-					className="justify-self-start rounded-md px-2 py-1 text-xs text-error"
+					className="justify-self-start"
 				>
 					Remove link
-				</button>
+				</Button>
 			) : null}
 			<FormActions />
 		</form>
@@ -142,29 +136,29 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 		>
 			<label className="grid gap-1.5">
 				<span className="text-xs font-medium text-secondary">Headline</span>
-				<input
+				<Input
 					value={draft.headline}
 					onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
 					placeholder="Image title"
-					className={INPUT_CLASS}
+					className="w-full"
 				/>
 			</label>
 			<label className="grid gap-1.5">
 				<span className="text-xs font-medium text-secondary">Credit</span>
-				<input
+				<Input
 					value={draft.credit}
 					onChange={(event) => setDraft({ ...draft, credit: event.target.value })}
 					placeholder="Photographer or illustrator"
-					className={INPUT_CLASS}
+					className="w-full"
 				/>
 			</label>
 			<label className="grid gap-1.5">
 				<span className="text-xs font-medium text-secondary">Copyright</span>
-				<input
+				<Input
 					value={draft.copyright}
 					onChange={(event) => setDraft({ ...draft, copyright: event.target.value })}
 					placeholder="Rights holder"
-					className={INPUT_CLASS}
+					className="w-full"
 				/>
 			</label>
 			<FormActions />
@@ -193,7 +187,7 @@ function ImageCaption({
 					onBlur={() => save(draft.trim())}
 					placeholder="Add a caption…"
 					rows={Math.min(3, Math.max(1, draft.split('\n').length))}
-					className="w-full resize-none rounded-md border border-medium bg-transparent px-3 py-2 text-sm leading-snug text-secondary outline-hidden focus:border-link"
+					className={`${textareaStyles} w-full resize-none`}
 				/>
 			}
 		/>
@@ -210,7 +204,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 	return (
 		<NodeViewWrapper data-article-image-wrapper className="article-image-block group/image not-prose relative my-6">
 			<figure
-				className={`relative overflow-hidden rounded-md border bg-surface transition-colors ${selected ? 'border-link' : 'border-medium'}`}
+				className={`relative overflow-hidden rounded-md border bg-surface transition-colors ${selected ? 'border-brand' : 'border-medium'}`}
 			>
 				{attrs.src ? (
 					<img
@@ -246,19 +240,20 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						<ImageDetailsPopover label="Link" title="Image link" hasValue={Boolean(attrs.href)}>
 							<LinkForm key={attrs.href} href={attrs.href} save={(href) => updateAttributes({ href })} />
 						</ImageDetailsPopover>
-						<button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
 							aria-pressed={showCaption}
+							data-active={showCaption}
 							onClick={() => {
 								if (showCaption) {
 									setCaptionDraftOpen(false)
 									updateAttributes({ caption: '' })
 								} else setCaptionDraftOpen(true)
 							}}
-							className={`${BUTTON_CLASS} ${showCaption ? 'bg-research-tint text-link' : ''}`}
 						>
 							Caption
-						</button>
+						</Button>
 						<ImageDetailsPopover
 							label="Credit"
 							title="Image credits"
@@ -270,16 +265,16 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 								save={updateAttributes}
 							/>
 						</ImageDetailsPopover>
-						<button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
 							onClick={() => {
 								deleteNode()
 								editor.commands.focus()
 							}}
-							className={`${BUTTON_CLASS} hover:text-error`}
 						>
 							Remove
-						</button>
+						</Button>
 					</div>
 				) : null}
 			</figure>

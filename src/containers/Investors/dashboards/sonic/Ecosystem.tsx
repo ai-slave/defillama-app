@@ -15,6 +15,7 @@ import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
@@ -252,26 +253,39 @@ function AssetBreakdownSection({
 							const breakdownEntries = Object.entries(cat.breakdown).sort(([, a], [, b]) => b - a)
 							const hasChildren = breakdownEntries.length > 0
 							const isOpen = expandedRows.has(idx)
-							const color = pieColors[cat.name] || '#8b949e'
+							const color = pieColors[cat.name] || 'var(--pro-text-tertiary)'
+							const row = (
+								<>
+									<span className="flex w-4 shrink-0 justify-center">
+										{hasChildren ? (
+											<Icon
+												name="chevron-right"
+												className={`size-3.5 text-pro-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`}
+											/>
+										) : null}
+									</span>
+									<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
+									<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary capitalize">{cat.name}</span>
+									<span className="shrink-0 label-md text-pro-text-primary">{cat.formatted}</span>
+									<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
+										{formatPercent(cat.pct, { input: 'percent' })}
+									</span>
+								</>
+							)
 							return (
 								<div key={cat.name} className="border-b border-pro-cards-border last:border-b-0">
-									<button
-										type="button"
-										disabled={!hasChildren}
-										aria-expanded={hasChildren ? isOpen : undefined}
-										className={`flex w-full items-center gap-2 py-2.5 text-left ${hasChildren ? 'cursor-pointer hover:opacity-80' : ''}`}
-										onClick={() => hasChildren && toggleRow(idx)}
-									>
-										<span className="w-4 shrink-0 text-[10px] text-pro-text-label">
-											{hasChildren ? (isOpen ? '\u25BC' : '\u25B6') : ''}
-										</span>
-										<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-										<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary capitalize">{cat.name}</span>
-										<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{cat.formatted}</span>
-										<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
-											{formatPercent(cat.pct, { input: 'percent' })}
-										</span>
-									</button>
+									{hasChildren ? (
+										<button
+											type="button"
+											aria-expanded={isOpen}
+											className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-sl-hover-bg"
+											onClick={() => toggleRow(idx)}
+										>
+											{row}
+										</button>
+									) : (
+										<div className="flex w-full items-center gap-2 px-1 py-2.5">{row}</div>
+									)}
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (
@@ -419,7 +433,7 @@ export default function Ecosystem() {
 						<div>
 							<div className="max-h-[400px] overflow-y-auto">
 								{data.stablecoins.breakdown.map((coin) => {
-									const color = data.stablecoins.pieColors[coin.name] || '#8b949e'
+									const color = data.stablecoins.pieColors[coin.name] || 'var(--pro-text-tertiary)'
 									return (
 										<div
 											key={coin.name}

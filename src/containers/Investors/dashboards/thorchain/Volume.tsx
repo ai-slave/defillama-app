@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { ApiTrendChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
 import {
@@ -60,7 +60,8 @@ export default function Volume() {
 
 	const walletChart = data.uniqueWalletsCharts?.[walletView]
 	const walletToggle = (
-		<ProSegmented<WalletView>
+		<SegmentedControl<WalletView>
+			variant="default"
 			size="sm"
 			label="Unique wallets period"
 			options={WALLET_VIEWS.filter((v) => data.uniqueWalletsCharts?.[v.value])}

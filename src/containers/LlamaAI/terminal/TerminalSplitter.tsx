@@ -1,4 +1,5 @@
 import { useRef, type RefObject } from 'react'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -30,8 +31,15 @@ export function TerminalSplitter({
 					placement="left"
 					render={
 						<button
+							id="terminal-chat-show"
 							type="button"
-							onClick={() => setTerminalChatCollapsed(false)}
+							// The rail leaves with this button; the chat header's Hide chat takes its place.
+							onClick={() =>
+								keepFocus(
+									() => setTerminalChatCollapsed(false),
+									() => document.getElementById('terminal-chat-hide')
+								)
+							}
 							data-umami-event="llamaai-terminal-chat-collapse"
 							data-umami-event-action="expand"
 						/>

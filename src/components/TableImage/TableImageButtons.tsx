@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useCallback, useState, useSyncExternalStore, type ReactElement, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import {
 	CsvDownloadDialogs,
@@ -13,6 +13,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
 export type TableImageSource = () => Omit<TableImageInput, 'isDark'> | null
@@ -85,7 +86,7 @@ export function TableImageButtons({
 	getSource,
 	className,
 	disabled = false,
-	buttonClassName,
+	trigger,
 	iconOnly = false,
 	triggerContent,
 	triggerLabel,
@@ -96,8 +97,8 @@ export function TableImageButtons({
 	getSource: TableImageSource
 	className?: string
 	disabled?: boolean
-	/** A surface with its own control language (Articles) styles the trigger itself; otherwise it is an md Button. */
-	buttonClassName?: string
+	/** The trigger element; an md Button unless the surface renders its own (the Articles rail passes a ghost sm Button). */
+	trigger?: ReactElement
 	iconOnly?: boolean
 	/** Replaces the icon + label entirely, for toolbars with their own typographic language. */
 	triggerContent?: ReactNode
@@ -148,14 +149,17 @@ export function TableImageButtons({
 	return (
 		<div className={className ?? 'flex flex-nowrap items-center gap-2'}>
 			<Ariakit.MenuProvider store={menu}>
-				<Ariakit.MenuButton
-					className={buttonClassName}
-					render={buttonClassName ? undefined : <Button size="md" square={iconOnly} />}
-					disabled={disabled || isLoading}
-					// The menu hands focus back here as the export starts, so the trigger stays focusable while it runs.
-					accessibleWhenDisabled={isLoading}
-					title="Export table as image"
-					aria-label="Export table as image"
+				<Tooltip
+					content={iconOnly ? 'Export table as image' : null}
+					render={
+						<Ariakit.MenuButton
+							render={trigger ?? <Button size="md" square={iconOnly} />}
+							disabled={disabled || isLoading}
+							// The menu hands focus back here as the export starts, so the trigger stays focusable while it runs.
+							accessibleWhenDisabled={isLoading}
+							aria-label="Export table as image"
+						/>
+					}
 				>
 					{isLoading ? (
 						<LoadingSpinner size={14} />
@@ -163,7 +167,7 @@ export function TableImageButtons({
 						(triggerContent ?? <Icon name="download-paper" height={14} width={14} />)
 					)}
 					{triggerContent || iconOnly ? null : <span>{triggerLabel ?? '.png'}</span>}
-				</Ariakit.MenuButton>
+				</Tooltip>
 
 				<MenuSurface variant="actions" aria-label="Export table" gutter={8}>
 					{prepareCsv ? (

@@ -277,14 +277,9 @@ function TopicExplorer({ onSelect }: { onSelect: (query: string) => void }) {
 			<p className="label-sm text-secondary">Explore by topic</p>
 			<div className="flex scrollbar-none touch-pan-x gap-1.5 overflow-x-auto [-webkit-overflow-scrolling:touch]">
 				{RESEARCH_TOPICS.map((topic) => (
-					<button
-						key={topic.label}
-						type="button"
-						onClick={() => onSelect(topic.query)}
-						className="hover-wash shrink-0 rounded-full bg-brand-faint px-2.5 py-1.5 label-sm text-link-on-tint"
-					>
+					<Button key={topic.label} size="sm" onClick={() => onSelect(topic.query)}>
 						{topic.label}
-					</button>
+					</Button>
 				))}
 			</div>
 		</div>

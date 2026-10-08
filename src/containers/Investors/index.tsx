@@ -3,8 +3,10 @@ import { useQueries } from '@tanstack/react-query'
 import { Fragment, Suspense, useCallback, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
@@ -77,15 +79,23 @@ function InvestorsShell({
 					{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
 
 					<div className="sticky top-0 z-10 flex items-center gap-3 bg-pro-app-bg px-4 py-3 md:hidden">
-						<button
-							type="button"
-							onClick={() => setSidebarOpen(true)}
-							className="flex size-8 items-center justify-center rounded-md text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary"
+						<Tooltip
+							content="Open dashboards menu"
+							render={
+								<Button
+									variant="ghost"
+									size="md"
+									square
+									onClick={() => setSidebarOpen(true)}
+									aria-label="Open dashboards menu"
+									aria-expanded={sidebarOpen}
+								/>
+							}
 						>
-							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<svg className="size-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 								<path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 							</svg>
-						</button>
+						</Tooltip>
 						<Logo size="sm" href="/" />
 					</div>
 
@@ -107,34 +117,37 @@ function InvestorsShell({
 
 								return (
 									<div key={project.id}>
-										<button
-											type="button"
-											aria-expanded={isSingleProtocol ? undefined : isExpanded}
-											onClick={() => {
-												if (isSingleProtocol) return
-												if (isActive) {
-													setTabsOpen(!tabsOpen)
-												} else {
-													scrollToPageTop()
-													setActiveProject(project.id)
-													setTabsOpen(true)
-													setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
-													closeSidebar()
-												}
-											}}
-											className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-semibold tracking-wide transition-colors ${
-												isActive
-													? 'text-sl-accent'
-													: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-											}`}
-										>
-											{!isSingleProtocol && (
+										{isSingleProtocol ? (
+											// One protocol has nothing to switch or collapse, so its name is a label, not a control.
+											<div className={`px-3 py-2 label-md ${isActive ? 'text-sl-accent' : 'text-pro-text-secondary'}`}>
+												{project.name}
+											</div>
+										) : (
+											<button
+												type="button"
+												aria-expanded={isExpanded}
+												onClick={() => {
+													if (isActive) {
+														setTabsOpen(!tabsOpen)
+													} else {
+														scrollToPageTop()
+														setActiveProject(project.id)
+														setTabsOpen(true)
+														setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
+														closeSidebar()
+													}
+												}}
+												className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left label-md transition-colors ${
+													isActive
+														? 'text-sl-accent'
+														: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
+												}`}
+											>
 												<svg
-													width="12"
-													height="12"
 													viewBox="0 0 12 12"
 													fill="none"
-													className={`shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+													aria-hidden="true"
+													className={`size-3.5 shrink-0 text-pro-text-tertiary transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
 												>
 													<path
 														d="M4.5 2.5L8 6L4.5 9.5"
@@ -144,9 +157,9 @@ function InvestorsShell({
 														strokeLinejoin="round"
 													/>
 												</svg>
-											)}
-											{project.name}
-										</button>
+												{project.name}
+											</button>
+										)}
 
 										{isExpanded && (
 											<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
@@ -160,7 +173,7 @@ function InvestorsShell({
 															<Fragment key={tab.id}>
 																{isNewGroup && !isSoloGroup && (
 																	<div
-																		className={`px-3 text-[10px] font-bold tracking-[0.15em] text-pro-text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}
+																		className={`px-3 label-xs text-pro-text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}
 																	>
 																		{tab.group}
 																	</div>
@@ -168,7 +181,7 @@ function InvestorsShell({
 																<Tab
 																	value={tab.id}
 																	onClick={closeSidebar}
-																	className={`w-full rounded-md px-3 py-1.5 text-left text-xs tracking-wide text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary data-[active=true]:bg-sl-accent-muted data-[active=true]:text-sl-accent ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'}`}
+																	className={`w-full rounded-md px-3 py-1.5 text-left label-sm text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary data-[active=true]:bg-sl-accent-muted data-[active=true]:text-sl-accent ${isSoloGroup && idx !== 0 ? 'mt-3' : ''}`}
 																>
 																	<TabLabel tab={tab} />
 																</Tab>
@@ -178,18 +191,22 @@ function InvestorsShell({
 												</TabList>
 												{tabs.map((tab) =>
 													tab.externalHref ? (
-														<a
+														<Tooltip
 															key={tab.id}
-															href={tab.externalHref}
-															target="_blank"
-															rel="noopener noreferrer"
-															title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
-															onClick={closeSidebar}
-															className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left text-xs font-medium tracking-wide text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+															content={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
+															render={
+																<a
+																	href={tab.externalHref}
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	onClick={closeSidebar}
+																	className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left label-sm text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+																/>
+															}
 														>
 															<span className="flex-1">{tab.label}</span>
-															<Icon name="external-link" className="size-3 shrink-0 opacity-70" />
-														</a>
+															<Icon name="external-link" className="size-3.5 shrink-0" />
+														</Tooltip>
 													) : null
 												)}
 											</div>
@@ -200,10 +217,17 @@ function InvestorsShell({
 						</nav>
 
 						<div className="mt-auto flex items-center justify-end pt-4">
-							<button
-								type="button"
-								onClick={toggleTheme}
-								className="flex size-8 items-center justify-center rounded-lg text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+							<Tooltip
+								content={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+								render={
+									<Button
+										variant="ghost"
+										size="md"
+										square
+										onClick={toggleTheme}
+										aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+									/>
+								}
 							>
 								{isDark ? (
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -226,7 +250,7 @@ function InvestorsShell({
 										/>
 									</svg>
 								)}
-							</button>
+							</Tooltip>
 						</div>
 					</aside>
 

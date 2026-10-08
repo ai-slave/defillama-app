@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import {
 	type Dispatch,
@@ -51,6 +52,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const noop = () => {}
@@ -714,49 +717,55 @@ function ActiveSingleChart({
 				/>
 				{addToDashboardButton}
 				{canEdit ? (
-					<Button
-						type="button"
-						size="md"
-						square
-						onClick={handleOpenStyleEditor}
-						title="Edit chart style"
-						aria-label="Edit chart style"
+					<Tooltip
+						content="Edit chart style"
+						render={
+							<Button type="button" size="md" square onClick={handleOpenStyleEditor} aria-label="Edit chart style" />
+						}
 					>
 						<Icon name="settings" height={16} width={16} />
-					</Button>
+					</Tooltip>
 				) : null}
 				{openArticleExport && messageId && !readOnly ? (
 					<>
-						<Button
-							type="button"
-							size="md"
-							square
-							onClick={() => void handleSaveToLibrary()}
-							pendingLabel={savingToLibrary ? 'Saving…' : null}
-							title="Save chart (frozen data)"
-							aria-label="Save chart (frozen data)"
+						<Tooltip
+							content="Save chart (frozen data)"
+							render={
+								<Button
+									type="button"
+									size="md"
+									square
+									onClick={() => void handleSaveToLibrary()}
+									pendingLabel={savingToLibrary ? 'Saving…' : null}
+									aria-label="Save chart (frozen data)"
+								/>
+							}
 						>
 							<Icon name="bookmark" height={16} width={16} />
-						</Button>
-						<Button
-							type="button"
-							size="md"
-							square
-							onClick={() => {
-								const request: ArticleExportRequest = {
-									kind: 'chart',
-									chartId: baseConfig.id,
-									charts: { [baseConfig.id]: { config: baseConfig, data } },
-									messageId
-								}
-								if (sessionId !== undefined) request.sessionId = sessionId
-								openArticleExport(request)
-							}}
-							title="Add to research article"
-							aria-label="Add to research article"
+						</Tooltip>
+						<Tooltip
+							content="Add to research article"
+							render={
+								<Button
+									type="button"
+									size="md"
+									square
+									onClick={() => {
+										const request: ArticleExportRequest = {
+											kind: 'chart',
+											chartId: baseConfig.id,
+											charts: { [baseConfig.id]: { config: baseConfig, data } },
+											messageId
+										}
+										if (sessionId !== undefined) request.sessionId = sessionId
+										openArticleExport(request)
+									}}
+									aria-label="Add to research article"
+								/>
+							}
 						>
 							<Icon name="file-plus" height={16} width={16} />
-						</Button>
+						</Tooltip>
 					</>
 				) : null}
 			</ChartControls>
@@ -891,47 +900,51 @@ function ChartRendererImpl({
 	}
 
 	const hasMultipleCharts = charts.length > 1
+	const renderChart = (chart: (typeof charts)[number]) => {
+		// Backend sessions before the keyed chart-data transition (commit a6035b1)
+		// stored one flat row array. PR #2666 kept this branch load-bearing.
+		const data = Array.isArray(chartData) ? chartData : chartData?.[chart.datasetName || chart.id] || []
+		return (
+			<SingleChart
+				key={chart.id}
+				config={chart}
+				data={data}
+				isActive={!hasMultipleCharts || activeChartId === chart.id}
+				title={chart.title}
+				sessionId={sessionId}
+				messageId={messageId}
+				readOnly={readOnly}
+				height={height}
+				artifactRef={artifactRefs?.[chart.id]}
+				onLocalStyleSave={onLocalStyleSave}
+			/>
+		)
+	}
 
 	return (
 		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface pt-2">
 			{hasMultipleCharts ? (
-				<div className="-mt-2 flex border-b border-subtle">
+				<Tabs value={activeChartId!} onValueChange={setSelectedChartId} values={charts.map((chart) => chart.id)}>
+					<Ariakit.TabList aria-label="Charts" className="-mt-2 flex border-b border-subtle">
+						{charts.map((chart) => (
+							<Tab
+								key={chart.id}
+								value={chart.id}
+								className="border-b-2 border-transparent px-2 py-1.5 label-sm text-secondary not-data-[active=true]:hover:text-primary data-[active=true]:border-brand data-[active=true]:text-link"
+							>
+								{chart.title}
+							</Tab>
+						))}
+					</Ariakit.TabList>
 					{charts.map((chart) => (
-						<button
-							type="button"
-							key={`toggle-${chart.id}`}
-							onClick={() => setSelectedChartId(chart.id)}
-							className={`border-b-2 px-2 py-1.5 label-sm ${
-								activeChartId === chart.id
-									? 'border-brand text-link'
-									: 'border-transparent text-secondary not-disabled:not-aria-disabled:hover:text-primary'
-							}`}
-						>
-							{chart.title}
-						</button>
+						<TabPanel key={chart.id} value={chart.id}>
+							{renderChart(chart)}
+						</TabPanel>
 					))}
-				</div>
-			) : null}
-			{charts.map((chart) => {
-				// Backend sessions before the keyed chart-data transition (commit a6035b1)
-				// stored one flat row array. PR #2666 kept this branch load-bearing.
-				const data = Array.isArray(chartData) ? chartData : chartData?.[chart.datasetName || chart.id] || []
-				return (
-					<SingleChart
-						key={chart.id}
-						config={chart}
-						data={data}
-						isActive={!hasMultipleCharts || activeChartId === chart.id}
-						title={chart.title}
-						sessionId={sessionId}
-						messageId={messageId}
-						readOnly={readOnly}
-						height={height}
-						artifactRef={artifactRefs?.[chart.id]}
-						onLocalStyleSave={onLocalStyleSave}
-					/>
-				)
-			})}
+				</Tabs>
+			) : (
+				charts.map(renderChart)
+			)}
 		</div>
 	)
 }

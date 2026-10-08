@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { ValueBadge, valueBadgeClass } from './feePresentation'
 import {
 	EXCHANGE_SEGMENT_LABELS,
 	type ExchangeEeaOrderbookOwnership,
@@ -12,21 +13,14 @@ import {
 /* KYC requirement chips give each requirement type its own stock hue (ID sky, selfie violet, proof of address amber,
    income profile teal, knowledge quiz indigo), an exception the `builtin-palette-color` baseline keeps. The hue marks
    a category, not a state; the icon and tooltip carry the meaning. Keep the palette in KYC_REQUIREMENT_BY_TOKEN and
-   never use it for status: compliance status badges use the data-up, warning and data-down tones in TONE_CLASS. */
+   never use it for status: compliance status badges use the data-up, warning and data-down tones of ValueBadge. */
 
-type ComplianceTone = 'positive' | 'caution' | 'negative' | 'neutral'
+type ComplianceTone = 'positive' | 'caution' | 'negative'
 
 interface StatusPresentation {
 	label: string
 	tone: ComplianceTone
 	icon: ComponentProps<typeof Icon>['name']
-}
-
-const TONE_CLASS: Record<ComplianceTone, string> = {
-	positive: 'border-data-up bg-data-up/10 text-data-up',
-	caution: 'border-warning bg-warning/10 text-warning',
-	negative: 'border-data-down bg-data-down/10 text-data-down',
-	neutral: 'border-subtle bg-surface text-secondary'
 }
 
 const EU_STATUS_PRESENTATION: Record<ExchangeEuStatus, StatusPresentation & { description: string }> = {
@@ -161,14 +155,12 @@ export function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | n
 	].join(' ')
 }
 
-function StatusBadge({ presentation }: { presentation: StatusPresentation }) {
+function StatusLabel({ presentation }: { presentation: StatusPresentation }) {
 	return (
-		<span
-			className={`inline-flex h-[18px] items-center gap-1 rounded-sm border px-1.5 label-sm ${TONE_CLASS[presentation.tone]}`}
-		>
-			<Icon name={presentation.icon} height={13} width={13} aria-hidden="true" />
+		<>
+			<Icon name={presentation.icon} className="size-3.5" aria-hidden="true" />
 			{presentation.label}
-		</span>
+		</>
 	)
 }
 
@@ -185,7 +177,9 @@ export function EuAvailabilityValue({
 	const detail = [presentation.description, orderbook].filter(Boolean).join('\n')
 	return (
 		<Tooltip content={detail}>
-			<StatusBadge presentation={presentation} />
+			<span className={valueBadgeClass(presentation.tone)}>
+				<StatusLabel presentation={presentation} />
+			</span>
 		</Tooltip>
 	)
 }
@@ -204,10 +198,9 @@ export function MicaLicenseValue({
 	if (presentation === null) return <span className="text-tertiary">–</span>
 
 	return (
-		<Hovercard
-			placement="left-start"
-			className="rounded-sm"
-			render={<button type="button" aria-label={`${presentation.label} MiCA details for ${name}`} />}
+		<ValueBadge
+			tone={presentation.tone}
+			ariaLabel={`${presentation.label} MiCA details for ${name}`}
 			contentClassName="w-72 p-3 text-primary"
 			content={
 				<dl className="flex flex-col gap-1.5 body-sm">
@@ -236,21 +229,29 @@ export function MicaLicenseValue({
 				</dl>
 			}
 		>
-			<StatusBadge presentation={presentation} />
-		</Hovercard>
+			<StatusLabel presentation={presentation} />
+		</ValueBadge>
 	)
 }
+
+/** A 16px icon in a 22px box: the height of the ValueBadge cells beside it, so KYC rows line up with the rest. */
+const KYC_CHIP_BOX = 'inline-flex items-center justify-center rounded-md p-0.5'
 
 function KycSummaryHovercard({ summary, name }: { summary: string; name: string }) {
 	return (
 		<Hovercard
 			placement="left-start"
-			className="size-7 justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
-			render={<button type="button" aria-label={`Full KYC requirements for ${name}`} />}
+			render={
+				<button
+					type="button"
+					aria-label={`Full KYC requirements for ${name}`}
+					className={`hover-wash border border-medium text-secondary ${KYC_CHIP_BOX}`}
+				/>
+			}
 			contentClassName="w-96 p-3 leading-snug text-primary"
 			content={<span className="block break-words whitespace-pre-wrap">{summary}</span>}
 		>
-			<Icon name="file-text" height={14} width={14} />
+			<Icon name="file-text" className="size-4" />
 		</Hovercard>
 	)
 }
@@ -274,11 +275,8 @@ export function KycRequirementValue({ name, kyc }: { name: string; kyc: KycValue
 		<span className="inline-flex items-center gap-1.5" aria-label={summary}>
 			{requirements.map((requirement) => (
 				<Tooltip key={requirement.key} content={requirement.label}>
-					<span
-						className={`inline-flex size-7 items-center justify-center rounded-md border ${requirement.className}`}
-						aria-label={requirement.label}
-					>
-						<Icon name={requirement.icon} height={15} width={15} />
+					<span className={`border ${KYC_CHIP_BOX} ${requirement.className}`} aria-label={requirement.label}>
+						<Icon name={requirement.icon} className="size-4" />
 					</span>
 				</Tooltip>
 			))}

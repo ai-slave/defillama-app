@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useRef, useState, type ReactNode, type Ref } from 'react'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { useSlackIntegrationLink } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
@@ -13,35 +12,25 @@ type Props = {
 	glyph?: ReactNode
 }
 
-// Slack's own button colour is a third-party brand mark; it takes Button md geometry and the shared
-// disabled idiom so it lines up with every other control in the row. Disabled is aria-disabled, so a pressed
-// button keeps focus while the link starts.
-const SLACK_BUTTON =
-	'inline-flex min-h-8 shrink-0 items-center justify-center gap-1 rounded-lg bg-ai-slack px-3 py-1.5 label-sm whitespace-nowrap text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-slack-deep aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
-
+// Slack's aubergine is a third-party brand mark: `.ai-slack-accent` re-points Button primary to it.
 function ConnectButton({
 	ref,
 	onClick,
-	disabled,
+	pendingLabel,
 	label
 }: {
 	ref?: Ref<HTMLButtonElement>
 	onClick: () => void
-	disabled?: boolean
+	pendingLabel: string | null
 	label: string
 }) {
 	return (
-		<Ariakit.Button
-			ref={ref}
-			type="button"
-			onClick={onClick}
-			accessibleWhenDisabled
-			disabled={disabled}
-			className={SLACK_BUTTON}
-		>
-			<SlackLogo />
-			{label}
-		</Ariakit.Button>
+		<span className="ai-slack-accent contents">
+			<Button ref={ref} variant="primary" size="md" onClick={onClick} pendingLabel={pendingLabel}>
+				<SlackLogo />
+				{label}
+			</Button>
+		</span>
 	)
 }
 
@@ -97,13 +86,13 @@ function WorkspaceRow({
 					<p className="m-0 mt-0.5 body-sm text-warning">{workspace.last_error}</p>
 				)}
 			</div>
-			<div className="flex shrink-0 gap-2">
+			<div className="ai-slack-accent flex shrink-0 gap-2">
 				{workspace.revoked || needsReconnect ? (
-					<button type="button" onClick={onReconnect} className={SLACK_BUTTON}>
+					<Button variant="primary" size="md" onClick={onReconnect}>
 						Reconnect
-					</button>
+					</Button>
 				) : (
-					<Button type="button" size="md" onClick={onDisconnect}>
+					<Button size="md" onClick={onDisconnect}>
 						Disconnect
 					</Button>
 				)}
@@ -142,14 +131,10 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						// Cancelling a pending link removes the block that held focus.
 						ref={takeLostFocus}
 						onClick={() => link.connect()}
-						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
-						label={
-							link.state.status === 'starting'
-								? 'Opening…'
-								: link.state.status === 'loading'
-									? 'Loading…'
-									: 'Add to Slack'
+						pendingLabel={
+							link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : null
 						}
+						label="Add to Slack"
 					/>
 				)}
 			</div>
@@ -160,18 +145,16 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						Waiting for confirmation in Slack. Once you finish in Slack, come back to this page to see your workspace
 						here.
 					</div>
-					<div className="mt-3 flex flex-wrap gap-2">
-						<Ariakit.Button
-							type="button"
-							onClick={() => link.connect()}
-							accessibleWhenDisabled
-							disabled={link.isStarting}
-							className={SLACK_BUTTON}
-						>
-							{link.isStarting ? 'Opening…' : 'Start over'}
-						</Ariakit.Button>
+					<div className="ai-slack-accent mt-3 flex flex-wrap gap-2">
 						<Button
-							type="button"
+							variant="primary"
+							size="md"
+							onClick={() => link.connect()}
+							pendingLabel={link.isStarting ? 'Opening…' : null}
+						>
+							Start over
+						</Button>
+						<Button
 							size="md"
 							pendingLabel={link.isCancelingPending ? 'Canceling…' : null}
 							onClick={() => link.cancelPending()}
@@ -198,8 +181,8 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 					<div className="flex justify-end">
 						<ConnectButton
 							onClick={() => link.connect()}
-							disabled={link.isStarting}
-							label={link.isStarting ? 'Opening…' : 'Add another workspace'}
+							pendingLabel={link.isStarting ? 'Opening…' : null}
+							label="Add another workspace"
 						/>
 					</div>
 				</div>

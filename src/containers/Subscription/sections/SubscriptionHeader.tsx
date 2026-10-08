@@ -3,17 +3,11 @@ import { BasicLink } from '~/components/Link'
 import { ThemeSwitch } from '~/components/Nav/ThemeSwitch'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Skeleton } from '~/ui/Skeleton'
 
-function AuthActions({
-	skeletonClassName,
-	signInClassName,
-	accountClassName
-}: {
-	skeletonClassName: string
-	signInClassName: string
-	accountClassName: string
-}) {
+function AuthActions({ accountClassName }: { accountClassName: string }) {
 	const isClient = useIsClient()
 	const { isAuthenticated, loaders } = useAuthContext()
 
@@ -22,22 +16,20 @@ function AuthActions({
 	return (
 		<>
 			{!isClient || loaders.userLoading ? (
-				<div
-					className={`animate-pulse rounded-lg bg-sub-border-slate-100 dark:bg-sub-border-strong ${skeletonClassName}`}
-				/>
+				<Skeleton className="h-8 w-16 rounded-lg" />
 			) : isAuthenticated ? (
-				<BasicLink href="/account" className={`flex items-center gap-1.5 font-medium ${accountClassName}`}>
+				<BasicLink href="/account" className={`flex items-center gap-1.5 text-sub-text-primary ${accountClassName}`}>
 					<img src="/assets/account_avatar.png" alt="" className="size-6 rounded-full" />
 					<span>My Account</span>
-					<Icon name="chevron-right" height={16} width={16} />
+					<Icon name="chevron-right" className="size-3.5" />
 				</BasicLink>
 			) : null}
 			{isClient ? (
 				<SignInModal
 					trigger={
-						<button type="button" className={signInClassName}>
-							Sign-in
-						</button>
+						<Button variant="primary" size="md">
+							Sign in
+						</Button>
 					}
 				/>
 			) : null}
@@ -55,11 +47,7 @@ export function SubscriptionHeader() {
 				</BasicLink>
 				<div className="flex items-center gap-4">
 					<ThemeSwitch variant="pill" />
-					<AuthActions
-						skeletonClassName="h-10 w-[88px]"
-						signInClassName="h-10 rounded-lg bg-sub-brand-primary px-4 text-sm leading-[17px] font-medium text-on-brand"
-						accountClassName="text-sm text-sub-text-primary"
-					/>
+					<AuthActions accountClassName="label-md" />
 				</div>
 			</header>
 
@@ -71,11 +59,7 @@ export function SubscriptionHeader() {
 				</BasicLink>
 				<div className="flex items-center gap-5">
 					<ThemeSwitch variant="pill" size="sm" />
-					<AuthActions
-						skeletonClassName="h-8 w-[72px]"
-						signInClassName="h-8 rounded-lg bg-sub-brand-primary px-3 text-xs text-on-brand"
-						accountClassName="text-xs text-sub-text-primary"
-					/>
+					<AuthActions accountClassName="label-sm" />
 				</div>
 			</header>
 		</>

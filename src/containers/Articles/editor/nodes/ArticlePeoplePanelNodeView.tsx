@@ -1,4 +1,5 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
+import { Button } from '~/ui/Button'
 import { ArticlePeoplePanelBlock } from '../../renderer/ArticlePeoplePanelBlock'
 import { validateArticlePeoplePanel, type ArticlePeoplePanelConfig } from '../peoplePanel'
 import { useArticleEditable } from '../useArticleEditable'
@@ -19,19 +20,18 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 		<NodeViewWrapper
 			data-people-panel-wrapper
 			className={`group/people not-prose relative my-6 rounded-md border bg-surface p-5 transition-colors ${
-				selected ? 'border-link' : 'border-medium'
+				selected ? 'border-brand' : 'border-medium'
 			}`}
 		>
 			{config ? (
 				<ArticlePeoplePanelBlock config={config} compact />
 			) : isEditable ? (
-				<button
-					type="button"
-					onClick={handleEdit}
-					className="w-full rounded-md py-6 text-center text-sm text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary"
-				>
-					Empty people panel — click to configure
-				</button>
+				<div className="grid justify-items-center gap-2 py-6">
+					<p className="text-sm text-tertiary">Empty people panel</p>
+					<Button variant="secondary" size="sm" onClick={handleEdit}>
+						Configure
+					</Button>
+				</div>
 			) : (
 				<p className="py-6 text-center text-sm text-tertiary">Empty people panel</p>
 			)}
@@ -43,23 +43,19 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 					onMouseDown={(e) => e.stopPropagation()}
 					className={`absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-medium bg-surface p-1 shadow-md ${selected ? '' : 'opacity-0 group-focus-within/people:opacity-100 group-hover/people:opacity-100 pointer-coarse:opacity-100'}`}
 				>
-					<button
-						type="button"
-						onClick={handleEdit}
-						className="rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
-					>
+					<Button variant="ghost" size="sm" onClick={handleEdit}>
 						Edit
-					</button>
-					<button
-						type="button"
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
 						onClick={() => {
 							deleteNode()
 							editor.commands.focus()
 						}}
-						className="rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-error/10 hover:text-error"
 					>
 						Remove
-					</button>
+					</Button>
 				</div>
 			) : null}
 		</NodeViewWrapper>

@@ -481,21 +481,12 @@ export default function ResearchSearch() {
 	return (
 		<div className="mx-auto grid w-full max-w-6xl gap-7 px-3 pt-4 pb-20 sm:px-6 lg:px-8">
 			<header className="grid gap-4 pr-16 lg:pr-0">
-				<div className="flex items-baseline justify-between gap-6">
-					<span className="font-jetbrains text-[10px] tracking-[0.22em] text-research-accent-strong uppercase">
-						Research / Archive
-					</span>
-					<button
-						type="button"
-						onClick={clearSearchParams}
-						className="shrink-0 font-jetbrains text-[10px] tracking-[0.22em] text-research-heading/50 uppercase transition-colors hover:text-research-accent-strong dark:text-on-brand/50 dark:hover:text-research-ink"
-						aria-label="Close search"
-					>
-						<span className="hidden sm:inline">← Back</span>
-						<span className="sm:hidden" aria-hidden>
-							×
-						</span>
-					</button>
+				<div className="flex items-baseline justify-between gap-6 font-jetbrains text-[10px] tracking-[0.22em] uppercase">
+					<span className="text-research-accent-strong">Research / Archive</span>
+					<Button variant="link" onClick={clearSearchParams} className="shrink-0">
+						<span aria-hidden>←</span>
+						Back
+					</Button>
 				</div>
 
 				<ResultsTitle query={query} tag={tag} clientName={clientName} />

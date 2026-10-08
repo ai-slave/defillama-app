@@ -1,6 +1,7 @@
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { ComposerTray } from './ComposerTray'
 
@@ -37,16 +38,21 @@ export function ContextWarningBanner({ warning, onStartNewChat, onDismiss }: Con
 					<Button type="button" size="sm" onClick={handleStartNewChat}>
 						Start new chat
 					</Button>
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						square
-						onClick={handleDismiss}
-						aria-label="Dismiss long-thread warning"
+					<Tooltip
+						content="Dismiss"
+						render={
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								square
+								onClick={handleDismiss}
+								aria-label="Dismiss long-thread warning"
+							/>
+						}
 					>
 						<Icon name="x" height={14} width={14} />
-					</Button>
+					</Tooltip>
 				</>
 			}
 		>

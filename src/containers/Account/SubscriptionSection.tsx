@@ -8,6 +8,7 @@ import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
 import { ApiAccessCard } from './ApiAccessCard'
@@ -105,13 +106,9 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 						Switch to yearly and get 12 months of {subscriptionLabel} for the price of 10.
 					</p>
 				</div>
-				<button
-					type="button"
-					onClick={onUpgrade}
-					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 label-sm text-on-brand"
-				>
+				<Button variant="primary" size="md" onClick={onUpgrade} className="w-full">
 					{buttonLabel}
-				</button>
+				</Button>
 			</div>
 		</div>
 	)
@@ -129,12 +126,9 @@ function FreeUpgradeBanner() {
 						Upgrade to Pro for advanced analytics tools, or get the API plan to power your own applications.
 					</p>
 				</div>
-				<BasicLink
-					href="/subscription"
-					className="flex h-8 w-fit items-center rounded-lg bg-sub-brand-primary px-3 label-sm text-on-brand"
-				>
+				<Button as={BasicLink} variant="primary" size="md" href="/subscription" className="w-fit">
 					View & compare plans
-				</BasicLink>
+				</Button>
 			</div>
 
 			<div
@@ -186,7 +180,7 @@ function PastDueSubscriptionCard({
 					className="mt-0.5 shrink-0 text-sub-warning-text-light dark:text-sub-warning-text-dark"
 				/>
 				<div className="flex flex-col gap-1">
-					<h3 className="text-base font-semibold text-sub-warning-text-light dark:text-sub-warning-text-dark">
+					<h3 className="title-lg text-sub-warning-text-light dark:text-sub-warning-text-dark">
 						{planName} subscription past due
 					</h3>
 					<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
@@ -204,17 +198,13 @@ function PastDueSubscriptionCard({
 						pendingLabel={isUpdateLoading ? 'Opening Stripe…' : null}
 					>
 						Update payment on Stripe
-						<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+						<Icon name="circle-external-link" className="size-3.5 shrink-0" />
 					</Button>
 				)}
 				{onCancel && (
-					<button
-						type="button"
-						onClick={onCancel}
-						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 label-md whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
-					>
+					<Button variant="secondary" size="md" onClick={onCancel}>
 						Cancel subscription
-					</button>
+					</Button>
 				)}
 			</div>
 		</div>
@@ -318,16 +308,17 @@ export function SubscriptionSection() {
 
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
-		<p className="body-sm text-sub-text-muted">
-			Couldn't check payment status.{' '}
-			<button
-				type="button"
+		<p className="flex flex-wrap items-center gap-2 body-sm text-sub-text-muted">
+			Couldn't check payment status.
+			<Button
+				variant="secondary"
+				size="sm"
+				ref={focusRegionOnLeave}
 				onClick={() => void refetchPastDueSubscription()}
-				aria-busy={isPastDueRetrying || undefined}
-				className="underline hover:text-sub-brand-primary"
+				pendingLabel={isPastDueRetrying ? 'Retrying…' : null}
 			>
-				{isPastDueRetrying ? 'Retrying…' : 'Retry'}
-			</button>
+				Try again
+			</Button>
 		</p>
 	) : null
 

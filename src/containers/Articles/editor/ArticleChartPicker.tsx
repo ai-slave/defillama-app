@@ -19,11 +19,13 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
@@ -457,17 +459,11 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											onChange={() => toggleEntity(entity)}
 											disabled={limitReached}
 											checked={checked}
-											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-40 ${
-												checked ? 'bg-research-tint text-link' : 'text-primary hover:bg-research-tint-hover'
+											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+												checked ? 'bg-brand-muted text-link-on-tint' : 'text-primary hover:bg-hover-row'
 											}`}
 										>
-											<span
-												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-													checked ? 'border-link bg-link' : 'border-medium bg-surface group-hover:border-tertiary'
-												}`}
-											>
-												{checked ? <Icon name="check" className="size-2.5 text-on-brand" /> : null}
-											</span>
+											<CheckboxIndicator checked={checked} />
 											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface">
 												<img src={entityLogo(entity)} alt="" className="size-full object-cover" />
 											</span>
@@ -531,15 +527,20 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 														triggerProps={{ 'aria-label': `Chart type for ${s.name}` }}
 													/>
 												</div>
-												<Button
-													variant="ghost"
-													size="md"
-													square
-													onClick={() => removeSeries(id)}
-													aria-label={`Remove ${s.name} ${labelFor(s.chartType)}`}
+												<Tooltip
+													content={`Remove ${s.name} ${labelFor(s.chartType)}`}
+													render={
+														<Button
+															variant="ghost"
+															size="md"
+															square
+															onClick={() => removeSeries(id)}
+															aria-label={`Remove ${s.name} ${labelFor(s.chartType)}`}
+														/>
+													}
 												>
 													<Icon name="x" className="size-4" aria-hidden="true" />
-												</Button>
+												</Tooltip>
 											</li>
 										)
 									})}
@@ -651,15 +652,20 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													// A phone row is too narrow for the date and the label side by side, so the label takes its own line.
 													className="max-sm:col-[2/-1] max-sm:row-start-2"
 												/>
-												<Button
-													variant="ghost"
-													size="md"
-													square
-													onClick={() => removeAnnotation(i)}
-													aria-label={`Remove annotation ${i + 1}`}
+												<Tooltip
+													content={`Remove annotation ${i + 1}`}
+													render={
+														<Button
+															variant="ghost"
+															size="md"
+															square
+															onClick={() => removeAnnotation(i)}
+															aria-label={`Remove annotation ${i + 1}`}
+														/>
+													}
 												>
 													<Icon name="x" className="size-4" aria-hidden="true" />
-												</Button>
+												</Tooltip>
 											</li>
 										))}
 									</ul>

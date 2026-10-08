@@ -6,6 +6,7 @@ import {
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { ChartPanel } from '~/ui/ChartPanel'
+import { keepFocus } from '~/ui/focus'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -168,8 +169,15 @@ export function ExitLedger({
 					{folded > 0 ? (
 						<button
 							type="button"
-							onClick={() => setExpanded(true)}
-							className="border-t border-subtle px-3 py-2 text-left body-sm text-link hover:underline focus-visible:focus-ring"
+							// The button leaves as the older rows appear: the first of them takes focus.
+							onClick={(event) => {
+								const table = event.currentTarget.previousElementSibling
+								keepFocus(
+									() => setExpanded(true),
+									() => table?.querySelectorAll<HTMLElement>('tbody tr')[VISIBLE_INCIDENTS]
+								)
+							}}
+							className="border-t border-subtle px-3 py-2 text-left body-sm text-link hover:underline"
 						>
 							{`Show ${count(folded)} older ${folded === 1 ? 'episode' : 'episodes'}`}
 						</button>
@@ -218,7 +226,7 @@ function CoverageNote({ gaps, days }: { gaps: Array<ExitIncident>; days: number 
 function IncidentRow({ incident }: { incident: ExitIncident }) {
 	const share = formatPercent(incidentWithdrawableShare(incident), RECEIPT_SHARE)
 	return (
-		<tr className="border-b border-subtle last:border-b-0">
+		<tr tabIndex={-1} className="border-b border-subtle last:border-b-0">
 			<TokenPageTableBodyCell>
 				<span className="text-primary">{day(incident.from)}</span>
 			</TokenPageTableBodyCell>

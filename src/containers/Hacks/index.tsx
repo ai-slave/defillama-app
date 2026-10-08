@@ -297,7 +297,7 @@ const hacksColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return (
-				<Tooltip content={value} className="inline text-ellipsis">
+				<Tooltip content={value} render={<span />}>
 					{value}
 				</Tooltip>
 			)
@@ -312,7 +312,7 @@ const hacksColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return (
-				<Tooltip content={value} className="inline text-ellipsis">
+				<Tooltip content={value} render={<span />}>
 					{value}
 				</Tooltip>
 			)

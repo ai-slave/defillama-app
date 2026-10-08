@@ -1,7 +1,9 @@
 import { useId } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
-import { ProChip, proInputStyles } from '../../ui'
+import { proInputStyles } from '../../ui'
 import { ChartCreationModeToggle } from './ChartCreationModeToggle'
 
 /** The combined card's optional name, asked only while the series combine into one chart. */
@@ -31,24 +33,33 @@ export function ComposerChips({
 		const chartType = getProDashboardChartTypeConfig(item.type)
 		const label = `${item.subjectType === 'protocol' ? item.protocol : item.chain} - ${chartType?.title || item.type}`
 		return (
-			<ProChip key={item.id} className="shrink-0 gap-1.5">
-				<span className="whitespace-nowrap text-pro-text-primary">{label}</span>
+			<span
+				key={item.id}
+				className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-medium py-0.5 pr-0.5 pl-2.5 label-sm text-primary"
+			>
+				<span className="whitespace-nowrap">{label}</span>
 				<input
 					type="color"
 					value={item.color || chartType?.color || '#3e61cc'}
 					onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
-					className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
+					className="size-5 cursor-pointer rounded-sm border border-medium bg-transparent p-0"
 					aria-label={`Color for ${label}`}
 				/>
-				<button
-					type="button"
-					onClick={() => onRemoveFromComposer(item.id)}
-					className="text-pro-text-tertiary transition-colors hover:text-error"
-					aria-label={`Remove ${label}`}
+				<Tooltip
+					content={`Remove ${label}`}
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={() => onRemoveFromComposer(item.id)}
+							aria-label={`Remove ${label}`}
+						/>
+					}
 				>
-					<Icon name="x" height={12} width={12} />
-				</button>
-			</ProChip>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
+			</span>
 		)
 	})
 }

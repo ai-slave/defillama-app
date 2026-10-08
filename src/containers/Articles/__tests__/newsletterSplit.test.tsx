@@ -50,7 +50,7 @@ describe('newsletter and media-kit split', () => {
 	test('starts the newsletters page with both newsletters selected and submit disabled until an email', () => {
 		const root = renderToDom(<NewslettersPage />)
 
-		const pressed = [...root.querySelectorAll('button[aria-pressed]')].map((button) =>
+		const pressed = [...root.querySelectorAll('[aria-label="Newsletters"] button[aria-pressed]')].map((button) =>
 			button.getAttribute('aria-pressed')
 		)
 		expect(pressed).toEqual(['true', 'true'])

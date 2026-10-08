@@ -136,7 +136,7 @@ export function Metrics({
 				autoFocus={!canDismiss}
 				type="text"
 				inputMode="search"
-				placeholder="Search..."
+				placeholder="Search…"
 				className={searchFieldInputPlacementStyles}
 				onInput={(e) => setSearchValue(e.currentTarget.value)}
 			/>
@@ -304,6 +304,7 @@ export function LinkToMetricOrToolPage({
 				render={
 					<button
 						type="button"
+						aria-label={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
 						onClick={(e) => {
 							const currentPinnedMetrics = JSON.parse(window.localStorage.getItem('pinned-metrics') || '[]')
 							setStorageItem(

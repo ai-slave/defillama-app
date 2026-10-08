@@ -41,9 +41,10 @@ import {
 } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { ProSegmented } from '../../../../ui'
+import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
 
 const AVAILABLE_VARIABLES = getAvailableVariables()
@@ -375,14 +376,12 @@ export function ColumnManager({
 		return validateExpression(customExpression)
 	}, [customExpression])
 
-	const validation = useMemo(() => {
-		if (!customName.trim()) return { isValid: false, error: 'Name is required' }
-		const isDuplicate = customColumns.some(
-			(col) => col.name.toLowerCase() === customName.toLowerCase() && col.id !== editingId
-		)
-		if (isDuplicate) return { isValid: false, error: 'Column name already exists' }
-		return expressionValidation
-	}, [customName, expressionValidation, customColumns, editingId])
+	const nameError = !customName.trim()
+		? 'Name is required'
+		: customColumns.some((col) => col.name.toLowerCase() === customName.toLowerCase() && col.id !== editingId)
+			? 'Column name already exists'
+			: null
+	const canSaveCustomColumn = nameError === null && expressionValidation.isValid
 
 	const preview = useMemo(() => {
 		if (!customExpression.trim() || !expressionValidation.isValid) return null
@@ -502,7 +501,7 @@ export function ColumnManager({
 	}
 
 	const handleAddOrUpdateCustomColumn = () => {
-		if (!validation.isValid) return
+		if (!canSaveCustomColumn) return
 		const column: CustomColumnDefinition = {
 			id: editingId ?? generateCustomColumnId(),
 			name: customName.trim(),
@@ -585,17 +584,15 @@ export function ColumnManager({
 	return (
 		<div className="flex flex-col gap-4">
 			<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
-				<div className="mb-2 flex items-center justify-between">
+				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
-						<h4 className="text-xs font-semibold text-pro-text-primary uppercase">Selected</h4>
-						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-xs font-medium text-brand">
-							{selectedColumns.length}
-						</span>
+						<h4 className="title-sm text-pro-text-primary">Selected</h4>
+						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-brand">{selectedColumns.length}</span>
 					</div>
 					{selectedColumns.length > 0 ? (
-						<button type="button" onClick={handleClearAll} className="text-xs font-medium text-error hover:underline">
+						<Button variant="link" onClick={handleClearAll}>
 							Clear all
-						</button>
+						</Button>
 					) : null}
 				</div>
 
@@ -675,7 +672,7 @@ export function ColumnManager({
 						<input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label="Search columns"
-							placeholder="Search columns..."
+							placeholder="Search columns…"
 							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 						/>
 					</div>
@@ -712,7 +709,7 @@ export function ColumnManager({
 										>
 											{column.header}
 										</span>
-										<span className="rounded-sm px-1 py-0.5 text-[9px] text-pro-text-tertiary uppercase">
+										<span className="rounded-sm px-1 py-0.5 label-xs text-pro-text-tertiary uppercase">
 											{GROUP_LABELS[column.group]}
 										</span>
 									</button>
@@ -741,9 +738,9 @@ export function ColumnManager({
 							height={14}
 							className="text-brand"
 						/>
-						<span className="text-xs font-semibold text-pro-text-primary">
+						<span className="title-sm text-pro-text-primary">
 							{editingId ? 'Edit custom column' : 'Custom column'}
-							{!hasActiveSubscription ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
+							{!hasActiveSubscription ? <span className="ml-1 body-sm text-pro-text-tertiary">(Pro)</span> : null}
 						</span>
 						{customColumns.length > 0 ? (
 							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-500">
@@ -761,100 +758,110 @@ export function ColumnManager({
 
 				<div className="mt-2 flex flex-wrap gap-1.5">
 					{EXAMPLE_PRESETS.map((preset) => (
-						<button
-							key={preset.name}
-							type="button"
-							onClick={() => handleApplyPreset(preset)}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand hover:text-brand"
-						>
+						<Button key={preset.name} size="sm" onClick={() => handleApplyPreset(preset)}>
 							{preset.name}
-						</button>
+						</Button>
 					))}
 				</div>
 
 				{customColumnExpanded ? (
 					<div className="mt-3 space-y-3 border-t border-pro-cards-border pt-3">
 						{editingId ? (
-							<div className="flex items-center justify-between">
-								<span className="text-xs text-pro-text-secondary">Editing: {customName || 'Custom column'}</span>
-								<button type="button" onClick={handleCancelEdit} className="text-xs text-brand hover:underline">
+							<div className="flex items-center justify-between body-sm">
+								<span className="text-pro-text-secondary">Editing: {customName || 'Custom column'}</span>
+								<Button variant="link" onClick={handleCancelEdit}>
 									Cancel
-								</button>
+								</Button>
 							</div>
 						) : null}
 
-						<div className="flex gap-2">
-							<input
-								type="text"
-								value={customName}
-								onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-								aria-label="Custom column name"
-								placeholder="Column name"
-								className="flex-1 rounded-md border border-pro-cards-border px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
-							/>
+						<div className="flex flex-col gap-1">
+							<label className="flex flex-col gap-1 label-sm text-pro-text-secondary">
+								Column name
+								<input
+									type="text"
+									value={customName}
+									onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+									placeholder="e.g., TVL to market cap"
+									aria-invalid={customName.trim() !== '' && nameError !== null}
+									aria-describedby={nameError && (customName || customExpression) ? `${fieldId}-name-error` : undefined}
+									className="rounded-md border border-pro-cards-border px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+								/>
+							</label>
+							{/* The save button stays disabled until the name is valid; say why once the reader has typed something. */}
+							{nameError && (customName || customExpression) ? (
+								<p id={`${fieldId}-name-error`} className="body-sm text-error">
+									{nameError}
+								</p>
+							) : null}
 						</div>
 
-						<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
-							<input
-								ref={expressionInputRef}
-								type="text"
-								value={customExpression}
-								onChange={handleExpressionChange}
-								onKeyDown={handleExpressionKeyDown}
-								onFocus={() => customExpression && setShowAutocomplete(true)}
-								aria-label="Custom column expression"
-								placeholder="e.g., tvl / mcap, fees24h * 365"
-								className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
-									customExpression && !expressionValidation.isValid
-										? 'border-error'
-										: customExpression && expressionValidation.isValid
-											? 'border-success'
-											: 'border-pro-cards-border focus:border-brand'
-								}`}
-							/>
-							{customExpression ? (
-								<div className="absolute top-1/2 right-2 -translate-y-1/2">
-									{expressionValidation.isValid ? (
-										<Icon name="check" height={12} width={12} className="text-success" />
-									) : (
-										<Icon name="x" height={12} width={12} className="text-error" />
-									)}
-								</div>
-							) : null}
-							{showAutocomplete && filteredSuggestions.length > 0 ? (
-								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg">
-									{filteredSuggestions.map((suggestion, index) => (
-										<button
-											key={`${suggestion.type}-${suggestion.value}`}
-											type="button"
-											onClick={() => insertSuggestion(suggestion)}
-											onMouseEnter={() => setAutocompleteIndex(index)}
-											className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-xs ${
-												index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-pro-text-primary'
-											}`}
-										>
-											<span
-												className={`size-1.5 shrink-0 rounded-full ${
-													suggestion.type === 'variable'
-														? 'bg-blue-400'
-														: suggestion.type === 'function'
-															? 'bg-purple-400'
-															: 'bg-gray-400'
+						<div className="flex flex-col gap-1">
+							<label htmlFor={`${fieldId}-expression`} className="label-sm text-pro-text-secondary">
+								Expression
+							</label>
+							<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
+								<input
+									id={`${fieldId}-expression`}
+									ref={expressionInputRef}
+									type="text"
+									value={customExpression}
+									onChange={handleExpressionChange}
+									onKeyDown={handleExpressionKeyDown}
+									onFocus={() => customExpression && setShowAutocomplete(true)}
+									placeholder="e.g., tvl / mcap, fees24h * 365"
+									className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
+										customExpression && !expressionValidation.isValid
+											? 'border-error'
+											: customExpression && expressionValidation.isValid
+												? 'border-success'
+												: 'border-pro-cards-border focus:border-brand'
+									}`}
+								/>
+								{customExpression ? (
+									<div className="absolute top-1/2 right-2 -translate-y-1/2">
+										{expressionValidation.isValid ? (
+											<Icon name="check" height={12} width={12} className="text-success" />
+										) : (
+											<Icon name="x" height={12} width={12} className="text-error" />
+										)}
+									</div>
+								) : null}
+								{showAutocomplete && filteredSuggestions.length > 0 ? (
+									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg">
+										{filteredSuggestions.map((suggestion, index) => (
+											<button
+												key={`${suggestion.type}-${suggestion.value}`}
+												type="button"
+												onClick={() => insertSuggestion(suggestion)}
+												onMouseEnter={() => setAutocompleteIndex(index)}
+												className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-xs ${
+													index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-pro-text-primary'
 												}`}
-											/>
-											<code className="shrink-0">{suggestion.display}</code>
-											<span className="ml-auto truncate text-pro-text-tertiary">{suggestion.description}</span>
-										</button>
-									))}
-								</div>
-							) : null}
+											>
+												<span
+													className={`size-1.5 shrink-0 rounded-full ${
+														suggestion.type === 'variable'
+															? 'bg-blue-400'
+															: suggestion.type === 'function'
+																? 'bg-purple-400'
+																: 'bg-gray-400'
+													}`}
+												/>
+												<code className="shrink-0">{suggestion.display}</code>
+												<span className="ml-auto truncate text-pro-text-tertiary">{suggestion.description}</span>
+											</button>
+										))}
+									</div>
+								) : null}
+							</div>
 						</div>
-						<p className="text-[9px] text-pro-text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
+						<p className="body-xs text-pro-text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
 
 						{/* Each field keeps 14rem, so on a phone they stack instead of squeezing four segments each. */}
 						<div className="flex flex-wrap gap-2">
 							<div className="min-w-56 flex-1">
-								<p id={`${fieldId}-format`} className="mb-1 text-xs font-medium text-pro-text-secondary">
+								<p id={`${fieldId}-format`} className="mb-1 label-sm text-pro-text-secondary">
 									Format
 								</p>
 								<SegmentedControl
@@ -868,7 +875,7 @@ export function ColumnManager({
 								/>
 							</div>
 							<div className="min-w-56 flex-1">
-								<p id={`${fieldId}-aggregation`} className="mb-1 text-xs font-medium text-pro-text-secondary">
+								<p id={`${fieldId}-aggregation`} className="mb-1 label-sm text-pro-text-secondary">
 									Aggregation
 								</p>
 								<SegmentedControl
@@ -909,14 +916,15 @@ export function ColumnManager({
 							</div>
 						) : null}
 
-						<button
-							type="button"
+						<Button
+							variant="primary"
+							size="md"
 							onClick={handleAddOrUpdateCustomColumn}
-							disabled={!validation.isValid}
-							className="w-full rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-50"
+							disabled={!canSaveCustomColumn}
+							className="w-full"
 						>
 							{editingId ? 'Update column' : 'Add custom column'}
-						</button>
+						</Button>
 					</div>
 				) : null}
 
@@ -930,32 +938,44 @@ export function ColumnManager({
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
 										<span className="truncate text-xs font-medium text-pro-text-primary">{col.name}</span>
-										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 text-[9px] uppercase">
+										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 label-xs uppercase">
 											{col.format}
 										</span>
-										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 text-[9px] text-pro-text-tertiary">
+										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 label-xs text-pro-text-tertiary">
 											{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}
 										</span>
 									</div>
 									<code className="block truncate text-xs text-pro-text-tertiary">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
-									<button
-										type="button"
-										onClick={() => handleEditCustomColumn(col)}
-										aria-label={`Edit ${col.name}`}
-										className="rounded-sm p-1 text-pro-text-tertiary hover:text-brand"
+									<Tooltip
+										content={`Edit ${col.name}`}
+										render={
+											<Button
+												variant="ghost"
+												size="sm"
+												square
+												onClick={() => handleEditCustomColumn(col)}
+												aria-label={`Edit ${col.name}`}
+											/>
+										}
 									>
-										<Icon name="pencil" height={12} width={12} />
-									</button>
-									<button
-										type="button"
-										onClick={() => onRemoveCustomColumn(col.id)}
-										aria-label={`Delete ${col.name}`}
-										className="rounded-sm p-1 text-pro-text-tertiary hover:bg-error/10 hover:text-error"
+										<Icon name="pencil" className="size-4" />
+									</Tooltip>
+									<Tooltip
+										content={`Delete ${col.name}`}
+										render={
+											<Button
+												variant="ghostDestructive"
+												size="sm"
+												square
+												onClick={() => onRemoveCustomColumn(col.id)}
+												aria-label={`Delete ${col.name}`}
+											/>
+										}
 									>
-										<Icon name="trash-2" height={12} width={12} />
-									</button>
+										<Icon name="trash-2" className="size-4" />
+									</Tooltip>
 								</div>
 							</div>
 						))}
@@ -1012,17 +1032,23 @@ function SortableChip({
 				{label}
 			</span>
 			{isFirst ? <Icon name="pin" width={8} height={8} className="text-brand" /> : null}
-			<button
-				type="button"
-				onClick={(e) => {
-					e.stopPropagation()
-					onRemove()
-				}}
-				aria-label={`Hide ${label}`}
-				className="rounded-sm text-pro-text-tertiary transition-colors hover:text-error"
+			<Tooltip
+				content={`Hide ${label}`}
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						onClick={(e) => {
+							e.stopPropagation()
+							onRemove()
+						}}
+						aria-label={`Hide ${label}`}
+					/>
+				}
 			>
-				<Icon name="x" width={10} height={10} />
-			</button>
+				<Icon name="x" className="size-4" />
+			</Tooltip>
 		</div>
 	)
 }
@@ -1052,8 +1078,8 @@ function SortingSection({
 
 	return (
 		<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
-			<h4 className="mb-2 text-xs font-semibold text-pro-text-primary uppercase">Sorting</h4>
-			<div className="flex flex-wrap items-center gap-2">
+			<h4 className="mb-2 title-sm text-pro-text-primary">Sorting</h4>
+			<div className="flex flex-wrap items-center gap-2 body-sm">
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
@@ -1062,7 +1088,7 @@ function SortingSection({
 						<span className={`truncate ${currentSortColumn ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
 							{selectedLabel}
 						</span>
-						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
+						<Icon name="chevron-down" className="ml-2 size-3.5 shrink-0 text-pro-text-tertiary" />
 					</PopoverDisclosure>
 					<Popover
 						store={popover}
@@ -1113,8 +1139,9 @@ function SortingSection({
 						</div>
 					</Popover>
 				</div>
-				<ProSegmented
+				<SegmentedControl
 					label="Sort direction"
+					variant="default"
 					size="sm"
 					value={currentSortColumn ? (isDescending ? 'desc' : 'asc') : null}
 					onValueChange={(direction) => onDirectionChange(direction === 'desc')}
@@ -1123,9 +1150,9 @@ function SortingSection({
 						{ value: 'desc', label: 'Desc', disabled: !currentSortColumn }
 					]}
 				/>
-				<button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
+				<Button variant="link" onClick={onReset}>
 					Reset
-				</button>
+				</Button>
 			</div>
 		</section>
 	)

@@ -358,7 +358,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search..."
+							placeholder="Search…"
 							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
@@ -653,8 +653,8 @@ const definitionColumn = columnHelper.accessor((protocol) => protocol.methodolog
 	id: 'definition',
 	header: 'Definition',
 	cell: ({ getValue }) => (
-		<Tooltip content={getValue()} className="flex-1">
-			<span className="line-clamp-2 min-w-0 overflow-hidden text-ellipsis whitespace-normal">{getValue()}</span>
+		<Tooltip content={getValue()} render={<span className="line-clamp-2 whitespace-normal" />}>
+			{getValue()}
 		</Tooltip>
 	),
 	enableSorting: false,

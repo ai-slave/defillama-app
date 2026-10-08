@@ -1,8 +1,10 @@
 import * as React from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
-import { LinkToPage, navActionStyles } from '../shared'
+import { LinkToPage } from '../shared'
 import type { TNavLink } from '../types'
 
 const ReorderablePinnedPages = React.lazy(() => import('./ReorderablePinnedPages'))
@@ -24,15 +26,14 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 			>
 				<span>Pinned Pages</span>
 				{pinnedPages.length > 1 ? (
-					<button
-						type="button"
-						className={`inline-flex ${navActionStyles} ${
-							isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'
-						}`}
+					<Button
+						variant="ghost"
+						size="sm"
+						className={isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'}
 						onClick={() => setIsReordering((value) => !value)}
 					>
 						{isReordering ? 'Done' : 'Reorder'}
-					</button>
+					</Button>
 				) : null}
 			</div>
 			{isReordering ? (
@@ -59,19 +60,29 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 							<Tooltip
 								content="Unpin from navigation"
 								render={
-									<button
-										type="button"
-										aria-label="Unpin from navigation"
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										aria-label={`Unpin ${page.name}`}
+										data-menu-name="Unpin from navigation"
 										onClick={(e) => {
 											e.preventDefault()
 											e.stopPropagation()
-											mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route))
+											// The row leaves the list: its neighbour's link takes focus.
+											const row = e.currentTarget.parentElement!
+											const next = neighbourRowControl(row, row.querySelector('a')!)
+											keepFocus(
+												() => mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route)),
+												() => next
+											)
 										}}
 									/>
 								}
-								className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md p-1 text-data-down group-focus-within:block group-hover:block hover:bg-hover-row focus-visible:bg-hover-row"
+								// On the active row (solid brand fill) the x takes the row's on-brand text and ring.
+								className="absolute top-1/2 right-1 -translate-y-1/2 not-group-focus-within:not-group-hover:hidden group-has-[[aria-current=page]]:focus-visible:focus-ring-on-brand"
 							>
-								<Icon name="x" className="size-4" />
+								<Icon name="x" className="size-4 group-has-[[aria-current=page]]:text-on-brand" />
 							</Tooltip>
 						</span>
 					))}

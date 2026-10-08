@@ -22,10 +22,10 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesStatementsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
-import { ProSegmented } from '../../../ui'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardLoading } from '../../ProCardStatus'
 
@@ -188,15 +188,17 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ProSegmented<EquitiesStatementOption>
+						<SegmentedControl<EquitiesStatementOption>
 							label="Statement"
+							variant="default"
 							size="sm"
 							value={statementType}
 							onValueChange={setStatementType}
 							options={STATEMENT_OPTIONS}
 						/>
-						<ProSegmented<EquitiesStatementPeriodOption>
+						<SegmentedControl<EquitiesStatementPeriodOption>
 							label="Period"
+							variant="default"
 							size="sm"
 							value={periodType}
 							onValueChange={setPeriodType}

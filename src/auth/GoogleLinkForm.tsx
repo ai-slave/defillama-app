@@ -146,12 +146,11 @@ export function GoogleLinkForm({
 					<InlineStatus variant="error">{error}</InlineStatus>
 				</div>
 			) : null}
-			<div className="flex flex-col items-center gap-3">
+			<div className="flex flex-col items-center gap-3 body-sm">
 				{/* Focusable while it waits: a sent code starts the wait while the button still has focus. */}
 				<Button
 					type="button"
-					variant="ghost"
-					size="sm"
+					variant="link"
 					pendingLabel={resendGoogleLinkMutation.isPending ? 'Sending code…' : null}
 					disabled={!canResend || pending}
 					accessibleWhenDisabled
@@ -159,13 +158,9 @@ export function GoogleLinkForm({
 				>
 					{canResend ? 'Resend code' : 'Resend available shortly'}
 				</Button>
-				<button
-					type="button"
-					className="body-sm text-link"
-					onClick={() => store.dispatch({ kind: 'useAnotherMethod' })}
-				>
+				<Button variant="link" onClick={() => store.dispatch({ kind: 'useAnotherMethod' })}>
 					Use another sign-in method
-				</button>
+				</Button>
 			</div>
 		</form>
 	)

@@ -131,9 +131,9 @@ test('tabs that fit carry no arrows, and overflowing tabs get arrows that page t
 	metrics.clientWidth = 300
 	await act(async () => tabList().dispatchEvent(new Event('scroll')))
 	await flushFrames()
-	expect(arrow('Scroll tabs left')).toBeUndefined()
+	expect(arrow('Scroll tabs left')?.getAttribute('aria-disabled')).toBe('true')
 	const right = arrow('Scroll tabs right')
-	expect(right).toBeDefined()
+	expect(right?.getAttribute('aria-disabled')).toBeNull()
 
 	await act(async () => right!.click())
 	expect(scrollBy).toHaveBeenCalledWith({ left: 240, behavior: 'smooth' })
@@ -141,7 +141,27 @@ test('tabs that fit carry no arrows, and overflowing tabs get arrows that page t
 	metrics.scrollLeft = 240
 	await act(async () => tabList().dispatchEvent(new Event('scroll')))
 	await flushFrames()
-	expect(arrow('Scroll tabs left')).toBeDefined()
+	expect(arrow('Scroll tabs left')?.getAttribute('aria-disabled')).toBeNull()
+})
+
+test('an arrow pressed to the end of the rail stays in place, disabled, so it keeps focus', async () => {
+	const tabList = () => container.querySelector('[aria-label="Dashboard sections"]')!
+	metrics.scrollWidth = 600
+	metrics.clientWidth = 300
+	await act(async () => root.render(<Harness />))
+	await flushFrames()
+	const right = arrow('Scroll tabs right')!
+	await act(async () => {
+		right.focus()
+		right.click()
+	})
+	metrics.scrollLeft = 300
+	await act(async () => tabList().dispatchEvent(new Event('scroll')))
+	await flushFrames()
+	expect(right.isConnected).toBe(true)
+	expect(right.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => right.click())
+	expect(scrollBy).toHaveBeenCalledOnce()
 })
 
 test('the active tab is kept in view by scrolling an overflowing list sideways, never on first mount', async () => {

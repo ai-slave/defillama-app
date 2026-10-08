@@ -9,7 +9,9 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
 import { NavItemContent, navSortableRowStyles } from '../shared'
 import type { TNavLink } from '../types'
@@ -78,14 +80,21 @@ function ReorderableRow({ page }: { page: TNavLink }) {
 						<Icon name="menu" className="size-4" />
 					</button>
 					<NavItemContent name={page.name} icon={page.icon} attention={page.attention} />
-					<button
-						type="button"
-						className="ml-auto flex size-7 items-center justify-center rounded-md text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
-						aria-label={`Unpin ${page.name}`}
-						onClick={() => handleUnpin()}
+					<Tooltip
+						content="Unpin from navigation"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="ml-auto"
+								aria-label={`Unpin ${page.name}`}
+								onClick={() => handleUnpin()}
+							/>
+						}
 					>
 						<Icon name="x" className="size-4" />
-					</button>
+					</Tooltip>
 				</div>
 			</div>
 		</div>

@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { inferFineKindFromArrowType } from './columnKind'
 import { formatDownloadRowCount } from './format'
 import { buildLlmInstructions } from './llmInstructions'
@@ -39,7 +42,7 @@ export function TableChipRail({
 	const totalCount = tables.length + pending.length
 
 	return (
-		<section aria-label="Loaded tables" className="flex flex-col gap-2">
+		<section aria-label="Loaded tables" tabIndex={-1} className="flex flex-col gap-2">
 			<SectionLabel
 				label="Tables"
 				count={totalCount}
@@ -47,16 +50,11 @@ export function TableChipRail({
 					totalCount > 0 ? (
 						<div className="flex items-center gap-1.5">
 							<CopyForAIButton />
-							<button
-								type="button"
-								onClick={onBrowseSchema}
-								className="inline-flex items-center gap-1.5 rounded-md border border-brand/30 bg-brand/8 px-2.5 py-1 text-xs font-semibold text-brand transition-all hover:border-brand/60 hover:bg-brand/12"
-								title={`Browse all ${totalSchemaCount} available datasets`}
-							>
-								<Icon name="layers" className="size-3" />
+							<Button variant="outline" size="sm" onClick={onBrowseSchema}>
+								<Icon name="layers" className="size-3.5" />
 								Browse schema
-								<span className="tabular-nums opacity-80">{totalSchemaCount}</span>
-							</button>
+								<span className="tabular-nums">{totalSchemaCount}</span>
+							</Button>
 						</div>
 					) : null
 				}
@@ -113,7 +111,6 @@ function TableChip({
 				type="button"
 				onClick={onToggle}
 				aria-expanded={open}
-				title={prettyLabelForSource(table.source)}
 				className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-pro-text-primary"
 			>
 				<Icon
@@ -125,17 +122,28 @@ function TableChip({
 				<span className="max-w-[180px] truncate font-mono">{table.name}</span>
 				<span className="text-pro-text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
 			</button>
-			<button
-				type="button"
-				onClick={onRemove}
-				aria-label={`Remove ${table.name}`}
-				className="flex w-6 items-center justify-center border-l border-subtle text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 hover:bg-error/10 hover:text-error"
+			<Tooltip
+				content="Remove"
+				render={
+					<button
+						ref={focusNeighbourChipOnLeave}
+						type="button"
+						onClick={onRemove}
+						aria-label={`Remove ${table.name}`}
+						className="flex w-6 items-center justify-center border-l border-subtle text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 hover:bg-hover-row hover:text-pro-text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
+					/>
+				}
 			>
-				<Icon name="x" className="size-3" />
-			</button>
+				<Icon name="x" className="size-4" />
+			</Tooltip>
 		</div>
 	)
 }
+
+// The table drops once DuckDB does, after the press: the next chip's × takes focus, else the tables section.
+const focusNeighbourChipOnLeave = passFocusOnLeave(
+	(node) => neighbourRowControl(node.parentElement!, node) ?? node.closest<HTMLElement>('section')
+)
 
 function PendingChip({ table }: { table: PendingTable }) {
 	const { status } = table
@@ -187,14 +195,26 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 						{table.columns.length} cols · {prettyLabelForSource(table.source)}
 					</span>
 				</div>
-				<button
-					type="button"
-					onClick={onClose}
-					aria-label="Close column list"
-					className="flex size-6 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+				<Tooltip
+					content="Close column list"
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={(event) => {
+								// Closing removes this button; focus returns to the chip that opened the list.
+								const chip = event.currentTarget
+									.closest('section')
+									?.querySelector<HTMLElement>('[aria-expanded="true"]')
+								keepFocus(onClose, () => chip)
+							}}
+							aria-label="Close column list"
+						/>
+					}
 				>
-					<Icon name="x" className="size-3" />
-				</button>
+					<Icon name="x" className="size-4" />
+				</Tooltip>
 			</div>
 			<ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
 				{table.columns.map((c) => (
@@ -226,16 +246,11 @@ function EmptyTablesPrompt({
 			</span>
 			<span className="ml-auto flex items-center gap-1.5">
 				<CopyForAIButton />
-				<button
-					type="button"
-					onClick={onBrowseSchema}
-					className="inline-flex items-center gap-1.5 rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand transition-opacity hover:opacity-90"
-					title={`Browse all ${totalSchemaCount} available datasets`}
-				>
-					<Icon name="layers" className="size-3" />
+				<Button variant="primary" size="sm" onClick={onBrowseSchema}>
+					<Icon name="layers" className="size-3.5" />
 					Browse datasets
-					<span className="tabular-nums opacity-80">{totalSchemaCount}</span>
-				</button>
+					<span className="tabular-nums">{totalSchemaCount}</span>
+				</Button>
 			</span>
 		</div>
 	)
@@ -261,18 +276,12 @@ function CopyForAIButton() {
 	}
 
 	return (
-		<button
-			type="button"
-			onClick={onCopy}
-			title="Copy a full dataset + dialect brief tailored for LLMs. Paste into ChatGPT / Claude / Gemini and ask for a query."
-			className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed ${
-				copied
-					? 'border-emerald-500/40 bg-success/10 text-success'
-					: 'border-subtle bg-transparent text-pro-text-secondary hover:border-brand/40 hover:text-brand'
-			}`}
+		<Tooltip
+			content="Copies a dataset and SQL dialect brief to paste into an AI assistant."
+			render={<Button variant="secondary" size="sm" onClick={onCopy} />}
 		>
-			{copied ? <Icon name="check" className="size-3" /> : <Icon name="sparkles" className="size-3" />}
+			<Icon name={copied ? 'check' : 'sparkles'} className="size-3.5" />
 			{copied ? 'Copied for AI' : 'Copy for AI'}
-		</button>
+		</Tooltip>
 	)
 }

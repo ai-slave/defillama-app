@@ -621,7 +621,7 @@ export function MultiMetricModal({
 
 							{isBulk ? (
 								<Button
-									variant="filter"
+									variant="toggle"
 									size="md"
 									data-active={showSelected}
 									aria-pressed={showSelected}
@@ -672,11 +672,12 @@ export function MultiMetricModal({
 								<CenteredHint icon="eye-off" text="No data" />
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
+									<div className="flex flex-col items-center gap-2 text-center body-md">
 										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
-										<button
-											type="button"
+										<p className="text-pro-text-secondary">No rows in selected date range</p>
+										<Button
+											variant="secondary"
+											size="sm"
 											// Clearing removes this button; focus returns to the range picker it cleared.
 											onClick={() =>
 												keepFocus(
@@ -684,10 +685,9 @@ export function MultiMetricModal({
 													() => dateRangeTriggerRef.current
 												)
 											}
-											className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 										>
 											Clear date range
-										</button>
+										</Button>
 									</div>
 								</div>
 							) : (
@@ -838,14 +838,10 @@ function EmptyState({
 					</p>
 				</div>
 				{onSelectAll ? (
-					<button
-						type="button"
-						onClick={onSelectAll}
-						className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-brand/30 bg-brand/5 px-3 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/10"
-					>
+					<Button variant="outline" size="sm" onClick={onSelectAll}>
 						<Icon name="check" className="size-3.5" />
 						Select all {availableCount}
-					</button>
+					</Button>
 				) : null}
 			</div>
 		</div>

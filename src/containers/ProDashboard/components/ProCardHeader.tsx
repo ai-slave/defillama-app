@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { SortableDragHandle } from '~/containers/ProtocolOverview/ProtocolPro'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { ProButton } from '../ui'
+import { Tooltip } from '~/ui/Tooltip'
 import { useDashboardCardContext } from './DashboardCardContext'
 import { ProCardEditControls, type ProCardOverflowMenuProps, ProCardOverflowMenu } from './ProCardActions'
 
@@ -46,18 +47,23 @@ export function ProCardHeader({
 			</div>
 			<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
 				{viewerControls}
-				{controls || onEdit ? (
-					<ProCardEditControls>
-						{controls}
-						{onEdit ? (
-							<ProButton size="sm" square variant="ghost" onClick={onEdit} title="Edit card">
-								<Icon name="pencil" height={14} width={14} />
-								<span className="sr-only">Edit card</span>
-							</ProButton>
-						) : null}
-					</ProCardEditControls>
-				) : null}
-				<ProCardOverflowMenu {...(menu ?? {})} />
+				{/* The menu stays beside the edit controls' first row; on its own it wraps to a row of one. */}
+				<div className="flex min-w-0 items-start gap-1">
+					{controls || onEdit ? (
+						<ProCardEditControls>
+							{controls}
+							{onEdit ? (
+								<Tooltip
+									content="Edit card"
+									render={<Button size="sm" square variant="ghost" aria-label="Edit card" onClick={onEdit} />}
+								>
+									<Icon name="pencil" height={16} width={16} />
+								</Tooltip>
+							) : null}
+						</ProCardEditControls>
+					) : null}
+					<ProCardOverflowMenu {...(menu ?? {})} />
+				</div>
 			</div>
 		</div>
 	)

@@ -1,7 +1,9 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'
 import type { TokenOption } from '../data/types'
@@ -124,20 +126,29 @@ export function IncludeTokens({
 	if (compact) {
 		return (
 			<>
-				<Button
-					type="button"
-					variant={hasSelection ? 'outline' : 'secondary'}
-					size="md"
-					square
-					onClick={openDialog}
-					aria-label={
+				<Tooltip
+					content={
 						firstSelectedName
 							? `Tokens: ${firstSelectedName}${selectedValues.length > 1 ? ` and ${selectedValues.length - 1} more` : ''}`
 							: 'Filter by token'
 					}
+					render={
+						<Button
+							type="button"
+							variant={hasSelection ? 'outline' : 'secondary'}
+							size="md"
+							square
+							onClick={openDialog}
+							aria-label={
+								firstSelectedName
+									? `Tokens: ${firstSelectedName}${selectedValues.length > 1 ? ` and ${selectedValues.length - 1} more` : ''}`
+									: 'Filter by token'
+							}
+						/>
+					}
 				>
-					<Icon name="search" height={14} width={14} className="shrink-0" />
-				</Button>
+					<Icon name="search" height={16} width={16} className="shrink-0" />
+				</Tooltip>
 				{dialog}
 			</>
 		)
@@ -167,17 +178,23 @@ export function IncludeTokens({
 					)}
 				</button>
 				{clearable ? (
-					<Button
-						size="sm"
-						variant="ghost"
-						square
-						type="button"
-						className="-my-1 mr-1 -ml-1"
-						aria-label="Clear selected tokens"
-						onClick={clearAll}
+					<Tooltip
+						content="Clear selected tokens"
+						render={
+							<Button
+								size="sm"
+								variant="ghost"
+								square
+								// Clearing removes this button: the picker beside it takes focus.
+								ref={passFocusOnLeave((node) => node.previousElementSibling as HTMLElement)}
+								className="mr-1"
+								aria-label="Clear selected tokens"
+								onClick={clearAll}
+							/>
+						}
 					>
-						<Icon name="x" height={14} width={14} />
-					</Button>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
 				) : null}
 			</div>
 

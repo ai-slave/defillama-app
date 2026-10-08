@@ -48,6 +48,7 @@ Mock only at boundaries:
 - Assert calls only for `fetch`, navigation, emitted events, and callbacks the test supplies.
 - Assert a request's URL, headers or body only where our own logic chose them: a filter, a cursor, a branch on user input. A fixed endpoint, an auth or secret header, or a body that is the input as JSON is a copy of the code. It cannot catch a wrong env var, a missing key or a broken upstream, and it fails only on intended changes.
 - Accessibility semantics (labels, roles, focus, expanded state) are behavior. Assert them.
+- A test of an action that removes, swaps or disables the focused control asserts where focus lands, and covers the opposite edge: the last item removed, the only row, the end page.
 - Tests read results through the public API, never through getters that expose internal state.
 
 ## One owner per behavior

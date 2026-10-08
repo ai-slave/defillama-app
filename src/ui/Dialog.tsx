@@ -14,6 +14,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { catchLostFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
@@ -604,18 +605,23 @@ export function DialogBackButton({
 	const { pending } = useContext(DialogSurfaceContext)
 	const leave = useDialogLeave()
 	return (
-		<Button
-			variant="ghost"
-			size="md"
-			square
-			className="-ml-2"
-			disabled={pending || disabled}
-			accessibleWhenDisabled
-			aria-label={label}
-			onClick={() => leave(onClick)}
+		<Tooltip
+			content={label}
+			render={
+				<Button
+					variant="ghost"
+					size="md"
+					square
+					className="-ml-2"
+					disabled={pending || disabled}
+					accessibleWhenDisabled
+					aria-label={label}
+					onClick={() => leave(onClick)}
+				/>
+			}
 		>
 			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
-		</Button>
+		</Tooltip>
 	)
 }
 

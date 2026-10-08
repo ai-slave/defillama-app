@@ -1,14 +1,17 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
+import { Button } from '~/ui/Button'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import type { SegmentedControlOption } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDashboardDiscovery } from '../hooks/useDashboardDiscovery'
 import { useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
-import { ProButton } from '../ui'
 import { DashboardBrowse } from './DashboardBrowse'
 import { DashboardCard } from './DashboardCard'
 import { DashboardSearch } from './DashboardSearch'
@@ -18,6 +21,15 @@ import { LoadingSkeleton } from './LoadingSkeleton'
 const viewModes = ['grid', 'list'] as const
 type ViewMode = (typeof viewModes)[number]
 const isViewMode = (value: string): value is ViewMode => viewModes.some((candidate) => candidate === value)
+const VIEW_MODE_OPTIONS: Array<SegmentedControlOption<ViewMode>> = [
+	{
+		value: 'grid',
+		label: <Icon name="layout-grid" height={16} width={16} />,
+		ariaLabel: 'Grid view',
+		tooltip: 'Grid view'
+	},
+	{ value: 'list', label: <Icon name="menu" height={16} width={16} />, ariaLabel: 'List view', tooltip: 'List view' }
+]
 const DEFAULT_PAGE_LIMIT = 20
 const itemsPerPageOptions = [
 	{ key: '20', name: '20' },
@@ -66,16 +78,17 @@ function SuggestedTags({
 			<p className="text-sm font-medium text-pro-text-label">Try these popular tags:</p>
 			<div className="flex flex-wrap justify-center gap-2">
 				{suggestedTags.map((tag) => (
-					<button
+					<Button
 						type="button"
+						variant="secondary"
+						size="sm"
 						key={tag}
 						onClick={() => onTagClick(tag)}
 						data-umami-event="dashboard-tag-click"
 						data-umami-event-tag={tag}
-						className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-text-form transition-[color,background-color,border-color,transform] duration-120 ease-out-quart hover:border-transparent hover:bg-brand hover:text-on-brand active:scale-[.985]"
 					>
 						{tag}
-					</button>
+					</Button>
 				))}
 			</div>
 		</div>
@@ -88,6 +101,7 @@ export function DashboardDiscovery({
 	initialCategories?: DiscoveryCategoriesInitialData | null
 }) {
 	const router = useRouter()
+	const searchRef = useRef<HTMLInputElement>(null)
 	const { view, tag: tagQuery, sortBy, query, page: pageQuery, limit, timeFrame } = router.query
 	const pushProQuery = (updates: Record<string, string | number | Array<string> | undefined>) => {
 		void pushShallowQuery(router, updates, '/pro')
@@ -186,22 +200,9 @@ export function DashboardDiscovery({
 			<div className="flex flex-col gap-1">
 				{!isBrowseMode ? (
 					<nav className="flex items-center gap-1 text-sm">
-						<button
-							type="button"
-							onClick={() => {
-								void router.push(
-									{
-										pathname: '/pro',
-										query: { tab: 'discover' }
-									},
-									undefined,
-									{ shallow: true }
-								)
-							}}
-							className="text-pro-accent hover:underline"
-						>
+						<BasicLink href="/pro?tab=discover" shallow className="text-pro-accent hover:underline">
 							Discover
-						</button>
+						</BasicLink>
 						<Icon name="chevron-right" height={14} width={14} className="text-pro-text-label" />
 						<span className="text-pro-text-label">
 							{selectedSortBy.name}
@@ -211,13 +212,13 @@ export function DashboardDiscovery({
 				) : null}
 
 				<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-					<DashboardSearch defaultValue={searchQuery} />
+					<DashboardSearch ref={searchRef} defaultValue={searchQuery} />
 
 					{!isBrowseMode ? (
 						<div className="ml-auto flex flex-wrap items-center gap-4">
 							<Select
 								heading="Items per page"
-								variant="pro"
+								variant="filter"
 								size="md"
 								allValues={itemsPerPageOptions}
 								selectedValues={itemsPerPage.toString()}
@@ -233,7 +234,7 @@ export function DashboardDiscovery({
 							/>
 							<Select
 								heading="Sort by"
-								variant="pro"
+								variant="filter"
 								size="md"
 								allValues={sortOptions}
 								selectedValues={selectedSortBy.key}
@@ -260,7 +261,7 @@ export function DashboardDiscovery({
 							{selectedSortBy.key === 'trending' ? (
 								<Select
 									heading="Time frame"
-									variant="pro"
+									variant="filter"
 									size="md"
 									allValues={timeFrameOptions}
 									selectedValues={selectedTimeFrame.key}
@@ -282,30 +283,14 @@ export function DashboardDiscovery({
 								/>
 							) : null}
 
-							<div className="flex items-center rounded-md border border-pro-cards-border bg-pro-cards-bg">
-								<button
-									type="button"
-									onClick={() => {
-										pushProQuery({ view: 'grid' })
-									}}
-									data-active={viewMode === 'grid'}
-									className="rounded-l-md border-r border-pro-cards-border p-2 text-pro-text-label transition-colors duration-120 ease-out-quart data-[active=false]:hover:bg-pro-hover-fill data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
-								>
-									<Icon name="layout-grid" height={16} width={16} />
-									<span className="sr-only">View as grid</span>
-								</button>
-								<button
-									type="button"
-									onClick={() => {
-										pushProQuery({ view: 'list' })
-									}}
-									data-active={viewMode === 'list'}
-									className="rounded-r-md p-2 text-pro-text-label transition-colors duration-120 ease-out-quart data-[active=false]:hover:bg-pro-hover-fill data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
-								>
-									<Icon name="menu" height={16} width={16} />
-									<span className="sr-only">View as list</span>
-								</button>
-							</div>
+							<SegmentedControl
+								variant="default"
+								size="md"
+								label="View"
+								options={VIEW_MODE_OPTIONS}
+								value={viewMode}
+								onValueChange={(mode) => pushProQuery({ view: mode })}
+							/>
 						</div>
 					) : null}
 				</div>
@@ -315,9 +300,13 @@ export function DashboardDiscovery({
 						<h2 className="font-medium text-pro-text-label">Active filters:</h2>
 						<div className="flex flex-wrap gap-2">
 							{selectedTags.map((tag) => (
-								<button
+								<Button
 									type="button"
+									variant="filter"
+									size="sm"
 									key={`pro-dashboard-tag-${tag}`}
+									data-active
+									ref={passFocusOnLeave((node) => neighbourRowControl(node, node) ?? searchRef.current)}
 									onClick={() => {
 										const { tag: currentTag } = router.query
 										let nextTag: Array<string> | undefined
@@ -331,23 +320,23 @@ export function DashboardDiscovery({
 										}
 										pushProQuery({ tag: nextTag })
 									}}
-									className="flex items-center gap-1.5 rounded-full bg-pro-accent/15 px-2.5 py-1 text-xs font-medium text-pro-accent transition-[color,background-color,border-color,transform] duration-120 ease-out-quart hover:bg-pro-accent hover:text-on-brand active:scale-[.985]"
 								>
+									<span className="sr-only">Remove filter </span>
 									<span>{tag}</span>
-									<Icon name="x" height={12} width={12} />
-									<span className="sr-only">Remove {tag} filter</span>
-								</button>
+									<Icon name="x" height={14} width={14} />
+								</Button>
 							))}
 						</div>
-						<button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
+							ref={passFocusOnLeave(() => searchRef.current)}
 							onClick={() => {
 								pushProQuery({ tag: undefined })
 							}}
-							className="font-medium text-pro-text-label underline-offset-2 transition-colors hover:text-error hover:underline"
 						>
 							Clear all
-						</button>
+						</Button>
 					</div>
 				) : null}
 			</div>
@@ -391,10 +380,10 @@ export function DashboardDiscovery({
 						<div className="h-px w-12 bg-pro-cards-border" />
 					</div>
 
-					<ProButton as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="lg">
-						<Icon name="plus" height={16} width={16} />
+					<Button as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="md">
+						<Icon name="plus" height={14} width={14} />
 						Create Your First Dashboard
-					</ProButton>
+					</Button>
 				</div>
 			) : (
 				<>
@@ -415,71 +404,85 @@ export function DashboardDiscovery({
 					{totalPages > 1 ? (
 						<div className="flex flex-col items-center gap-4">
 							<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
-								<Ariakit.Button
-									type="button"
-									onClick={() => {
-										const targetPage = 1
-										pushProQuery({ page: toPageQueryValue(targetPage) })
-									}}
-									disabled={selectedPage < 3}
-									accessibleWhenDisabled
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
+								<Tooltip
+									content="First page"
+									render={
+										<Button
+											size="md"
+											variant="ghost"
+											square
+											aria-label="First page"
+											onClick={() => pushProQuery({ page: toPageQueryValue(1) })}
+											disabled={selectedPage < 3}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevrons-left" height={16} width={16} />
-								</Ariakit.Button>
-								<Ariakit.Button
-									type="button"
-									onClick={() => {
-										const targetPage = Math.max(1, selectedPage - 1)
-										pushProQuery({ page: toPageQueryValue(targetPage) })
-									}}
-									disabled={selectedPage === 1}
-									accessibleWhenDisabled
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
+								</Tooltip>
+								<Tooltip
+									content="Previous page"
+									render={
+										<Button
+											size="md"
+											variant="ghost"
+											square
+											aria-label="Previous page"
+											onClick={() => pushProQuery({ page: toPageQueryValue(Math.max(1, selectedPage - 1)) })}
+											disabled={selectedPage === 1}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevron-left" height={16} width={16} />
-								</Ariakit.Button>
+								</Tooltip>
 								{pagesToShow.map((pageNum) => {
 									const isActive = selectedPage === pageNum
 									return (
-										<button
-											type="button"
+										<Button
+											size="md"
 											key={`page-to-navigate-to-${pageNum}`}
-											onClick={() => {
-												const targetPage = pageNum
-												pushProQuery({ page: toPageQueryValue(targetPage) })
-											}}
+											variant="ghost"
 											data-active={isActive}
-											className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-elevated-1 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
+											aria-current={isActive ? 'page' : undefined}
+											onClick={() => pushProQuery({ page: toPageQueryValue(pageNum) })}
 										>
 											{pageNum}
-										</button>
+										</Button>
 									)
 								})}
-								<Ariakit.Button
-									type="button"
-									onClick={() => {
-										const targetPage = Math.min(totalPages, selectedPage + 1)
-										pushProQuery({ page: toPageQueryValue(targetPage) })
-									}}
-									disabled={selectedPage === totalPages}
-									accessibleWhenDisabled
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
+								<Tooltip
+									content="Next page"
+									render={
+										<Button
+											size="md"
+											variant="ghost"
+											square
+											aria-label="Next page"
+											onClick={() => pushProQuery({ page: toPageQueryValue(Math.min(totalPages, selectedPage + 1)) })}
+											disabled={selectedPage === totalPages}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevron-right" height={16} width={16} />
-								</Ariakit.Button>
-								<Ariakit.Button
-									type="button"
-									onClick={() => {
-										const targetPage = totalPages
-										pushProQuery({ page: toPageQueryValue(targetPage) })
-									}}
-									disabled={selectedPage > totalPages - 2}
-									accessibleWhenDisabled
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
+								</Tooltip>
+								<Tooltip
+									content="Last page"
+									render={
+										<Button
+											size="md"
+											variant="ghost"
+											square
+											aria-label="Last page"
+											onClick={() => pushProQuery({ page: toPageQueryValue(totalPages) })}
+											disabled={selectedPage > totalPages - 2}
+											accessibleWhenDisabled
+										/>
+									}
 								>
 									<Icon name="chevrons-right" height={16} width={16} />
-								</Ariakit.Button>
+								</Tooltip>
 							</div>
 							<p className="text-xs text-pro-text-label">
 								Page {selectedPage} of {totalPages}

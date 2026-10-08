@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
+import { Button } from '~/ui/Button'
 import { Tooltip } from '~/ui/Tooltip'
 import type { FilterPreset, FilterPresetCategory } from '../presets/filterPresets'
 import { CORE_FILTER_PRESETS } from '../presets/filterPresets'
@@ -93,14 +94,12 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 										content={preset.tooltip}
 										key={preset.id}
 										render={
-											<button
-												type="button"
+											<Button
+												variant="toggle"
+												size="sm"
+												data-active={isActive}
+												aria-pressed={isActive}
 												onClick={() => onApplyPreset(preset)}
-												className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
-													isActive
-														? 'border-brand bg-brand/10 text-brand'
-														: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-												}`}
 											/>
 										}
 									>

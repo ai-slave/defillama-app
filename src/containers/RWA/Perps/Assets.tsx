@@ -55,7 +55,7 @@ const columns = columnHelper.columns([
 		id: 'assetGroups',
 		header: d.assetGroup.label,
 		cell: (info) => (
-			<Tooltip content={info.getValue()} className="inline-block max-w-full truncate">
+			<Tooltip content={info.getValue()} render={<span className="inline-block max-w-full truncate" />}>
 				{info.getValue()}
 			</Tooltip>
 		),
@@ -159,7 +159,7 @@ export function RWAPerpsAssetsOverview({
 						</PanelTitle>
 						<TableSearchInput
 							columnId="asset"
-							placeholder="Search assets..."
+							placeholder="Search assets…"
 							className={searchFieldInlineWrapperStyles}
 						/>
 						<TableCsvExport filename="rwa-perps-assets.csv" />

@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 interface UserHeaderProps {
@@ -12,14 +13,10 @@ export function UserHeader({ displayName, onLogout }: UserHeaderProps) {
 				<img src="/assets/account_avatar.png" alt="" className="size-12 shrink-0 rounded-full" />
 				<span className="text-sm font-medium text-sub-text-primary">{displayName}</span>
 			</div>
-			<button
-				type="button"
-				onClick={onLogout}
-				className="flex h-8 items-center justify-center gap-1 rounded-lg border border-sub-border-muted px-3 text-xs leading-4 font-medium text-error dark:border-sub-border-strong"
-			>
-				<Icon name="sign-out" height={16} width={16} />
-				<span>Sign out</span>
-			</button>
+			<Button variant="secondary" size="md" onClick={onLogout}>
+				<Icon name="sign-out" className="size-3.5" />
+				Sign out
+			</Button>
 		</div>
 	)
 }

@@ -1,6 +1,6 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { ProButton } from '../ui'
 import { useChartSyncPreference } from './useChartSyncGroup'
 
 export function ChartSyncToggle() {
@@ -9,10 +9,12 @@ export function ChartSyncToggle() {
 		<Tooltip
 			content={enabled ? 'Charts share hover and zoom. Click to unlink.' : 'Link hover and zoom across charts'}
 			render={
-				<ProButton
+				<Button
 					type="button"
+					size="md"
 					square
-					variant={enabled ? 'primary' : 'ghost'}
+					variant="ghost"
+					data-active={enabled}
 					aria-label="Sync charts"
 					aria-pressed={enabled}
 					data-umami-event="dashboard-sync-toggle"

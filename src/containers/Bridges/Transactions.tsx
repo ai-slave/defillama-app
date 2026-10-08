@@ -31,6 +31,7 @@ import {
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -271,16 +272,20 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					)
 				}
 				return (
-					<a
-						href={explorer.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
-						title={value}
+					<Tooltip
+						content={<span className="break-all">{value}</span>}
+						render={
+							<a
+								href={explorer.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
+							/>
+						}
 					>
 						{truncateMiddle(value, 8, 4)}
 						<Icon name="external-link" height={10} width={10} />
-					</a>
+					</Tooltip>
 				)
 			},
 			meta: {
@@ -331,16 +336,20 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
 				if (!explorer) return display
 				return (
-					<a
-						href={explorer.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 text-link hover:underline"
-						title={value}
+					<Tooltip
+						content={<span className="break-all">{value}</span>}
+						render={
+							<a
+								href={explorer.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1 text-link hover:underline"
+							/>
+						}
 					>
 						{display}
 						<Icon name="external-link" height={10} width={10} />
-					</a>
+					</Tooltip>
 				)
 			},
 			meta: {
@@ -361,16 +370,20 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
 				if (!explorer) return display
 				return (
-					<a
-						href={explorer.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 text-link hover:underline"
-						title={value}
+					<Tooltip
+						content={<span className="break-all">{value}</span>}
+						render={
+							<a
+								href={explorer.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1 text-link hover:underline"
+							/>
+						}
 					>
 						{display}
 						<Icon name="external-link" height={10} width={10} />
-					</a>
+					</Tooltip>
 				)
 			},
 			meta: {
@@ -396,16 +409,20 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					)
 				}
 				return (
-					<a
-						href={explorer.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 text-link hover:underline"
-						title={value}
+					<Tooltip
+						content={<span className="break-all">{value}</span>}
+						render={
+							<a
+								href={explorer.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1 text-link hover:underline"
+							/>
+						}
 					>
 						<span className="font-mono text-xs">{truncateMiddle(value)}</span>
 						<Icon name="external-link" height={10} width={10} />
-					</a>
+					</Tooltip>
 				)
 			},
 			meta: {
@@ -934,17 +951,22 @@ function PagerButton({
 }) {
 	// A pager button disables itself at the first or last page; it stays focusable so focus does not drop to the page.
 	return (
-		<Button
-			type="button"
-			variant="secondary"
-			size="md"
-			square
-			accessibleWhenDisabled
-			disabled={disabled}
-			onClick={onClick}
-			aria-label={ariaLabel}
+		<Tooltip
+			content={ariaLabel}
+			render={
+				<Button
+					type="button"
+					variant="secondary"
+					size="md"
+					square
+					accessibleWhenDisabled
+					disabled={disabled}
+					onClick={onClick}
+					aria-label={ariaLabel}
+				/>
+			}
 		>
 			{children}
-		</Button>
+		</Tooltip>
 	)
 }

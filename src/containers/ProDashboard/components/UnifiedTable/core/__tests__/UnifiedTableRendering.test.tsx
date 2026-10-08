@@ -12,6 +12,8 @@ import type { ProtocolsUnifiedTableResponse } from '../../../../unifiedTable/con
 import { TablePagination } from '../../../Table/TablePagination'
 import UnifiedTable from '../../index'
 import type { ProtocolTableLeafRow, ProtocolTableRow } from '../../types'
+import type { ActiveFilterChip } from '../../utils/filterChips'
+import { UnifiedTableHeader } from '../UnifiedTableHeader'
 import { UnifiedVirtualTable } from '../UnifiedVirtualTable'
 import { tableFeaturesConfig, useUnifiedTable } from '../useUnifiedTable'
 
@@ -532,5 +534,59 @@ describe('UnifiedTable rendering', () => {
 		await waitForUi(() => expect(container.textContent).not.toContain("Couldn't refresh this card"))
 		expect(rowRequests()).toBeGreaterThan(attemptsBeforeRetry)
 		expect(container.textContent).toContain('Aave')
+	})
+
+	describe('removing a filter chip', () => {
+		const chips: Array<ActiveFilterChip> = [
+			{ id: 'chains', label: 'Chains', value: 'Ethereum', clearKeys: ['chains'] },
+			{ id: 'tvl', label: 'TVL', value: '> $1m', clearKeys: ['tvlMin'] }
+		]
+		function ChipsHarness({ withFiltersButton }: { withFiltersButton: boolean }) {
+			const [shown, setShown] = useState(chips)
+			return (
+				<Dashboard streamDone>
+					<section aria-label="Table card" tabIndex={-1}>
+						<UnifiedTableHeader
+							title="Protocols"
+							scopeDescription="All protocols"
+							rowHeadersSummary={null}
+							onSearchChange={() => {}}
+							filterChips={shown}
+							onFilterRemove={(chip) => setShown((current) => current.filter((item) => item.id !== chip.id))}
+							onClearFilters={() => setShown([])}
+							filtersEditable
+							activeFilterCount={shown.length}
+							{...(withFiltersButton ? { onFiltersClick: () => {} } : {})}
+						/>
+					</section>
+				</Dashboard>
+			)
+		}
+		const chip = (label: string) =>
+			container.querySelector<HTMLButtonElement>(`[aria-label="Remove filter: ${label}"]`)!
+		async function remove(label: string) {
+			await act(async () => {
+				chip(label).focus()
+				chip(label).click()
+			})
+		}
+
+		test('hands focus to the next chip, then to the Filters button after the last', async () => {
+			dashboardMocks.permissions.isReadOnly = false
+			await act(async () => root.render(<ChipsHarness withFiltersButton />))
+			await remove('Chains')
+			expect(document.activeElement).toBe(chip('TVL'))
+			await remove('TVL')
+			expect(document.activeElement?.textContent).toBe('Filters')
+		})
+
+		test('hands focus to the card after the last chip when there is no Filters button', async () => {
+			dashboardMocks.permissions.isReadOnly = false
+			await act(async () => root.render(<ChipsHarness withFiltersButton={false} />))
+			await remove('TVL')
+			expect(document.activeElement).toBe(chip('Chains'))
+			await remove('Chains')
+			expect(document.activeElement).toBe(container.querySelector('section'))
+		})
 	})
 })

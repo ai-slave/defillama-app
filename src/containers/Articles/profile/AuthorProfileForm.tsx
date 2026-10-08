@@ -1,9 +1,9 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import {
 	ArticleApiError,
 	type AuthorProfileUpdate,
@@ -13,7 +13,10 @@ import {
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, textareaStyles } from '~/ui/Input'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 
@@ -202,6 +205,12 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 	)
 }
 
+/** The key field of the custom link row just added: the last row's first input. */
+function newCustomKeyInput(scope: HTMLElement) {
+	const inputs = scope.querySelectorAll<HTMLInputElement>('input')
+	return inputs[inputs.length - 2]
+}
+
 function Section({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
 	return (
 		<section className="grid gap-6 border-t border-medium py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
@@ -209,7 +218,8 @@ function Section({ title, description, children }: { title: string; description:
 				<h2 className="text-base font-semibold text-primary">{title}</h2>
 				<p className="mt-1.5 text-sm leading-relaxed text-secondary">{description}</p>
 			</div>
-			<div className="grid min-w-0 gap-5">{children}</div>
+			{/* content-start: the description column can be taller, and a stretched grid would pad out every field. */}
+			<div className="grid min-w-0 content-start gap-5">{children}</div>
 		</section>
 	)
 }
@@ -328,15 +338,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Profile</h1>
 					<p className="mt-1 text-sm text-secondary">How readers see you on research and author pages.</p>
 				</div>
-				<Link
-					href={`/research/authors/${profile.slug}`}
-					target="_blank"
-					rel="noreferrer"
-					className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-surface px-3 py-2 text-sm text-secondary transition-colors hover:border-link/40 hover:text-primary"
-				>
-					View public page
-					<span aria-hidden>↗</span>
-				</Link>
+				<ExternalLinkButton href={`/research/authors/${profile.slug}`}>View public page</ExternalLinkButton>
 			</header>
 
 			<LivePreview state={state} createdAt={profile.createdAt} />
@@ -361,12 +363,12 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						Display name
 						<CharCount value={state.displayName} max={DISPLAY_NAME_MAX} />
 					</span>
-					<input
+					<Input
 						type="text"
 						maxLength={DISPLAY_NAME_MAX}
 						value={state.displayName}
 						onChange={(e) => update({ displayName: e.target.value })}
-						className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+						className="w-full"
 					/>
 					{displayNameError ? <span className="text-xs text-error">{displayNameError}</span> : null}
 				</label>
@@ -383,16 +385,17 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			>
 				<label className="grid gap-1.5">
 					<span className="text-sm font-medium text-primary">Public URL</span>
-					<div className="flex items-stretch overflow-hidden rounded-md border border-medium bg-page transition-colors focus-within:border-link/60">
-						<span className="border-r border-medium bg-surface px-3 py-2 font-jetbrains text-xs text-tertiary">
-							/research/authors/
-						</span>
+					{/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
+					    value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */}
+					<div className="flex min-h-8 items-center rounded-lg border border-medium bg-page px-3 focus-within:border-brand has-[[aria-invalid=true]]:border-error">
+						<span className="shrink-0 text-base text-tertiary sm:body-sm">/research/authors/</span>
 						<input
 							type="text"
 							maxLength={SLUG_MAX}
 							value={state.slug}
 							onChange={(e) => update({ slug: e.target.value })}
-							className="w-full bg-transparent px-3 py-2 font-jetbrains text-sm text-primary outline-hidden"
+							aria-invalid={slugError ? true : undefined}
+							className="min-w-0 flex-1 bg-transparent py-0.5 text-base text-primary focus:outline-hidden sm:body-sm"
 							spellCheck={false}
 							autoCapitalize="none"
 							autoCorrect="off"
@@ -424,7 +427,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						value={state.bio}
 						onChange={(e) => update({ bio: e.target.value })}
 						placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
-						className="w-full resize-y rounded-md border border-medium bg-page px-3 py-2 text-sm leading-relaxed text-primary outline-hidden transition-colors focus:border-link/60"
+						className={`${textareaStyles} w-full resize-y`}
 					/>
 				</label>
 			</Section>
@@ -434,13 +437,13 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					{PRESET_SOCIALS.map((kind) => (
 						<label key={kind.id} className="grid gap-1.5">
 							<span className="text-xs font-medium text-secondary">{kind.label}</span>
-							<input
+							<Input
 								type="text"
 								maxLength={SOCIAL_VALUE_MAX}
 								value={state.socials[kind.id] || ''}
 								onChange={(e) => updateSocial(kind.id, e.target.value)}
 								placeholder={kind.placeholder}
-								className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+								className="w-full"
 							/>
 						</label>
 					))}
@@ -448,62 +451,88 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 
 				{showCustom ? (
 					<div className="grid gap-3 border-t border-medium pt-4">
-						<div className="flex items-center justify-between gap-2">
+						<div className="flex items-center justify-between gap-2 label-sm">
 							<h3 className="text-sm font-medium text-primary">Custom links</h3>
-							<button type="button" onClick={addCustom} className="text-xs text-link hover:underline">
+							<Button variant="link" onClick={addCustom}>
 								+ add another
-							</button>
+							</Button>
 						</div>
 						{state.customSocials.length === 0 ? (
-							<button
-								type="button"
-								onClick={addCustom}
-								className="rounded-md border border-dashed border-medium bg-page p-3 text-sm text-tertiary transition-colors hover:border-link/40 hover:text-primary"
+							<Button
+								variant="secondary"
+								size="md"
+								onClick={(event) => {
+									const list = event.currentTarget.parentElement!
+									keepFocus(addCustom, () => newCustomKeyInput(list))
+								}}
 							>
 								Add a custom link
-							</button>
+							</Button>
 						) : (
 							state.customSocials.map((entry, index) => (
 								<div key={entry.id} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-2">
-									<input
+									<Input
 										type="text"
 										value={entry.key}
 										onChange={(e) => updateCustom(index, { key: e.target.value })}
 										placeholder="kind"
 										maxLength={40}
-										className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+										className="w-full"
 									/>
-									<input
+									<Input
 										type="text"
 										value={entry.value}
 										onChange={(e) => updateCustom(index, { value: e.target.value })}
 										placeholder="https://…"
 										maxLength={SOCIAL_VALUE_MAX}
-										className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+										className="w-full"
 									/>
-									<button
-										type="button"
-										onClick={() => removeCustom(index)}
-										aria-label="Remove"
-										className="flex size-9 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-error/10 hover:text-error"
+									<Tooltip
+										content="Remove link"
+										render={
+											<Button
+												variant="ghost"
+												size="md"
+												square
+												aria-label={`Remove custom link ${entry.key || index + 1}`}
+												onClick={(event) => {
+													// The row leaves with its button: the next row's takes focus, else Add a custom link.
+													const row = event.currentTarget.parentElement!
+													const list = row.parentElement!
+													const next = neighbourRowControl(row, event.currentTarget)
+													keepFocus(
+														() => removeCustom(index),
+														() => next ?? (list.lastElementChild as HTMLElement)
+													)
+												}}
+											/>
+										}
 									>
-										<Icon name="x" className="size-3.5" />
-									</button>
+										<Icon name="x" className="size-4" />
+									</Tooltip>
 								</div>
 							))
 						)}
 					</div>
 				) : (
-					<button
-						type="button"
-						onClick={() => {
-							setShowCustom(true)
-							addCustom()
-						}}
-						className="mr-auto text-xs text-link hover:underline"
-					>
-						+ add custom link
-					</button>
+					<div className="label-sm">
+						<Button
+							variant="link"
+							onClick={(event) => {
+								// The section, not this row: the row leaves once the custom links show.
+								const section = event.currentTarget.parentElement!.parentElement!
+								keepFocus(
+									() => {
+										setShowCustom(true)
+										addCustom()
+									},
+									() => newCustomKeyInput(section)
+								)
+							}}
+						>
+							+ add custom link
+						</Button>
+					</div>
 				)}
 			</Section>
 
@@ -517,15 +546,15 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						{dirty ? 'Unsaved changes' : 'All changes saved'}
 					</span>
 					<div className="flex items-center gap-2">
-						<Ariakit.Button
-							type="button"
+						<Button
+							variant="ghost"
+							size="md"
 							onClick={handleReset}
 							disabled={!dirty || updateProfileMutation.isPending}
 							accessibleWhenDisabled
-							className="rounded-md px-3 py-2 text-sm text-secondary transition-colors hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 						>
 							Discard
-						</Ariakit.Button>
+						</Button>
 						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
 						<Button
 							variant="primary"

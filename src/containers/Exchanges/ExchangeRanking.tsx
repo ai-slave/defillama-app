@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -92,10 +93,11 @@ function SubScoreRows({
 			<span className="label-sm text-secondary">{title}</span>
 			{subs.map((sub) => (
 				<div key={sub.key} className="flex items-center justify-between gap-3">
-					<Tooltip content={sub.what} className="min-w-0">
-						<span className="truncate body-sm underline decoration-dotted">
-							{sub.label} <span className="text-tertiary">{sub.weight}</span>
-						</span>
+					<Tooltip
+						content={sub.what}
+						render={<span className="min-w-0 truncate body-sm underline decoration-dotted" />}
+					>
+						{sub.label} <span className="text-tertiary">{sub.weight}</span>
 					</Tooltip>
 					<ScoreBar score={scores[sub.key] ?? null} />
 				</div>
@@ -152,15 +154,17 @@ function RankingRow({
 				))}
 				<td className="py-2 text-right">
 					{hasDetail ? (
-						<button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							className="ml-auto"
 							onClick={onToggle}
 							aria-expanded={expanded}
 							aria-label={`${expanded ? 'Hide' : 'Show'} sub-scores for ${row.name}`}
-							className="rounded-sm p-1 text-tertiary hover:bg-surface-elevated-1 hover:text-primary"
 						>
-							<Icon name={expanded ? 'chevron-up' : 'chevron-down'} height={14} width={14} />
-						</button>
+							<Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="size-4" />
+						</Button>
 					) : null}
 				</td>
 			</tr>
@@ -202,9 +206,9 @@ function RankingRow({
 										<div className="flex items-center justify-between gap-3">
 											<Tooltip
 												content="Did fills pay what the book promised at that size? 100 means at or better than quoted; a shortfall cuts Execution by up to 12%."
-												className="min-w-0"
+												render={<span className="min-w-0 truncate body-sm underline decoration-dotted" />}
 											>
-												<span className="truncate body-sm underline decoration-dotted">Delivery vs quote</span>
+												Delivery vs quote
 											</Tooltip>
 											<ScoreBar score={row.execDelivery} />
 										</div>

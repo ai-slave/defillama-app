@@ -43,6 +43,7 @@ import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButto
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { Input, textareaStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -192,7 +193,7 @@ export function BannerForm({ banner }: Props) {
 						<label
 							key={kind}
 							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.kind === kind ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+								state.kind === kind ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
 							}`}
 						>
 							<input
@@ -251,7 +252,7 @@ export function BannerForm({ banner }: Props) {
 							<label
 								key={scope}
 								className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-									state.scope === scope ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+									state.scope === scope ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
 								}`}
 							>
 								<input
@@ -290,7 +291,7 @@ export function BannerForm({ banner }: Props) {
 							>
 								<ComboboxSelectTrigger
 									aria-label="Banner section"
-									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link ${
+									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors data-[state=open]:border-brand ${
 										errors.section
 											? 'border-error/60 text-primary'
 											: state.section
@@ -358,7 +359,7 @@ export function BannerForm({ banner }: Props) {
 						<label
 							key={mode}
 							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.audienceMode === mode ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+								state.audienceMode === mode ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
 							}`}
 						>
 							<input
@@ -388,7 +389,7 @@ export function BannerForm({ banner }: Props) {
 										<label
 											key={group.id}
 											className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-												selected ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+												selected ? 'border-brand bg-brand-muted' : 'border-medium hover:bg-hover-row'
 											}`}
 										>
 											<input
@@ -449,7 +450,7 @@ export function BannerForm({ banner }: Props) {
 							maxLength={TEXT_MAX}
 							rows={3}
 							placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
-							className="w-full resize-y rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className={`${textareaStyles} w-full resize-y`}
 						/>
 						{errors.text ? <p className="text-xs text-error">{errors.text}</p> : null}
 					</label>
@@ -459,13 +460,13 @@ export function BannerForm({ banner }: Props) {
 							Link URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.linkUrl}
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
 					</label>
@@ -475,13 +476,13 @@ export function BannerForm({ banner }: Props) {
 							Link label <span className="font-normal text-tertiary">(optional, default “Read more”)</span>
 							<CharCount value={state.linkLabel} max={LINK_LABEL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.linkLabel}
 							onChange={(e) => update({ linkLabel: e.target.value })}
 							maxLength={LINK_LABEL_MAX}
 							placeholder="Read more"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 					</label>
 				</Section>
@@ -556,13 +557,13 @@ export function BannerForm({ banner }: Props) {
 							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
 							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.imageAlt}
 							onChange={(e) => update({ imageAlt: e.target.value })}
 							maxLength={IMAGE_ALT_MAX}
 							placeholder="e.g. Revolut X — built for serious crypto traders"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 					</label>
 
@@ -571,13 +572,13 @@ export function BannerForm({ banner }: Props) {
 							Link URL <span className="font-normal text-tertiary">(default for every placement)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.linkUrl}
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
 					</label>
@@ -588,13 +589,13 @@ export function BannerForm({ banner }: Props) {
 							<span className="font-normal text-tertiary">(optional, overrides Link URL on /research)</span>
 							<CharCount value={state.landingLinkUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.landingLinkUrl}
 							onChange={(e) => update({ landingLinkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.landingLinkUrl ? <p className="text-xs text-error">{errors.landingLinkUrl}</p> : null}
 					</label>
@@ -605,13 +606,13 @@ export function BannerForm({ banner }: Props) {
 							<span className="font-normal text-tertiary">(optional, overrides Link URL on article pages)</span>
 							<CharCount value={state.articleLinkUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.articleLinkUrl}
 							onChange={(e) => update({ articleLinkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.articleLinkUrl ? <p className="text-xs text-error">{errors.articleLinkUrl}</p> : null}
 					</label>
@@ -621,13 +622,13 @@ export function BannerForm({ banner }: Props) {
 							Disclosure URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.disclosureUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.disclosureUrl}
 							onChange={(e) => update({ disclosureUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.disclosureUrl ? <p className="text-xs text-error">{errors.disclosureUrl}</p> : null}
 					</label>
@@ -637,13 +638,13 @@ export function BannerForm({ banner }: Props) {
 							Disclosure label <span className="font-normal text-tertiary">(optional, default “Disclosure”)</span>
 							<CharCount value={state.disclosureText} max={DISCLOSURE_TEXT_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.disclosureText}
 							onChange={(e) => update({ disclosureText: e.target.value })}
 							maxLength={DISCLOSURE_TEXT_MAX}
 							placeholder="Disclosure"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 					</label>
 				</Section>
@@ -668,13 +669,13 @@ export function BannerForm({ banner }: Props) {
 							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
 							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.imageAlt}
 							onChange={(e) => update({ imageAlt: e.target.value })}
 							maxLength={IMAGE_ALT_MAX}
 							placeholder="e.g. State of DeFi banner — get in touch"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 					</label>
 
@@ -683,13 +684,13 @@ export function BannerForm({ banner }: Props) {
 							Link URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
-						<input
+						<Input
 							type="text"
 							value={state.linkUrl}
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+							className="w-full"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
 					</label>
@@ -720,13 +721,9 @@ export function BannerForm({ banner }: Props) {
 					</span>
 					<div className="flex items-center gap-2">
 						{banner ? (
-							<button
-								type="button"
-								onClick={() => setConfirmDelete(true)}
-								className="rounded-md px-3 py-2 text-sm text-error transition-colors hover:bg-error/10"
-							>
+							<Button variant="destructive" size="md" onClick={() => setConfirmDelete(true)}>
 								Delete
-							</button>
+							</Button>
 						) : null}
 						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
 						<Button

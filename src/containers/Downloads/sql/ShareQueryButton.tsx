@@ -1,5 +1,6 @@
-import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 import type { QueryTableRef } from '../savedDownloads'
@@ -30,56 +31,35 @@ export function ShareQueryButton({
 	notebookCells = EMPTY_NOTEBOOK_CELLS,
 	notebookTitle
 }: ShareQueryButtonProps) {
-	const [copied, setCopied] = useState(false)
+	const { copied, copy } = useCopy()
 
 	const isNotebook = mode === 'notebook'
 	const hasContent = isNotebook ? notebookCells.some((c) => c.source.trim()) : !!sql.trim()
 
-	// Both are value blocks, which the compiler cannot lower inside a try or catch. Building the link is
-	// called out to so a failure there is still caught; the message does not depend on anything in the
-	// try, so it is computed before it.
+	// A value block, which the compiler cannot lower inside a try or catch. Building the link is called
+	// out to so a failure there is still caught.
 	const buildShareLink = () => {
 		const url = isNotebook
 			? buildNotebookShareUrl(window.location.origin, '/downloads', { title: notebookTitle, cells: notebookCells })
 			: buildShareUrl(window.location.origin, '/downloads', extractQueryConfig({ sql, tables, chartConfig }))
 		return url.includes('mode=sql') ? url : `${url}${url.includes('?') ? '&' : '?'}mode=sql`
 	}
-	const copiedMessage = isNotebook ? 'Notebook link copied' : 'Share link copied'
-
-	const onClick = async () => {
+	const onClick = () => {
 		try {
 			const withMode = buildShareLink()
 			if (withMode.length > MAX_SAFE_URL_LENGTH) {
-				toast(
-					(t) => (
-						<span>
-							Link is long ({formatNumber(withMode.length)} chars) — some apps may truncate it.
-							<button type="button" onClick={() => toast.dismiss(t.id)} style={{ marginLeft: 8 }}>
-								OK
-							</button>
-						</span>
-					),
-					{ duration: 4000 }
-				)
+				toast(`Link is long (${formatNumber(withMode.length)} chars) — some apps may truncate it.`, { duration: 4000 })
 			}
-			await navigator.clipboard.writeText(withMode)
-			setCopied(true)
-			toast.success(copiedMessage)
-			setTimeout(() => setCopied(false), 1500)
+			void copy(withMode)
 		} catch {
 			toast.error('Could not copy link')
 		}
 	}
 
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled || !hasContent}
-			className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-pro-text-primary transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-		>
+		<Button variant="secondary" size="md" onClick={onClick} disabled={disabled || !hasContent}>
 			<Icon name={copied ? 'check' : 'share'} className="size-3.5" />
 			{copied ? 'Copied' : 'Share'}
-		</button>
+		</Button>
 	)
 }

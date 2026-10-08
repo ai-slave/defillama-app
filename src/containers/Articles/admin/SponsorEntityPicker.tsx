@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ArticleEntitySuggestionItem } from '~/containers/Articles/entitySuggestions'
 import type { ResearchSponsorEntityType } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
@@ -28,6 +30,7 @@ export function SponsorEntityPicker({
 	inputId
 }: Props) {
 	const [open, setOpen] = useState(false)
+	const inputRef = useRef<HTMLInputElement>(null)
 	const [searchValue, setSearchValue] = useState('')
 	const query = searchValue.trim()
 
@@ -53,6 +56,7 @@ export function SponsorEntityPicker({
 				<div className="relative flex items-center">
 					<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
+						ref={inputRef}
 						id={inputId}
 						aria-label={inputId ? undefined : 'Sponsor page'}
 						placeholder={value?.label ?? placeholder}
@@ -60,14 +64,21 @@ export function SponsorEntityPicker({
 						className={`${inputStyles} w-full pr-9 pl-9`}
 					/>
 					{value ? (
-						<button
-							type="button"
-							onClick={() => onChange(null)}
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={() =>
+								keepFocus(
+									() => onChange(null),
+									() => inputRef.current
+								)
+							}
 							aria-label="Clear selected DefiLlama page"
-							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary"
+							className="absolute right-2"
 						>
-							<Icon name="x" height={12} width={12} />
-						</button>
+							<Icon name="x" className="size-4" />
+						</Button>
 					) : null}
 				</div>
 				<ComboboxSurface

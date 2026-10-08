@@ -38,6 +38,8 @@ test('a column preset is a radio choice that marks the active preset and applies
 				showFiltersPanel={false}
 				setShowFiltersPanel={vi.fn()}
 				activeFilterCount={0}
+				filtersToggleRef={{ current: null }}
+				columnsToggleRef={{ current: null }}
 			/>
 		)
 	)

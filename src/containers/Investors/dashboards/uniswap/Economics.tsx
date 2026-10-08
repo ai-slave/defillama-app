@@ -6,8 +6,8 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
 import type { UniswapUnlocks } from './serverData'
@@ -454,7 +454,8 @@ export default function Economics() {
 					stacked={lpView === 'chain'}
 					defaultView="cumulative"
 					extraControl={
-						<ProSegmented<'total' | 'chain'>
+						<SegmentedControl<'total' | 'chain'>
+							variant="default"
 							size="sm"
 							label="LP fees breakdown"
 							options={[
@@ -479,7 +480,8 @@ export default function Economics() {
 					stacked={burnView === 'chain'}
 					defaultView="day"
 					extraControl={
-						<ProSegmented<'total' | 'chain'>
+						<SegmentedControl<'total' | 'chain'>
+							variant="default"
 							size="sm"
 							label="Protocol fees breakdown"
 							options={[

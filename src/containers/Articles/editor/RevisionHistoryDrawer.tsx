@@ -259,7 +259,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-research-tint font-jetbrains text-link"
+			className="grid shrink-0 place-items-center rounded-full bg-brand-muted font-jetbrains text-link-on-tint"
 		>
 			{initials || '·'}
 		</span>
@@ -605,11 +605,11 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 																}}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
+																	isSelected ? 'bg-brand-muted' : 'hover:bg-hover-row'
 																}`}
 															>
 																{isSelected ? (
-																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
+																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-brand" />
 																) : null}
 																{/* The day's timeline: segments above and below each glyph, centred on it (the 20px inset
 																    plus half the 20px glyph), so no backdrop has to hide a line behind the glyph. */}
@@ -1075,7 +1075,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 		)
 	}
 	return (
-		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-research-warning-bright/20 ring-inset`}>
+		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-warning/20 ring-inset`}>
 			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-warning">
 				~
 			</span>

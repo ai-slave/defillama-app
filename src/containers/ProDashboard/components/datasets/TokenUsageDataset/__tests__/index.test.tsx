@@ -76,6 +76,39 @@ describe('TokenUsageDataset CSV export', () => {
 		await act(async () => pending.resolve(Response.json([])))
 	})
 
+	test('Try again keeps the error and waits in its button until the retry lands', async () => {
+		const retry = Promise.withResolvers<Response>()
+		let failing = true
+		http.serve({ [USAGE_PATH]: () => (failing ? new Response(null, { status: 500 }) : retry.promise) })
+		await render()
+
+		const tryAgain = await waitForUi(
+			() => {
+				const button = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+					(node) => node.textContent === 'Try again'
+				)
+				expect(button).toBeDefined()
+				return button!
+			},
+			{ timeout: 3000 }
+		)
+		failing = false
+		await act(async () => {
+			tryAgain.focus()
+			tryAgain.click()
+		})
+
+		await waitForUi(() => expect(tryAgain.getAttribute('aria-busy')).toBe('true'))
+		expect(tryAgain.isConnected).toBe(true)
+		expect(tryAgain.disabled).toBe(false)
+		expect(tryAgain.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(tryAgain)
+		expect(container.textContent).toContain("Couldn't load token usage data")
+
+		await act(async () => retry.resolve(Response.json(rows)))
+		await waitForUi(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))
+	})
+
 	test('exports every filtered row in sorted order before pagination', async () => {
 		http.serve({ [USAGE_PATH]: rows })
 		await render()

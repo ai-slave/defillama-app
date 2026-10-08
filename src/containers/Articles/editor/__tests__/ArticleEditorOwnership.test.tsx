@@ -172,7 +172,7 @@ async function click(el: Element) {
 }
 
 async function restoreFromHistory() {
-	await click(container.querySelector('button[title="Revision history"]')!)
+	await click(container.querySelector('button[aria-label="Revision history"]')!)
 	await settle()
 	await click(button('Restore as pending'))
 	// The confirmation's own button, not the drawer's "Restore as pending".

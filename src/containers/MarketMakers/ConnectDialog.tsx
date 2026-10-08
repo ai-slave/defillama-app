@@ -23,6 +23,7 @@ import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { useSubmitLead } from './client'
 import { LeadField, LeadHoneypot, LeadSuccess } from './LeadForm'
 import { EMAIL_PATTERN } from './leadShared'
@@ -321,20 +322,26 @@ function ConnectForm({
 											<span className="truncate">{selectedToken.name}</span>
 											<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
 										</span>
-										<button
-											ref={changeTokenRef}
-											type="button"
-											onClick={() =>
-												keepFocus(
-													() => setSelectedToken(null),
-													() => tokenSearchRef.current
-												)
+										<Tooltip
+											content="Change token"
+											render={
+												<Button
+													ref={changeTokenRef}
+													variant="ghost"
+													size="sm"
+													square
+													onClick={() =>
+														keepFocus(
+															() => setSelectedToken(null),
+															() => tokenSearchRef.current
+														)
+													}
+													aria-label="Change token"
+												/>
 											}
-											aria-label="Change token"
-											className="shrink-0 text-secondary hover:text-primary"
 										>
-											<Icon name="x" height={14} width={14} />
-										</button>
+											<Icon name="x" className="size-4" />
+										</Tooltip>
 									</div>
 								) : (
 									<TokenCombobox
@@ -383,18 +390,20 @@ function ConnectForm({
 							</div>
 						) : null}
 						{tokenStatus === 'listed' && manualToken ? (
-							<button
-								type="button"
-								onClick={() =>
-									keepFocus(
-										() => setManualToken(false),
-										() => tokenSearchRef.current
-									)
-								}
-								className="w-fit body-sm text-link hover:underline"
-							>
-								Back to token search
-							</button>
+							<div className="body-sm">
+								<Button
+									variant="link"
+									onClick={() =>
+										keepFocus(
+											() => setManualToken(false),
+											() => tokenSearchRef.current
+										)
+									}
+								>
+									<Icon name="arrow-left" className="size-3.5" />
+									Back to token search
+								</Button>
+							</div>
 						) : null}
 						<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
 							<span className="label-sm text-tertiary">Contact information</span>

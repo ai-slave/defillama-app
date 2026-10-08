@@ -76,9 +76,11 @@ export function OAuthWelcomeDialog({
 					<p className="body-sm text-tertiary">Accept the Terms of Service and Privacy Policy to continue.</p>
 				)}
 				{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
-				<button type="button" className="body-sm text-link" onClick={onSignOut}>
-					Sign out
-				</button>
+				<p className="text-center body-sm">
+					<Button variant="link" onClick={onSignOut}>
+						Sign out
+					</Button>
+				</p>
 			</DialogBody>
 		</Dialog>
 	)

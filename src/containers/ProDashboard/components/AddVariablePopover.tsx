@@ -15,7 +15,6 @@ import {
 	suggestVariableBindings
 } from '../dashboardVariables/resolve'
 import { useProDashboardCatalog, useProDashboardItemsState, useProDashboardVariables } from '../ProDashboardAPIContext'
-import { ProButton } from '../ui'
 import { getItemIconUrl } from '../utils'
 
 export const VARIABLE_KIND_LABELS: Record<DashboardVariableKind, string> = {
@@ -125,7 +124,7 @@ export function AddVariablePopover() {
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure render={<ProButton type="button" variant="ghost" />} title="Add a dashboard parameter">
+			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="ghost" />}>
 				<Icon name="plus" height={14} width={14} />
 				<span>Parameter</span>
 			</Ariakit.PopoverDisclosure>

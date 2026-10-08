@@ -1,6 +1,7 @@
 import * as React from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { ProSegmented } from '../../../ui'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
 
 interface YieldsTableHeaderProps {
@@ -15,6 +16,9 @@ interface YieldsTableHeaderProps {
 	showFiltersPanel: boolean
 	setShowFiltersPanel: (show: boolean) => void
 	activeFilterCount: number
+	/** Closing a panel hands focus back to the toggle that opened it. */
+	filtersToggleRef: React.RefObject<HTMLButtonElement | null>
+	columnsToggleRef: React.RefObject<HTMLButtonElement | null>
 }
 
 export function YieldsTableHeader({
@@ -28,7 +32,9 @@ export function YieldsTableHeader({
 	setPoolName,
 	showFiltersPanel,
 	setShowFiltersPanel,
-	activeFilterCount
+	activeFilterCount,
+	filtersToggleRef,
+	columnsToggleRef
 }: YieldsTableHeaderProps) {
 	const presetOptions = React.useMemo(
 		() =>
@@ -45,7 +51,8 @@ export function YieldsTableHeader({
 				<div className="flex items-center gap-2">
 					<input
 						type="text"
-						placeholder="Search pools..."
+						aria-label="Search pools"
+						placeholder="Search pools…"
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
 						className="w-full rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden"
@@ -56,8 +63,10 @@ export function YieldsTableHeader({
 			{/* Wraps on a phone so the presets and the table actions each get a full row. */}
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="min-w-0">
-					<ProSegmented
+					<SegmentedControl
 						label="Column preset"
+						variant="default"
+						size="md"
 						value={activePreset}
 						onValueChange={applyPreset}
 						options={presetOptions}
@@ -67,29 +76,34 @@ export function YieldsTableHeader({
 				<div className="flex flex-wrap items-center gap-2">
 					{downloadCSV && <CSVExportButton onClick={downloadCSV} smol />}
 
-					<button
-						type="button"
+					<Button
+						ref={filtersToggleRef}
+						variant="secondary"
+						size="md"
+						aria-expanded={showFiltersPanel}
 						onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-						className="hover:bg-surface-secondary relative flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
+						className="relative"
 					>
-						<Icon name="align-left" height={14} width={14} />
+						<Icon name="align-left" className="size-3.5" />
 						Filters
 						{activeFilterCount > 0 ? (
 							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand text-xs text-on-brand">
 								{activeFilterCount}
 							</span>
 						) : null}
-						<Icon name={showFiltersPanel ? 'chevron-up' : 'chevron-down'} height={12} width={12} />
-					</button>
-					<button
-						type="button"
+						<Icon name={showFiltersPanel ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+					</Button>
+					<Button
+						ref={columnsToggleRef}
+						variant="secondary"
+						size="md"
+						aria-expanded={showColumnPanel}
 						onClick={() => setShowColumnPanel(!showColumnPanel)}
-						className="hover:bg-surface-secondary flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
 					>
-						<Icon name="settings" height={14} width={14} />
-						Customize Table
-						<Icon name={showColumnPanel ? 'chevron-up' : 'chevron-down'} height={12} width={12} />
-					</button>
+						<Icon name="settings" className="size-3.5" />
+						Customize table
+						<Icon name={showColumnPanel ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+					</Button>
 				</div>
 			</div>
 		</div>

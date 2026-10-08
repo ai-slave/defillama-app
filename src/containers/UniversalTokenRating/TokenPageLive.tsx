@@ -6,6 +6,7 @@ import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -617,23 +618,28 @@ export function TokenPageLive({
 								>
 									<div className="flex items-center justify-between gap-2">
 										<h3 className="label-lg">{disclosureCategoryTitle(entry)}</h3>
-										<Button
-											type="button"
-											size="sm"
-											square
-											aria-label={`Open ${disclosureCategoryTitle(entry)} details`}
-											onClick={() =>
-												openCriteria(
-													disclosureCategoryTitle(entry),
-													'disclosure',
-													entry.key,
-													withDisclosureTitles(entry.criteria),
-													null
-												)
+										<Tooltip
+											content={`Open ${disclosureCategoryTitle(entry)} details`}
+											render={
+												<Button
+													type="button"
+													size="sm"
+													square
+													aria-label={`Open ${disclosureCategoryTitle(entry)} details`}
+													onClick={() =>
+														openCriteria(
+															disclosureCategoryTitle(entry),
+															'disclosure',
+															entry.key,
+															withDisclosureTitles(entry.criteria),
+															null
+														)
+													}
+												/>
 											}
 										>
-											<Icon name="arrow-right" height={14} width={14} />
-										</Button>
+											<Icon name="arrow-right" height={16} width={16} />
+										</Tooltip>
 									</div>
 									<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
 										{entry.criteria.map((item) => (
@@ -1001,15 +1007,20 @@ export function TokenPageLive({
 								<Panel padding="none">
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
 										<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
-										<Button
-											type="button"
-											size="sm"
-											square
-											aria-label="Open exchange coverage details"
-											onClick={() => openFootprint(tier1Criterion?.key)}
+										<Tooltip
+											content="Open exchange coverage details"
+											render={
+												<Button
+													type="button"
+													size="sm"
+													square
+													aria-label="Open exchange coverage details"
+													onClick={() => openFootprint(tier1Criterion?.key)}
+												/>
+											}
 										>
-											<Icon name="arrow-right" height={14} width={14} />
-										</Button>
+											<Icon name="arrow-right" height={16} width={16} />
+										</Tooltip>
 									</div>
 									<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:items-stretch md:divide-x md:divide-y-0">
 										<div className="flex flex-1 flex-col gap-2 px-4 py-2.5 lg:flex-row lg:flex-wrap lg:items-center">
@@ -1134,25 +1145,30 @@ export function TokenPageLive({
 											<h3 className="label-lg">Disclosed Token Vesting vs Actual Vesting</h3>
 										</span>
 										{vestingCriterion ? (
-											<Button
-												type="button"
-												size="sm"
-												square
-												aria-label="Open vesting details"
-												onClick={() =>
-													tokenomicsCategory &&
-													vestingCriterion &&
-													openCriteria(
-														'Performance Overview: Tokenomics',
-														'performance',
-														'tokenomics_p',
-														tokenomicsCategory.criteria,
-														vestingCriterion.key
-													)
+											<Tooltip
+												content="Open vesting details"
+												render={
+													<Button
+														type="button"
+														size="sm"
+														square
+														aria-label="Open vesting details"
+														onClick={() =>
+															tokenomicsCategory &&
+															vestingCriterion &&
+															openCriteria(
+																'Performance Overview: Tokenomics',
+																'performance',
+																'tokenomics_p',
+																tokenomicsCategory.criteria,
+																vestingCriterion.key
+															)
+														}
+													/>
 												}
 											>
-												<Icon name="arrow-right" height={14} width={14} />
-											</Button>
+												<Icon name="arrow-right" height={16} width={16} />
+											</Tooltip>
 										) : null}
 									</div>
 									<div className="flex flex-col lg:flex-row">
@@ -1240,25 +1256,30 @@ export function TokenPageLive({
 												<span className="label-lg">{card.value}</span>
 											</div>
 											{card.criterion ? (
-												<Button
-													type="button"
-													size="sm"
-													square
-													aria-label={`Open ${card.title} details`}
-													onClick={() =>
-														tokenomicsCategory &&
-														card.criterion &&
-														openCriteria(
-															'Performance Overview: Tokenomics',
-															'performance',
-															'tokenomics_p',
-															tokenomicsCategory.criteria,
-															card.criterion.key
-														)
+												<Tooltip
+													content={`Open ${card.title} details`}
+													render={
+														<Button
+															type="button"
+															size="sm"
+															square
+															aria-label={`Open ${card.title} details`}
+															onClick={() =>
+																tokenomicsCategory &&
+																card.criterion &&
+																openCriteria(
+																	'Performance Overview: Tokenomics',
+																	'performance',
+																	'tokenomics_p',
+																	tokenomicsCategory.criteria,
+																	card.criterion.key
+																)
+															}
+														/>
 													}
 												>
-													<Icon name="arrow-right" height={14} width={14} />
-												</Button>
+													<Icon name="arrow-right" height={16} width={16} />
+												</Tooltip>
 											) : null}
 										</div>
 										<GradeFooterStacked

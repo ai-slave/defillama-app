@@ -134,9 +134,10 @@ test('Add to Slack keeps focus while it starts the link', async () => {
 	await waitForUi(() => expect(button('Add to Slack')).toBeDefined())
 	const add = button('Add to Slack')!
 	await press(add)
-	await waitForUi(() => expect(add.textContent).toBe('Opening…'))
+	await waitForUi(() => expect(accessibleName(add)).toBe('Opening…'))
 	expect(add.disabled).toBe(false)
 	expect(add.getAttribute('aria-disabled')).toBe('true')
+	expect(add.getAttribute('aria-busy')).toBe('true')
 	expect(document.activeElement).toBe(add)
 })
 
@@ -173,7 +174,7 @@ test('Add another workspace keeps the workspaces listed and waits with focus whi
 	await waitForUi(() => expect(button('Add another workspace')).toBeDefined())
 	const add = button('Add another workspace')!
 	await press(add)
-	await waitForUi(() => expect(add.textContent).toBe('Opening…'))
+	await waitForUi(() => expect(accessibleName(add)).toBe('Opening…'))
 	expect(container.textContent).toContain('Llama Research')
 	expect(document.activeElement).toBe(add)
 })

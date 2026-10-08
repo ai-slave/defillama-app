@@ -178,9 +178,13 @@ const stablecoinsColumns = columnHelper.columns([
 			info.row.original.change_1d_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_1d_nol}
-					className={`justify-end truncate underline decoration-dotted ${
-						info.row.original.change_1d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-					}`}
+					render={
+						<span
+							className={`underline decoration-dotted ${
+								info.row.original.change_1d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
+							}`}
+						/>
+					}
 				>
 					<PercentChange percent={info.getValue()} />
 				</Tooltip>
@@ -199,9 +203,13 @@ const stablecoinsColumns = columnHelper.columns([
 			info.row.original.change_7d_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_7d_nol}
-					className={`justify-end truncate underline decoration-dotted ${
-						info.row.original.change_7d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-					}`}
+					render={
+						<span
+							className={`underline decoration-dotted ${
+								info.row.original.change_7d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
+							}`}
+						/>
+					}
 				>
 					<PercentChange percent={info.getValue()} />
 				</Tooltip>
@@ -220,9 +228,13 @@ const stablecoinsColumns = columnHelper.columns([
 			info.row.original.change_1m_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_1m_nol}
-					className={`justify-end truncate underline decoration-dotted ${
-						info.row.original.change_1m_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-					}`}
+					render={
+						<span
+							className={`underline decoration-dotted ${
+								info.row.original.change_1m_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
+							}`}
+						/>
+					}
 				>
 					<PercentChange percent={info.getValue()} />
 				</Tooltip>

@@ -22,6 +22,7 @@ type ReorderableEditorialTagListProps = {
 	onReorder: (items: Array<EditorialTagOrderItem>) => void
 	onRemove: (articleId: string) => void
 	pending: boolean
+	removingId: string | null
 	reorderPending: boolean
 }
 
@@ -30,6 +31,7 @@ export function ReorderableEditorialTagList({
 	onReorder,
 	onRemove,
 	pending,
+	removingId,
 	reorderPending
 }: ReorderableEditorialTagListProps) {
 	const sensors = useSensors(
@@ -66,6 +68,7 @@ export function ReorderableEditorialTagList({
 								article={article}
 								position={index + 1}
 								onRemove={() => onRemove(article.id)}
+								removing={removingId === article.id}
 								disabled={disabled}
 							/>
 						))}
@@ -81,11 +84,13 @@ function SortableEditorialTagRow({
 	article,
 	position,
 	onRemove,
+	removing,
 	disabled
 }: {
 	article: ArticleDocument
 	position: number
 	onRemove: () => void
+	removing: boolean
 	disabled: boolean
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -107,12 +112,13 @@ function SortableEditorialTagRow({
 			position={position}
 			onRemove={onRemove}
 			pending={disabled}
+			removing={removing}
 			leading={
 				<Ariakit.Button
 					type="button"
 					disabled={disabled}
 					accessibleWhenDisabled
-					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 					aria-label={`Drag ${article.title}`}
 					{...attributes}
 					{...listeners}

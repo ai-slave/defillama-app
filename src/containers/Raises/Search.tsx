@@ -2,12 +2,14 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
@@ -89,23 +91,22 @@ function Input({
 }) {
 	return (
 		<>
-			<button
-				type="button"
-				onClick={() => setOpen((prev) => !prev)}
-				className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
+			<Tooltip
+				content={open ? 'Close search' : 'Open search'}
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						className="absolute top-1/2 left-2 -translate-y-1/2"
+						aria-label={open ? 'Close search' : 'Open search'}
+						aria-expanded={open}
+						onClick={() => setOpen((prev) => !prev)}
+					/>
+				}
 			>
-				{open ? (
-					<>
-						<span className="sr-only">Close Search</span>
-						<Icon name="x" height={16} width={16} />
-					</>
-				) : (
-					<>
-						<span className="sr-only">Open Search</span>
-						<Icon name="search" height={16} width={16} />
-					</>
-				)}
-			</button>
+				<Icon name={open ? 'x' : 'search'} className="size-4" />
+			</Tooltip>
 
 			<Ariakit.Combobox placeholder={placeholder} autoSelect className={searchFieldInputStyles} />
 		</>

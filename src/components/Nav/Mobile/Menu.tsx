@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { lazy, Suspense, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -8,7 +9,7 @@ import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
 import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
-import { LinkToPage, navActionStyles, navSummaryStyles } from '../shared'
+import { LinkToPage, navSummaryStyles } from '../shared'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 
 const ReorderablePinnedPages = lazy(() => import('./ReorderablePinnedPages'))
@@ -155,9 +156,9 @@ function PinnedPagesSection({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 			<div className="mb-1 flex items-center justify-between gap-2 label-sm text-secondary">
 				<span>Pinned Pages</span>
 				{pinnedPages.length > 1 ? (
-					<button type="button" className={navActionStyles} onClick={() => setIsReordering((v) => !v)}>
+					<Button variant="ghost" size="sm" onClick={() => setIsReordering((v) => !v)}>
 						{isReordering ? 'Done' : 'Reorder'}
-					</button>
+					</Button>
 				) : null}
 			</div>
 			<hr className="border-subtle" />

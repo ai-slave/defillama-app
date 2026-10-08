@@ -14,6 +14,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
 
@@ -231,13 +232,37 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				{timeView === 'Month' ? (
 					<div className="order-1 flex items-center gap-2 md:order-0">
-						<Button type="button" variant="ghost" size="md" square onClick={goToPrevMonth} aria-label="Previous Month">
+						<Tooltip
+							content="Previous month"
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="md"
+									square
+									onClick={goToPrevMonth}
+									aria-label="Previous month"
+								/>
+							}
+						>
 							<Icon name="chevron-left" height={16} width={16} />
-						</Button>
+						</Tooltip>
 						<span className="w-32 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
-						<Button type="button" variant="ghost" size="md" square onClick={goToNextMonth} aria-label="Next Month">
+						<Tooltip
+							content="Next month"
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="md"
+									square
+									onClick={goToNextMonth}
+									aria-label="Next month"
+								/>
+							}
+						>
 							<Icon name="chevron-right" height={16} width={16} />
-						</Button>
+						</Tooltip>
 					</div>
 				) : null}
 

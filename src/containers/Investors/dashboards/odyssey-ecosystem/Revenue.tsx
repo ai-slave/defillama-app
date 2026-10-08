@@ -3,9 +3,9 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { useTab, chartToModel, type RevenueResponse } from './api'
@@ -243,7 +243,8 @@ export default function Revenue() {
 			) : (
 				<ChartCard title="Holder Buybacks" subtitle="Revenue routed to token holders (MET / VSP)">
 					<div className="mb-3 flex justify-end">
-						<ProSegmented<'daily' | 'monthly'>
+						<SegmentedControl<'daily' | 'monthly'>
+							variant="default"
 							size="sm"
 							label="Holder buybacks period"
 							value={holderMode}

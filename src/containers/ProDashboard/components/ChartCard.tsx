@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { Select } from '~/components/Select/Select'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { downloadCSV } from '~/utils/download'
 import type { QueryRetry } from '~/utils/query'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
@@ -17,7 +18,7 @@ import {
 	getDashboardChartValueSymbol,
 	type Protocol
 } from '../types'
-import { ProMeta, ProSegmented } from '../ui'
+import { ProMeta } from '../ui'
 import {
 	DASHBOARD_CHART_GROUPING,
 	generateChartColor,
@@ -218,7 +219,8 @@ export function ChartCard({ chart }: ChartCardProps) {
 				controls={
 					<>
 						{isGroupable ? (
-							<ProSegmented
+							<SegmentedControl
+								variant="default"
 								size="sm"
 								label="Grouping"
 								options={DASHBOARD_GROUPING_SEGMENTS}
@@ -237,7 +239,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 								}}
 								label={presentation.cumulative ? 'Cumulative' : 'Individual'}
 								labelType="none"
-								variant="pro"
+								variant="filter"
 							/>
 						) : null}
 					</>

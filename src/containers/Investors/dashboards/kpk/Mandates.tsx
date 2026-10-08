@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { useTab, type KpkMandateClient, type KpkMandates, type KpkMandateSleeve, type KpkMandateWindow } from './api'
@@ -123,7 +123,9 @@ export default function Mandates() {
 				<section className="flex flex-col gap-3">
 					<SectionHeader title="Performance vs benchmark">
 						{denomOptions.length > 0 && activeDenom && (
-							<ProSegmented
+							<SegmentedControl
+								variant="default"
+								size="md"
 								label="Denomination"
 								options={denomOptions}
 								value={activeDenom}

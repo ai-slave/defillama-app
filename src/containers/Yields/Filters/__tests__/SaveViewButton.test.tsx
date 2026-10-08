@@ -1,0 +1,70 @@
+// @vitest-environment happy-dom
+
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { SaveViewButton } from '../index'
+
+const router = vi.hoisted(() => ({ pathname: '/yields', asPath: '/yields', query: {}, push: vi.fn() }))
+vi.mock('next/router', () => ({ useRouter: () => router }))
+
+let container: HTMLDivElement
+let root: Root
+
+beforeEach(() => {
+	localStorage.clear()
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
+
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+
+const button = (name: string) => document.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`)
+// The storage store re-renders its readers a task after a write.
+const nextTask = () => new Promise((resolve) => setTimeout(resolve))
+
+async function openWithViews(names: Array<string>) {
+	await act(async () => root.render(<SaveViewButton currentFilters={{ chain: 'Ethereum' }} />))
+	await act(async () => container.querySelector('button')!.click())
+	const field = document.querySelector<HTMLInputElement>('input[aria-label="Saved view name"]')!
+	for (const name of names) {
+		await act(async () => {
+			const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+			setValue.call(field, name)
+			field.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await act(async () => {
+			field.form!.requestSubmit()
+			await nextTask()
+		})
+	}
+	return field
+}
+
+async function deleteFocused(name: string) {
+	await act(async () => {
+		button(`Delete ${name}`)!.focus()
+		button(`Delete ${name}`)!.click()
+		await nextTask()
+	})
+}
+
+test('deleting a saved view hands focus to the next view’s delete, else the previous one’s', async () => {
+	await openWithViews(['Alpha', 'Beta', 'Gamma'])
+	await deleteFocused('Beta')
+	expect(button('Delete Beta')).toBeNull()
+	expect(document.activeElement).toBe(button('Delete Gamma'))
+	await deleteFocused('Gamma')
+	expect(document.activeElement).toBe(button('Delete Alpha'))
+})
+
+test('deleting the last saved view hands focus to the popover’s name field', async () => {
+	const field = await openWithViews(['Alpha'])
+	await deleteFocused('Alpha')
+	expect(document.body.textContent).toContain('No saved views yet')
+	expect(document.activeElement).toBe(field)
+})

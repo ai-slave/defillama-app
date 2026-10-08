@@ -1,13 +1,22 @@
-import * as Ariakit from '@ariakit/react'
 import type { Ref } from 'react'
 import type * as React from 'react'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+
+// A removed row takes its Remove with it: the next row's Remove takes focus, else the section's article picker.
+const focusNeighbourOnLeave = passFocusOnLeave(
+	(node) => neighbourRowControl(node.closest('li')!, node) ?? node.closest('section')?.querySelector('input')
+)
 
 type EditorialTagRowProps = {
 	article: ArticleDocument
 	onRemove: () => void
+	/** Any editorial request runs: every row's Remove waits. */
 	pending: boolean
+	/** This row's removal runs. */
+	removing: boolean
 	position?: number
 	leading?: React.ReactNode
 	className?: string
@@ -18,6 +27,7 @@ export function EditorialTagRow({
 	article,
 	onRemove,
 	pending,
+	removing,
 	position,
 	leading,
 	className,
@@ -43,15 +53,18 @@ export function EditorialTagRow({
 				</span>
 				<span className="truncate text-sm text-primary">{article.title}</span>
 			</div>
-			<Ariakit.Button
-				type="button"
+			<Button
+				ref={focusNeighbourOnLeave}
+				variant="secondary"
+				size="sm"
 				onClick={onRemove}
+				pendingLabel={removing ? 'Removing…' : null}
 				disabled={pending}
 				accessibleWhenDisabled
-				className={`justify-self-end rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 aria-disabled:opacity-50${leading ? ' sm:col-start-3' : ''}`}
+				className={`justify-self-end${leading ? ' sm:col-start-3' : ''}`}
 			>
 				Remove
-			</Ariakit.Button>
+			</Button>
 		</li>
 	)
 }

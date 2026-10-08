@@ -1,5 +1,6 @@
+import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { configDefaults, defineConfig } from 'vitest/config'
 import type { VitestPluginContext } from 'vitest/node'
 
@@ -27,7 +28,11 @@ function reactCompilerUnderTest() {
 		name: 'react-compiler-under-test',
 		enforce: 'pre' as const,
 		configureVitest({ defineCacheKeyGenerator }: VitestPluginContext) {
-			defineCacheKeyGenerator(({ id }) => (appSource.test(id) ? compilerOptions : undefined))
+			defineCacheKeyGenerator(({ id, sourceCode }) => {
+				if (!id.includes('/src/')) return undefined
+				const imports = resolvedLocalImports(id, sourceCode)
+				return appSource.test(id) ? `${compilerOptions}${imports}` : imports
+			})
 		},
 		transform(code: string, id: string) {
 			if (!appSource.test(id)) return null
@@ -40,6 +45,27 @@ function reactCompilerUnderTest() {
 			return output?.code == null ? null : { code: output.code, map: null }
 		}
 	}
+}
+
+const IMPORT_SPECIFIER = /(?:from|import|mock)\s*\(?\s*['"]((?:\.{1,2}|~)\/[^'"]+)['"]/g
+const RESOLVE_SUFFIXES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
+
+/**
+ * The file each local import of `id` resolves to. A cached transform holds its imports already
+ * resolved, and the cache keys on the file's own content, so renaming `panes.ts` to `panes.tsx` left
+ * every unchanged importer pointing at a file that no longer existed and broke the CI shards reading
+ * main's cache. With the resolution in the key, a rename re-transforms its importers.
+ */
+function resolvedLocalImports(id: string, sourceCode: string) {
+	let resolved = ''
+	for (const [, specifier] of sourceCode.matchAll(IMPORT_SPECIFIER)) {
+		const base = specifier.startsWith('~/')
+			? resolve(import.meta.dirname, 'src', specifier.slice(2))
+			: resolve(dirname(id), specifier)
+		const suffix = RESOLVE_SUFFIXES.find((candidate) => existsSync(base + candidate))
+		resolved += `${specifier}${suffix ?? '?'};`
+	}
+	return resolved
 }
 
 const SHARED_EXCLUDE = [...configDefaults.exclude, '**/.codex/**', '**/.claude/**']

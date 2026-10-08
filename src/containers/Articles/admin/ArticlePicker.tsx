@@ -1,10 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -39,6 +41,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 	const { authorizedFetch } = useAuthContext()
 	const [searchValue, setSearchValue] = useState('')
 	const [open, setOpen] = useState(false)
+	const inputRef = useRef<HTMLInputElement>(null)
 	// Every title seen (search results, the resolved selection, a pick) stays known by id, so the selected
 	// article keeps its label through later search changes and failed lookups.
 	const [titles, setTitles] = useState<Record<string, string>>({})
@@ -86,26 +89,34 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				resetValueOnHide
 			>
 				<div
-					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error/60' : 'border-medium focus-within:border-link/60'}`}
+					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error/60' : 'border-medium'}`}
 				>
 					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
+						ref={inputRef}
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-primary placeholder:text-tertiary"
 					/>
 					{value ? (
-						<button
-							type="button"
-							onClick={() => {
-								setSearchValue('')
-								onChange(null)
-							}}
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							onClick={() =>
+								keepFocus(
+									() => {
+										setSearchValue('')
+										onChange(null)
+									},
+									() => inputRef.current
+								)
+							}
 							aria-label="Clear selection"
-							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary"
+							className="absolute right-2"
 						>
-							<Icon name="x" height={12} width={12} />
-						</button>
+							<Icon name="x" className="size-4" />
+						</Button>
 					) : null}
 				</div>
 				<ComboboxSurface
@@ -149,8 +160,8 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					Selected: <span className="tracking-normal text-secondary normal-case">{selectedLabel}</span>
 				</p>
 			) : null}
-			{hint ? <p className="text-xs text-tertiary">{hint}</p> : null}
-			{error ? <p className="text-xs text-error">{error}</p> : null}
+			{hint ? <p className="body-sm text-tertiary">{hint}</p> : null}
+			{error ? <p className="body-sm text-error">{error}</p> : null}
 		</div>
 	)
 }

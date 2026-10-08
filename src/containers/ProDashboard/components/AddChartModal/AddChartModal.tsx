@@ -31,7 +31,8 @@ export function AddChartModal({
 	draftItem,
 	initialUnifiedFocusSection,
 	onOpenSqlModal,
-	placement
+	placement,
+	finalFocus
 }: AddChartModalProps) {
 	const { state, actions, computed, submitError } = useModalActions(editItem, onClose, placement, draftItem)
 	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
@@ -66,6 +67,7 @@ export function AddChartModal({
 			open={isOpen}
 			onClose={onClose}
 			{...(onClosed ? { onClosed } : {})}
+			{...(finalFocus ? { finalFocus } : {})}
 			unmountOnHide
 			portal
 			hideOnInteractOutside={false}

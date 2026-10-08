@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, createRef } from 'react'
+import { act, createRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { attachmentUploadMessage, type AttachmentUpload } from '../../../hooks/useImageUpload'
@@ -54,6 +54,19 @@ test('failed files remain visible with a named retry action, reason, and indepen
 	expect(remove).toHaveBeenCalledWith(0)
 })
 
+test('a retry that replaces the failed strip hands focus to the prompt field', async () => {
+	const prompt = document.createElement('textarea')
+	prompt.name = 'prompt'
+	document.body.append(prompt)
+	await render({ status: 'error', progress: 0, error: 'Connection interrupted' })
+	const retryButton = button('Retry upload demo.csv')
+	retryButton.focus()
+	await act(async () => render({ status: 'pending', progress: 0 }))
+	expect(retryButton.isConnected).toBe(false)
+	expect(document.activeElement).toBe(prompt)
+	prompt.remove()
+})
+
 test('waiting, transferring, finishing, and ready states stay on the same file card', async () => {
 	await render({ status: 'pending', progress: 0 })
 	const card = button('Open demo.csv')
@@ -93,4 +106,39 @@ test('opens the full failure reason without retrying or removing the file', asyn
 	expect(details.textContent).toContain('Too many concurrent uploads. Try again shortly.')
 	expect(retry).not.toHaveBeenCalled()
 	expect(remove).not.toHaveBeenCalled()
+})
+
+test('removing an attachment hands focus to the next one’s remove, and the last one to the prompt field', async () => {
+	const prompt = document.createElement('textarea')
+	prompt.name = 'prompt'
+	document.body.append(prompt)
+	const image = new File(['png'], 'chart.png', { type: 'image/png' })
+	function Harness() {
+		const [selected, setSelected] = useState([
+			{ id: 'file-1', file },
+			{ id: 'image-1', file: image, url: 'blob:chart' }
+		])
+		return (
+			<ImageUpload
+				selectedImages={selected.map((item) => ({ url: '', ...item }))}
+				previewImage={null}
+				setPreviewImage={vi.fn()}
+				retryUpload={retry}
+				removeImage={(idx) => setSelected((items) => items.filter((_, i) => i !== idx))}
+				uploadMessage={null}
+				fileInputRef={createRef()}
+				handleImageSelect={vi.fn()}
+			/>
+		)
+	}
+	await act(async () => root.render(<Harness />))
+	await act(async () => {
+		button('Remove demo.csv').focus()
+		button('Remove demo.csv').click()
+	})
+	expect(document.activeElement).toBe(button('Remove chart.png'))
+	await act(async () => button('Remove chart.png').click())
+	expect(button('Remove chart.png')).toBeNull()
+	expect(document.activeElement).toBe(prompt)
+	prompt.remove()
 })

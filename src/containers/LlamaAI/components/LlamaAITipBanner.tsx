@@ -48,17 +48,25 @@ export function LlamaAITipBanner() {
 				{tip.title}
 			</Tooltip>
 			{tip.cta.kind !== 'none' && (
-				<button
-					type="button"
-					onClick={onPrimary}
-					className="shrink-0 rounded-md bg-brand px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
-				>
+				<Button variant="primary" size="md" onClick={onPrimary}>
 					{tip.cta.label}
-				</button>
+				</Button>
 			)}
-			<Button type="button" variant="ghost" size="md" square onClick={() => dismissTip(tip)} aria-label="Dismiss tip">
+			<Tooltip
+				content="Dismiss tip"
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="md"
+						square
+						onClick={() => dismissTip(tip)}
+						aria-label="Dismiss tip"
+					/>
+				}
+			>
 				<Icon name="x" height={16} width={16} />
-			</Button>
+			</Tooltip>
 		</div>
 	)
 }

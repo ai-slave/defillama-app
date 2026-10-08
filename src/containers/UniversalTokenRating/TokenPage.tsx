@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
@@ -245,9 +246,12 @@ export function MetricCard({
 					{badge}
 				</span>
 				{onOpen ? (
-					<Button type="button" size="sm" square aria-label={`Open ${title} details`} onClick={onOpen}>
-						<Icon name="arrow-right" height={14} width={14} />
-					</Button>
+					<Tooltip
+						content={`Open ${title} details`}
+						render={<Button type="button" size="sm" square aria-label={`Open ${title} details`} onClick={onOpen} />}
+					>
+						<Icon name="arrow-right" height={16} width={16} />
+					</Tooltip>
 				) : null}
 			</div>
 			<div className="flex flex-1 flex-col gap-3 p-4">{children}</div>

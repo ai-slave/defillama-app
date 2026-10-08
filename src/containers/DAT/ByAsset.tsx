@@ -147,7 +147,6 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 						<BasicLink
 							href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
-							title={name}
 							className="truncate label-md text-link hover:underline"
 						>
 							{name}

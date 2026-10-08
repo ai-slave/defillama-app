@@ -1,6 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
+import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon as SharedIcon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater } from './ArticleEditorTypes'
@@ -55,7 +59,7 @@ export function ArticleCoverImageEditor({
 							<button
 								type="button"
 								onClick={onOpenCoverDetails}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55"
+								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55"
 							>
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
@@ -65,20 +69,39 @@ export function ArticleCoverImageEditor({
 								disabled={isUploadingCover}
 								onClick={openCoverPicker}
 								accessibleWhenDisabled
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+								aria-busy={isUploadingCover || undefined}
+								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:bg-research-invert/55 aria-busy:cursor-progress"
 							>
-								{isUploadingCover ? 'Uploading…' : 'Replace'}
+								{isUploadingCover ? (
+									<>
+										<LoadingSpinner size={14} />
+										Uploading…
+									</>
+								) : (
+									'Replace'
+								)}
 							</Ariakit.Button>
-							<button
-								type="button"
-								disabled={isUploadingCover}
-								aria-label="Remove cover"
-								title="Remove cover"
-								onClick={() => updateArticle('coverImage', null)}
-								className="pointer-events-auto flex size-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft text-on-brand backdrop-blur-sm transition-colors hover:border-error/60 hover:bg-error/70 disabled:cursor-not-allowed disabled:opacity-60"
+							<Tooltip
+								content="Remove cover"
+								render={
+									<Ariakit.Button
+										disabled={isUploadingCover}
+										accessibleWhenDisabled
+										aria-label="Remove cover"
+										onClick={(event) => {
+											// The cover leaves with this button: the Add cover image tile that replaces it takes focus.
+											const editor = event.currentTarget.closest('figure')!.parentElement!
+											keepFocus(
+												() => updateArticle('coverImage', null),
+												() => editor.querySelector('button')
+											)
+										}}
+										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft p-1.5 text-on-brand backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error/60 not-aria-disabled:hover:bg-error/70 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+									/>
+								}
 							>
-								<Icon name="trash" className="size-3.5" />
-							</button>
+								<Icon name="trash" className="size-4" />
+							</Tooltip>
 						</div>
 					</div>
 					{(() => {
@@ -90,32 +113,34 @@ export function ArticleCoverImageEditor({
 						const hasAny = headline || caption || metaParts.length > 0
 						if (!hasAny) {
 							return (
-								<button
-									type="button"
-									onClick={onOpenCoverDetails}
-									className="flex items-center gap-1.5 self-start rounded-md border border-dashed border-medium px-2.5 py-1 text-[11px] font-medium text-tertiary transition-colors hover:border-link/40 hover:text-primary"
-								>
-									<Icon name="plus" className="size-3" />
+								<Button variant="secondary" size="sm" onClick={onOpenCoverDetails} className="justify-self-start">
+									<Icon name="plus" className="size-3.5" />
 									<span>Add caption & credits</span>
-								</button>
+								</Button>
 							)
 						}
 						return (
 							<figcaption className="group/cap flex items-start justify-between gap-3">
-								<div className="grid gap-0.5 text-xs">
-									{headline ? <span className="font-medium text-secondary">{headline}</span> : null}
+								<div className="grid gap-0.5 body-sm">
+									{headline ? <span className="label-sm text-secondary">{headline}</span> : null}
 									{caption ? <span className="text-tertiary">{caption}</span> : null}
-									{metaParts.length > 0 ? <span className="text-tertiary/75">{metaParts.join(' · ')}</span> : null}
+									{metaParts.length > 0 ? <span className="text-tertiary">{metaParts.join(' · ')}</span> : null}
 								</div>
-								<button
-									type="button"
-									onClick={onOpenCoverDetails}
-									aria-label="Edit cover details"
-									title="Edit cover details"
-									className="shrink-0 rounded-md p-1.5 text-tertiary opacity-0 transition-opacity group-hover/cap:opacity-100 hover:bg-research-tint-hover hover:text-primary focus-visible:opacity-100"
+								<Tooltip
+									content="Edit cover details"
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											onClick={onOpenCoverDetails}
+											aria-label="Edit cover details"
+											className="opacity-0 transition-opacity group-hover/cap:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+										/>
+									}
 								>
-									<Icon name="pencil" className="size-3.5" />
-								</button>
+									<Icon name="pencil" className="size-4" />
+								</Tooltip>
 							</figcaption>
 						)
 					})()}
@@ -126,14 +151,15 @@ export function ArticleCoverImageEditor({
 					disabled={isUploadingCover}
 					onClick={openCoverPicker}
 					accessibleWhenDisabled
-					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+					aria-busy={isUploadingCover || undefined}
+					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
 				>
-					<SharedIcon name="image-plus" className="size-6" />
-					<span className="text-sm font-medium">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>
-					<span className="text-[11px] text-tertiary/80">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
+					{isUploadingCover ? <LoadingSpinner size={24} /> : <SharedIcon name="image-plus" className="size-6" />}
+					<span className="label-md">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>
+					<span className="body-sm text-tertiary">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
 				</Ariakit.Button>
 			)}
-			{publishError ? <p className="mt-2 text-xs text-error">{publishError}</p> : null}
+			{publishError ? <p className="mt-2 body-sm text-error">{publishError}</p> : null}
 		</div>
 	)
 }

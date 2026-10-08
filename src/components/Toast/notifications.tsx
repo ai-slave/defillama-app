@@ -1,5 +1,7 @@
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 const SUCCESS_TOAST_DURATION = 4000
 
@@ -23,11 +25,24 @@ export function errorToast({ title, description }: { title: string; description:
 				<p className="flex items-center gap-2 title-md text-error">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<span>{title}</span>
-					<button type="button" onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">
-						<Icon name="circle-x" height={16} width={16} />
-
-						<span className="sr-only">Close</span>
-					</button>
+					<Tooltip
+						content="Close"
+						portal={false}
+						// Beside the button, in the title row's free space: above clips at the viewport top, below covers the description.
+						placement="left"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="ml-auto"
+								aria-label="Close"
+								onClick={() => toast.dismiss(t.id)}
+							/>
+						}
+					>
+						<Icon name="x" className="size-4" />
+					</Tooltip>
 				</p>
 				<p className="text-secondary">{description}</p>
 			</div>

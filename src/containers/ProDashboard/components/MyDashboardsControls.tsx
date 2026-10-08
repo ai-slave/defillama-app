@@ -1,8 +1,11 @@
 import { useRef } from 'react'
 import { Select } from '~/components/Select/Select'
+import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { ProSegmented, proInputStyles } from '../ui'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
+import { proInputStyles } from '../ui'
 import {
 	isMyDashboardsSort,
 	MY_DASHBOARDS_SORT_OPTIONS,
@@ -50,24 +53,32 @@ export function MyDashboardsControls({
 					className={`${proInputStyles} pr-8 pl-8`}
 				/>
 				{query ? (
-					<button
-						type="button"
-						// The button leaves with the text it clears; focus goes back to the search box.
-						onClick={() =>
-							keepFocus(
-								() => onQueryChange(''),
-								() => searchRef.current
-							)
+					<Tooltip
+						content="Clear search"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								aria-label="Clear search"
+								// The button leaves with the text it clears; focus goes back to the search box.
+								onClick={() =>
+									keepFocus(
+										() => onQueryChange(''),
+										() => searchRef.current
+									)
+								}
+								className="absolute top-1/2 right-1.5 -translate-y-1/2"
+							/>
 						}
-						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-pro-hover-fill hover:text-pro-text-primary"
 					>
-						<Icon name="x" height={12} width={12} />
-						<span className="sr-only">Clear search</span>
-					</button>
+						<Icon name="x" height={16} width={16} />
+					</Tooltip>
 				) : null}
 			</div>
 
-			<ProSegmented
+			<SegmentedControl
+				variant="default"
 				options={MY_DASHBOARDS_VISIBILITY_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
 				label="Visibility"
 				value={visibility}
@@ -76,7 +87,7 @@ export function MyDashboardsControls({
 			/>
 			<Select
 				heading="Sort by"
-				variant="pro"
+				variant="filter"
 				size="md"
 				allValues={MY_DASHBOARDS_SORT_OPTIONS}
 				selectedValues={selectedSort.key}

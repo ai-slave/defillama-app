@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { readInvestorApiJson } from '../../api.types'
 import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
 import {
@@ -65,7 +65,8 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 			title={title}
 			subtitle={subtitle}
 			control={
-				<ProSegmented<typeof view>
+				<SegmentedControl<typeof view>
+					variant="default"
 					size="sm"
 					label={`${title} view`}
 					options={[

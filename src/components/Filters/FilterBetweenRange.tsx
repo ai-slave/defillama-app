@@ -183,6 +183,7 @@ function Form({
 								key={pick.value}
 								type="button"
 								onClick={() => pickMin(pick.value)}
+								aria-pressed={Number(minValue) === pick.value}
 								data-active={Number(minValue) === pick.value}
 								className={metricOptionChipStyles}
 							>

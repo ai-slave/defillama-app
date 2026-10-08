@@ -48,16 +48,21 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 				<Button type="submit" size="sm" square variant="ghost" aria-label="Save parameter name">
 					<Icon name="check" height={14} width={14} />
 				</Button>
-				<Button
-					type="button"
-					size="sm"
-					square
-					variant="ghost"
-					aria-label="Cancel rename"
-					onClick={() => setRenameDraft(null)}
+				<Tooltip
+					content="Cancel rename"
+					render={
+						<Button
+							type="button"
+							size="sm"
+							square
+							variant="ghost"
+							aria-label="Cancel rename"
+							onClick={() => setRenameDraft(null)}
+						/>
+					}
 				>
-					<Icon name="x" height={14} width={14} />
-				</Button>
+					<Icon name="x" height={16} width={16} />
+				</Tooltip>
 			</form>
 		)
 	}
@@ -90,13 +95,17 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 			</Tooltip>
 			{canEditVariables ? (
 				<Ariakit.MenuProvider placement="bottom-end">
-					<Ariakit.MenuButton
-						render={<Button size="md" square variant="ghost" />}
-						aria-label={`Parameter options for ${variable.label}`}
-						title="Parameter options"
+					<Tooltip
+						content="Parameter options"
+						render={
+							<Ariakit.MenuButton
+								render={<Button size="md" square variant="ghost" />}
+								aria-label={`Parameter options for ${variable.label}`}
+							/>
+						}
 					>
-						<Icon name="ellipsis" height={14} width={14} />
-					</Ariakit.MenuButton>
+						<Icon name="ellipsis" height={16} width={16} />
+					</Tooltip>
 					<MenuSurface variant="actions" gutter={6}>
 						<MenuItem data-umami-event="dashboard-variable-rename" onClick={() => setRenameDraft(variable.label)}>
 							<Icon name="pencil" height={14} width={14} />

@@ -37,7 +37,7 @@ afterEach(async () => {
 
 const siteSearchDialog = () =>
 	[...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find(
-		(dialog) => dialog.querySelector('input[placeholder="Search..."]') && !dialog.hidden
+		(dialog) => dialog.querySelector('input[placeholder="Search…"]') && !dialog.hidden
 	)
 
 /**

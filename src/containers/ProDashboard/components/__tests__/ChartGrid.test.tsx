@@ -329,9 +329,7 @@ test('a text card rendering raw HTML gets no edit affordance', async () => {
 		items: [notes('text-1', 'Notes'), { id: 'text-2', kind: 'text', content: '<b>Raw</b>', allowHtml: true }]
 	})
 	const editButtons = (itemId: string) =>
-		Array.from(container.querySelectorAll(`[data-item-id="${itemId}"] button`)).filter(
-			(node) => node.textContent?.trim() === 'Edit card'
-		)
+		container.querySelectorAll(`[data-item-id="${itemId}"] button[aria-label="Edit card"]`)
 	expect(editButtons('text-1')).toHaveLength(1)
 	expect(editButtons('text-2')).toHaveLength(0)
 	expect(container.querySelector('[data-item-id="text-2"] [aria-label="Drag to reorder this card"]')).not.toBeNull()
@@ -408,13 +406,17 @@ test('switching read-only off keeps card elements mounted', async () => {
 	expect(container.querySelector('[data-item-id="section-1"]')).toBe(section)
 })
 
-test('removing a section keeps its cards and offers Undo in its own toast', async () => {
+test('removing a section keeps its cards, hands focus to the grid and offers Undo in its own toast', async () => {
 	await renderGrid({
 		items: [{ id: 'section-1', kind: 'section', title: 'Overview', displayAs: 'heading' }, notes('text-1')]
 	})
 	const remove = buttons().find((node) => node.getAttribute('aria-label') === 'Delete section')!
-	await act(async () => remove.click())
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
 	expect(actions.handleChartsReordered.mock.calls[0][0].map((item: { id: string }) => item.id)).toEqual(['text-1'])
+	expect(document.activeElement).toBe(container.querySelector('[data-testid="dashboard-grid"]'))
 	const toast = await renderToastContent(0)
 	expect(toast.options.id).toBe('section-removed')
 	expect(toast.element.textContent).toContain('Section removed · cards stay')

@@ -1,7 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import { useMemo, useRef } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
+import { Hovercard } from '~/ui/Hovercard'
+import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 
@@ -47,16 +48,21 @@ function IconItemLogo({ item }: IIconItemLogoProps) {
 	if (!item.href) return logo
 
 	return (
-		<a
-			href={item.href}
-			target="_blank"
-			rel="noopener noreferrer"
-			title={title}
-			className="flex"
-			onClick={(e) => e.stopPropagation()}
+		<Tooltip
+			content={title}
+			render={
+				<a
+					href={item.href}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={title}
+					className="flex"
+					onClick={(e) => e.stopPropagation()}
+				/>
+			}
 		>
 			{logo}
-		</a>
+		</Tooltip>
 	)
 }
 
@@ -100,24 +106,20 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 				<IconItemLogo key={key} item={item} />
 			))}
 			{hiddenItems.length > 0 && items.length > 2 ? (
-				<Ariakit.HovercardProvider>
-					<Ariakit.HovercardAnchor
-						render={<button type="button" />}
-						className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-elevated-2 label-xs text-primary"
-					>
-						{`+${hiddenItems.length}`}
-					</Ariakit.HovercardAnchor>
-					<Ariakit.Hovercard
-						className="z-10 flex max-h-(--popover-available-height) max-w-[min(36rem,var(--popover-available-width))] flex-wrap items-center justify-start gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-1 text-primary shadow-overlay-sm"
-						overflowPadding={16}
-						unmountOnHide
-						portal
-					>
-						{hiddenItems.map(({ item, key }) => (
-							<IconItemLogo key={key} item={item} />
-						))}
-					</Ariakit.Hovercard>
-				</Ariakit.HovercardProvider>
+				<Hovercard
+					render={
+						<button
+							type="button"
+							className="min-h-6 min-w-6 justify-center rounded-full bg-surface-elevated-2 px-1 label-sm text-primary"
+						/>
+					}
+					contentClassName="flex max-w-[min(36rem,var(--popover-available-width))] flex-wrap items-center gap-1 p-1"
+					content={hiddenItems.map(({ item, key }) => (
+						<IconItemLogo key={key} item={item} />
+					))}
+				>
+					{`+${hiddenItems.length}`}
+				</Hovercard>
 			) : null}
 		</div>
 	)

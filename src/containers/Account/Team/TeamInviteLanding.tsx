@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { SignInDialog } from '~/containers/Subscription/SignInDialog'
+import { Button } from '~/ui/Button'
 
 export function TeamInviteLanding() {
 	const dialogStore = Ariakit.useDialogStore()
@@ -24,18 +25,14 @@ export function TeamInviteLanding() {
 					automatically.
 				</p>
 			</div>
-			<button
-				type="button"
-				className="flex h-10 items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand"
-				onClick={() => openDialog('signup')}
-			>
+			<Button variant="primary" size="md" onClick={() => openDialog('signup')}>
 				Sign up & accept
-			</button>
+			</Button>
 			<p className="text-sm text-sub-text-muted">
 				Already have an account?{' '}
-				<button type="button" className="text-link" onClick={() => openDialog('signin')}>
+				<Button variant="link" onClick={() => openDialog('signin')}>
 					Sign in
-				</button>
+				</Button>
 			</p>
 			{isOpen ? <SignInDialog store={dialogStore} initialStep={initialStep} suppressVerifyEmailPrompt /> : null}
 		</div>

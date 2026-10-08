@@ -1,8 +1,9 @@
 import { TabProvider, TabList, Tab, TabPanel } from '@ariakit/react'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useId, type ReactNode } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
+import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { FineKind } from './columnKind'
@@ -258,17 +259,16 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 			</div>
 
 			<div className="flex flex-col gap-2">
-				<Link
+				<Button
+					as={BasicLink}
+					variant="primary"
+					size="lg"
 					href={subscriptionHref}
 					onClick={() => setSignupSource('sql-studio')}
-					className="group inline-flex items-center justify-center gap-2 rounded-md bg-sub-brand-primary px-4 py-2.5 text-sm font-semibold text-on-brand transition-all hover:bg-sub-brand-primary/90 hover:shadow-brand-glow-strong"
 				>
 					{isAuthenticated ? 'Upgrade to API plan' : 'Sign in & subscribe'}
-					<Icon
-						name="arrow-up-right"
-						className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-					/>
-				</Link>
+					<Icon name="arrow-up-right" className="size-3.5" />
+				</Button>
 				<span className="text-[11px] text-pro-text-tertiary">Cancel anytime · pay with card or crypto</span>
 			</div>
 		</div>

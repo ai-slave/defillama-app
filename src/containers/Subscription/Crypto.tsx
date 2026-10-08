@@ -4,6 +4,7 @@ import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 
@@ -32,6 +33,7 @@ export function PaymentButton({
 	const [cryptoError, setCryptoError] = useState<string | null>(null)
 
 	const isStripe = paymentMethod === 'stripe'
+	const pending = loading === paymentMethod
 	const icon = isStripe ? 'card' : 'wallet'
 	const text = isStripe ? 'Pay with Card' : 'Pay with Crypto'
 
@@ -59,17 +61,17 @@ export function PaymentButton({
 	return (
 		<>
 			<div className="flex flex-col gap-2">
-				<Ariakit.Button
-					type="button"
+				<Button
+					variant="primary"
+					size="lg"
+					className="w-full"
 					onClick={handleClick}
-					disabled={loading === paymentMethod}
-					accessibleWhenDisabled
-					className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple bg-sub-purple py-3 text-sm font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md aria-disabled:cursor-not-allowed aria-disabled:opacity-70 sm:py-3.5 dark:border-sub-purple dark:bg-sub-purple dark:hover:bg-sub-purple-hover ${type === 'api' && !isStripe ? 'shadow-sub-purple-glow-strong' : ''}`}
+					pendingLabel={pending ? 'Opening checkout…' : null}
 					data-umami-event={isAuthenticated ? `subscribe-${paymentMethod}-${type ?? ''}` : undefined}
 				>
-					{icon ? <Icon name={icon} height={14} width={14} className="sm:h-4 sm:w-4" /> : null}
-					<span className="wrap-break-word">{text}</span>
-				</Ariakit.Button>
+					<Icon name={icon} className="size-3.5" />
+					{text}
+				</Button>
 				{cryptoError ? <InlineStatus variant="error">{cryptoError}</InlineStatus> : null}
 			</div>
 

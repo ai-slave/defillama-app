@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import type { ArticlePdf } from '../types'
 import { type PdfUploadResult, usePdfUpload } from './usePdfUpload'
@@ -56,7 +57,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 								href={currentPdf.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="truncate text-sm font-medium text-primary hover:text-link"
+								className="truncate label-md text-primary hover:text-link"
 							>
 								{currentPdf.originalName || 'report.pdf'}
 							</a>
@@ -94,10 +95,11 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					disabled={disabled}
 					onClick={open}
 					accessibleWhenDisabled
-					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+					aria-busy={isUploading || undefined}
+					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-link/50 not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-50"
 				>
-					<Icon name="file-text" className="size-5" />
-					<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
+					{isUploading ? <LoadingSpinner size={14} /> : <Icon name="file-text" className="size-5" />}
+					<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
 				</Ariakit.Button>
 			)}
 			{errorMessage ? (

@@ -1,7 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatRatio } from '~/utils/numberFormat'
 import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
@@ -152,7 +152,8 @@ export default function Incentives() {
 
 			<SectionHeader>Weekly Spend per Pool</SectionHeader>
 			<ChartCard title="Per-pool weekly spend">
-				<ProSegmented<VenueId>
+				<SegmentedControl<VenueId>
+					variant="default"
 					size="sm"
 					label="Pool venue"
 					className="mb-3"
@@ -178,7 +179,8 @@ export default function Incentives() {
 
 			<SectionHeader>Epochs & Spend</SectionHeader>
 			<ChartCard title="Epoch breakdown">
-				<ProSegmented<VenueId>
+				<SegmentedControl<VenueId>
+					variant="default"
 					size="sm"
 					label="Epoch venue"
 					className="mb-3"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { useTab, type KpkVault, type KpkVaults } from './api'
@@ -107,7 +107,14 @@ export default function Vaults() {
 
 			<section className="flex flex-col gap-3">
 				<SectionHeader title="Vaults">
-					<ProSegmented label="Filter vaults by venue" options={venueOptions} value={venue} onValueChange={setVenue} />
+					<SegmentedControl
+						variant="default"
+						size="md"
+						label="Filter vaults by venue"
+						options={venueOptions}
+						value={venue}
+						onValueChange={setVenue}
+					/>
 				</SectionHeader>
 				<Card>
 					<DataTable<KpkVault>

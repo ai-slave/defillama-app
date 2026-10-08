@@ -3,11 +3,13 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { CustomTimePeriod } from '../dashboardTypes'
 import { absoluteTimePeriod } from '../timePeriod'
-import { ProButton, ProSegmented } from '../ui'
 
 // Picked days are UTC calendar days, like the daily points they filter.
 dayjs.extend(utc)
@@ -115,7 +117,7 @@ export function CustomTimePeriodPicker({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
-				render={<ProButton type="button" variant={isActive ? 'primary' : 'secondary'} />}
+				render={<Button size="md" type="button" variant="toggle" data-active={isActive} />}
 				disabled={disabled}
 			>
 				<span className="flex items-center gap-1">
@@ -126,73 +128,74 @@ export function CustomTimePeriodPicker({
 
 			<PopoverSurface variant="list" heading="Custom time period" gutter={8} style={{ minWidth: '300px' }}>
 				<form onSubmit={handleApply} className="flex flex-col gap-4 p-4">
-					<ProSegmented<'relative' | 'absolute'>
+					<SegmentedControl<'relative' | 'absolute'>
+						variant="field"
 						value={mode}
 						onValueChange={setMode}
 						options={CUSTOM_PERIOD_MODE_OPTIONS}
 						label="Custom period mode"
-						size="sm"
+						size="md"
 					/>
 
 					{mode === 'relative' ? (
 						<div className="flex flex-col gap-2">
-							<label htmlFor="custom-period-relative-days" className="text-sm font-medium text-pro-text-label">
+							<label htmlFor="custom-period-relative-days" className="label-sm text-pro-text-label">
 								Days ago
 							</label>
 							<div className="flex items-center gap-2">
-								<input
+								<Input
 									id="custom-period-relative-days"
 									name="relativeDays"
 									type="text"
 									inputMode="numeric"
 									defaultValue={defaultRelativeDays}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="flex-1"
 									placeholder="Enter days"
 								/>
-								<span className="text-sm text-pro-text-secondary">days ago → Now</span>
+								<span className="body-sm text-pro-text-secondary">days ago → Now</span>
 							</div>
 						</div>
 					) : (
 						<div className="flex flex-col gap-3">
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-start-date" className="text-sm font-medium text-pro-text-label">
+								<label htmlFor="custom-period-start-date" className="label-sm text-pro-text-label">
 									From
 								</label>
-								<input
+								<Input
 									id="custom-period-start-date"
 									name="startDate"
 									type="date"
 									defaultValue={defaultStartDate}
 									max={today}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="cursor-pointer dark:scheme-dark"
 								/>
 							</div>
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-end-date" className="text-sm font-medium text-pro-text-label">
+								<label htmlFor="custom-period-end-date" className="label-sm text-pro-text-label">
 									To
 								</label>
-								<input
+								<Input
 									id="custom-period-end-date"
 									name="endDate"
 									type="date"
 									defaultValue={defaultEndDate}
 									max={today}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="cursor-pointer dark:scheme-dark"
 								/>
 							</div>
 						</div>
 					)}
 
 					<div className="flex gap-2 border-t border-pro-cards-border pt-2">
-						<ProButton type="button" onClick={handleClear} variant="secondary" className="flex-1">
+						<Button size="md" type="button" onClick={handleClear} variant="secondary" className="flex-1">
 							Clear
-						</ProButton>
-						<ProButton type="submit" variant="primary" className="flex-1">
+						</Button>
+						<Button size="md" type="submit" variant="primary" className="flex-1">
 							Apply
-						</ProButton>
+						</Button>
 					</div>
 				</form>
 			</PopoverSurface>

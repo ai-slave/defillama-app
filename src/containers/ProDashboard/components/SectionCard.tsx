@@ -1,9 +1,11 @@
 import { useId } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { SECTION_DESCRIPTION_MAX_LENGTH, SECTION_TITLE_MAX_LENGTH, type SectionConfig } from '../types'
-import { InlineTextField, ProButton, ProMeta, ProSegmented } from '../ui'
+import { InlineTextField, ProMeta } from '../ui'
 import { keepKeyboardEventsInsideCard } from './ProCardActions'
 
 let tabsExplainerShown = false
@@ -69,14 +71,19 @@ export function SectionCard({
 			data-testid="dashboard-section"
 		>
 			{!isTab ? (
-				<ProButton
-					size="sm"
-					square
-					variant="ghost"
-					aria-expanded={!collapsed}
-					aria-controls={contentId}
-					aria-label={collapsed ? 'Expand section' : 'Collapse section'}
-					onClick={onToggleCollapsed}
+				<Tooltip
+					content={collapsed ? 'Expand section' : 'Collapse section'}
+					render={
+						<Button
+							size="sm"
+							square
+							variant="ghost"
+							aria-expanded={!collapsed}
+							aria-controls={contentId}
+							aria-label={collapsed ? 'Expand section' : 'Collapse section'}
+							onClick={onToggleCollapsed}
+						/>
+					}
 				>
 					<Icon
 						name="chevron-down"
@@ -84,7 +91,7 @@ export function SectionCard({
 						width={16}
 						className={`transition-[rotate] duration-180 ease-out-quart ${collapsed ? '-rotate-90' : ''}`}
 					/>
-				</ProButton>
+				</Tooltip>
 			) : null}
 			<div className="flex min-w-48 flex-col">
 				{editing ? (
@@ -125,7 +132,8 @@ export function SectionCard({
 						}
 						data-umami-event={isTab ? 'dashboard-section-to-heading' : 'dashboard-section-to-tab'}
 					>
-						<ProSegmented<NonNullable<SectionConfig['displayAs']>>
+						<SegmentedControl<NonNullable<SectionConfig['displayAs']>>
+							variant="default"
 							size="sm"
 							label="Section display"
 							options={DISPLAY_AS_OPTIONS}
@@ -140,7 +148,7 @@ export function SectionCard({
 					<Tooltip
 						content="Move section up"
 						render={
-							<ProButton
+							<Button
 								size="sm"
 								square
 								variant="ghost"
@@ -156,7 +164,7 @@ export function SectionCard({
 					<Tooltip
 						content="Move section down"
 						render={
-							<ProButton
+							<Button
 								size="sm"
 								square
 								variant="ghost"
@@ -172,7 +180,7 @@ export function SectionCard({
 					<Tooltip
 						content="Add section below"
 						render={
-							<ProButton
+							<Button
 								size="sm"
 								square
 								variant="ghost"
@@ -187,7 +195,13 @@ export function SectionCard({
 					<Tooltip
 						content="Remove section (cards stay)"
 						render={
-							<ProButton size="sm" square variant="danger" aria-label="Delete section" onClick={editing.onDelete} />
+							<Button
+								size="sm"
+								square
+								variant="ghostDestructive"
+								aria-label="Delete section"
+								onClick={editing.onDelete}
+							/>
 						}
 					>
 						<Icon name="trash-2" height={16} width={16} />

@@ -10,7 +10,6 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
-import { ProSegmented } from '../../ui'
 import { assertCustomDataSizeAllowed, CustomDataParseError, parseCustomDataCsv } from '../CustomData/parseCustomDataCsv'
 import { CustomDataTooLargeError, encodeRows, useDecodedRows } from '../CustomData/rowsEncoding'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
@@ -216,8 +215,9 @@ function CustomDataForm({
 				className={`min-h-0 flex-col gap-2 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
 			>
 				<div className="flex shrink-0 items-center gap-2">
-					<ProSegmented
+					<SegmentedControl
 						label="Display as"
+						variant="default"
 						size="sm"
 						value={customData.displayMode}
 						onValueChange={(mode) => {

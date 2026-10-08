@@ -5,6 +5,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
@@ -60,16 +61,21 @@ function CriterionCards({
 									{formatPercent(marketMakerCriterionRawPercent(criterion?.raw ?? null), UTR_PERCENT_OPTIONS) ?? 'N/A'}
 								</span>
 							</div>
-							<Button
-								type="button"
-								size="sm"
-								square
-								disabled={!criterion}
-								aria-label={`Open ${definition.label} details`}
-								onClick={() => criterion && onOpen(criterion)}
+							<Tooltip
+								content={`Open ${definition.label} details`}
+								render={
+									<Button
+										type="button"
+										size="sm"
+										square
+										disabled={!criterion}
+										aria-label={`Open ${definition.label} details`}
+										onClick={() => criterion && onOpen(criterion)}
+									/>
+								}
 							>
-								<Icon name="arrow-right" height={14} width={14} />
-							</Button>
+								<Icon name="arrow-right" height={16} width={16} />
+							</Tooltip>
 						</div>
 						<GradeFooterColumns
 							score={criterion?.score ?? null}

@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from '~/containers/Account/endTrialHold'
 import { PRO_TRIAL_CONVERSION_PRICE } from '~/containers/Subscription/data'
 import type {
@@ -9,6 +8,7 @@ import type {
 	PricingCardCallbacks,
 	PricingCardData
 } from '~/containers/Subscription/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -113,17 +113,14 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 
 /* ── PricingCardCta ────────────────────────────────────────────────── */
 
-const outlineBtnCls =
-	'h-14 w-full rounded-xl border border-sub-border-slate-100 bg-sub-surface-slate-10 text-base leading-5 font-medium text-sub-heading dark:border-sub-border-strong dark:bg-transparent dark:text-sub-text-primary sm:h-10 sm:rounded-lg sm:border-sub-border-muted sm:bg-white sm:text-sm sm:text-sub-text-primary dark:sm:border-sub-border-strong dark:sm:bg-transparent'
-const filledBtnCls =
-	'h-14 w-full rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm'
+// The pricing CTAs are standalone full-width conversion buttons, so they are Button size="lg".
 
 // Where a non-Stripe plan is actually managed; Stripe checkout/portal actions
 // don't apply to these providers.
 function ProviderManageNotice({ provider }: { provider: string | null }) {
 	if (provider === 'llamapay' || provider === 'legacy') {
 		return (
-			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 				Your plan is billed through{' '}
 				<a
 					href="https://subscriptions.llamapay.io/"
@@ -139,14 +136,14 @@ function ProviderManageNotice({ provider }: { provider: string | null }) {
 	}
 	if (provider === 'apple') {
 		return (
-			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 				Your plan is billed through the App Store. Manage it in your Apple subscription settings.
 			</p>
 		)
 	}
 	if (provider === 'google_play') {
 		return (
-			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+			<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 				Your plan is billed through Google Play. Manage it in your Google Play subscription settings.
 			</p>
 		)
@@ -210,18 +207,18 @@ function PricingCardCta({
 	if (isManualSubscription || isTeamProvided) {
 		if (card.key === 'enterprise') {
 			return (
-				<a href="mailto:sales@defillama.com" className={`${filledBtnCls} flex items-center justify-center`}>
+				<Button as="a" href="mailto:sales@defillama.com" variant="primary" size="lg" className="w-full">
 					{card.primaryCta}
-				</a>
+				</Button>
 			)
 		}
 		if (!isCurrentPlan) return null
 		return (
 			<>
-				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
+				<p className="mt-4 text-center label-lg text-sub-brand-primary sm:label-md dark:text-sub-brand-secondary">
 					Current plan
 				</p>
-				<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+				<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 					{isTeamProvided
 						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
 						: `Your ${card.title} plan was set up by the DefiLlama team. To change it, email support@defillama.com.`}
@@ -239,40 +236,41 @@ function PricingCardCta({
 	if (isCurrentPlan) {
 		return (
 			<>
-				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
+				<p className="mt-4 text-center label-lg text-sub-brand-primary sm:label-md dark:text-sub-brand-secondary">
 					{isTrial ? 'Current plan (trial)' : 'Current plan'}
 				</p>
 				{isCancelPending ? (
 					<div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
-						<p className="text-center text-[13px] leading-5 font-medium text-warning">Cancellation scheduled</p>
-						<p className="text-center text-xs leading-4 text-sub-text-muted">
+						<p className="text-center label-sm text-warning">Cancellation scheduled</p>
+						<p className="text-center body-sm text-sub-text-muted">
 							Your plan stays active until the end of the billing period.
 						</p>
 						{/* Reverting opens the Stripe billing portal, so it only applies to Stripe plans */}
 						{isSelfServeStripe ? (
-							<button
-								type="button"
-								className="mt-1 text-[13px] leading-5 font-medium text-sub-brand-primary underline hover:text-sub-brand-secondary"
-								onClick={onRevertCancellation}
-							>
-								Revert Cancellation
-							</button>
+							<p className="text-center label-sm">
+								<Button variant="link" onClick={onRevertCancellation}>
+									Revert cancellation
+								</Button>
+							</p>
 						) : null}
 					</div>
 				) : null}
 				{!isSelfServeStripe && !isTrial ? <ProviderManageNotice provider={currentProvider ?? null} /> : null}
 				{isTrial ? (
 					<>
-						<button
-							type="button"
-							className={`${filledBtnCls} disabled:cursor-not-allowed disabled:opacity-60`}
+						{/* The hold starts in the dialog this button opened, and that dialog returns focus here on close. */}
+						<Button
+							variant="primary"
+							size="lg"
+							className="w-full"
 							onClick={onEndTrial}
 							disabled={isEndTrialApplying}
+							accessibleWhenDisabled
 						>
-							Upgrade to Full Access
-						</button>
+							Upgrade to full access
+						</Button>
 						{isEndTrialApplying ? (
-							<p className="text-center text-xs leading-4 text-sub-text-cool-muted dark:text-sub-text-muted">
+							<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 								{END_TRIAL_APPLYING_REASON}
 							</p>
 						) : null}
@@ -280,10 +278,10 @@ function PricingCardCta({
 				) : null}
 				{canUpgradeCycle && !isCancelPending ? (
 					<>
-						<button type="button" className={filledBtnCls} onClick={() => onUpgradeToYearly?.(card.key)}>
-							Upgrade to Yearly
-						</button>
-						<p className="text-center text-xs leading-4 text-sub-text-cool-muted dark:text-sub-text-muted">
+						<Button variant="primary" size="lg" className="w-full" onClick={() => onUpgradeToYearly?.(card.key)}>
+							Upgrade to yearly
+						</Button>
+						<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 							Switch to annual billing — save {card.key === 'api' ? '$600' : '$98'}/year
 						</p>
 					</>
@@ -296,9 +294,9 @@ function PricingCardCta({
 	if (isUpgradeTier) {
 		if (card.key === 'enterprise') {
 			return (
-				<a href="mailto:sales@defillama.com" className={`${filledBtnCls} flex items-center justify-center`}>
+				<Button as="a" href="mailto:sales@defillama.com" variant="primary" size="lg" className="w-full">
 					{card.primaryCta}
-				</a>
+				</Button>
 			)
 		}
 		// The upgrade flow charges through Stripe; a plan billed elsewhere must be
@@ -307,14 +305,15 @@ function PricingCardCta({
 			return <ProviderManageNotice provider={currentProvider ?? null} />
 		}
 		return (
-			<button
-				type="button"
-				className={filledBtnCls}
+			<Button
+				variant="primary"
+				size="lg"
+				className="w-full"
 				onClick={() => onUpgradeTier?.(card.key)}
-				disabled={loading === 'stripe'}
+				pendingLabel={loading === 'stripe' ? 'Processing…' : null}
 			>
-				{loading === 'stripe' ? 'Processing...' : `Upgrade to ${card.title} with Card`}
-			</button>
+				Upgrade to {card.title} with Card
+			</Button>
 		)
 	}
 
@@ -324,87 +323,88 @@ function PricingCardCta({
 			{card.key === 'pro' && isTrialAvailable ? (
 				<>
 					{/* ── Split CTA: trial vs subscribe side-by-side ── */}
-					<div className="flex gap-2">
-						<button
-							type="button"
-							className="h-14 flex-1 rounded-xl bg-emerald-600 text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
-							onClick={onStartTrial}
-							data-umami-event="subscribe-trial-start"
-						>
-							Start Free Trial
-						</button>
-						<button
-							type="button"
-							className="h-14 flex-1 rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
+					<div className="flex flex-wrap gap-2">
+						{/* The trial CTA takes the success green through the .sub-trial-accent token scope; `contents` keeps
+						    the Button a flex item of this row. */}
+						<span className="sub-trial-accent contents">
+							<Button
+								variant="primary"
+								size="lg"
+								className="flex-1"
+								onClick={onStartTrial}
+								data-umami-event="subscribe-trial-start"
+							>
+								Start free trial
+							</Button>
+						</span>
+						<Button
+							variant="primary"
+							size="lg"
+							className="flex-1"
 							onClick={() => onPrimaryCtaClick?.(card.key)}
-							disabled={loading === 'stripe'}
+							pendingLabel={loading === 'stripe' ? 'Processing…' : null}
 							{...checkoutEvent('stripe')}
 						>
-							{loading === 'stripe' ? 'Processing...' : card.primaryCta}
-						</button>
+							{card.primaryCta}
+						</Button>
 					</div>
-					<div className="rounded-[10px] border border-sub-border-slate-100 px-3 py-2.5 text-xs leading-4 text-sub-text-cool sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[11px] dark:border-sub-border-strong dark:text-sub-text-muted">
-						<p className="font-medium text-success dark:text-success">Free trial differences:</p>
+					<div className="rounded-lg border border-sub-border-slate-100 px-3 py-2.5 body-sm text-sub-text-cool sm:px-2.5 sm:py-2 dark:border-sub-border-strong dark:text-sub-text-muted">
+						<p className="label-sm text-success">Free trial differences:</p>
 						<ul className="mt-1 flex flex-col gap-0.5">
 							<li>• 3 deep research reports in total (vs 5/day)</li>
 							<li>• No CSV downloads — paid Pro only</li>
 						</ul>
-						<p className="mt-1.5 text-[11px] sm:text-[10px]">
-							No charge for 7 days — converts to {PRO_TRIAL_CONVERSION_PRICE} after
-						</p>
+						<p className="mt-1.5 body-xs">No charge for 7 days — converts to {PRO_TRIAL_CONVERSION_PRICE} after</p>
 					</div>
 					{card.secondaryCta ? (
-						<Ariakit.Button
-							type="button"
-							className={outlineBtnCls}
+						<Button
+							variant="secondary"
+							size="lg"
+							className="w-full"
 							onClick={() => onSecondaryCtaClick?.(card.key)}
-							disabled={loading === 'llamapay'}
-							accessibleWhenDisabled
+							pendingLabel={loading === 'llamapay' ? 'Processing…' : null}
 							{...checkoutEvent('llamapay')}
 						>
-							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
-						</Ariakit.Button>
+							{card.secondaryCta}
+						</Button>
 					) : null}
 				</>
 			) : (
 				<>
 					{card.secondaryCta ? (
-						<Ariakit.Button
-							type="button"
-							className={outlineBtnCls}
+						<Button
+							variant="secondary"
+							size="lg"
+							className="w-full"
 							onClick={() => onSecondaryCtaClick?.(card.key)}
-							disabled={loading === 'llamapay'}
-							accessibleWhenDisabled
+							pendingLabel={loading === 'llamapay' ? 'Processing…' : null}
 							{...checkoutEvent('llamapay')}
 						>
-							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
-						</Ariakit.Button>
+							{card.secondaryCta}
+						</Button>
 					) : null}
-					<button
-						type="button"
-						className={filledBtnCls}
+					<Button
+						variant="primary"
+						size="lg"
+						className="w-full"
 						onClick={() => onPrimaryCtaClick?.(card.key)}
-						disabled={loading === 'stripe'}
+						pendingLabel={loading === 'stripe' ? 'Processing…' : null}
 						{...checkoutEvent('stripe')}
 					>
-						{loading === 'stripe' ? 'Processing...' : card.primaryCta}
-					</button>
+						{card.primaryCta}
+					</Button>
 				</>
 			)}
 			{cryptoError?.cardKey === card.key ? <InlineStatus variant="error">{cryptoError.message}</InlineStatus> : null}
 			{card.ctaSubtext ? (
-				<p className="text-center text-xs leading-4 text-sub-text-cool-muted dark:text-sub-text-muted">
-					{card.ctaSubtext}
-				</p>
+				<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">{card.ctaSubtext}</p>
 			) : null}
 			{!isAuthenticated && card.key !== 'free' && card.key !== 'enterprise' ? (
-				<button
-					type="button"
-					className="text-[13px] leading-5 text-sub-text-cool-muted underline hover:text-sub-brand-primary dark:text-sub-text-muted dark:hover:text-sub-brand-secondary"
-					onClick={() => onPrimaryCtaClick?.('free')}
-				>
-					Already a subscriber? Sign In
-				</button>
+				<p className="text-center body-sm">
+					<Button variant="link" onClick={() => onPrimaryCtaClick?.('free')}>
+						Already a subscriber? Sign in
+					</Button>
+				</p>
 			) : null}
 		</>
 	)
@@ -578,7 +578,7 @@ export function PricingCard({
 							cryptoError={cryptoError}
 						/>
 						{isLowerTier ? (
-							<p className="text-center text-[13px] leading-5 font-medium text-sub-brand-primary dark:text-sub-brand-secondary">
+							<p className="text-center label-sm text-sub-brand-primary dark:text-sub-brand-secondary">
 								Included in your plan
 							</p>
 						) : null}
@@ -588,9 +588,7 @@ export function PricingCard({
 
 			{card.recommendedLabel ? (
 				<div className={`pricing-original ${badgeSlotClass}`}>
-					<div className="text-center text-sm leading-[17px] font-medium text-sub-brand-softest">
-						{card.recommendedLabel}
-					</div>
+					<div className="text-center label-md text-sub-brand-softest">{card.recommendedLabel}</div>
 				</div>
 			) : (
 				<div className={`pricing-original ${badgeSlotClass}`} aria-hidden="true" />

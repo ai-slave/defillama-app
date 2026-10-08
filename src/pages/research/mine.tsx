@@ -1,7 +1,6 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
@@ -14,10 +13,14 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 
 type StatusFilter = 'all' | 'draft' | 'published'
@@ -57,7 +60,13 @@ function StatusDot({ status }: { status: ArticleDocument['status'] }) {
 }
 
 function MyArticlesContent() {
-	const [deleteTarget, setDeleteTarget] = useState<ArticleDocument | null>(null)
+	// The neighbour row's Delete is read when the confirm opens: the delete's success drops the row from the list.
+	const [deleteTarget, setDeleteTarget] = useState<{
+		article: ArticleDocument
+		neighbour: HTMLElement | null | undefined
+	} | null>(null)
+	const returnFocusRef = useRef<HTMLElement | null>(null)
+	const newArticleRef = useRef<HTMLAnchorElement>(null)
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -147,14 +156,18 @@ function MyArticlesContent() {
 		<div className="mx-auto grid w-full max-w-5xl gap-8 px-3 pt-2 pb-20 lg:px-0">
 			{deleteTarget ? (
 				<ConfirmActionDialog
-					key={deleteTarget.id}
-					title={`Delete ${deleteTarget.title || 'Untitled'}?`}
+					key={deleteTarget.article.id}
+					title={`Delete ${deleteTarget.article.title || 'Untitled'}?`}
 					description="This permanently deletes the article. This cannot be undone."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
 					mutation={deleteArticleMutation}
-					variables={deleteTarget.id}
+					variables={deleteTarget.article.id}
+					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
+					onSuccess={() => {
+						returnFocusRef.current = deleteTarget.neighbour ?? newArticleRef.current
+					}}
 				/>
 			) : null}
 			<header className="grid gap-6 border-b border-medium pb-6">
@@ -188,25 +201,16 @@ function MyArticlesContent() {
 						) : null}
 					</div>
 					<div className="flex items-center gap-2">
-						<Link
-							href="/research/profile"
-							className="rounded-md border border-medium px-3 py-2 text-sm text-secondary hover:border-link/40 hover:text-primary"
-						>
+						<Button as={Link} variant="secondary" size="md" href="/research/profile">
 							Edit profile
-						</Link>
-						<Link
-							href="/research"
-							className="rounded-md border border-medium px-3 py-2 text-sm text-secondary hover:border-link/40 hover:text-primary"
-						>
+						</Button>
+						<Button as={Link} variant="secondary" size="md" href="/research">
 							Browse all
-						</Link>
-						<Link
-							href="/research/new"
-							className="inline-flex items-center gap-1.5 rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand hover:opacity-90"
-						>
-							<Icon name="plus" className="size-4" aria-hidden />
+						</Button>
+						<Button ref={newArticleRef} as={Link} variant="primary" size="md" href="/research/new">
+							<Icon name="plus" className="size-3.5" />
 							New
-						</Link>
+						</Button>
 					</div>
 				</div>
 
@@ -230,24 +234,21 @@ function MyArticlesContent() {
 						onValueChange={setStatusFilter}
 					/>
 
-					<div className="ml-auto flex flex-wrap items-center gap-2">
-						<label className="relative flex items-center">
-							<Icon
-								name="search"
-								className="pointer-events-none absolute left-2.5 size-3.5 text-tertiary"
-								aria-hidden
-							/>
-							<input
+					{/* One row at every width: on a phone the search takes what the sort select leaves. */}
+					<div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
+						<label className="relative flex min-w-0 flex-1 items-center">
+							<Icon name="search" className={`${searchFieldIconStyles} size-4`} aria-hidden />
+							<Input
 								type="search"
 								onInput={(e) => setSearchInput(e.currentTarget.value)}
 								placeholder="Search title, slug…"
-								className="w-44 rounded-md border border-medium bg-surface py-1.5 pr-2 pl-8 text-sm text-primary placeholder:text-tertiary focus:border-link/50 focus:outline-hidden sm:w-56"
+								className="w-full pl-8 sm:w-56"
 							/>
 						</label>
 						<select
 							value={sortKey}
 							onChange={(e) => setSortKey(e.target.value as SortKey)}
-							className="rounded-md border border-medium bg-surface py-1.5 pr-2 pl-2.5 text-sm text-primary focus:border-link/50 focus:outline-hidden"
+							className={`${inputStyles} cursor-pointer`}
 							aria-label="Sort"
 						>
 							{(Object.keys(SORT_LABELS) as Array<SortKey>).map((k) => (
@@ -305,12 +306,9 @@ function MyArticlesContent() {
 								: 'Nothing here.'}
 					</p>
 					{totalCount === 0 ? (
-						<Link
-							href="/research/new"
-							className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand"
-						>
+						<Button as={Link} variant="primary" size="md" href="/research/new" className="mx-auto mt-3">
 							Write your first
-						</Link>
+						</Button>
 					) : null}
 				</div>
 			) : (
@@ -324,16 +322,12 @@ function MyArticlesContent() {
 							return (
 								<li
 									key={article.id}
-									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-research-tint-hover"
+									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-hover-row"
 								>
 									<span
 										aria-hidden
 										className={`absolute top-2 bottom-2 left-0 w-[2px] rounded-r ${
-											scheduled
-												? 'bg-research-accent/70'
-												: article.status === 'draft'
-													? 'bg-warning/70'
-													: 'bg-transparent'
+											scheduled ? 'bg-brand/70' : article.status === 'draft' ? 'bg-warning/70' : 'bg-transparent'
 										}`}
 									/>
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">
@@ -344,14 +338,14 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-research-tint px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
+													className="rounded-sm bg-brand-muted px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link-on-tint uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-research-tint px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link uppercase">
+												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link-on-tint uppercase">
 													Co-author
 												</span>
 											) : null}
@@ -385,34 +379,55 @@ function MyArticlesContent() {
 									</Link>
 
 									<div className="flex shrink-0 items-center gap-1">
-										<Link
-											href={{
-												pathname: '/research/edit/[id]',
-												query: { id: article.id, view: 'preview' }
-											}}
-											aria-label="Preview in editor"
-											title="Preview in editor"
-											className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-surface hover:text-primary"
+										<Tooltip
+											content="Preview in editor"
+											render={
+												<Button
+													as={Link}
+													variant="ghost"
+													size="md"
+													square
+													href={{
+														pathname: '/research/edit/[id]',
+														query: { id: article.id, view: 'preview' }
+													}}
+													aria-label="Preview in editor"
+												/>
+											}
 										>
 											<Icon name="eye" className="size-4" />
-										</Link>
-										<Link
+										</Tooltip>
+										<Button
+											as={Link}
+											variant="secondary"
+											size="md"
 											href={`/research/edit/${article.id}`}
-											className="hidden h-8 items-center gap-1.5 rounded-md border border-medium px-3 text-xs text-secondary hover:border-link/40 hover:text-primary sm:flex"
+											className="max-sm:hidden"
 										>
 											Edit
-										</Link>
+										</Button>
 										{article.viewerRole !== 'collaborator' ? (
-											<button
-												type="button"
-												aria-label="Delete"
-												title="Delete"
-												disabled={isDeleting}
-												onClick={() => setDeleteTarget(article)}
-												className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+											<Tooltip
+												content="Delete"
+												render={
+													<Button
+														variant="ghostDestructive"
+														size="md"
+														square
+														aria-label={`Delete ${article.title || 'untitled article'}`}
+														disabled={isDeleting}
+														onClick={(event) => {
+															returnFocusRef.current = null
+															setDeleteTarget({
+																article,
+																neighbour: neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+															})
+														}}
+													/>
+												}
 											>
-												<Icon name="x" className="size-3.5" />
-											</button>
+												<Icon name="trash-2" className="size-4" />
+											</Tooltip>
 										) : null}
 									</div>
 								</li>
@@ -426,27 +441,27 @@ function MyArticlesContent() {
 								{rangeStart}–{rangeEnd} of {formatNumber(filtered.length)}
 							</span>
 							<div className="flex items-center gap-1">
-								<Ariakit.Button
-									type="button"
+								<Button
+									variant="secondary"
+									size="md"
 									onClick={() => setPage((p) => Math.max(1, p - 1))}
 									disabled={safePage <= 1}
 									accessibleWhenDisabled
-									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-medium aria-disabled:hover:text-secondary"
 								>
 									<span aria-hidden>←</span> Prev
-								</Ariakit.Button>
+								</Button>
 								<span className="px-3 font-jetbrains text-xs tabular-nums">
 									{safePage} / {totalPages}
 								</span>
-								<Ariakit.Button
-									type="button"
+								<Button
+									variant="secondary"
+									size="md"
 									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
 									disabled={safePage >= totalPages}
 									accessibleWhenDisabled
-									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-medium aria-disabled:hover:text-secondary"
 								>
 									Next <span aria-hidden>→</span>
-								</Ariakit.Button>
+								</Button>
 							</div>
 						</div>
 					) : null}

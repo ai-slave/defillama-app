@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
 import { FeeValue, feeLabel } from './feePresentation'
@@ -87,26 +87,22 @@ export const MICA_COLUMNS = columnHelper.columns([
 				<div className="flex items-center justify-end gap-1.5">
 					{venue.activePromotion ? <PromotionGift promotion={venue.activePromotion} venue={venue} /> : null}
 					{venueDestination ? (
-						<a
+						<ExternalLinkButton
 							href={venueDestination.url}
-							target="_blank"
-							rel="noopener noreferrer"
 							data-umami-event="mica-exchange-click"
 							data-umami-event-exchange={venue.exchange}
 							data-umami-event-type={venueDestination.kind === 'referral' ? 'ref' : 'website'}
 							data-umami-event-placement="trade"
 							data-umami-event-url={venueDestination.url}
-							className="inline-flex h-7 items-center gap-1 rounded-md border border-medium px-2.5 label-sm text-link hover:bg-hover-row"
 							aria-label={`Trade on ${venue.name}`}
 						>
 							Trade
-							<Icon name="arrow-up-right" height={13} width={13} />
-						</a>
+						</ExternalLinkButton>
 					) : null}
 				</div>
 			)
 		},
-		meta: { headerClassName: 'w-[132px] min-w-[132px]', align: 'end' }
+		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor((row) => pairTotal(row.depth.spotBid2Usd, row.depth.spotAsk2Usd) ?? undefined, {
 		id: 'spotDepth2',

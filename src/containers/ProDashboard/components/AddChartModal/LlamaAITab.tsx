@@ -7,6 +7,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
@@ -137,19 +138,24 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									{chart.title}
 								</button>
 								{selected ? <Icon name="check" height={16} width={16} className="shrink-0 text-brand" /> : null}
-								<Button
-									variant="ghost"
-									size="sm"
-									square
-									aria-label={`Delete ${chart.title}`}
-									onClick={(event) => {
-										returnFocus.current = event.currentTarget
-										setDeleteTarget(chart)
-									}}
-									className="relative"
+								<Tooltip
+									content="Delete chart"
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											aria-label={`Delete ${chart.title}`}
+											onClick={(event) => {
+												returnFocus.current = event.currentTarget
+												setDeleteTarget(chart)
+											}}
+											className="relative"
+										/>
+									}
 								>
-									<Icon name="trash-2" height={14} width={14} />
-								</Button>
+									<Icon name="trash-2" height={16} width={16} />
+								</Tooltip>
 							</div>
 							<p className="line-clamp-2 text-xs text-pro-text-tertiary">{chart.original_query}</p>
 							{chart.session_id ? (

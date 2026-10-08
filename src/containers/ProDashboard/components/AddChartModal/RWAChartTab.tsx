@@ -10,7 +10,9 @@ import {
 } from '~/containers/ProDashboard/components/datasets/RWADataset/useRWAChartData'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
+import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
@@ -52,6 +54,11 @@ const BREAKDOWN_OPTIONS: Array<VirtualizedSelectOption<RWAOverviewChartBreakdown
 	{ value: 'category', label: 'Category' },
 	{ value: 'platform', label: 'Platform' },
 	{ value: 'assetGroup', label: 'Asset Group' }
+]
+
+const RWA_MODE_OPTIONS: Array<SegmentedControlOption<'overview' | 'asset'>> = [
+	{ value: 'overview', label: 'Chain' },
+	{ value: 'asset', label: 'By asset' }
 ]
 
 const ALL_METRICS: Array<RWAOverviewChartMetric> = ['activeMcap', 'onChainMcap', 'defiActiveTvl']
@@ -127,32 +134,14 @@ function RWAChartTabInner({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="space-y-3">
-				<div className="flex rounded-md border border-pro-cards-border p-0.5">
-					<button
-						type="button"
-						onClick={() => onRwaModeChange('overview')}
-						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
-							rwaMode === 'overview'
-								? 'bg-pro-cards-bg text-pro-text-primary shadow-sm'
-								: 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						Chain
-					</button>
-					<button
-						type="button"
-						onClick={() => onRwaModeChange('asset')}
-						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
-							rwaMode === 'asset'
-								? 'bg-pro-cards-bg text-pro-text-primary shadow-sm'
-								: 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						By asset
-					</button>
-				</div>
-			</div>
+			<SegmentedControl
+				variant="field"
+				size="md"
+				label="RWA chart mode"
+				options={RWA_MODE_OPTIONS}
+				value={rwaMode}
+				onValueChange={onRwaModeChange}
+			/>
 
 			{rwaMode === 'overview' ? (
 				<div className="flex flex-wrap gap-3">
@@ -282,18 +271,16 @@ function AssetControls({
 				{ALL_METRICS.map((metric) => {
 					const isSelected = selectedMetrics.includes(metric)
 					return (
-						<button
-							type="button"
+						<Button
 							key={metric}
+							variant="toggle"
+							size="sm"
+							data-active={isSelected}
+							aria-pressed={isSelected}
 							onClick={() => handleMetricToggle(metric)}
-							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-								isSelected
-									? 'bg-brand text-on-brand'
-									: 'border border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
-							}`}
 						>
 							{METRIC_LABELS[metric]}
-						</button>
+						</Button>
 					)
 				})}
 			</div>

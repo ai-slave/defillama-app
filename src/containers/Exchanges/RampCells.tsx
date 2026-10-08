@@ -1,7 +1,6 @@
-import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
-import { FEE_TONE_CLASS, type FeeTone } from './feePresentation'
+import { FEE_TONE_CLASS, type FeeTone, ValueBadge } from './feePresentation'
 import type { RampRowModel } from './rampPresentation'
 
 const USD_FIXED_OPTIONS = { currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
@@ -37,17 +36,15 @@ export function CostBadge({
 	children: React.ReactNode
 	ariaLabel: string
 }) {
-	const badgeTone = tone(fraction, limits)
 	return (
-		<Hovercard
-			placement="left-start"
-			className={`rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
-			render={<button type="button" aria-label={ariaLabel} />}
+		<ValueBadge
+			tone={tone(fraction, limits)}
+			ariaLabel={ariaLabel}
 			contentClassName="w-80 p-3 text-primary"
 			content={children}
 		>
 			{label}
-		</Hovercard>
+		</ValueBadge>
 	)
 }
 

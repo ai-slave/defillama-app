@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { ProSegmented } from '../../../ui'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
 
 const PRESET_OPTIONS = [
@@ -33,8 +34,10 @@ export function ChainsTableHeader({
 		<div className="mb-4">
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<ProSegmented
+					<SegmentedControl
 						label="Column preset"
+						variant="default"
+						size="md"
 						value={selectedPreset}
 						onValueChange={applyPreset}
 						options={PRESET_OPTIONS}
@@ -43,17 +46,17 @@ export function ChainsTableHeader({
 					<div className="flex items-center gap-2">
 						<CSVExportButton onClick={handleExportCSV} smol />
 
-						<button
+						<Button
 							ref={customizeRef}
-							type="button"
+							variant="secondary"
+							size="md"
 							aria-expanded={showColumnSelector}
 							onClick={() => setShowColumnSelector(!showColumnSelector)}
-							className="flex items-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-pro-hover-fill"
 						>
-							<Icon name="settings" height={14} width={14} />
-							Customize Table
-							<Icon name={showColumnSelector ? 'chevron-up' : 'chevron-down'} height={12} width={12} />
-						</button>
+							<Icon name="settings" className="size-3.5" />
+							Customize table
+							<Icon name={showColumnSelector ? 'chevron-up' : 'chevron-down'} className="size-3.5 text-tertiary" />
+						</Button>
 					</div>
 				</div>
 			</div>

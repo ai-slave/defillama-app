@@ -9,6 +9,7 @@ import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 
 const REASON_COPY: Record<QueueNotSentReason, string> = {
 	execution_stopped: 'You stopped the run',
@@ -260,17 +261,22 @@ export function QueueChips({
 												Retry
 											</Button>
 										) : null}
-										<Button
-											type="button"
-											aria-describedby={`queue-row-${rowKey}`}
-											variant="ghost"
-											size="sm"
-											square
-											onClick={() => onDismiss(item.id)}
+										<Tooltip
+											content="Dismiss"
+											render={
+												<Button
+													type="button"
+													aria-describedby={`queue-row-${rowKey}`}
+													variant="ghost"
+													size="sm"
+													square
+													onClick={() => onDismiss(item.id)}
+												/>
+											}
 										>
 											<Icon name="x" height={14} width={14} />
 											<span className="sr-only">Dismiss</span>
-										</Button>
+										</Tooltip>
 									</div>
 								) : null}
 							</li>
@@ -342,34 +348,44 @@ export function QueueChips({
 									<RowError status={status} />
 								</div>
 								<div className="flex shrink-0 items-center gap-1">
-									<Button
-										type="button"
-										aria-describedby={`queue-row-${rowKey}`}
-										accessibleWhenDisabled
-										disabled={busy}
-										pendingLabel={status?.action === 'opening_edit' ? 'Opening editor…' : null}
-										variant="ghost"
-										size="sm"
-										square
-										onClick={() => onEditStart(item.id)}
+									<Tooltip
+										content="Edit"
+										render={
+											<Button
+												type="button"
+												aria-describedby={`queue-row-${rowKey}`}
+												accessibleWhenDisabled
+												disabled={busy}
+												pendingLabel={status?.action === 'opening_edit' ? 'Opening editor…' : null}
+												variant="ghost"
+												size="sm"
+												square
+												onClick={() => onEditStart(item.id)}
+											/>
+										}
 									>
 										<Icon name="pencil" height={16} width={16} />
 										<span className="sr-only">Edit</span>
-									</Button>
-									<Button
-										type="button"
-										aria-describedby={`queue-row-${rowKey}`}
-										accessibleWhenDisabled
-										disabled={busy}
-										pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
-										variant="ghost"
-										size="sm"
-										square
-										onClick={() => onDismiss(item.id)}
+									</Tooltip>
+									<Tooltip
+										content="Dismiss"
+										render={
+											<Button
+												type="button"
+												aria-describedby={`queue-row-${rowKey}`}
+												accessibleWhenDisabled
+												disabled={busy}
+												pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
+												variant="ghost"
+												size="sm"
+												square
+												onClick={() => onDismiss(item.id)}
+											/>
+										}
 									>
 										<Icon name="x" height={14} width={14} />
 										<span className="sr-only">Dismiss</span>
-									</Button>
+									</Tooltip>
 								</div>
 							</li>
 						)
@@ -400,36 +416,46 @@ export function QueueChips({
 							</div>
 							<div className="flex shrink-0 items-center gap-1.5">
 								{canRetry ? (
-									<Button
-										type="button"
-										aria-describedby={`queue-row-${rowKey}`}
-										data-primary={retryPrimary ? 'true' : undefined}
-										accessibleWhenDisabled
-										disabled={busy || !!status?.unsavedDraft}
-										pendingLabel={status?.action === 'retrying' ? 'Retrying…' : null}
-										variant={retryPrimary ? 'primary' : 'secondary'}
-										size="sm"
-										square
-										onClick={() => onRetry(item.id)}
+									<Tooltip
+										content="Retry"
+										render={
+											<Button
+												type="button"
+												aria-describedby={`queue-row-${rowKey}`}
+												data-primary={retryPrimary ? 'true' : undefined}
+												accessibleWhenDisabled
+												disabled={busy || !!status?.unsavedDraft}
+												pendingLabel={status?.action === 'retrying' ? 'Retrying…' : null}
+												variant={retryPrimary ? 'primary' : 'secondary'}
+												size="sm"
+												square
+												onClick={() => onRetry(item.id)}
+											/>
+										}
 									>
 										<Icon name="repeat" height={16} width={16} />
 										<span className="sr-only">Retry</span>
-									</Button>
+									</Tooltip>
 								) : null}
-								<Button
-									type="button"
-									aria-describedby={`queue-row-${rowKey}`}
-									accessibleWhenDisabled
-									disabled={busy}
-									pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
-									variant="ghost"
-									size="sm"
-									square
-									onClick={() => onDismiss(item.id)}
+								<Tooltip
+									content="Dismiss"
+									render={
+										<Button
+											type="button"
+											aria-describedby={`queue-row-${rowKey}`}
+											accessibleWhenDisabled
+											disabled={busy}
+											pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
+											variant="ghost"
+											size="sm"
+											square
+											onClick={() => onDismiss(item.id)}
+										/>
+									}
 								>
 									<Icon name="x" height={14} width={14} />
 									<span className="sr-only">Dismiss</span>
-								</Button>
+								</Tooltip>
 							</div>
 						</li>
 					)

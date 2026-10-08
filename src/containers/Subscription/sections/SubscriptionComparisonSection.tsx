@@ -2,18 +2,13 @@ import { type CSSProperties, type UIEvent, useRef } from 'react'
 import { ComparisonCell, SELECTED_COLUMN_HIGHLIGHT } from '~/containers/Subscription/components'
 import { PLAN_META_BY_CYCLE } from '~/containers/Subscription/data'
 import type { BillingCycle, ComparisonSection, PlanKey } from '~/containers/Subscription/types'
+import { Button } from '~/ui/Button'
 
 /* ── Style maps ────────────────────────────────────────────────────── */
 
 const planHeadStyles = {
 	selected: 'border-x border-sub-brand-primary bg-brand/6 dark:bg-sub-brand-primary/5 md:rounded-t-[16px]',
 	default: 'border-sub-mobile-table-border md:border-sub-desktop-table-border md:bg-white dark:md:bg-transparent'
-}
-
-const planHeadButtonStyles = {
-	selected: 'border-sub-brand-primary bg-sub-brand-primary text-on-brand',
-	default:
-		'border-sub-border-slate-100 bg-white text-sub-heading dark:border-sub-border-strong dark:bg-transparent dark:text-sub-text-primary md:border-sub-border-muted md:text-sub-text-primary dark:md:border-sub-border-strong dark:md:bg-transparent'
 }
 
 // Placed from the table's fixed column widths (label 233px, plan 132px; 400px and 146px from md), so CSS
@@ -65,7 +60,6 @@ function ComparisonPlanHead({
 	const isCurrentPlan = plan === currentPlan
 	const isLowerTier = currentPlan != null && currentPlan !== 'free' && PLAN_TIER[plan] < PLAN_TIER[currentPlan]
 	const colStyle = isSelected ? planHeadStyles.selected : planHeadStyles.default
-	const btnStyle = isSelected ? planHeadButtonStyles.selected : planHeadButtonStyles.default
 	const edgeBorderClass = isSelected ? '' : `${isFirst ? 'border-l' : ''} ${isLast ? 'border-r' : ''}`
 	const slashIdx = meta.price.indexOf('/')
 	const priceValue = slashIdx >= 0 ? meta.price.slice(0, slashIdx) : meta.price
@@ -78,33 +72,29 @@ function ComparisonPlanHead({
 		>
 			<div className="flex h-full flex-col justify-between p-3 md:p-5">
 				<div>
-					<p className="text-sm leading-4 font-medium text-sub-heading md:text-lg md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary">
+					<p className="label-md text-sub-heading md:label-xl md:text-sub-text-primary dark:text-sub-text-primary">
 						{meta.title}
 					</p>
 					<div className="mt-1 flex items-end gap-px">
-						<p className="bg-linear-to-r from-sub-brand-secondary to-sub-brand-softest bg-clip-text text-xs leading-[17px] font-medium text-transparent md:text-sm">
+						<p className="bg-linear-to-r from-sub-brand-secondary to-sub-brand-softest bg-clip-text label-sm text-transparent md:label-md">
 							{priceValue}
 						</p>
 						{priceUnit ? (
-							<p className="text-xs leading-4 text-sub-mobile-text-muted md:text-xs md:text-sub-desktop-text-muted">
-								{priceUnit}
-							</p>
+							<p className="body-sm text-sub-mobile-text-muted md:text-sub-desktop-text-muted">{priceUnit}</p>
 						) : null}
 					</div>
 					{meta.priceSecondary ? (
-						<p className="text-[10px] leading-3 text-sub-mobile-text-muted md:text-[11px] md:text-sub-desktop-text-muted">
-							{meta.priceSecondary}
-						</p>
+						<p className="body-xs text-sub-mobile-text-muted md:text-sub-desktop-text-muted">{meta.priceSecondary}</p>
 					) : null}
 				</div>
 				{isCurrentPlan || isLowerTier ? (
-					<p className="text-center text-[10px] leading-7 font-medium text-sub-brand-primary md:text-xs dark:text-sub-brand-secondary">
+					<p className="flex min-h-8 items-center justify-center label-xs text-sub-brand-primary md:label-sm dark:text-sub-brand-secondary">
 						{isCurrentPlan ? 'Current plan' : 'Unlocked'}
 					</p>
 				) : hideAction ? null : (
-					<button
-						type="button"
-						className={`h-7 rounded-[6px] border px-2 text-[10px] leading-3 md:h-8 md:rounded-lg md:text-xs ${btnStyle}`}
+					<Button
+						variant={isSelected ? 'primary' : 'secondary'}
+						size="md"
 						// Several plans share an action label, so the name says which plan it starts.
 						aria-label={`${meta.action}: ${meta.title}`}
 						// Paid-plan changes are account management, matching the pricing card's untracked upgrade controls.
@@ -112,7 +102,7 @@ function ComparisonPlanHead({
 						onClick={() => onAction(plan)}
 					>
 						{meta.action}
-					</button>
+					</Button>
 				)}
 			</div>
 		</div>

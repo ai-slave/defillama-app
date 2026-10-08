@@ -11,6 +11,7 @@ import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
@@ -227,22 +228,27 @@ export function SelectItemsStep() {
 								>
 									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={16} />
 									<span className="whitespace-nowrap">{item.label}</span>
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										square
-										aria-label={`Remove ${item.label}`}
-										onClick={(event) => {
-											const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
-											keepFocus(
-												() => actions.toggleSelectedItem(item.value),
-												() => next ?? searchRef.current
-											)
-										}}
+									<Tooltip
+										content="Remove"
+										render={
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												square
+												aria-label={`Remove ${item.label}`}
+												onClick={(event) => {
+													const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
+													keepFocus(
+														() => actions.toggleSelectedItem(item.value),
+														() => next ?? searchRef.current
+													)
+												}}
+											/>
+										}
 									>
-										<Icon name="x" height={12} width={12} />
-									</Button>
+										<Icon name="x" height={16} width={16} />
+									</Tooltip>
 								</div>
 							))
 						) : (

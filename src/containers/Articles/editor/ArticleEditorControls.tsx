@@ -8,6 +8,8 @@ import {
 	TableImageButtons,
 	useTableImageWatermark
 } from '~/components/TableImage/TableImageButtons'
+import { Button } from '~/ui/Button'
+import { Tooltip } from '~/ui/Tooltip'
 import { Icon } from './ArticleEditorIcon'
 import { useArticleEditable } from './useArticleEditable'
 
@@ -25,29 +27,30 @@ export function RailButton({
 	children: ReactNode
 }) {
 	return (
-		<Ariakit.Button
-			type="button"
-			aria-label={label}
-			aria-pressed={active}
-			title={label}
-			onClick={onClick}
-			disabled={disabled}
-			accessibleWhenDisabled
-			className={`flex size-9 shrink-0 items-center justify-center rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40 ${
-				active ? 'bg-research-tint text-link' : 'text-secondary hover:bg-research-tint-hover hover:text-primary'
-			}`}
+		<Tooltip
+			content={label}
+			render={
+				<Button
+					variant="ghost"
+					size="md"
+					square
+					aria-label={label}
+					aria-pressed={active}
+					data-active={active}
+					onClick={onClick}
+					disabled={disabled}
+					accessibleWhenDisabled
+				/>
+			}
 		>
 			{children}
-		</Ariakit.Button>
+		</Tooltip>
 	)
 }
 
 export function RailDivider() {
 	return <span aria-hidden className="mx-1 h-5 w-px bg-border-medium" />
 }
-
-const RAIL_BUTTON_CLASS =
-	'flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:opacity-50'
 
 function TableRailButton({
 	label,
@@ -61,17 +64,21 @@ function TableRailButton({
 	pressed?: boolean
 }) {
 	return (
-		<button
-			type="button"
-			aria-label={label}
-			aria-pressed={pressed}
-			title={label}
-			onClick={onClick}
-			onMouseDown={(e) => e.preventDefault()}
-			className="flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
+		<Tooltip
+			content={label}
+			render={
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label={label}
+					aria-pressed={pressed}
+					onClick={onClick}
+					onMouseDown={(e) => e.preventDefault()}
+				/>
+			}
 		>
 			{children}
-		</button>
+		</Tooltip>
 	)
 }
 
@@ -152,7 +159,7 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 				<TableImageButtons
 					getSource={getTableImageSource}
 					className="contents"
-					buttonClassName={RAIL_BUTTON_CLASS}
+					trigger={<Button variant="ghost" size="sm" />}
 					triggerContent={<span className="label-xs tracking-wider">PNG ▾</span>}
 					watermarkMode="preference"
 					hideWatermarkItem
@@ -161,9 +168,21 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 					<span className={`label-xs tracking-wider ${watermarkEnabled ? '' : 'text-tertiary line-through'}`}>WM</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-				<TableRailButton label="Delete table" onClick={() => editor.chain().focus().deleteTable().run()}>
-					<Icon name="x" className="size-3.5" />
-				</TableRailButton>
+				<Tooltip
+					content="Delete table"
+					render={
+						<Button
+							variant="ghostDestructive"
+							size="sm"
+							square
+							aria-label="Delete table"
+							onClick={() => editor.chain().focus().deleteTable().run()}
+							onMouseDown={(e) => e.preventDefault()}
+						/>
+					}
+				>
+					<Icon name="trash" className="size-4" />
+				</Tooltip>
 			</div>
 		</Ariakit.Popover>
 	)

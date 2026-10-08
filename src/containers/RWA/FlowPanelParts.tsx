@@ -165,7 +165,7 @@ function FlowVsPriceStat({
 	)
 
 	return (
-		<Tooltip content={content} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+		<Tooltip content={content} render={<span className="inline-flex items-baseline gap-1 whitespace-nowrap" />}>
 			<span className="text-secondary underline decoration-dotted">{label}</span>
 			<span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
 		</Tooltip>

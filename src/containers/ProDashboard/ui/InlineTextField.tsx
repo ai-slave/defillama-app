@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { keepKeyboardEventsInsideCard } from './keyboard'
 
 // The field mounts each time editing starts, so its text is selected once per edit.
@@ -69,26 +70,30 @@ export function InlineTextField({
 	if (!editing) {
 		return (
 			<span className={wrapperClassName}>
-				<button
-					ref={(button) => {
-						if (!button || !returnFocusToButtonRef.current) return
-						returnFocusToButtonRef.current = false
-						button.focus()
-					}}
-					type="button"
-					disabled={blocked}
-					aria-busy={saving || undefined}
-					onClick={() => {
-						setDraft(value)
-						setEditing(true)
-					}}
-					className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-pro-hover-fill/60 ${statusClassName} ${value ? '' : 'text-pro-text-tertiary italic'}`
-						.replace(/\s+/g, ' ')
-						.trim()}
-					title="Click to edit"
+				<Tooltip
+					content="Click to edit"
+					render={
+						<button
+							ref={(button) => {
+								if (!button || !returnFocusToButtonRef.current) return
+								returnFocusToButtonRef.current = false
+								button.focus()
+							}}
+							type="button"
+							disabled={blocked}
+							aria-busy={saving || undefined}
+							onClick={() => {
+								setDraft(value)
+								setEditing(true)
+							}}
+							className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-pro-hover-fill/60 ${statusClassName} ${value ? '' : 'text-pro-text-tertiary italic'}`
+								.replace(/\s+/g, ' ')
+								.trim()}
+						/>
+					}
 				>
 					{value || placeholder}
-				</button>
+				</Tooltip>
 				{statusAffordances}
 			</span>
 		)

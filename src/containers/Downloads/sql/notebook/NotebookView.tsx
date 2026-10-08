@@ -2,9 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { loader } from '@monaco-editor/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig } from '../chartConfig'
 import type { CellVirtualTable, CompletionContext } from '../completions'
 import { registerSqlCompletions, registerSqlHovers } from '../completions'
@@ -37,6 +39,9 @@ interface NotebookViewProps {
 }
 
 const EMPTY_NOTEBOOK_CELLS: QueryTab['cells'] = []
+
+// The stale banner leaves once its cells re-run or it is dismissed; Run all in the header above takes focus.
+const focusRunAllOnLeave = passFocusOnLeave((banner) => banner.previousElementSibling?.querySelector('button'))
 
 export function NotebookView({
 	tab,
@@ -279,36 +284,26 @@ export function NotebookView({
 							) : null}
 						</span>
 					) : null}
-					<Ariakit.Button
-						type="button"
+					<Button
+						variant={promoteRunAll ? 'primary' : 'secondary'}
+						size="md"
 						onClick={runAll}
-						disabled={!canRun || runningAny || !hasRunnableSql}
-						accessibleWhenDisabled
-						className={`inline-flex items-center gap-1.5 rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40 ${
-							promoteRunAll
-								? 'bg-brand px-3 py-1.5 text-sm font-semibold text-on-brand hover:opacity-90'
-								: 'border border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-pro-text-primary hover:border-brand/40 hover:text-brand'
-						}`}
+						disabled={!canRun || !hasRunnableSql}
+						pendingLabel={runningAny ? 'Running…' : null}
 					>
-						{runningAny ? (
-							<LoadingSpinner size={promoteRunAll ? 13 : 12} />
-						) : (
-							<svg
-								className={promoteRunAll ? 'size-3.5' : 'size-3.5'}
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								aria-hidden
-							>
-								<path d="M8 5v14l11-7z" />
-							</svg>
-						)}
+						<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+							<path d="M8 5v14l11-7z" />
+						</svg>
 						{promoteRunAll ? 'Run notebook' : 'Run all'}
-					</Ariakit.Button>
+					</Button>
 				</div>
 			</div>
 
 			{tab.cellsDirty || firstStaleName ? (
-				<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-pro-premium-300/40 bg-pro-premium-300/5 px-3 py-1.5 text-[11.5px] text-pro-premium-300">
+				<div
+					ref={focusRunAllOnLeave}
+					className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-pro-premium-300/40 bg-pro-premium-300/5 px-3 py-1.5 body-sm text-pro-premium-300"
+				>
 					<span className="inline-flex items-center gap-1.5">
 						<Icon name="alert-triangle" className="size-3.5" />
 						{tab.cellsDirty
@@ -319,24 +314,22 @@ export function NotebookView({
 					</span>
 					<div className="flex items-center gap-1">
 						{firstStaleName && !tab.cellsDirty ? (
-							<Ariakit.Button
-								type="button"
+							<Button
+								variant="outline"
+								size="sm"
 								onClick={runAll}
-								disabled={!canRun || runningAny}
-								accessibleWhenDisabled
-								className="rounded-md border border-pro-premium-300/40 px-2 py-0.5 text-[11px] font-medium text-pro-premium-300 hover:bg-pro-premium-300/10 aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+								disabled={!canRun}
+								pendingLabel={runningAny ? 'Running…' : null}
 							>
 								Re-run all
-							</Ariakit.Button>
+							</Button>
 						) : null}
-						<button
-							type="button"
-							onClick={onDismissCellsDirty}
-							aria-label="Dismiss"
-							className="rounded-md px-1.5 py-0.5 hover:bg-pro-premium-300/20"
+						<Tooltip
+							content="Dismiss"
+							render={<Button variant="ghost" size="sm" square onClick={onDismissCellsDirty} aria-label="Dismiss" />}
 						>
-							<Icon name="x" className="size-3" />
-						</button>
+							<Icon name="x" className="size-4" />
+						</Tooltip>
 					</div>
 				</div>
 			) : null}

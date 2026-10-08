@@ -137,3 +137,27 @@ test('search results have no drawer close button and unmount on close', async ()
 	await act(async () => store!.show())
 	expect(surfaceOf('listbox').textContent).toContain('Ethereum')
 })
+
+function RowsPopover({ rows }: { rows: Array<string> }) {
+	return (
+		<Ariakit.PopoverProvider defaultOpen>
+			<Ariakit.PopoverDisclosure>Open</Ariakit.PopoverDisclosure>
+			<PopoverSurface variant="panel" dismiss="own">
+				{rows.map((row) => (
+					<button key={row} type="button">
+						{row}
+					</button>
+				))}
+			</PopoverSurface>
+		</Ariakit.PopoverProvider>
+	)
+}
+
+test('a focused control that an update removes hands focus to the popover, not the page', async () => {
+	await act(async () => root.render(<RowsPopover rows={['Alpha', 'Beta']} />))
+	const popover = surfaceOf('dialog')
+	const beta = [...popover.querySelectorAll('button')].find((button) => button.textContent === 'Beta')!
+	await act(async () => beta.focus())
+	await act(async () => root.render(<RowsPopover rows={['Alpha']} />))
+	expect(document.activeElement?.textContent).toBe('Alpha')
+})

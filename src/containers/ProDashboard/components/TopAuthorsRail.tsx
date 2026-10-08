@@ -2,10 +2,12 @@ import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
-import { ProButton, ProMeta, proCardShellStyles } from '../ui'
+import { ProMeta, proCardShellStyles } from '../ui'
 import { DiscoveryShelfHeading } from './DiscoverySection'
 
 const RAIL_TITLE = 'Top Authors'
@@ -93,19 +95,29 @@ export function TopAuthorsRail() {
 			<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
 
 			<div className="group/rail relative">
-				{canScrollLeft ? (
+				{canScrollLeft || canScrollRight ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							square
-							variant="secondary"
-							aria-label="Scroll Top Authors left"
-							onClick={() => scrollByPage('left')}
-							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+						{canScrollLeft ? (
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll left"
+							render={
+								<Button
+									size="md"
+									type="button"
+									square
+									variant="overlay"
+									aria-label="Scroll Top Authors left"
+									disabled={!canScrollLeft}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('left')}
+									className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 md:flex"
+								/>
+							}
 						>
 							<Icon name="chevron-left" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 
@@ -120,19 +132,29 @@ export function TopAuthorsRail() {
 					))}
 				</div>
 
-				{canScrollRight && authors.length > 4 ? (
+				{(canScrollLeft || canScrollRight) && authors.length > 4 ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							square
-							variant="secondary"
-							aria-label="Scroll Top Authors right"
-							onClick={() => scrollByPage('right')}
-							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+						{canScrollRight ? (
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll right"
+							render={
+								<Button
+									size="md"
+									type="button"
+									square
+									variant="overlay"
+									aria-label="Scroll Top Authors right"
+									disabled={!canScrollRight}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('right')}
+									className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 md:flex"
+								/>
+							}
 						>
 							<Icon name="chevron-right" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 			</div>

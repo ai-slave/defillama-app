@@ -13,6 +13,7 @@ import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/das
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -26,7 +27,6 @@ import {
 	fetchProtocolChainBreakdownData,
 	type ProtocolBreakdownMetric
 } from '../../services/ProtocolChartBuilderData'
-import { ProSegmented } from '../../ui'
 import { buildProTreemapData } from '../../utils/treemap'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
@@ -115,10 +115,6 @@ const LIMIT_OPTIONS = [
 	{ value: '20', label: 'Top 20' }
 ]
 
-// The builder's checkbox, in the Pro info accent.
-const builderCheckboxStyles =
-	'flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20'
-
 const MODE_OPTIONS: Array<{ value: ChartBuilderConfig['mode']; label: string }> = [
 	{ value: 'chains', label: 'Group by protocol' }, // group by protocol filter by chains
 	{ value: 'protocol', label: 'Group by chains' } // group by chains filter by protocol
@@ -144,8 +140,6 @@ function FilterModeToggle({
 			options={FILTER_MODE_OPTIONS}
 			variant="default"
 			size="sm"
-			className="border-pro-cards-border bg-transparent"
-			buttonClassName="text-xs font-medium"
 		/>
 	)
 }
@@ -161,7 +155,6 @@ export function ChartBuilderTab({
 	timePeriod,
 	customTimePeriod
 }: ChartBuilderTabProps) {
-	const groupByParentId = useId()
 	const nameId = useId()
 	const [pane, setPane] = useState<AddCardPane>('configure')
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
@@ -561,11 +554,13 @@ export function ChartBuilderTab({
 
 					<div className="border-t border-pro-cards-border pt-1.5">
 						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Mode</h4>
-						<ProSegmented
+						<SegmentedControl
 							label="Grouping mode"
 							options={MODE_OPTIONS}
 							value={chartBuilder.mode}
 							onValueChange={handleModeChange}
+							variant="field"
+							size="md"
 							className="mb-1.5"
 						/>
 					</div>
@@ -701,32 +696,25 @@ export function ChartBuilderTab({
 							</p>
 						) : isChainsMode || !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
 							<div className="mb-1">
-								<Ariakit.CheckboxProvider value={chartBuilder.hideOthers || false}>
-									<label className="flex cursor-pointer items-center gap-1.5">
-										<Ariakit.Checkbox
-											onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
-											className={builderCheckboxStyles}
-										/>
-										<span className="text-xs text-pro-text-secondary">
-											Hide "Others" (show only top {chartBuilder.limit})
-										</span>
-									</label>
-								</Ariakit.CheckboxProvider>
+								<Checkbox
+									variant="inline-sm"
+									checked={chartBuilder.hideOthers || false}
+									onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
+								>
+									Hide "Others" (show only top {chartBuilder.limit})
+								</Checkbox>
 							</div>
 						) : null}
 
 						{isChainsMode ? (
 							<div className="mb-1">
-								<Ariakit.CheckboxProvider value={chartBuilder.groupByParent || false}>
-									<label htmlFor={groupByParentId} className="flex cursor-pointer items-center gap-1.5">
-										<Ariakit.Checkbox
-											id={groupByParentId}
-											onChange={(e) => onChartBuilderChange({ groupByParent: e.target.checked })}
-											className={builderCheckboxStyles}
-										/>
-										<span className="text-xs text-pro-text-secondary">Group by parent protocol</span>
-									</label>
-								</Ariakit.CheckboxProvider>
+								<Checkbox
+									variant="inline-sm"
+									checked={chartBuilder.groupByParent || false}
+									onChange={(e) => onChartBuilderChange({ groupByParent: e.target.checked })}
+								>
+									Group by parent protocol
+								</Checkbox>
 							</div>
 						) : null}
 					</div>
@@ -747,8 +735,8 @@ export function ChartBuilderTab({
 										key={option.value}
 										className={`relative flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1 text-center transition-colors has-focus-visible:focus-ring ${
 											chartBuilder.chartType === option.value
-												? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
-												: 'border-pro-cards-border text-pro-text-secondary hover:bg-pro-hover-fill hover:text-pro-text-primary'
+												? 'border-brand bg-brand-muted text-link-on-tint'
+												: 'border-medium text-secondary hover:bg-hover-row hover:text-primary'
 										}`}
 									>
 										<Ariakit.Radio value={option.value} className="sr-only" />
@@ -775,11 +763,13 @@ export function ChartBuilderTab({
 
 					<div className="border-t border-pro-cards-border pt-1.5">
 						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Display value as</h4>
-						<ProSegmented
+						<SegmentedControl
 							label="Display value as"
 							options={hasExactRemainder ? DISPLAY_OPTIONS : DISPLAY_OPTIONS.slice(0, 1)}
 							value={displayAs}
 							onValueChange={(display) => onChartBuilderChange({ displayAs: display })}
+							variant="field"
+							size="md"
 						/>
 					</div>
 				</div>
@@ -855,21 +845,16 @@ export function ChartBuilderTab({
 
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
-							<div className="flex items-center justify-between gap-2">
-								<h4 className="text-xs font-medium text-pro-text-secondary">Series colors</h4>
-								<Ariakit.Button
-									type="button"
+							<div className="flex items-center justify-between gap-2 label-sm">
+								<h4 className="text-pro-text-secondary">Series colors</h4>
+								<Button
+									variant="link"
 									onClick={() => onChartBuilderChange({ seriesColors: {} })}
 									disabled={!hasCustomSeriesColors}
 									accessibleWhenDisabled
-									className={`text-xs font-medium transition-colors aria-disabled:cursor-not-allowed ${
-										hasCustomSeriesColors
-											? 'text-pro-text-secondary hover:text-pro-text-primary'
-											: 'cursor-not-allowed text-pro-text-tertiary'
-									}`}
 								>
 									Reset all
-								</Ariakit.Button>
+								</Button>
 							</div>
 							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
 								{visibleSeries.map((series) => {
@@ -878,7 +863,7 @@ export function ChartBuilderTab({
 									return (
 										<div
 											key={series.name}
-											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs"
+											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 body-sm"
 										>
 											<span className="max-w-[140px] truncate text-pro-text-secondary" title={series.name}>
 												{series.name}
@@ -890,20 +875,15 @@ export function ChartBuilderTab({
 												className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
 												aria-label={`Select color for ${series.name}`}
 											/>
-											<Ariakit.Button
-												type="button"
+											<Button
+												variant="link"
 												onClick={() => handleSeriesColorReset(series.name)}
 												disabled={!hasOverride}
 												accessibleWhenDisabled
 												aria-label={`Reset color for ${series.name}`}
-												className={`text-xs font-medium transition-colors aria-disabled:cursor-not-allowed ${
-													hasOverride
-														? 'text-pro-text-tertiary hover:text-pro-text-primary'
-														: 'pro-text4 cursor-not-allowed'
-												}`}
 											>
 												Reset
-											</Ariakit.Button>
+											</Button>
 										</div>
 									)
 								})}

@@ -3,8 +3,10 @@ import { BasicLink } from '~/components/Link'
 import type { FreeUsage } from '~/containers/LlamaAI/types'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { passFocusOnLeave, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export type FreeUsageNoteState =
@@ -51,6 +53,10 @@ export function getPhonePromptPlaceholder(usage: FreeUsage | null | undefined): 
 		? `Ask LlamaAI · ${typed.remaining} of ${typed.limit} left today`
 		: 'Ask LlamaAI…'
 }
+
+/* The storage store re-renders its readers a task after the write, so the card leaves after the dismiss handler
+   returns; the button hands focus on as it leaves. Nothing nearer survives the card. */
+const focusPageOnLeave = passFocusOnLeave(pageContent)
 
 const dismissKey = (userId: string) => `llamaai-welcome-bonus-dismissed:${userId}`
 
@@ -152,17 +158,23 @@ function WelcomeWeekCard({
 						Try Pro free
 					</BasicLink>
 				) : remaining > 1 ? (
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						square
-						onClick={onDismiss}
-						aria-label="Dismiss welcome week"
-						className="-my-1 -mr-1"
+					<Tooltip
+						content="Dismiss"
+						render={
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								square
+								ref={focusPageOnLeave}
+								onClick={onDismiss}
+								aria-label="Dismiss welcome week"
+								className="-my-1 -mr-1"
+							/>
+						}
 					>
 						<Icon name="x" height={16} width={16} />
-					</Button>
+					</Tooltip>
 				) : null}
 			</div>
 			<p className="label-sm text-primary">

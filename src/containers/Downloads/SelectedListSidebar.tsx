@@ -1,6 +1,8 @@
+import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { ConfirmableContent } from './ActionFeedback'
 
 export interface CsvQueryStatus {
@@ -73,19 +75,17 @@ export function SelectedListSidebar({
 						Selected {noun}s ({items.length})
 					</p>
 					{loadingCount > 0 ? (
-						<p className="text-[10px] text-pro-text-tertiary">
+						<p className="label-xs text-pro-text-tertiary">
 							Ready {readyCount}/{items.length}
 						</p>
 					) : null}
 				</div>
 				{items.length > 0 ? (
-					<button
-						type="button"
-						onClick={() => keepFocus(onClearAll, pickerTrigger)}
-						className="shrink-0 text-[11px] text-pro-text-tertiary hover:text-pro-text-primary hover:underline"
-					>
-						Clear all
-					</button>
+					<span className="shrink-0 label-sm">
+						<Button variant="link" onClick={() => keepFocus(onClearAll, pickerTrigger)}>
+							Clear all
+						</Button>
+					</span>
 				) : null}
 			</div>
 			<div className="flex-1 overflow-auto">
@@ -104,7 +104,6 @@ export function SelectedListSidebar({
 								type="button"
 								onClick={() => onPreview(item.value)}
 								className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
-								title={`Preview ${item.label}`}
 								aria-current={isActive ? true : undefined}
 							>
 								<span className="flex size-4 shrink-0 items-center justify-center">
@@ -123,35 +122,48 @@ export function SelectedListSidebar({
 								</span>
 							</button>
 							{isPreview ? null : (
-								<button
-									type="button"
-									onClick={() => onDownload(item)}
-									disabled={!isReady}
-									aria-label={`Download ${item.label} CSV`}
-									className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
+								<Tooltip
+									content="Download CSV"
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											square
+											onClick={() => onDownload(item)}
+											disabled={!isReady}
+											// Stays focusable while the row loads, so the tooltip still opens.
+											accessibleWhenDisabled
+											aria-label={`Download ${item.label} CSV`}
+										/>
+									}
 								>
 									<ConfirmableContent
 										confirmed={confirmed(`download:${item.value}`)}
-										idle={<Icon name="download-cloud" className="size-3.5" />}
-										done={<Icon name="check" className="size-3.5" />}
+										idle={<Icon name="download-cloud" className="size-4" />}
+										done={<Icon name="check" className="size-4" />}
 									/>
-								</button>
+								</Tooltip>
 							)}
-							<button
-								type="button"
-								onClick={(event) => removeRow(item.value, event.currentTarget)}
-								title="Remove"
-								aria-label={`Remove ${item.label}`}
-								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
+							<Tooltip
+								content="Remove"
+								render={
+									<Button
+										variant="ghost"
+										size="sm"
+										square
+										onClick={(event) => removeRow(item.value, event.currentTarget)}
+										aria-label={`Remove ${item.label}`}
+									/>
+								}
 							>
-								<Icon name="x" className="size-3.5" />
-							</button>
+								<Icon name="x" className="size-4" />
+							</Tooltip>
 						</div>
 					)
 				})}
 			</div>
 			{isPreview ? null : (
-				<p className="border-t border-subtle p-3 text-center text-[10px] text-pro-text-tertiary">
+				<p className="border-t border-subtle p-3 text-center body-xs text-pro-text-tertiary">
 					Download combined puts each {noun} in its own column
 				</p>
 			)}

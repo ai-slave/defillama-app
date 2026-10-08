@@ -104,7 +104,7 @@ export function QABlockNodeView({ node, updateAttributes, getPos, editor }: Node
 								questionNumber && questionNumber.length > 0 ? questionNumber.length : automaticQuestionNumber.length
 							)
 						}}
-						className="font-inherit h-[1.4em] appearance-none rounded-xs border-b border-dashed border-transparent bg-transparent p-0 leading-[1.4] text-inherit outline-hidden placeholder:text-link placeholder:opacity-100 hover:border-medium focus:border-link"
+						className="font-inherit h-[1.4em] appearance-none rounded-xs border-b border-dashed border-transparent bg-transparent p-0 leading-[1.4] text-inherit placeholder:text-link placeholder:opacity-100 hover:border-medium"
 					/>
 				) : (
 					<span>{questionNumber ?? automaticQuestionNumber}</span>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
-import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
@@ -150,7 +150,8 @@ export default function Tokenomics() {
 											<p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">{protocolChart.subtitle}</p>
 										)}
 									</div>
-									<ProSegmented<typeof protocolView>
+									<SegmentedControl<typeof protocolView>
+										variant="default"
 										size="sm"
 										label="FLR by protocol flow"
 										options={[
@@ -193,7 +194,8 @@ export default function Tokenomics() {
 							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
 						</p>
 					</div>
-					<ProSegmented<BurnView>
+					<SegmentedControl<BurnView>
+						variant="default"
 						size="sm"
 						label="FLR burn period"
 						options={[

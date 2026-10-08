@@ -8,6 +8,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } fr
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { seatPrice } from './seatPricing'
@@ -134,17 +135,22 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 						</label>
 						<div className="flex items-center gap-2">
 							{/* Focusable at the floor: the press that reaches it keeps focus, and the hint below says why. */}
-							<Button
-								type="button"
-								aria-label="Decrease seats"
-								size="md"
-								square
-								disabled={decrementDisabled || !canChangeTeamBilling}
-								accessibleWhenDisabled
-								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
+							<Tooltip
+								content="Decrease seats"
+								render={
+									<Button
+										type="button"
+										aria-label="Decrease seats"
+										size="md"
+										square
+										disabled={decrementDisabled || !canChangeTeamBilling}
+										accessibleWhenDisabled
+										onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
+									/>
+								}
 							>
 								<Icon name="minus" className="size-4" aria-hidden="true" />
-							</Button>
+							</Tooltip>
 							{/* Ariakit's autoFocus, so the dialog opens on the seat count instead of the header ×. */}
 							<Ariakit.Focusable
 								autoFocus
@@ -164,16 +170,21 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 									/>
 								}
 							/>
-							<Button
-								type="button"
-								aria-label="Increase seats"
-								disabled={!canChangeTeamBilling}
-								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
-								size="md"
-								square
+							<Tooltip
+								content="Increase seats"
+								render={
+									<Button
+										type="button"
+										aria-label="Increase seats"
+										disabled={!canChangeTeamBilling}
+										onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
+										size="md"
+										square
+									/>
+								}
 							>
 								<Icon name="plus" className="size-4" aria-hidden="true" />
-							</Button>
+							</Tooltip>
 						</div>
 						{floorHint ? (
 							<p id="manage-seat-floor" className="body-sm text-secondary">

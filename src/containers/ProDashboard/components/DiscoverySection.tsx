@@ -1,8 +1,9 @@
 import { BasicLink } from '~/components/Link'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
-import { ProButton } from '../ui'
 import { DashboardCard } from './DashboardCard'
 
 interface DiscoverySectionProps {
@@ -89,19 +90,29 @@ export function DiscoverySection({
 			<DiscoveryShelfHeading title={title} subtitle={subtitle} seeAllHref={seeAllHref} />
 
 			<div className="group/rail relative">
-				{canScrollLeft ? (
+				{canScrollLeft || canScrollRight ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							square
-							variant="secondary"
-							aria-label={`Scroll ${title} left`}
-							onClick={() => scrollByPage('left')}
-							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+						{canScrollLeft ? (
+							<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll left"
+							render={
+								<Button
+									size="md"
+									type="button"
+									square
+									variant="overlay"
+									aria-label={`Scroll ${title} left`}
+									disabled={!canScrollLeft}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('left')}
+									className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 md:flex"
+								/>
+							}
 						>
 							<Icon name="chevron-left" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 
@@ -119,19 +130,29 @@ export function DiscoverySection({
 					))}
 				</div>
 
-				{canScrollRight && dashboards.length > 3 ? (
+				{(canScrollLeft || canScrollRight) && dashboards.length > 3 ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-						<ProButton
-							type="button"
-							square
-							variant="secondary"
-							aria-label={`Scroll ${title} right`}
-							onClick={() => scrollByPage('right')}
-							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
+						{canScrollRight ? (
+							<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						) : null}
+						<Tooltip
+							content="Scroll right"
+							render={
+								<Button
+									size="md"
+									type="button"
+									square
+									variant="overlay"
+									aria-label={`Scroll ${title} right`}
+									disabled={!canScrollRight}
+									accessibleWhenDisabled
+									onClick={() => scrollByPage('right')}
+									className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 md:flex"
+								/>
+							}
 						>
 							<Icon name="chevron-right" height={16} width={16} />
-						</ProButton>
+						</Tooltip>
 					</>
 				) : null}
 			</div>

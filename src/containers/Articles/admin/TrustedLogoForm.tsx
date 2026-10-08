@@ -8,6 +8,7 @@ import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
+import { Input } from '~/ui/Input'
 import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
@@ -137,24 +138,24 @@ export function TrustedLogoForm({ logoId }: Props) {
 		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
 			<label className="grid gap-1.5">
 				<span className="text-sm font-medium text-primary">Name</span>
-				<input
+				<Input
 					type="text"
 					value={state.name}
 					onChange={(e) => update({ name: e.target.value })}
 					placeholder="e.g. Coinbase"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 				{errors.name ? <p className="text-xs text-error">{errors.name}</p> : null}
 			</label>
 
 			<label className="grid gap-1.5">
 				<span className="text-sm font-medium text-primary">Link URL</span>
-				<input
+				<Input
 					type="url"
 					value={state.linkUrl}
 					onChange={(e) => update({ linkUrl: e.target.value })}
 					placeholder="https://…"
-					className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+					className="w-full"
 				/>
 				{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
 			</label>

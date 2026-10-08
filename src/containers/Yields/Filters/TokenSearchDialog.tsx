@@ -7,7 +7,6 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
-import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
@@ -18,6 +17,7 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'
 import type { TokenOption } from '../data/types'
+import { HelpDefs, HelpIcon } from './ui'
 
 // Token search dialog shared by the earn / loop / borrow pages: search header, Recent chips,
 // GROUPS (families) then TOKENS (virtualized), ↑↓/↵ navigation; the rail holds the selection,
@@ -27,15 +27,15 @@ import type { TokenOption } from '../data/types'
 const MATCH_LABELS: Record<TokenMatch, string> = { exact: 'Exact', contains: 'Contains', set: 'Set' }
 const ON_LABELS: Record<TokenOn, string> = { reference: 'Reference', pool: 'Pool', both: 'Both' }
 
-const MATCH_HELP: Array<{ term: string; def: string }> = [
-	{ term: 'Exact', def: 'Pools that include a token you picked.' },
-	{ term: 'Contains', def: 'Pools containing at least one of your picks.' },
-	{ term: 'Set', def: 'Pools whose tokens are exactly your selection (pair search).' }
+const MATCH_HELP = [
+	{ id: 'Exact', term: 'Exact', def: 'Pools that include a token you picked.' },
+	{ id: 'Contains', term: 'Contains', def: 'Pools containing at least one of your picks.' },
+	{ id: 'Set', term: 'Set', def: 'Pools whose tokens are exactly your selection (pair search).' }
 ]
-const ON_HELP: Array<{ term: string; def: string }> = [
-	{ term: 'Reference', def: 'The asset you provide to enter the pool.' },
-	{ term: 'Pool', def: 'The token you hold while in the pool.' },
-	{ term: 'Both', def: 'Match on either of the two.' }
+const ON_HELP = [
+	{ id: 'Reference', term: 'Reference', def: 'The asset you provide to enter the pool.' },
+	{ id: 'Pool', term: 'Pool', def: 'The token you hold while in the pool.' },
+	{ id: 'Both', term: 'Both', def: 'Match on either of the two.' }
 ]
 
 const RECENT_KEY = 'yields-token-search-recent'
@@ -84,36 +84,13 @@ function isFamily(value: string): boolean {
 	return value.startsWith('family:')
 }
 
-function HelpIcon({ items, label }: { items: Array<{ term: string; def: string }>; label: string }) {
-	return (
-		<Hovercard
-			placement="top-start"
-			className="text-tertiary hover:text-secondary"
-			contentClassName="max-w-105 p-3"
-			render={<button type="button" aria-label={label} />}
-			content={
-				<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-					{items.map((it) => (
-						<div key={it.term} className="contents">
-							<dt className="label-md whitespace-nowrap text-primary">{it.term}</dt>
-							<dd className="body-md text-secondary">{it.def}</dd>
-						</div>
-					))}
-				</dl>
-			}
-		>
-			<Icon name="help-circle" height={14} width={14} />
-		</Hovercard>
-	)
-}
-
 export function MatchOnControls({ match }: { match: MatchConfig }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-1.5">
 				<span className="flex items-center gap-1 label-sm text-secondary">
 					Match
-					<HelpIcon items={MATCH_HELP} label="About match modes" />
+					<HelpIcon content={<HelpDefs items={MATCH_HELP} />} label="About match modes" />
 				</span>
 				<SegmentedControl
 					label="Match mode"
@@ -127,7 +104,7 @@ export function MatchOnControls({ match }: { match: MatchConfig }) {
 			<div className="flex flex-col gap-1.5">
 				<span className="flex items-center gap-1 label-sm text-secondary">
 					Search in
-					<HelpIcon items={ON_HELP} label="About search targets" />
+					<HelpIcon content={<HelpDefs items={ON_HELP} />} label="About search targets" />
 				</span>
 				<SegmentedControl
 					label="Search target"
