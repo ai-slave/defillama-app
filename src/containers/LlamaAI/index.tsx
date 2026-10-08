@@ -2485,18 +2485,17 @@ export function AgenticChat({
 		})()
 	}, [dispatchStream, sessionId, streamPhase.status, abortActiveRequest, authorizedFetchCompat, applyQueueSnapshot])
 
-	// Reuse the same submit path for assistant action buttons. While a queued prompt waits, a follow-up
-	// joins the queue behind it, as a typed prompt does.
+	// Follow-ups use the selected composer mode, including research-plan confirmations.
+	// While a queued prompt waits, a follow-up joins the queue behind it, as a typed prompt does.
 	const handleActionClick = useCallback(
 		(message: string) => {
 			if (isStreaming) return
 			const followUp = {
 				isSuggestedQuestion: true,
 				entrySource: 'follow-up',
-				modeOverride: 'quick' as const,
 				quotedTextOverride: null
 			}
-			if (queueOwnsComposer) void handleQueue(message, undefined, undefined, 'quick', null)
+			if (queueOwnsComposer) void handleQueue(message, undefined, undefined, undefined, null)
 			else handleSubmit(message, undefined, undefined, undefined, followUp)
 		},
 		[isStreaming, queueOwnsComposer, handleQueue, handleSubmit]

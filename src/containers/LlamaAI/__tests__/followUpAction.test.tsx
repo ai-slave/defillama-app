@@ -93,21 +93,21 @@ const button = (text: string) =>
 		expect(match).toBeDefined()
 		return match!
 	})
-const turnOnResearch = async () => {
-	const research = await waitForUi(() => {
-		const input = document.querySelector<HTMLInputElement>('input[type="radio"][value="research"]')
+const selectMode = async (mode: string) => {
+	const radio = await waitForUi(() => {
+		const input = document.querySelector<HTMLInputElement>(`input[type="radio"][value="${mode}"]`)
 		expect(input).not.toBeNull()
 		return input!
 	})
-	await act(async () => research.click())
-	await waitForUi(() => expect(research.checked).toBe(true))
+	await act(async () => radio.click())
+	await waitForUi(() => expect(radio.checked).toBe(true))
 }
 
-test('a follow-up button is sent as a quick suggested question even while research mode is on, so it never spends the research report', async () => {
+test.each(['quick', 'research', 'fact_checked'])('a follow-up button preserves the selected %s mode', async (mode) => {
 	openOldChat()
 	await draw()
 	const followUp = await button('Fee trend')
-	await turnOnResearch()
+	await selectMode(mode)
 
 	await act(async () => followUp.click())
 
@@ -117,7 +117,7 @@ test('a follow-up button is sent as a quick suggested question even while resear
 		isSuggestedQuestion: true,
 		entrySource: 'follow-up'
 	})
-	expect(agenticBodies()[0].mode).toBeUndefined()
+	expect(agenticBodies()[0].mode).toBe(mode === 'quick' ? undefined : mode)
 })
 
 test('a tip prompt is sent as a quick suggested question even while research mode is on', async () => {
@@ -138,7 +138,7 @@ test('a tip prompt is sent as a quick suggested question even while research mod
 	})
 	await draw()
 	const tip = await button('Top yields on Base')
-	await turnOnResearch()
+	await selectMode('research')
 
 	await act(async () => tip.click())
 
@@ -151,7 +151,7 @@ test('a tip prompt is sent as a quick suggested question even while research mod
 	expect(agenticBodies()[0].mode).toBeUndefined()
 })
 
-test('a follow-up while a queued prompt waits joins the queue as a quick question, even while research mode is on', async () => {
+test.each(['quick', 'research', 'fact_checked'])('a queued follow-up preserves the selected %s mode', async (mode) => {
 	openOldChat({
 		queueRevision: 1,
 		queuedMessages: [
@@ -167,7 +167,7 @@ test('a follow-up while a queued prompt waits joins the queue as a quick questio
 	})
 	await draw()
 	const followUp = await button('Fee trend')
-	await turnOnResearch()
+	await selectMode(mode)
 
 	await act(async () => followUp.click())
 
@@ -176,7 +176,11 @@ test('a follow-up while a queued prompt waits joins the queue as a quick questio
 		expect(post).toBeDefined()
 		return JSON.parse(post!.init!.body as string) as Record<string, unknown>
 	})
-	expect(queued).toMatchObject({ message: 'Show the fee trend', researchMode: false, factCheckMode: false })
+	expect(queued).toMatchObject({
+		message: 'Show the fee trend',
+		researchMode: mode === 'research',
+		factCheckMode: mode === 'fact_checked'
+	})
 	expect(queued.quotedText).toBeUndefined()
 	expect(agenticBodies()).toEqual([])
 })

@@ -34,6 +34,7 @@
 - Prompt and edit mutations carry a stable `clientMutationId`; reusing it reattaches or reconciles instead of starting duplicate work.
 - A held queue attach is not streaming. The chat enters `streaming` when the preamble naming the queued execution arrives, and a hold that drops before then retries silently.
 - While a queued prompt waits, the composer and follow-up actions add to the queue, and a branch switch leaves the hold attached.
+- Conversation follow-up buttons use the selected composer mode for immediate and queued requests. Suggested-question attribution must not override that mode: research-plan confirmations need Research mode too. Follow-ups do not include a pending text quote.
 - A project chat sends `projectId` with every request.
 
 ### Duels
