@@ -4,7 +4,7 @@ import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { ResearchLimitModal } from '~/containers/LlamaAI/components/ResearchLimitModal'
+import { FactCheckedUpsellModal } from '~/containers/LlamaAI/components/UsageLimit'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -14,7 +14,7 @@ const session = installSubscriberSession('reader', { account: 'free', resolved: 
 let root: Root
 
 function OpenModal() {
-	return <ResearchLimitModal dialogStore={Ariakit.useDialogStore({ defaultOpen: true })} />
+	return <FactCheckedUpsellModal dialogStore={Ariakit.useDialogStore({ defaultOpen: true })} />
 }
 
 const render = async () => {

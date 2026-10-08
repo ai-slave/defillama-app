@@ -41,13 +41,13 @@ import {
 	useCitationSheetController
 } from '~/containers/LlamaAI/components/messages/CitationSheetContext'
 import type { PromptSubmitMode } from '~/containers/LlamaAI/components/PromptInput'
-import { ResearchLimitModal } from '~/containers/LlamaAI/components/ResearchLimitModal'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import { ShareModal } from '~/containers/LlamaAI/components/ShareModal'
 import { AgenticSidebar } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import { TextSelectionPopup } from '~/containers/LlamaAI/components/TextSelectionPopup'
 import { TipActionProvider } from '~/containers/LlamaAI/components/TipActionContext'
 import { UploadTargetProvider } from '~/containers/LlamaAI/components/UploadTarget'
+import { FactCheckedUpsellModal } from '~/containers/LlamaAI/components/UsageLimit'
 import { RECOVERY_MAX_MS } from '~/containers/LlamaAI/connectionErrors'
 import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containers/LlamaAI/dashboardPanelState'
 import { ExecutionCoordinator, type ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
@@ -486,9 +486,9 @@ export function AgenticChat({
 	const [restoreFailure, setRestoreFailure] = useState<{ sessionId: string; message: string } | null>(null)
 	const [viewError, setViewError] = useState<string | null>(null)
 	const [paginationError, setPaginationError] = useState<string | null>(null)
-	const researchModalStore = Ariakit.useDialogStore()
+	const factCheckedUpsellStore = Ariakit.useDialogStore()
 	const isAlertsModalOpen = Ariakit.useStoreState(alertsModalStore, 'open')
-	const isResearchModalOpen = Ariakit.useStoreState(researchModalStore, 'open')
+	const isFactCheckedUpsellOpen = Ariakit.useStoreState(factCheckedUpsellStore, 'open')
 	const isSettingsModalOpen = Ariakit.useStoreState(settingsModalStore, 'open')
 	const isSubscribeModalOpen = Ariakit.useStoreState(subscribeModalStore, 'open')
 	const currentMessageIdRef = useRef<string | null>(null)
@@ -717,7 +717,7 @@ export function AgenticChat({
 
 	const openShareModal = useCallback((messageId?: string) => setShareTarget({ messageId: messageId ?? null }), [])
 
-	const handleFactCheckedGated = useCallback(() => researchModalStore.show(), [researchModalStore])
+	const handleFactCheckedGated = useCallback(() => factCheckedUpsellStore.show(), [factCheckedUpsellStore])
 
 	const closeShareModal = useCallback(() => setShareTarget(null), [])
 
@@ -899,7 +899,7 @@ export function AgenticChat({
 		!readOnly &&
 		!(isMobileChatView && (sidebarVisible || citationSheet.isOpen)) &&
 		!isAlertsModalOpen &&
-		!isResearchModalOpen &&
+		!isFactCheckedUpsellOpen &&
 		!isSettingsModalOpen &&
 		!isSubscribeModalOpen &&
 		!showTokenLimitModal &&
@@ -3083,7 +3083,7 @@ export function AgenticChat({
 											}}
 										/>
 									) : null}
-									{!readOnly ? <ResearchLimitModal dialogStore={researchModalStore} /> : null}
+									{!readOnly ? <FactCheckedUpsellModal dialogStore={factCheckedUpsellStore} /> : null}
 									{!readOnly ? (
 										<EndTrialModal
 											isOpen={showTokenLimitModal}

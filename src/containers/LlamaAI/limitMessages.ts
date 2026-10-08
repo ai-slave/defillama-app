@@ -1,4 +1,4 @@
-import { getUsageLimitText } from '~/containers/LlamaAI/components/ResearchLimitModal'
+import { getUsageLimitText } from '~/containers/LlamaAI/components/UsageLimit'
 import type { FreeLimitError, UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
 import type { Message, UsageLimitOffer } from '~/containers/LlamaAI/types'
 

@@ -91,7 +91,7 @@ function TrialOrUpgradeLink({ umamiEvent, onClick }: { umamiEvent: string; onCli
 }
 
 // Opens only when a free user taps Fact-checked, so it always reads as the Pro upsell.
-export function ResearchLimitModal({ dialogStore }: { dialogStore: Ariakit.DialogStore }) {
+export function FactCheckedUpsellModal({ dialogStore }: { dialogStore: Ariakit.DialogStore }) {
 	const { isTrial } = useAuthContext()
 	const open = Ariakit.useStoreState(dialogStore, 'open')
 	const copy = COPY.fact_checked

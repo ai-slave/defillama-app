@@ -13,10 +13,10 @@ import { BranchArrows } from '~/containers/LlamaAI/components/messages/BranchCon
 import { ActionButtonGroup } from '~/containers/LlamaAI/components/messages/MessageActionGroup'
 import { ResponseErrorBoundary } from '~/containers/LlamaAI/components/messages/ResponseErrorBoundary'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
-import { UsageLimitActions } from '~/containers/LlamaAI/components/ResearchLimitModal'
 import { ResponseControls } from '~/containers/LlamaAI/components/ResponseControls'
 import { AgentTimeline } from '~/containers/LlamaAI/components/status/AgentTimeline'
 import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerMode'
+import { UsageLimitActions } from '~/containers/LlamaAI/components/UsageLimit'
 import { useAdvancedProvenance } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
 	parseMessageToRenderModel,
