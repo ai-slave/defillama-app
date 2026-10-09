@@ -17,7 +17,7 @@ import type { ArticleDocument, ArticleImage, ArticlePdf } from '~/containers/Art
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { PdfUploadButton } from '~/containers/Articles/upload/PdfUploadButton'
 import { Button } from '~/ui/Button'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 
 function articleEditHref(article: ArticleDocument): string {
@@ -228,13 +228,13 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					<span>Description</span>
 					<span className="text-tertiary">{state.reportDescription.length}/600</span>
 				</span>
-				<textarea
+				<Textarea
 					value={state.reportDescription}
 					onChange={(event) => setState((prev) => ({ ...prev, reportDescription: event.target.value.slice(0, 600) }))}
 					placeholder="Shown on hover over the report card on /research."
 					rows={3}
 					maxLength={600}
-					className={`${textareaStyles} resize-none`}
+					className="resize-none"
 				/>
 			</label>
 		</li>

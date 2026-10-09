@@ -1,36 +1,6 @@
 import * as React from 'react'
-import { Skeleton } from '~/ui/Skeleton'
-import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-
-export function KpiCard({
-	label,
-	value,
-	sub,
-	info
-}: {
-	label: string
-	value?: string | number | undefined
-	sub?: string | undefined
-	/** When set, renders a "*" next to the label that reveals this text on hover. */
-	info?: string
-}) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="flex items-center gap-0.5 label-sm tracking-wide text-secondary">
-				{label}
-				{info && (
-					<Tooltip content={info} className="cursor-help text-secondary">
-						*
-					</Tooltip>
-				)}
-			</span>
-			{value != null ? <span className="mono-xl text-primary">{value}</span> : <Skeleton className="h-7 w-24" />}
-			{sub && <span className="body-sm text-secondary">{sub}</span>}
-		</div>
-	)
-}
 
 export function ChartCard({
 	title,

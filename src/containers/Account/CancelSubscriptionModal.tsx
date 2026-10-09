@@ -4,7 +4,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
 interface CancelSubscriptionModalProps {
@@ -76,13 +76,13 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 						</Ariakit.DialogDescription>
 						<Field label="Reason for cancelling (optional)">
 							{(control) => (
-								<textarea
+								<Textarea
 									{...control}
 									name="message"
 									placeholder="Let us know why you're cancelling…"
 									rows={3}
 									readOnly={isLoading}
-									className={`${textareaStyles} w-full resize-none`}
+									className="w-full resize-none"
 								/>
 							)}
 						</Field>

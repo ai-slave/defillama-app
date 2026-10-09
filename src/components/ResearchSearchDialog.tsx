@@ -386,13 +386,15 @@ function SearchResults({
 	if (failed) {
 		return (
 			<div className="p-2">
-				<InlineStatus variant="error">
-					<span className="flex flex-wrap items-center justify-between gap-2">
-						Couldn&rsquo;t load search results.
+				<InlineStatus
+					variant="error"
+					action={
 						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={onRetry}>
 							Try again
 						</Button>
-					</span>
+					}
+				>
+					Couldn&rsquo;t load search results.
 				</InlineStatus>
 			</div>
 		)

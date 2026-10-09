@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import type { FieldControlProps } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -57,7 +57,7 @@ export function SponsorEntityPicker({
 						{...control}
 						placeholder={value?.label ?? 'Search protocols, chains, or CEXs…'}
 						autoSelect
-						className={`${inputStyles} w-full pr-9 pl-9`}
+						render={<Input className="w-full pr-9 pl-9" />}
 					/>
 					{value ? (
 						<Button

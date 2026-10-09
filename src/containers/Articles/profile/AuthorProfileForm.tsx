@@ -16,7 +16,7 @@ import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { fieldFrameInputStyles, fieldFrameStyles, Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -404,23 +404,18 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					live
 				>
 					{(control) => (
-						/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
-						   value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */
-						<div className={fieldFrameStyles}>
-							<span className="shrink-0 text-tertiary">/research/authors/</span>
-							<input
-								{...control}
-								type="text"
-								required
-								maxLength={SLUG_MAX}
-								value={state.slug}
-								onChange={(e) => update({ slug: e.target.value })}
-								className={fieldFrameInputStyles}
-								spellCheck={false}
-								autoCapitalize="none"
-								autoCorrect="off"
-							/>
-						</div>
+						<Input
+							{...control}
+							prefix="/research/authors/"
+							type="text"
+							required
+							maxLength={SLUG_MAX}
+							value={state.slug}
+							onChange={(e) => update({ slug: e.target.value })}
+							spellCheck={false}
+							autoCapitalize="none"
+							autoCorrect="off"
+						/>
 					)}
 				</Field>
 			</Section>
@@ -431,14 +426,14 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			>
 				<Field label="About you" action={<CharCount value={state.bio} max={BIO_MAX} />}>
 					{(control) => (
-						<textarea
+						<Textarea
 							{...control}
 							rows={5}
 							maxLength={BIO_MAX}
 							value={state.bio}
 							onChange={(e) => update({ bio: e.target.value })}
 							placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
-							className={`${textareaStyles} w-full resize-y`}
+							className="w-full resize-y"
 						/>
 					)}
 				</Field>

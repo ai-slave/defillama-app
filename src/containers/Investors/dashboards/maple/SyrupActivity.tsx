@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import {
@@ -19,8 +20,6 @@ import { aggregateByMonth, aggregateDripByMonth, monthTimestampMs, type DripRow,
 import {
 	CardSkeleton,
 	ChartCard,
-	KpiCard,
-	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_DOLLAR_TIME_CHART_OPTIONS,
 	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
@@ -330,17 +329,17 @@ export default function SyrupActivity() {
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{protocolKpis ? (
 						<>
-							<KpiCard label="Syrup TVL" value={protocolKpis.tvl} />
-							<KpiCard label="Syrup APY" value={protocolKpis.apy} />
-							<KpiCard label="stSyrup Rate" value={protocolKpis.exchangeRate} />
-							<KpiCard label="stSyrup Supply" value={protocolKpis.stSupply} />
+							<StatTile label="Syrup TVL" value={protocolKpis.tvl ?? '—'} />
+							<StatTile label="Syrup APY" value={protocolKpis.apy ?? '—'} />
+							<StatTile label="stSyrup Rate" value={protocolKpis.exchangeRate ?? '—'} />
+							<StatTile label="stSyrup Supply" value={protocolKpis.stSupply ?? '—'} />
 						</>
 					) : (
 						<>
-							<KpiSkeleton label="Syrup TVL" />
-							<KpiSkeleton label="Syrup APY" />
-							<KpiSkeleton label="stSyrup Rate" />
-							<KpiSkeleton label="stSyrup Supply" />
+							<StatTile label="Syrup TVL" loading />
+							<StatTile label="Syrup APY" loading />
+							<StatTile label="stSyrup Rate" loading />
+							<StatTile label="stSyrup Supply" loading />
 						</>
 					)}
 				</div>
@@ -351,17 +350,17 @@ export default function SyrupActivity() {
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{activityKpis ? (
 						<>
-							<KpiCard label="Total Migrations" value={activityKpis.totalMigrations} />
-							<KpiCard label="Tokens Migrated" value={activityKpis.tokensMigrated} />
-							<KpiCard label="stSyrup Deposits" value={activityKpis.deposits} />
-							<KpiCard label="stSyrup Withdrawals" value={activityKpis.withdrawals} />
+							<StatTile label="Total Migrations" value={activityKpis.totalMigrations} />
+							<StatTile label="Tokens Migrated" value={activityKpis.tokensMigrated} />
+							<StatTile label="stSyrup Deposits" value={activityKpis.deposits} />
+							<StatTile label="stSyrup Withdrawals" value={activityKpis.withdrawals} />
 						</>
 					) : (
 						<>
-							<KpiSkeleton label="Total Migrations" />
-							<KpiSkeleton label="Tokens Migrated" />
-							<KpiSkeleton label="stSyrup Deposits" />
-							<KpiSkeleton label="stSyrup Withdrawals" />
+							<StatTile label="Total Migrations" loading />
+							<StatTile label="Tokens Migrated" loading />
+							<StatTile label="stSyrup Deposits" loading />
+							<StatTile label="stSyrup Withdrawals" loading />
 						</>
 					)}
 				</div>
@@ -407,15 +406,15 @@ export default function SyrupActivity() {
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>
-							<KpiCard label="Total Claims" value={dripKpis.totalClaims} />
-							<KpiCard label="Total Claimed" value={dripKpis.totalClaimed} />
-							<KpiCard label="Unique Claimers" value={dripKpis.uniqueClaimers} />
+							<StatTile label="Total Claims" value={dripKpis.totalClaims} />
+							<StatTile label="Total Claimed" value={dripKpis.totalClaimed} />
+							<StatTile label="Unique Claimers" value={dripKpis.uniqueClaimers} />
 						</>
 					) : (
 						<>
-							<KpiSkeleton label="Total Claims" />
-							<KpiSkeleton label="Total Claimed" />
-							<KpiSkeleton label="Unique Claimers" />
+							<StatTile label="Total Claims" loading />
+							<StatTile label="Total Claimed" loading />
+							<StatTile label="Unique Claimers" loading />
 						</>
 					)}
 				</div>

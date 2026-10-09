@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareOverviewData, type OverviewAPIResponse } from './data'
-import { ChartCard, KpiCard, SectionHeader } from './ui'
+import { ChartCard, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -29,8 +30,8 @@ export default function Overview() {
 		<div className="flex flex-col gap-6">
 			<SectionHeader>Chain Ecosystem</SectionHeader>
 			<div className="grid grid-cols-2 gap-4">
-				<KpiCard label="Chain TVL" value={tvl.currentFormatted} />
-				{tvl.currentBridgedFormatted && <KpiCard label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
+				<StatTile label="Chain TVL" value={tvl.currentFormatted} />
+				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
 			</div>
 			<ChartCard title={tvl.title} subtitle={tvl.subtitle} titleTooltip={tvl.titleTooltip}>
 				<MultiSeriesChart
@@ -92,18 +93,18 @@ export default function Overview() {
 				<>
 					<SectionHeader>FXRP</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-						<KpiCard label="Total FXRP Supply" value={fxrp.totalFxrpSupply} />
-						<KpiCard
+						<StatTile label="Total FXRP Supply" value={fxrp.totalFxrpSupply} />
+						<StatTile
 							label="% Locked in DeFi"
 							value={fxrp.pctLockedInDefi}
 							sub="All networks"
-							def="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
+							tooltip="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
 						/>
-						<KpiCard
+						<StatTile
 							label="Value Locked in DeFi"
 							value={fxrp.valueLockedInDefiUsd}
 							sub="Flare only"
-							def="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
+							tooltip="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
 						/>
 					</div>
 				</>
@@ -111,9 +112,9 @@ export default function Overview() {
 
 			<SectionHeader>Stablecoins</SectionHeader>
 			<div className="grid grid-cols-3 gap-4">
-				<KpiCard label="Total" value={stables.kpis.total} />
-				<KpiCard label="Native Minted" value={stables.kpis.native} />
-				<KpiCard label="Bridged" value={stables.kpis.bridged} />
+				<StatTile label="Total" value={stables.kpis.total} />
+				<StatTile label="Native Minted" value={stables.kpis.native} />
+				<StatTile label="Bridged" value={stables.kpis.bridged} />
 			</div>
 
 			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged.">

@@ -4,6 +4,7 @@ import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
 	formatUsd,
@@ -17,8 +18,6 @@ import {
 	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
 	InvestorsTable,
-	KpiCard,
-	MetricStrip,
 	PageLoader,
 	SectionHeader
 } from './shared'
@@ -186,15 +185,18 @@ export default function GHO() {
 	return (
 		<div className="flex flex-col gap-6">
 			{kpis && (
-				<MetricStrip>
-					<KpiCard label="Total GHO Size" value={kpis.totalSize} />
-					<KpiCard label="Total Borrowed" value={kpis.totalBorrowed} />
-					<KpiCard label="Available Liquidity" value={kpis.availableLiquidity} />
-					<KpiCard label="Borrow APY (Main)" value={kpis.borrowApy} />
-					<KpiCard label="Utilization (Main)" value={kpis.utilization} />
-					<KpiCard label="Borrow Cap (Main)" value={kpis.borrowCap} />
-					<KpiCard label="Markets" value={kpis.markets} />
-				</MetricStrip>
+				<InlineStatStrip
+					stacked
+					items={[
+						{ label: 'Total GHO Size', value: kpis.totalSize },
+						{ label: 'Total Borrowed', value: kpis.totalBorrowed },
+						{ label: 'Available Liquidity', value: kpis.availableLiquidity },
+						{ label: 'Borrow APY (Main)', value: kpis.borrowApy },
+						{ label: 'Utilization (Main)', value: kpis.utilization },
+						{ label: 'Borrow Cap (Main)', value: kpis.borrowCap },
+						{ label: 'Markets', value: kpis.markets }
+					]}
+				/>
 			)}
 
 			{/* Chart section with inline time window toggle */}

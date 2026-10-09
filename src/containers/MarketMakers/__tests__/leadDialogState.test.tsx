@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ClaimDialog } from '../ClaimDialog'
@@ -231,12 +232,12 @@ describe('lead forms keep what was typed', () => {
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		await type(inputByLabel('Position at organization')!, 'CEO')
 		await type(inputByLabel('Your organization email address')!, 'ada@acme')
-		const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)
-		expect(errorTexts()).toEqual([])
+		const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+		expect(fieldErrorTexts(dialog)).toEqual([])
 
 		await click(buttonByText('Submit claim request')!)
 
-		expect(errorTexts()).toEqual([
+		expect(fieldErrorTexts(dialog)).toEqual([
 			'Enter your full name.',
 			'Enter your LinkedIn or X profile URL.',
 			'Enter a valid email address.',
@@ -244,7 +245,7 @@ describe('lead forms keep what was typed', () => {
 		])
 		expect(document.activeElement).toBe(inputByLabel('Your full name'))
 		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
-		expect(errorTexts()).not.toContain('Enter your full name.')
+		expect(fieldErrorTexts(dialog)).not.toContain('Enter your full name.')
 		expect(http.urls().some((url) => url.includes('/lead/claim'))).toBe(false)
 	})
 
@@ -295,7 +296,7 @@ test('an empty connect request says what is missing and focuses the interest pic
 	await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 	await click(buttonByText('Submit request')!)
 
-	expect([...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)).toEqual([
+	expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual([
 		'Choose what you are interested in.',
 		'Enter the project name.',
 		'Enter the token ticker.',
@@ -309,7 +310,7 @@ test('an empty connect request says what is missing and focuses the interest pic
 
 test('a token status picked after a failed submit opens its token field without an error', async () => {
 	await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
-	const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)
+	const errorTexts = () => fieldErrorTexts(document.querySelector('[role="dialog"]')!)
 	await click(buttonByText('Submit request')!)
 	expect(errorTexts()).toContain('Enter the project name.')
 

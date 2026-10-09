@@ -15,7 +15,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
@@ -573,7 +573,7 @@ export function MetricSentenceBuilder({
 										<Combobox
 											autoFocus
 											placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
-											className={searchFieldInputStyles}
+											render={<Input className={searchFieldInputPlacementStyles} />}
 											aria-label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
 										/>
 									</div>

@@ -6,6 +6,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
+import { ComposerFrame } from '~/containers/LlamaAI/components/input/ComposerFrame'
 import {
 	FREE_DAILY_ALLOWANCE,
 	FREE_RESEARCH_ALLOWANCE,
@@ -185,17 +186,13 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 							}
 						}}
 					>
-						<div
-							className={clsx(
-								'flex items-center gap-2 rounded-xl border border-medium bg-surface px-4 py-3 transition-all duration-200',
-								'focus-within:border-ai-gold-deep focus-within:shadow-ai-focus-gold dark:focus-within:shadow-ai-focus-gold-dark'
-							)}
-						>
+						<ComposerFrame layout="row" tone="gold">
 							<input
 								name="freeform"
 								type="text"
+								aria-label="Ask your own question"
 								placeholder="Or ask your own question…"
-								className="flex-1 bg-transparent body-md text-secondary outline-hidden placeholder:text-tertiary"
+								className="min-h-8 min-w-0 flex-1 bg-transparent px-1.5 py-1 body-lg text-primary outline-hidden placeholder:text-tertiary sm:body-md"
 							/>
 							<button
 								type="submit"
@@ -204,7 +201,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 								Ask
 								<Icon name="arrow-right" height={14} width={14} />
 							</button>
-						</div>
+						</ComposerFrame>
 					</form>
 				</section>
 			)}

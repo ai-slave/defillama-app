@@ -13,7 +13,7 @@ import {
 } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useCreateProject, useProjectUsage, useUpdateProject } from './hooks'
 import type { Project } from './types'
@@ -117,7 +117,7 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 
 					<Field label="Description (optional)">
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								readOnly={pending}
 								rows={3}
@@ -125,7 +125,7 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 								value={description ?? ''}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="What's this project about?"
-								className={`${textareaStyles} resize-none`}
+								className="resize-none"
 							/>
 						)}
 					</Field>

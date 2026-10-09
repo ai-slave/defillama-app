@@ -2,9 +2,10 @@ import { lazy, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatRatio } from '~/utils/numberFormat'
 import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -129,14 +130,33 @@ export default function Incentives() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<KpiCard label="30d Total Spend" value={k.thirtyDayTotal?.formatted} />
-				<KpiCard label="All-time Total Spend" value={k.allTimeTotal?.formatted} />
-				<KpiCard
-					label="Fees Rolled Into Incentives (30d)"
-					value={k.feesRolledIntoIncentives?.formatted}
-					sub="AERO/VELO emissions beyond what we paid in bribes"
-				/>
-				<KpiCard label="Gov-Token Power (locked USD)" value={k.govTokenPowerUsd?.formatted} sub="vlCVX + veAERO" />
+				{data ? (
+					<>
+						<StatTile label="30d Total Spend" value={k.thirtyDayTotal?.formatted ?? '—'} />
+						<StatTile label="All-time Total Spend" value={k.allTimeTotal?.formatted ?? '—'} />
+						<StatTile
+							label="Fees Rolled Into Incentives (30d)"
+							value={k.feesRolledIntoIncentives?.formatted ?? '—'}
+							sub="AERO/VELO emissions beyond what we paid in bribes"
+						/>
+						<StatTile
+							label="Gov-Token Power (locked USD)"
+							value={k.govTokenPowerUsd?.formatted ?? '—'}
+							sub="vlCVX + veAERO"
+						/>
+					</>
+				) : (
+					<>
+						<StatTile label="30d Total Spend" loading />
+						<StatTile label="All-time Total Spend" loading />
+						<StatTile
+							label="Fees Rolled Into Incentives (30d)"
+							sub="AERO/VELO emissions beyond what we paid in bribes"
+							loading
+						/>
+						<StatTile label="Gov-Token Power (locked USD)" sub="vlCVX + veAERO" loading />
+					</>
+				)}
 			</div>
 			<ChartCard title="30d Spend by Venue">
 				<SimpleTable
@@ -239,9 +259,9 @@ export default function Incentives() {
 					{data.nonSpendIncentives.govTokenPower && (
 						<ChartCard title={data.nonSpendIncentives.govTokenPower.title || 'Gov-token incentive power'}>
 							<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-								<KpiCard label="vlCVX locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.vlCvxLockedUsd)} />
-								<KpiCard label="veAERO locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.veAeroLockedUsd)} />
-								<KpiCard
+								<StatTile label="vlCVX locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.vlCvxLockedUsd)} />
+								<StatTile label="veAERO locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.veAeroLockedUsd)} />
+								<StatTile
 									label="Total locked"
 									value={
 										data.nonSpendIncentives.govTokenPower.totalFormatted ||

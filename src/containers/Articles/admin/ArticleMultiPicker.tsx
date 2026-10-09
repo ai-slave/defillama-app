@@ -8,7 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -101,7 +101,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 						ref={inputRef}
 						placeholder="Search articles by title…"
 						autoSelect
-						className={searchFieldInputStyles}
+						render={<Input className={searchFieldInputPlacementStyles} />}
 					/>
 				</div>
 				<ComboboxSurface

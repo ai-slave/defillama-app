@@ -16,6 +16,7 @@ import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { Icon } from '~/ui/Icon'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
@@ -33,28 +34,6 @@ const tableFeaturesConfig = tableFeatures({
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-
-function KpiCard({
-	label,
-	value,
-	change
-}: {
-	label: string
-	value: string
-	change?: { value: number; formatted: string }
-}) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<div className="flex items-baseline gap-2">
-				<span className="mono-xl text-primary">{value}</span>
-				{change && (
-					<span className={`label-sm ${change.value >= 0 ? 'text-success' : 'text-error'}`}>{change.formatted}</span>
-				)}
-			</div>
-		</div>
-	)
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -319,7 +298,7 @@ export default function Ecosystem() {
 			{/* TVL */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Total Value Locked</SectionHeader>
-				<KpiCard label="Current TVL" value={data.tvl.currentFormatted} />
+				<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartCard title={data.tvl.title}>
 					<MultiSeriesChart
 						dataset={data.tvl.dataset}
@@ -335,10 +314,10 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Protocol Fees</SectionHeader>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-					<KpiCard label="24h Fees" value={data.fees.kpis.total24h.formatted} change={data.fees.kpis.change1d} />
-					<KpiCard label="7d Fees" value={data.fees.kpis.total7d.formatted} change={data.fees.kpis.change7d} />
-					<KpiCard label="30d Fees" value={data.fees.kpis.total30d.formatted} change={data.fees.kpis.change1m} />
-					<KpiCard label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
+					<StatTile label="24h Fees" value={data.fees.kpis.total24h.formatted} change={data.fees.kpis.change1d} />
+					<StatTile label="7d Fees" value={data.fees.kpis.total7d.formatted} change={data.fees.kpis.change7d} />
+					<StatTile label="30d Fees" value={data.fees.kpis.total30d.formatted} change={data.fees.kpis.change1m} />
+					<StatTile label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.fees.title}>
 					<MultiSeriesChart
@@ -360,22 +339,22 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>DEX Volume</SectionHeader>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-					<KpiCard
+					<StatTile
 						label="24h Volume"
 						value={data.dexVolume.kpis.total24h.formatted}
 						change={data.dexVolume.kpis.change1d}
 					/>
-					<KpiCard
+					<StatTile
 						label="7d Volume"
 						value={data.dexVolume.kpis.total7d.formatted}
 						change={data.dexVolume.kpis.change7d}
 					/>
-					<KpiCard
+					<StatTile
 						label="30d Volume"
 						value={data.dexVolume.kpis.total30d.formatted}
 						change={data.dexVolume.kpis.change1m}
 					/>
-					<KpiCard label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
+					<StatTile label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.dexVolume.title}>
 					<MultiSeriesChart
@@ -397,9 +376,9 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Stablecoins</SectionHeader>
 				<div className="grid grid-cols-3 gap-4">
-					<KpiCard label="Circulating" value={data.stablecoins.kpis.currentCirculating.formatted} />
-					<KpiCard label="Minted (Native)" value={data.stablecoins.kpis.currentMinted.formatted} />
-					<KpiCard label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
+					<StatTile label="Circulating" value={data.stablecoins.kpis.currentCirculating.formatted} />
+					<StatTile label="Minted (Native)" value={data.stablecoins.kpis.currentMinted.formatted} />
+					<StatTile label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
 				<ChartCard title={data.stablecoins.title}>
 					<MultiSeriesChart

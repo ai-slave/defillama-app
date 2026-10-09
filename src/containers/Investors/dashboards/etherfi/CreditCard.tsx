@@ -1,9 +1,10 @@
 import { lazy, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
-import { CardSkeleton, ChartCard, KpiCard, KpiSkeleton } from './ui'
+import { CardSkeleton, ChartCard } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -82,17 +83,17 @@ export default function CreditCard() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				{kpis ? (
 					<>
-						<KpiCard label="TVL" value={kpis.tvl} />
-						<KpiCard label="Fees (24h)" value={kpis.fees24h} />
-						<KpiCard label="Revenue (24h)" value={kpis.revenue24h} />
-						<KpiCard label="USD Inflows (Latest)" value={kpis.inflows} />
+						<StatTile label="TVL" value={kpis.tvl} />
+						<StatTile label="Fees (24h)" value={kpis.fees24h} />
+						<StatTile label="Revenue (24h)" value={kpis.revenue24h} />
+						<StatTile label="USD Inflows (Latest)" value={kpis.inflows} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="TVL" />
-						<KpiSkeleton label="Fees (24h)" />
-						<KpiSkeleton label="Revenue (24h)" />
-						<KpiSkeleton label="USD Inflows (Latest)" />
+						<StatTile label="TVL" loading />
+						<StatTile label="Fees (24h)" loading />
+						<StatTile label="Revenue (24h)" loading />
+						<StatTile label="USD Inflows (Latest)" loading />
 					</>
 				)}
 			</div>

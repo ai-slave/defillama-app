@@ -9,7 +9,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
-import { Input, inputStyles, textareaStyles } from '~/ui/Input'
+import { Input, inputStyles, Textarea } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -388,14 +388,14 @@ function MetaSheet({
 									action={<FieldCount>{`${(article.reportDescription ?? '').length}/600`}</FieldCount>}
 								>
 									{(control) => (
-										<textarea
+										<Textarea
 											{...control}
 											value={article.reportDescription ?? ''}
 											onChange={(event) => updateArticle('reportDescription', event.target.value.slice(0, 600))}
 											placeholder="Shown on hover over the report card in the /research carousel."
 											rows={4}
 											maxLength={600}
-											className={`${textareaStyles} resize-none`}
+											className="resize-none"
 										/>
 									)}
 								</Field>
@@ -576,13 +576,13 @@ function MetaSheet({
 							</Field>
 							<Field label="Excerpt">
 								{(control) => (
-									<textarea
+									<Textarea
 										{...control}
 										value={article.excerpt ?? ''}
 										onChange={(event) => updateArticle('excerpt', event.target.value)}
 										placeholder="Auto-derived from your first paragraph. Override here if you want."
 										rows={3}
-										className={`${textareaStyles} resize-none`}
+										className="resize-none"
 									/>
 								)}
 							</Field>
@@ -647,14 +647,14 @@ function MetaSheet({
 								action={<FieldCount>{`${(article.seoDescription ?? '').length}/160`}</FieldCount>}
 							>
 								{(control) => (
-									<textarea
+									<Textarea
 										{...control}
 										value={article.seoDescription ?? ''}
 										onChange={(event) => updateArticle('seoDescription', event.target.value)}
 										placeholder="Shown in search results and link previews. Falls back to the excerpt."
 										rows={3}
 										maxLength={300}
-										className={`${textareaStyles} resize-none`}
+										className="resize-none"
 									/>
 								)}
 							</Field>
@@ -667,9 +667,9 @@ function MetaSheet({
 						<p className="body-sm text-tertiary">Loading authors…</p>
 					) : null}
 					{collaboratorsLoadFailed ? (
-						<InlineStatus variant="error">
-							<span className="flex flex-wrap items-center justify-between gap-2">
-								Couldn&apos;t load the authors.
+						<InlineStatus
+							variant="error"
+							action={
 								<Button
 									type="button"
 									size="sm"
@@ -678,7 +678,9 @@ function MetaSheet({
 								>
 									Try again
 								</Button>
-							</span>
+							}
+						>
+							Couldn&apos;t load the authors.
 						</InlineStatus>
 					) : null}
 					{authors.length > 0 ? (

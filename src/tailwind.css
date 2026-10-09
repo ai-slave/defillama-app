@@ -28,6 +28,17 @@
 	}
 }
 
+/* A recipe default that callers may override (Skeleton's radius, a status shell's minimum height). `initial:` puts
+   the class in a layer nested inside utilities, and a nested layer ranks below its parent's own rules, so a caller's
+   plain utility wins whatever order Tailwind emits the two in. Only for layout defaults callers are meant to change;
+   colors and type stay recipe-only, where an override is a new variant instead. */
+@custom-variant initial {
+	/* Not `@layer initial`: initial is a CSS-wide keyword, which a layer name may not be. */
+	@layer defaults {
+		@slot;
+	}
+}
+
 [data-ab-variant='b'] {
 	display: none;
 }

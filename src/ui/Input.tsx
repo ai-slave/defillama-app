@@ -1,4 +1,4 @@
-import type { ComponentPropsWithRef } from 'react'
+import type { ComponentPropsWithRef, ReactNode } from 'react'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
@@ -29,15 +29,19 @@ import { tw } from './tw'
    placeholder; callers never do.
 
    Date fields are `<Input type="date" className="cursor-pointer dark:scheme-dark">`.
-   Multiline fields use `textareaStyles`, never `inputStyles`. Code, hex
-   colors, addresses and formulas take `codeInputStyles` / `codeTextareaStyles`:
-   the same field in the mono family at the same sizes, so phones still get
-   16px.
+   Multiline fields are `Textarea`. Code, hex colors, addresses and formulas
+   take `variant="code"` on either: the same field in the mono family at the
+   same sizes, so phones still get 16px. A verification code is
+   `<Input variant="oneTimeCode">`. Fixed text inside the box (a URL prefix,
+   a unit) is `prefix` / `suffix`: the box then draws around the text and the
+   value, with the recipe's hover, focus and error, because a wrapper's own
+   :focus never fires. Variants are props, never recipe strings glued to a
+   raw element, so a caller's class can never fight the recipe's.
 
    Search fields: SearchField (./SearchField.tsx) for a search with a clear
    button. A hand-built one renders `<Input className={searchFieldInputPlacementStyles}>`
-   inside a wrapper; only Ariakit hosts (Combobox, ComboboxInput) take
-   `searchFieldInputStyles`. Table searches pick one wrapper:
+   inside a wrapper; an Ariakit host (Combobox, ComboboxInput) renders the
+   same Input through `render`. Table searches pick one wrapper:
    `searchFieldWrapperStyles` (standalone, left-anchored),
    `searchFieldInlineWrapperStyles` (fixed 280px beside other toolbar
    controls, never shrinks), or `searchFieldFlexibleWrapperStyles` (shares
@@ -54,8 +58,10 @@ import { tw } from './tw'
    same contract as Button/Card. Different colors or type are a new variant
    in this file, not a className override.
 
-   For Ariakit hosts that render their own input (Ariakit.Combobox), pass
-   `className={inputStyles}` (plus layout classes) instead of the component.
+   An Ariakit host that renders its own input (Ariakit.Combobox) renders the
+   component: `render={<Input />}`. `inputStyles` stays exported only for a
+   native <select> and the few field-styled pick triggers, until each moves
+   onto Select.
 ---------------------------------------------------------------------------- */
 
 const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary placeholder:text-tertiary not-focus:not-disabled:not-aria-disabled:not-aria-invalid:hover:border-strong focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-disabled aria-busy:cursor-progress aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled aria-invalid:border-error aria-invalid:focus:border-error`
@@ -63,21 +69,23 @@ const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page bg-clip-pa
 export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 
 /** Multiline prose needs the body ramp; callers own rows, resizing, and height limits. */
-export const textareaStyles = `${fieldSurfaceStyles} py-2 max-sm:placeholder:text-sm/6 sm:body-md`
+const textareaStyles = `${fieldSurfaceStyles} py-2 max-sm:placeholder:text-sm/6 sm:body-md`
 
 // Built on the surface, not inputStyles: its sm:body-sm would set Inter back on desktop.
-export const codeInputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:font-mono max-sm:placeholder:text-sm/6 sm:mono-md sheet:min-h-11`
+const codeInputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:font-mono max-sm:placeholder:text-sm/6 sm:mono-md sheet:min-h-11`
 
-export const codeTextareaStyles = `${fieldSurfaceStyles} py-2 max-sm:font-mono max-sm:placeholder:text-sm/6 sm:mono-md`
+const codeTextareaStyles = `${fieldSurfaceStyles} py-2 max-sm:font-mono max-sm:placeholder:text-sm/6 sm:mono-md`
 
 /** A one-time code (email verification, account link): centred digits spaced apart, the hint at normal spacing. */
-export const oneTimeCodeInputStyles = `${inputStyles} text-center tracking-[0.4em] placeholder:tracking-normal`
+const oneTimeCodeInputStyles = `${inputStyles} text-center tracking-[0.4em] placeholder:tracking-normal`
 
 /* A field with fixed text inside its box (a URL prefix, a unit): the frame draws the recipe's box, hover, focus and
    error around a borderless `fieldFrameInputStyles` input, because a wrapper's own :focus never fires. */
-export const fieldFrameStyles = tw`flex min-h-8 min-w-0 cursor-text items-center gap-1 rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary focus-within:border-brand not-focus-within:not-has-[[aria-invalid=true]]:hover:border-strong has-disabled:cursor-not-allowed has-disabled:border-disabled has-disabled:bg-disabled has-disabled:text-disabled has-[[aria-invalid=true]]:border-error sm:body-sm sheet:min-h-11`
+const fieldFrameStyles = tw`flex min-h-8 min-w-0 cursor-text items-center gap-1 rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary focus-within:border-brand not-focus-within:not-has-[:disabled,[aria-disabled=true],[aria-invalid=true]]:hover:border-strong has-[:disabled,[aria-disabled=true]]:cursor-not-allowed has-[:disabled,[aria-disabled=true]]:border-disabled has-[:disabled,[aria-disabled=true]]:bg-disabled has-[:disabled,[aria-disabled=true]]:text-disabled has-[[aria-busy=true]]:cursor-progress has-[[aria-invalid=true]]:border-error sm:body-sm sheet:min-h-11`
 
-export const fieldFrameInputStyles = tw`min-w-0 flex-1 bg-transparent py-0.5 outline-hidden placeholder:text-tertiary`
+// [font:inherit] takes the frame's type: the base layer sets every input to text-sm, which would put 14px beside a
+// 16px prefix on phones and let iOS zoom on focus.
+const fieldFrameInputStyles = tw`min-w-0 flex-1 cursor-[inherit] bg-transparent py-0.5 text-inherit outline-hidden [font:inherit] placeholder:text-tertiary`
 
 export const searchFieldWrapperStyles = tw`relative mr-auto w-full min-w-0 sm:max-w-[280px]`
 
@@ -89,13 +97,82 @@ export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 botto
 
 export const searchFieldInputPlacementStyles = tw`w-full pl-8`
 
-export const searchFieldInputStyles = `${inputStyles} ${searchFieldInputPlacementStyles}`
+const INPUT_VARIANTS = {
+	text: inputStyles,
+	code: codeInputStyles,
+	oneTimeCode: oneTimeCodeInputStyles
+} as const
 
-type InputProps = {
+type InputProps = (
+	| {
+			/** text (default); code for addresses, hex colors and formulas (mono at the same sizes); oneTimeCode for a
+			    verification code (centred, spaced digits). */
+			variant?: keyof typeof INPUT_VARIANTS
+			prefix?: never
+			suffix?: never
+	  }
+	| {
+			variant?: 'text'
+			/** Fixed text inside the box before or after the value: a URL prefix, a unit. The box then draws around both
+			    and `className` lands on it. */
+			prefix?: ReactNode
+			suffix?: ReactNode
+	  }
+) & {
 	/** Layout placement only (w-full, m-3, overlay-clearing pl-8/pr-*) — never colors or type. */
 	className?: string
-} & Omit<ComponentPropsWithRef<'input'>, 'className'>
+} & Omit<ComponentPropsWithRef<'input'>, 'className' | 'prefix'>
 
-export function Input({ className, ...props }: InputProps) {
-	return <input className={`${inputStyles} ${className ?? ''}`.trim()} {...props} />
+export function Input({ variant = 'text', prefix, suffix, className, ...props }: InputProps) {
+	if (prefix == null && suffix == null)
+		return <input className={`${INPUT_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
+	// A div, not a label: the Field's own label names the input, and a second wrapping label would add the prefix to
+	// that name. A press on the fixed text moves focus into the input, as a label would, with the caret on the side
+	// that was pressed (Radix Themes' text field does the same); a link or button inside the text keeps its press.
+	return (
+		<div
+			role="presentation"
+			className={`${fieldFrameStyles} ${className ?? ''}`.trim()}
+			onMouseDown={(event) => {
+				const target = event.target as HTMLElement
+				if (target.closest('input, button, a')) return
+				event.preventDefault()
+				const input = event.currentTarget.querySelector('input')!
+				input.focus()
+				// setSelectionRange throws on email and number inputs; their caret stays where focus puts it.
+				if (!/^(text|search|url|tel|password)$/.test(input.type)) return
+				const caret = target.closest('[data-slot="suffix"]') ? input.value.length : 0
+				input.setSelectionRange(caret, caret)
+			}}
+		>
+			{prefix != null ? (
+				<span data-slot="prefix" className="shrink-0 text-tertiary">
+					{prefix}
+				</span>
+			) : null}
+			<input className={fieldFrameInputStyles} {...props} />
+			{suffix != null ? (
+				<span data-slot="suffix" className="shrink-0 text-tertiary">
+					{suffix}
+				</span>
+			) : null}
+		</div>
+	)
+}
+
+const TEXTAREA_VARIANTS = {
+	prose: textareaStyles,
+	code: codeTextareaStyles
+} as const
+
+type TextareaProps = {
+	/** prose (default) on the body ramp; code in the mono family (CSV, SQL, embed snippets). */
+	variant?: keyof typeof TEXTAREA_VARIANTS
+	/** Layout placement, rows' height limits and resizing (w-full, min-h-*, resize-none) — never colors or type. */
+	className?: string
+} & Omit<ComponentPropsWithRef<'textarea'>, 'className'>
+
+/** Every multiline field. Callers own rows, resizing and height limits. */
+export function Textarea({ variant = 'prose', className, ...props }: TextareaProps) {
+	return <textarea className={`${TEXTAREA_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
 }

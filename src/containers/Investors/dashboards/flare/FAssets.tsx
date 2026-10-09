@@ -3,9 +3,10 @@ import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareFAssetsData, type FAssetsAPIResponse } from './data'
-import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
+import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -34,24 +35,24 @@ export default function FAssets() {
 
 			<SectionHeader>FXRP</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Total FXRP Supply" value={k.totalFxrpSupply} />
-				<KpiCard
+				<StatTile label="Total FXRP Supply" value={k.totalFxrpSupply} />
+				<StatTile
 					label="% Locked in DeFi"
 					value={k.pctLockedInDefi}
 					sub="All networks"
-					def="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
+					tooltip="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
 				/>
-				<KpiCard
+				<StatTile
 					label="Value Locked in DeFi"
 					value={k.valueLockedInDefiUsd}
 					sub="Flare only"
-					def="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
+					tooltip="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
 				/>
-				<KpiCard
+				<StatTile
 					label="FXRP Locked in DeFi"
 					value={k.fxrpLockedInDefi}
 					sub="Flare only"
-					def="Same figure as Value Locked in DeFi, in FXRP token units instead of USD."
+					tooltip="Same figure as Value Locked in DeFi, in FXRP token units instead of USD."
 				/>
 			</div>
 
@@ -118,15 +119,15 @@ export default function FAssets() {
 
 			<SectionHeader>Activity</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard label="Total DeFi Txns" value={k.totalDefiTransactions} />
-				<KpiCard
+				<StatTile label="Total DeFi Txns" value={k.totalDefiTransactions} />
+				<StatTile
 					label="Total Minters"
 					value={k.totalMinters}
-					def="Distinct wallets with DeFi activity in FXRP protocols, not a count of mint transactions."
+					tooltip="Distinct wallets with DeFi activity in FXRP protocols, not a count of mint transactions."
 				/>
-				<KpiCard label="Mints" value={k.mintCount} />
-				<KpiCard label="Burns" value={k.burnCount} def="FXRP redemptions." />
-				<KpiCard label="Swaps" value={k.swapCount} />
+				<StatTile label="Mints" value={k.mintCount} />
+				<StatTile label="Burns" value={k.burnCount} tooltip="FXRP redemptions." />
+				<StatTile label="Swaps" value={k.swapCount} />
 			</div>
 		</div>
 	)

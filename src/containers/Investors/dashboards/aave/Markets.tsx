@@ -4,6 +4,7 @@ import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
 	formatUsd,
@@ -18,8 +19,6 @@ import {
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
 	ChartCard,
 	InvestorsTable,
-	KpiCard,
-	MetricStrip,
 	PageLoader,
 	SectionHeader
 } from './shared'
@@ -267,14 +266,17 @@ export default function Markets() {
 	return (
 		<div className="flex flex-col gap-6">
 			{kpis && (
-				<MetricStrip>
-					<KpiCard label="Total Market Size" value={kpis.totalMarketSize} />
-					<KpiCard label="Available Liquidity" value={kpis.totalAvailableLiquidity} />
-					<KpiCard label="Total Borrowed" value={kpis.totalBorrowed} />
-					<KpiCard label="Chains" value={kpis.numChains} />
-					<KpiCard label="Assets" value={kpis.numAssets} />
-					<KpiCard label="Avg Supply APY" value={kpis.avgSupplyApy} />
-				</MetricStrip>
+				<InlineStatStrip
+					stacked
+					items={[
+						{ label: 'Total Market Size', value: kpis.totalMarketSize },
+						{ label: 'Available Liquidity', value: kpis.totalAvailableLiquidity },
+						{ label: 'Total Borrowed', value: kpis.totalBorrowed },
+						{ label: 'Chains', value: kpis.numChains },
+						{ label: 'Assets', value: kpis.numAssets },
+						{ label: 'Avg Supply APY', value: kpis.avgSupplyApy }
+					]}
+				/>
 			)}
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

@@ -1,5 +1,5 @@
 import { Field } from '~/ui/Field'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 
 interface TextTabProps {
 	textTitle: string
@@ -31,14 +31,14 @@ export function TextTab({ textTitle, textContent, onTextTitleChange, onTextConte
 				error={error}
 			>
 				{(control) => (
-					<textarea
+					<Textarea
 						{...control}
 						required
 						value={textContent}
 						onChange={(e) => onTextContentChange(e.target.value)}
 						placeholder="Enter markdown content…"
 						rows={8}
-						className={`${textareaStyles} w-full resize-none`}
+						className="w-full resize-none"
 					/>
 				)}
 			</Field>

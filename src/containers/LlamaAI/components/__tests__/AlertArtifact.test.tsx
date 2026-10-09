@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AlertArtifact } from '../AlertArtifact'
@@ -134,5 +135,5 @@ test('Save alert with no Slack channel picked focuses the channel picker, not th
 	expect(
 		document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')!.getAttribute('aria-invalid')
 	).toBeNull()
-	expect(channel.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe('Choose a Slack channel.')
+	expect(fieldErrorTexts()).toEqual(['Choose a Slack channel.'])
 })

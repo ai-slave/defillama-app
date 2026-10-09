@@ -8,7 +8,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles, textareaStyles } from '~/ui/Input'
+import { Input, inputStyles, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
@@ -200,14 +200,14 @@ function ReportSession({
 								<Ariakit.Focusable
 									autoFocus
 									render={
-										<textarea
+										<Textarea
 											{...control}
 											readOnly={pending}
 											name="message"
 											required
 											value={message}
 											onChange={(event) => setMessage(event.target.value)}
-											className={`${textareaStyles} min-h-24 resize-y`}
+											className="min-h-24 resize-y"
 										/>
 									}
 								/>
@@ -215,24 +215,11 @@ function ReportSession({
 						</Field>
 						<Field label="Where can we find correct information? (optional)">
 							{(control) => (
-								<textarea
-									{...control}
-									readOnly={pending}
-									name="correctSource"
-									className={`${textareaStyles} min-h-24 resize-y`}
-								/>
+								<Textarea {...control} readOnly={pending} name="correctSource" className="min-h-24 resize-y" />
 							)}
 						</Field>
 						<Field label="How can we contact you? (optional)">
-							{(control) => (
-								<input
-									{...control}
-									readOnly={pending}
-									name="contact"
-									placeholder="Email address"
-									className={inputStyles}
-								/>
-							)}
+							{(control) => <Input {...control} readOnly={pending} name="contact" placeholder="Email address" />}
 						</Field>
 						{failed ? <InlineStatus variant="error">Couldn&rsquo;t send the report. Try again.</InlineStatus> : null}
 					</DialogBody>

@@ -172,9 +172,9 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							}}
 						/>
 						{verificationError ? (
-							<InlineStatus variant="error">
-								<span className="flex flex-wrap items-center justify-between gap-2">
-									Verification could not load.
+							<InlineStatus
+								variant="error"
+								action={
 									<Button
 										type="button"
 										size="sm"
@@ -185,7 +185,9 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 									>
 										Try again
 									</Button>
-								</span>
+								}
+							>
+								Verification could not load.
 							</InlineStatus>
 						) : null}
 					</>

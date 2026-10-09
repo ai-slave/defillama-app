@@ -33,7 +33,7 @@ export const tooltipSurfaceStyles = `${tooltipSurfaceStaticStyles} ${tooltipMoti
 
 /* Virtualized lists measure each row, so their rows skip `content-visibility`: an off-screen row would report
    its placeholder size instead of its own. */
-export const popoverMeasuredRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
+export const popoverMeasuredRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
 
 export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:cv-auto-44`
 
@@ -62,7 +62,7 @@ export const popoverSeeMoreStyles = tw`w-full cursor-pointer px-3 py-2 text-left
 // Nested-menu rows only render in phone sheets, so they keep the 44px touch height outright.
 export const nestedMenuRootRowStyles = tw`grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1rem] items-center overflow-hidden px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuSelectRowStyles = tw`grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1.25rem] items-center overflow-hidden border-b border-subtle px-4 py-2.5 text-left body-sm text-primary last-of-type:border-b-0 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const nestedMenuSelectRowStyles = tw`grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1.25rem] items-center overflow-hidden border-b border-subtle px-4 py-2.5 text-left body-sm text-primary last-of-type:border-b-0 not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
 export const nestedMenuSeeMoreStyles = tw`min-h-11 w-full cursor-pointer px-4 py-2.5 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 

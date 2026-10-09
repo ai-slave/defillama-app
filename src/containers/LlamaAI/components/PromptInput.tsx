@@ -22,6 +22,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { useFileDropTarget } from './FileDrop'
+import { ComposerFrame } from './input/ComposerFrame'
 
 const PASTE_TO_FILE_THRESHOLD = 1500
 const CAPABILITY_PROMPTS = new Set(CAPABILITIES.flatMap((capability) => capability.prompts))
@@ -489,9 +490,10 @@ export function PromptInput({
 	)
 
 	return (
-		<form
-			noValidate
-			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand [[data-composer-tray]+&]:rounded-t-none"
+		<ComposerFrame
+			as="form"
+			layout="stack"
+			className="@container relative w-full"
 			onSubmit={handleFormSubmit}
 			onPointerDown={handleFormPointerDown}
 		>
@@ -644,6 +646,6 @@ export function PromptInput({
 					/>
 				</div>
 			</div>
-		</form>
+		</ComposerFrame>
 	)
 }

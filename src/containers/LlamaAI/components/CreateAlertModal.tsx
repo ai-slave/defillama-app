@@ -68,7 +68,7 @@ import {
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, textareaStyles } from '~/ui/Input'
+import { Input, inputStyles, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { queryReadFailed } from '~/utils/query'
@@ -451,7 +451,7 @@ function CreateAlertModalForm({
 						<div className="flex flex-col gap-1.5">
 							<Field label="What should it tell you?" error={shown?.prompt}>
 								{(control) => (
-									<textarea
+									<Textarea
 										{...control}
 										ref={initialPromptRef}
 										required
@@ -459,7 +459,7 @@ function CreateAlertModalForm({
 										onChange={(e) => setPrompt(e.target.value)}
 										rows={2}
 										placeholder="Hyperliquid TVL and its top drivers"
-										className={`${textareaStyles} w-full resize-none`}
+										className="w-full resize-none"
 									/>
 								)}
 							</Field>
@@ -589,13 +589,13 @@ function CreateAlertModalForm({
 					) : (
 						<Field label="Add context to the ping (optional)">
 							{(control) => (
-								<textarea
+								<Textarea
 									{...control}
 									value={prompt}
 									onChange={(e) => setPrompt(e.target.value)}
 									rows={1}
 									placeholder="ETH price, gas, and what moved the market"
-									className={`${textareaStyles} w-full resize-none`}
+									className="w-full resize-none"
 								/>
 							)}
 						</Field>

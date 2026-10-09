@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
 	formatUsd,
@@ -21,8 +22,6 @@ import {
 	CardSkeleton,
 	ChartCard,
 	InvestorsTable,
-	KpiCard,
-	MetricStrip,
 	PageLoader,
 	SectionHeader
 } from './shared'
@@ -267,13 +266,16 @@ export default function Rates() {
 			</div>
 
 			{kpis && (
-				<MetricStrip>
-					<KpiCard label={`${activeAsset} Supply APY`} value={kpis.supplyApy} />
-					<KpiCard label={`${activeAsset} Borrow APY`} value={kpis.borrowApy} />
-					<KpiCard label="Utilization" value={kpis.utilization} />
-					<KpiCard label="Market Size" value={kpis.marketSize} />
-					<KpiCard label="Markets" value={kpis.marketsCount} />
-				</MetricStrip>
+				<InlineStatStrip
+					stacked
+					items={[
+						{ label: `${activeAsset} Supply APY`, value: kpis.supplyApy },
+						{ label: `${activeAsset} Borrow APY`, value: kpis.borrowApy },
+						{ label: 'Utilization', value: kpis.utilization },
+						{ label: 'Market Size', value: kpis.marketSize },
+						{ label: 'Markets', value: kpis.marketsCount }
+					]}
+				/>
 			)}
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

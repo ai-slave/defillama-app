@@ -28,7 +28,7 @@ import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 
 export function EditorialTagsView() {
 	return (
@@ -304,13 +304,13 @@ export function ReportHighlightControls({
 						<span>Highlight text</span>
 						<span>{highlightText.length}/2000</span>
 					</span>
-					<textarea
+					<Textarea
 						value={highlightText}
 						onChange={(event) => setHighlightText(event.target.value.slice(0, 2000))}
 						placeholder="Custom text shown on the right side of the Report highlight block."
 						rows={4}
 						maxLength={2000}
-						className={`${textareaStyles} resize-none`}
+						className="resize-none"
 					/>
 					<div className="flex flex-wrap items-center gap-2">
 						<Button

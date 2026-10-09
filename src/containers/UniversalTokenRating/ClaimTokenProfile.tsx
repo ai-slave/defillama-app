@@ -9,7 +9,7 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { fieldFrameInputStyles, fieldFrameStyles, Input, inputStyles } from '~/ui/Input'
+import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -105,17 +105,15 @@ function CellInput({
 	}
 	if (column.type === 'percent' || column.type === 'months') {
 		return (
-			<label className={`${fieldFrameStyles} w-full`}>
-				<input
-					{...control}
-					aria-label={column.label}
-					value={value}
-					onChange={(event) => onChange(event.target.value)}
-					inputMode={column.type === 'months' ? 'numeric' : 'decimal'}
-					className={fieldFrameInputStyles}
-				/>
-				<span className="shrink-0 text-tertiary">{column.type === 'percent' ? '%' : 'months'}</span>
-			</label>
+			<Input
+				{...control}
+				aria-label={column.label}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				inputMode={column.type === 'months' ? 'numeric' : 'decimal'}
+				suffix={column.type === 'percent' ? '%' : 'months'}
+				className="w-full"
+			/>
 		)
 	}
 	return (

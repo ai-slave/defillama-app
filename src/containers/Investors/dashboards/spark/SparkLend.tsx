@@ -5,7 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { Skeleton } from '~/ui/Skeleton'
+import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
 	formatUsd,
@@ -77,24 +77,6 @@ function CardSkeleton({ title }: { title: string }) {
 			<div className="flex h-[400px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
-		</div>
-	)
-}
-
-function KpiCard({ label, value }: { label: string; value: string | number | null }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value ?? '—'}</span>
-		</div>
-	)
-}
-
-function KpiSkeleton({ label }: { label: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<Skeleton className="h-8 w-24" />
 		</div>
 	)
 }
@@ -228,19 +210,19 @@ export default function SparkLend() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
 				{kpis ? (
 					<>
-						<KpiCard label="TVL" value={kpis.tvl} />
-						<KpiCard label="Total Borrowed" value={kpis.borrowed} />
-						<KpiCard label="Fees (24h)" value={kpis.fees24h} />
-						<KpiCard label="Revenue (24h)" value={kpis.revenue24h} />
-						<KpiCard label="Supply Side Rev (24h)" value={kpis.supplySideRevenue24h} />
+						<StatTile label="TVL" value={kpis.tvl} />
+						<StatTile label="Total Borrowed" value={kpis.borrowed} />
+						<StatTile label="Fees (24h)" value={kpis.fees24h} />
+						<StatTile label="Revenue (24h)" value={kpis.revenue24h} />
+						<StatTile label="Supply Side Rev (24h)" value={kpis.supplySideRevenue24h} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="TVL" />
-						<KpiSkeleton label="Total Borrowed" />
-						<KpiSkeleton label="Fees (24h)" />
-						<KpiSkeleton label="Revenue (24h)" />
-						<KpiSkeleton label="Supply Side Rev (24h)" />
+						<StatTile label="TVL" loading />
+						<StatTile label="Total Borrowed" loading />
+						<StatTile label="Fees (24h)" loading />
+						<StatTile label="Revenue (24h)" loading />
+						<StatTile label="Supply Side Rev (24h)" loading />
 					</>
 				)}
 			</div>

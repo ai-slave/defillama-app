@@ -16,6 +16,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -69,16 +70,6 @@ const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChartProps['charts']> = [
 	}
 ]
 const PORTFOLIO_CHART_OPTIONS = createSingleSeriesChartOptions('$')
-
-function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value ?? '—'}</span>
-			{helper ? <span className="body-sm text-secondary">{helper}</span> : null}
-		</div>
-	)
-}
 
 function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesConfig, Row> }) {
 	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
@@ -541,14 +532,14 @@ export default function Positions() {
 			</div>
 
 			<div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-				<MetricCard label="Account Value" value={kpis.accountValue} />
-				<MetricCard label="Total Notional" value={kpis.totalNtlPos} />
-				<MetricCard label="Margin Used" value={kpis.totalMarginUsed} />
-				<MetricCard label="Withdrawable" value={kpis.withdrawable} />
-				<MetricCard label="Active Positions" value={kpis.positionCount} />
-				<MetricCard label="Funding PnL 24h" value={kpis.fundingPnl24h} />
-				<MetricCard label="Funding PnL 7d" value={kpis.fundingPnl7d} />
-				<MetricCard label="Portfolio Volume" value={kpis.portfolioVolume} helper={portfolio.window} />
+				<StatTile label="Account Value" value={kpis.accountValue} />
+				<StatTile label="Total Notional" value={kpis.totalNtlPos} />
+				<StatTile label="Margin Used" value={kpis.totalMarginUsed} />
+				<StatTile label="Withdrawable" value={kpis.withdrawable} />
+				<StatTile label="Active Positions" value={kpis.positionCount} />
+				<StatTile label="Funding PnL 24h" value={kpis.fundingPnl24h} />
+				<StatTile label="Funding PnL 7d" value={kpis.fundingPnl7d} />
+				<StatTile label="Portfolio Volume" value={kpis.portfolioVolume} sub={portfolio.window} />
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">

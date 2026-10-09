@@ -7,7 +7,7 @@ import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFoote
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -279,13 +279,13 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 				</Field>
 				<Field label="Bio">
 					{(control) => (
-						<textarea
+						<Textarea
 							{...control}
 							value={item.bio}
 							onChange={(e) => onChange({ bio: e.target.value })}
 							rows={3}
 							placeholder="Short bio paragraph"
-							className={`${textareaStyles} resize-y`}
+							className="resize-y"
 						/>
 					)}
 				</Field>

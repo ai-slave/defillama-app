@@ -15,6 +15,7 @@ import { TablePager } from '~/containers/Investors/TablePager'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { StatTile } from '~/ui/SummaryStats'
 import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { formatSonicCount } from './format'
@@ -23,15 +24,6 @@ import { SonicIcon } from './SonicIcon'
 echarts.use([TreemapLabelContrast, EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function KpiCard({ label, value }: { label: string; value: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value}</span>
-		</div>
-	)
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -298,10 +290,10 @@ export default function FeeM() {
 
 			{/* Global KPIs */}
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Total Contracts" value={data.globalKpis.totalContracts.formatted} />
-				<KpiCard label="Total Transactions" value={data.globalKpis.totalTransactions.formatted} />
-				<KpiCard label="Total Collected" value={data.globalKpis.totalCollected.formatted} />
-				<KpiCard label="Total Claimed" value={data.globalKpis.totalClaimed.formatted} />
+				<StatTile label="Total Contracts" value={data.globalKpis.totalContracts.formatted} />
+				<StatTile label="Total Transactions" value={data.globalKpis.totalTransactions.formatted} />
+				<StatTile label="Total Collected" value={data.globalKpis.totalCollected.formatted} />
+				<StatTile label="Total Claimed" value={data.globalKpis.totalClaimed.formatted} />
 			</div>
 
 			{/* Daily Stats Chart */}

@@ -7,6 +7,8 @@ export type SelectOption = {
 	icon?: ReactNode
 	/** Drawn greyed out: a value the page's current settings leave out. */
 	muted?: boolean
+	/** Shown but not pickable, with `help` as its visible reason (a private Slack channel the bot is not in). */
+	disabled?: boolean
 }
 
 export type SelectValues = ReadonlyArray<SelectOption> | ReadonlyArray<string>

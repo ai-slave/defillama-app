@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useState } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
-import { codeInputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 interface ColorPickerProps {
@@ -50,7 +50,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 						</Ariakit.RadioGroup>
 					</Ariakit.RadioProvider>
 					<div className="flex items-center gap-2 label-sm">
-						<input
+						<Input
 							type="text"
 							aria-label={`Custom color for ${name}`}
 							value={draft}
@@ -59,7 +59,8 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 								if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 							}}
 							placeholder="#2f73c6"
-							className={`${codeInputStyles} w-24`}
+							variant="code"
+							className="w-24"
 						/>
 						<Button variant="link" onClick={() => onChange(null)}>
 							Reset

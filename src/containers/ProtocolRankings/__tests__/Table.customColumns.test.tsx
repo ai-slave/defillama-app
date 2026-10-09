@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IProtocol } from '../types'
 
@@ -184,7 +185,6 @@ test('saving a custom column without a name or formula says so under each field 
 		expect(element).not.toBeNull()
 		return element!
 	})
-	const errors = () => [...dialog.querySelectorAll('.text-error')].map((el) => el.textContent)
 	const field = (label: string) =>
 		[...dialog.querySelectorAll('label')].find((el) => el.textContent === label)!.control as HTMLInputElement
 	const type = async (input: HTMLInputElement, value: string) =>
@@ -193,13 +193,13 @@ test('saving a custom column without a name or formula says so under each field 
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts(dialog)).toEqual([])
 	await click(button('Save')!)
-	expect(errors()).toEqual(['Enter a column name.', 'Enter a formula.'])
+	expect(fieldErrorTexts(dialog)).toEqual(['Enter a column name.', 'Enter a formula.'])
 	expect(document.activeElement).toBe(field('Column name'))
 	await type(field('Column name'), 'Ratio')
 	await type(field('Formula'), 'tvl *')
-	expect(errors()[0]).toMatch(/^Invalid formula: /)
+	expect(fieldErrorTexts(dialog)[0]).toMatch(/^Invalid formula: /)
 	await type(field('Formula'), 'tvl * 2')
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts(dialog)).toEqual([])
 })

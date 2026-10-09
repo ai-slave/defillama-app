@@ -24,6 +24,7 @@ import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
+import { ComposerFrame } from '../components/input/ComposerFrame'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -344,7 +345,7 @@ export function ProjectLanding({
 									preview={imageUpload.pastedPreview}
 									onClose={() => imageUpload.setPastedPreview(null)}
 								/>
-								<div className="group/composer flex items-end gap-2 rounded-lg border border-medium bg-page p-1.5 focus-within:border-brand">
+								<ComposerFrame layout="row" className="group/composer">
 									<AddSourcesMenu
 										projectId={projectId}
 										onAddPhotosFiles={imageUpload.openFilePicker}
@@ -395,7 +396,7 @@ export function ProjectLanding({
 									>
 										<Icon name="arrow-up" height={16} width={16} />
 									</Button>
-								</div>
+								</ComposerFrame>
 								{send === 'readFailed' ? (
 									<div className="mt-2">
 										<InlineStatus variant="error">
@@ -406,17 +407,23 @@ export function ProjectLanding({
 							</form>
 							<section>
 								{sessionsFailed ? (
-									<div role="alert" className="mb-3 flex flex-wrap items-center gap-2 body-sm text-error">
-										<p>Couldn&apos;t load chats.</p>
-										<Button
-											ref={focusRegionOnLeave}
-											variant="secondary"
-											size="sm"
-											pendingLabel={projectSessions.isFetching ? 'Retrying…' : null}
-											onClick={() => void projectSessions.refetch()}
+									<div className="mb-3">
+										<InlineStatus
+											variant="error"
+											action={
+												<Button
+													ref={focusRegionOnLeave}
+													variant="secondary"
+													size="sm"
+													pendingLabel={projectSessions.isFetching ? 'Retrying…' : null}
+													onClick={() => void projectSessions.refetch()}
+												>
+													Try again
+												</Button>
+											}
 										>
-											Try again
-										</Button>
+											Couldn&apos;t load chats.
+										</InlineStatus>
 									</div>
 								) : null}
 								{projectSessions.isLoading && !sessionsFailed ? (

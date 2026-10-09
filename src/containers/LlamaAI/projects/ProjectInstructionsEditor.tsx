@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatNumber } from '~/utils/numberFormat'
 import { useUpdateProject } from './hooks'
@@ -71,7 +71,7 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 					)}
 				</span>
 			</header>
-			<textarea
+			<Textarea
 				id={inputId}
 				aria-describedby={`${inputId}-hint${update.error ? ` ${inputId}-error` : ''}`}
 				aria-invalid={!!update.error}
@@ -83,7 +83,7 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 				maxLength={MAX_LENGTH}
 				rows={3}
 				placeholder="How should LlamaAI respond in this project?"
-				className={`${textareaStyles} field-sizing-content max-h-64 min-h-20 resize-y`}
+				className="field-sizing-content max-h-64 min-h-20 resize-y"
 			/>
 			{update.error ? (
 				<div role="alert" id={`${inputId}-error`} className="flex flex-wrap items-center gap-2 body-sm text-error">

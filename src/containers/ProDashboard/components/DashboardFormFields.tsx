@@ -3,7 +3,7 @@ import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { DASHBOARD_DESCRIPTION_MAX_LENGTH } from '../dashboardTypes'
@@ -183,7 +183,7 @@ export function DescriptionField({ value, onChange }: { value: string; onChange:
 			<label htmlFor={id} className={dashboardFieldLabelStyles}>
 				Description
 			</label>
-			<textarea
+			<Textarea
 				id={id}
 				name="description"
 				value={value}
@@ -192,7 +192,7 @@ export function DescriptionField({ value, onChange }: { value: string; onChange:
 				maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
 				rows={3}
 				aria-describedby={`${id}-count`}
-				className={`${textareaStyles} resize-none`}
+				className="resize-none"
 			/>
 			<p id={`${id}-count`} className={dashboardFieldHintStyles}>
 				{value.length}/{DASHBOARD_DESCRIPTION_MAX_LENGTH} characters

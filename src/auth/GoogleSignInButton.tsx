@@ -236,13 +236,15 @@ export function GoogleSignInButton({
 			</Ariakit.Button>
 			{loadStatus === 'failed' ? (
 				<div className="mt-2">
-					<InlineStatus variant="error">
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<span>Google could not load.</span>
+					<InlineStatus
+						variant="error"
+						action={
 							<Button type="button" size="sm" disabled={loading || disabled} onClick={() => void retryLoad()}>
 								Try again
 							</Button>
-						</div>
+						}
+					>
+						Google could not load.
 					</InlineStatus>
 				</div>
 			) : error ? (

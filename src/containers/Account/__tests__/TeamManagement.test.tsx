@@ -6,6 +6,7 @@ import { afterAll, afterEach, beforeEach, expect, onTestFinished, test, vi } fro
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
@@ -843,11 +844,11 @@ test('assignment requires a selected available plan and retains it after failure
 	const radio = document.querySelector<HTMLInputElement>('input[type=radio]')!
 	await act(async () => button('Assign').focus())
 	await click('Assign')
-	expect(dialog().querySelector('.text-error')?.textContent).toBe('Choose a subscription type.')
+	expect(fieldErrorTexts(dialog())).toEqual(['Choose a subscription type.'])
 	expect(document.activeElement).toBe(radio)
 	expect(posts()).toHaveLength(0)
 	await act(async () => radio.click())
-	expect(dialog().querySelector('.text-error')).toBeNull()
+	expect(fieldErrorTexts(dialog())).toEqual([])
 	await click('Assign')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await act(async () => request.reject(new Error('No seats available')))
@@ -1120,7 +1121,7 @@ test.each([
 	expect(dialog().textContent).not.toContain(message)
 	await act(async () => button('Update seats').focus())
 	await click('Update seats')
-	expect(dialog().querySelector('.text-error')?.textContent).toBe(message)
+	expect(fieldErrorTexts(dialog())).toEqual([message])
 	expect(input.getAttribute('aria-invalid')).toBe('true')
 	expect(document.activeElement).toBe(input)
 	expect(posts()).toHaveLength(0)

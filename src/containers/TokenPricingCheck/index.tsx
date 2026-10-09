@@ -8,6 +8,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 import { formatDateTime } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { checkTokenPricingDetails, fetchPricingChains, tokenPriceKey } from './api'
@@ -246,12 +247,21 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 						</p>
 					) : null}
 					{chainsQuery.isError ? (
-						<div className="flex items-center gap-2" role="alert">
-							<p className="body-md text-error">Could not load the supported chains.</p>
-							<Button type="button" size="sm" onClick={() => void chainsQuery.refetch()}>
-								Retry
-							</Button>
-						</div>
+						<InlineStatus
+							variant="error"
+							action={
+								<Button
+									type="button"
+									size="sm"
+									pendingLabel={chainsQuery.isFetching ? 'Retrying…' : null}
+									onClick={() => void chainsQuery.refetch()}
+								>
+									Try again
+								</Button>
+							}
+						>
+							Couldn&rsquo;t load the supported chains.
+						</InlineStatus>
 					) : null}
 				</form>
 			</Card>

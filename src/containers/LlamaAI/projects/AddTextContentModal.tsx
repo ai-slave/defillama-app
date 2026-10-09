@@ -13,7 +13,7 @@ import {
 } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useAddTextFile } from './hooks'
 
@@ -103,7 +103,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 
 					<Field label="Content" error={contentError}>
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								required
 								readOnly={add.isPending}
@@ -111,7 +111,8 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 								value={content}
 								onChange={(e) => setContent(e.target.value)}
 								placeholder="# my note&#10;Anything goes here…"
-								className={`${textareaStyles} resize-y font-mono`}
+								variant="code"
+								className="resize-y"
 							/>
 						)}
 					</Field>

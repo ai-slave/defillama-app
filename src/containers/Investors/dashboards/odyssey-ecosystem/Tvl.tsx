@@ -1,6 +1,7 @@
 import { lazy, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import {
 	useTab,
@@ -10,9 +11,14 @@ import {
 	type MorphoMarketHistory,
 	type TvlResponse
 } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+
+const TOTAL_TVL_DEFINITION =
+	"Includes third-party TVL — the Metronome AMO supply in external Morpho markets — so it is broader than the sum of each protocol's own DefiLlama TVL (which by convention excludes AMO-supplied Morpho liquidity)."
+const MORPHO_TVL_DEFINITION =
+	"Third-party TVL: the Metronome AMO's supply into external Morpho markets. Not part of Metronome's own DefiLlama TVL."
 
 const PROTO_COLORS: Record<string, string> = {
 	Metronome: '#fb923c',
@@ -164,19 +170,27 @@ export default function Tvl() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-				<KpiCard
-					label="Total Ecosystem TVL"
-					value={k.total?.formatted}
-					info="Includes third-party TVL — the Metronome AMO supply in external Morpho markets — so it is broader than the sum of each protocol's own DefiLlama TVL (which by convention excludes AMO-supplied Morpho liquidity)."
-				/>
-				<KpiCard label="Metronome" value={k.metronome?.formatted} />
-				<KpiCard label="Vesper" value={k.vesper?.formatted} />
-				<KpiCard label="Odyssey" value={k.odyssey?.formatted} />
-				<KpiCard
-					label="Morpho (Metronome Markets)"
-					value={k.morpho?.formatted}
-					info="Third-party TVL: the Metronome AMO's supply into external Morpho markets. Not part of Metronome's own DefiLlama TVL."
-				/>
+				{data ? (
+					<>
+						<StatTile label="Total Ecosystem TVL" tooltip={TOTAL_TVL_DEFINITION} value={k.total?.formatted ?? '—'} />
+						<StatTile label="Metronome" value={k.metronome?.formatted ?? '—'} />
+						<StatTile label="Vesper" value={k.vesper?.formatted ?? '—'} />
+						<StatTile label="Odyssey" value={k.odyssey?.formatted ?? '—'} />
+						<StatTile
+							label="Morpho (Metronome Markets)"
+							tooltip={MORPHO_TVL_DEFINITION}
+							value={k.morpho?.formatted ?? '—'}
+						/>
+					</>
+				) : (
+					<>
+						<StatTile label="Total Ecosystem TVL" tooltip={TOTAL_TVL_DEFINITION} loading />
+						<StatTile label="Metronome" loading />
+						<StatTile label="Vesper" loading />
+						<StatTile label="Odyssey" loading />
+						<StatTile label="Morpho (Metronome Markets)" tooltip={MORPHO_TVL_DEFINITION} loading />
+					</>
+				)}
 			</div>
 
 			<SectionHeader>Total Ecosystem TVL</SectionHeader>
@@ -239,10 +253,10 @@ export default function Tvl() {
 				<>
 					<SectionHeader>Morpho Borrow Markets · Utilization</SectionHeader>
 					<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-						<KpiCard label="Total Supply" value={uk.supply?.formatted} />
-						<KpiCard label="Total Borrows" value={uk.borrows?.formatted} />
-						<KpiCard label="Avg Utilization" value={uk.avgUtilization?.formatted} />
-						<KpiCard label="Idle Liquidity" value={uk.idleLiquidity?.formatted} />
+						<StatTile label="Total Supply" value={uk.supply?.formatted ?? '—'} />
+						<StatTile label="Total Borrows" value={uk.borrows?.formatted ?? '—'} />
+						<StatTile label="Avg Utilization" value={uk.avgUtilization?.formatted ?? '—'} />
+						<StatTile label="Idle Liquidity" value={uk.idleLiquidity?.formatted ?? '—'} />
 					</div>
 					<ChartCard title="Vaults Overview">
 						<SimpleTable

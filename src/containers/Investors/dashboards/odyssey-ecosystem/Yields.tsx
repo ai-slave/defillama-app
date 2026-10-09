@@ -1,6 +1,7 @@
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, type YieldsResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable } from './ui'
+import { ChartCard, SectionHeader, SimpleTable } from './ui'
 
 export default function Yields() {
 	const { data } = useTab<YieldsResponse>('yields')
@@ -9,18 +10,29 @@ export default function Yields() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<KpiCard
-					label={k.topLooperApy?.label || 'Top Looper Max APY'}
-					value={k.topLooperApy?.formatted}
-					sub="At max leverage"
-				/>
-				<KpiCard
-					label={k.topOdysseyApy?.label || 'Top Odyssey Max APY'}
-					value={k.topOdysseyApy?.formatted}
-					sub="At max leverage"
-				/>
-				<KpiCard label={k.topVesperApy?.label || 'Top Vesper Net APY'} value={k.topVesperApy?.formatted} />
-				<KpiCard label="Active Odyssey Strategies" value={k.odysseyStrategyCount?.formatted} />
+				{data ? (
+					<>
+						<StatTile
+							label={k.topLooperApy?.label || 'Top Looper Max APY'}
+							value={k.topLooperApy?.formatted ?? '—'}
+							sub="At max leverage"
+						/>
+						<StatTile
+							label={k.topOdysseyApy?.label || 'Top Odyssey Max APY'}
+							value={k.topOdysseyApy?.formatted ?? '—'}
+							sub="At max leverage"
+						/>
+						<StatTile label={k.topVesperApy?.label || 'Top Vesper Net APY'} value={k.topVesperApy?.formatted ?? '—'} />
+						<StatTile label="Active Odyssey Strategies" value={k.odysseyStrategyCount?.formatted ?? '—'} />
+					</>
+				) : (
+					<>
+						<StatTile label={k.topLooperApy?.label || 'Top Looper Max APY'} sub="At max leverage" loading />
+						<StatTile label={k.topOdysseyApy?.label || 'Top Odyssey Max APY'} sub="At max leverage" loading />
+						<StatTile label={k.topVesperApy?.label || 'Top Vesper Net APY'} loading />
+						<StatTile label="Active Odyssey Strategies" loading />
+					</>
+				)}
 			</div>
 
 			<SectionHeader>Odyssey Loopr · Max APY by Chain</SectionHeader>

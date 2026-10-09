@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { SaveViewButton } from '../index'
 
 const router = vi.hoisted(() => ({ pathname: '/yields', asPath: '/yields', query: {}, push: vi.fn() }))
@@ -75,12 +76,11 @@ test('a reopened popover drops the error of the last opening', async () => {
 	const trigger = container.querySelector('button')!
 	await act(async () => trigger.click())
 	await act(async () => document.querySelector('form')!.requestSubmit())
-	const errorTexts = () => [...document.querySelectorAll('.text-error')].map((el) => el.textContent)
-	expect(errorTexts()).toEqual(['Enter a view name.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a view name.'])
 	await act(async () =>
 		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 	)
 	await act(async () => trigger.click())
 	expect(document.querySelector('form')).not.toBeNull()
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 })

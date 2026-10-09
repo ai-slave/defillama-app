@@ -885,9 +885,9 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	if (!article.id && createError) {
 		return (
 			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
-				<InlineStatus variant="error">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<span>{createError}</span>
+				<InlineStatus
+					variant="error"
+					action={
 						<Button
 							type="button"
 							size="sm"
@@ -896,7 +896,9 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 						>
 							Try again
 						</Button>
-					</div>
+					}
+				>
+					{createError}
 				</InlineStatus>
 			</div>
 		)

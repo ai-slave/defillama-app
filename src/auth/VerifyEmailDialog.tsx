@@ -8,7 +8,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { oneTimeCodeInputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
 export function VerifyEmailDialog({
@@ -123,7 +123,7 @@ export function VerifyEmailDialog({
 							</p>
 							<Field label="Verification code" error={codeError}>
 								{(control) => (
-									<input
+									<Input
 										{...control}
 										ref={codeRef}
 										type="text"
@@ -132,7 +132,8 @@ export function VerifyEmailDialog({
 										maxLength={6}
 										required
 										placeholder="000000"
-										className={`${oneTimeCodeInputStyles} w-full`}
+										variant="oneTimeCode"
+										className="w-full"
 										value={otp}
 										// Read-only rather than disabled while a request runs, so the field keeps focus.
 										readOnly={pending}
@@ -156,11 +157,11 @@ export function VerifyEmailDialog({
 							</Button>
 							{/* One slot for request failures, verify and delivery alike; a refused code shows under the field. */}
 							{error ? (
-								<InlineStatus variant="error">
-									{/* A delivery failure offers its retry beside the message. */}
-									{deliveryFailed ? (
-										<div className="flex flex-wrap items-center justify-between gap-2">
-											<span>{error}</span>
+								<InlineStatus
+									variant="error"
+									// A delivery failure offers its retry beside the message.
+									action={
+										deliveryFailed ? (
 											<Button
 												type="button"
 												size="sm"
@@ -169,10 +170,10 @@ export function VerifyEmailDialog({
 											>
 												Try again
 											</Button>
-										</div>
-									) : (
-										error
-									)}
+										) : null
+									}
+								>
+									{error}
 								</InlineStatus>
 							) : null}
 							<div className="flex flex-col items-center gap-3">

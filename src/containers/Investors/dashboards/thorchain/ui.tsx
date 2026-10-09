@@ -7,8 +7,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
-import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { readInvestorApiJson } from '../../api.types'
@@ -169,25 +168,6 @@ function lastNDaysZoom(len: number, days = THREE_MONTHS): { dataZoom: { start: n
 
 // ---------------------------------------------------------------- KPI + layout
 
-function KpiCard({ label, value, sub, def }: { label: string; value: string; sub?: string; def?: string | undefined }) {
-	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wider text-tertiary uppercase">
-				{label}
-				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
-				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
-				{def && (
-					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
-						<Icon name="help-circle" height={13} width={13} />
-					</Tooltip>
-				)}
-			</span>
-			<span className="mono-lg tracking-tight text-primary tabular-nums">{value}</span>
-			{sub && <span className="mono-sm text-tertiary tabular-nums">{sub}</span>}
-		</div>
-	)
-}
-
 // Renders KPIs straight from the payload's KPI map; pass the ordered keys + labels.
 // `cols` sets the widest breakpoint (4 default, 3 for denser tabs); `label` wraps it
 // in a titled group for organizing many KPIs into readable bands.
@@ -208,7 +188,7 @@ export function KpiGrid({
 		>
 			{items.map(([key, lbl, def]) => {
 				const k = kpis[key]
-				return k ? <KpiCard key={key} label={lbl} value={k.formatted} def={def} /> : null
+				return k ? <StatTile key={key} label={lbl} value={k.formatted} tooltip={def} /> : null
 			})}
 		</div>
 	)
@@ -238,14 +218,8 @@ export function Kpi({
 	note?: string
 	def?: string | undefined
 }) {
-	if (kpi) return <KpiCard label={label} value={kpi.formatted} def={def} />
-	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-medium bg-surface p-4">
-			<span className="label-sm tracking-wider text-tertiary uppercase">{label}</span>
-			<span className="mono-lg text-tertiary tabular-nums">—</span>
-			<span className="mono-sm text-tertiary">{note ? `awaiting ${note}` : 'awaiting data'}</span>
-		</div>
-	)
+	if (kpi) return <StatTile label={label} value={kpi.formatted} tooltip={def} />
+	return <StatTile label={label} value="—" sub={note ? `awaiting ${note}` : 'awaiting data'} />
 }
 
 // A labeled group of KPIs (e.g. the "Fees" vs "Revenue" bands on Financials).

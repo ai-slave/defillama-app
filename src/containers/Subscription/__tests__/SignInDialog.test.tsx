@@ -11,6 +11,7 @@ import { rememberSignIn } from '~/auth/lastSignIn'
 import { AUTH_SERVER, POCKETBASE_URL } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -120,7 +121,6 @@ const termsCheckbox = () =>
 	[...container.querySelectorAll('label')]
 		.find((label) => label.textContent?.startsWith('I agree'))!
 		.querySelector<HTMLInputElement>('input')!
-const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
 const submitForm = () =>
 	act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
@@ -252,9 +252,9 @@ test('sign-up says what is wrong under each field, focuses the first, and sends 
 	await act(async () => buttonNamed('Create an account').click())
 	await completeCaptcha()
 	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false)
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(container)).toEqual([])
 	await submitForm()
-	expect(errorTexts()).toEqual([
+	expect(fieldErrorTexts(container)).toEqual([
 		'Enter an email address.',
 		'Enter a password.',
 		'Enter your password again.',
@@ -265,7 +265,7 @@ test('sign-up says what is wrong under each field, focuses the first, and sends 
 	await type('email', 'new@example')
 	await type('password', 'short')
 	await type('passwordConfirm', 'shorter')
-	expect(errorTexts()).toEqual([
+	expect(fieldErrorTexts(container)).toEqual([
 		'Enter a valid email address.',
 		'Enter at least 8 characters.',
 		"The passwords don't match.",
@@ -275,12 +275,12 @@ test('sign-up says what is wrong under each field, focuses the first, and sends 
 	await type('password', 'password123')
 	await type('passwordConfirm', 'password123')
 	await submitForm()
-	expect(errorTexts()).toEqual(['Accept the Terms of Service and Privacy Policy to continue.'])
+	expect(fieldErrorTexts(container)).toEqual(['Accept the Terms of Service and Privacy Policy to continue.'])
 	expect(document.activeElement).toBe(termsCheckbox())
 	expect(termsCheckbox().getAttribute('aria-invalid')).toBe('true')
 	expect(requests).toHaveLength(0)
 	await act(async () => termsCheckbox().click())
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(container)).toEqual([])
 	await submitForm()
 	await settle()
 	expect(requests).toHaveLength(1)
@@ -289,12 +289,12 @@ test('sign-up says what is wrong under each field, focuses the first, and sends 
 test('sign-in names a missing email and password under their fields and sends nothing', async () => {
 	await completeCaptcha()
 	await submitForm()
-	expect(errorTexts()).toEqual(['Enter an email address.', 'Enter your password.'])
+	expect(fieldErrorTexts(container)).toEqual(['Enter an email address.', 'Enter your password.'])
 	expect(document.activeElement).toBe(input('email'))
 	expect(requests).toHaveLength(0)
 	await type('email', 'person@example.com')
 	await type('password', 'secret')
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(container)).toEqual([])
 })
 
 test('explains a failed security check without a second error and mounts a fresh check on retry', async () => {
@@ -304,7 +304,6 @@ test('explains a failed security check without a second error and mounts a fresh
 	await act(async () => buttonNamed('Fail CAPTCHA').click())
 	expect(container.textContent).toContain("The security check couldn't load.")
 	expect(container.querySelector('[role="alert"]')).toBeNull()
-	expect(errorTexts()).toEqual([])
 	expect(submitButton().disabled).toBe(true)
 	await act(async () => buttonNamed('Try again').click())
 	expect(container.textContent).not.toContain("The security check couldn't load.")

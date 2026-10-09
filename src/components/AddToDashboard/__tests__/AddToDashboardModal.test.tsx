@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { YieldsChartConfig } from '~/containers/ProDashboard/types'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -71,28 +72,27 @@ async function renderModal() {
 	await waitForUi(() => expect(dialog().textContent).toContain('No dashboards yet'))
 }
 
-const errorTexts = () => [...dialog().querySelectorAll('.text-error')].map((element) => element.textContent)
 const saveRequests = () => session.requests.filter((request) => request.url.pathname.endsWith('/pro-dashboard/save'))
 
 test('a submit without a dashboard or a new name says what is missing under it and saves nothing', async () => {
 	await renderModal()
 	const submit = button('Add to dashboard')
 	expect(submit.getAttribute('aria-disabled')).toBeNull()
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(dialog())).toEqual([])
 	await act(async () => submit.click())
-	expect(errorTexts()).toEqual(['Choose a dashboard or create a new one.'])
+	expect(fieldErrorTexts(dialog())).toEqual(['Choose a dashboard or create a new one.'])
 	expect(document.activeElement).toBe(button('Create new dashboard'))
 
 	await act(async () => button('Create new dashboard').click())
 	const name = dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!
 	// The new name field is a new question: it opens quiet, and the next submit asks for it.
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(dialog())).toEqual([])
 	await act(async () => submit.click())
-	expect(errorTexts()).toEqual(['Enter a name for the new dashboard.'])
+	expect(fieldErrorTexts(dialog())).toEqual(['Enter a name for the new dashboard.'])
 	expect(document.activeElement).toBe(name)
 	expect(name.getAttribute('aria-invalid')).toBe('true')
 	await type(name, 'Research')
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(dialog())).toEqual([])
 	expect(saveRequests()).toHaveLength(0)
 })
 

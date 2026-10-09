@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercentChange } from '~/utils/numberFormat'
 
@@ -27,8 +28,9 @@ import { formatPercentChange } from '~/utils/numberFormat'
    SummaryCardGrid + SummaryStatsCard (chain, protocol, token, equity and
    RWA asset pages included); never hand-roll the grid or the card. A card
    shown only on desktop passes className="max-xl:hidden".
-   Titles (h1 + logo) and collapsible bodies stay callsite JSX. StatItem
-   also stands alone in stat-tile grids. Every headline change renders
+   Titles (h1 + logo) and collapsible bodies stay callsite JSX. A grid of
+   stat tiles (KPI rows) is StatTile; never a page-local KpiCard. Every
+   headline change renders
    through SummaryChange; never hand-roll the percent and its window.
 
    Inline summary strips above a table or chart use InlineStatStrip; never
@@ -169,6 +171,56 @@ export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStr
 					) : null}
 				</div>
 			))}
+		</Card>
+	)
+}
+
+/** A stat tile in a grid of tiles (investor dashboards, KPI rows): a Card with a label-sm text-secondary label over a
+    mono-xl value, an optional body-sm tertiary line under it, and a definition as a dotted-underline tooltip on the
+    label. `change` sits beside the value, coloured by its sign (the data up/down tones). `loading` draws the value's
+    Skeleton at the same height, so the grid does not jump. A value that is missing once loaded is "—", which the
+    caller passes. Lay tiles out with a grid at the call site. */
+export function StatTile({
+	label,
+	tooltip,
+	sub,
+	change,
+	...state
+}: {
+	label: string
+	tooltip?: ReactNode
+	sub?: ReactNode
+	/** A signed change and its formatted text, e.g. { value: -3.1, formatted: '-3.1%' }. */
+	change?: { value: number; formatted: string }
+} & ({ loading: true } | { loading?: false; value: ReactNode })) {
+	return (
+		<Card padding="md" className="flex min-w-0 flex-col gap-1">
+			{tooltip ? (
+				<Tooltip
+					content={tooltip}
+					tabIndex={0}
+					className="w-fit cursor-help label-sm text-secondary underline decoration-dotted underline-offset-4"
+				>
+					{label}
+				</Tooltip>
+			) : (
+				<span className="label-sm text-secondary">{label}</span>
+			)}
+			{'value' in state ? (
+				<span className="flex flex-wrap items-baseline gap-x-2">
+					<span className="mono-xl break-words text-primary">{state.value}</span>
+					{change ? (
+						<span
+							className={`label-sm ${change.value > 0 ? 'text-data-up' : change.value < 0 ? 'text-data-down' : 'text-secondary'}`}
+						>
+							{change.formatted}
+						</span>
+					) : null}
+				</span>
+			) : (
+				<Skeleton className="h-8 w-24" />
+			)}
+			{sub ? <span className="body-sm text-tertiary">{sub}</span> : null}
 		</Card>
 	)
 }

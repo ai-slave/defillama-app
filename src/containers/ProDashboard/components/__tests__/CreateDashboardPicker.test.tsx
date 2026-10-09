@@ -439,7 +439,7 @@ describe('a free account', () => {
 		await click('Create dashboard')
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 		const alert = document.querySelector('[role="alert"]')!
-		expect(alert.querySelector('span')!.textContent).toBe(limit)
+		expect(alert.textContent).toContain(limit)
 		expect(alert.textContent).not.toContain('Your choices are still here.')
 		const upgrade = alert.querySelector('a')!
 		expect(upgrade.textContent).toBe('Upgrade to Pro')

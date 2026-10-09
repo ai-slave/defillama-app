@@ -4,7 +4,7 @@ import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessi
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { getErrorMessage } from '~/utils/error'
@@ -61,7 +61,7 @@ export function ProjectSessionItem({
 					onSubmit={handleRenameSubmit}
 					className="group/row -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-1 rounded-md bg-hover-row px-1 py-0.5 sm:min-h-9"
 				>
-					<input
+					<Input
 						type="text"
 						name="newTitle"
 						aria-label="Session title"
@@ -76,7 +76,7 @@ export function ProjectSessionItem({
 								closeRename()
 							}
 						}}
-						className={`${inputStyles} min-w-0 flex-1`}
+						className="min-w-0 flex-1"
 					/>
 					<Button
 						size="md"

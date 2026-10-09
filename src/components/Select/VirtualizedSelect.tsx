@@ -5,7 +5,7 @@ import { type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useS
 import { TokenLogo } from '~/components/TokenLogo'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	popoverMeasuredRowStyles,
@@ -146,7 +146,11 @@ function SearchInput({ label }: { label: string }) {
 	return (
 		<div className="relative">
 			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
-			<Ariakit.ComboboxInput aria-label={`Search ${label}`} placeholder="Search…" className={searchFieldInputStyles} />
+			<Ariakit.ComboboxInput
+				aria-label={`Search ${label}`}
+				placeholder="Search…"
+				render={<Input className={searchFieldInputPlacementStyles} />}
+			/>
 		</div>
 	)
 }
@@ -340,7 +344,7 @@ function PickerTrigger({
 }) {
 	const labelId = useId()
 	const triggerId = useId()
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	const content = (
 		<>
 			{/* The space keeps the accessible name "Label: value"; flex items join their text without one. */}

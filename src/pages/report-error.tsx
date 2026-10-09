@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 
@@ -67,22 +67,22 @@ function ReportError() {
 					</Field>
 					<Field label="What’s wrong about it?" error={submitted ? errors.message : null}>
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								required
 								value={report.message}
 								onChange={edit('message')}
-								className={`${textareaStyles} min-h-24 w-full`}
+								className="min-h-24 w-full"
 							/>
 						)}
 					</Field>
 					<Field label="Where can we find correct information? (optional)">
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								value={report.correctSource}
 								onChange={edit('correctSource')}
-								className={`${textareaStyles} min-h-24 w-full`}
+								className="min-h-24 w-full"
 							/>
 						)}
 					</Field>

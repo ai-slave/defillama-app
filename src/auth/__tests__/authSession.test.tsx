@@ -11,6 +11,7 @@ import { AUTH_SERVER } from '~/constants'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -945,7 +946,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await settle()
 	expect(document.body.textContent).toContain('Thanks for signing up!')
 	expect(document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(false)
-	expect(document.querySelector('.text-error')).toBeNull()
+	expect(alertTexts()).toEqual([])
 })
 
 test('backs off a Google-link resend when the endpoint gives a 429 without timing', async () => {

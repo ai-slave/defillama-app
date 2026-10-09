@@ -65,7 +65,7 @@ const newsletterDetails: Record<
 
 export default function NewslettersPage() {
 	const { user } = useAuthContext()
-	const publicationsErrorId = useId()
+	const publicationsErrorId = `${useId()}-error`
 	const mutation = useNewsletterSubscription()
 
 	const accountEmail =

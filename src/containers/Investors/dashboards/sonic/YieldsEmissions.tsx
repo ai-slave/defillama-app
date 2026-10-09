@@ -5,20 +5,12 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function KpiCard({ label, value }: { label: string; value: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value}</span>
-		</div>
-	)
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -128,10 +120,10 @@ export default function YieldsEmissions() {
 						</a>
 					</div>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-						<KpiCard label="Permanent Burn / Day" value={data.burn.permanentBurnPerDay.formatted} />
-						<KpiCard label="Permanent Burn / Year" value={data.burn.permanentBurnPerYear.formatted} />
-						<KpiCard label="Burn Rate" value={data.burn.burnRate.formatted} />
-						<KpiCard label="Fees / Day" value={data.burn.feesPerDay.formatted} />
+						<StatTile label="Permanent Burn / Day" value={data.burn.permanentBurnPerDay.formatted} />
+						<StatTile label="Permanent Burn / Year" value={data.burn.permanentBurnPerYear.formatted} />
+						<StatTile label="Burn Rate" value={data.burn.burnRate.formatted} />
+						<StatTile label="Fees / Day" value={data.burn.feesPerDay.formatted} />
 					</div>
 				</div>
 			)}
@@ -140,9 +132,9 @@ export default function YieldsEmissions() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Yield Pools</SectionHeader>
 				<div className="grid grid-cols-3 gap-4">
-					<KpiCard label="Total Pools" value={data.yields.kpis.totalPools.formatted} />
-					<KpiCard label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
-					<KpiCard label="Avg APY" value={data.yields.kpis.avgApy.formatted} />
+					<StatTile label="Total Pools" value={data.yields.kpis.totalPools.formatted} />
+					<StatTile label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
+					<StatTile label="Avg APY" value={data.yields.kpis.avgApy.formatted} />
 				</div>
 				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 					<table className="w-full">

@@ -136,7 +136,7 @@ test.each(['chains', 'protocols'] as const)(
 	}
 )
 
-test('a catalog failure shows an error and Retry recovers the chain list', async () => {
+test('a catalog failure shows an error and Try again recovers the chain list', async () => {
 	let chainReads = 0
 	http.serve({
 		[CHAINS_URL]: () => (++chainReads === 1 ? fixtureStatus(404)() : [{ name: 'Base', tvl: 100 }])
@@ -144,9 +144,9 @@ test('a catalog failure shows an error and Retry recovers the chain list', async
 	await mount()
 	await click('Compare chains')
 	await click('Create comparison')
-	await waitForText('Failed to load chains')
+	await waitForText('Couldn’t load chains')
 	expect(container.textContent).not.toContain('No chains found')
-	await click('Retry')
+	await click('Try again')
 	await waitForText('Base')
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(chainListReads()).toBe(2)

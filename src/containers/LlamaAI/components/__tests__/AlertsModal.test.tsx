@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ALERTS_QUERY_KEY } from '../alerts/queryKeys'
@@ -562,9 +563,7 @@ test('saving a Slack alert with no workspace picked focuses the workspace picker
 	await press(buttonNamed(document, 'Save'))
 	expect(document.activeElement).toBe(workspace)
 	expect(workspace.getAttribute('aria-invalid')).toBe('true')
-	expect(workspace.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe(
-		'Choose a Slack workspace.'
-	)
+	expect(fieldErrorTexts()).toEqual(['Choose a Slack workspace.'])
 	expect(alertRequests().some((request) => request.init?.method === 'PATCH' || request.init?.method === 'PUT')).toBe(
 		false
 	)

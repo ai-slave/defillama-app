@@ -12,10 +12,10 @@ export function SubscriptionLoadError({
 	message?: string
 }) {
 	return (
-		<InlineStatus variant="error">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<span>{message}</span>
-				{/* A retry that succeeds removes this notice and its button, so focus moves to the region around it. */}
+		<InlineStatus
+			variant="error"
+			action={
+				// A retry that succeeds removes this notice and its button, so focus moves to the region around it.
 				<Button
 					ref={focusRegionOnLeave}
 					type="button"
@@ -25,7 +25,9 @@ export function SubscriptionLoadError({
 				>
 					Try again
 				</Button>
-			</div>
+			}
+		>
+			{message}
 		</InlineStatus>
 	)
 }

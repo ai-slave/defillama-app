@@ -23,7 +23,8 @@ import { type ReactNode, useId } from 'react'
 
    Layout: label-sm text-secondary label over the control, then the hint
    (body-sm text-tertiary) and the error (body-sm text-error), 4px apart.
-   `action` sits on the label row's right (Forgot password?). The control is
+   `action` sits on the label row's right (Forgot password?) in body-sm, so a
+   link there takes the hint's size without a wrapper. The control is
    a render function that spreads the wiring onto it:
      <Field label="Email" error={errors.email}>
        {(control) => <Input {...control} type="email" value={email} … />}
@@ -34,7 +35,10 @@ import { type ReactNode, useId } from 'react'
    names (a search box, a link bubble's URL); the label stays for screen
    readers. Every other field shows its label (design.md).
    A picker that draws its own label (VirtualizedSelect's `field`) takes
-   `error` and wires it the same way, so it never sits inside a Field.
+   `error` and wires it the same way, so it never sits inside a Field. Any
+   error wired by hand gets an id ending in `-error` (`${useId()}-error`),
+   as Field's own do: that suffix is how tests and audits tell an error
+   description from a hint.
    `live`: for a check that runs while the reader types ("will this work?":
    a date the page refuses, a name already taken). Its changes are announced,
    since no submit moves focus to them. Submit errors never need it.
@@ -94,7 +98,7 @@ export function Field({
 				<div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-1">
 					{labelElement}
 					<div className="col-span-2 row-start-2 flex min-w-0 flex-col">{control}</div>
-					<div className="col-start-2 row-start-1">{action}</div>
+					<div className="col-start-2 row-start-1 body-sm">{action}</div>
 				</div>
 			) : (
 				<>

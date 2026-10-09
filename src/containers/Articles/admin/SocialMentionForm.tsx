@@ -17,7 +17,7 @@ import type { SocialMention, SocialMentionPayload } from '~/containers/Articles/
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
@@ -166,14 +166,14 @@ export function SocialMentionForm({ mentionId }: Props) {
 		<form noValidate onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
 			<Field label="Quote" error={shown?.quote}>
 				{(control) => (
-					<textarea
+					<Textarea
 						{...control}
 						required
 						value={state.quote}
 						onChange={(e) => update({ quote: e.target.value })}
 						rows={3}
 						placeholder="What they said about DefiLlama"
-						className={`${textareaStyles} w-full resize-y`}
+						className="w-full resize-y"
 					/>
 				)}
 			</Field>

@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatCompactNumber,
 	formatPercent,
@@ -17,8 +18,6 @@ import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
 	CardSkeleton,
 	ChartCard,
-	KpiCard,
-	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_PERCENT_CATEGORY_CHART_OPTIONS,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
@@ -158,19 +157,19 @@ export default function PoolsOverview() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				{kpis ? (
 					<>
-						<KpiCard label="Total TVL" value={kpis.totalTvl} />
-						<KpiCard label="Active Pools" value={kpis.activePools} />
-						<KpiCard label="Total Depositors" value={kpis.totalDepositors} />
-						<KpiCard label="Avg Pool APY" value={kpis.avgApy} />
-						<KpiCard label="Avg Utilization" value={kpis.avgUtil} />
+						<StatTile label="Total TVL" value={kpis.totalTvl} />
+						<StatTile label="Active Pools" value={kpis.activePools} />
+						<StatTile label="Total Depositors" value={kpis.totalDepositors} />
+						<StatTile label="Avg Pool APY" value={kpis.avgApy} />
+						<StatTile label="Avg Utilization" value={kpis.avgUtil} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="Total TVL" />
-						<KpiSkeleton label="Active Pools" />
-						<KpiSkeleton label="Total Depositors" />
-						<KpiSkeleton label="Avg Pool APY" />
-						<KpiSkeleton label="Avg Utilization" />
+						<StatTile label="Total TVL" loading />
+						<StatTile label="Active Pools" loading />
+						<StatTile label="Total Depositors" loading />
+						<StatTile label="Avg Pool APY" loading />
+						<StatTile label="Avg Utilization" loading />
 					</>
 				)}
 			</div>

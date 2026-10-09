@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
-import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
+import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -33,31 +34,31 @@ export default function Staking() {
 
 			<SectionHeader>Staking &amp; Delegation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard
+				<StatTile
 					label="% of Circ. Supply Staked or Delegated"
 					value={k.pctStakedOrDelegated}
-					def="P-chain staked FLR plus FTSO-delegated WFLR, as a percent of circulating supply."
+					tooltip="P-chain staked FLR plus FTSO-delegated WFLR, as a percent of circulating supply."
 				/>
 				{k.totalStakedOrDelegated && (
-					<KpiCard
+					<StatTile
 						label="Total Staked + Delegated"
 						value={k.totalStakedOrDelegated}
-						def="Sum of P-chain staking and FTSO delegation, the height of the stacked chart below."
+						tooltip="Sum of P-chain staking and FTSO delegation, the height of the stacked chart below."
 					/>
 				)}
-				<KpiCard
+				<StatTile
 					label="FTSO Delegation"
 					value={k.ftsoDelegated}
 					sub={k.ftsoDelegatedUsd}
-					def="WFLR delegated to Flare's decentralized price oracle providers, instead of staked to a validator."
+					tooltip="WFLR delegated to Flare's decentralized price oracle providers, instead of staked to a validator."
 				/>
-				<KpiCard
+				<StatTile
 					label="Total Stake"
 					value={k.totalStake}
-					def="FLR staked to P-chain validators. Doesn't include FTSO delegation."
+					tooltip="FLR staked to P-chain validators. Doesn't include FTSO delegation."
 				/>
-				<KpiCard label="Validators" value={k.validatorCount} />
-				<KpiCard label="Avg Uptime" value={k.averageUptime} />
+				<StatTile label="Validators" value={k.validatorCount} />
+				<StatTile label="Avg Uptime" value={k.averageUptime} />
 			</div>
 
 			{chart && chart.dataset.source.length > 0 && (

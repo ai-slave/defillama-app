@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { AuthProvider } from '~/auth'
 import pb from '~/utils/pocketbase'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { NewsletterSignup } from '../NewsletterSignup'
@@ -61,8 +62,6 @@ async function type(input: HTMLInputElement, value: string) {
 	})
 }
 
-const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
-
 test.each(['card', 'strip'] as const)(
 	'%s refuses a submit with no newsletter, then submits only the reselected one',
 	async (layout) => {
@@ -77,13 +76,13 @@ test.each(['card', 'strip'] as const)(
 		})
 		const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
 		expect(submit.getAttribute('aria-disabled')).toBeNull()
-		expect(errorTexts()).toEqual([])
+		expect(fieldErrorTexts(container)).toEqual([])
 		await act(async () => submit.click())
-		expect(errorTexts()).toEqual(['Choose at least one newsletter.'])
+		expect(fieldErrorTexts(container)).toEqual(['Choose at least one newsletter.'])
 		expect(document.activeElement).toBe(choices[0])
 		expect(subscribeRequests()).toHaveLength(0)
 		await act(async () => choices[1].click())
-		expect(errorTexts()).toEqual([])
+		expect(fieldErrorTexts(container)).toEqual([])
 		await act(async () => submit.click())
 		await waitForUi(() => expect(submit.getAttribute('aria-disabled')).toBe('true'))
 		expect(submit.disabled).toBe(false)
@@ -108,15 +107,15 @@ test.each(['card', 'strip'] as const)(
 		const email = container.querySelector<HTMLInputElement>('input[type="email"]')!
 		const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
 		await type(email, '')
-		expect(errorTexts()).toEqual([])
+		expect(fieldErrorTexts(container)).toEqual([])
 		await act(async () => submit.click())
-		expect(errorTexts()).toEqual(['Enter an email address.'])
+		expect(fieldErrorTexts(container)).toEqual(['Enter an email address.'])
 		expect(document.activeElement).toBe(email)
 		expect(email.getAttribute('aria-invalid')).toBe('true')
 		await type(email, 'reader@example')
-		expect(errorTexts()).toEqual(['Enter a valid email address.'])
+		expect(fieldErrorTexts(container)).toEqual(['Enter a valid email address.'])
 		await type(email, 'reader@example.com')
-		expect(errorTexts()).toEqual([])
+		expect(fieldErrorTexts(container)).toEqual([])
 		expect(email.getAttribute('aria-invalid')).toBeNull()
 		expect(subscribeRequests()).toHaveLength(0)
 	}

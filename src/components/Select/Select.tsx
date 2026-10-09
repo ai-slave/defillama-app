@@ -77,6 +77,27 @@ function isMultiStateSelect(props: ISelect): props is ISelect & ISelectWithState
 	return !isUrlSelect(props) && Array.isArray(props.selectedValues)
 }
 
+/** An option's name. `help` is a tooltip on a pickable option; on a disabled one it is the visible reason under the
+    name, since a disabled row's tooltip never opens. `muted` draws the name on the secondary tier. */
+function OptionLabel({ option }: { option: SelectValues[number] }) {
+	if (typeof option === 'string') return <span>{option}</span>
+	if (option.disabled)
+		return (
+			<span className="flex min-w-0 flex-col">
+				<span>{option.name}</span>
+				{option.help ? <span className="body-xs text-tertiary">{option.help}</span> : null}
+			</span>
+		)
+	if (option.help)
+		return (
+			<Tooltip content={option.help}>
+				<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
+				<Icon name="help-circle" height={15} width={15} />
+			</Tooltip>
+		)
+	return <span className={option.muted ? 'text-secondary' : undefined}>{option.name}</span>
+}
+
 export function Select(props: ISelect) {
 	const {
 		allValues,
@@ -100,7 +121,8 @@ export function Select(props: ISelect) {
 						router.query,
 						includeQueryKey,
 						excludeQueryKey,
-						allValues.map((v) => (typeof v === 'string' ? v : v.key))
+						// The full set leaves disabled options out, as the writer does, so an empty query never selects them.
+						allValues.flatMap((v) => (typeof v === 'string' ? [v] : v.disabled ? [] : [v.key]))
 					)
 				: [],
 		[router.query, includeQueryKey, excludeQueryKey, allValues]
@@ -122,7 +144,11 @@ export function Select(props: ISelect) {
 	)
 
 	// Helper to extract keys from allValues
-	const getAllKeys = React.useCallback(() => allValues.map((v) => (typeof v === 'string' ? v : v.key)), [allValues])
+	// A disabled option can never be picked, so Select all and the URL's full set leave it out.
+	const getAllKeys = React.useCallback(
+		() => allValues.flatMap((v) => (typeof v === 'string' ? [v] : v.disabled ? [] : [v.key])),
+		[allValues]
+	)
 
 	const setSelectedValues = React.useCallback(
 		(values: Array<string> | string) => {
@@ -207,6 +233,8 @@ export function Select(props: ISelect) {
 					{allValues.map((option) => (
 						<NestedSelectItem
 							key={getOptionKey(option)}
+							disabled={typeof option !== 'string' && option.disabled}
+							accessibleWhenDisabled
 							name={selectionName}
 							value={getOptionKey(option)}
 							checked={
@@ -227,16 +255,7 @@ export function Select(props: ISelect) {
 							hideOnClick={false}
 							className={nestedMenuSelectRowStyles}
 						>
-							{typeof option === 'string' ? (
-								<span>{option}</span>
-							) : isSelectOption(option) && option.help ? (
-								<Tooltip content={option.help}>
-									<span className="mr-1">{option.name}</span>
-									<Icon name="help-circle" height={15} width={15} />
-								</Tooltip>
-							) : (
-								<span>{isSelectOption(option) ? option.name : option}</span>
-							)}
+							<OptionLabel option={option} />
 							{renderCheck(getOptionKey(option))}
 						</NestedSelectItem>
 					))}
@@ -298,26 +317,20 @@ export function Select(props: ISelect) {
 						{allValues.map((option) => {
 							const optionKey = getOptionKey(option)
 							const optionName = isSelectOption(option) ? option.name : option
+							const optionDisabled = typeof option !== 'string' && option.disabled
 							const selectItem = (
 								<Ariakit.ComboboxItem
 									key={optionKey}
 									value={optionKey}
+									disabled={optionDisabled}
+									accessibleWhenDisabled
 									className={
 										showCheckboxes
 											? `${popoverRowStyles} min-w-0 flex-1 justify-start gap-2`
 											: `${popoverRowWithBorderStyles} justify-start gap-2`
 									}
 								>
-									{isSelectOption(option) && option.help ? (
-										<Tooltip content={option.help}>
-											<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
-											<Icon name="help-circle" height={15} width={15} />
-										</Tooltip>
-									) : (
-										<span className={isSelectOption(option) && option.muted ? 'text-secondary' : undefined}>
-											{optionName}
-										</span>
-									)}
+									<OptionLabel option={option} />
 									{/* The space "Only" lies over, so a long name never runs under it. */}
 									{showCheckboxes ? <span aria-hidden className="ml-auto w-11 shrink-0 max-sm:w-14" /> : null}
 									{renderCheck(optionKey)}
@@ -331,6 +344,7 @@ export function Select(props: ISelect) {
 									{selectItem}
 									<Ariakit.ComboboxItem
 										value={`__only__${optionKey}`}
+										disabled={optionDisabled}
 										selectValueOnClick={false}
 										hideOnClick={false}
 										onClick={() => selectOnlyOne(optionKey)}

@@ -35,6 +35,7 @@ const INTERNAL_ROUTE_EXCLUSIONS = [
 	'/account',
 	'/api',
 	'/auth',
+	'/dev',
 	'/login',
 	'/logout',
 	'/pro/preview',

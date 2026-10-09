@@ -45,7 +45,7 @@ import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { codeInputStyles, Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
@@ -801,7 +801,7 @@ export function ColumnManager({
 						<Field label="Expression" live error={shownExpressionError}>
 							{(control) => (
 								<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
-									<input
+									<Input
 										{...control}
 										ref={expressionInputRef}
 										type="text"
@@ -811,7 +811,8 @@ export function ColumnManager({
 										onKeyDown={handleExpressionKeyDown}
 										onFocus={() => customExpression && setShowAutocomplete(true)}
 										placeholder="e.g., tvl / mcap, fees24h * 365"
-										className={`${codeInputStyles} w-full pr-8`}
+										variant="code"
+										className="w-full pr-8"
 									/>
 									{customExpression ? (
 										<div className="absolute top-1/2 right-2 -translate-y-1/2">

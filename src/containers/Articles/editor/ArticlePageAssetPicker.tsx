@@ -6,7 +6,7 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -97,7 +97,7 @@ export function ArticlePageAssetPicker({
 						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
 						disabled={atLimit}
 						autoSelect
-						className={searchFieldInputStyles}
+						render={<Input className={searchFieldInputPlacementStyles} />}
 					/>
 				</div>
 				<ComboboxSurface

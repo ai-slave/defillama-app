@@ -1,6 +1,7 @@
+import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
 import { useTab, type TreasuryResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
 
 export default function Treasury() {
 	const { data } = useTab<TreasuryResponse>('treasury')
@@ -16,14 +17,25 @@ export default function Treasury() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<KpiCard
-					label="Treasury LP Total"
-					value={tlp?.totalFormatted}
-					sub={`Unclaimed ${tlp?.unclaimedRewardsFormatted || ''}`}
-				/>
-				<KpiCard label="Ethereum UniV3 Total" value={eth?.totalFormatted} />
-				<KpiCard label="Plasma UniV3 Total" value={plasma?.totalFormatted} />
-				<KpiCard label="veAERO Locks" value={aero?.rows?.length != null ? String(aero.rows.length) : undefined} />
+				{data ? (
+					<>
+						<StatTile
+							label="Treasury LP Total"
+							value={tlp?.totalFormatted ?? '—'}
+							sub={`Unclaimed ${tlp?.unclaimedRewardsFormatted || ''}`}
+						/>
+						<StatTile label="Ethereum UniV3 Total" value={eth?.totalFormatted ?? '—'} />
+						<StatTile label="Plasma UniV3 Total" value={plasma?.totalFormatted ?? '—'} />
+						<StatTile label="veAERO Locks" value={aero?.rows ? String(aero.rows.length) : '—'} />
+					</>
+				) : (
+					<>
+						<StatTile label="Treasury LP Total" loading />
+						<StatTile label="Ethereum UniV3 Total" loading />
+						<StatTile label="Plasma UniV3 Total" loading />
+						<StatTile label="veAERO Locks" loading />
+					</>
+				)}
 			</div>
 
 			<SectionHeader>Treasury LP Positions</SectionHeader>

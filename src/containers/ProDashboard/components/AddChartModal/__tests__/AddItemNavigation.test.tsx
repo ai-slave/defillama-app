@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession, type SessionOptions } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DASHBOARD_ITEM_REVEAL_EVENT } from '../../../hooks/useDashboardItemDeepLink'
@@ -125,7 +126,7 @@ describe('a subscriber without SQL access', () => {
 		const add = [...document.querySelectorAll<HTMLButtonElement>('footer button')].find(
 			(button) => button.textContent === 'Add card'
 		)!
-		const errors = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((node) => node.textContent)
+		const errors = () => fieldErrorTexts(document.querySelector('[role="dialog"]')!)
 		expect(add.getAttribute('aria-disabled')).toBeNull()
 		expect(errors()).toEqual([])
 		await click(add)
@@ -153,7 +154,7 @@ describe('a subscriber without SQL access', () => {
 			)!
 		const csv = document.querySelector<HTMLTextAreaElement>('textarea')!
 		await click(add)
-		expect(document.querySelector('[role="dialog"] .text-error')?.textContent).toBe('Paste or upload a CSV.')
+		expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual(['Paste or upload a CSV.'])
 		expect(document.activeElement).toBe(csv)
 		// Below lg a second press finds the error unchanged; it must still bring the CSV fields back to take focus.
 		for (let press = 0; press < 2; press++) {

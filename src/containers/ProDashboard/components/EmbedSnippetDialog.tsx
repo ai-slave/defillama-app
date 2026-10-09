@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { codeTextareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 
@@ -99,14 +99,15 @@ function EmbedSnippetContent({
 						options={EMBED_THEME_OPTIONS}
 					/>
 				</div>
-				<textarea
+				<Textarea
 					readOnly
 					value={snippet}
 					rows={4}
 					aria-label="Embed code"
 					spellCheck={false}
 					onFocus={(event) => event.currentTarget.select()}
-					className={`${codeTextareaStyles} w-full resize-none`}
+					variant="code"
+					className="w-full resize-none"
 				/>
 				{copyStatus === 'failed' ? (
 					<InlineStatus variant="error">

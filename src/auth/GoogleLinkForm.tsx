@@ -8,7 +8,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { oneTimeCodeInputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
 export function GoogleLinkForm({
@@ -122,7 +122,7 @@ export function GoogleLinkForm({
 			</p>
 			<Field label="Verification code" error={(submitted ? codeError : null) ?? codeRefusal}>
 				{(control) => (
-					<input
+					<Input
 						{...control}
 						type="text"
 						name="code"
@@ -134,7 +134,8 @@ export function GoogleLinkForm({
 						maxLength={6}
 						required
 						placeholder="000000"
-						className={`${oneTimeCodeInputStyles} w-full`}
+						variant="oneTimeCode"
+						className="w-full"
 						value={code}
 						onChange={(event) => {
 							setCode(event.target.value.replace(/\D/g, '').slice(0, 6))

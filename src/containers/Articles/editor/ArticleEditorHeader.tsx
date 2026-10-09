@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon as SharedIcon } from '~/ui/Icon'
-import { codeInputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -130,7 +130,7 @@ export function ArticleEditorHeader({
 					›
 				</span>
 				{slugEditing ? (
-					<input
+					<Input
 						autoFocus
 						aria-label="Article slug"
 						placeholder="article-slug"
@@ -147,7 +147,8 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className={`${codeInputStyles} w-[24ch]`}
+						variant="code"
+						className="w-[24ch]"
 					/>
 				) : (
 					<Button

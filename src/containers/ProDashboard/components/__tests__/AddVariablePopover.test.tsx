@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AddVariablePopover } from '../AddVariablePopover'
 
@@ -20,7 +21,6 @@ afterEach(async () => {
 })
 
 const labelField = () => document.body.querySelector<HTMLInputElement>('input[maxlength]')
-const errors = () => [...document.body.querySelectorAll('.text-error')].map((node) => node.textContent)
 
 test('a reopened parameter popover keeps the typed label but starts with its errors quiet', async () => {
 	await act(async () =>
@@ -39,14 +39,14 @@ test('a reopened parameter popover keeps the typed label but starts with its err
 	})
 	const add = () => [...document.body.querySelectorAll('button')].find((b) => b.textContent === 'Add parameter')!
 	await act(async () => add().click())
-	expect(errors()).toEqual(['Choose a chain.'])
+	expect(fieldErrorTexts()).toEqual(['Choose a chain.'])
 
 	await act(async () => disclosure.click())
 	await waitForUi(() => expect(labelField()).toBeNull())
 	await act(async () => disclosure.click())
 	await waitForUi(() => expect(labelField()).not.toBeNull())
 	expect(labelField()!.value).toBe('Network')
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	await act(async () => add().click())
-	expect(errors()).toEqual(['Choose a chain.'])
+	expect(fieldErrorTexts()).toEqual(['Choose a chain.'])
 })

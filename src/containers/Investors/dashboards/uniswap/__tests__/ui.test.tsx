@@ -25,6 +25,8 @@ describe('uniswap KPI definition tooltip', () => {
 		container.remove()
 	})
 
+	const wallets = () => [...container.querySelectorAll('span')].find((el) => el.textContent === 'Wallets')!
+
 	test('falls back to the KPI payload note when no definition is passed', async () => {
 		await act(async () =>
 			root.render(
@@ -32,7 +34,8 @@ describe('uniswap KPI definition tooltip', () => {
 			)
 		)
 
-		expect(container.querySelector('[aria-label]')?.getAttribute('aria-label')).toBe(NOTE)
+		await act(async () => wallets().dispatchEvent(new TouchEvent('touchstart', { bubbles: true })))
+		expect(document.body.textContent).toContain(NOTE)
 	})
 
 	test('prefers an explicit definition over the payload note', async () => {
@@ -42,7 +45,9 @@ describe('uniswap KPI definition tooltip', () => {
 			)
 		)
 
-		expect(container.querySelector('[aria-label]')?.getAttribute('aria-label')).toBe(DEF)
+		await act(async () => wallets().dispatchEvent(new TouchEvent('touchstart', { bubbles: true })))
+		expect(document.body.textContent).toContain(DEF)
+		expect(document.body.textContent).not.toContain(NOTE)
 	})
 })
 

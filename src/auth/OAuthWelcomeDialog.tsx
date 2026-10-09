@@ -22,7 +22,7 @@ export function OAuthWelcomeDialog({
 	const [submitted, setSubmitted] = useState(false)
 	// Not the mutation's own error: that one clears when a retry starts. Success closes the dialog.
 	const [error, setError] = useState<string | null>(null)
-	const termsErrorId = useId()
+	const termsErrorId = `${useId()}-error`
 	const termsError = submitted && !acceptedTerms ? 'Accept the Terms of Service and Privacy Policy to continue.' : null
 
 	return (

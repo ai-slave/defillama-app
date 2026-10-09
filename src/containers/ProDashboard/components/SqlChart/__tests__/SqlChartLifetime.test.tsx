@@ -6,7 +6,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { chartDatasets } from '~/containers/Downloads/chart-datasets'
 import { defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { readAppStorage, useSavedDownloads, writeAppStorage } from '~/contexts/LocalStorage'
+import type { FieldControlProps } from '~/ui/Field'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -16,8 +18,13 @@ import { SqlChartModal } from '../SqlChartModal'
 // DuckDB runs as WebAssembly in a browser worker; the test answers its connection instead.
 const engine = vi.hoisted(() => ({ send: vi.fn(), cancelSent: vi.fn(), load: vi.fn() }))
 vi.mock('~/containers/Downloads/sql/duckdb', () => ({ getDuckDB: engine.load }))
-// Monaco cannot run in happy-dom, and no assertion reads the editor.
-vi.mock('~/containers/Downloads/sql/Editor', () => ({ Editor: () => null }))
+// Monaco cannot run in happy-dom. The stand-in keeps Field's wiring, which the real editor copies onto its editable
+// element, so the query's field error is read the way a screen reader reaches it.
+vi.mock('~/containers/Downloads/sql/Editor', () => ({
+	Editor: ({ id, 'aria-invalid': invalid, 'aria-describedby': describedBy }: FieldControlProps) => (
+		<textarea id={id} aria-invalid={invalid} aria-describedby={describedBy} />
+	)
+}))
 
 const session = installSubscriberSession('u1', { resolved: true })
 const onEdit = vi.fn()
@@ -327,17 +334,16 @@ test('a save the dashboard refuses keeps the editor open with the reason in its 
 
 test('Run and Save with an empty query say so under the editor and run nothing', async () => {
 	await mount({ ...item, query: { sql: '', tableSources: [] } })
-	const errors = () => [...document.querySelectorAll('.text-error')].map((node) => node.textContent)
 	await waitForUi(() => expect(button('Save changes').getAttribute('aria-disabled')).toBeNull())
 	const run = [...document.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
 		b.textContent?.startsWith('Run query')
 	)!
 	expect(run.getAttribute('aria-disabled')).toBeNull()
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	await act(async () => run.click())
-	expect(errors()).toEqual(['Enter a query.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a query.'])
 	await click('Save changes')
-	expect(errors()).toEqual(['Enter a query.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a query.'])
 	expect(engine.send).not.toHaveBeenCalled()
 	expect(onEdit).not.toHaveBeenCalled()
 })

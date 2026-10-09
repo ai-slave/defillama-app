@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import {
 	nestedMenuSeeMoreStyles,
 	nestedMenuSelectRowStyles,
@@ -360,7 +360,7 @@ export function SelectWithCombobox({
 				<NestedMenu label={label} render={<button type="button" />}>
 					<PopoverHeader
 						inset="nested"
-						search={<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />}
+						search={<Ariakit.Combobox placeholder={searchPlaceholder} render={<Input className="w-full" />} />}
 					>
 						{headerRow}
 					</PopoverHeader>
@@ -457,7 +457,7 @@ export function SelectWithCombobox({
 				<PopoverHeader
 					search={
 						searchable ? (
-							<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
+							<Ariakit.ComboboxInput placeholder={searchPlaceholder} render={<Input className="w-full" />} />
 						) : null
 					}
 				>

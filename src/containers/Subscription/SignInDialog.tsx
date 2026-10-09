@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import {
-	type ComponentProps,
+	type ComponentPropsWithRef,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -270,7 +270,7 @@ function Captcha({ disabled, onToken }: { disabled: boolean; onToken: (token: st
 }
 
 /** A password Input with a show/hide toggle; Field's control props spread onto it. */
-function PasswordInput(props: Omit<ComponentProps<typeof Input>, 'type' | 'className'>) {
+function PasswordInput(props: Omit<ComponentPropsWithRef<'input'>, 'type' | 'className' | 'prefix'>) {
 	const [visible, setVisible] = useState(false)
 	return (
 		<div className="relative flex">
@@ -316,7 +316,7 @@ function AuthScreen({
 	const signInWithGithubMutation = useMutation({ mutationFn: signInWithGithub })
 	const signInWithGoogleMutation = useMutation({ mutationFn: signInWithGoogle })
 	const errorId = useId()
-	const termsErrorId = useId()
+	const termsErrorId = `${useId()}-error`
 	const loginMutation = useMutation({ mutationFn: login })
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
@@ -650,11 +650,9 @@ function AuthScreen({
 						label="Password"
 						error={submitted ? passwordMessage : null}
 						action={
-							<span className="body-sm">
-								<Button variant="link" onClick={() => store.dispatch({ kind: 'navigate', screen: 'forgot', email })}>
-									Forgot password?
-								</Button>
-							</span>
+							<Button variant="link" onClick={() => store.dispatch({ kind: 'navigate', screen: 'forgot', email })}>
+								Forgot password?
+							</Button>
 						}
 					>
 						{(control) => (

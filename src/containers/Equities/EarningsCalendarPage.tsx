@@ -362,7 +362,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 			<PanelStatus variant="error">
 				<span className="flex flex-col items-center gap-3">
 					The earnings calendar didn’t load.
-					<RetryButton refetch={query.refetch} fetching={query.isFetching} />
+					<RetryButton size="md" refetch={query.refetch} fetching={query.isFetching} />
 				</span>
 			</PanelStatus>
 		)
@@ -408,11 +408,11 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 			/>
 			<StaleDataNotice stale={view.stale} updatedAt={view.updatedAt} />
 			{!query.data && query.isError ? (
-				<InlineStatus variant="error">
-					<span className="flex flex-wrap items-center gap-2">
-						The full calendar didn’t load, so only this week is shown and search is off.
-						<RetryButton refetch={query.refetch} fetching={query.isFetching} />
-					</span>
+				<InlineStatus
+					variant="error"
+					action={<RetryButton size="sm" refetch={query.refetch} fetching={query.isFetching} />}
+				>
+					The full calendar didn’t load, so only this week is shown and search is off.
 				</InlineStatus>
 			) : null}
 
@@ -551,12 +551,12 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 	)
 }
 
-function RetryButton({ refetch, fetching }: { refetch: () => void; fetching: boolean }) {
+function RetryButton({ size, refetch, fetching }: { size: 'sm' | 'md'; refetch: () => void; fetching: boolean }) {
 	return (
 		<Button
 			type="button"
 			variant="secondary"
-			size="md"
+			size={size}
 			pendingLabel={fetching ? 'Retrying…' : null}
 			onClick={() => refetch()}
 		>

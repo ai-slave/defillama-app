@@ -39,3 +39,5 @@ The pickers in this folder share one surface (`ComboboxSurface` in `src/ui/Popov
 Never build a long list from a plain input over buttons, or cap it with `slice()`. Use the virtualized pickers; their header in `VirtualizedSelect.tsx` covers measured rows, trigger variants and server search.
 
 An option with `muted: true` is drawn on the secondary tier: a value the page's current settings leave out, still selectable, with its `help` saying what brings it back.
+
+An option with `disabled: true` stays in the list but cannot be picked: arrow keys still reach it, so a screen reader announces it as unavailable, and its `help` shows under the name as the reason ("Invite the bot to this private channel"). Select all and a URL selection's full set leave it out. A picker never drops an option the reader would look for; it disables it and says why.

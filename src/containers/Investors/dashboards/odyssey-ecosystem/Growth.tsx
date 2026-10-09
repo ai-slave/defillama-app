@@ -3,9 +3,10 @@ import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeries
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -252,10 +253,25 @@ export default function Growth() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<KpiCard label="Active Accounts" value={k.activeAccounts?.formatted} sub="Loopr — current" />
-				<KpiCard label="Active Positions" value={k.activePositions?.formatted} sub="Loopr — current" />
-				<KpiCard label="Total Users" value={k.totalUsers?.formatted} sub="Loopr — cumulative" />
-				<KpiCard label="Morpho Utilization" value={k.morphoUtilization?.formatted} sub="All Metronome markets" />
+				{data ? (
+					<>
+						<StatTile label="Active Accounts" value={k.activeAccounts?.formatted ?? '—'} sub="Loopr — current" />
+						<StatTile label="Active Positions" value={k.activePositions?.formatted ?? '—'} sub="Loopr — current" />
+						<StatTile label="Total Users" value={k.totalUsers?.formatted ?? '—'} sub="Loopr — cumulative" />
+						<StatTile
+							label="Morpho Utilization"
+							value={k.morphoUtilization?.formatted ?? '—'}
+							sub="All Metronome markets"
+						/>
+					</>
+				) : (
+					<>
+						<StatTile label="Active Accounts" sub="Loopr — current" loading />
+						<StatTile label="Active Positions" sub="Loopr — current" loading />
+						<StatTile label="Total Users" sub="Loopr — cumulative" loading />
+						<StatTile label="Morpho Utilization" sub="All Metronome markets" loading />
+					</>
+				)}
 			</div>
 
 			<SectionHeader>Loopr · Daily Activity (Combined)</SectionHeader>

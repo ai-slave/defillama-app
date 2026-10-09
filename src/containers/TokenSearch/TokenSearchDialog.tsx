@@ -143,9 +143,9 @@ function TokenSearch({
 						<LoadingIndicator />
 					</p>
 				) : failed ? (
-					<InlineStatus variant="error">
-						<span className="flex flex-wrap items-center justify-between gap-2">
-							Couldn&rsquo;t search tokens.
+					<InlineStatus
+						variant="error"
+						action={
 							<Button
 								type="button"
 								size="sm"
@@ -154,7 +154,9 @@ function TokenSearch({
 							>
 								Try again
 							</Button>
-						</span>
+						}
+					>
+						Couldn&rsquo;t search tokens.
 					</InlineStatus>
 				) : visibleTokens.length === 0 ? (
 					<NoResults>No tokens found</NoResults>

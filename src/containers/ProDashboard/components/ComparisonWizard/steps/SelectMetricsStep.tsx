@@ -37,13 +37,15 @@ export function SelectMetricsStep() {
 					<LoadingIndicator label="Checking metric availability" />
 				</div>
 			) : metadataError ? (
-				<InlineStatus variant="error">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<span>Could not check which metrics the selected {typeLabel} have.</span>
+				<InlineStatus
+					variant="error"
+					action={
 						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retryMetadata}>
 							Try again
 						</Button>
-					</div>
+					}
+				>
+					Could not check which metrics the selected {typeLabel} have.
 				</InlineStatus>
 			) : (
 				<>

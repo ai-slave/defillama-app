@@ -5,8 +5,7 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
-import { Skeleton } from '~/ui/Skeleton'
-import { Tooltip } from '~/ui/Tooltip'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
@@ -133,41 +132,6 @@ function CardSkeleton({ title }: { title: string }) {
 	)
 }
 
-function InfoIcon() {
-	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="inline-block text-secondary opacity-50">
-			<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-			<path d="M8 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-			<circle cx="8" cy="5" r="0.75" fill="currentColor" />
-		</svg>
-	)
-}
-
-function KpiCard({ label, value, tooltip }: { label: string; value: string | number | null; tooltip?: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wide text-secondary">
-				{label}
-				{tooltip && (
-					<Tooltip className="cursor-help" content={tooltip}>
-						<InfoIcon />
-					</Tooltip>
-				)}
-			</span>
-			<span className="mono-xl text-primary">{value ?? '—'}</span>
-		</div>
-	)
-}
-
-function KpiSkeleton({ label }: { label: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<Skeleton className="h-8 w-24" />
-		</div>
-	)
-}
-
 function SectionHeader({ title }: { title: string }) {
 	return <h2 className="heading-xs tracking-tight text-primary">{title}</h2>
 }
@@ -205,41 +169,41 @@ export default function IncomeBreakdown() {
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
 				{isHoneyLoading || !honeyRevenue ? (
 					<>
-						<KpiSkeleton label="HONEY Supply" />
-						<KpiSkeleton label="sUSDe Yield (Current)" />
-						<KpiSkeleton label="sUSDe Yield (30d Avg)" />
-						<KpiSkeleton label="Annual Revenue (Current)" />
-						<KpiSkeleton label="Annual Revenue (30d Avg)" />
-						<KpiSkeleton label="Annual Revenue (Inception Avg)" />
+						<StatTile label="HONEY Supply" loading />
+						<StatTile label="sUSDe Yield (Current)" loading />
+						<StatTile label="sUSDe Yield (30d Avg)" loading />
+						<StatTile label="Annual Revenue (Current Yield)" loading />
+						<StatTile label="Annual Revenue (30d Avg Yield)" loading />
+						<StatTile label="Annual Revenue (Inception Avg)" loading />
 					</>
 				) : (
 					<>
-						<KpiCard
+						<StatTile
 							label="HONEY Supply"
 							value={honeyRevenue.honeySupply.formatted}
 							tooltip="Current HONEY total supply. Since HONEY ≈ $1, this approximates its market cap."
 						/>
-						<KpiCard
+						<StatTile
 							label="sUSDe Yield (Current)"
 							value={honeyRevenue.susdeYield.current.formatted}
 							tooltip="Latest sUSDe staking yield from Ethena (7-day rolling average)."
 						/>
-						<KpiCard
+						<StatTile
 							label="sUSDe Yield (30d Avg)"
 							value={honeyRevenue.susdeYield.avg30d.formatted}
 							tooltip="30-day average sUSDe staking yield from Ethena."
 						/>
-						<KpiCard
+						<StatTile
 							label="Annual Revenue (Current Yield)"
 							value={honeyRevenue.kpis.annualRevenueCurrent.formatted}
 							tooltip="Projected annual revenue using HONEY supply × current sUSDe yield."
 						/>
-						<KpiCard
+						<StatTile
 							label="Annual Revenue (30d Avg Yield)"
 							value={honeyRevenue.kpis.annualRevenue30d.formatted}
 							tooltip="Projected annual revenue using HONEY supply × 30-day average sUSDe yield."
 						/>
-						<KpiCard
+						<StatTile
 							label="Annual Revenue (Inception Avg)"
 							value={honeyRevenue.kpis.annualRevenueInception.formatted}
 							tooltip="Historical benchmark using HONEY supply × average sUSDe yield since USDe launch (Nov 2023)."
@@ -250,7 +214,11 @@ export default function IncomeBreakdown() {
 
 			<SectionHeader title="Chain Fees" />
 			<div className="grid grid-cols-1 gap-4">
-				{kpis ? <KpiCard label="Total Chain Fees" value={kpis.chainFees} /> : <KpiSkeleton label="Total Chain Fees" />}
+				{kpis ? (
+					<StatTile label="Total Chain Fees" value={kpis.chainFees ?? '—'} />
+				) : (
+					<StatTile label="Total Chain Fees" loading />
+				)}
 			</div>
 
 			{isLoading ? (
@@ -308,13 +276,13 @@ export default function IncomeBreakdown() {
 			<div className="grid grid-cols-2 gap-4">
 				{kpis ? (
 					<>
-						<KpiCard label="Total BEX Revenue" value={kpis.bexRevenue} />
-						<KpiCard label="Cumulative Volume" value={kpis.bexVolume} />
+						<StatTile label="Total BEX Revenue" value={kpis.bexRevenue ?? '—'} />
+						<StatTile label="Cumulative Volume" value={kpis.bexVolume ?? '—'} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="Total BEX Revenue" />
-						<KpiSkeleton label="Cumulative Volume" />
+						<StatTile label="Total BEX Revenue" loading />
+						<StatTile label="Cumulative Volume" loading />
 					</>
 				)}
 			</div>
@@ -356,13 +324,13 @@ export default function IncomeBreakdown() {
 			<div className="grid grid-cols-2 gap-4">
 				{kpis ? (
 					<>
-						<KpiCard label="Total Bend Fees" value={kpis.bendFees} />
-						<KpiCard label="Total Bend Revenue" value={kpis.bendRevenue} />
+						<StatTile label="Total Bend Fees" value={kpis.bendFees ?? '—'} />
+						<StatTile label="Total Bend Revenue" value={kpis.bendRevenue ?? '—'} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="Total Bend Fees" />
-						<KpiSkeleton label="Total Bend Revenue" />
+						<StatTile label="Total Bend Fees" loading />
+						<StatTile label="Total Bend Revenue" loading />
 					</>
 				)}
 			</div>

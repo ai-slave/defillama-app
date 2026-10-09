@@ -2,48 +2,6 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent } from '~/utils/numberFormat'
 
-// This dashboard's design language: numbers are the hero — large, monospaced and
-// tabular; labels are tiny, uppercase and dim. Flat, hairline-bordered, no shadows.
-export function KpiCard({
-	label,
-	value,
-	sub,
-	change,
-	def
-}: {
-	label: string
-	value: string
-	sub?: string
-	change?: { value: number; formatted: string }
-	/** Explainer for a non-obvious metric, read on hover over the "?" next to the label. */
-	def?: string
-}) {
-	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wider text-secondary uppercase">
-				{label}
-				{def && (
-					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
-						<Icon name="help-circle" height={12} width={12} />
-					</Tooltip>
-				)}
-			</span>
-			<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-				<span className="mono-xl tracking-tight text-primary tabular-nums">{value}</span>
-				{change && (
-					<span
-						className={`flex items-center gap-0.5 mono-sm tabular-nums ${change.value >= 0 ? 'text-success' : 'text-error'}`}
-					>
-						<span aria-hidden>{change.value >= 0 ? '▲' : '▼'}</span>
-						{change.formatted}
-					</span>
-				)}
-			</div>
-			{sub && <span className="mono-sm text-secondary tabular-nums">{sub}</span>}
-		</div>
-	)
-}
-
 // A chart card frames its viz with a prominent title, an optional one-line
 // plain-English thesis (subtitle) and an optional headline KPI on the right.
 // `titleTooltip` is for a longer explainer that would clutter the subtitle —

@@ -8,6 +8,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
@@ -39,28 +40,6 @@ const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChartProps['charts'] = [
 		encode: { x: 'timestamp', y: 'Cumulative Emissions' }
 	}
 ]
-
-function KpiCard({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<div className="flex items-center gap-1">
-				<span className="label-sm tracking-wide text-secondary">{label}</span>
-				{tooltip && (
-					<span className="group relative cursor-help">
-						<svg className="size-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<circle cx="12" cy="12" r="10" strokeWidth="2" />
-							<path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round" />
-						</svg>
-						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-subtle bg-overlay p-2 body-sm text-secondary shadow-overlay group-hover:block">
-							{tooltip}
-						</span>
-					</span>
-				)}
-			</div>
-			<span className="mono-xl text-primary">{value}</span>
-		</div>
-	)
-}
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
 	return (
@@ -229,26 +208,26 @@ export default function Revenue() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Total Fees Generated</SectionHeader>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-					<KpiCard
+					<StatTile
 						label="All Time"
 						value={data.kpis.fees.allTime.formatted}
 						tooltip="Total fees earned by NEAR Protocol and Products, converted from USD to NEAR at daily prices"
 					/>
-					<KpiCard label="YTD" value={data.kpis.fees.ytd.formatted} tooltip="Year to date total fees" />
-					<KpiCard label="30D" value={data.kpis.fees.d30.formatted} tooltip="Last 30 days total fees" />
+					<StatTile label="YTD" value={data.kpis.fees.ytd.formatted} tooltip="Year to date total fees" />
+					<StatTile label="30D" value={data.kpis.fees.d30.formatted} tooltip="Last 30 days total fees" />
 				</div>
 			</div>
 
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Revenue</SectionHeader>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-					<KpiCard
+					<StatTile
 						label="All Time"
 						value={data.kpis.revenue.allTime.formatted}
 						tooltip="NEAR received by intents fee wallets (fefundsadmin + 1csfundsadmin) plus protocol transaction fees (70% burned)"
 					/>
-					<KpiCard label="YTD" value={data.kpis.revenue.ytd.formatted} tooltip="Year to date revenue" />
-					<KpiCard label="30D" value={data.kpis.revenue.d30.formatted} tooltip="Last 30 days revenue" />
+					<StatTile label="YTD" value={data.kpis.revenue.ytd.formatted} tooltip="Year to date revenue" />
+					<StatTile label="30D" value={data.kpis.revenue.d30.formatted} tooltip="Last 30 days revenue" />
 				</div>
 			</div>
 

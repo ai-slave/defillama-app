@@ -754,7 +754,7 @@ const RULES = [
 	{
 		id: 'hand-built-field',
 		description:
-			'native input, textarea or select with its own border, fill or radius — use Input, inputStyles, textareaStyles or codeInputStyles from src/ui/Input.tsx (one outline, hover, radius, fill, focus, error and type), or Select for a pick',
+			'native input, textarea or select with its own border, fill or radius — use Input or Textarea from src/ui/Input.tsx (one outline, hover, radius, fill, focus, error and type), or Select for a pick',
 		match: matchHandBuiltField,
 		uiOwned: true,
 		skipTests: true

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { useNetworkStatsData } from './networkStatsApi'
 
@@ -219,22 +220,9 @@ export default function NetworkStats() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Network</SectionHeader>
 				<div className="grid grid-cols-3 gap-4">
-					<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-						<span className="label-sm tracking-wide text-secondary">Latest Block</span>
-						<span className="mono-xl text-primary tabular-nums">{liveBlock ? formatNumber(liveBlock) : '—'}</span>
-					</div>
-					{data.network.gasPrice && (
-						<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-							<span className="label-sm tracking-wide text-secondary">Gas Price</span>
-							<span className="mono-xl text-primary">{data.network.gasPrice.formatted}</span>
-						</div>
-					)}
-					{data.network.price && (
-						<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-							<span className="label-sm tracking-wide text-secondary">S Price</span>
-							<span className="mono-xl text-primary">{data.network.price.formatted}</span>
-						</div>
-					)}
+					<StatTile label="Latest Block" value={liveBlock ? formatNumber(liveBlock) : '—'} />
+					{data.network.gasPrice && <StatTile label="Gas Price" value={data.network.gasPrice.formatted} />}
+					{data.network.price && <StatTile label="S Price" value={data.network.price.formatted} />}
 				</div>
 			</div>
 

@@ -7,10 +7,11 @@ import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { useTab, chartToModel, type RevenueResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -196,27 +197,70 @@ export default function Revenue() {
 		<div className="flex flex-col gap-6">
 			{/* Headline KPIs */}
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-				<KpiCard
-					label="Ecosystem Revenue (All-time)"
-					value={ra.ecosystem?.formatted}
-					sub="Claimed + unclaimed pipeline"
-				/>
-				<KpiCard label="Metronome" value={ra.metronome?.formatted} sub="All-time" />
-				<KpiCard label="Vesper" value={ra.vesper?.formatted} sub="All-time" />
-				<KpiCard label="Odyssey" value={ra.odyssey?.formatted} sub="All-time" />
+				{data ? (
+					<>
+						<StatTile
+							label="Ecosystem Revenue (All-time)"
+							value={ra.ecosystem?.formatted ?? '—'}
+							sub="Claimed + unclaimed pipeline"
+						/>
+						<StatTile label="Metronome" value={ra.metronome?.formatted ?? '—'} sub="All-time" />
+						<StatTile label="Vesper" value={ra.vesper?.formatted ?? '—'} sub="All-time" />
+						<StatTile label="Odyssey" value={ra.odyssey?.formatted ?? '—'} sub="All-time" />
+					</>
+				) : (
+					<>
+						<StatTile label="Ecosystem Revenue (All-time)" sub="Claimed + unclaimed pipeline" loading />
+						<StatTile label="Metronome" sub="All-time" loading />
+						<StatTile label="Vesper" sub="All-time" loading />
+						<StatTile label="Odyssey" sub="All-time" loading />
+					</>
+				)}
 			</div>
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-				<KpiCard label="Unclaimed Pipeline" value={k.unclaimedPipeline?.formatted} sub="Pending claim / harvest" />
-				<KpiCard label="MET Holder Buybacks" value={ha.metronome?.formatted} sub="All-time" />
-				<KpiCard label="VSP Holder Buybacks" value={ha.vesper?.formatted} sub="All-time" />
+				{data ? (
+					<>
+						<StatTile
+							label="Unclaimed Pipeline"
+							value={k.unclaimedPipeline?.formatted ?? '—'}
+							sub="Pending claim / harvest"
+						/>
+						<StatTile label="MET Holder Buybacks" value={ha.metronome?.formatted ?? '—'} sub="All-time" />
+						<StatTile label="VSP Holder Buybacks" value={ha.vesper?.formatted ?? '—'} sub="All-time" />
+					</>
+				) : (
+					<>
+						<StatTile label="Unclaimed Pipeline" sub="Pending claim / harvest" loading />
+						<StatTile label="MET Holder Buybacks" sub="All-time" loading />
+						<StatTile label="VSP Holder Buybacks" sub="All-time" loading />
+					</>
+				)}
 			</div>
 
 			{/* 1 · Claimed revenue */}
 			<SectionHeader>Claimed Revenue · Last 30 Days</SectionHeader>
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-				<KpiCard label="Metronome 30d" value={cm.metronome?.formatted} />
-				<KpiCard label="Vesper 30d" value={cm.vesper?.formatted} sub={vc ? `${vc.windowDays}d window` : undefined} />
-				<KpiCard label="Odyssey 30d" value={cm.odyssey?.formatted} sub={oc ? `${oc.windowDays}d window` : undefined} />
+				{data ? (
+					<>
+						<StatTile label="Metronome 30d" value={cm.metronome?.formatted ?? '—'} />
+						<StatTile
+							label="Vesper 30d"
+							value={cm.vesper?.formatted ?? '—'}
+							sub={vc ? `${vc.windowDays}d window` : undefined}
+						/>
+						<StatTile
+							label="Odyssey 30d"
+							value={cm.odyssey?.formatted ?? '—'}
+							sub={oc ? `${oc.windowDays}d window` : undefined}
+						/>
+					</>
+				) : (
+					<>
+						<StatTile label="Metronome 30d" loading />
+						<StatTile label="Vesper 30d" loading />
+						<StatTile label="Odyssey 30d" loading />
+					</>
+				)}
 			</div>
 			{isLoading || !dailyModel ? (
 				<ChartSkeleton title="Daily Revenue" />

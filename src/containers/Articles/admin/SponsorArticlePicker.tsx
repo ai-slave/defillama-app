@@ -6,7 +6,7 @@ import { searchResearchSponsorArticles } from '~/containers/Articles/api'
 import type { ResearchSponsorArticleSearchResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -42,7 +42,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					// Focusable while a pick links: the pick disables the field that holds focus.
 					disabled={disabled}
 					accessibleWhenDisabled
-					className={`${inputStyles} w-full pl-9 aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled`}
+					render={<Input className="w-full pl-9" />}
 				/>
 			</div>
 			<ComboboxSurface

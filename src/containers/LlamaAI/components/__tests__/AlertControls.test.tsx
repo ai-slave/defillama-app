@@ -3,6 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
@@ -123,20 +124,20 @@ test('an unlinked delivery channel says so under the delivery field; a rejected 
 	const initialPrice = document.querySelector<HTMLInputElement>('[aria-label="Price"]')!.value
 	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
 	const delivery = () => document.querySelector<HTMLElement>('[role="radiogroup"][aria-label="Delivery channel"]')!
-	const deliveryError = () => delivery().closest('[role="group"]')!.querySelector('.text-error')?.textContent ?? null
+	const errors = () => fieldErrorTexts(document.querySelector('[role="dialog"]')!)
 	await press(radio('Delivery channel', 'Email'), 'ArrowRight')
 	expect(radio('Delivery channel', 'Telegram').getAttribute('aria-checked')).toBe('true')
 	expect(submit().disabled).toBe(false)
-	expect(deliveryError()).toBeNull()
+	expect(errors()).toEqual([])
 	await act(async () => submit().click())
 	expect(alertCreations()).toEqual([])
-	expect(deliveryError()).toBe('Choose a linked channel.')
+	expect(errors()).toEqual(['Choose a linked channel.'])
 	expect(delivery().contains(document.activeElement)).toBe(true)
 	await press(radio('Delivery channel', 'Telegram'), 'End')
 	expect(radio('Delivery channel', 'Slack').getAttribute('aria-checked')).toBe('true')
-	expect(deliveryError()).toBe('Choose a linked channel.')
+	expect(errors()).toEqual(['Choose a linked channel.'])
 	await press(radio('Delivery channel', 'Slack'), 'Home')
-	expect(deliveryError()).toBeNull()
+	expect(errors()).toEqual([])
 	session.serve({ [`${AI}/alerts`]: () => Response.json({ error: 'Test save failure' }, { status: 500 }) })
 	await act(async () => {
 		submit().click()
@@ -418,7 +419,7 @@ test('switching the alert type after a failed submit opens the other type quiet;
 	await press(radio('Alert type', 'Scheduled report'), 'ArrowRight')
 	const price = document.querySelector<HTMLInputElement>('[aria-label="Price"]')!
 	expect(price.getAttribute('aria-invalid')).toBeNull()
-	expect(document.querySelector('[role="dialog"] .text-error')).toBeNull()
+	expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual([])
 	await act(async () => submit().click())
 	expect(document.querySelector('[role="dialog"] [aria-invalid="true"]')).not.toBeNull()
 	await press(radio('Alert type', 'Price alert'), 'Home')
@@ -441,25 +442,16 @@ test('Create waits while the Slack channels load and holds beside their failure,
 	await input('textarea', 'Daily TVL movers')
 	await press(radio('Delivery channel', 'Email'), 'End')
 	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
-	// Field and FieldGroup errors are described by their control; the load failure's own notice is not one of them.
-	const fieldErrors = () =>
-		[...document.querySelectorAll('[aria-describedby]')].flatMap((el) =>
-			el
-				.getAttribute('aria-describedby')!
-				.split(' ')
-				.map((id) => document.getElementById(id))
-				.filter((node) => node?.classList.contains('text-error'))
-				.map((node) => node!.textContent)
-		)
 	await waitForUi(() => expect(submit().textContent).toContain('Loading channels…'))
 	await act(async () => submit().click())
-	expect(fieldErrors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 
 	await act(async () => firstLoad.resolve(Response.json({ error: 'upstream' }, { status: 500 })))
 	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load Slack channels."))
 	expect(submit().getAttribute('aria-disabled')).toBe('true')
 	await act(async () => submit().click())
-	expect(fieldErrors()).toEqual([])
+	// The load failure's own notice is not a field error.
+	expect(fieldErrorTexts()).toEqual([])
 	expect(alertCreations()).toEqual([])
 
 	const retry = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Try again')!
@@ -467,7 +459,7 @@ test('Create waits while the Slack channels load and holds beside their failure,
 	await waitForUi(() => expect(document.querySelector('[aria-label="Slack channel"]')).not.toBeNull())
 	expect(submit().getAttribute('aria-disabled')).toBeNull()
 	await act(async () => submit().click())
-	expect(fieldErrors()).toEqual(['Choose a Slack channel.'])
+	expect(fieldErrorTexts()).toEqual(['Choose a Slack channel.'])
 })
 
 test('a missing Slack workspace or channel focuses that picker, not the delivery channel toggle', async () => {
@@ -504,6 +496,6 @@ test('a missing Slack workspace or channel focuses that picker, not the delivery
 	})
 	await act(async () => submit().click())
 	expect(document.activeElement).toBe(channel)
-	expect(channel.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe('Choose a Slack channel.')
+	expect(fieldErrorTexts()).toEqual(['Choose a Slack channel.'])
 	expect(alertCreations()).toEqual([])
 })

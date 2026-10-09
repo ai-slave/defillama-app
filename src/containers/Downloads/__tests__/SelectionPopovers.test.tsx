@@ -3,6 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DateRangePicker } from '../DateRangePicker'
 import { RowLimitPicker } from '../RowLimitPicker'
@@ -176,22 +177,21 @@ test('a reopened picker keeps its draft but drops the errors of the last opening
 			</>
 		)
 	)
-	const errorTexts = () => [...document.querySelectorAll('.text-error')].map((el) => el.textContent)
 
 	await click(button('Date range: All'))
 	await input(document.querySelector<HTMLInputElement>('input[type="date"]')!, '2026-01-01')
 	await click(button('Apply'))
-	expect(errorTexts()).toEqual(['Choose a To date.'])
+	expect(fieldErrorTexts()).toEqual(['Choose a To date.'])
 	await escape(document.activeElement as HTMLElement)
 	await click(button('Date range: All'))
 	expect(document.querySelector<HTMLInputElement>('input[type="date"]')!.value).toBe('2026-01-01')
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	await escape(document.activeElement as HTMLElement)
 
 	await click(button('Row limit: All'))
 	await click(button('Apply'))
-	expect(errorTexts()).toEqual(['Enter a row limit.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a row limit.'])
 	await escape(document.activeElement as HTMLElement)
 	await click(button('Row limit: All'))
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 })

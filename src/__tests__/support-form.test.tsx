@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Support from '~/pages/support'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -53,8 +54,6 @@ async function submitForm() {
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 }
 
-const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
-
 test('a request without a description or with a malformed email says so under the fields and sends nothing', async () => {
 	session.serve({ [REPORT_URL]: { message: 'success' } })
 	await openForm()
@@ -63,11 +62,11 @@ test('a request without a description or with a malformed email says so under th
 	await type(email, 'reader@example')
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 
-	expect(errorTexts()).toEqual(['Enter a valid email address.', 'Enter a description of the issue.'])
+	expect(fieldErrorTexts(container)).toEqual(['Enter a valid email address.', 'Enter a description of the issue.'])
 	expect(document.activeElement).toBe(email)
 	await type(email, '')
 	await type(description, 'The fees chart is empty')
-	expect(errorTexts()).toEqual([])
+	expect(fieldErrorTexts(container)).toEqual([])
 	expect(session.requests.filter((request) => request.url.href === REPORT_URL)).toHaveLength(0)
 })
 

@@ -66,7 +66,7 @@ function ClaimForm({
 	const submit = useSubmitLead('claim')
 	// The last failure, kept while a retry runs: the mutation clears its own error when the retry starts.
 	const [failure, setFailure] = useState<string | null>(null)
-	const consentsErrorId = useId()
+	const consentsErrorId = `${useId()}-error`
 	const awaitingCheckId = useId()
 	const [position, setPosition] = useState('')
 	const [hasContact, setHasContact] = useState<'yes' | 'no'>('no')

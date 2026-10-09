@@ -18,7 +18,7 @@ import {
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -128,10 +128,10 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 							<Ariakit.Focusable
 								autoFocus
 								render={
-									<textarea
+									<Textarea
 										{...control}
 										placeholder="e.g. The TVL figure is out of date"
-										className={`${textareaStyles} w-full resize-none`}
+										className="w-full resize-none"
 										rows={3}
 										maxLength={500}
 										value={feedbackText}

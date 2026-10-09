@@ -15,7 +15,7 @@ import { common, createLowlight } from 'lowlight'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { codeInputStyles, Input } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -359,23 +359,25 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 						>
 							Label
 						</label>
-						<input
+						<Input
 							id={`${fieldId}-label`}
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className={`${codeInputStyles} min-w-0 flex-1`}
+							variant="code"
+							className="min-w-0 flex-1"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<label htmlFor={`${fieldId}-url`} className="w-12 shrink-0 label-xs tracking-wider text-tertiary uppercase">
 							URL
 						</label>
-						<input
+						<Input
 							id={`${fieldId}-url`}
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className={`${codeInputStyles} min-w-0 flex-1`}
+							variant="code"
+							className="min-w-0 flex-1"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">

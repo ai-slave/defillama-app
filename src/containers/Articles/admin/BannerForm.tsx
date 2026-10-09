@@ -45,7 +45,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -432,14 +432,14 @@ export function BannerForm({ banner }: Props) {
 				<Section title="Content" description="The text readers see and an optional link.">
 					<Field label="Banner text" action={<CharCount value={state.text} max={TEXT_MAX} />} error={shown.text}>
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								value={state.text}
 								onChange={(e) => update({ text: e.target.value })}
 								maxLength={TEXT_MAX}
 								rows={3}
 								placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
-								className={`${textareaStyles} w-full resize-y`}
+								className="w-full resize-y"
 							/>
 						)}
 					</Field>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
@@ -47,7 +47,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 				open={open}
 				setOpen={setOpen}
 			>
-				<Input placeholder="Search investors…" open={open} setOpen={setOpen} />
+				<SearchInput placeholder="Search investors…" open={open} setOpen={setOpen} />
 
 				<ComboboxSurface
 					variant="search-results"
@@ -80,7 +80,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 	)
 }
 
-function Input({
+function SearchInput({
 	open,
 	setOpen,
 	placeholder
@@ -108,7 +108,11 @@ function Input({
 				<Icon name={open ? 'x' : 'search'} className="size-4" />
 			</Tooltip>
 
-			<Ariakit.Combobox placeholder={placeholder} autoSelect className={searchFieldInputStyles} />
+			<Ariakit.Combobox
+				placeholder={placeholder}
+				autoSelect
+				render={<Input className={searchFieldInputPlacementStyles} />}
+			/>
 		</>
 	)
 }

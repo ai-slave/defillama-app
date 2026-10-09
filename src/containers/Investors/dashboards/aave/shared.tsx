@@ -9,7 +9,6 @@ import {
 	table_getTotalSize,
 	table_getVisibleLeafColumns
 } from '@tanstack/react-table/static-functions'
-import { Children } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type {
@@ -20,7 +19,6 @@ import type {
 } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { Skeleton } from '~/ui/Skeleton'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
 export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
@@ -127,41 +125,6 @@ export function CardSkeleton({ title }: { title: string }) {
 			<div className="flex h-[400px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
-		</div>
-	)
-}
-
-export function KpiCard({ label, value }: { label: string; value: string | number | null }) {
-	return (
-		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="label-sm tracking-wide text-tertiary">{label}</span>
-			<span className="mono-lg text-primary tabular-nums">{value ?? '—'}</span>
-		</div>
-	)
-}
-
-export function KpiSkeleton({ label }: { label: string }) {
-	return (
-		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="label-sm tracking-wide text-tertiary">{label}</span>
-			<Skeleton className="h-7 w-20" />
-		</div>
-	)
-}
-
-/** Full-width metric strip — items stretch evenly, separated by vertical dividers */
-export function MetricStrip({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="flex gap-0 overflow-x-auto rounded-lg border border-subtle bg-surface">
-			{Array.isArray(children) ? (
-				Children.map(children, (child, i) => (
-					<div className={`flex-1 px-5 py-3 ${i > 0 ? 'border-l border-subtle' : ''}`} style={{ minWidth: '120px' }}>
-						{child}
-					</div>
-				))
-			) : (
-				<div className="flex-1 px-5 py-3">{children}</div>
-			)}
 		</div>
 	)
 }

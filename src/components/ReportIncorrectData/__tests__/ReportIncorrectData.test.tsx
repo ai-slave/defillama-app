@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportIncorrectData, type ReportSubject } from '..'
 
@@ -94,15 +95,14 @@ test('a report without a message says so under the field and sends nothing', asy
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	const submit = document.querySelector<HTMLButtonElement>('button[type="submit"]')!
 	const message = document.querySelector('textarea')!
-	const errorText = () => document.querySelector('.text-error')?.textContent ?? null
-	expect(errorText()).toBeNull()
+	expect(fieldErrorTexts()).toEqual([])
 	await act(async () => submit.click())
-	expect(errorText()).toBe('Enter what’s wrong with the data.')
+	expect(fieldErrorTexts()).toEqual(['Enter what’s wrong with the data.'])
 	expect(message.getAttribute('aria-invalid')).toBe('true')
 	expect(document.activeElement).toBe(message)
 	expect(mocks.fetchJson).not.toHaveBeenCalled()
 	await typeMessage('Incorrect value')
-	expect(errorText()).toBeNull()
+	expect(fieldErrorTexts()).toEqual([])
 })
 
 async function waitForPending() {

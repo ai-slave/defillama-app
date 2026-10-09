@@ -3,7 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { NoResults } from '~/ui/NoResults'
@@ -64,7 +64,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
 				<MenuSurface variant="panel" heading={heading} unmountOnHide={false} gutter={6}>
-					<PopoverHeader search={<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />} />
+					<PopoverHeader search={<Ariakit.Combobox placeholder="Search..." render={<Input className="w-full" />} />} />
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
 							{matches.slice(0, viewableMatches).map((value) => (

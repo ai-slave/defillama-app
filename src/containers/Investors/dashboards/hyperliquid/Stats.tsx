@@ -17,6 +17,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
@@ -198,16 +199,6 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 					{coins.map((c, i) => renderItem(c, coins.length + i))}
 				</div>
 			</div>
-		</div>
-	)
-}
-
-function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value != null ? value : '—'}</span>
-			{helper ? <span className="body-sm text-secondary">{helper}</span> : null}
 		</div>
 	)
 }
@@ -627,10 +618,10 @@ export default function Stats() {
 			{topCoins.length > 0 ? <PriceTickerTape coins={topCoins} /> : null}
 
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-				<MetricCard label="24h Perp Volume" value={marketPresentation.totalVolume} />
-				<MetricCard label="Total Open Interest" value={marketPresentation.totalOI} />
-				<MetricCard label="Perp Markets" value={perps.length} />
-				<MetricCard label="Spot Markets" value={spot.length} />
+				<StatTile label="24h Perp Volume" value={marketPresentation.totalVolume} />
+				<StatTile label="Total Open Interest" value={marketPresentation.totalOI} />
+				<StatTile label="Perp Markets" value={perps.length} />
+				<StatTile label="Spot Markets" value={spot.length} />
 			</div>
 			<FundingChart data={marketPresentation.fundingChartData} />
 			{!fundingsLoading ? <PredictedFundingTable data={fundings} /> : null}

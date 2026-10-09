@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -72,14 +72,14 @@ function QueueChipEditor({
 				if (message) onSave(message)
 			}}
 		>
-			<textarea
+			<Textarea
 				key={id}
 				autoFocus
 				name="message"
 				aria-label="Queued message"
 				defaultValue={initialMessage}
 				onChange={(event) => onDraftChange(event.currentTarget.value)}
-				className={`${textareaStyles} w-full resize-none`}
+				className="w-full resize-none"
 				rows={2}
 			/>
 			{status?.error ? <p className="m-0 body-sm text-error">{status.error}</p> : null}

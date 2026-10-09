@@ -312,14 +312,9 @@ export function PortfolioNotifications({
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
 					{/* A failed read is unknown, not "none": offering setup would POST over the saved preferences. */}
 					{readFailed ? (
-						<InlineStatus variant="error">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<span>
-									Couldn&apos;t load the email notifications for the &quot;{selectedPortfolio}&quot; portfolio
-									{selectedPortfolio === DEFAULT_PORTFOLIO_NAME
-										? ", so they can't be changed yet."
-										: ", so they can't be changed and the portfolio can't be deleted yet."}
-								</span>
+						<InlineStatus
+							variant="error"
+							action={
 								<Button
 									type="button"
 									size="sm"
@@ -328,7 +323,12 @@ export function PortfolioNotifications({
 								>
 									Try again
 								</Button>
-							</div>
+							}
+						>
+							Couldn&apos;t load the email notifications for the &quot;{selectedPortfolio}&quot; portfolio
+							{selectedPortfolio === DEFAULT_PORTFOLIO_NAME
+								? ", so they can't be changed yet."
+								: ", so they can't be changed and the portfolio can't be deleted yet."}
 						</InlineStatus>
 					) : (
 						<p className="body-sm text-secondary">

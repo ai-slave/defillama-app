@@ -103,13 +103,15 @@ export function AuthenticationCard() {
 				)}
 
 				{isEmailUnverified ? (
-					<InlineStatus variant="warning">
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<span>Your email isn&apos;t verified.</span>
-							<Button type="button" size="md" onClick={handleVerifyEmail}>
+					<InlineStatus
+						variant="warning"
+						action={
+							<Button type="button" size="sm" onClick={handleVerifyEmail}>
 								Verify email
 							</Button>
-						</div>
+						}
+					>
+						Your email isn&apos;t verified.
 					</InlineStatus>
 				) : null}
 			</div>

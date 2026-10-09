@@ -5,6 +5,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { Skeleton } from '~/ui/Skeleton'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
 import { useEcosystemData, type ChartData } from './ecosystemApi'
@@ -156,25 +157,6 @@ function buildSupplyModel(chart: ChartData | undefined): CartesianChartModel | u
 	)
 }
 
-function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
-	return (
-		<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl tracking-tight text-primary">{value}</span>
-			<span className="body-sm text-secondary">{description}</span>
-		</div>
-	)
-}
-
-function KpiCard({ label, value }: { label: string; value?: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			{value ? <span className="mono-xl text-primary">{value}</span> : <Skeleton className="h-8 w-24" />}
-		</div>
-	)
-}
-
 function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	return (
 		<div className="flex items-center gap-2 rounded-full border border-medium bg-surface px-3 py-1">
@@ -265,20 +247,41 @@ export default function Ecosystem() {
 				<HeadlinePill label="Total Intent Fees" value={intents?.kpis.totalIntentFees.formatted} />
 			</div>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-				<KpiCard label="All-Time Volume" value={intents?.kpis.allTimeVolume.formatted} />
-				<KpiCard label="30-Day Volume" value={intents?.kpis.volume30d.formatted} />
-				<KpiCard label="7-Day Volume" value={intents?.kpis.volume7d.formatted} />
-				<KpiCard label="Daily Volume" value={dailyVolumeFormatted} />
+				{intents ? (
+					<>
+						<StatTile label="All-Time Volume" value={intents.kpis.allTimeVolume.formatted} />
+						<StatTile label="30-Day Volume" value={intents.kpis.volume30d.formatted} />
+						<StatTile label="7-Day Volume" value={intents.kpis.volume7d.formatted} />
+						<StatTile label="Daily Volume" value={dailyVolumeFormatted ?? '—'} />
 
-				<KpiCard label="All-Time Swaps" value={intents?.kpis.totalSwaps.formatted} />
-				<KpiCard label="30-Day Swaps" value={intents?.kpis.swaps30d.formatted} />
-				<KpiCard label="7-Day Swaps" value={intents?.kpis.swaps7d.formatted} />
-				<KpiCard label="Daily Swaps" value={intents?.kpis.dailySwaps.formatted} />
+						<StatTile label="All-Time Swaps" value={intents.kpis.totalSwaps.formatted} />
+						<StatTile label="30-Day Swaps" value={intents.kpis.swaps30d.formatted} />
+						<StatTile label="7-Day Swaps" value={intents.kpis.swaps7d.formatted} />
+						<StatTile label="Daily Swaps" value={intents.kpis.dailySwaps.formatted} />
 
-				<KpiCard label="Avg Trade Size" value={intents?.kpis.avgTradeSize.formatted} />
-				<KpiCard label="30-Day Unique Users" value={intents?.kpis.uniqueUsers30d.formatted} />
-				<KpiCard label="7-Day Unique Users" value={intents?.kpis.uniqueUsers7d.formatted} />
-				<KpiCard label="1-Day Unique Users" value={intents?.kpis.uniqueUsers1d.formatted} />
+						<StatTile label="Avg Trade Size" value={intents.kpis.avgTradeSize.formatted} />
+						<StatTile label="30-Day Unique Users" value={intents.kpis.uniqueUsers30d.formatted} />
+						<StatTile label="7-Day Unique Users" value={intents.kpis.uniqueUsers7d.formatted} />
+						<StatTile label="1-Day Unique Users" value={intents.kpis.uniqueUsers1d.formatted} />
+					</>
+				) : (
+					<>
+						<StatTile label="All-Time Volume" loading />
+						<StatTile label="30-Day Volume" loading />
+						<StatTile label="7-Day Volume" loading />
+						<StatTile label="Daily Volume" loading />
+
+						<StatTile label="All-Time Swaps" loading />
+						<StatTile label="30-Day Swaps" loading />
+						<StatTile label="7-Day Swaps" loading />
+						<StatTile label="Daily Swaps" loading />
+
+						<StatTile label="Avg Trade Size" loading />
+						<StatTile label="30-Day Unique Users" loading />
+						<StatTile label="7-Day Unique Users" loading />
+						<StatTile label="1-Day Unique Users" loading />
+					</>
+				)}
 			</div>
 
 			{isLoading || !intentModels.volume ? (
@@ -384,15 +387,36 @@ export default function Ecosystem() {
 			{/* Base-Chain Activity */}
 			<SectionTitle>Base-Chain Activity</SectionTitle>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-				<KpiCard label="Daily Transactions" value={eco?.kpis.dailyTxns.formatted} />
-				<KpiCard label="Avg Daily Txns (7d)" value={eco?.kpis.avgDailyTxns7d.formatted} />
-				<KpiCard label="Avg Daily Txns (30d)" value={eco?.kpis.avgDailyTxns30d.formatted} />
+				{eco ? (
+					<>
+						<StatTile label="Daily Transactions" value={eco.kpis.dailyTxns.formatted} />
+						<StatTile label="Avg Daily Txns (7d)" value={eco.kpis.avgDailyTxns7d.formatted} />
+						<StatTile label="Avg Daily Txns (30d)" value={eco.kpis.avgDailyTxns30d.formatted} />
+					</>
+				) : (
+					<>
+						<StatTile label="Daily Transactions" loading />
+						<StatTile label="Avg Daily Txns (7d)" loading />
+						<StatTile label="Avg Daily Txns (30d)" loading />
+					</>
+				)}
 			</div>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-				<KpiCard label="Daily Active Accounts" value={eco?.kpis.dailyActiveAccounts.formatted} />
-				<KpiCard label="Monthly Active Accounts" value={eco?.kpis.monthlyActiveAccounts.formatted} />
-				<KpiCard label="New Accounts (30d)" value={eco?.kpis.newAccounts30d.formatted} />
-				<KpiCard label="Daily Gas Fee" value={eco?.kpis.dailyGasFeeNear.formatted} />
+				{eco ? (
+					<>
+						<StatTile label="Daily Active Accounts" value={eco.kpis.dailyActiveAccounts.formatted} />
+						<StatTile label="Monthly Active Accounts" value={eco.kpis.monthlyActiveAccounts.formatted} />
+						<StatTile label="New Accounts (30d)" value={eco.kpis.newAccounts30d.formatted} />
+						<StatTile label="Daily Gas Fee" value={eco.kpis.dailyGasFeeNear.formatted} />
+					</>
+				) : (
+					<>
+						<StatTile label="Daily Active Accounts" loading />
+						<StatTile label="Monthly Active Accounts" loading />
+						<StatTile label="New Accounts (30d)" loading />
+						<StatTile label="Daily Gas Fee" loading />
+					</>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -453,11 +477,23 @@ export default function Ecosystem() {
 			{/* Token Overview */}
 			<SectionTitle>Token Overview</SectionTitle>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-				<KpiCard label="NEAR Price" value={token?.kpis.nearPrice.formatted} />
-				<KpiCard label="Market Cap" value={token?.kpis.marketCap.formatted} />
-				<KpiCard label="Circulating Supply" value={token?.kpis.circulatingSupply.formatted} />
-				<KpiCard label="Total Supply" value={token?.kpis.totalSupply.formatted} />
-				<KpiCard label="Locked Supply" value={token?.kpis.lockedSupply.formatted} />
+				{token ? (
+					<>
+						<StatTile label="NEAR Price" value={token.kpis.nearPrice.formatted} />
+						<StatTile label="Market Cap" value={token.kpis.marketCap.formatted} />
+						<StatTile label="Circulating Supply" value={token.kpis.circulatingSupply.formatted} />
+						<StatTile label="Total Supply" value={token.kpis.totalSupply.formatted} />
+						<StatTile label="Locked Supply" value={token.kpis.lockedSupply.formatted} />
+					</>
+				) : (
+					<>
+						<StatTile label="NEAR Price" loading />
+						<StatTile label="Market Cap" loading />
+						<StatTile label="Circulating Supply" loading />
+						<StatTile label="Total Supply" loading />
+						<StatTile label="Locked Supply" loading />
+					</>
+				)}
 			</div>
 
 			{isLoading || !areaDatasets.nearPrice ? (
@@ -493,7 +529,7 @@ export default function Ecosystem() {
 			<SectionTitle>Protocol</SectionTitle>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
 				{PROTOCOL_STATS.map((stat) => (
-					<StatCard key={stat.label} {...stat} />
+					<StatTile key={stat.label} label={stat.label} value={stat.value} sub={stat.description} />
 				))}
 			</div>
 		</div>

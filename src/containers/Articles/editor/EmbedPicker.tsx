@@ -4,7 +4,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tag } from '~/ui/Tag'
 import { detectEmbed, getEmbedProviderLabel, type EmbedDetection } from '../embedProviders'
@@ -122,13 +122,13 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 
 					<Field label="Caption (optional)">
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								value={caption}
 								onChange={(e) => setCaption(e.target.value)}
 								rows={2}
 								placeholder="Source notes or context shown below the embed"
-								className={`${textareaStyles} resize-none`}
+								className="resize-none"
 							/>
 						)}
 					</Field>

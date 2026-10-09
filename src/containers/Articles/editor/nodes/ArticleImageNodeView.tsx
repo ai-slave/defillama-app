@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { useArticleEditable } from '../useArticleEditable'
 import { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.shared'
@@ -45,6 +45,7 @@ function FormActions() {
 
 function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 	const [draft, setDraft] = useState(alt)
+	const altId = useId()
 	const store = Ariakit.usePopoverContext()!
 	return (
 		<form
@@ -56,14 +57,17 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 				store.hide()
 			}}
 		>
-			<label className="grid gap-1.5">
-				<span className="label-sm text-secondary">Alt text</span>
-				<textarea
+			<div className="grid gap-1.5">
+				<label htmlFor={altId} className="label-sm text-secondary">
+					Alt text
+				</label>
+				<Textarea
+					id={altId}
 					value={draft}
 					onChange={(event) => setDraft(event.target.value)}
 					rows={3}
 					placeholder="Describe the image for screen readers"
-					className={`${textareaStyles} w-full resize-none`}
+					className="w-full resize-none"
 					onKeyDown={(event) => {
 						if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
 							event.preventDefault()
@@ -71,7 +75,7 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 						}
 					}}
 				/>
-			</label>
+			</div>
 			<FormActions />
 		</form>
 	)
@@ -183,14 +187,14 @@ function ImageCaption({
 		<Ariakit.Focusable
 			autoFocus={autoFocus}
 			render={
-				<textarea
+				<Textarea
 					value={draft}
 					onChange={(event) => setDraft(event.target.value)}
 					aria-label="Image caption"
 					onBlur={() => save(draft.trim())}
 					placeholder="Add a caption…"
 					rows={Math.min(3, Math.max(1, draft.split('\n').length))}
-					className={`${textareaStyles} w-full resize-none`}
+					className="w-full resize-none"
 				/>
 			}
 		/>

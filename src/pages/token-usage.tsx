@@ -33,7 +33,7 @@ import { Button } from '~/ui/Button'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
@@ -379,7 +379,7 @@ export function TokenUsageSearch() {
 					id="token-usage-search-input"
 					placeholder="Search tokens…"
 					autoSelect
-					className={`${inputStyles} w-full pl-9`}
+					render={<Input className="w-full pl-9" />}
 				/>
 			</span>
 

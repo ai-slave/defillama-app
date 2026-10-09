@@ -159,9 +159,9 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 						/>
 					</div>
 					{creation.error ? (
-						<InlineStatus variant="error">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<span>{CREATION_FAILED}</span>
+						<InlineStatus
+							variant="error"
+							action={
 								<Button
 									type="button"
 									size="sm"
@@ -173,7 +173,9 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 								>
 									Try again
 								</Button>
-							</div>
+							}
+						>
+							{CREATION_FAILED}
 						</InlineStatus>
 					) : null}
 					{copy.error ? (

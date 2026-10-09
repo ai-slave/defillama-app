@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { textareaStyles } from '~/ui/Input'
+import { Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardRatingDecision } from '../dashboardTypes'
@@ -101,12 +101,12 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 			{rating > 0 ? (
 				<Field label="Feedback (optional)">
 					{(control) => (
-						<textarea
+						<Textarea
 							{...control}
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard…"
 							rows={3}
-							className={`${textareaStyles} w-full`}
+							className="w-full"
 							readOnly={submission.isPending}
 							aria-busy={submission.isPending || undefined}
 						/>

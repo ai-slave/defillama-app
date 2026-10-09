@@ -111,7 +111,7 @@ function TokenCombobox({
 				ref={inputRef}
 				placeholder="Search your token by name or ticker"
 				autoSelect
-				className={`w-full ${inputStyles}`}
+				render={<Input className="w-full" />}
 			/>
 			<ComboboxSurface
 				variant="search-results"

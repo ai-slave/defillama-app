@@ -15,8 +15,7 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
-import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
@@ -229,24 +228,6 @@ export function useTooltipMaxItems() {
 
 // ---------------------------------------------------------------- KPI + layout
 
-function KpiCard({ label, value, def }: { label: string; value: string; def?: string | undefined }) {
-	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-4">
-			<span className="flex items-center gap-1 label-sm tracking-wider text-tertiary uppercase">
-				{label}
-				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
-				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
-				{def && (
-					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
-						<Icon name="help-circle" height={13} width={13} />
-					</Tooltip>
-				)}
-			</span>
-			<span className="mono-lg tracking-tight text-primary tabular-nums">{value}</span>
-		</div>
-	)
-}
-
 // Renders KPIs straight from the payload's KPI map; pass the ordered keys + labels.
 // The tooltip prefers an explicit definition, falling back to the KPI's own `note`.
 export function KpiGrid({
@@ -266,7 +247,7 @@ export function KpiGrid({
 		>
 			{items.map(([key, lbl, def]) => {
 				const k = kpis[key]
-				return k ? <KpiCard key={key} label={lbl} value={k.formatted} def={def ?? k.note} /> : null
+				return k ? <StatTile key={key} label={lbl} value={k.formatted} tooltip={def ?? k.note} /> : null
 			})}
 		</div>
 	)

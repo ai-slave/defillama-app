@@ -8,7 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -96,7 +96,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
 						aria-invalid={error ? true : undefined}
-						className={`${searchFieldInputStyles} pr-9`}
+						render={<Input className={`${searchFieldInputPlacementStyles} pr-9`} />}
 					/>
 					{value ? (
 						<Button

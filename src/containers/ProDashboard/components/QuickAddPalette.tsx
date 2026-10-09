@@ -3,7 +3,7 @@ import { type KeyboardEvent, type MouseEvent, useDeferredValue, useEffect, useMe
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { tw } from '~/ui/tw'
@@ -322,7 +322,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 						autoSelect="always"
 						aria-label="Quick add"
 						placeholder={QUICK_ADD_PLACEHOLDER}
-						className={inputStyles}
+						render={<Input />}
 						onKeyDownCapture={handleKeyDownCapture}
 					/>
 				</DialogSearchHeader>

@@ -37,8 +37,6 @@ import {
 import { getRwaInclusionDefault, RWA_INCLUSION_OPTIONS, type RWAInclusionKey } from './inclusion'
 import type { RWAAssetsInlineFilterKey } from './layout/inlineFilters'
 
-/* inputStyles as a label shell: the wrapper carries the field chrome and
-   focus-within lights the border while the inner input stays bare. */
 const ATTRIBUTE_FILTER_STATE_LABELS: Record<RWAAttributeFilterState, string> = {
 	yes: 'Yes',
 	no: 'No',

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { codeTextareaStyles, Input } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
@@ -178,14 +178,15 @@ export function CopyDashboardLinkButton({
 						<div className="flex flex-col gap-1.5">
 							<p className="label-sm text-secondary">Embed dashboard</p>
 							<div className="flex gap-2">
-								<textarea
+								<Textarea
 									value={embedSnippet}
 									readOnly
 									rows={3}
 									aria-label="Embed code"
 									spellCheck={false}
 									onFocus={(event) => event.currentTarget.select()}
-									className={`${codeTextareaStyles} min-w-0 flex-1 resize-none`}
+									variant="code"
+									className="min-w-0 flex-1 resize-none"
 								/>
 								<Tooltip
 									content={copied === 'embed' ? 'Copied' : 'Copy embed code'}

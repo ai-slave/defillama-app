@@ -23,14 +23,13 @@ describe('thorchain KPI definition tooltip', () => {
 		container.remove()
 	})
 
-	// A `title` attribute never opens on touch, so the (i) has to be a real tooltip anchor.
+	// A `title` attribute never opens on touch, so the label has to be a real tooltip anchor.
 	test('opens on touch', async () => {
 		await act(async () =>
 			root.render(<KpiGrid kpis={{ volume: { value: 1, formatted: '$1' } }} items={[['volume', 'Volume', DEF]]} />)
 		)
 
-		const anchor = container.querySelector('[aria-label]')!
-		expect(anchor).not.toBeNull()
+		const anchor = [...container.querySelectorAll('span')].find((el) => el.textContent === 'Volume')!
 		expect(document.body.textContent).not.toContain(DEF)
 
 		await act(async () => {

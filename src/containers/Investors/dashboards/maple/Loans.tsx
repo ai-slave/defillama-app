@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
 	formatUsd,
@@ -12,15 +13,7 @@ import {
 } from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
-import {
-	CardSkeleton,
-	ChartCard,
-	KpiCard,
-	KpiSkeleton,
-	MAPLE_CSV_ONLY_EXPORT,
-	MAPLE_USD_CATEGORY_CHART_OPTIONS,
-	Pagination
-} from './shared'
+import { CardSkeleton, ChartCard, MAPLE_CSV_ONLY_EXPORT, MAPLE_USD_CATEGORY_CHART_OPTIONS, Pagination } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -169,19 +162,19 @@ export default function Loans() {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				{kpis ? (
 					<>
-						<KpiCard label="Active Loans" value={kpis.totalLoans} />
-						<KpiCard label="Total Principal" value={kpis.totalPrincipal} />
-						<KpiCard label="Avg Interest Rate" value={kpis.avgRate} />
-						<KpiCard label="Total Interest Paid" value={kpis.totalInterestPaid} />
-						<KpiCard label="Avg Loan Age" value={kpis.avgAge} />
+						<StatTile label="Active Loans" value={kpis.totalLoans} />
+						<StatTile label="Total Principal" value={kpis.totalPrincipal} />
+						<StatTile label="Avg Interest Rate" value={kpis.avgRate} />
+						<StatTile label="Total Interest Paid" value={kpis.totalInterestPaid} />
+						<StatTile label="Avg Loan Age" value={kpis.avgAge} />
 					</>
 				) : (
 					<>
-						<KpiSkeleton label="Active Loans" />
-						<KpiSkeleton label="Total Principal" />
-						<KpiSkeleton label="Avg Interest Rate" />
-						<KpiSkeleton label="Total Interest Paid" />
-						<KpiSkeleton label="Avg Loan Age" />
+						<StatTile label="Active Loans" loading />
+						<StatTile label="Total Principal" loading />
+						<StatTile label="Avg Interest Rate" loading />
+						<StatTile label="Total Interest Paid" loading />
+						<StatTile label="Avg Loan Age" loading />
 					</>
 				)}
 			</div>

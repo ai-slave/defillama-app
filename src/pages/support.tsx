@@ -8,7 +8,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
@@ -184,12 +184,12 @@ function Support() {
 
 							<Field label="Description" error={submitted ? errors.body : null}>
 								{(control) => (
-									<textarea
+									<Textarea
 										{...control}
 										required
 										value={request.body}
 										onChange={edit('body')}
-										className={`${textareaStyles} min-h-24 w-full`}
+										className="min-h-24 w-full"
 									/>
 								)}
 							</Field>

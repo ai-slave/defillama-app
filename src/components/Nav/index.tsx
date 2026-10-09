@@ -114,11 +114,9 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 	} = useGetLiteDashboards()
 	// A failed list says so where the list would be; the dashboards saved from the last load stay listed above it.
 	const dashboardsStatus = dashboardsFailed ? (
-		<InlineStatus variant="error">
-			<span className="flex flex-wrap items-center justify-between gap-2">
-				<span>
-					{liteDashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
-				</span>
+		<InlineStatus
+			variant="error"
+			action={
 				<Button
 					ref={focusAfterDashboardsRetry}
 					type="button"
@@ -128,7 +126,9 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 				>
 					Try again
 				</Button>
-			</span>
+			}
+		>
+			{liteDashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
 		</InlineStatus>
 	) : null
 

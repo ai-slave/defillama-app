@@ -318,9 +318,9 @@ function AddToArticleForm({
 
 							<div className="max-h-56 overflow-y-auto overscroll-contain">
 								{queryReadFailed(drafts) ? (
-									<InlineStatus variant="error">
-										<div className="flex flex-wrap items-center justify-between gap-2">
-											<span>Couldn&apos;t load your drafts.</span>
+									<InlineStatus
+										variant="error"
+										action={
 											<Button
 												// The list replaces this button once the retry loads it, so focus moves to the search field above.
 												ref={passFocusOnLeave(() => searchRef.current)}
@@ -331,7 +331,9 @@ function AddToArticleForm({
 											>
 												Try again
 											</Button>
-										</div>
+										}
+									>
+										Couldn&apos;t load your drafts.
 									</InlineStatus>
 								) : drafts.isLoading ? (
 									<div role="status" aria-live="polite" className="flex items-center justify-center py-8">

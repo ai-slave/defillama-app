@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Icon } from './Icon'
 import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
 
@@ -19,11 +20,12 @@ import { Panel } from './Panel'
      these parts, with the quiet LoadingIndicator they render by default.
      A loading state never sits on the bare page background.
    - Copy is text-center body-sm: loading and empty text-tertiary, error
-     text-error with role="alert". Ad-hoc placeholders use the same
+     text-error with role="alert". InlineStatus draws its own box (below). Ad-hoc placeholders use the same
      tokens; never raw `text-red-*` or text-primary for "No results found".
    - Shells reserve space with min-h: 360px by default, 400px for a lazy
      chart that renders its own export toolbar, larger only when the route's
-     chart or table shape needs it.
+     chart or table shape needs it. The 360px is an `initial:` default, so
+     a caller's min-h-* always wins.
    - A request's error renders where its data would be, as one of these
      states, never as a toast from an effect watching `.error`. Read it with
      `queryReadFailed` from src/utils/query.ts and check it before loading;
@@ -32,15 +34,18 @@ import { Panel } from './Panel'
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
 
+// Loading has its own parts (PanelLoadingStatus, SurfaceBodyLoadingStatus) that draw the animated LoadingIndicator;
+// the text statuses take only empty and error, so a loading state can never render as bare "Loading" text.
+type TextStatusVariant = Exclude<StatusVariant, 'loading'>
+
 const STATUS_TEXT = {
-	loading: 'text-tertiary',
 	empty: 'text-tertiary',
 	error: 'text-error'
 } as const
 
 type PanelStatusProps = {
 	children: ReactNode
-	variant: StatusVariant
+	variant: TextStatusVariant
 	className?: string
 }
 
@@ -48,7 +53,10 @@ export function PanelStatus({ children, variant, className }: PanelStatusProps) 
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
-		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
+		<Panel
+			padding="sm"
+			className={`flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+		>
 			<p
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
@@ -77,15 +85,50 @@ function bringDialogErrorIntoView(node: HTMLDivElement | null) {
 	if (node?.closest('[role=dialog],[role=alertdialog]')) node.scrollIntoView({ block: 'nearest' })
 }
 
-export function InlineStatus({ children, variant }: { children: ReactNode; variant: 'empty' | 'error' | 'warning' }) {
+const INLINE_STATUS = {
+	error: { box: 'border-error-muted bg-error-faint text-primary', icon: 'circle-x', iconColor: 'text-error' },
+	warning: {
+		box: 'border-warning-muted bg-warning-faint text-primary',
+		icon: 'alert-triangle',
+		iconColor: 'text-warning'
+	},
+	empty: { box: 'border-medium bg-surface-elevated-1 text-tertiary', icon: null, iconColor: '' }
+} as const
+
+/** A message in a dialog or above content: a request that failed, a caveat, an empty note. Error and warning take
+    their tinted box and status icon, so the two never differ by colour alone; the message stays primary text. The
+    icon sits centred on the first line (`h-lh`), so a wrapped message keeps it beside its opening words. `action` is
+    the one sm Button that answers it (Try again, Renew); with it, icon and text centre on that button's 24px row.
+    A field's own error is never an InlineStatus: Field draws it under the field. Where the failed part already draws
+    its own error (the Turnstile widget), the line under it is a body-sm text-secondary hint instead of a second box. */
+export function InlineStatus({
+	children,
+	variant,
+	action
+}: {
+	children: ReactNode
+	variant: 'empty' | 'error' | 'warning'
+	action?: ReactNode
+}) {
+	const { box, icon, iconColor } = INLINE_STATUS[variant]
+	// The first line drops by half of what the 24px action row adds over one line of text.
+	const firstLine = action ? 'mt-[calc((1.5rem_-_1lh)/2)]' : ''
 	return (
 		<div
 			// Attached only while the status is an error, so a status that turns into one in place scrolls too.
 			ref={variant === 'error' ? bringDialogErrorIntoView : undefined}
 			role={variant === 'error' ? 'alert' : 'status'}
-			className={`rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm ${variant === 'warning' ? 'text-warning' : STATUS_TEXT[variant]}`}
+			className={`flex gap-2 rounded-lg border px-3 body-sm ${action ? 'py-1.5' : 'py-2'} ${box}`}
 		>
-			{children}
+			{icon ? (
+				<span className={`flex h-lh shrink-0 items-center ${firstLine}`}>
+					<Icon name={icon} className={`size-4 ${iconColor}`} aria-hidden />
+				</span>
+			) : null}
+			<div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-1">
+				<div className={`min-w-0 ${firstLine}`}>{children}</div>
+				{action}
+			</div>
 		</div>
 	)
 }
@@ -107,7 +150,10 @@ export function SurfaceLoadingOverlay({ label }: { label: string }) {
 
 export function PanelLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
 	return (
-		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
+		<Panel
+			padding="sm"
+			className={`flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+		>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				<LoadingIndicator label={label} />
 			</div>
@@ -117,7 +163,7 @@ export function PanelLoadingStatus({ label = 'Loading', className }: { label?: s
 
 type SurfaceBodyStatusProps = {
 	children: ReactNode
-	variant: StatusVariant
+	variant: TextStatusVariant
 	className?: string
 	contentClassName?: string
 	textClassName?: string
@@ -134,7 +180,7 @@ export function SurfaceBodyStatus({
 	const statusTextClassName = textClassName ?? `body-sm ${STATUS_TEXT[variant]}`
 
 	return (
-		<div className={`flex min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
+		<div className={`flex flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}>
 			<div
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
@@ -148,7 +194,7 @@ export function SurfaceBodyStatus({
 
 export function SurfaceBodyLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
 	return (
-		<div className={`flex min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
+		<div className={`flex flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				<LoadingIndicator label={label} />
 			</div>

@@ -7,8 +7,9 @@ import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Field } from '~/ui/Field'
+import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
-import { codeTextareaStyles, Input } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
@@ -90,7 +91,8 @@ function CustomDataForm({
 	onPaneChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
-	const csvErrorId = useId()
+	const csvErrorId = `${useId()}-error`
+	const pasteId = useId()
 	// A CSV that does not parse says so as it is read; a missing one waits for Add. No parse error is '', not null.
 	const csvError = customData.error || submitError
 	// A fresh CSV preview replaces the stored rows, so those only decode while there is no preview.
@@ -145,8 +147,7 @@ function CustomDataForm({
 		applyTypedCsv(text, customData.sourceName)
 	}
 
-	const handleFile = (file: File | undefined) => {
-		if (!file) return
+	const handleFile = (file: File) => {
 		applyTypedCsv.cancel()
 		try {
 			assertCustomDataSizeAllowed(file.size)
@@ -198,30 +199,46 @@ function CustomDataForm({
 				</Field>
 
 				{/* A file or a paste fills one CSV, so their error sits under both and the paste field takes it. */}
-				<div data-invalid={csvError ? '' : undefined} className="flex min-h-0 flex-1 flex-col gap-3">
-					<label className="flex flex-col gap-1">
-						<span className="label-sm text-secondary">CSV file</span>
-						<input
-							type="file"
-							accept=".csv,text/csv"
-							data-umami-event="custom-data-file"
-							onChange={(event) => handleFile(event.target.files?.[0])}
-							className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary file:mr-2 file:rounded-sm file:border-0 file:bg-surface file:px-2 file:py-1 file:label-sm file:text-primary"
-						/>
-					</label>
+				{/* A CSV dropped anywhere in the column loads like a picked one, as the native file box allowed. */}
+				<div
+					data-invalid={csvError ? '' : undefined}
+					className="flex min-h-0 flex-1 flex-col gap-3"
+					onDragOver={(event) => {
+						if (event.dataTransfer.types.includes('Files')) event.preventDefault()
+					}}
+					onDrop={(event) => {
+						const file = event.dataTransfer.files[0]
+						if (!file) return
+						event.preventDefault()
+						handleFile(file)
+					}}
+				>
+					<FileButton
+						accept=".csv,text/csv"
+						size="md"
+						data-umami-event="custom-data-file"
+						onFiles={([file]) => handleFile(file)}
+						className="self-start"
+					>
+						<Icon name="paperclip" className="size-3.5" aria-hidden />
+						Upload CSV file
+					</FileButton>
 
-					<label className="flex min-h-0 flex-1 flex-col gap-1">
-						<span className="label-sm text-secondary">Or paste CSV</span>
-						<textarea
+					<div className="flex min-h-0 flex-1 flex-col gap-1">
+						<label htmlFor={pasteId} className="label-sm text-secondary">
+							Or paste CSV
+						</label>
+						<Textarea
+							id={pasteId}
 							value={customData.csvText}
 							onChange={(event) => handleTextChange(event.target.value)}
 							placeholder={'date,value\n2026-01-01,10'}
-							aria-label="Paste CSV"
 							aria-invalid={csvError ? true : undefined}
 							aria-describedby={csvError ? csvErrorId : undefined}
-							className={`${codeTextareaStyles} min-h-[160px] w-full flex-1 resize-none`}
+							variant="code"
+							className="min-h-[160px] w-full flex-1 resize-none"
 						/>
-					</label>
+					</div>
 
 					{csvError ? (
 						<p id={csvErrorId} className="body-sm text-error">

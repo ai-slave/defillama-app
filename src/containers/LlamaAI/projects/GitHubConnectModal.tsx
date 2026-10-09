@@ -7,7 +7,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { Field } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input, inputStyles } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -51,13 +51,15 @@ export function GitHubConnectModal(props: GitHubConnectModalProps) {
 
 function LoadError({ message, retrying, onRetry }: { message: string; retrying: boolean; onRetry: () => void }) {
 	return (
-		<InlineStatus variant="error">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<span>{message}</span>
+		<InlineStatus
+			variant="error"
+			action={
 				<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
 					Try again
 				</Button>
-			</div>
+			}
+		>
+			{message}
 		</InlineStatus>
 	)
 }
@@ -274,7 +276,7 @@ function GitHubConnectForm({
 												ref={takeLostFocus}
 												disabled={fieldsLocked}
 												placeholder="owner/repo"
-												className={`${inputStyles} w-full`}
+												render={<Input className="w-full" />}
 											/>
 											<ComboboxSurface
 												variant="search-results"
@@ -332,7 +334,7 @@ function GitHubConnectForm({
 												ref={takeLostFocus}
 												disabled={fieldsLocked}
 												placeholder="main"
-												className={`${inputStyles} w-full`}
+												render={<Input className="w-full" />}
 											/>
 											<ComboboxSurface
 												variant="search-results"

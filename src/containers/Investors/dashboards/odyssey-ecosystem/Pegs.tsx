@@ -1,7 +1,8 @@
+import { StatTile } from '~/ui/SummaryStats'
 import { formatDateTime } from '~/utils/dateFormat'
 import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { useTab, type PegRow, type PegSupplyCap, type PegsResponse } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
@@ -83,32 +84,41 @@ export default function Pegs() {
 
 			<SectionHeader>Spot Peg · Headline</SectionHeader>
 			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-				<KpiCard
-					label="msUSD spot peg"
-					value={
-						k?.msUSD
-							? `${formatRatio(k.msUSD.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.spotDeviationBps} bps)`
-							: undefined
-					}
-					sub={
-						k?.msUSD
-							? `Worst: ${k.msUSD.worstChain} @ ${formatUsd(k.msUSD.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msUSD.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.worstDeviationBps} bps)`
-							: undefined
-					}
-				/>
-				<KpiCard
-					label="msETH spot peg"
-					value={
-						k?.msETH
-							? `${formatRatio(k.msETH.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.spotDeviationBps} bps)`
-							: undefined
-					}
-					sub={
-						k?.msETH
-							? `Worst: ${k.msETH.worstChain} @ ${formatUsd(k.msETH.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msETH.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.worstDeviationBps} bps)`
-							: undefined
-					}
-				/>
+				{data ? (
+					<>
+						<StatTile
+							label="msUSD spot peg"
+							value={
+								k?.msUSD
+									? `${formatRatio(k.msUSD.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.spotDeviationBps} bps)`
+									: '—'
+							}
+							sub={
+								k?.msUSD
+									? `Worst: ${k.msUSD.worstChain} @ ${formatUsd(k.msUSD.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msUSD.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.worstDeviationBps} bps)`
+									: undefined
+							}
+						/>
+						<StatTile
+							label="msETH spot peg"
+							value={
+								k?.msETH
+									? `${formatRatio(k.msETH.spotPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.spotDeviationBps} bps)`
+									: '—'
+							}
+							sub={
+								k?.msETH
+									? `Worst: ${k.msETH.worstChain} @ ${formatUsd(k.msETH.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msETH.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.worstDeviationBps} bps)`
+									: undefined
+							}
+						/>
+					</>
+				) : (
+					<>
+						<StatTile label="msUSD spot peg" loading />
+						<StatTile label="msETH spot peg" loading />
+					</>
+				)}
 			</div>
 
 			<SectionHeader>msUSD · Peg Depth</SectionHeader>

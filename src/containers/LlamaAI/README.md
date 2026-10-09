@@ -20,6 +20,7 @@
 | Link Telegram or Slack                   | `useIntegrationLink` / `useSlackIntegrationLink`; components read derived state, never poll  | `components/SlackIntegrationRow.tsx`     |
 | Show status in the thread                | `ChatStatusLine`                                                                             | `components/status/ChatStatusLine.tsx`   |
 | Show state that blocks the next prompt   | `ComposerTray`; the composer box holds the draft only                                        | failed prompt, full queue, context limit |
+| Draw the box around a prompt             | `ComposerFrame` (`row` or `stack`; `gold` on the /ai landing), never a hand-built border     | `components/input/ComposerFrame.tsx`     |
 | Pick a color                             | A `semantics.css` token; `--ai-*` only for the exceptions in `src/styles/themes/llamaai.css` | gold welcome action                      |
 
 ## Checks a table can't express
@@ -80,7 +81,7 @@
 ### UI
 
 - Project pages use `heading-sm` titles, 16px top padding and 16px between sections; breadcrumb and title rows use 8px gaps. Tabs use `TabLink` through the Ariakit `Tab` render prop.
-- Prose fields use `textareaStyles`, compact inputs `inputStyles`; both use 16px text below `sm`. Textarea height follows content.
+- Prose fields use `Textarea`, compact inputs `Input`; both use 16px text below `sm`. Textarea height follows content.
 - The sidebar header holds actions only: the toggles, the Chat | Terminal switch and New chat. Alerts and Projects form one row list under it, and History starts on spacing, not a divider. The switch is a `SegmentedControl` with `variant="mode"`, so New chat stays the only brand-colored control; the rail stacks the same switch as icons. It renders only for accounts with the terminal, and never in the open sidebar below `lg`, where the terminal does not open.
 - The sidebar Alerts row, with its count, is the one standing entry to the Alerts modal. The composer and landing hold no Alerts button; alerts are created by asking in chat, and contextual entries (tips, alert cards, token pages) may open the modal. Sidebar icons stay neutral.
 - Sidebar projects get a 16px folder icon; chat rows stay text-only. Chat title rows are `body-md`, at least 36px high on desktop and 44px below `sm`.

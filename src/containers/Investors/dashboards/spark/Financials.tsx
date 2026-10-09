@@ -6,6 +6,7 @@ import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
@@ -43,15 +44,6 @@ function ChartCard({
 				{actions}
 			</div>
 			{children}
-		</div>
-	)
-}
-
-function KpiCard({ label, value }: { label: string; value: string }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value}</span>
 		</div>
 	)
 }
@@ -348,7 +340,7 @@ function TvlSection({ data }: { data: FinData }) {
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Total Value Locked</SectionHeader>
-			<KpiCard label="Current TVL" value={data.tvl.currentFormatted} />
+			<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 			<ChartCard
 				title={data.tvl.title}
 				actions={
@@ -602,7 +594,7 @@ export default function Financials() {
 			{/* Section 1: KPIs */}
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				{data.kpis.map((kpi) => (
-					<KpiCard key={kpi.label} label={kpi.label} value={kpi.formatted} />
+					<StatTile key={kpi.label} label={kpi.label} value={kpi.formatted} />
 				))}
 			</div>
 

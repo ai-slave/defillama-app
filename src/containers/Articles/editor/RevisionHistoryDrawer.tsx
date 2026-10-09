@@ -753,13 +753,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 function LoadError({ message, retrying, onRetry }: { message: string; retrying: boolean; onRetry: () => void }) {
 	return (
 		<div className="p-4">
-			<InlineStatus variant="error">
-				<div className="flex flex-wrap items-center justify-between gap-2">
-					<span>{message}</span>
+			<InlineStatus
+				variant="error"
+				action={
 					<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
 						Try again
 					</Button>
-				</div>
+				}
+			>
+				{message}
 			</InlineStatus>
 		</div>
 	)

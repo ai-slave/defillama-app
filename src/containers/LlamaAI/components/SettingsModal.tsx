@@ -34,7 +34,7 @@ import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from 
 import { Field } from '~/ui/Field'
 import { neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, textareaStyles } from '~/ui/Input'
+import { Input, inputStyles, Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -538,7 +538,7 @@ export const SettingsModal = memo(function SettingsModal({
 											}}
 										>
 											<div className="relative">
-												<textarea
+												<Textarea
 													ref={instructionsRef}
 													id="llamaai-custom-instructions"
 													aria-label="Custom instructions"
@@ -555,7 +555,7 @@ export const SettingsModal = memo(function SettingsModal({
 														}
 													}}
 													placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-													className={`${textareaStyles} w-full resize-none`}
+													className="w-full resize-none"
 													rows={5}
 												/>
 												{showClear ? (

@@ -138,9 +138,9 @@ export function useSavedDraft<S, F extends Fields>(
 
 export function SavedChangedNotice({ noun, onLoadSaved }: { noun: string; onLoadSaved: () => void }) {
 	return (
-		<InlineStatus variant="warning">
-			<span className="flex flex-wrap items-center justify-between gap-2">
-				<span>This {noun} was changed elsewhere while you were editing. Your unsaved edits are kept.</span>
+		<InlineStatus
+			variant="warning"
+			action={
 				<Button
 					variant="secondary"
 					size="sm"
@@ -153,7 +153,9 @@ export function SavedChangedNotice({ noun, onLoadSaved }: { noun: string; onLoad
 				>
 					Load saved version
 				</Button>
-			</span>
+			}
+		>
+			This {noun} was changed elsewhere while you were editing. Your unsaved edits are kept.
 		</InlineStatus>
 	)
 }

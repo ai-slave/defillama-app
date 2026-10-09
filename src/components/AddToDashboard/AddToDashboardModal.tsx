@@ -267,7 +267,7 @@ function AddToDashboardDialog({
 				slug: repairDashboard?.slug
 			}
 		: picked
-	const targetErrorId = useId()
+	const targetErrorId = `${useId()}-error`
 	const [submitted, setSubmitted] = useState(false)
 	// Kept while a retry runs: the mutation clears its own error when the retry starts.
 	const [submitError, setSubmitError] = useState<string | null>(null)
@@ -437,11 +437,9 @@ function AddToDashboardDialog({
 						</div>
 
 						{dashboardsFailed ? (
-							<InlineStatus variant="error">
-								<div className="flex flex-wrap items-center justify-between gap-2">
-									<span>
-										{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
-									</span>
+							<InlineStatus
+								variant="error"
+								action={
 									<Button
 										type="button"
 										size="sm"
@@ -450,7 +448,9 @@ function AddToDashboardDialog({
 									>
 										Try again
 									</Button>
-								</div>
+								}
+							>
+								{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
 							</InlineStatus>
 						) : null}
 

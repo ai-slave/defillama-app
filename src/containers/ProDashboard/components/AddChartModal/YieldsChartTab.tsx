@@ -313,9 +313,9 @@ export function YieldsChartTab({
 	return (
 		<div className="flex flex-col gap-4">
 			{queryReadFailed(yieldsQuery) && !yieldsQuery.data ? (
-				<InlineStatus variant="error">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<span>Couldn't load the yield pools.</span>
+				<InlineStatus
+					variant="error"
+					action={
 						<Button
 							type="button"
 							size="sm"
@@ -324,7 +324,9 @@ export function YieldsChartTab({
 						>
 							Try again
 						</Button>
-					</div>
+					}
+				>
+					Couldn't load the yield pools.
 				</InlineStatus>
 			) : yieldsLoading ? (
 				<div role="status" aria-live="polite" className="flex h-32 items-center justify-center">

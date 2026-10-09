@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardAnnotation } from '../../dashboardTypes'
 import { AnnotationsPopover } from '../AnnotationsPopover'
@@ -62,11 +63,10 @@ test('a reopened popover keeps the typed draft but starts with its errors quiet'
 	const disclosure = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Annotations'))!
 	await act(async () => disclosure.click())
 	await waitForUi(() => expect(document.body.querySelector('input[type="text"]')).not.toBeNull())
-	const errors = () => [...document.body.querySelectorAll('.text-error')].map((node) => node.textContent)
 	const labelField = () => document.body.querySelector<HTMLInputElement>('input[type="text"]')!
 	const addButton = () => [...document.body.querySelectorAll('button')].find((b) => b.textContent === 'Add')!
 	await act(async () => addButton().click())
-	expect(errors()).toEqual(['Enter a date.', 'Enter a label.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a date.', 'Enter a label.'])
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(labelField(), 'Upgrade')
 		labelField().dispatchEvent(new Event('input', { bubbles: true }))
@@ -77,7 +77,7 @@ test('a reopened popover keeps the typed draft but starts with its errors quiet'
 	await act(async () => disclosure.click())
 	await waitForUi(() => expect(document.body.querySelector('input[type="text"]')).not.toBeNull())
 	expect(labelField().value).toBe('Upgrade')
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	await act(async () => addButton().click())
-	expect(errors()).toEqual(['Enter a date.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a date.'])
 })

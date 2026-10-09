@@ -115,10 +115,10 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	// user why; a retry cannot succeed, so it offers the upgrade instead of keeping the draft for one.
 	const { isAtDashboardLimit } = useFreeTierStatus()
 	const creationFeedback = creationError ? (
-		<InlineStatus variant="error">
-			{isAtDashboardLimit ? (
-				<div className="flex flex-wrap items-center justify-between gap-2">
-					<span>{creationError}</span>
+		<InlineStatus
+			variant="error"
+			action={
+				isAtDashboardLimit ? (
 					<Button
 						as={BasicLink}
 						variant="primary"
@@ -128,13 +128,11 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 					>
 						Upgrade to Pro
 					</Button>
-				</div>
-			) : (
-				<>
-					{creationError}
-					<span className="block">Your choices are still here.</span>
-				</>
-			)}
+				) : null
+			}
+		>
+			{creationError}
+			{isAtDashboardLimit ? null : <span className="block">Your choices are still here.</span>}
 		</InlineStatus>
 	) : null
 	const handleBackToPicker = () => setView({ mode: 'picker', from: view.mode })
@@ -350,13 +348,15 @@ function DashboardTemplates({
 	return (
 		<div className="flex flex-col gap-3">
 			{anyFailed ? (
-				<InlineStatus variant="error">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<span>Could not load template data.</span>
+				<InlineStatus
+					variant="error"
+					action={
 						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retry}>
 							Try again
 						</Button>
-					</div>
+					}
+				>
+					Could not load template data.
 				</InlineStatus>
 			) : null}
 			<div role="group" aria-label="Templates" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -329,16 +330,15 @@ test('leaving after a failed save asks before discarding the generated dashboard
 test('a submit with a missing name and a short prompt says so under each field, focuses the name and sends nothing', async () => {
 	save.mockResolvedValueOnce({ created: dashboard })
 	await render()
-	const errors = () => [...document.querySelectorAll('.text-error')].map((element) => element.textContent)
 	await type(promptField(), 'Fees')
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	await submit()
-	expect(errors()).toEqual(['Enter a dashboard name.', 'Enter at least 20 characters.'])
+	expect(fieldErrorTexts()).toEqual(['Enter a dashboard name.', 'Enter at least 20 characters.'])
 	expect(document.activeElement).toBe(nameField())
 	expect(nameField().getAttribute('aria-invalid')).toBe('true')
 	await type(nameField(), 'My analysis')
 	await type(promptField(), 'Compare the fees and TVL of Ethereum and Arbitrum')
-	expect(errors()).toEqual([])
+	expect(fieldErrorTexts()).toEqual([])
 	expect(mocks.creator).not.toHaveBeenCalled()
 	await submit()
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())

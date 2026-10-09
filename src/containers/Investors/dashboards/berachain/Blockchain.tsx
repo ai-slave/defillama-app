@@ -3,20 +3,12 @@ import { lazy } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function KpiCard({ label, value }: { label: string; value: string | number | null }) {
-	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
-			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<span className="mono-xl text-primary">{value ?? '—'}</span>
-		</div>
-	)
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -156,10 +148,10 @@ export default function Blockchain() {
 			{/* Chain Activity */}
 			<SectionHeader title="Chain Activity" />
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Latest Daily Txs" value={data.activityKpis.latestTxCount.formatted} />
-				<KpiCard label="Active Addresses" value={data.activityKpis.latestActiveAddresses.formatted} />
-				<KpiCard label="Avg Daily Txs (7d)" value={data.activityKpis.avgDailyTxs7d.formatted} />
-				<KpiCard label="Total Txs (All Time)" value={data.activityKpis.totalTxsAllTime.formatted} />
+				<StatTile label="Latest Daily Txs" value={data.activityKpis.latestTxCount.formatted} />
+				<StatTile label="Active Addresses" value={data.activityKpis.latestActiveAddresses.formatted} />
+				<StatTile label="Avg Daily Txs (7d)" value={data.activityKpis.avgDailyTxs7d.formatted} />
+				<StatTile label="Total Txs (All Time)" value={data.activityKpis.totalTxsAllTime.formatted} />
 			</div>
 
 			<ChartCard title="Daily Transactions">
@@ -189,10 +181,10 @@ export default function Blockchain() {
 			{/* Gas & Fee Economics */}
 			<SectionHeader title="Gas & Fee Economics" />
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Fees (7d)" value={data.gasKpis.totalFees7d.formatted} />
-				<KpiCard label="Fees (30d)" value={data.gasKpis.totalFees30d.formatted} />
-				<KpiCard label="Fees (All Time)" value={data.gasKpis.totalFeesAllTime.formatted} />
-				<KpiCard label="Avg Fee per Tx" value={data.gasKpis.avgFeePerTx.formatted} />
+				<StatTile label="Fees (7d)" value={data.gasKpis.totalFees7d.formatted} />
+				<StatTile label="Fees (30d)" value={data.gasKpis.totalFees30d.formatted} />
+				<StatTile label="Fees (All Time)" value={data.gasKpis.totalFeesAllTime.formatted} />
+				<StatTile label="Avg Fee per Tx" value={data.gasKpis.avgFeePerTx.formatted} />
 			</div>
 
 			<ChartCard title="Daily Gas Fees (USD)">

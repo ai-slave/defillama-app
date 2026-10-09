@@ -305,16 +305,22 @@ export function SelectItemsStep() {
 									<LoadingIndicator label={`Loading ${typeLabel.toLowerCase()}`} />
 								</div>
 							) : protocolCatalog.status === 'error' ? (
-								<div className="flex h-full flex-col items-center justify-center gap-2 p-3">
-									<InlineStatus variant="error">Failed to load {typeLabel.toLowerCase()}.</InlineStatus>
-									<Button
-										type="button"
-										size="sm"
-										pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
-										onClick={protocolCatalog.retry}
+								<div className="p-3">
+									<InlineStatus
+										variant="error"
+										action={
+											<Button
+												type="button"
+												size="sm"
+												pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
+												onClick={protocolCatalog.retry}
+											>
+												Try again
+											</Button>
+										}
 									>
-										Retry
-									</Button>
+										Couldn&rsquo;t load {typeLabel.toLowerCase()}.
+									</InlineStatus>
 								</div>
 							) : filteredOptions.length === 0 ? (
 								<p role="status" className="flex h-full items-center justify-center body-sm text-tertiary">

@@ -14,7 +14,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -122,7 +122,7 @@ function SiteSearchPalette({ onSelect }: { onSelect: () => void }) {
 			}}
 		>
 			<DialogSearchHeader title="Search">
-				<Ariakit.Combobox placeholder="Search…" aria-label="Search" className={inputStyles} />
+				<Ariakit.Combobox placeholder="Search…" aria-label="Search" render={<Input />} />
 			</DialogSearchHeader>
 			<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} p-2`} alwaysVisible>
 				<SearchResults searchValue={searchValue} onSelect={onSelect} />
@@ -208,10 +208,10 @@ function SearchLoading() {
 function SearchError({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
 	return (
 		<div className="p-2">
-			<InlineStatus variant="error">
-				<span className="flex flex-wrap items-center justify-between gap-2">
-					Couldn&rsquo;t load search results.
-					{/* Replaces a See more that failed with focus, so it takes that focus. */}
+			<InlineStatus
+				variant="error"
+				action={
+					// Replaces a See more that failed with focus, so it takes that focus.
 					<Button
 						ref={takeLostFocus}
 						type="button"
@@ -221,7 +221,9 @@ function SearchError({ retrying, onRetry }: { retrying: boolean; onRetry: () => 
 					>
 						Try again
 					</Button>
-				</span>
+				}
+			>
+				Couldn&rsquo;t load search results.
 			</InlineStatus>
 		</div>
 	)
@@ -299,7 +301,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						ref={inputField}
 						// The default list loads with the popover; starting it on focus has it ready by the first open.
 						onFocus={() => void queryClient.prefetchQuery(defaultSearchListQuery)}
-						className={`${inputStyles} w-full pr-14 pl-9`}
+						render={<Input className="w-full pr-14 pl-9" />}
 					/>
 					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center justify-center rounded-md bg-brand-muted px-1.5 label-xs text-link">
 						⌘K

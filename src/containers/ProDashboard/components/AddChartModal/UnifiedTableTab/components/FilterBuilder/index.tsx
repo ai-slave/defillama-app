@@ -4,7 +4,7 @@ import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable
 import { Button } from '~/ui/Button'
 import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -334,7 +334,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				</div>
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="body-sm text-tertiary">{prefix}</span> : null}
-					<input
+					<Input
 						type="text"
 						inputMode="decimal"
 						value={localValue}
@@ -343,7 +343,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						ref={takeLostFocus}
 						aria-label={`${config.label} value`}
 						placeholder="e.g. 10, 1k, 1m"
-						className={`${inputStyles} min-w-0 flex-1`}
+						className="min-w-0 flex-1"
 					/>
 					{suffix ? <span className="body-sm text-tertiary">{suffix}</span> : null}
 				</div>
@@ -382,7 +382,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			{filter.operator === 'between' ? (
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="body-sm text-tertiary">{prefix}</span> : null}
-					<input
+					<Input
 						type="text"
 						inputMode="decimal"
 						value={localMinValue}
@@ -391,10 +391,10 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						ref={takeLostFocus}
 						aria-label={`${config.label} minimum`}
 						placeholder="Min"
-						className={`${inputStyles} min-w-0 flex-1`}
+						className="min-w-0 flex-1"
 					/>
 					<span className="body-sm text-tertiary">-</span>
-					<input
+					<Input
 						type="text"
 						inputMode="decimal"
 						value={localMaxValue}
@@ -402,14 +402,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onKeyDown={handleKeyDown}
 						aria-label={`${config.label} maximum`}
 						placeholder="Max"
-						className={`${inputStyles} min-w-0 flex-1`}
+						className="min-w-0 flex-1"
 					/>
 					{suffix ? <span className="body-sm text-tertiary">{suffix}</span> : null}
 				</div>
 			) : (
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="body-sm text-tertiary">{prefix}</span> : null}
-					<input
+					<Input
 						type="text"
 						inputMode="decimal"
 						value={localValue}
@@ -418,7 +418,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						ref={takeLostFocus}
 						aria-label={`${config.label} value`}
 						placeholder="e.g. 10, 1k, 1m"
-						className={`${inputStyles} min-w-0 flex-1`}
+						className="min-w-0 flex-1"
 					/>
 					{suffix ? <span className="body-sm text-tertiary">{suffix}</span> : null}
 				</div>

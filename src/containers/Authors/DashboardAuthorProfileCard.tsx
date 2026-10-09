@@ -9,7 +9,7 @@ import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getMyDashboardAuthorProfile, TOP_AUTHORS_QUERY_KEY, updateMyDashboardAuthorProfile } from './api'
@@ -312,13 +312,13 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 
 					<Field label="Bio" action={<CharCount value={state.bio} max={BIO_MAX} />}>
 						{(control) => (
-							<textarea
+							<Textarea
 								{...control}
 								value={state.bio}
 								maxLength={BIO_MAX}
 								rows={4}
 								onChange={(e) => setState((prev) => ({ ...prev, bio: e.target.value }))}
-								className={`${textareaStyles} resize-y`}
+								className="resize-y"
 							/>
 						)}
 					</Field>

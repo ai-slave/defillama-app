@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { StatTile } from '~/ui/SummaryStats'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
-import { ChartCard, KpiCard, SectionHeader } from './ui'
+import { ChartCard, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -31,11 +32,11 @@ export default function Network() {
 		<div className="flex flex-col gap-6">
 			<SectionHeader>Network Stats</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard label="Total Txns" value={k.totalTransactions} />
-				<KpiCard label="24h Txns" value={k.transactions24h} />
-				<KpiCard label="Avg Daily 7d" value={k.avgDailyTxs7d} />
-				<KpiCard label="Avg Daily 30d" value={k.avgDailyTxs30d} />
-				<KpiCard label="Total Addresses" value={k.totalAddresses} />
+				<StatTile label="Total Txns" value={k.totalTransactions} />
+				<StatTile label="24h Txns" value={k.transactions24h} />
+				<StatTile label="Avg Daily 7d" value={k.avgDailyTxs7d} />
+				<StatTile label="Avg Daily 30d" value={k.avgDailyTxs30d} />
+				<StatTile label="Total Addresses" value={k.totalAddresses} />
 			</div>
 
 			{c.transactions.dataset.source.length > 0 && (

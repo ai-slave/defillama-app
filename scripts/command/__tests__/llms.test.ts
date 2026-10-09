@@ -57,6 +57,11 @@ const samplePages: DefillamaPages = {
 			description: 'Private research admin route.'
 		},
 		{
+			name: 'Design System',
+			route: '/dev/design-system',
+			description: 'Development-only design system page.'
+		},
+		{
 			name: 'Data Definitions',
 			route: '/data-definitions',
 			description: 'Canonical metric definitions.'
@@ -138,6 +143,7 @@ describe('llms artifact generation', () => {
 		expect(full).not.toContain('External Metrics')
 		expect(full).not.toContain('Sheets Auth')
 		expect(full).not.toContain('Research Admin')
+		expect(full).not.toContain('Design System')
 		expect(full).not.toContain('Hidden Subscription')
 	})
 

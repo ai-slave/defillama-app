@@ -18,7 +18,7 @@ import {
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
@@ -321,7 +321,7 @@ function GenerateDashboardModalInner({
 								<Ariakit.Focusable
 									autoFocus={mode === 'iterate'}
 									render={
-										<textarea
+										<Textarea
 											{...control}
 											ref={promptRef}
 											name="aiDescription"
@@ -333,7 +333,7 @@ function GenerateDashboardModalInner({
 													: 'e.g. Build a DeFi yields dashboard with the top earning protocols, comparing chains and showing historical performance…'
 											}
 											rows={4}
-											className={`${textareaStyles} resize-none`}
+											className="resize-none"
 											readOnly={fieldsLocked}
 											required
 										/>

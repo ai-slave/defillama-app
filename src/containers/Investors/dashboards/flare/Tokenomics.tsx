@@ -3,11 +3,12 @@ import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
-import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
+import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -99,15 +100,15 @@ export default function Tokenomics() {
 				<>
 					<SectionHeader>Inflation & Supply</SectionHeader>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-						<KpiCard label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
-						<KpiCard label="Circulating Supply" value={inf.kpis.circulatingSupply} />
-						<KpiCard
+						<StatTile label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
+						<StatTile label="Circulating Supply" value={inf.kpis.circulatingSupply} />
+						<StatTile
 							label="On-chain Burned (Total)"
 							value={inf.kpis.cumulativeOnchainBurned}
-							def="All on-chain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
+							tooltip="All on-chain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
 						/>
-						<KpiCard label="Emitted (Last Month)" value={inf.kpis.lastMonthEmitted} />
-						<KpiCard label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
+						<StatTile label="Emitted (Last Month)" value={inf.kpis.lastMonthEmitted} />
+						<StatTile label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
 					</div>
 					{inf.pctChart && (
 						<ChartCard title={inf.pctChart.title ?? 'Annualized Inflation Rate'} subtitle={inf.pctChart.subtitle}>
@@ -177,11 +178,11 @@ export default function Tokenomics() {
 
 			<SectionHeader>FLR Transaction Burn</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				<KpiCard label="Latest Daily" value={bk.latestDailyBurn} />
-				<KpiCard label="Burn 7d" value={bk.burn7d} />
-				<KpiCard label="Burn 30d" value={bk.burn30d} />
-				<KpiCard label="Burn YTD" value={bk.burnYtd} />
-				<KpiCard label="Total Burned" value={bk.totalGasBurned} />
+				<StatTile label="Latest Daily" value={bk.latestDailyBurn} />
+				<StatTile label="Burn 7d" value={bk.burn7d} />
+				<StatTile label="Burn 30d" value={bk.burn30d} />
+				<StatTile label="Burn YTD" value={bk.burnYtd} />
+				<StatTile label="Total Burned" value={bk.totalGasBurned} />
 			</div>
 
 			<div className="rounded-lg border border-subtle bg-surface p-4">
@@ -228,12 +229,12 @@ export default function Tokenomics() {
 
 			<SectionHeader>FLR Emissions</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-				{maxSupplyQuery.data != null && <KpiCard label="Max Supply" value={maxSupplyQuery.data} />}
-				<KpiCard label="Latest Epoch Emit" value={ek.latestEpochEmit} />
-				<KpiCard label="Emit 30d" value={ek.emit30d} />
-				<KpiCard label="Cumulative Emitted" value={ek.cumulativeEmissionsTracked} />
-				<KpiCard label="Epochs Tracked" value={ek.epochsTracked} />
-				<KpiCard label="Latest Epoch Burn" value={ek.latestEpochBurn} />
+				{maxSupplyQuery.data != null && <StatTile label="Max Supply" value={maxSupplyQuery.data} />}
+				<StatTile label="Latest Epoch Emit" value={ek.latestEpochEmit} />
+				<StatTile label="Emit 30d" value={ek.emit30d} />
+				<StatTile label="Cumulative Emitted" value={ek.cumulativeEmissionsTracked} />
+				<StatTile label="Epochs Tracked" value={ek.epochsTracked} />
+				<StatTile label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
 			<ChartCard title={e.emissionsTitle}>
 				<MultiSeriesChart
@@ -249,25 +250,25 @@ export default function Tokenomics() {
 
 			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard
+				<StatTile
 					label="Burn / Emit (latest)"
 					value={ek.latestBurnVsEmitPct}
-					def="Transaction-fee burn as a percent of FLR emitted, for the latest reward epoch. 100% would mean burn fully offsets new emission."
+					tooltip="Transaction-fee burn as a percent of FLR emitted, for the latest reward epoch. 100% would mean burn fully offsets new emission."
 				/>
-				<KpiCard
+				<StatTile
 					label="Net Inflation (latest)"
 					value={ek.latestNetInflation}
-					def="FLR emitted minus FLR burned, for the latest reward epoch."
+					tooltip="FLR emitted minus FLR burned, for the latest reward epoch."
 				/>
-				<KpiCard
+				<StatTile
 					label="Burn / Emit (30d)"
 					value={ek.burnVsEmit30dPct}
-					def="Transaction-fee burn as a percent of FLR emitted, over the trailing 30 days."
+					tooltip="Transaction-fee burn as a percent of FLR emitted, over the trailing 30 days."
 				/>
-				<KpiCard
+				<StatTile
 					label="Net Inflation (30d)"
 					value={ek.netInflation30d}
-					def="FLR emitted minus FLR burned, over the trailing 30 days."
+					tooltip="FLR emitted minus FLR burned, over the trailing 30 days."
 				/>
 			</div>
 			<ChartCard title={e.burnVsEmitTitle}>
@@ -288,22 +289,26 @@ export default function Tokenomics() {
 			{fire ? (
 				<>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-						<KpiCard label="Total Collected" value={fire.kpis.totalCollectedUsd} />
-						<KpiCard label="Collected 30d" value={fire.kpis.collected30dUsd} />
-						<KpiCard
+						<StatTile label="Total Collected" value={fire.kpis.totalCollectedUsd} />
+						<StatTile label="Collected 30d" value={fire.kpis.collected30dUsd} />
+						<StatTile
 							label="FDC Fees"
 							value={fire.kpis.fdcCollectedUsd}
-							def="Fees paid for FDC (Flare Data Connector) data requests."
+							tooltip="Fees paid for FDC (Flare Data Connector) data requests."
 						/>
-						<KpiCard label="Minting Fees" value={fire.kpis.mintingFeeCollectedUsd} def="Fees paid when minting FXRP." />
+						<StatTile
+							label="Minting Fees"
+							value={fire.kpis.mintingFeeCollectedUsd}
+							tooltip="Fees paid when minting FXRP."
+						/>
 						{fire.kpis.redemptionFeeCollectedUsd != null && (
-							<KpiCard
+							<StatTile
 								label="Redemption Fees"
 								value={fire.kpis.redemptionFeeCollectedUsd}
-								def="Fees paid when redeeming FXRP back to XRP."
+								tooltip="Fees paid when redeeming FXRP back to XRP."
 							/>
 						)}
-						<KpiCard label="Tag Fees" value={fire.kpis.tagsCollectedUsd} def="Fees from Flare's Tags product." />
+						<StatTile label="Tag Fees" value={fire.kpis.tagsCollectedUsd} tooltip="Fees from Flare's Tags product." />
 					</div>
 					<div className="rounded-lg border border-subtle bg-surface p-4">
 						<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
