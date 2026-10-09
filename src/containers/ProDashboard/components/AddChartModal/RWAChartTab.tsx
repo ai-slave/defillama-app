@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
-import { chartColor } from '~/constants/colors'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
 	useRWAAssetsList,
@@ -322,11 +323,7 @@ function OverviewPreview({
 	)
 	const pieData = snapshot?.view === 'pie' ? snapshot.data : EMPTY_RWA_SNAPSHOT_ITEMS
 
-	const pieColors = useMemo(() => {
-		const colors: Record<string, string> = {}
-		for (const [idx, item] of pieData.entries()) colors[item.name] = chartColor(idx)
-		return colors
-	}, [pieData])
+	const pieChartData = useMemo(() => preparePieChartData({ data: pieData, limit: CHART_SERIES_LIMIT }), [pieData])
 
 	const barData = snapshot?.view === 'hbar' ? snapshot : EMPTY_RWA_BAR_DATA
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
@@ -345,7 +342,7 @@ function OverviewPreview({
 					showTotalInTooltip={!chartDataset.dimensions.some(isRwaTotalSeriesLabel)}
 				/>
 			) : chartView === 'pie' && pieData.length > 0 ? (
-				<PieChart chartData={pieData} stackColors={pieColors} />
+				<PieChart chartData={pieChartData} />
 			) : chartView === 'hbar' && barData.categories.length > 0 ? (
 				<HBarChart categories={barData.categories} values={barData.values} valueSymbol="$" />
 			) : chartView === 'treemap' && treemapData.length > 0 ? (

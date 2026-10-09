@@ -2,7 +2,13 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -140,15 +146,17 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					}
 					items.sort((a, b) => b.value - a.value)
 
-					const rows = items
-						.map(
-							(item) =>
-								`<li style="list-style:none;padding:1px 0">${item.marker}${escapeHtml(item.name)}&nbsp;&nbsp;<b>${formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</b></li>`
-						)
-						.join('')
+					const pointedName = getPointedSeriesName(list)
+					let pointedRow = ''
+					let rows = ''
+					for (const item of items) {
+						const row = `${item.marker}${escapeHtml(item.name)}&nbsp;&nbsp;<b>${formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</b>`
+						if (item.name === pointedName) pointedRow = `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</li>`
+						else rows += `<li style="list-style:none;padding:1px 0">${row}</li>`
+					}
 					const totalRow = `<li style="list-style:none;padding:2px 0 0;border-top:1px solid ${activeColors.axis};margin-top:4px;font-weight:600">Total&nbsp;&nbsp;${formatCompactNumber(total, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</li>`
 
-					return `<div><div style="margin-bottom:6px;font-weight:500">${dateLabel}</div><ul style="margin:0;padding:0">${rows}${totalRow}</ul></div>`
+					return `<div><div style="margin-bottom:6px;font-weight:500">${dateLabel}</div><ul style="margin:0;padding:0">${pointedRow}${rows}${totalRow}</ul></div>`
 				}
 			}
 		}),

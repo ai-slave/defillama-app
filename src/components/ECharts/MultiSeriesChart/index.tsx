@@ -45,6 +45,7 @@ import {
 import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { useLoadedIconUrls } from '../shared/icon'
 import { mergeDeep } from '../shared/merge'
+import { normalizeTooltipItems } from '../shared/tooltip'
 import {
 	buildDefaultChartSettings,
 	getViewportTooltipPosition,
@@ -69,10 +70,11 @@ import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes } from './logScale'
 import { buildMultiYAxis, normalizeSeriesYAxisIndices } from './multiYAxis'
 import { selectChartDatasetColumns } from './selection'
-import { buildMultiSeries } from './series'
+import { buildMultiSeries, getPointerLines, getPointerStack } from './series'
+import { assignStackColors } from './stackColors'
 import { createStateTimelineSeries, getStateTimelineGridBottom } from './stateTimeline'
 import { buildSparseTimeSeriesDataset } from './timeSeriesDataset'
-import { createTooltipFormatter } from './tooltip'
+import { createTooltipFormatter, findNearestLineSeries, findPointedStackSeries } from './tooltip'
 import type { IMultiSeriesChartProps } from './types'
 
 echarts.use([
@@ -156,6 +158,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		logoBg: string
 	} | null>(null)
 	const latestTooltipDataIndexRef = useRef<number | null>(null)
+	// The pointer's pixel y over the chart, so the tooltip can name the stack band under it.
+	const pointerYRef = useRef<number | null>(null)
 	const chartMotion = useContext(ChartMotionContext)
 	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
 	// recreating it on effect re-runs and prevents cross-chart interference.
@@ -259,9 +263,25 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		[hallmarkStyle, hallmarks, chartTheme.text, hallmarksInMs]
 	)
 
+	const pointerStack = useMemo(
+		() => getPointerStack(renderedCharts, selectedCharts, expandTo100Percent),
+		[renderedCharts, selectedCharts, expandTo100Percent]
+	)
+	// Computed once per dataset and pick, never on hover.
+	const coloredCharts = useMemo(() => {
+		const colors =
+			pointerStack &&
+			assignStackColors({ charts: renderedCharts, stack: pointerStack.series, source: renderedDatasetSource })
+		if (!colors) return renderedCharts
+		return renderedCharts.map((chart) => {
+			const color = colors.get(chart.name)
+			return color ? { ...chart, color } : chart
+		})
+	}, [pointerStack, renderedCharts, renderedDatasetSource])
+
 	const { series, sourceAxisIndexes } = useMemo(() => {
 		const builtSeries = buildMultiSeries({
-			charts: renderedCharts,
+			charts: coloredCharts,
 			selectedCharts,
 			expandTo100Percent,
 			solidChartAreaStyle,
@@ -272,7 +292,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		})
 		return normalizeSeriesYAxisIndices(builtSeries)
 	}, [
-		renderedCharts,
+		coloredCharts,
 		chartTheme,
 		expandTo100Percent,
 		solidChartAreaStyle,
@@ -349,6 +369,30 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		)
 	}, [finalYAxis, mergedChartSettings.yAxis, expandTo100Percent, props.logScale, logEligibleYAxes])
 
+	const pointerLines = useMemo(() => (pointerStack ? null : getPointerLines(series)), [pointerStack, series])
+	// Flags the series under the pointer (a stack band, or the nearest of several lines) on the tooltip items, so
+	// whichever formatter the chart uses can lead with it.
+	const markPointedSeries = useStableCallback((params: unknown) => {
+		const instance = chartRef.current
+		const pointerY = pointerYRef.current
+		if (!instance || instance.isDisposed() || pointerY == null) return
+		const items = normalizeTooltipItems(params)
+		let pointed: string | null = null
+		if (pointerStack) {
+			const yAxisIndex = sourceAxisIndexes
+				? sourceAxisIndexes.indexOf(pointerStack.yAxisIndex)
+				: pointerStack.yAxisIndex
+			pointed = findPointedStackSeries(items, pointerStack.series, instance.convertFromPixel({ yAxisIndex }, pointerY))
+		} else if (pointerLines) {
+			pointed = findNearestLineSeries(
+				items,
+				pointerLines,
+				(yAxisIndex, value) => instance.convertToPixel({ yAxisIndex }, value),
+				pointerY
+			)
+		}
+		for (const item of items) if (item.seriesName === pointed) item.pointed = true
+	})
 	const tooltipFormatter = useMemo(
 		() =>
 			createTooltipFormatter({
@@ -456,7 +500,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			layer.appendChild(img)
 		}
 	})
+	const trackPointer = useStableCallback((event: { offsetY: number }) => {
+		pointerYRef.current = event.offsetY
+	})
 	const showLatestTooltip = useStableCallback(() => {
+		// The resting tooltip points at no band.
+		pointerYRef.current = null
 		const instance = chartRef.current
 		const dataIndex = latestTooltipDataIndexRef.current
 		if (!instance || instance.isDisposed() || dataIndex == null) return
@@ -491,11 +540,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		emitReady(instance)
 		instance.on('finished', syncCategoryLogos)
 		instance.on('globalout', showLatestTooltip)
+		// Registered before setOption, so it runs ahead of the tooltip's own pointer handler.
+		instance.getZr().on('mousemove', trackPointer)
 
 		return () => {
 			persistentLifecycle.capture(instance)
 			instance.off('finished', syncCategoryLogos)
 			instance.off('globalout', showLatestTooltip)
+			instance.getZr().off('mousemove', trackPointer)
 			eventHoverCleanupRef.current?.()
 			eventHoverCleanupRef.current = null
 			if (categoryLogosFrameRef.current != null) {
@@ -511,7 +563,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			instance.dispose()
 			emitReady(null)
 		}
-	}, [persistentLifecycle, showLatestTooltip, syncCategoryLogos])
+	}, [persistentLifecycle, showLatestTooltip, syncCategoryLogos, trackPointer])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -616,6 +668,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const baseTooltip = mergedChartSettings.tooltip ?? {}
 		const tooltipOverride = Array.isArray(chartOptions?.tooltip) ? chartOptions.tooltip[0] : chartOptions?.tooltip
 		const customTooltipFormatter = tooltipOverride?.formatter
+		const formatter = customTooltipFormatter ?? tooltipFormatter
+		const pointedFormatter: TooltipComponentOption['formatter'] =
+			typeof formatter === 'function'
+				? (params, ticket, callback) => {
+						markPointedSeries(params)
+						return formatter(params, ticket, callback)
+					}
+				: formatter
 		const enterable = typeof baseTooltip?.enterable === 'boolean' ? baseTooltip.enterable : false
 		const baseExtraCssText = typeof baseTooltip?.extraCssText === 'string' ? baseTooltip.extraCssText : ''
 		const extraCssText = [
@@ -643,7 +703,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			position: clampTooltipToViewport,
 			extraCssText,
 			trigger: 'axis',
-			formatter: customTooltipFormatter ?? tooltipFormatter
+			formatter: pointedFormatter
 		}
 		delete tooltipConfig.appendToBody
 		delete tooltipConfig.className
@@ -810,6 +870,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		hasCategoryLogos,
 		showLatestTooltip,
 		syncCategoryLogos,
+		markPointedSeries,
 		chartMotion,
 		hasEnteredRef
 	])

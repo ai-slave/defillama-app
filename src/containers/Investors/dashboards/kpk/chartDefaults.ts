@@ -1,7 +1,12 @@
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 
 /**
@@ -141,8 +146,10 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 	const items = normalizeTooltipItems(params)
 	if (items.length === 0) return ''
 
+	const pointedName = getPointedSeriesName(items)
 	const rows: Array<{ marker: string; name: string; value: number }> = []
 	let overlay: (typeof rows)[number] | null = null
+	let pointed: (typeof rows)[number] | null = null
 
 	for (const item of items) {
 		const name = item.seriesName
@@ -152,17 +159,20 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 		if (!Number.isFinite(value) || Math.abs(value) < DUST_USD) continue
 		const row = { marker: item.marker ?? '', name, value }
 		if (name === overlaySeries) overlay = row
+		else if (name === pointedName) pointed = row
 		else rows.push(row)
 	}
 	rows.sort((a, b) => b.value - a.value)
 
 	const heading = items[0]?.axisValue ?? items[0]?.name
 	let out = heading == null ? '' : `<strong>${escapeHtml(String(heading))}</strong><br/>`
+	// The pointed segment leads; the overlay line keeps its place under the rule.
+	if (pointed) out += tooltipRow(pointed.name, pointed.value, pointed.marker, TOOLTIP_POINTED_ROW_STYLE)
 	for (const row of rows) out += tooltipRow(row.name, row.value, row.marker)
-	if (rows.length > 1) {
+	if (rows.length + (pointed ? 1 : 0) > 1) {
 		out += tooltipRow(
 			'Total',
-			rows.reduce((sum, row) => sum + row.value, 0),
+			rows.reduce((sum, row) => sum + row.value, pointed?.value ?? 0),
 			'',
 			TOTAL_ROW_STYLE
 		)

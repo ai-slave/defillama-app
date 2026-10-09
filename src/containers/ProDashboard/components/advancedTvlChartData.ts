@@ -1,5 +1,6 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	buildComputedBreakdownResult,
@@ -17,7 +18,7 @@ export interface AdvancedTvlChartData {
 	pieSeries: RuntimePieChartData
 }
 
-const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
+const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: CHART_SERIES_LIMIT, upstreamOthersValue: 0 }
 
 const BINANCE_CEX_EXCLUDED_INFLOW_TIMESTAMPS = [1_681_430_400_000, 1_681_516_800_000] as const
 

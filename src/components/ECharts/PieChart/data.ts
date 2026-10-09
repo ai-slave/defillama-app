@@ -1,5 +1,5 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { assignUniqueColors, chartColor, OTHERS_COLOR } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
 type RuntimePieInput = Record<string, number> | Array<PieInputRow> | ReadonlyMap<string, number>
@@ -145,14 +145,15 @@ export function buildRuntimePieChartCsvDataset(
 export function buildRuntimePieChartPresentation({
 	series,
 	selectedSeries,
-	colorIndexByPeer
+	colorByPeer
 }: {
 	series: RuntimePieChartData
 	selectedSeries?: ReadonlySet<string>
-	colorIndexByPeer?: ReadonlyMap<string, number>
+	/** Page-wide colours, so a peer keeps its colour across the page's charts; rank colours otherwise. */
+	colorByPeer?: Readonly<Record<string, string>>
 }) {
 	const chartData: Array<{ name: string; value: number }> = []
-	const stackColors: Record<string, string> = {}
+	const slices: Array<{ name: string; color: string }> = []
 	let othersValue = Math.max(series.upstreamOthersValue, 0)
 	for (let index = 0; index < series.peers.length; index++) {
 		const peer = series.peers[index]!
@@ -162,8 +163,9 @@ export function buildRuntimePieChartPresentation({
 		}
 		chartData.push(peer)
 		// Others is grey, outside the palette, so a peer keeps its palette colour without a reserved slot.
-		stackColors[peer.name] = chartColor(colorIndexByPeer?.get(peer.name) ?? index)
+		slices.push({ name: peer.name, color: colorByPeer?.[peer.name] ?? chartColor(index) })
 	}
+	const stackColors = assignUniqueColors(slices)
 	if (chartData.length === 0 && series.peers.length > 0) return { chartData, stackColors }
 	if (othersValue > 0) {
 		chartData.push({ name: 'Others', value: othersValue })

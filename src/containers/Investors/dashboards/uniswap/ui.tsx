@@ -7,10 +7,12 @@ import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/c
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '~/components/ECharts/shared/formatters'
 import {
+	getPointedSeriesName,
 	getTooltipAxisValue,
 	getTooltipRawYValue,
 	normalizeTooltipItems,
-	TOOLTIP_OTHERS_ROW_STYLE
+	TOOLTIP_OTHERS_ROW_STYLE,
+	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -193,8 +195,10 @@ export function createStackTooltipFormatter({
 		if (items.length === 0) return ''
 		const axisValue = getTooltipAxisValue(items[0])
 		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
+		const pointedName = getPointedSeriesName(items)
 		const rows: Array<{ marker: string; name: string; value: number }> = []
 		let catchAll: (typeof rows)[number] | null = null
+		let pointed: (typeof rows)[number] | null = null
 		let total = 0
 		for (const item of items) {
 			const name = item.seriesName
@@ -205,17 +209,21 @@ export function createStackTooltipFormatter({
 			total += value
 			const row = { marker: item.marker ?? '', name, value }
 			if (isCatchAll(name)) catchAll = row
+			else if (name === pointedName) pointed = row
 			else rows.push(row)
 		}
 		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
-		const hasTail = rows.length > maxItems - (catchAll ? 1 : 0)
-		const visible = catchAll || hasTail ? rows.slice(0, maxItems - 1) : rows
+		// The pointed series leads in one of the capped slots and is never folded into the tail.
+		const limit = maxItems - (pointed ? 1 : 0)
+		const hasTail = rows.length > limit - (catchAll ? 1 : 0)
+		const visible = catchAll || hasTail ? rows.slice(0, limit - 1) : rows
 		let tail = catchAll?.value ?? 0
 		for (const row of rows.slice(visible.length)) tail += row.value
+		if (pointed) output += line(pointed.marker, pointed.name, pointed.value, TOOLTIP_POINTED_ROW_STYLE)
 		for (const row of visible) output += line(row.marker, row.name, row.value)
 		if (catchAll || hasTail)
 			output += line(catchAll?.marker ?? rows[visible.length]?.marker ?? '', catchAll?.name ?? 'Others', tail)
-		if (showTotal && rows.length + (catchAll ? 1 : 0) > 1)
+		if (showTotal && rows.length + (pointed ? 1 : 0) + (catchAll ? 1 : 0) > 1)
 			output += line('', 'Total', total, `${TOOLTIP_OTHERS_ROW_STYLE}font-weight:600;`)
 		return output
 	}

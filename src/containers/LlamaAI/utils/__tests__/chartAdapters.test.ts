@@ -502,6 +502,40 @@ describe('chart adapters', () => {
 		expect(tooltip).not.toContain('<svg')
 	})
 
+	test('category tooltips lead with the pointed series ahead of larger values', () => {
+		const config = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: { field: 'chain', label: 'Chain', type: 'category' as const },
+				yAxes: [{ id: 'left', fields: ['tvl', 'fees'], label: 'USD', position: 'left' as const }]
+			},
+			series: [
+				{ ...baseSeries, name: 'TVL', type: 'bar' as const, dataMapping: { xField: 'chain', yField: 'tvl' } },
+				{ ...baseSeries, name: 'Fees', type: 'bar' as const, dataMapping: { xField: 'chain', yField: 'fees' } }
+			]
+		} satisfies ChartConfiguration
+		const result = adaptCartesianChartData(config, [{ chain: 'Ethereum', tvl: 20, fees: 5 }])
+		const formatter = result.props.chartOptions?.tooltip
+		const row = result.props.dataset.source[0]
+		const params = result.props.charts.map((chart) => ({
+			seriesName: chart.name,
+			marker: '',
+			name: row?.[0],
+			value: row,
+			encode: { x: [0], y: [chart.encode.y] },
+			pointed: chart.name === 'Fees'
+		}))
+
+		const tooltip =
+			formatter && !Array.isArray(formatter) && typeof formatter.formatter === 'function'
+				? String(formatter.formatter(params as never, ''))
+				: ''
+
+		expect(tooltip.indexOf('Fees: 5')).toBeGreaterThan(-1)
+		expect(tooltip.indexOf('Fees: 5')).toBeLessThan(tooltip.indexOf('TVL: 20'))
+	})
+
 	test('keeps cartesian time-series rows sorted after adaptation', () => {
 		const timeConfig = {
 			...baseConfig,

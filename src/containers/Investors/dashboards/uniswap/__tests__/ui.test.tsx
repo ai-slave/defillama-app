@@ -85,6 +85,18 @@ describe('uniswap stack tooltip', () => {
 		expect(rowsOf(html)).toEqual(['A $40', 'B $30', 'Others $25', 'Total $95'])
 	})
 
+	test('leads with the pointed series instead of folding it into Others, with the same Total', () => {
+		const chart: Chart = {
+			dates,
+			series: [series('Others', [5, 1]), series('A', [40, 1]), series('B', [30, 1]), series('C', [20, 1])]
+		}
+		const params = paramsAt(chart, 0).map((item) => ({ ...item, pointed: item.seriesName === 'C' }))
+		const html = createStackTooltipFormatter({ groupBy: 'daily', valueSymbol: '$', maxItems: 3, showTotal: true })(
+			params
+		)
+		expect(rowsOf(html)).toEqual(['C $20', 'A $40', 'Others $35', 'Total $95'])
+	})
+
 	test('omits Total for overlaid series', () => {
 		const chart: Chart = { dates, series: [series('A', [2, 9]), series('B', [1, 9])] }
 		const html = createStackTooltipFormatter({ groupBy: 'daily', valueSymbol: '$', maxItems: 20, showTotal: false })(

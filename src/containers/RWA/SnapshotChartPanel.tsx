@@ -26,7 +26,7 @@ const pieChartLegendPosition = {
 const pieChartLegendTextStyle = { fontSize: 14 }
 const EMPTY_TREEMAP: Array<RwaTreemapNode> = []
 /** Ten slices and Others: one more than the chart's series cap, since Others is its own slice here. */
-const DEFAULT_PIE_LIMIT = RWA_MAX_CHART_SERIES + 1
+const PIE_LIMIT = RWA_MAX_CHART_SERIES + 1
 
 type RWASnapshotChartPanelProps = {
 	view: Exclude<RWAChartView, 'timeSeries' | 'share'>
@@ -42,8 +42,6 @@ type RWASnapshotChartPanelProps = {
 	error: string | null
 	/** The metric switch, the view select and any period control, shared with the time series panel. */
 	toolbarStart: ReactNode
-	/** Slices the pie keeps, Others included; the ten largest plus Others by default. */
-	pieLimit?: number
 	/** Controls only the treemap view offers, such as Nested by. */
 	treemapControls?: ReactNode
 	/** Slices the flat treemap keeps, Others included; every slice by default. */
@@ -54,8 +52,8 @@ type RWASnapshotChartPanelProps = {
 
 /**
  * The pie, treemap and bar views of one value per group: the perps splits reduced to a snapshot (perpsSnapshot.ts)
- * and the Assets breakdown (OverviewBreakdownPanel.tsx). The pie keeps `pieLimit` slices, the bars up to twenty,
- * the treemap every group.
+ * and the Assets breakdown (OverviewBreakdownPanel.tsx). The pie keeps the ten largest plus Others, the bars up to
+ * twenty, the treemap every group.
  */
 export function RWASnapshotChartPanel({
 	view,
@@ -68,7 +66,6 @@ export function RWASnapshotChartPanel({
 	isLoading,
 	error,
 	toolbarStart,
-	pieLimit = DEFAULT_PIE_LIMIT,
 	treemapControls,
 	treemapLimit,
 	nestedTreemap = EMPTY_TREEMAP
@@ -83,7 +80,7 @@ export function RWASnapshotChartPanel({
 		const bars = limitRwaHorizontalBarData(deferredSlices, { sort: true })
 		return {
 			colors,
-			pie: limitRwaPieChartData(deferredSlices, pieLimit),
+			pie: limitRwaPieChartData(deferredSlices, PIE_LIMIT),
 			bars: {
 				categories: bars.map((bar) => bar.name),
 				values: bars.map((bar) => bar.value),
@@ -95,7 +92,7 @@ export function RWASnapshotChartPanel({
 				breakdownLabel: groupLabel
 			})
 		}
-	}, [deferredSlices, groupLabel, nestedTreemap, pieLimit, treemapLimit])
+	}, [deferredSlices, groupLabel, nestedTreemap, treemapLimit])
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const viewFilename = `${filename}-${view}`
 

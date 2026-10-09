@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { getAdvancedTvlBreakdownSources } from '../../services/protocolTvl'
 import { buildAdvancedTvlChartData } from '../advancedTvlChartData'
@@ -77,6 +78,6 @@ describe('buildAdvancedTvlChartData', () => {
 
 		expect(result.pieSeries.peers).toHaveLength(17)
 		expect(result.pieSeries.upstreamOthersValue).toBe(25)
-		expect(result.pieSeries.limit).toBe(15)
+		expect(result.pieSeries.limit).toBe(CHART_SERIES_LIMIT)
 	})
 })

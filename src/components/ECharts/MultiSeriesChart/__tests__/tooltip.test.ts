@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import {
 	createCappedRemainderTooltipFormatter,
+	createCategoryTooltipFormatter,
 	createInflowsTooltipFormatter,
-	createTooltipFormatter
+	createTooltipFormatter,
+	findNearestLineSeries,
+	findPointedStackSeries
 } from '../tooltip'
 
 function tooltipItem(name: string, value: number | null) {
@@ -191,5 +194,124 @@ describe('MultiSeriesChart tooltip', () => {
 
 		expect(tooltip).toContain('APY: 4.5%')
 		expect(tooltip).toContain('TVL: $10,000')
+	})
+
+	describe('the stack band under the pointer', () => {
+		// Stacked in this order, the bands span 0-50, 50-80, 80-95 and 95-100.
+		const stack = [
+			tooltipItem('Chain A', 50),
+			tooltipItem('Chain B', 30),
+			tooltipItem('Chain C', 15),
+			tooltipItem('Chain D', 5)
+		]
+		const pointing = <T extends { seriesName: string }>(items: Array<T>, name: string) =>
+			items.map((item) => (item.seriesName === name ? { ...item, pointed: true } : item))
+
+		test('is the band holding the pointer, positive values up from zero and negative values down', () => {
+			const stackSeries = new Set(['Chain A', 'Chain B', 'Chain C', 'Chain D'])
+			// An overlay outside the stack never holds the pointer.
+			const withOverlay = [tooltipItem('Price', 1000), ...stack]
+			const flows = [tooltipItem('Inflow', 10), tooltipItem('Outflow A', -4), tooltipItem('Outflow B', -6)]
+			const flowSeries = new Set(['Inflow', 'Outflow A', 'Outflow B'])
+
+			expect(findPointedStackSeries(withOverlay, stackSeries, 97)).toBe('Chain D')
+			expect(findPointedStackSeries(withOverlay, stackSeries, 90)).toBe('Chain C')
+			expect(findPointedStackSeries(withOverlay, stackSeries, 120)).toBeNull()
+			expect(findPointedStackSeries(flows, flowSeries, -2)).toBe('Outflow A')
+			expect(findPointedStackSeries(flows, flowSeries, -7)).toBe('Outflow B')
+		})
+
+		test('is the nearest line within reach of the pointer, measured in pixels across axes', () => {
+			const lines = [tooltipItem('TVL', 100), tooltipItem('Fees', 2), tooltipItem('Price', null)]
+			const lineAxes = new Map([
+				['TVL', 0],
+				['Fees', 1],
+				['Price', 0]
+			])
+			// TVL's axis puts 100 at 200px; Fees' axis puts 2 at 150px.
+			const toPixel = (yAxisIndex: number, value: number) => (yAxisIndex === 0 ? value * 2 : value * 75)
+
+			expect(findNearestLineSeries(lines, lineAxes, toPixel, 195)).toBe('TVL')
+			expect(findNearestLineSeries(lines, lineAxes, toPixel, 155)).toBe('Fees')
+			// Halfway between, both are out of reach.
+			expect(findNearestLineSeries(lines, lineAxes, toPixel, 175)).toBeNull()
+		})
+
+		test('leads the default tooltip even when its value would fall in "+N more"', () => {
+			const tooltip = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '%', maxItems: 3 })(
+				pointing(stack, 'Chain D')
+			)
+
+			expect(tooltip.indexOf('Chain D')).toBeGreaterThan(-1)
+			expect(tooltip.indexOf('Chain D')).toBeLessThan(tooltip.indexOf('Chain A'))
+			expect(tooltip).toContain('Chain B')
+			expect(tooltip).not.toContain('Chain C')
+			expect(tooltip).toContain('+1 more')
+		})
+
+		test('keeps value order when no band is pointed', () => {
+			const tooltip = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '%' })(stack)
+
+			expect(tooltip.indexOf('Chain A')).toBeLessThan(tooltip.indexOf('Chain B'))
+			expect(tooltip.indexOf('Chain C')).toBeLessThan(tooltip.indexOf('Chain D'))
+		})
+
+		test('keeps an Others band in its own row', () => {
+			const tooltip = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '%' })(
+				pointing([...stack, tooltipItem('Others', 3)], 'Others')
+			)
+
+			expect(tooltip.indexOf('Others')).toBeGreaterThan(tooltip.indexOf('Chain D'))
+		})
+
+		test('leads the inflows tooltip and leaves the pointed band out of Others', () => {
+			const tooltip = createInflowsTooltipFormatter({ valueSymbol: '$', topN: 2 })(
+				pointing(
+					[
+						tooltipItem('Token A', 70),
+						tooltipItem('Token B', 20),
+						tooltipItem('Token C', 10),
+						tooltipItem('Token D', 5)
+					],
+					'Token C'
+				)
+			)
+
+			expect(tooltip.indexOf('Token C')).toBeLessThan(tooltip.indexOf('Token A'))
+			expect(tooltip.indexOf('Token C')).toBeGreaterThan(tooltip.indexOf('Total Inflows'))
+			expect(tooltip).toContain('Others&nbsp;&nbsp;$5')
+		})
+
+		test('leads the capped tooltip and leaves the pointed band out of Others', () => {
+			const tooltip = createCappedRemainderTooltipFormatter({ valueSymbol: '$', maxItems: 3 })(
+				pointing(
+					[
+						tooltipItem('Pool A', 1),
+						tooltipItem('Pool B', 2),
+						tooltipItem('Pool C', 3),
+						tooltipItem('Pool D', 4),
+						tooltipItem('Pool E', 5)
+					],
+					'Pool A'
+				)
+			)
+
+			expect(tooltip.indexOf('Pool A')).toBeLessThan(tooltip.indexOf('Pool E'))
+			expect(tooltip).toContain('Others&nbsp;&nbsp;$9')
+		})
+
+		test('leads the category tooltip', () => {
+			const tooltip = createCategoryTooltipFormatter('$')(
+				pointing(
+					[
+						{ ...tooltipItem('Fees', 70), axisValue: 'Uniswap' },
+						{ ...tooltipItem('Revenue', 5), axisValue: 'Uniswap' }
+					],
+					'Revenue'
+				)
+			)
+
+			expect(tooltip.indexOf('Revenue')).toBeLessThan(tooltip.indexOf('Fees'))
+		})
 	})
 })

@@ -161,10 +161,9 @@ export function AdvancedTvlChartTab({
 				chartType,
 				chainsDataset: chartType === 'chainsTvl' ? advancedDataset : EMPTY_DATASET,
 				chainNames: chartType === 'chainsTvl' ? renderedSeries : EMPTY_STACKS,
-				tokenNames:
-					chartType === 'chainsTvl' ? EMPTY_STACKS : chartType === 'tokensPie' ? pieSeriesNames : renderedSeries
+				tokenNames: chartType === 'chainsTvl' ? EMPTY_STACKS : renderedSeries
 			}),
-		[chartType, advancedDataset, pieSeriesNames, renderedSeries]
+		[chartType, advancedDataset, renderedSeries]
 	)
 	const pieSelection = useLocalSelection({
 		allowEmptySelection: true,
@@ -236,10 +235,7 @@ export function AdvancedTvlChartTab({
 		return (
 			<Suspense fallback={<ChartPanelExportShellFallback />}>
 				{chartType === 'tokensPie' ? (
-					<PieChart
-						chartData={piePresentation.chartData}
-						stackColors={{ ...piePresentation.stackColors, ...presentation.stackColors }}
-					/>
+					<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 				) : (
 					<MultiSeriesChart
 						title=""

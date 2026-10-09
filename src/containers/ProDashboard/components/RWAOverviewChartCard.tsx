@@ -1,5 +1,6 @@
 import { lazy, type ReactNode, Suspense, useMemo } from 'react'
-import { chartColor } from '~/constants/colors'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -84,11 +85,8 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	)
 	const pieData = snapshot?.view === 'pie' ? snapshot.data : EMPTY_RWA_SNAPSHOT_ITEMS
 
-	const pieColors = useMemo(() => {
-		const colors: Record<string, string> = {}
-		for (const [idx, item] of pieData.entries()) colors[item.name] = chartColor(idx)
-		return colors
-	}, [pieData])
+	// The CSV keeps every group; the pie folds past the series cap.
+	const pieChartData = useMemo(() => preparePieChartData({ data: pieData, limit: CHART_SERIES_LIMIT }), [pieData])
 
 	const barData = snapshot?.view === 'hbar' ? snapshot : EMPTY_RWA_BAR_DATA
 	const cardHeightScale = useCardHeightScale()
@@ -159,7 +157,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 							onReady={handleChartReady}
 						/>
 					) : chartView === 'pie' && pieData.length > 0 ? (
-						<PieChart onReady={handleChartReady} chartData={pieData} stackColors={pieColors} height={chartHeight} />
+						<PieChart onReady={handleChartReady} chartData={pieChartData} height={chartHeight} />
 					) : chartView === 'hbar' && barData.categories.length > 0 ? (
 						<HBarChart
 							categories={barData.categories}

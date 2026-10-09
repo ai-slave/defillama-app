@@ -60,4 +60,21 @@ describe('shared signed-inflow tooltip', () => {
 		expect(output).toContain('Others&nbsp;&nbsp;$23')
 		expect(output).toContain('Total Inflows&nbsp;&nbsp;$65')
 	})
+
+	test('leads the signed inflows tooltip with the pointed band, even one past the ten rows', () => {
+		const timestamp = 1_767_225_600_000
+		const output = createSignedInflowsTooltipFormatter('$')(
+			Array.from({ length: 12 }, (_, index) => ({
+				seriesName: `Flow ${index}`,
+				marker: '',
+				data: { timestamp, [`Flow ${index}`]: index + 1 },
+				pointed: index === 11
+			}))
+		)
+
+		expect(output.indexOf('Flow 11&')).toBeGreaterThan(output.indexOf('Total Inflows'))
+		expect(output.indexOf('Flow 11&')).toBeLessThan(output.indexOf('Flow 0&'))
+		// Flows 0-9 fill the ten rows, so only Flow 10 folds into Others.
+		expect(output).toContain('Others&nbsp;&nbsp;$11')
+	})
 })

@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
+import { adaptPieChartData } from '~/containers/LlamaAI/utils/chartAdapters/pie'
 import { deriveCapabilities, type ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { buildRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 
@@ -61,5 +63,44 @@ describe('LlamaAI chart render plan', () => {
 		const yAxis = plan.rendererProps.chartOptions?.yAxis
 		if (!Array.isArray(yAxis)) throw new Error('Expected multiple configured axes')
 		expect(yAxis.map((axis) => axis.name)).toEqual([undefined, undefined])
+	})
+
+	test('draws a pie up to the series cap with Others while its CSV keeps every slice', () => {
+		const config = {
+			id: 'fees-share',
+			type: 'pie',
+			title: 'Fees share',
+			description: '',
+			axes: {
+				x: { field: 'protocol', label: 'Protocol', type: 'category' },
+				yAxes: [{ id: 'fees', fields: ['fees'], label: 'Fees', position: 'left' }]
+			},
+			series: [
+				{
+					name: 'Fees',
+					type: 'bar',
+					yAxisId: 'fees',
+					metricClass: 'flow',
+					dataMapping: { xField: 'protocol', yField: 'fees' },
+					styling: {}
+				}
+			],
+			dataTransformation: { timeField: 'protocol', metrics: ['fees'] },
+			displayOptions: {
+				canStack: false,
+				canShowPercentage: false,
+				canShowCumulative: false,
+				supportsGrouping: false
+			}
+		} satisfies ChartConfiguration
+		const rows: Array<{ protocol: string; fees: number }> = []
+		for (let rank = 0; rank < CHART_SERIES_LIMIT + 2; rank++) rows.push({ protocol: `P${rank}`, fees: 100 - rank })
+		const adapted = adaptPieChartData(config, rows)
+		const plan = buildRenderPlan(config, adapted, state, deriveCapabilities(config, adapted))
+		if (plan.rendererKind !== 'pie') throw new Error('Expected pie render plan')
+
+		expect(plan.rendererProps.chartData).toHaveLength(CHART_SERIES_LIMIT + 1)
+		expect(plan.rendererProps.chartData.at(-1)?.name).toBe('Others')
+		expect(plan.exportModel?.csvRows).toHaveLength(CHART_SERIES_LIMIT + 3)
 	})
 })

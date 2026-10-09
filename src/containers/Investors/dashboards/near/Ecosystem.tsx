@@ -4,6 +4,7 @@ import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/com
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { Skeleton } from '~/ui/Skeleton'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
@@ -206,8 +207,8 @@ export default function Ecosystem() {
 		[intents]
 	)
 
-	const tokenPie = intents ? aggregateBreakdown(intents.tokenBreakdown, 15) : undefined
-	const blockchainPie = intents ? aggregateBreakdown(intents.blockchainBreakdown, 15) : undefined
+	const tokenPie = intents ? aggregateBreakdown(intents.tokenBreakdown, CHART_SERIES_LIMIT) : undefined
+	const blockchainPie = intents ? aggregateBreakdown(intents.blockchainBreakdown, CHART_SERIES_LIMIT) : undefined
 	const channelBars = intents ? channelsToBars(intents.channelBreakdown) : undefined
 
 	const dailyVolumeRaw = lastSeriesValue(intents?.volumeChart, 'Daily Volume')
@@ -335,9 +336,9 @@ export default function Ecosystem() {
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				{isLoading || !tokenPie ? (
-					<ChartSkeleton title="Volume by Token (All-Time, Top 15)" />
+					<ChartSkeleton title="Volume by Token (All-Time, Top 10)" />
 				) : (
-					<ChartCard title="Volume by Token (All-Time, Top 15)">
+					<ChartCard title="Volume by Token (All-Time, Top 10)">
 						<PieChart
 							chartData={tokenPie}
 							valueSymbol="$"

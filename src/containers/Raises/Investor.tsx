@@ -3,10 +3,16 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import {
+	buildRuntimePieChartCsvDataset,
+	buildRuntimePieChartPresentation,
+	prepareRuntimePieChartData
+} from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -97,8 +103,17 @@ export function InvestorContainer({
 			chains
 		})
 	const deferredFundingRoundsByMonthChart = React.useDeferredValue(fundingRoundsByMonthChart)
-	const deferredInvestmentByRounds = React.useDeferredValue(investmentByRounds)
-	const deferredRaisesByCategory = React.useDeferredValue(raisesByCategory)
+	// The pies fold past the series cap; their CSVs and the category list beside them keep every row.
+	const investmentByRoundsSeries = React.useMemo(
+		() => prepareRuntimePieChartData({ data: investmentByRounds, limit: CHART_SERIES_LIMIT }),
+		[investmentByRounds]
+	)
+	const raisesByCategorySeries = React.useMemo(
+		() => prepareRuntimePieChartData({ data: raisesByCategory, limit: CHART_SERIES_LIMIT }),
+		[raisesByCategory]
+	)
+	const deferredInvestmentByRounds = React.useDeferredValue(investmentByRoundsSeries)
+	const deferredRaisesByCategory = React.useDeferredValue(raisesByCategorySeries)
 
 	return (
 		<>
@@ -174,7 +189,11 @@ export function InvestorContainer({
 				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
-							chartData={deferredInvestmentByRounds}
+							chartData={buildRuntimePieChartPresentation({ series: deferredInvestmentByRounds }).chartData}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredInvestmentByRounds })
+							}}
 							title="Investment by Rounds"
 							valueSymbol=""
 							exportButtons={{
@@ -189,7 +208,11 @@ export function InvestorContainer({
 				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
-							chartData={deferredRaisesByCategory}
+							chartData={buildRuntimePieChartPresentation({ series: deferredRaisesByCategory }).chartData}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredRaisesByCategory })
+							}}
 							title="Investments by Category"
 							valueSymbol=""
 							exportButtons={{

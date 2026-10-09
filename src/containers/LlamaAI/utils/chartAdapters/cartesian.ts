@@ -6,7 +6,12 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
-import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { chartColor } from '~/constants/colors'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import {
@@ -307,12 +312,16 @@ export const createCategoryTooltipFormatter = (
 		}
 		values.sort((a, b) => b.value - a.value)
 
+		const pointedName = getPointedSeriesName(items)
+		let pointedLine = ''
 		let lines = ''
 		for (const item of values) {
-			lines += `<div>${item.marker} ${escapeHtml(item.seriesName)}: ${escapeHtml(formatChartValue(item.value, item.symbol))}</div>`
+			const row = `${item.marker} ${escapeHtml(item.seriesName)}: ${escapeHtml(formatChartValue(item.value, item.symbol))}`
+			if (item.seriesName === pointedName) pointedLine = `<div style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</div>`
+			else lines += `<div>${row}</div>`
 		}
 
-		return `<div style="margin-bottom: 8px; font-weight: 600;">${escapeHtml(header)}</div>${lines}`
+		return `<div style="margin-bottom: 8px; font-weight: 600;">${escapeHtml(header)}</div>${pointedLine}${lines}`
 	}
 }
 

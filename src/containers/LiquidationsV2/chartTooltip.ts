@@ -1,5 +1,6 @@
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
+	getPointedSeriesName,
 	getTooltipAxisValue,
 	getTooltipRawYValue,
 	normalizeTooltipItems,
@@ -33,6 +34,9 @@ export function formatLiquidationMetricValue(value: number, metric: Liquidations
 	return `${amountLabel} ${tokenLabel}`
 }
 
+// The pointed row leads, bold and ruled off with the card's own Total rule rather than the shared tooltip divider.
+const POINTED_ROW_STYLE = ' font-weight:600; padding-bottom:6px; border-bottom:1px solid var(--border-medium);'
+
 function getLiquidationsTooltipValue(param: EChartsTooltipItem): number {
 	const rawValue = getTooltipRawYValue(param, param.seriesName ?? '')
 	if (typeof rawValue === 'number') return rawValue
@@ -42,6 +46,7 @@ function getLiquidationsTooltipValue(param: EChartsTooltipItem): number {
 
 export function getLiquidationsTooltipHtml(params: unknown, metric: LiquidationsMetric, tokenLabel: string): string {
 	const paramsList = normalizeTooltipItems(params)
+	const pointedName = getPointedSeriesName(paramsList)
 	const rows: Array<string> = []
 	let firstVisibleParam: EChartsTooltipItem | undefined
 	let total = 0
@@ -52,13 +57,16 @@ export function getLiquidationsTooltipHtml(params: unknown, metric: Liquidations
 		firstVisibleParam ??= param
 		total += value
 		const rowValue = formatLiquidationMetricValue(value, metric, tokenLabel)
-		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
+		const isPointed = param.seriesName === pointedName
+		const row = `<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;${isPointed ? POINTED_ROW_STYLE : ''}">
 								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
 									${param.marker ?? ''}
 									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(param.seriesName ?? '')}</span>
 								</span>
 								<span style="color:var(--text-primary); text-align:right;">${escapeHtml(rowValue)}</span>
-							</div>`)
+							</div>`
+		if (isPointed) rows.unshift(row)
+		else rows.push(row)
 	}
 
 	const axisValue = getTooltipAxisValue(firstVisibleParam)

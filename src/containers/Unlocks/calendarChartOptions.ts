@@ -2,9 +2,11 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
 	type EChartsTooltipItem,
+	getPointedSeriesName,
 	getTooltipAxisValue,
 	getTooltipRawYValue,
-	normalizeTooltipItems
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -36,13 +38,20 @@ export const calendarChartOptions = {
 			if (validParams.length === 0) {
 				tooltipContent += 'No unlocks'
 			} else {
+				const pointedName = getPointedSeriesName(params)
+				let pointedRow = ''
+				let rows = ''
 				for (const [param, value] of validParams) {
 					totalValue += value
-					tooltipContent += `<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+					const isPointed = param.seriesName === pointedName
+					const row = `<div style="${isPointed ? TOOLTIP_POINTED_ROW_STYLE : ''}display: flex; justify-content: space-between; align-items: center; gap: 8px;">
 					<span>${param.marker} ${escapeHtml(param.seriesName)}</span>
 					<span style="font-weight: 500;">${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 				</div>`
+					if (isPointed) pointedRow = row
+					else rows += row
 				}
+				tooltipContent += pointedRow + rows
 				if (validParams.length > 1) {
 					tooltipContent += `<div style="border-top: 1px solid var(--border-subtle); margin-top: 4px; padding-top: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
 					<span><strong>Total</strong></span>

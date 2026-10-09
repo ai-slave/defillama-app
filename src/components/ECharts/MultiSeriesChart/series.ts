@@ -3,7 +3,7 @@ import * as echarts from 'echarts/core'
 import { CHART_COLORS } from '~/constants/colors'
 import type { ChartTheme } from '../shared/chartTheme'
 import type { buildHallmarksMarkLine } from './hallmarks'
-import type { IMultiSeriesChartProps } from './types'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from './types'
 
 type NamedLineSeriesOption = Omit<LineSeriesOption, 'type'> & { name: string; type: 'line' }
 type NamedBarSeriesOption = Omit<BarSeriesOption, 'type'> & { name: string; type: 'bar' }
@@ -136,17 +136,17 @@ export function buildMultiSeries({
 			}
 		}
 
+		const stack = chartStack(chart, expandTo100Percent)
 		if (expandTo100Percent) {
-			const isOverlay = chart.yAxisIndex != null && chart.yAxisIndex > 0
-			if (!isOverlay) {
-				series.stack = 'A'
+			if (stack != null) {
+				series.stack = stack
 				if (series.type === 'line') {
 					series.lineStyle = { width: 0, color }
 					series.areaStyle = {}
 				}
 			}
 		} else {
-			if (chart.stack != null) series.stack = chart.stack
+			if (stack != null) series.stack = stack
 			if (chart.stackStrategy != null) series.stackStrategy = chart.stackStrategy
 			if (series.type === 'line') {
 				series.lineStyle = { color }
@@ -211,4 +211,53 @@ export function buildMultiSeries({
 		for (const series of output) series.yAxisIndex ??= 0
 	}
 	return output
+}
+
+/** The stack a series joins: a share chart stacks every series on its main axis, other charts follow the caller. */
+export function chartStack(
+	chart: MultiSeriesChartSeriesConfig,
+	expandTo100Percent: boolean | undefined
+): string | undefined {
+	if (expandTo100Percent) return chart.yAxisIndex != null && chart.yAxisIndex > 0 ? undefined : 'A'
+	return chart.stack
+}
+
+/**
+ * The chart's one stack of drawn series. Past the palette, colours repeat, so the renderer recolours this stack by
+ * overlap and the tooltip names the band under the pointer. Null without a stack, with stacks side by side (height
+ * alone cannot tell them apart), or with a strategy other than ECharts' default, which stacks positive and negative
+ * values apart.
+ */
+export function getPointerStack(
+	charts: ReadonlyArray<MultiSeriesChartSeriesConfig>,
+	selectedCharts: ReadonlySet<string> | undefined,
+	expandTo100Percent: boolean | undefined
+): { series: Set<string>; yAxisIndex: number } | null {
+	let stack: string | undefined
+	let yAxisIndex = 0
+	const names = new Set<string>()
+	for (const chart of charts) {
+		if (selectedCharts && !selectedCharts.has(chart.name)) continue
+		const chartStackName = chartStack(chart, expandTo100Percent)
+		if (chartStackName == null) continue
+		if (!expandTo100Percent && chart.stackStrategy != null && chart.stackStrategy !== 'samesign') return null
+		if (stack === undefined) {
+			stack = chartStackName
+			yAxisIndex = chart.yAxisIndex ?? 0
+		} else if (chartStackName !== stack) return null
+		names.add(chart.name)
+	}
+	return names.size > 1 ? { series: names, yAxisIndex } : null
+}
+
+/**
+ * The y-axis of each unstacked line, so the tooltip can name the line nearest the pointer when a chart draws several.
+ * Null with fewer than two such lines: a stack names its band instead, and a lone line needs no naming.
+ */
+export function getPointerLines(series: ReadonlyArray<MultiSeriesRenderSeries>): Map<string, number> | null {
+	const lines = new Map<string, number>()
+	for (const item of series) {
+		if (item.type === 'line' && item.stack == null) lines.set(item.name, item.yAxisIndex ?? 0)
+	}
+	return lines.size > 1 ? lines : null
 }

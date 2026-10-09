@@ -84,3 +84,46 @@ test('shows a user series named Other as an ordinary row when nothing was folded
 	expect(text).toContain('|Base  $10|')
 	expect(text).not.toContain('Others')
 })
+
+test('leads a category tooltip with the pointed series even when it falls past the ten rows', () => {
+	// Twelve tokens on one chain: token-0 = $120 down to token-11 = $10.
+	const result: QueryResult = {
+		columns: [
+			{ name: 'chain', type: 'VARCHAR' },
+			{ name: 'token', type: 'VARCHAR' },
+			{ name: 'fee', type: 'DOUBLE' }
+		],
+		rows: Array.from({ length: 12 }, (_, i) => ['Ethereum', `token-${i}`, (12 - i) * 10])
+	}
+	const config: ChartConfig = {
+		chartType: 'bar',
+		xCol: 'chain',
+		yCols: ['fee'],
+		splitByCol: 'token',
+		stackMode: 'off',
+		rightAxisCols: [],
+		seriesKinds: {},
+		seriesColors: {},
+		numberFormat: 'currency'
+	}
+	const { chartModel, chartOptions } = buildLineBarChart(config, result, classifyColumns(result), {})
+	const row = chartModel.dataset.source[0]!
+	const formatter = (chartOptions.tooltip as unknown as { formatter: (params: unknown) => string }).formatter
+	const text = formatter(
+		chartModel.charts.map((chart) => ({
+			seriesName: chart.name,
+			marker: '',
+			axisValue: row[0],
+			value: row,
+			encode: { x: [0], y: [chart.encode.y] },
+			pointed: chart.name === 'token-11'
+		}))
+	)
+		.replace(/<[^>]+>/g, '|')
+		.replaceAll('&nbsp;', ' ')
+
+	expect(text.indexOf('|token-11  $10|')).toBeGreaterThan(-1)
+	expect(text.indexOf('|token-11  $10|')).toBeLessThan(text.indexOf('|token-0  $120|'))
+	expect(text).toContain('|token-8  $40|')
+	expect(text).not.toContain('token-9')
+})

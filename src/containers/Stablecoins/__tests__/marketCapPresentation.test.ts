@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -10,6 +10,25 @@ type Row = { name: string; mcap: number | null }
 const getName = (row: Row) => row.name
 
 describe('buildStablecoinMarketCapPresentation', () => {
+	test('gives a pie peer picked from past the top ten a palette colour no drawn slice uses', () => {
+		const rows: Array<Row> = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => ({
+			name: `Token ${index}`,
+			mcap: 100 - index
+		}))
+		const series = prepareStablecoinMarketCapSeries({ rows, view: 'pie', getName, getValue: (row) => row.mcap ?? 0 })
+		const picked = new Set(series.selectionSeries)
+		picked.delete('Token 3')
+
+		const presentation = buildStablecoinMarketCapPresentation({ series, selectedSeries: picked })
+
+		expect(presentation.kind === 'pie' && presentation.stackColors).toMatchObject({
+			'Token 0': chartColor(0),
+			'Token 4': chartColor(4),
+			[`Token ${CHART_SERIES_LIMIT}`]: chartColor(3),
+			Others: OTHERS_COLOR
+		})
+	})
+
 	test('preserves pie ordering and consolidates slices beyond the selected limit into Others', () => {
 		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: index === 2 ? 'Others' : `Token ${index}`,

@@ -1,6 +1,7 @@
 import type { LegendComponentOption } from 'echarts'
 import type { PieSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { ChartExportButtonsMode } from '~/components/ChartExport/types'
 
 export interface PieTooltipParams {
@@ -26,5 +27,7 @@ export interface IPieChartProps {
 	legendPosition?: Pick<LegendComponentOption, 'left' | 'right' | 'top' | 'bottom' | 'orient'>
 	legendTextStyle?: LegendComponentOption['textStyle']
 	exportButtons?: ChartExportButtonsMode
+	/** What the CSV exports, the drawn slices by default; a pie folded past the series cap exports every row. */
+	csvSource?: ChartCsvSource
 	onReady?: (instance: echarts.ECharts | null) => void
 }

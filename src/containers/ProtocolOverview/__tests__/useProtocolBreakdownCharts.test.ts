@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import {
 	buildComputedBreakdownResult,
 	buildProtocolBreakdownPresentation,
@@ -256,7 +257,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		expect(result.tokenBreakdownPieSeries.peers).toHaveLength(17)
 		expect(result.tokenBreakdownPieSeries.peers.some((peer) => peer.name === 'Dust')).toBe(false)
 		const presentation = buildRuntimePieChartPresentation({ series: result.tokenBreakdownPieSeries })
-		expect(presentation.chartData).toHaveLength(16)
+		expect(presentation.chartData).toHaveLength(CHART_SERIES_LIMIT + 1)
 		expect(presentation.chartData.at(-1)?.name).toBe('Others')
 
 		const fullPositiveResult = buildComputedBreakdownResult({
@@ -284,7 +285,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		}
 		const result = buildComputedBreakdownResult(input)
 
-		expect(result.tokenBreakdownPieSeries).toEqual({ peers: [], limit: 15, upstreamOthersValue: 5 })
+		expect(result.tokenBreakdownPieSeries).toEqual({ peers: [], limit: CHART_SERIES_LIMIT, upstreamOthersValue: 5 })
 	})
 
 	test('uses the price from the side with the larger USD notional', () => {

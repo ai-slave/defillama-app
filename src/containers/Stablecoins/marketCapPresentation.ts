@@ -1,9 +1,8 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { CHART_COLORS, oldBlue, OTHERS_COLOR } from '~/constants/colors'
+import { assignUniqueColors, CHART_COLORS, CHART_SERIES_LIMIT, oldBlue, OTHERS_COLOR } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
 
-const PIE_SLICE_LIMIT = 10
 const HORIZONTAL_BAR_SLICE_LIMIT = 9
 
 type MarketCapSlice = { name: string; value: number; color: string }
@@ -136,7 +135,7 @@ export function buildStablecoinMarketCapPresentation({
 
 	// The pie is a share view, so unpicked peers and the upstream remainder always join Others; the bar view shows
 	// values, so unpicking a peer removes it and the upstream remainder shows only while every peer is picked.
-	const limit = series.kind === 'pie' ? PIE_SLICE_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT
+	const limit = series.kind === 'pie' ? CHART_SERIES_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT
 	const visibleSlices: Array<MarketCapSlice> = []
 	let selectedPeerCount = 0
 	let unpickedValue = 0
@@ -163,12 +162,8 @@ export function buildStablecoinMarketCapPresentation({
 
 	if (series.kind === 'pie') {
 		const chartData: Array<{ name: string; value: number }> = []
-		const stackColors: Record<string, string> = {}
-		for (const slice of visibleSlices) {
-			chartData.push({ name: slice.name, value: slice.value })
-			stackColors[slice.name] = slice.color
-		}
-		return { kind: 'pie', chartData, stackColors }
+		for (const slice of visibleSlices) chartData.push({ name: slice.name, value: slice.value })
+		return { kind: 'pie', chartData, stackColors: assignUniqueColors(visibleSlices) }
 	}
 
 	const categories: Array<string> = []

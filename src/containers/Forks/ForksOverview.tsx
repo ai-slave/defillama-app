@@ -156,13 +156,14 @@ export function ForksOverview({
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: 'fork-pie' })
-	const visibleTokenTvls = React.useMemo(
+	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
-				selectedSeries: selectedPieSeries
-			}).chartData,
-		[pieSeries, selectedPieSeries]
+				selectedSeries: selectedPieSeries,
+				colorByPeer: chartColors
+			}),
+		[chartColors, pieSeries, selectedPieSeries]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
@@ -203,7 +204,11 @@ export function ForksOverview({
 						</ChartPanelBodyFallback>
 					) : (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<PieChart chartData={visibleTokenTvls} stackColors={chartColors} onReady={handlePieChartReady} />
+							<PieChart
+								chartData={piePresentation.chartData}
+								stackColors={piePresentation.stackColors}
+								onReady={handlePieChartReady}
+							/>
 						</React.Suspense>
 					)}
 				</ChartPanel>

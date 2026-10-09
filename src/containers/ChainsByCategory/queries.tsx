@@ -1,4 +1,3 @@
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchAdapterChainProtocolTotals } from '~/containers/AdapterMetrics/api'
 import type { AdapterChainProtocolTotalsResponse } from '~/containers/AdapterMetrics/api.types'
 import { getDimensionAdapterOverviewOfAllChains } from '~/containers/AdapterMetrics/queries'
@@ -261,13 +260,6 @@ export const getChainsByCategory = async ({
 		categoryName = categories.find((cat) => slug(cat) === category) || category
 	}
 
-	// Colours go by TVL rank, the order the pie and dominance charts rank chains in.
-	const tvlByChain = new Map(chainTvls.map((chain) => [chain.name, chain.tvl ?? 0]))
-	const rankedChains = rest.chainsUnique.toSorted((a, b) => (tvlByChain.get(b) ?? 0) - (tvlByChain.get(a) ?? 0))
-	const colorsByChain: Record<string, string> = {}
-	for (const [index, chain] of rankedChains.entries()) colorsByChain[chain] = chartColor(index)
-	colorsByChain['Others'] = OTHERS_COLOR
-
 	const stablesChainMcapMap = new Map<string, number>()
 	for (const chain of stablecoins.chains) {
 		const key = slug(chain.name)
@@ -315,7 +307,6 @@ export const getChainsByCategory = async ({
 		category,
 		categoryName,
 		allCategories: categoryLinks,
-		colorsByChain,
 		chains: chainTvls
 			.map((chain) => {
 				const name = slug(chain.name)

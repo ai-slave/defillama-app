@@ -1,7 +1,13 @@
 import { formatRatio } from '~/utils/numberFormat'
 import { escapeHtml } from '../shared/escapeHtml'
 import { formatTooltipChartDate, formatTooltipValueHtml, type TooltipGroupBy } from '../shared/formatters'
-import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '../shared/tooltip'
 
 const CHART_SYMBOLS: Record<string, string> = {
 	'Active Addresses': '',
@@ -55,7 +61,9 @@ export function createOverviewTooltipFormatter({
 		if (items.length === 0) return ''
 		const axisValue = getTooltipAxisValue(items[0])
 		const chartDate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-		let output = chartDate
+		const pointedName = getPointedSeriesName(items)
+		let pointedLine = ''
+		let rowLines = ''
 		let mcap: number | null = null
 		let tvl: number | null = null
 		for (const item of items) {
@@ -64,13 +72,16 @@ export function createOverviewTooltipFormatter({
 			const rawValue = getTooltipRawYValue(item, name)
 			const value = rawValue === '-' ? Number.NaN : typeof rawValue === 'number' ? rawValue : Number(rawValue)
 			if (!Number.isFinite(value)) continue
-			output += `<li style="list-style:none">${item.marker ?? ''}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValueHtml(
+			const row = `${item.marker ?? ''}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValueHtml(
 				value,
 				getSeriesSymbol(name, valueSymbol, unlockTokenSymbol, seriesValueSymbols)
-			)}</li>`
+			)}`
+			if (name === pointedName) pointedLine = `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</li>`
+			else rowLines += `<li style="list-style:none">${row}</li>`
 			if (name === 'Mcap' && mcap === null) mcap = value
 			if (name === 'TVL' && tvl === null) tvl = value
 		}
+		let output = chartDate + pointedLine + rowLines
 		if (mcap !== null && tvl !== null && tvl > 0)
 			output += `<li style="list-style:none">Mcap/TVL&nbsp;&nbsp;${formatRatio(mcap / tvl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>`
 		return output

@@ -17,6 +17,7 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { CHART_SERIES_LIMIT, chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -87,7 +88,10 @@ export function BridgedTVLByChain({
 	const { pieSeries, tableData } = React.useMemo(() => {
 		const category = chainData?.[chartType]
 		const breakdown = category?.breakdown
-		const pieSeries = prepareRuntimePieChartData({ data: breakdown ?? EMPTY_CHAIN_ASSET_BREAKDOWN, limit: 10 })
+		const pieSeries = prepareRuntimePieChartData({
+			data: breakdown ?? EMPTY_CHAIN_ASSET_BREAKDOWN,
+			limit: CHART_SERIES_LIMIT
+		})
 
 		const tableData: Array<BridgedChainRow> = []
 		if (breakdown) {
@@ -101,17 +105,18 @@ export function BridgedTVLByChain({
 		return { pieSeries, tableData }
 	}, [chainData, chartType])
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
-	const pieColorIndex = React.useMemo(() => {
-		const indexByToken = new Map<string, number>()
-		if (!chainData) return indexByToken
+	const pieColors = React.useMemo(() => {
+		const colorByToken: Record<string, string> = {}
+		if (!chainData) return colorByToken
+		let count = 0
 		for (const { key: categoryName } of CHART_TYPES) {
 			const category = chainData[categoryName]
 			if (!category) continue
 			for (const name in category.breakdown) {
-				if (!indexByToken.has(name)) indexByToken.set(name, indexByToken.size)
+				if (!Object.hasOwn(colorByToken, name)) colorByToken[name] = chartColor(count++)
 			}
 		}
-		return indexByToken
+		return colorByToken
 	}, [chainData])
 	const {
 		activeSeries: selectedPieTokens,
@@ -123,9 +128,9 @@ export function BridgedTVLByChain({
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
 				selectedSeries: selectedPieTokenSet,
-				colorIndexByPeer: pieColorIndex
+				colorByPeer: pieColors
 			}),
-		[pieColorIndex, pieSeries, selectedPieTokenSet]
+		[pieColors, pieSeries, selectedPieTokenSet]
 	)
 
 	const deferredPiePresentation = React.useDeferredValue(piePresentation)

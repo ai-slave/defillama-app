@@ -32,6 +32,21 @@ describe('liquidations chart tooltip', () => {
 		expect(output).toContain('$100')
 	})
 
+	test('leads with the pointed protocol and keeps the total', () => {
+		const output = getLiquidationsTooltipHtml(
+			[
+				{ axisValue: 2000, seriesName: 'Aave', value: [2000, 60], encode: { x: [0], y: [1] } },
+				{ axisValue: 2000, seriesName: 'Spark', value: [2000, 40], encode: { x: [0], y: [1] }, pointed: true }
+			],
+			'usd',
+			'WBTC'
+		)
+
+		expect(output.indexOf('Spark')).toBeLessThan(output.indexOf('Aave'))
+		expect(output.indexOf('$40')).toBeLessThan(output.indexOf('$60'))
+		expect(output).toContain('$100')
+	})
+
 	test('omits sparse, missing, and zero rows', () => {
 		const output = getLiquidationsTooltipHtml(
 			[

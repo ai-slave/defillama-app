@@ -3,6 +3,9 @@ import { formatTooltipChartDate, formatTooltipValueHtml } from './formatters'
 
 export const TOOLTIP_OTHERS_ROW_STYLE =
 	'list-style:none;margin-top:6px;padding-top:6px;border-top:1px solid rgba(128,128,128,0.3);'
+/** The stack band under the pointer leads the list, set off below as the Others row is set off above. */
+export const TOOLTIP_POINTED_ROW_STYLE =
+	'list-style:none;font-weight:600;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(128,128,128,0.3);'
 
 export interface EChartsTooltipItem {
 	axisValue?: unknown
@@ -16,12 +19,25 @@ export interface EChartsTooltipItem {
 	seriesName?: string
 	seriesIndex?: number
 	value?: unknown
+	/** Set by MultiSeriesChart on the stack band under the pointer; formatters list that series first. */
+	pointed?: boolean
 }
 
 type TooltipRow = { marker: string; name: string; value: number }
 
 function isEChartsTooltipItem(value: unknown): value is EChartsTooltipItem {
 	return value !== null && typeof value === 'object'
+}
+
+/**
+ * The series MultiSeriesChart flagged under the pointer, for a formatter to list first. Others is the remainder and
+ * keeps its own row, so it is never the pointed series.
+ */
+export function getPointedSeriesName(items: ReadonlyArray<EChartsTooltipItem>): string | null {
+	for (const item of items) {
+		if (item.pointed && item.seriesName && item.seriesName !== 'Others') return item.seriesName
+	}
+	return null
 }
 
 export function normalizeTooltipItems(params: unknown): Array<EChartsTooltipItem> {
@@ -90,6 +106,7 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, 'daily') : ''
 		const rows: Array<TooltipRow> = []
 		let explicitOthers: TooltipRow | null = null
+		let pointed: TooltipRow | null = null
 		let total = 0
 		for (const item of items) {
 			const name = item.seriesName
@@ -101,6 +118,9 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 			total += value
 			if (name === 'Others') {
 				explicitOthers = row
+			} else if (item.pointed) {
+				// The stack band under the pointer leads, even past the ten rows.
+				pointed = row
 			} else if (rows.length < 10 || value < rows[rows.length - 1]!.value) {
 				let insertAt = rows.length
 				while (insertAt > 0 && rows[insertAt - 1]!.value > value) insertAt--
@@ -110,7 +130,10 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 		}
 
 		output += `<li style="list-style:none;font-weight:600">Total Inflows&nbsp;&nbsp;${formatTooltipValueHtml(total, valueSymbol)}</li>`
-		let selectedSum = 0
+		if (pointed) {
+			output += `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${pointed.marker}${hideSeriesName ? '' : escapeHtml(pointed.name)}&nbsp;&nbsp;${formatTooltipValueHtml(pointed.value, valueSymbol)}</li>`
+		}
+		let selectedSum = pointed?.value ?? 0
 		for (const row of rows) {
 			selectedSum += row.value
 			if (row.value === 0) continue

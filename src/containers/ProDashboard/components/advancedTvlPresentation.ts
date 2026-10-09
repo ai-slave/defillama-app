@@ -76,17 +76,13 @@ export function buildAdvancedTvlPresentation({
 	const colorNames =
 		chartType === 'chainsTvl'
 			? orderedChainNames
-			: chartType === 'tokenValuesUsd' ||
-				  chartType === 'tokensPie' ||
-				  chartType === 'tokenBalances' ||
-				  chartType === 'tokenInflows'
+			: chartType === 'tokenValuesUsd' || chartType === 'tokenBalances' || chartType === 'tokenInflows'
 				? tokenNames
 				: []
 	// Series take the palette by rank in the chart; the folded remainder is always the Others grey.
 	const stackColors: Record<string, string> = {}
 	let rank = 0
 	for (const name of colorNames) stackColors[name] = name === 'Others' ? OTHERS_COLOR : chartColor(rank++)
-	if (chartType === 'tokensPie') stackColors.Others = OTHERS_COLOR
 
 	let charts: Array<MultiSeriesChartSeriesConfig> = []
 	let chartOptions = DOLLAR_CHART_OPTIONS

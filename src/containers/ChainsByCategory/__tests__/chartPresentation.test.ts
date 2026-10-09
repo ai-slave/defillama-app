@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { chartColor } from '~/constants/colors'
 import { buildChainsByCategoryChartPresentation } from '../index'
 
 describe('chains by category chart presentation', () => {
@@ -19,7 +20,6 @@ describe('chains by category chart presentation', () => {
 				tvl: { 1: 100, 2: 100, 3: 100, 4: 100 },
 				staking: { 1: 5, 2: 5, 3: 5, 4: 5 }
 			},
-			colorsByChain: { Ethereum: '#111', Solana: '#222' },
 			enabledTvlSettings: ['staking']
 		})
 
@@ -33,6 +33,9 @@ describe('chains by category chart presentation', () => {
 		])
 		expect(result.chainSeries).toEqual(['Solana', 'Ethereum'])
 		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum'])
+		// Staking moves Solana ahead, and both charts colour it as the leader.
+		expect(result.dominanceCharts.charts.map((chart) => chart.color)).toEqual([chartColor(0), chartColor(1)])
+		expect(result.colorsByChain).toEqual({ Solana: chartColor(0), Ethereum: chartColor(1) })
 	})
 
 	test('retains an unsampled latest date for the pie without appending a dominance row', () => {
@@ -44,7 +47,6 @@ describe('chains by category chart presentation', () => {
 				}
 			},
 			totalTvlByDate: { tvl: { 1: 100, 2: 100, 3: 100, 4: 100, 5: 100 } },
-			colorsByChain: { Ethereum: '#111', Solana: '#222' },
 			enabledTvlSettings: []
 		})
 
@@ -69,7 +71,6 @@ describe('chains by category chart presentation', () => {
 				}
 			},
 			totalTvlByDate: { tvl: { 1: 175, 2: 200 } },
-			colorsByChain: {},
 			enabledTvlSettings: []
 		})
 

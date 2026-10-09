@@ -2,7 +2,12 @@ import { Fragment, lazy, useMemo } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
@@ -75,19 +80,23 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 						const items = normalizeTooltipItems(params)
 						const proposal = proposalByLabel.get(String(items[0]?.axisValue))
 						if (!proposal) return ''
+						const pointedName = getPointedSeriesName(items)
 						let total = 0
+						let pointedRow = ''
 						let rows = ''
 						for (const item of items) {
 							const name = item.seriesName ?? ''
 							const value = Number(getTooltipRawYValue(item, name) ?? 0)
 							if (!value) continue
 							total += value
-							rows += `${item.marker ?? ''}${escapeHtml(name)}: ${formatUsd(value, { compact: true })}<br/>`
+							const row = `${item.marker ?? ''}${escapeHtml(name)}: ${formatUsd(value, { compact: true })}`
+							if (name === pointedName) pointedRow = `<div style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</div>`
+							else rows += `${row}<br/>`
 						}
 						return (
 							`<b>#${proposal.id} ${escapeHtml(proposalTitle(proposal.title))}</b><br/>` +
 							`<span style="opacity:.7">${escapeHtml(proposal.date)} &middot; ${proposal.voters} voters</span><br/>` +
-							`<b>Turnout: ${formatUsd(total, { compact: true })}</b><br/>${rows}`
+							`<b>Turnout: ${formatUsd(total, { compact: true })}</b><br/>${pointedRow}${rows}`
 						)
 					}
 				}

@@ -6,6 +6,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -65,6 +66,7 @@ function PieChart({
 	formatTooltip,
 	customLabel,
 	exportButtons,
+	csvSource = 'rendered-chart',
 	onReady,
 	...props
 }: IPieChartProps) {
@@ -255,11 +257,14 @@ function PieChart({
 					shadowColor: 'rgba(0, 0, 0, 0.5)'
 				}
 			},
-			data: chartData.map((item) => {
-				const color = stackColorByName.get(item.name)
-				const dataItem = { name: item.name, value: item.value }
-				return color === undefined ? dataItem : { ...dataItem, itemStyle: { color } }
-			})
+			// A slice without a colour takes the palette by its rank, not ECharts' default palette; Others stays grey.
+			data: chartData.map((item, index) => ({
+				name: item.name,
+				value: item.value,
+				itemStyle: {
+					color: stackColorByName.get(item.name) ?? (item.name === 'Others' ? OTHERS_COLOR : chartColor(index))
+				}
+			}))
 		}
 
 		if (reservedRight > 0) {
@@ -433,7 +438,7 @@ function PieChart({
 								iconUrl={exportButtonsConfig?.pngIconUrl}
 								showCsv={csvDownloadEnabled}
 								showPng={imageExportEnabled}
-								csvSource="rendered-chart"
+								csvSource={csvSource}
 							/>
 						}
 					/>

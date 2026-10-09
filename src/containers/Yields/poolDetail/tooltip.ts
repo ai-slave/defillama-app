@@ -10,6 +10,8 @@ export interface ChartTooltipItem {
 	name: string
 	seriesName: string
 	value: unknown
+	/** Carries MultiSeriesChart's pointed-series flag through to the formatters. */
+	pointed?: boolean
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -36,7 +38,8 @@ function toTooltipItem(value: unknown): ChartTooltipItem | null {
 		marker: typeof value.marker === 'string' ? value.marker : '',
 		name: typeof value.name === 'string' ? value.name : '',
 		seriesName: typeof value.seriesName === 'string' ? value.seriesName : '',
-		value: value.value
+		value: value.value,
+		pointed: value.pointed === true
 	}
 }
 

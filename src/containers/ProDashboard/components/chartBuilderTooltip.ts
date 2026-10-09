@@ -5,10 +5,12 @@ import {
 	type TooltipGroupBy
 } from '~/components/ECharts/shared/formatters'
 import {
+	getPointedSeriesName,
 	getTooltipAxisValue,
 	getTooltipRawYValue,
 	normalizeTooltipItems,
-	TOOLTIP_OTHERS_ROW_STYLE
+	TOOLTIP_OTHERS_ROW_STYLE,
+	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 
 type ChartBuilderTooltipRow = {
@@ -21,10 +23,10 @@ function renderChartBuilderTooltipRow(
 	row: ChartBuilderTooltipRow,
 	valueSymbol: string,
 	maxNameLength: number,
-	separated = false
+	leadStyle = ''
 ) {
 	const name = row.name.length > maxNameLength ? `${row.name.substring(0, maxNameLength - 2)}..` : row.name
-	return `<div style="${separated ? TOOLTIP_OTHERS_ROW_STYLE : ''}display:flex;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap">${row.marker}<span style="margin-right:4px">${escapeHtml(name)}</span><span style="margin-left:auto;font-weight:500">${formatTooltipValueHtml(row.value, valueSymbol)}</span></div>`
+	return `<div style="${leadStyle}display:flex;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap">${row.marker}<span style="margin-right:4px">${escapeHtml(name)}</span><span style="margin-left:auto;font-weight:500">${formatTooltipValueHtml(row.value, valueSymbol)}</span></div>`
 }
 
 export function createChartBuilderTooltipFormatter({
@@ -45,8 +47,10 @@ export function createChartBuilderTooltipFormatter({
 		const rawAxisValue = getTooltipAxisValue(items[0])
 		const axisValue = rawAxisValue < 10_000_000_000 ? rawAxisValue * 1000 : rawAxisValue
 		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
+		const pointedName = getPointedSeriesName(items)
 		const rows: Array<ChartBuilderTooltipRow> = []
 		let explicitOthers: ChartBuilderTooltipRow | null = null
+		let pointed: ChartBuilderTooltipRow | null = null
 		let total = 0
 
 		for (const item of items) {
@@ -61,31 +65,37 @@ export function createChartBuilderTooltipFormatter({
 			total += value
 			if (name.startsWith('Others')) {
 				explicitOthers = row
+			} else if (name === pointedName) {
+				pointed = row
 			} else {
 				rows.push(row)
 			}
 		}
 
 		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
-		const showTotal = rows.length + (explicitOthers ? 1 : 0) > 1
+		const seriesRowCount = rows.length + (pointed ? 1 : 0)
+		const showTotal = seriesRowCount + (explicitOthers ? 1 : 0) > 1
 		const totalLine = showTotal
 			? `<div style="font-size:11px;line-height:1.4;font-weight:600">Total&nbsp;&nbsp;${formatTooltipValueHtml(total, valueSymbol)}</div>`
 			: ''
 
-		const renderInTwoColumns = useTwoColumns && rows.length > 10
-		let content = ''
+		const renderInTwoColumns = useTwoColumns && seriesRowCount > 10
+		// The pointed series leads at full width, above the two-column grid.
+		let content = pointed ? renderChartBuilderTooltipRow(pointed, valueSymbol, 20, TOOLTIP_POINTED_ROW_STYLE) : ''
 		if (renderInTwoColumns) {
 			const midpoint = Math.ceil(rows.length / 2)
 			const leftRows = rows.slice(0, midpoint)
 			const rightRows = rows.slice(midpoint)
 			const leftColumn = leftRows.map((row) => renderChartBuilderTooltipRow(row, valueSymbol, 15)).join('')
 			const rightColumn = rightRows.map((row) => renderChartBuilderTooltipRow(row, valueSymbol, 15)).join('')
-			content = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${leftColumn}</div><div>${rightColumn}</div></div>`
+			content += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${leftColumn}</div><div>${rightColumn}</div></div>`
 		} else {
-			content = rows.map((row) => renderChartBuilderTooltipRow(row, valueSymbol, 20)).join('')
+			content += rows.map((row) => renderChartBuilderTooltipRow(row, valueSymbol, 20)).join('')
 		}
 
-		const othersLine = explicitOthers ? renderChartBuilderTooltipRow(explicitOthers, valueSymbol, 20, true) : ''
+		const othersLine = explicitOthers
+			? renderChartBuilderTooltipRow(explicitOthers, valueSymbol, 20, TOOLTIP_OTHERS_ROW_STYLE)
+			: ''
 
 		return `<div style="max-width:${renderInTwoColumns ? '400px' : '300px'}"><div style="font-size:12px;margin-bottom:4px;font-weight:500">${chartdate}</div>${totalLine}${content}${othersLine}</div>`
 	}

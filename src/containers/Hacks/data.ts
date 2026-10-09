@@ -1,5 +1,5 @@
 import { preparePieChartData } from '~/components/ECharts/PieChart/data'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT } from '~/constants/colors'
 import { firstDayOfMonth } from '~/utils'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { IHacksPageData, IHackRow } from './types'
@@ -102,7 +102,7 @@ function buildHacksSummary(
 		totalRugs: formatUsd(totalBridgeHacks, USD_LOWERCASE_MILLIONS_OPTIONS),
 		pieChartData: preparePieChartData({
 			data: Array.from(techniqueTotals, ([name, value]) => ({ name, value })),
-			limit: 15
+			limit: CHART_SERIES_LIMIT
 		})
 	}
 

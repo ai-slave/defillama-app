@@ -25,7 +25,7 @@ function buildChart(unlocksData: UnlocksData, dates: Array<string>) {
  * dataset preparation, then axis-trigger params shaped as ECharts sends them for array rows
  * (`value` is the whole row, `encode.y` is the series' column).
  */
-function hoverDay(chart: ReturnType<typeof buildChart>, dayIndex: number) {
+function hoverDay(chart: ReturnType<typeof buildChart>, dayIndex: number, pointedSeries?: string) {
 	const names = chart.charts.map((series) => series.name)
 	const selected = buildSelectedAdditiveChart({
 		dataset: chart.dataset,
@@ -42,7 +42,8 @@ function hoverDay(chart: ReturnType<typeof buildChart>, dayIndex: number) {
 		data: row,
 		encode: { x: [series.encode.x], y: [series.encode.y] },
 		dimensionNames: prepared.dimensions.map((dimension) => dimension.name),
-		axisValue: row[0]
+		axisValue: row[0],
+		pointed: series.name === pointedSeries
 	}))
 	return calendarChartOptions.tooltip.formatter(params)
 }
@@ -75,6 +76,24 @@ describe('calendar chart tooltip', () => {
 		const html = hoverDay(chart, 1)
 
 		expect(rowValue(html, 'Alpha')).toBe('$177.37m')
+		expect(rowValue(html, 'Beta')).toBe('$5m')
+		expect(totalValue(html)).toBe('$182.37m')
+	})
+
+	test('leads with the pointed protocol without changing the total', () => {
+		const chart = buildChart(
+			{
+				'2026-09-24': {
+					totalValue: 182_370_000,
+					events: [unlockEvent('Alpha', 177_370_000), unlockEvent('Beta', 5_000_000)]
+				}
+			},
+			['2026-09-24']
+		)
+		const html = hoverDay(chart, 0, 'Beta')
+
+		expect(html.indexOf('<span> Beta</span>')).toBeGreaterThan(-1)
+		expect(html.indexOf('<span> Beta</span>')).toBeLessThan(html.indexOf('<span> Alpha</span>'))
 		expect(rowValue(html, 'Beta')).toBe('$5m')
 		expect(totalValue(html)).toBe('$182.37m')
 	})

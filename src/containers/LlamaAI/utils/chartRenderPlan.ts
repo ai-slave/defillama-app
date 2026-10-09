@@ -1,8 +1,9 @@
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import type { IScatterChartProps } from '~/components/ECharts/ScatterChart/types'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import {
@@ -106,7 +107,8 @@ export function buildRenderPlan(
 		case 'pie': {
 			const rendererProps: IPieChartProps = {
 				...adaptedChart.props,
-				chartData: adaptedChart.props.chartData ?? []
+				// The pie folds past the series cap; the CSV export keeps every slice.
+				chartData: preparePieChartData({ data: adaptedChart.props.chartData ?? [], limit: CHART_SERIES_LIMIT })
 			}
 			return {
 				rendererKind: 'pie',

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import { getChartTheme } from '../../shared/chartTheme'
-import { buildMultiSeries, projectionLabelFits } from '../series'
+import { buildMultiSeries, getPointerLines, getPointerStack, projectionLabelFits } from '../series'
+import type { MultiSeriesChartSeriesConfig } from '../types'
 
 const chartTheme = getChartTheme(false)
 const NO_ICONS: ReadonlySet<string> = new Set()
@@ -147,5 +148,79 @@ describe('MultiSeriesChart series construction', () => {
 		)
 
 		expect(series).toMatchObject({ type: 'line', step: 'end' })
+	})
+
+	describe('the chart stack', () => {
+		const line = (name: string, extra: Partial<MultiSeriesChartSeriesConfig> = {}): MultiSeriesChartSeriesConfig => ({
+			name,
+			type: 'line',
+			encode: { x: 'timestamp', y: name },
+			...extra
+		})
+
+		test('stacks every drawn series of a share chart except its overlay', () => {
+			const charts = [
+				line('Solana', { stack: 'Solana' }),
+				line('Bitcoin', { stack: 'Bitcoin' }),
+				line('Sui', { stack: 'Sui' }),
+				line('Price', { yAxisIndex: 1 })
+			]
+
+			expect(getPointerStack(charts, new Set(['Solana', 'Bitcoin', 'Price']), true)).toEqual({
+				series: new Set(['Solana', 'Bitcoin']),
+				yAxisIndex: 0
+			})
+		})
+
+		test('is one shared stack, never stacks side by side or unstacked series', () => {
+			const stacked = (stacks: Array<string | undefined>) =>
+				getPointerStack(
+					stacks.map((stack, index) => line(`Series ${index}`, { stack })),
+					undefined,
+					false
+				)
+
+			expect(stacked(['fees', 'fees', 'revenue', 'revenue'])).toBeNull()
+			expect(stacked([undefined, undefined])).toBeNull()
+			expect(stacked(['total', 'total'])).toEqual({ series: new Set(['Series 0', 'Series 1']), yAxisIndex: 0 })
+		})
+
+		test('is null when values stack across zero', () => {
+			const charts = [
+				line('Base', { stack: 'growth', stackStrategy: 'all' }),
+				line('Reward', { stack: 'growth', stackStrategy: 'all' })
+			]
+
+			expect(getPointerStack(charts, undefined, false)).toBeNull()
+		})
+	})
+
+	test('names each unstacked line by its axis, and nothing for a lone line or a stack', () => {
+		const build = (charts: Array<MultiSeriesChartSeriesConfig>) =>
+			buildMultiSeries({
+				charts,
+				selectedCharts: undefined,
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
+				chartTheme
+			})
+		const line = (name: string, extra: Partial<MultiSeriesChartSeriesConfig> = {}): MultiSeriesChartSeriesConfig => ({
+			name,
+			type: 'line',
+			encode: { x: 'timestamp', y: name },
+			...extra
+		})
+
+		expect(
+			getPointerLines(build([line('TVL'), line('Fees', { yAxisIndex: 1 }), line('Volume', { type: 'bar' })]))
+		).toEqual(
+			new Map([
+				['TVL', 0],
+				['Fees', 1]
+			])
+		)
+		expect(getPointerLines(build([line('TVL'), line('Volume', { type: 'bar' })]))).toBeNull()
+		expect(getPointerLines(build([line('A', { stack: 's' }), line('B', { stack: 's' })]))).toBeNull()
 	})
 })

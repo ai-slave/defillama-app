@@ -9,7 +9,12 @@ import type {
 	MultiSeriesYAxisOption
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
@@ -280,19 +285,27 @@ function buildChartOptions(
 				const items = normalizeTooltipItems(params)
 				if (items.length === 0) return ''
 				const header = escapeHtml(String(items[0].axisValue ?? items[0].name ?? ''))
+				const pointedName = getPointedSeriesName(items)
 				const rows: Array<{ marker: string; name: string; value: number }> = []
+				let pointed: (typeof rows)[number] | null = null
 				for (const item of items) {
 					const name = item.seriesName
 					if (!name) continue
 					const rawValue = getTooltipRawYValue(item, name)
 					const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
 					if (!value || !Number.isFinite(value)) continue
-					rows.push({ marker: item.marker ?? '', name, value })
+					const row = { marker: item.marker ?? '', name, value }
+					if (name === pointedName) pointed = row
+					else rows.push(row)
 				}
 				rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
 
-				let content = ''
-				for (let index = 0; index < rows.length && index < 10; index++) {
+				// The pointed series leads in one of the ten slots, even when its value would fall past them.
+				let content = pointed
+					? `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${pointed.marker}${escapeHtml(pointed.name)}&nbsp;&nbsp;${formatter.tooltip(pointed.value)}</li>`
+					: ''
+				const limit = pointed ? 9 : 10
+				for (let index = 0; index < rows.length && index < limit; index++) {
 					const row = rows[index]
 					content += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatter.tooltip(row.value)}</li>`
 				}

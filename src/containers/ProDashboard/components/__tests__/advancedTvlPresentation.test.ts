@@ -54,17 +54,4 @@ describe('advanced TVL presentation', () => {
 			}).valueSymbol
 		).toBe('')
 	})
-
-	test('reserves the established Others color without making it a selectable token', () => {
-		const presentation = buildAdvancedTvlPresentation({
-			chartType: 'tokensPie',
-			chainsDataset,
-			chainNames: [],
-			tokenNames: ['USDC']
-		})
-
-		expect(Object.keys(presentation.stackColors)).toEqual(['USDC', 'Others'])
-		expect(presentation.stackColors.Others).toMatch(/^#[0-9a-f]{6}$/i)
-		expect(presentation.stackColors.Others).not.toBe(presentation.stackColors.USDC)
-	})
 })

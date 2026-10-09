@@ -1,7 +1,13 @@
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 
 export const AREA_CHART_EXPORTS = {
 	csv: true,
@@ -24,7 +30,9 @@ export function createChartOptions(valueSymbol: string, reverseSeries = false): 
 							const items = normalizeTooltipItems(params)
 							if (items.length === 0) return ''
 
-							let content = formatTooltipChartDate(getTooltipAxisValue(items[0]), 'daily')
+							const pointedName = getPointedSeriesName(items)
+							let pointedRow = ''
+							let rows = ''
 							for (let index = items.length - 1; index >= 0; index--) {
 								const item = items[index]
 								const name = item.seriesName
@@ -32,9 +40,11 @@ export function createChartOptions(valueSymbol: string, reverseSeries = false): 
 								const rawValue = getTooltipRawYValue(item, name)
 								const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
 								if (!value || !Number.isFinite(value)) continue
-								content += `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
+								const row = `${item.marker ?? ''}${name}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}`
+								if (name === pointedName) pointedRow = `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</li>`
+								else rows += `<li style="list-style:none">${row}</li>`
 							}
-							return content
+							return formatTooltipChartDate(getTooltipAxisValue(items[0]), 'daily') + pointedRow + rows
 						}
 					}
 				}

@@ -12,8 +12,10 @@ import { buildRwaBreakdownSlices } from './hooks'
 import { RWASnapshotChartPanel } from './SnapshotChartPanel'
 import { buildRwaNestedTreemapTreeData, canBuildRwaNestedTreemap } from './treemap'
 
-/** Pie and flat treemap slices per axis, Others included: the chain pie stays small, every category keeps its own slice. */
-const PIE_LIMITS: Record<RwaChartAxis, number> = {
+/** Flat treemap tiles per axis, Others included: the chain treemap stays small, every category keeps its own tile.
+   The pie folds past ten slices on every axis, because a slice past the palette repeats a colour; the treemap is where
+   every category shows, each tile labelled. */
+const TREEMAP_LIMITS: Record<RwaChartAxis, number> = {
 	chain: 10,
 	category: Number.POSITIVE_INFINITY,
 	assetName: 24,
@@ -88,8 +90,7 @@ export function RWAOverviewBreakdownPanel({
 			isLoading={false}
 			error={null}
 			toolbarStart={toolbarStart}
-			pieLimit={PIE_LIMITS[axis]}
-			treemapLimit={PIE_LIMITS[axis]}
+			treemapLimit={TREEMAP_LIMITS[axis]}
 			nestedTreemap={nestedTreemap}
 			treemapControls={
 				<Select

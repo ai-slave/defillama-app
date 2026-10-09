@@ -180,7 +180,7 @@ export function ChartPaletteGroup() {
 				wide
 				name="CHART_COLORS"
 				prop="src/constants/colors.ts"
-				note="The one series palette, in order; past the limit a series is Others. Every colour passes 3:1 on the chart backgrounds in both modes."
+				note="The one series palette, in order; past the limit a series is Others, or, in a stack that shows every series, takes the colour it overlaps least with. Every colour passes 3:1 on the chart backgrounds in both modes."
 			>
 				<SwatchGrid>
 					{CHART_COLORS.map((color, index) => (

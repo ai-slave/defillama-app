@@ -10,7 +10,11 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
@@ -54,7 +58,7 @@ import { useQueryDraft } from './useQueryDraft'
 import { useVerifiedHistoryFetcher } from './useVerifiedHistory'
 import { useWidestHistory } from './useWidestHistory'
 
-const li = (inner: string, extra = '') => `<li style="list-style:none;${extra}">${inner}</li>`
+const li = (inner: string, style = 'list-style:none;') => `<li style="${style}">${inner}</li>`
 
 const valueOf = (item: ChartTooltipItem | undefined): number | null => {
 	if (!item) return null
@@ -216,6 +220,9 @@ function buildTooltipFormatter(
 			if (value != null) measured = (measured ?? 0) + value
 		}
 
+		const pointedName = getPointedSeriesName(items)
+		let pointedRow = ''
+		let rows = ''
 		for (const name of [AVAILABLE_NAME, REMAINDER_NAME]) {
 			const item = byName.get(name)
 			if (!item) continue
@@ -226,11 +233,17 @@ function buildTooltipFormatter(
 				measured && measured > 0
 					? ` (${formatPercent((value / measured) * 100, { input: 'percent', maximumFractionDigits: 1 })})`
 					: ''
-			html += li(`${item.marker} ${name}: ${escapeHtml(formatAmount(value, unit, model.symbol))}${share}`)
+			const row = `${item.marker} ${name}: ${escapeHtml(formatAmount(value, unit, model.symbol))}${share}`
+			if (name === pointedName) pointedRow = li(row, TOOLTIP_POINTED_ROW_STYLE)
+			else rows += li(row)
 		}
+		html += pointedRow + rows
 
 		if (measured != null && Number.isFinite(measured)) {
-			html += li(`${TOTAL_NAME}: ${escapeHtml(formatAmount(measured, unit, model.symbol))}`, 'font-weight:600;')
+			html += li(
+				`${TOTAL_NAME}: ${escapeHtml(formatAmount(measured, unit, model.symbol))}`,
+				'list-style:none;font-weight:600;'
+			)
 			if (quotedDates.has(timestamp)) {
 				html += li(
 					`<span style="opacity:0.7">Valued at the quoted rate: the exit could not price the supply that day</span>`

@@ -3,7 +3,7 @@ import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButt
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import type { IProtocolValueChart, ProtocolTreasuryKey } from './api.types'
 import { useFetchProtocolChartsByKeys, type IFetchProtocolChartsByKeysParams } from './queries.client'
@@ -599,7 +599,7 @@ const buildTokenInflowsFromChartPairs = (
 }
 
 const EMPTY_MULTI_SERIES_CHARTS: MultiSeriesCharts = []
-const EMPTY_RUNTIME_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
+const EMPTY_RUNTIME_PIE_SERIES: RuntimePieChartData = { peers: [], limit: CHART_SERIES_LIMIT, upstreamOthersValue: 0 }
 
 /** Build pie slices from the latest breakdown point, skipping `UNKNOWN*` keys and values below the minimum. */
 export const buildLatestBreakdownPieSeries = (
@@ -619,7 +619,7 @@ export const buildLatestBreakdownPieSeries = (
 			hasSource = true
 		}
 	}
-	return hasSource ? prepareRuntimePieChartData({ data: source, limit: 15 }) : EMPTY_RUNTIME_PIE_SERIES
+	return hasSource ? prepareRuntimePieChartData({ data: source, limit: CHART_SERIES_LIMIT }) : EMPTY_RUNTIME_PIE_SERIES
 }
 
 const EMPTY_COMPUTED_RESULT: IUseProtocolBreakdownChartsComputed = {

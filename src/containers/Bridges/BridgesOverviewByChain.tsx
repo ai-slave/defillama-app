@@ -7,7 +7,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { CHART_DOWN, CHART_UP } from '~/constants/colors'
+import { CHART_DOWN, CHART_UP, chartColor } from '~/constants/colors'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -195,16 +195,17 @@ export function BridgesOverviewByChain({
 			}),
 		[selectedChain, chartType, chainVolumeData, bridgeStatsCurrentDay, activeTokenPieSeries, displaysTokenPie]
 	)
-	const tokenColorIndex = React.useMemo(() => {
-		const indexByToken = new Map<string, number>()
-		if (!tokenPieSeriesByDirection) return indexByToken
+	const tokenColors = React.useMemo(() => {
+		const colorByToken: Record<string, string> = {}
+		if (!tokenPieSeriesByDirection) return colorByToken
+		let count = 0
 		for (const series of [tokenPieSeriesByDirection.deposited, tokenPieSeriesByDirection.withdrawn]) {
 			if (!series) continue
 			for (const peer of series.peers) {
-				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
+				if (!Object.hasOwn(colorByToken, peer.name)) colorByToken[peer.name] = chartColor(count++)
 			}
 		}
-		return indexByToken
+		return colorByToken
 	}, [tokenPieSeriesByDirection])
 	const activeTokenSeriesNames = React.useMemo(
 		() => activeTokenPieSeries?.peers.map((peer) => peer.name) ?? EMPTY_CHAINS,
@@ -221,10 +222,10 @@ export function BridgesOverviewByChain({
 				? buildRuntimePieChartPresentation({
 						series: activeTokenPieSeries,
 						selectedSeries: selectedTokenSet,
-						colorIndexByPeer: tokenColorIndex
+						colorByPeer: tokenColors
 					})
 				: { chartData: [], stackColors: {} },
-		[activeTokenPieSeries, selectedTokenSet, tokenColorIndex]
+		[activeTokenPieSeries, selectedTokenSet, tokenColors]
 	)
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)

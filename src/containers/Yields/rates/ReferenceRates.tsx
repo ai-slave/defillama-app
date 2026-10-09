@@ -4,7 +4,11 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
@@ -95,14 +99,18 @@ function ratesTooltipFormatter(params: unknown): string {
 	const ts = getTooltipAxisValue(first)
 	const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 	const sorted = [...items].sort((a, b) => (RATES_ORDER[a.seriesName] ?? 9) - (RATES_ORDER[b.seriesName] ?? 9))
+	const pointedName = getPointedSeriesName(items)
+	let pointedRow = ''
 	let rows = ''
 	for (const p of sorted) {
 		const raw = getChartTooltipValue(p)
 		const v = typeof raw === 'number' ? raw : raw == null ? null : Number(raw)
 		if (v == null || !Number.isFinite(v)) continue
-		rows += `<li style="list-style:none;">${p.marker} ${p.seriesName}: ${formatPercent(v, YIELD_PERCENT_OPTIONS) ?? '—'}</li>`
+		const row = `${p.marker} ${p.seriesName}: ${formatPercent(v, YIELD_PERCENT_OPTIONS) ?? '—'}`
+		if (p.seriesName === pointedName) pointedRow = `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${row}</li>`
+		else rows += `<li style="list-style:none;">${row}</li>`
 	}
-	return date + rows
+	return date + pointedRow + rows
 }
 
 const RATES_CHART_OPTIONS = { tooltip: { formatter: ratesTooltipFormatter } }

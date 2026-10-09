@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildPieLayoutOption,
 	buildRuntimePieChartCsvDataset,
@@ -174,14 +174,40 @@ describe('runtime pie selection', () => {
 	test('keeps peer colors stable across related views with different rankings', () => {
 		const firstView = prepareRuntimePieChartData({ data: { USDC: 10, ETH: 5 }, limit: 3 })
 		const secondView = prepareRuntimePieChartData({ data: { ETH: 20, USDC: 1 }, limit: 3 })
-		const colorIndexByPeer = new Map([
-			['USDC', 0],
-			['ETH', 1]
-		])
+		const colorByPeer = { USDC: chartColor(0), ETH: chartColor(1) }
 
-		expect(buildRuntimePieChartPresentation({ series: firstView, colorIndexByPeer }).stackColors).toEqual(
-			buildRuntimePieChartPresentation({ series: secondView, colorIndexByPeer }).stackColors
+		expect(buildRuntimePieChartPresentation({ series: firstView, colorByPeer }).stackColors).toEqual(
+			buildRuntimePieChartPresentation({ series: secondView, colorByPeer }).stackColors
 		)
+	})
+
+	test('gives a peer picked from past the top ten a palette colour no drawn slice uses', () => {
+		const data: Record<string, number> = {}
+		for (let rank = 0; rank < CHART_SERIES_LIMIT + 2; rank++) data[`P${rank}`] = 100 - rank
+		const series = prepareRuntimePieChartData({ data, limit: CHART_SERIES_LIMIT })
+		const picked = new Set(Object.keys(data))
+		picked.delete('P3')
+
+		const { chartData, stackColors } = buildRuntimePieChartPresentation({ series, selectedSeries: picked })
+
+		expect(chartData).toHaveLength(CHART_SERIES_LIMIT + 1)
+		expect(chartData.at(-2)?.name).toBe(`P${CHART_SERIES_LIMIT}`)
+		expect(stackColors.P0).toBe(chartColor(0))
+		expect(stackColors.P4).toBe(chartColor(4))
+		expect(stackColors[`P${CHART_SERIES_LIMIT}`]).toBe(chartColor(3))
+		expect(stackColors.Others).toBe(OTHERS_COLOR)
+	})
+
+	test('gives a slice whose page colour another drawn slice took the first unused palette colour', () => {
+		const series = prepareRuntimePieChartData({ data: { A: 3, B: 2, C: 1 }, limit: CHART_SERIES_LIMIT })
+		// Page-wide rank colours wrap past the palette, so a peer ranked eleventh on the page shares the first colour.
+		const colorByPeer = { A: chartColor(0), B: chartColor(CHART_SERIES_LIMIT), C: chartColor(1) }
+
+		expect(buildRuntimePieChartPresentation({ series, colorByPeer }).stackColors).toEqual({
+			A: chartColor(0),
+			B: chartColor(2),
+			C: chartColor(1)
+		})
 	})
 
 	test('keeps unpicked peers and the upstream remainder in Others for any partial selection', () => {

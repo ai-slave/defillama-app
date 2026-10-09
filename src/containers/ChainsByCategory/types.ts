@@ -31,7 +31,6 @@ export interface IChainsByCategoryData {
 		label: string
 		to: string
 	}>
-	colorsByChain: Record<string, string>
 	chains: Array<IChain>
 	totalTvlByDate: Record<string, Record<number, number>>
 	tvlChartsByChain: Record<string, Record<string, Record<number, number>>>

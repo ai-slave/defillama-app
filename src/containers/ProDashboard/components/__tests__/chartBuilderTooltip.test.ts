@@ -48,4 +48,19 @@ describe('Pro chart builder tooltip', () => {
 		for (let i = 0; i < 11; i++) expect(many).toContain(`Series ${i}`)
 		expect(many).toContain('$55')
 	})
+
+	test('leads with the pointed series above the two-column grid without changing the total', () => {
+		const output = createChartBuilderTooltipFormatter({ displayAs: 'timeSeries', useTwoColumns: true })(
+			Array.from({ length: 11 }, (_, index) => ({
+				seriesName: `Series ${index}`,
+				value: [1_767_225_600_000, index],
+				pointed: index === 1
+			}))
+		)
+
+		expect(output.indexOf('Total')).toBeLessThan(output.indexOf('Series 1<'))
+		expect(output.indexOf('Series 1<')).toBeLessThan(output.indexOf('Series 10'))
+		expect(output.indexOf('Series 1<')).toBeLessThan(output.indexOf('display:grid'))
+		expect(output).toContain('$55')
+	})
 })

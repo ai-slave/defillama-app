@@ -285,13 +285,14 @@ export function LSTOverview({
 		selectedCharts: selectedPieTokensSet,
 		setSelectedSeries: setSelectedPieTokens
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: 'breakdown-pie' })
-	const visiblePieChartData = React.useMemo(
+	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
-				selectedSeries: selectedPieTokensSet
-			}).chartData,
-		[pieSeries, selectedPieTokensSet]
+				selectedSeries: selectedPieTokensSet,
+				colorByPeer: lsdColors
+			}),
+		[lsdColors, pieSeries, selectedPieTokensSet]
 	)
 	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
 	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
@@ -325,7 +326,7 @@ export function LSTOverview({
 		}),
 		[areaChartData, barChartStacks, groupBy, inflowsChartData, lsdColors, tab, tokens]
 	)
-	const deferredPieChartData = React.useDeferredValue(visiblePieChartData)
+	const deferredPiePresentation = React.useDeferredValue(piePresentation)
 	const deferredActiveChartData = React.useDeferredValue(activeChartData)
 	const renderedActiveChartData = deferredActiveChartData.kind === tab ? deferredActiveChartData : activeChartData
 	const renderedGroupBy = renderedActiveChartData.groupBy
@@ -420,7 +421,11 @@ export function LSTOverview({
 										/>
 									</ChartPanelToolbar>
 									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<PieChart chartData={deferredPieChartData} stackColors={lsdColors} onReady={handlePieReady} />
+										<PieChart
+											chartData={deferredPiePresentation.chartData}
+											stackColors={deferredPiePresentation.stackColors}
+											onReady={handlePieReady}
+										/>
 									</React.Suspense>
 								</div>
 								<div className="flex flex-col">

@@ -1,10 +1,12 @@
 import { escapeHtml } from '../shared/escapeHtml'
 import { formatTooltipChartDate, formatTooltipValueHtml, type TooltipGroupBy } from '../shared/formatters'
 import {
+	type EChartsTooltipItem,
 	getTooltipAxisValue,
 	getTooltipRawYValue,
 	normalizeTooltipItems,
-	TOOLTIP_OTHERS_ROW_STYLE
+	TOOLTIP_OTHERS_ROW_STYLE,
+	TOOLTIP_POINTED_ROW_STYLE
 } from '../shared/tooltip'
 import { formatAxisLabel } from './multiYAxis'
 import type { IMultiSeriesChartProps } from './types'
@@ -13,8 +15,14 @@ type GroupBy = NonNullable<IMultiSeriesChartProps['groupBy']>
 type TooltipValueRow = readonly [marker: string, name: string, value: number, symbol: string, hasOverride: boolean]
 
 const OTHERS_SERIES_NAME = 'Others'
+const TOOLTIP_ROW_STYLE = 'list-style:none;'
 
 type LegacyTooltipRow = { marker: string; name: string; value: number }
+
+// Formatters lead with the stack band under the pointer (`item.pointed`); an Others band keeps its own row.
+function renderPointedLegacyRow(row: LegacyTooltipRow, valueSymbol: string) {
+	return `<li style="${TOOLTIP_POINTED_ROW_STYLE}">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
+}
 
 /** Category-axis formatter used by this renderer's object-row datasets. */
 export function createCategoryTooltipFormatter(valueSymbol: string) {
@@ -26,18 +34,22 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 		const category = first.axisValue ?? first.name
 		let output = category == null ? '' : `<strong>${escapeHtml(String(category))}</strong><br/>`
 		const rows: Array<LegacyTooltipRow> = []
+		let pointed: LegacyTooltipRow | null = null
 		for (const item of items) {
 			const name = item.seriesName
 			if (!name) continue
 			const rawValue = getTooltipRawYValue(item, name)
 			const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
 			if (!value || Number.isNaN(value)) continue
-			rows.push({ marker: item.marker ?? '', name, value })
+			const row = { marker: item.marker ?? '', name, value }
+			if (item.pointed && name !== OTHERS_SERIES_NAME) pointed = row
+			else rows.push(row)
 		}
 		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
 		const othersIndex = rows.findIndex((row) => row.name === OTHERS_SERIES_NAME)
 		const others = othersIndex >= 0 ? rows.splice(othersIndex, 1)[0] : null
-		const limit = others ? 9 : 10
+		const limit = (others ? 9 : 10) - (pointed ? 1 : 0)
+		if (pointed) output += renderPointedLegacyRow(pointed, valueSymbol)
 		for (let index = 0; index < rows.length && index < limit; index++) {
 			const row = rows[index]!
 			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
@@ -73,6 +85,7 @@ export function createCappedRemainderTooltipFormatter({
 		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
 		const rows: Array<LegacyTooltipRow> = []
 		let explicitOthers: LegacyTooltipRow | null = null
+		let pointed: LegacyTooltipRow | null = null
 
 		for (const item of items) {
 			const name = item.seriesName
@@ -82,12 +95,15 @@ export function createCappedRemainderTooltipFormatter({
 			if (!Number.isFinite(value) || value === 0) continue
 			const row = { marker: item.marker ?? '', name, value }
 			if (explicitRemainderLabel !== null && name === explicitRemainderLabel) explicitOthers = row
+			else if (item.pointed) pointed = row
 			else rows.push(row)
 		}
 
 		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
-		const hasRemainder = explicitOthers != null || rows.length > maxItems
-		const visibleLimit = hasRemainder ? Math.max(0, maxItems - 1) : maxItems
+		const rowLimit = maxItems - (pointed ? 1 : 0)
+		const hasRemainder = explicitOthers != null || rows.length > rowLimit
+		const visibleLimit = hasRemainder ? Math.max(0, rowLimit - 1) : rowLimit
+		if (pointed) output += renderPointedLegacyRow(pointed, valueSymbol)
 		for (let index = 0; index < rows.length && index < visibleLimit; index++) {
 			const row = rows[index]!
 			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
@@ -147,6 +163,7 @@ export function createInflowsTooltipFormatter({
 		let total = 0
 		let regularCount = 0
 		let explicitOthers: LegacyTooltipRow | null = null
+		let pointed: LegacyTooltipRow | null = null
 
 		for (const item of items) {
 			const name = item.seriesName
@@ -162,6 +179,10 @@ export function createInflowsTooltipFormatter({
 				continue
 			}
 			regularCount++
+			if (item.pointed) {
+				pointed = { marker: item.marker ?? '', name, value }
+				continue
+			}
 			if (topN <= 0) continue
 
 			const absoluteValue = Math.abs(value)
@@ -179,18 +200,20 @@ export function createInflowsTooltipFormatter({
 		}
 
 		if (regularCount === 0 && !explicitOthers) return chartdate
-		if (regularCount === 1 && !explicitOthers && topValues.length === 1) {
-			const row = topValues[0]!
+		const single = pointed ?? topValues[0]
+		if (regularCount === 1 && !explicitOthers && single) {
+			const row = single
 			return `${chartdate}<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
 		}
 
-		let selectedSum = 0
+		let selectedSum = pointed?.value ?? 0
 		for (const row of topValues) selectedSum += row.value
 		let others = total - selectedSum
 		if (Math.abs(others) < 1e-8) others = 0
 
 		let output = chartdate
 		output += `<li style="list-style:none;font-weight:600">${escapeHtml(totalLabel)}&nbsp;&nbsp;${formatTooltipValueHtml(total, valueSymbol)}</li>`
+		if (pointed) output += renderPointedLegacyRow(pointed, valueSymbol)
 		for (let index = topValues.length - 1; index >= 0; index--) {
 			const row = topValues[index]!
 			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
@@ -227,9 +250,57 @@ function insertTopTooltipValue(rows: Array<TooltipValueRow>, nextRow: TooltipVal
 	if (rows.length > limit) rows.pop()
 }
 
-function renderTooltipRow(row: TooltipValueRow, separated = false) {
-	const style = separated ? TOOLTIP_OTHERS_ROW_STYLE : 'list-style:none;'
+function renderTooltipRow(row: TooltipValueRow, style: string) {
 	return `<li style="${style}">${row[0]} ${escapeHtml(row[1])}: ${escapeHtml(formatAxisLabel(row[2], row[3]))}</li>`
+}
+
+/** The stacked series whose band holds `pointerValue` on the y-axis: positive values stack up from zero and negative
+   values down, each in series order, as ECharts draws them. */
+export function findPointedStackSeries(
+	items: ReadonlyArray<EChartsTooltipItem>,
+	stackedSeries: ReadonlySet<string>,
+	pointerValue: number
+): string | null {
+	const above = pointerValue >= 0
+	let edge = 0
+	for (const item of items) {
+		const name = item.seriesName
+		if (!name || !stackedSeries.has(name)) continue
+		const value = Number(getTooltipRawYValue(item, name))
+		// Zero, null and '-' draw no band; NaN is falsy too.
+		if (!value || value > 0 !== above) continue
+		edge += value
+		if (above ? pointerValue < edge : pointerValue > edge) return name
+	}
+	return null
+}
+
+// A line further than this from the pointer is not the one being pointed at.
+const NEAREST_LINE_PX = 12
+
+/** The line whose value at the hovered date is nearest the pointer, in pixels so lines on different axes compare. */
+export function findNearestLineSeries(
+	items: ReadonlyArray<EChartsTooltipItem>,
+	lineAxes: ReadonlyMap<string, number>,
+	toPixel: (yAxisIndex: number, value: number) => number,
+	pointerY: number
+): string | null {
+	let nearest: string | null = null
+	let nearestDistance = NEAREST_LINE_PX
+	for (const item of items) {
+		const name = item.seriesName
+		const yAxisIndex = name == null ? undefined : lineAxes.get(name)
+		if (yAxisIndex === undefined) continue
+		const raw = getTooltipRawYValue(item, name!)
+		// Null and '-' cells draw no point here.
+		if (raw == null || raw === '-') continue
+		const distance = Math.abs(toPixel(yAxisIndex, Number(raw)) - pointerY)
+		if (distance < nearestDistance) {
+			nearest = name!
+			nearestDistance = distance
+		}
+	}
+	return nearest
 }
 
 export function createTooltipFormatter({
@@ -265,6 +336,7 @@ export function createTooltipFormatter({
 		const topOverrideVals: Array<TooltipValueRow> = []
 		const topStandardVals: Array<TooltipValueRow> = []
 		let othersRow: TooltipValueRow | null = null
+		let pointedRow: TooltipValueRow | null = null
 
 		for (const item of items) {
 			const name = item?.seriesName
@@ -287,6 +359,12 @@ export function createTooltipFormatter({
 				standardCount += 1
 			}
 
+			// The band under the pointer leads, even when its value would fall in "+N more".
+			if (item.pointed && name !== OTHERS_SERIES_NAME) {
+				pointedRow = nextRow
+				continue
+			}
+
 			if (name === OTHERS_SERIES_NAME) {
 				othersRow = nextRow
 				continue
@@ -303,7 +381,7 @@ export function createTooltipFormatter({
 
 		if (!shouldCap) vals.sort(compareTooltipRows)
 
-		const rowLimit = shouldCap ? Math.max(0, cap - (othersRow ? 1 : 0)) : 0
+		const rowLimit = shouldCap ? Math.max(0, cap - (othersRow ? 1 : 0) - (pointedRow ? 1 : 0)) : 0
 		const cappedVals = shouldCap
 			? topOverrideVals.length >= rowLimit
 				? topOverrideVals.slice(0, rowLimit)
@@ -315,12 +393,25 @@ export function createTooltipFormatter({
 				? `<li style="list-style:none;font-weight:600;">Total: ${formatAxisLabel(total, valueSymbol)}</li>`
 				: ''
 		let valueLines = ''
-		for (const row of cappedVals) valueLines += renderTooltipRow(row)
+		for (const row of cappedVals) valueLines += renderTooltipRow(row, TOOLTIP_ROW_STYLE)
 		const remainingLine = remaining > 0 ? `<li style="list-style:none;opacity:0.7;">+${remaining} more</li>` : ''
 		const othersLine = othersRow
-			? renderTooltipRow(othersRow, totalLine.length > 0 || valueLines.length > 0 || remainingLine.length > 0)
+			? renderTooltipRow(
+					othersRow,
+					totalLine.length > 0 || pointedRow || valueLines.length > 0 || remainingLine.length > 0
+						? TOOLTIP_OTHERS_ROW_STYLE
+						: TOOLTIP_ROW_STYLE
+				)
+			: ''
+		const pointedLine = pointedRow
+			? renderTooltipRow(
+					pointedRow,
+					valueLines.length > 0 || remainingLine.length > 0 || othersLine.length > 0
+						? TOOLTIP_POINTED_ROW_STYLE
+						: TOOLTIP_ROW_STYLE
+				)
 			: ''
 
-		return chartdate + totalLine + valueLines + remainingLine + othersLine
+		return chartdate + totalLine + pointedLine + valueLines + remainingLine + othersLine
 	}
 }

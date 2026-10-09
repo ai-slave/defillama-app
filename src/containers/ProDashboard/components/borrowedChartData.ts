@@ -1,5 +1,6 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	buildComputedBreakdownResult,
@@ -17,7 +18,7 @@ interface BorrowedChartData {
 	pieSeries: RuntimePieChartData
 }
 
-const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
+const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: CHART_SERIES_LIMIT, upstreamOthersValue: 0 }
 
 export function buildBorrowedChartData(
 	chartType: BorrowedChartType,

@@ -14,6 +14,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
+import { chartColor } from '~/constants/colors'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -161,15 +162,16 @@ export function BridgeInfo({
 	) as ReadonlyArray<ChartType>
 	const activeTokenSeries =
 		chartType === 'Tokens To' ? tokenWithdrawals : chartType === 'Tokens From' ? tokenDeposits : null
-	const tokenColorIndex = React.useMemo(() => {
-		const indexByToken = new Map<string, number>()
+	const tokenColors = React.useMemo(() => {
+		const colorByToken: Record<string, string> = {}
+		let count = 0
 		for (const series of [tokenWithdrawals, tokenDeposits]) {
 			if (!series) continue
 			for (const peer of series.peers) {
-				if (!indexByToken.has(peer.name)) indexByToken.set(peer.name, indexByToken.size)
+				if (!Object.hasOwn(colorByToken, peer.name)) colorByToken[peer.name] = chartColor(count++)
 			}
 		}
-		return indexByToken
+		return colorByToken
 	}, [tokenDeposits, tokenWithdrawals])
 	const activeTokenSeriesNames = React.useMemo(
 		() => activeTokenSeries?.peers.map((peer) => peer.name) ?? [],
@@ -190,10 +192,10 @@ export function BridgeInfo({
 				? buildRuntimePieChartPresentation({
 						series: activeTokenSeries,
 						selectedSeries: selectedTokenSet,
-						colorIndexByPeer: tokenColorIndex
+						colorByPeer: tokenColors
 					})
 				: { chartData: [], stackColors: {} },
-		[activeTokenSeries, selectedTokenSet, tokenColorIndex]
+		[activeTokenSeries, selectedTokenSet, tokenColors]
 	)
 
 	const inflowsDataset = React.useMemo(

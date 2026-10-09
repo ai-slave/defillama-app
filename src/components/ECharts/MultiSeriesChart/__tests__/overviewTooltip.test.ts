@@ -53,6 +53,21 @@ describe('overview tooltip', () => {
 		expect(output).toContain('2.50')
 	})
 
+	test('leads with the pointed series and keeps the Mcap to TVL row last', () => {
+		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
+			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },
+			{
+				axisValue: 1_700_000_000_000,
+				seriesName: 'Mcap',
+				value: [1_700_000_000_000, 25],
+				encode: { y: [1] },
+				pointed: true
+			}
+		])
+		expect(output.indexOf('Mcap&nbsp;&nbsp;$25')).toBeLessThan(output.indexOf('TVL&nbsp;&nbsp;$10'))
+		expect(output.indexOf('TVL&nbsp;&nbsp;$10')).toBeLessThan(output.indexOf('Mcap/TVL&nbsp;&nbsp;2.50'))
+	})
+
 	test('renders a zero Mcap ratio when TVL is positive', () => {
 		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
 			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },

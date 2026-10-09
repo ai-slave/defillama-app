@@ -15,6 +15,7 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { CHART_SERIES_LIMIT, chartColor } from '~/constants/colors'
 import {
 	CHAINS_CATEGORY_GROUP_SETTINGS,
 	TVL_SETTINGS_KEYS,
@@ -75,7 +76,6 @@ const getChainRowExtraValues = ({
 
 export function ChainsByCategory({
 	chains,
-	colorsByChain,
 	allCategories,
 	category: _category,
 	categoryName,
@@ -106,10 +106,9 @@ export function ChainsByCategory({
 	})
 	const chartData =
 		chartDataQuery.data ?? (shouldFetchChartData ? EMPTY_CHAINS_CHART_DATA : { tvlChartsByChain, totalTvlByDate })
-	const { pieSeries, dominanceCharts, chainSeries } = useFormatChartData({
+	const { pieSeries, dominanceCharts, chainSeries, colorsByChain } = useFormatChartData({
 		tvlChartsByChain: chartData.tvlChartsByChain,
 		totalTvlByDate: chartData.totalTvlByDate,
-		colorsByChain,
 		enabledTvlSettings
 	})
 	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
@@ -134,13 +133,14 @@ export function ChainsByCategory({
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: categoryName })
-	const visiblePieChartData = React.useMemo(
+	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
-				selectedSeries: selectedPieSeries
-			}).chartData,
-		[pieSeries, selectedPieSeries]
+				selectedSeries: selectedPieSeries,
+				colorByPeer: colorsByChain
+			}),
+		[colorsByChain, pieSeries, selectedPieSeries]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
@@ -213,7 +213,11 @@ export function ChainsByCategory({
 						</ChartPanelToolbar>
 						{chartScopeNote}
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<PieChart chartData={visiblePieChartData} stackColors={colorsByChain} onReady={handlePieChartReady} />
+							<PieChart
+								chartData={piePresentation.chartData}
+								stackColors={piePresentation.stackColors}
+								onReady={handlePieChartReady}
+							/>
 						</React.Suspense>
 					</ChartPanel>
 					<ChartPanel className="relative isolate">
@@ -266,12 +270,10 @@ export function ChainsByCategory({
 export const buildChainsByCategoryChartPresentation = ({
 	tvlChartsByChain,
 	totalTvlByDate,
-	colorsByChain,
 	enabledTvlSettings
 }: {
 	tvlChartsByChain: IChainsByCategoryData['tvlChartsByChain']
 	totalTvlByDate: IChainsByCategoryData['totalTvlByDate']
-	colorsByChain: IChainsByCategoryData['colorsByChain']
 	enabledTvlSettings: ReadonlyArray<TvlSettingsKey>
 }) => {
 	const recentTvlByChain: Record<string, number> = {}
@@ -311,45 +313,47 @@ export const buildChainsByCategoryChartPresentation = ({
 		if (row) source.push(row)
 	}
 	const dimensions = ['timestamp', ...chainNames]
-	const pieSeries = prepareRuntimePieChartData({ data: recentTvlByChain, limit: 10 })
+	const pieSeries = prepareRuntimePieChartData({ data: recentTvlByChain, limit: CHART_SERIES_LIMIT })
 	const chainSeries = pieSeries.peers.map((peer) => peer.name)
 	const rankedCurrentChains = new Set(chainSeries)
 	for (const chain of chainNames) {
 		if (!rankedCurrentChains.has(chain)) chainSeries.push(chain)
 	}
 	const dimensionIndex = new Map(chainNames.map((chain, index) => [chain, index + 1]))
+	// Colours follow the rank both charts share, under the TVL settings in use, so the pie and the dominance chart
+	// colour a chain alike. Past the top ten the dominance chart recolours its stack by overlap.
+	const colorsByChain: Record<string, string> = {}
 	const chartsConfig: Array<MultiSeriesChartSeriesConfig> = []
-	for (const chain of chainSeries) {
+	for (const [rank, chain] of chainSeries.entries()) {
 		const yDimension = dimensionIndex.get(chain)
 		if (yDimension == null) throw new Error(`Missing chart dimension for chain ${chain}`)
-		const chart: MultiSeriesChartSeriesConfig = {
+		colorsByChain[chain] = chartColor(rank)
+		chartsConfig.push({
 			type: 'line',
 			name: chain,
 			encode: { x: 0, y: yDimension },
-			stack: chain
-		}
-		const color = colorsByChain[chain]
-		if (color != null) chart.color = color
-		chartsConfig.push(chart)
+			stack: chain,
+			color: colorsByChain[chain]
+		})
 	}
 	return {
 		dominanceCharts: { dataset: { source, dimensions }, charts: chartsConfig },
 		pieSeries,
-		chainSeries
+		chainSeries,
+		colorsByChain
 	}
 }
 
 const useFormatChartData = (options: Parameters<typeof buildChainsByCategoryChartPresentation>[0]) => {
-	const { colorsByChain, enabledTvlSettings, totalTvlByDate, tvlChartsByChain } = options
+	const { enabledTvlSettings, totalTvlByDate, tvlChartsByChain } = options
 	return React.useMemo(
 		() =>
 			buildChainsByCategoryChartPresentation({
-				colorsByChain,
 				enabledTvlSettings,
 				totalTvlByDate,
 				tvlChartsByChain
 			}),
-		[colorsByChain, enabledTvlSettings, totalTvlByDate, tvlChartsByChain]
+		[enabledTvlSettings, totalTvlByDate, tvlChartsByChain]
 	)
 }
 

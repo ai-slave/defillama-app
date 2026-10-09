@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { buildHacksPageSummary, filterHacksRows, type HacksFilterState } from '../data'
 import type { IHackRow } from '../types'
 
@@ -86,6 +87,22 @@ describe('Hacks data', () => {
 		expect(names(['Unknown'])).toEqual(['Chainless'])
 		expect(names(['Arbitrum', 'Base'])).toEqual(['Bridged', 'Base only'])
 		expect(names([])).toEqual([])
+	})
+
+	test('draws the largest techniques up to the series cap and folds the rest into Others', () => {
+		const rows: Array<IHackRow> = []
+		for (let rank = 0; rank < CHART_SERIES_LIMIT + 2; rank++) {
+			rows.push(row({ technique: `Technique ${rank}`, amountUsd: 1000 - rank }))
+		}
+
+		const pie = buildHacksPageSummary(rows).pieChartData
+
+		expect(pie).toHaveLength(CHART_SERIES_LIMIT + 1)
+		expect(pie[0]).toEqual({ name: 'Technique 0', value: 1000 })
+		expect(pie.at(-1)).toEqual({
+			name: 'Others',
+			value: 1000 - CHART_SERIES_LIMIT + (1000 - CHART_SERIES_LIMIT - 1)
+		})
 	})
 
 	test('returns measured zero summaries for successful empty data', () => {

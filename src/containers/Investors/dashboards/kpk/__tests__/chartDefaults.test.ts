@@ -113,6 +113,21 @@ describe('KPK composition tooltip', () => {
 
 		expect(readRows(html).map(([name]) => name)).toEqual(['Morpho', 'Gearbox', 'Total', 'Adjusted TVA'])
 	})
+
+	test('leads with the pointed segment, keeping the Total and the overlay line last', () => {
+		const html = formatterOf(kpkCompositionChartOptions('Adjusted TVA'))([
+			item('Morpho', 'Aug 26', 34_650_000, 1),
+			{ ...item('Gearbox', 'Aug 26', 11_360_000, 2), pointed: true },
+			item('Adjusted TVA', 'Aug 26', 40_000_000, 3)
+		])
+
+		expect(readRows(html)).toEqual([
+			['Gearbox', '$11.36m'],
+			['Morpho', '$34.65m'],
+			['Total', '$46.01m'],
+			['Adjusted TVA', '$40m']
+		])
+	})
 })
 
 describe('KPK composition range slider', () => {

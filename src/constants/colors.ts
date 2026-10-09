@@ -24,9 +24,36 @@ export const CHART_SERIES_LIMIT = 10
 /** The "Others" series: a neutral grey at 3:1 or more on every chart background, so it reads as the remainder. */
 export const OTHERS_COLOR = '#8a8d8f'
 
-/** The colour for the series at this rank. Callers fold past CHART_SERIES_LIMIT, so the cycle is only a fallback. */
+/** The colour for the series at this rank. Past CHART_SERIES_LIMIT callers fold into Others, or MultiSeriesChart
+   recolours a stack that shows every series by overlap (`assignStackColors`), so the cycle is only a fallback. */
 export function chartColor(index: number): string {
 	return CHART_COLORS[index % CHART_COLORS.length] ?? oldBlue
+}
+
+/**
+ * Colours for series in draw order, each its own while the palette lasts. A series keeps its colour unless one drawn
+ * before it took that colour (a pick from past CHART_SERIES_LIMIT wraps onto a top colour, and a page-wide colour can
+ * match another series'); those take the palette colours nothing drawn uses, in draw order. A pie and a stack of at
+ * most CHART_SERIES_LIMIT series both use it, so they colour the same picks alike.
+ */
+export function assignUniqueColors(series: ReadonlyArray<{ name: string; color: string }>): Record<string, string> {
+	const colors: Record<string, string> = {}
+	const used = new Set<string>()
+	const repeated: Array<string> = []
+	for (const item of series) {
+		if (used.has(item.color)) {
+			repeated.push(item.name)
+			continue
+		}
+		used.add(item.color)
+		colors[item.name] = item.color
+	}
+	let next = 0
+	for (const name of repeated) {
+		while (next < CHART_SERIES_LIMIT && used.has(chartColor(next))) next++
+		colors[name] = chartColor(next++)
+	}
+	return colors
 }
 
 /** Colours for `count` series in rank order. */

@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { queryReadFailed } from '~/utils/query'
 import { useIdleChartComputation } from '../hooks/useIdleChartComputation'
 import {
@@ -15,7 +16,7 @@ const EMPTY_BORROWED_CHART_DATA: ReturnType<typeof buildBorrowedChartData> = {
 	breakdown: null,
 	seriesNames: [],
 	defaultSeriesNames: [],
-	pieSeries: { peers: [], limit: 15, upstreamOthersValue: 0 }
+	pieSeries: { peers: [], limit: CHART_SERIES_LIMIT, upstreamOthersValue: 0 }
 }
 
 export function useBorrowedChartData({

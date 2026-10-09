@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { getBorrowedBreakdownSources } from '../../services/protocolTvl'
 import { buildBorrowedChartData } from '../borrowedChartData'
@@ -35,7 +36,7 @@ describe('buildBorrowedChartData', () => {
 			{ name: 'USDC', value: 40 },
 			{ name: 'ETH', value: 30 }
 		])
-		expect(pie.pieSeries.limit).toBe(15)
+		expect(pie.pieSeries.limit).toBe(CHART_SERIES_LIMIT)
 	})
 
 	test('keeps raw token quantities in an unaggregated dataset', () => {

@@ -9,7 +9,11 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
+import {
+	getPointedSeriesName,
+	getTooltipAxisValue,
+	TOOLTIP_POINTED_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -200,7 +204,7 @@ function buildChartInputs(
 	return { dataset: { source: rows, dimensions }, charts, hasData }
 }
 
-const li = (inner: string, extra = '') => `<li style="list-style:none;${extra}">${inner}</li>`
+const li = (inner: string, style = 'list-style:none;') => `<li style="${style}">${inner}</li>`
 
 const valueOf = (p: ChartTooltipItem): number | null => {
 	const raw = getChartTooltipValue(p)
@@ -208,9 +212,9 @@ const valueOf = (p: ChartTooltipItem): number | null => {
 	return n != null && Number.isFinite(n) ? n : null
 }
 
-const tooltipRow = (p: ChartTooltipItem, symbol: string) => {
+const tooltipRow = (p: ChartTooltipItem, symbol: string, style?: string) => {
 	const v = valueOf(p)
-	return v == null ? '' : li(`${p.marker} ${p.seriesName}: ${fmtVal(v, symbol)}`)
+	return v == null ? '' : li(`${p.marker} ${p.seriesName}: ${fmtVal(v, symbol)}`, style)
 }
 
 // Components keep their declared order (never re-sorted by value).
@@ -236,7 +240,10 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 		const ts = getTooltipAxisValue(first)
 		const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 
-		let html = date
+		// The pointed bar or overlay leads; the summary row keeps its place between them.
+		const pointedName = getPointedSeriesName(items)
+		let pointedRow = ''
+		let html = ''
 
 		let total = 0
 		let hasBar = false
@@ -247,14 +254,15 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 			if (v == null) continue
 			hasBar = true
 			total += v
-			html += tooltipRow(p, '%')
+			if (label === pointedName) pointedRow = tooltipRow(p, '%', TOOLTIP_POINTED_ROW_STYLE)
+			else html += tooltipRow(p, '%')
 		}
 
 		const verifiedItem =
 			payoutGaps && apyWindow === 'daily' ? byName.get(VERIFIED_APY_SERIES.label + rateSuffix) : undefined
 		if (verifiedItem && isNoPayoutDay(valueOf(verifiedItem))) html += li('No payout this day')
 
-		const summaryStyle = 'font-weight:600;'
+		const summaryStyle = 'list-style:none;font-weight:600;'
 		if (model.net && netLabel) {
 			const item = byName.get(netLabel)
 			const v = item ? valueOf(item) : null
@@ -265,10 +273,12 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 
 		for (const overlay of overlays) {
 			const item = byName.get(overlay.label)
-			if (item) html += tooltipRow(item, overlay.symbol)
+			if (!item) continue
+			if (overlay.label === pointedName) pointedRow = tooltipRow(item, overlay.symbol, TOOLTIP_POINTED_ROW_STYLE)
+			else html += tooltipRow(item, overlay.symbol)
 		}
 
-		return html
+		return date + pointedRow + html
 	}
 }
 

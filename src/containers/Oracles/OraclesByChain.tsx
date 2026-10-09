@@ -99,13 +99,14 @@ export function OraclesByChain({
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: activeLink })
-	const visiblePieData = React.useMemo(
+	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: tableAndPieData.pieSeries,
-				selectedSeries: selectedPieSeries
-			}).chartData,
-		[selectedPieSeries, tableAndPieData.pieSeries]
+				selectedSeries: selectedPieSeries,
+				colorByPeer: oraclesColors
+			}),
+		[oraclesColors, selectedPieSeries, tableAndPieData.pieSeries]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
@@ -143,7 +144,11 @@ export function OraclesByChain({
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
-						<PieChart chartData={visiblePieData} stackColors={oraclesColors} onReady={handlePieChartReady} />
+						<PieChart
+							chartData={piePresentation.chartData}
+							stackColors={piePresentation.stackColors}
+							onReady={handlePieChartReady}
+						/>
 					</React.Suspense>
 				</ChartPanel>
 				<ChartPanel className="flex-1">

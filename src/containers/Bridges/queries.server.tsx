@@ -6,7 +6,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { CONFIG_API } from '~/constants'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT } from '~/constants/colors'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -347,10 +347,10 @@ export function buildTableDataByChain({
 
 			tokenDeposits = hasUnknownDepositValue
 				? null
-				: prepareRuntimePieChartData({ data: depositValuesByToken, limit: 15 })
+				: prepareRuntimePieChartData({ data: depositValuesByToken, limit: CHART_SERIES_LIMIT })
 			tokenWithdrawals = hasUnknownWithdrawalValue
 				? null
-				: prepareRuntimePieChartData({ data: withdrawalValuesByToken, limit: 15 })
+				: prepareRuntimePieChartData({ data: withdrawalValuesByToken, limit: CHART_SERIES_LIMIT })
 			const totalAddressesDeposited = prevDayData.totalAddressDeposited
 			const totalAddressesWithdrawn = prevDayData.totalAddressWithdrawn
 			const addressesTableUnformatted = new Map<string, AddressTableUnformattedRow>()
