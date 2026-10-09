@@ -234,7 +234,7 @@ function CustomRangeForm({
 							{...control}
 							type="date"
 							name="startDate"
-							className="w-full cursor-pointer dark:scheme-dark"
+							className="w-full cursor-pointer"
 							value={localStartDate}
 							max={maxDate}
 							onChange={handleStartDateChange}
@@ -265,7 +265,7 @@ function CustomRangeForm({
 							{...control}
 							type="date"
 							name="endDate"
-							className="w-full cursor-pointer dark:scheme-dark"
+							className="w-full cursor-pointer"
 							value={localEndDate}
 							max={maxDate}
 							onChange={handleEndDateChange}

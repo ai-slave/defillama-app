@@ -499,9 +499,13 @@ html.dark,
    selection is its state, and the wash would drop its text under AA on the
    selected tint. A tinted control hovers to the next ramp step instead.
    While held down the wash deepens to bg-pressed-row. */
-.hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
-		[aria-pressed='true']
-	):hover,
+@media (hover: hover) {
+	.hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
+			[aria-pressed='true']
+		):hover {
+		background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
+	}
+}
 .hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
 		[aria-pressed='true']
 	):focus-visible {
@@ -520,13 +524,19 @@ html.dark,
 }
 
 /* Card-strength variant (--bg-hover-card) for interactive tiles. */
-.hover-wash-card:not(:disabled):not([aria-disabled='true']):hover,
+@media (hover: hover) {
+	.hover-wash-card:not(:disabled):not([aria-disabled='true']):hover {
+		background-image: linear-gradient(var(--bg-hover-card), var(--bg-hover-card));
+	}
+}
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):focus-visible {
 	background-image: linear-gradient(var(--bg-hover-card), var(--bg-hover-card));
 }
 
 /* Row-hover companion for cells that must keep an opaque bg (sticky table
    columns): washes when the ancestor .group is hovered. */
-.group:hover .group-hover-wash {
-	background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
+@media (hover: hover) {
+	.group:hover .group-hover-wash {
+		background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
+	}
 }

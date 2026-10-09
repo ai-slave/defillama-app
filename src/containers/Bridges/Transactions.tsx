@@ -640,7 +640,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 							onChange={(e) => handleStartDateChange(e.target.value)}
 							max={maxDate}
 							required
-							className="cursor-pointer dark:scheme-dark"
+							className="cursor-pointer"
 						/>
 					)}
 				</Field>
@@ -659,7 +659,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 							min={startDate}
 							max={maxDate}
 							required
-							className="cursor-pointer dark:scheme-dark"
+							className="cursor-pointer"
 						/>
 					)}
 				</Field>

@@ -132,7 +132,7 @@ function AnnotationsPanel({
 								ref={dateInputRef}
 								type="date"
 								required
-								className="cursor-pointer dark:scheme-dark"
+								className="cursor-pointer"
 								value={date}
 								// Adding the last allowed annotation from this field locks it; read-only keeps its focus.
 								readOnly={atLimit}

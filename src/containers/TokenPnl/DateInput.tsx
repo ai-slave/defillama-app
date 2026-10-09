@@ -52,7 +52,7 @@ export function DateInput({
 					onBlur={() => setDraft(null)}
 					min={min}
 					max={max}
-					className="cursor-pointer dark:scheme-dark"
+					className="cursor-pointer"
 				/>
 			)}
 		</Field>

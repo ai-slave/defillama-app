@@ -487,7 +487,7 @@ function GrowthReadout({
 								{...(firstDay ? { min: firstDay } : {})}
 								{...(lastDay ? { max: lastDay } : {})}
 								onChange={(event) => setQuery({ growthFrom: event.target.value || undefined, [rangeKey]: undefined })}
-								className="cursor-pointer dark:scheme-dark"
+								className="cursor-pointer"
 							/>
 						</label>
 					</PopoverSurface>

@@ -28,7 +28,7 @@ import { tw } from './tw'
    hint; sm:body-sm takes over from there. The recipe sizes the
    placeholder; callers never do.
 
-   Date fields are `<Input type="date" className="cursor-pointer dark:scheme-dark">`.
+   Date fields are `<Input type="date" className="cursor-pointer">`.
    Multiline fields are `Textarea`. Code, hex colors, addresses and formulas
    take `variant="code"` on either: the same field in the mono family at the
    same sizes, so phones still get 16px. A verification code is

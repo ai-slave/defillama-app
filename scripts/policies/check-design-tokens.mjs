@@ -625,6 +625,32 @@ function withoutComments(content) {
 	return content.replace(/(^|\s)\/\*[\s\S]*?\*\//g, '$1').replace(/(^|\s)\/\/.*$/gm, '$1')
 }
 
+function matchUngatedHover(content) {
+	// Walk the CSS blocks: a `:hover` selector counts unless an enclosing @media requires `hover: hover`.
+	// Scrollbar thumbs are left out: only a pointer can reach them.
+	const css = withoutComments(content)
+	const preludes = []
+	const hits = []
+	let start = 0
+	for (let i = 0; i < css.length; i++) {
+		const char = css[i]
+		if (char === '{') {
+			const prelude = css.slice(start, i).trim()
+			const gated = preludes.some((outer) => outer.startsWith('@media') && /hover:\s*hover/.test(outer))
+			if (!prelude.startsWith('@') && prelude.includes(':hover') && !prelude.includes('scrollbar') && !gated)
+				hits.push(prelude)
+			preludes.push(prelude)
+			start = i + 1
+		} else if (char === '}') {
+			preludes.pop()
+			start = i + 1
+		} else if (char === ';') {
+			start = i + 1
+		}
+	}
+	return hits.length > 0 ? hits : null
+}
+
 function matchChartToolbarAutoMargin(content) {
 	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
 	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
@@ -675,6 +701,19 @@ const RULES = [
 		description:
 			'nested scroll containers are thin globally; use scrollbar-none only when the scrollbar must be hidden',
 		pattern: /\bthin-scrollbar\b/g
+	},
+	{
+		id: 'ungated-hover',
+		description:
+			'a hand-written :hover rule outside @media (hover: hover) sticks after a tap on a touch screen; put the :hover selector inside the media query and keep :focus-visible and :active outside it (design.md → Hover)',
+		cssOnly: true,
+		match: matchUngatedHover
+	},
+	{
+		id: 'per-field-color-scheme',
+		description:
+			'color-scheme follows the mode globally (src/tailwind.css), so native controls are already dark in dark mode; remove the scheme-* class',
+		pattern: /\bscheme-(?:dark|light|normal)\b/g
 	},
 	{
 		id: 'interim-token',
@@ -1087,12 +1126,14 @@ for (const file of files) {
 			file.endsWith('.css') &&
 			![
 				'explicit-thin-scrollbar',
+				'ungated-hover',
 				'legacy-token-reference',
 				'prefixed-design-token',
 				'arbitrary-standard-radius'
 			].includes(rule.id)
 		)
 			continue
+		if (rule.cssOnly && !file.endsWith('.css')) continue
 		if (rule.uiOwned && file.startsWith('src/ui/')) continue
 		if (rule.ownedBy?.some((prefix) => file.startsWith(prefix))) continue
 		const source =

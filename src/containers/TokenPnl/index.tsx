@@ -515,7 +515,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 								placeholder="Tokens held"
 								value={quantityInput}
 								onChange={(event) => setQuantityInput(event.target.value)}
-								className="w-full dark:scheme-dark"
+								className="w-full"
 							/>
 						)}
 					</Field>

@@ -652,7 +652,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													aria-label={`Annotation ${i + 1} date`}
 													value={annotation.date.slice(0, 10)}
 													onChange={(e) => updateAnnotation(i, { date: e.target.value })}
-													className="cursor-pointer dark:scheme-dark"
+													className="cursor-pointer"
 												/>
 												<Input
 													value={annotation.label}

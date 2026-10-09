@@ -185,7 +185,7 @@ function CustomRangeForm({
 							onChange={(e) => setFrom(e.currentTarget.value)}
 							min={minDate}
 							max={to || maxDate}
-							className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+							className="w-full min-w-0 cursor-pointer"
 						/>
 					)}
 				</Field>
@@ -198,7 +198,7 @@ function CustomRangeForm({
 							onChange={(e) => setTo(e.currentTarget.value)}
 							min={from || minDate}
 							max={maxDate}
-							className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+							className="w-full min-w-0 cursor-pointer"
 						/>
 					)}
 				</Field>

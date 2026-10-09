@@ -189,7 +189,7 @@ function CustomPeriodForm({
 								value={startDate}
 								max={today}
 								onChange={(e) => setStartDate(e.target.value)}
-								className="cursor-pointer dark:scheme-dark"
+								className="cursor-pointer"
 							/>
 						)}
 					</Field>
@@ -202,7 +202,7 @@ function CustomPeriodForm({
 								value={endDate}
 								max={today}
 								onChange={(e) => setEndDate(e.target.value)}
-								className="cursor-pointer dark:scheme-dark"
+								className="cursor-pointer"
 							/>
 						)}
 					</Field>

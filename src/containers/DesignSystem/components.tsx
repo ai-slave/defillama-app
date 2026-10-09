@@ -573,12 +573,7 @@ export function FieldsGroup() {
 				<SearchField label="Search protocols" placeholder="Search protocols" value={search} onChange={setSearch} />
 			</Example>
 			<Example name="Input" prop='type="date"'>
-				<Input
-					type="date"
-					aria-label="Start date"
-					defaultValue="2026-10-08"
-					className="cursor-pointer dark:scheme-dark"
-				/>
+				<Input type="date" aria-label="Start date" defaultValue="2026-10-08" className="cursor-pointer" />
 			</Example>
 			<Example name="FieldGroup" prop="error" note="A set of controls answered together, with one error.">
 				<FieldGroup label="Delivery" error="Choose at least one channel.">

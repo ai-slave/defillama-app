@@ -145,20 +145,23 @@
 	pointer-events: none;
 }
 
-.llamaai-glow:hover::before {
-	opacity: 1;
-	animation: shimmer 3s;
-}
+/* Touch screens get no hover, so a tap never leaves the CTA glowing. */
+@media (hover: hover) {
+	.llamaai-glow:hover::before {
+		opacity: 1;
+		animation: shimmer 3s;
+	}
 
-.llamaai-glow:hover {
-	box-shadow:
-		0px 0px 80px color-mix(in srgb, var(--ai-gold-bright) 70%, transparent),
-		0px 0px 2px 4px rgba(255, 255, 255, 0.2);
-}
+	.llamaai-glow:hover {
+		box-shadow:
+			0px 0px 80px color-mix(in srgb, var(--ai-gold-bright) 70%, transparent),
+			0px 0px 2px 4px rgba(255, 255, 255, 0.2);
+	}
 
-.llamaai-glow:hover svg {
-	--star-1-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-	--star-2-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+	.llamaai-glow:hover svg {
+		--star-1-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+		--star-2-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+	}
 }
 
 .llamaai-glow .ai-icon {
@@ -184,13 +187,18 @@
 	.llamaai-glow {
 		transition: none;
 	}
-	.llamaai-glow:hover::before {
-		animation: none;
-	}
-	.llamaai-glow svg,
-	.llamaai-glow:hover svg {
+	.llamaai-glow svg {
 		--animate-enabled: paused;
 		--star-1-animation: none;
 		--star-2-animation: none;
+	}
+	@media (hover: hover) {
+		.llamaai-glow:hover::before {
+			animation: none;
+		}
+		.llamaai-glow:hover svg {
+			--star-1-animation: none;
+			--star-2-animation: none;
+		}
 	}
 }
