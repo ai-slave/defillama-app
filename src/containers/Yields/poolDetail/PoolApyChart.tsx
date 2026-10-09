@@ -54,12 +54,16 @@ import { useWidestHistory } from './useWidestHistory'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-// ChartGroupingSelector renders shortLabel (falling back to the label's first letter).
+// ChartGroupingSelector renders shortLabel; a daily bar is a day's mean, so every window reads "avg".
 const WINDOW_OPTIONS = [
-	{ value: 'daily', label: 'Daily values', shortLabel: 'Daily' },
+	{ value: 'daily', label: '1-day average', shortLabel: '1d avg' },
 	{ value: '7d', label: '7-day average', shortLabel: '7d avg' },
 	{ value: '30d', label: '30-day average', shortLabel: '30d avg' }
 ] as const satisfies ReadonlyArray<ChartGroupingOption<PoolChartWindow>>
+
+// Rate series name their window, so the tooltip, legend and CSV never show one window under another's label.
+const windowSuffix = (window: PoolChartWindow) =>
+	` (${WINDOW_OPTIONS.find((option) => option.value === window)!.shortLabel})`
 
 // Single source for a toggleable series: its default feeds the URL override read, the picker
 // option, and getBooleanOverride, so the three can never disagree.
@@ -89,7 +93,7 @@ function fmtVal(v: number, symbol: string): string {
 // bars; a dollar magnitude has none and stays daily.
 function windowedLine(line: PoolChartLine, apyWindow: PoolChartWindow): { name: string; values: Array<number | null> } {
 	if (line.unit !== 'percent' || !line.avg7 || !line.avg30) return { name: line.label, values: line.values }
-	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
+	const rateSuffix = windowSuffix(apyWindow)
 	return {
 		name: line.label + rateSuffix,
 		values: apyWindow === 'daily' ? line.values : apyWindow === '7d' ? line.avg7 : line.avg30
@@ -126,9 +130,7 @@ function buildChartInputs(
 		avg7: Array<number | null>
 		avg30: Array<number | null>
 	}) => (apyWindow === 'daily' ? series.values : apyWindow === '7d' ? series.avg7 : series.avg30)
-	// Rate series carry the window in their name so the tooltip, legend and CSV export can
-	// never present an averaged value under a daily label.
-	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
+	const rateSuffix = windowSuffix(apyWindow)
 
 	const dimensions: Array<string> = ['timestamp']
 	const charts: Array<MultiSeriesChartSeriesConfig> = []
@@ -213,7 +215,7 @@ const tooltipRow = (p: ChartTooltipItem, symbol: string) => {
 
 // Components keep their declared order (never re-sorted by value).
 function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow, payoutGaps: boolean) {
-	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
+	const rateSuffix = windowSuffix(apyWindow)
 	const barLabels = model.bars.map((b) => b.label + rateSuffix)
 	const netLabel = model.netLine ? model.netLine.label + rateSuffix : null
 	// Rates read together: percent overlays follow the total, and the dollar magnitudes close.
@@ -248,7 +250,8 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 			html += tooltipRow(p, '%')
 		}
 
-		const verifiedItem = payoutGaps && apyWindow === 'daily' ? byName.get(VERIFIED_APY_SERIES.label) : undefined
+		const verifiedItem =
+			payoutGaps && apyWindow === 'daily' ? byName.get(VERIFIED_APY_SERIES.label + rateSuffix) : undefined
 		if (verifiedItem && isNoPayoutDay(valueOf(verifiedItem))) html += li('No payout this day')
 
 		const summaryStyle = 'font-weight:600;'

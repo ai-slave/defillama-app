@@ -12,6 +12,9 @@ import type { DetailHolders } from './types'
 import { HOW_WE_VERIFY_ID } from './VerifiedApyPanel'
 import type { MeasuredComposition, VerifiedSnapshotModel } from './VerifiedSnapshotCard'
 
+// Latest reading, the table's Now: named so the chart's averages below are never read as its window.
+const NOW_SUFFIX = ' · now'
+
 type ApyKind = 'supply' | 'borrow'
 
 interface ApyPart {
@@ -196,7 +199,7 @@ export function AnswerStrip({
 							label={
 								<span className="flex items-center gap-1.5 text-primary">
 									<SealGlyph size={15} className={snapshot.current ? 'text-verified' : 'text-tertiary'} />
-									{borrow ? 'Verified Supply APY' : 'Verified APY'}
+									{(borrow ? 'Verified Supply APY' : 'Verified APY') + NOW_SUFFIX}
 								</span>
 							}
 							value={figure != null ? formatPercent(figure, YIELD_PERCENT_OPTIONS) : '—'}
@@ -221,7 +224,7 @@ export function AnswerStrip({
 				) : null}
 				{supply && (!snapshot || measured == null) ? (
 					<Tile
-						label={supply.apyLabel}
+						label={supply.apyLabel + NOW_SUFFIX}
 						value={supply.apy.total == null ? '—' : formatPercent(supply.apy.total, YIELD_PERCENT_OPTIONS)}
 						aside={reportedParts.length > 0 ? <Split parts={reportedParts} /> : null}
 					/>
@@ -229,7 +232,7 @@ export function AnswerStrip({
 
 				{borrow ? (
 					<Tile
-						label={borrow.apyLabel}
+						label={borrow.apyLabel + NOW_SUFFIX}
 						value={borrow.apy.total == null ? '—' : formatPercent(borrow.apy.total, YIELD_PERCENT_OPTIONS)}
 						aside={borrowParts.length > 0 ? <Split parts={borrowParts} /> : null}
 					/>

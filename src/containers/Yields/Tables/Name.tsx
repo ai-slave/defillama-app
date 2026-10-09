@@ -174,7 +174,7 @@ export function NameYield({ project, projectslug, airdrop, raiseValuationUsd }: 
 	const lockup = (
 		<>
 			<TokenLogo name={project} kind="token" alt={`Logo of ${project}`} size={22} />
-			<span className="min-w-0 shrink truncate">{project}</span>
+			<TruncatedText text={project} />
 		</>
 	)
 
