@@ -198,6 +198,7 @@ export async function getProtocolRankingsSnapshot({
 			const lastGood = await snapshotStore.readLastGood(chainCacheKey(chain))
 			try {
 				assertPublishableSnapshot(snapshot, {
+					expectProtocols: chain === 'All' || chainMetadata[slug(chain)].protocolCount !== 0,
 					expectDexs: shouldFetchDexs,
 					expectPerps: shouldFetchPerps,
 					previousProtocolCount: lastGood?.protocols.length ?? null

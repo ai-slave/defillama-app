@@ -49,13 +49,16 @@ function snapshot(overrides: Partial<ProtocolRankingsCanonicalSnapshot> = {}): P
 	}
 }
 
-const healthyContext = { expectDexs: true, expectPerps: true, previousProtocolCount: null }
+const healthyContext = { expectProtocols: true, expectDexs: true, expectPerps: true, previousProtocolCount: null }
 
 describe('assertPublishableSnapshot', () => {
 	test('rejects an empty protocols list', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [] }), healthyContext)).toThrow(
 			ProtocolRankingSnapshotValidationError
 		)
+		expect(() =>
+			assertPublishableSnapshot(snapshot({ protocols: [] }), { ...healthyContext, expectProtocols: false })
+		).not.toThrow()
 	})
 
 	test('rejects a row count that dropped below the ratio floor of the previous snapshot', () => {
@@ -193,6 +196,20 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 			['dream', null],
 			['derive-v2', null]
 		])
+		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
+	})
+
+	test('publishes an empty snapshot for a chain whose metadata lists no protocols', async () => {
+		// Pearl has chain fees but no protocols, so an empty table is real data.
+		telemetry.serve({ '/lite/protocols2': { protocols: [], chains: ['Ethereum', 'Pearl'], parentProtocols: [] } })
+
+		const result = await getProtocolRankingsSnapshot({
+			...args,
+			chain: 'Pearl',
+			chainMetadata: { pearl: { id: 'pearl', name: 'Pearl', protocolCount: 0 } as IChainMetadata }
+		})
+
+		expect(result.protocols).toEqual([])
 		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
 	})
 

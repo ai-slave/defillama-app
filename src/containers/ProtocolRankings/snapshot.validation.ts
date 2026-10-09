@@ -37,6 +37,8 @@ export class ProtocolRankingSnapshotValidationError extends Error {
 export function assertPublishableSnapshot(
 	snapshot: ProtocolRankingsCanonicalSnapshot,
 	context: {
+		/** False for chains whose metadata lists no protocols, such as chain-fees-only Pearl. */
+		expectProtocols: boolean
 		/** From getProtocolRankingSourceOptions — whether this chain should have DEX data. */
 		expectDexs: boolean
 		/** From getProtocolRankingSourceOptions — whether this chain should have perps data. */
@@ -49,7 +51,7 @@ export function assertPublishableSnapshot(
 		throw new ProtocolRankingSnapshotValidationError(`${snapshot.chain}: ${message}`, check)
 	}
 
-	if (snapshot.protocols.length === 0) {
+	if (context.expectProtocols && snapshot.protocols.length === 0) {
 		fail('protocols-empty', 'snapshot has no protocols')
 	}
 	const previous = context.previousProtocolCount
