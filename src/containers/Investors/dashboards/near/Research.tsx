@@ -191,7 +191,7 @@ export default function Research() {
 	return (
 		<div className="flex flex-col gap-8">
 			<Card padding="md" className="flex flex-col gap-2">
-				<h1 className="heading-sm text-primary">Reports & Research</h1>
+				<h2 className="heading-sm text-primary">Reports & Research</h2>
 				<p className="max-w-2xl body-md text-secondary">
 					Independent analysis, technical papers, and foundational resources covering NEAR&apos;s investment case,
 					architecture, and ecosystem growth.

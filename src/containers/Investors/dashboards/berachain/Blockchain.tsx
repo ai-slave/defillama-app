@@ -2,7 +2,7 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -11,15 +11,6 @@ import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
 
 function SectionHeader({ title }: { title: string }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{title}</h2>
@@ -163,33 +154,35 @@ export default function Blockchain() {
 				<StatTile label="Total Txs (All Time)" value={data.activityKpis.totalTxsAllTime.formatted} />
 			</div>
 
-			<ChartCard title="Daily Transactions">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="Daily Transactions"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.transactions}
 						charts={TRANSACTIONS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
 						valueSymbol=""
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
-			<ChartCard title="Active & New Addresses">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="Active & New Addresses"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.addresses}
 						charts={ADDRESSES_CHARTS}
 						chartOptions={DEFAULT_CHART_OPTIONS}
 						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol=""
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			{/* Gas & Fee Economics */}
 			<SectionHeader title="Gas & Fee Economics" />
@@ -200,65 +193,69 @@ export default function Blockchain() {
 				<StatTile label="Avg Fee per Tx" value={data.gasKpis.avgFeePerTx.formatted} />
 			</div>
 
-			<ChartCard title="Daily Gas Fees (USD)">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="Daily Gas Fees (USD)"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.gasFees}
 						charts={GAS_FEES_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
 						valueSymbol="$"
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
-			<ChartCard title="Block Utilization (%)">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="Block Utilization (%)"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.blockUtilization}
 						charts={UTILIZATION_CHART}
 						chartOptions={PERCENT_CHART_OPTIONS}
 						exportButtons={AREA_CHART_EXPORTS}
 						valueSymbol="%"
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			{/* Contract Deployments */}
 			<SectionHeader title="Contract Deployments" />
-			<ChartCard title="New Contracts Deployed (Monthly)">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="New Contracts Deployed (Monthly)"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.contractDeployments}
 						charts={CONTRACTS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
 						valueSymbol=""
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			{/* Token Transfers */}
 			<SectionHeader title="Token Transfers" />
-			<ChartCard title="Daily Token Transfer Volume (USD)">
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
+						title="Daily Token Transfer Volume (USD)"
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.tokenTransfers}
 						charts={TRANSFERS_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
 						valueSymbol="$"
-						title=""
-						height="400px"
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">

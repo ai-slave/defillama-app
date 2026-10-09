@@ -17,7 +17,7 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -273,80 +273,81 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-tertiary uppercase">{children}</h2>
 }
 
-// Card chrome with an "awaiting data" body + the awaited API field, so the target
+// A chart panel with an "awaiting data" body + the awaited API field, so the target
 // layout is visible before the backend ships the data.
 export function PlaceholderCard({
 	title,
 	subtitle,
-	note,
-	height = '360px'
+	note
 }: {
 	title: string
 	subtitle?: string | undefined
 	note?: string
-	height?: string
 }) {
 	return (
-		<ChartCard title={title} subtitle={subtitle}>
-			<div
-				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium text-center"
-				style={{ height }}
-			>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
+			<ChartPanelBodyFallback className="flex-col gap-2 text-center">
 				<span className="body-sm text-tertiary">Awaiting data</span>
 				{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
-			</div>
-		</ChartCard>
+			</ChartPanelBodyFallback>
+		</ChartPanel>
 	)
 }
 
-export function ChartCard({
+/** A card's or chart panel's title and the line under it; chart panels put it in ChartPanelToolbar's `leading`. */
+export function CardTitle({
 	title,
 	subtitle,
-	subtitles,
-	value,
-	control,
-	children
+	subtitles
 }: {
 	title: string
 	subtitle?: string | undefined
 	/**
-	 * Every subtitle a control on this card can swap in. They share one grid cell, so the box is as
+	 * Every subtitle a control on this chart can swap in. They share one grid cell, so the box is as
 	 * tall as the longest of them at whatever width the reader has, and switching views cannot move
 	 * the chart underneath. Reserving lines by hand can't do this: which subtitle wraps, and into how
 	 * many lines, changes with the viewport, the title beside it and the next copy edit.
 	 */
 	subtitles?: Array<string> | undefined
-	value?: string | undefined
-	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
-	control?: React.ReactNode
-	children: React.ReactNode
 }) {
 	const variants = subtitle && subtitles?.length ? [...new Set([subtitle, ...subtitles])] : null
 	return (
+		<div className="min-w-0 flex-1 basis-60">
+			<h3 className="title-md text-primary">{title}</h3>
+			{variants ? (
+				<div className="mt-0.5 grid">
+					{variants.map((text) => (
+						<p
+							key={text}
+							aria-hidden={text === subtitle ? undefined : true}
+							className={`col-start-1 row-start-1 body-sm text-tertiary ${text === subtitle ? '' : 'invisible'}`}
+						>
+							{text}
+						</p>
+					))}
+				</div>
+			) : (
+				subtitle && <p className="mt-0.5 body-sm text-tertiary">{subtitle}</p>
+			)}
+		</div>
+	)
+}
+
+/** A titled table card; charts sit in a ChartPanel with CardTitle instead. */
+export function ChartCard({
+	title,
+	subtitle,
+	children
+}: {
+	title: string
+	subtitle?: string | undefined
+	children: React.ReactNode
+}) {
+	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-				<div className="min-w-0 flex-1 basis-60">
-					<h3 className="title-md text-primary">{title}</h3>
-					{variants ? (
-						<div className="mt-0.5 grid">
-							{variants.map((text) => (
-								<p
-									key={text}
-									aria-hidden={text === subtitle ? undefined : true}
-									className={`col-start-1 row-start-1 body-sm text-tertiary ${text === subtitle ? '' : 'invisible'}`}
-								>
-									{text}
-								</p>
-							))}
-						</div>
-					) : (
-						subtitle && <p className="mt-0.5 body-sm text-tertiary">{subtitle}</p>
-					)}
-				</div>
-				<div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
-					{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
-					{control}
-				</div>
+			<div className="mb-3">
+				<CardTitle title={title} subtitle={subtitle} />
 			</div>
 			{children}
 		</div>
@@ -424,18 +425,19 @@ export function BarListCard({
 	showValues?: boolean
 }) {
 	return (
-		<ChartCard title={title} subtitle={subtitle}>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
 			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<HBarChart
 					categories={items.map((item) => item.name)}
 					values={items.map((item) => item.value)}
 					colors={items.map((item, index) => seriesColor(item.name, index))}
 					valueSymbol={valueSymbol}
-					height="360px"
 					showValueLabels={showValues}
+					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -458,7 +460,7 @@ export function TimeAreaCard({
 	/** Fixed card title; defaults to the chart payload's own title. */
 	title?: string
 	subtitle?: string
-	/** Every subtitle this card's control can swap in; see ChartCard. */
+	/** Every subtitle this card's control can swap in; see CardTitle. */
 	subtitles?: Array<string>
 	value?: string | undefined
 	valueSymbol?: string
@@ -520,26 +522,27 @@ export function TimeAreaCard({
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartCard
-			title={title ?? chart.title ?? ''}
-			subtitle={subtitle ?? chart.subtitle}
-			subtitles={subtitles}
-			value={value}
-			control={control}
-		>
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={
+					<CardTitle title={title ?? chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} subtitles={subtitles} />
+				}
+			>
+				{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
+				{control}
+			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					title=""
-					height="360px"
+					containerClassName={CHART_FILL}
 					hideDefaultLegend={!multipleSeries}
 					groupBy={groupBy}
 					exportButtons="hidden"
 					chartOptions={chartOptions}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }

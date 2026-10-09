@@ -4,8 +4,9 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { ChartPanel, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { readInvestorApiJson } from '../../api.types'
 import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
 import {
@@ -17,7 +18,6 @@ import {
 } from './transform'
 import {
 	ApiTable,
-	ChartCard,
 	defWithNetworkFee,
 	DEX,
 	DonutCard,
@@ -61,13 +61,11 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 		data?.data && (['monthly', 'quarterly', 'yearly'] as const).some((k) => Object.keys(data.data[k] ?? {}).length > 0)
 
 	return (
-		<ChartCard
-			title={title}
-			subtitle={subtitle}
-			control={
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>}>
 				<SegmentedControl<typeof view>
 					variant="default"
-					size="sm"
+					size="md"
 					label={`${title} view`}
 					options={[
 						{ value: 'table', label: 'Table' },
@@ -76,10 +74,9 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					value={view}
 					onValueChange={setView}
 				/>
-			}
-		>
+			</ChartPanelToolbar>
 			{query.isLoading ? (
-				<div className="flex h-[320px] items-center justify-center body-sm text-tertiary">Loading…</div>
+				<SurfaceBodyLoadingStatus className="min-h-[320px]" />
 			) : hasData ? (
 				<IncomeStatement
 					name={NAME}
@@ -87,12 +84,14 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					view={view}
 					anchorId="thorchain-income"
 					showTitles={false}
-					className="border-none bg-transparent p-0"
+					className="border-none bg-transparent"
 				/>
 			) : (
-				<div className="flex h-[320px] items-center justify-center body-sm text-tertiary">No income statement data</div>
+				<SurfaceBodyStatus variant="empty" className="min-h-[320px]">
+					No income statement data
+				</SurfaceBodyStatus>
 			)}
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 

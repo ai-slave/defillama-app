@@ -3,6 +3,7 @@ import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSerie
 import { ASSET_BRAND_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -139,7 +140,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 						dataset={chartModel.dataset}
 						charts={chartModel.charts}
 						valueSymbol={chart.valueSymbol}
-						height="360px"
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 						hallmarks={hallmarks}

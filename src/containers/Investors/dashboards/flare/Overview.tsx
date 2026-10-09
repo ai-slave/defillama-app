@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareOverviewData, type OverviewAPIResponse } from './data'
-import { ChartCard, SectionHeader } from './ui'
+import { SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -41,19 +41,22 @@ export default function Overview() {
 				<StatTile label="Chain TVL" value={tvl.currentFormatted} />
 				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
 			</div>
-			<ChartCard title={tvl.title} subtitle={tvl.subtitle} titleTooltip={tvl.titleTooltip}>
+			<ChartPanel>
 				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
 						dataset={tvl.dataset}
 						charts={tvl.charts}
 						valueSymbol="$"
-						title=""
+						title={tvl.title}
+						subtitle={tvl.subtitle}
+						titleTooltip={tvl.titleTooltip}
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
-						height="360px"
 						chartOptions={tvl.chartOptions}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			{protocolRankings.length > 0 && (
 				<>
@@ -127,19 +130,21 @@ export default function Overview() {
 				<StatTile label="Bridged" value={stables.kpis.bridged} />
 			</div>
 
-			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged.">
+			<ChartPanel>
 				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
 						dataset={stables.dataset}
 						charts={stables.charts}
 						valueSymbol="$"
-						title=""
+						title={stables.title}
+						subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged."
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						solidChartAreaStyle
-						height="360px"
 						chartOptions={stables.chartOptions}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 		</div>
 	)
 }

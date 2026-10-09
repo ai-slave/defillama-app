@@ -3,7 +3,7 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
-import { ChainWarningBanners } from '~/containers/ChainOverview/WarningBanners'
+import { WarningBanners } from '~/containers/ChainOverview/WarningBanners'
 import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
 import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestions'
@@ -119,7 +119,7 @@ export default function Chain(props: InferGetStaticPropsType<typeof getStaticPro
 			announcement={
 				<>
 					<ChainOverviewAnnouncement chainName={props.metadata.name} />
-					<ChainWarningBanners warningBanners={props.warningBanners} chainName={props.metadata.name} />
+					<WarningBanners banners={props.warningBanners} entityName={props.metadata.name} />
 				</>
 			}
 		>

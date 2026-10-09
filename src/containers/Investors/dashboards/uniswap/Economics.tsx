@@ -11,6 +11,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import type { UniswapUnlocks } from './serverData'
 import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
 import {
@@ -338,7 +339,9 @@ export default function Economics() {
 				TOP_CHAINS
 			),
 		...QUERY_OPTS
-	})
+	}) // The read each trend card shows, so its Try again reruns that one.
+	const lpRead = lpView === 'total' ? lpFeesSeries : lpFeesByChainSeries
+	const burnRead = burnView === 'total' ? burnUsdSeries : burnByChainSeries
 
 	const kpis: Record<string, KpiT | undefined> = useMemo(() => {
 		const server = data?.kpis ?? {}
@@ -450,13 +453,13 @@ export default function Economics() {
 					subtitle="Swap fees accruing to liquidity providers: total fees minus the protocol fee."
 					series={lpView === 'total' ? lpFeesSeries.data : lpFeesByChainSeries.data}
 					isLoading={lpView === 'total' ? lpFeesSeries.isLoading : lpFeesByChainSeries.isLoading}
-					isError={lpView === 'total' ? lpFeesSeries.isError : lpFeesByChainSeries.isError}
+					failedRead={queryReadFailed(lpRead) ? lpRead : null}
 					stacked={lpView === 'chain'}
 					defaultView="cumulative"
 					extraControl={
 						<SegmentedControl<'total' | 'chain'>
 							variant="default"
-							size="sm"
+							size="md"
 							label="LP fees breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },
@@ -476,13 +479,13 @@ export default function Economics() {
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, collected in the TokenJar and burned as UNI."
 					series={burnView === 'total' ? burnUsdSeries.data : burnByChainSeries.data}
 					isLoading={burnView === 'total' ? burnUsdSeries.isLoading : burnByChainSeries.isLoading}
-					isError={burnView === 'total' ? burnUsdSeries.isError : burnByChainSeries.isError}
+					failedRead={queryReadFailed(burnRead) ? burnRead : null}
 					stacked={burnView === 'chain'}
 					defaultView="day"
 					extraControl={
 						<SegmentedControl<'total' | 'chain'>
 							variant="default"
-							size="sm"
+							size="md"
 							label="Protocol fees breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },

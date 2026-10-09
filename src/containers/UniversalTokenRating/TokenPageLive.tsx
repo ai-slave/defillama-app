@@ -9,6 +9,7 @@ import { chartColor, UTR_METRIC_COLORS } from '~/constants/colors'
 import { AccentBadge, SecondaryBadge, StatusBadge } from '~/containers/MarketMakers/badges'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
+import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -301,9 +302,9 @@ function AboutDrawer({
 					<h4 className="label-lg">Performance</h4>
 					<AccentBadge className="min-h-6">Last 30 days</AccentBadge>
 				</div>
-				<div className="rounded-lg border border-subtle bg-surface">
+				<Panel padding="none">
 					<PerformanceMatrix rows={[matrixRow]} grading={scoringConfig?.grading} className="h-[320px] w-full" />
-				</div>
+				</Panel>
 				<div className="flex flex-col divide-y divide-(--border-subtle) rounded-lg border border-subtle bg-surface sm:flex-row sm:divide-x sm:divide-y-0">
 					<TickScoreStrip
 						label="Disclosures"
@@ -689,56 +690,57 @@ export function TokenPageLive({
 										onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.volumeMcap)}
-									>
-										{marketQuality?.series.length ? (
-											<>
-												<div className="flex h-[320px] flex-col gap-3">
+										chart={
+											marketQuality?.series.length ? (
+												<>
 													<ChartCaption>Market Cap (USD)</ChartCaption>
-													<MultiSeriesChart
-														dataset={UTR_TIME_DATASET}
-														charts={[
-															{
-																type: 'line',
-																name: 'Market Cap (USD)',
-																encode: { x: 0, y: 1 },
-																color: metricColor(UTR_METRIC_COLORS.marketCap),
-																data: marketQuality.series.map((point): [number, number] => [
-																	toTime(point.date),
-																	point.marketCapUsd ?? 0
-																])
-															}
-														]}
-														valueSymbol="$"
-														containerClassName="min-h-0 w-full flex-1"
-														hideDataZoom
-														exportButtons="hidden"
-													/>
-													<CardDivider />
-													<ChartCaption>Trade Volume (USD)</ChartCaption>
-													<MultiSeriesChart
-														dataset={UTR_TIME_DATASET}
-														charts={[
-															{
-																type: 'bar',
-																name: 'Trade Volume (USD)',
-																encode: { x: 0, y: 1 },
-																color: metricColor(UTR_METRIC_COLORS.volume),
-																data: marketQuality.series.map((point): [number, number] => [
-																	toTime(point.date),
-																	point.tradeVolumeUsd ?? 0
-																])
-															}
-														]}
-														valueSymbol="$"
-														chartOptions={VOLUME_TIME_OPTIONS}
-														containerClassName="min-h-0 w-full flex-1"
-														hideDataZoom
-														exportButtons="hidden"
-													/>
-												</div>
-												<CardDivider />
-											</>
-										) : null}
+													{/* Both charts share one floor, so this card's chart area matches the Depth card beside it. */}
+													<ChartPanelBody>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={[
+																{
+																	type: 'line',
+																	name: 'Market Cap (USD)',
+																	encode: { x: 0, y: 1 },
+																	color: metricColor(UTR_METRIC_COLORS.marketCap),
+																	data: marketQuality.series.map((point): [number, number] => [
+																		toTime(point.date),
+																		point.marketCapUsd ?? 0
+																	])
+																}
+															]}
+															valueSymbol="$"
+															containerClassName="min-h-0 flex-1"
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+														<ChartCaption>Trade Volume (USD)</ChartCaption>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={[
+																{
+																	type: 'bar',
+																	name: 'Trade Volume (USD)',
+																	encode: { x: 0, y: 1 },
+																	color: metricColor(UTR_METRIC_COLORS.volume),
+																	data: marketQuality.series.map((point): [number, number] => [
+																		toTime(point.date),
+																		point.tradeVolumeUsd ?? 0
+																	])
+																}
+															]}
+															valueSymbol="$"
+															chartOptions={VOLUME_TIME_OPTIONS}
+															containerClassName="min-h-0 flex-1"
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
+									>
 										<KvTable
 											rows={[
 												[
@@ -760,49 +762,50 @@ export function TokenPageLive({
 										onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.depthMcap)}
-									>
-										{marketQuality?.series.length ? (
-											<>
-												<div className="flex h-[320px] flex-col gap-3">
+										chart={
+											marketQuality?.series.length ? (
+												<>
 													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
-													<MultiSeriesChart
-														dataset={UTR_TIME_DATASET}
-														charts={[
-															{
-																type: 'line',
-																name: 'Depth (+/- 2%)',
-																encode: { x: 0, y: 1 },
-																color: metricColor(UTR_METRIC_COLORS.depth),
-																yAxisIndex: 0,
-																hideAreaStyle: true,
-																data: marketQuality.series.map((point): [number, number] => [
-																	toTime(point.date),
-																	point.depthUsd ?? 0
-																])
-															},
-															{
-																type: 'line',
-																name: 'Market Cap',
-																encode: { x: 0, y: 1 },
-																color: metricColor(UTR_METRIC_COLORS.depthMarketCap),
-																yAxisIndex: 1,
-																hideAreaStyle: true,
-																data: marketQuality.series.map((point): [number, number] => [
-																	toTime(point.date),
-																	point.marketCapUsd ?? 0
-																])
-															}
-														]}
-														valueSymbol="$"
-														containerClassName="min-h-0 w-full flex-1"
-														hideDefaultLegend={false}
-														hideDataZoom
-														exportButtons="hidden"
-													/>
-												</div>
-												<CardDivider />
-											</>
-										) : null}
+													<ChartPanelBody>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={[
+																{
+																	type: 'line',
+																	name: 'Depth (+/- 2%)',
+																	encode: { x: 0, y: 1 },
+																	color: metricColor(UTR_METRIC_COLORS.depth),
+																	yAxisIndex: 0,
+																	hideAreaStyle: true,
+																	data: marketQuality.series.map((point): [number, number] => [
+																		toTime(point.date),
+																		point.depthUsd ?? 0
+																	])
+																},
+																{
+																	type: 'line',
+																	name: 'Market Cap',
+																	encode: { x: 0, y: 1 },
+																	color: metricColor(UTR_METRIC_COLORS.depthMarketCap),
+																	yAxisIndex: 1,
+																	hideAreaStyle: true,
+																	data: marketQuality.series.map((point): [number, number] => [
+																		toTime(point.date),
+																		point.marketCapUsd ?? 0
+																	])
+																}
+															]}
+															valueSymbol="$"
+															containerClassName={CHART_FILL}
+															hideDefaultLegend={false}
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
+									>
 										<KvTable
 											rows={[
 												[
@@ -824,33 +827,36 @@ export function TokenPageLive({
 										onOpen={() => openTotalMarket(spread?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(spread)}
+										chart={
+											spread?.exchanges.length ? (
+												<>
+													<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
+													<ChartPanelBody>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={spread.exchanges.map((exchange, index) => ({
+																type: 'line' as const,
+																name: exchangeLabel(exchange.exchangeId),
+																encode: { x: 0, y: 1 },
+																color: chartColor(index),
+																hideAreaStyle: true,
+																data: exchange.points.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.spreadPct ?? 0
+																])
+															}))}
+															valueSymbol="%"
+															chartOptions={PERCENT_TIME_OPTIONS}
+															containerClassName={CHART_FILL}
+															hideDefaultLegend={false}
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
 									>
-										{spread?.exchanges.length ? (
-											<>
-												<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
-												<MultiSeriesChart
-													dataset={UTR_TIME_DATASET}
-													charts={spread.exchanges.map((exchange, index) => ({
-														type: 'line' as const,
-														name: exchangeLabel(exchange.exchangeId),
-														encode: { x: 0, y: 1 },
-														color: chartColor(index),
-														hideAreaStyle: true,
-														data: exchange.points.map((point): [number, number] => [
-															toTime(point.date),
-															point.spreadPct ?? 0
-														])
-													}))}
-													valueSymbol="%"
-													chartOptions={PERCENT_TIME_OPTIONS}
-													height="240px"
-													hideDefaultLegend={false}
-													hideDataZoom
-													exportButtons="hidden"
-												/>
-												<CardDivider />
-											</>
-										) : null}
 										<KvTable
 											rows={[
 												[
@@ -883,23 +889,26 @@ export function TokenPageLive({
 											)
 										}
 										{...summaryFooter(priceChart)}
+										chart={
+											priceChart?.candles.length ? (
+												<>
+													<ChartCaption>Price (USD)</ChartCaption>
+													<ChartPanelBody>
+														<CandlestickChart
+															data={priceChart.candles.map((candle): CandlestickPoint => [
+																toTime(candle.date),
+																candle.openUsd,
+																candle.closeUsd,
+																candle.lowUsd,
+																candle.highUsd
+															])}
+															containerClassName={CHART_FILL}
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
 									>
-										{priceChart?.candles.length ? (
-											<>
-												<ChartCaption>Price (USD)</ChartCaption>
-												<CandlestickChart
-													data={priceChart.candles.map((candle): CandlestickPoint => [
-														toTime(candle.date),
-														candle.openUsd,
-														candle.closeUsd,
-														candle.lowUsd,
-														candle.highUsd
-													])}
-													height="240px"
-												/>
-												<CardDivider />
-											</>
-										) : null}
 										<KvTable
 											rows={[
 												['Count Green Candles', String(priceChart?.greenCandles ?? 'N/A')],
@@ -948,35 +957,36 @@ export function TokenPageLive({
 										onOpen={() => openTotalMarket(funding?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(funding)}
-									>
-										{funding?.exchanges.length ? (
-											<>
-												<div className="flex flex-1 flex-col gap-3">
+										chart={
+											funding?.exchanges.length ? (
+												<>
 													<ChartCaption>Funding Rate (%)</ChartCaption>
-													<MultiSeriesChart
-														dataset={UTR_TIME_DATASET}
-														charts={funding.exchanges.map((exchange, index) => ({
-															type: 'line' as const,
-															name: exchangeLabel(exchange.exchangeId),
-															encode: { x: 0, y: 1 },
-															color: chartColor(index),
-															hideAreaStyle: true,
-															data: exchange.points.map((point): [number, number] => [
-																toTime(point.date),
-																point.fundingPct ?? 0
-															])
-														}))}
-														valueSymbol="%"
-														chartOptions={PERCENT_TIME_OPTIONS}
-														height="200px"
-														hideDefaultLegend={false}
-														hideDataZoom
-														exportButtons="hidden"
-													/>
-												</div>
-												<CardDivider />
-											</>
-										) : null}
+													<ChartPanelBody>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={funding.exchanges.map((exchange, index) => ({
+																type: 'line' as const,
+																name: exchangeLabel(exchange.exchangeId),
+																encode: { x: 0, y: 1 },
+																color: chartColor(index),
+																hideAreaStyle: true,
+																data: exchange.points.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.fundingPct ?? 0
+																])
+															}))}
+															valueSymbol="%"
+															chartOptions={PERCENT_TIME_OPTIONS}
+															containerClassName={CHART_FILL}
+															hideDefaultLegend={false}
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
+									>
 										<KvTable
 											rows={[
 												[
@@ -1079,42 +1089,46 @@ export function TokenPageLive({
 										onOpen={() => openFootprint(entry.chart?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(entry.chart)}
+										chart={
+											entry.chart?.points.length ? (
+												<>
+													<ChartCaption>
+														{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
+													</ChartCaption>
+													<ChartPanelBody>
+														<MultiSeriesChart
+															dataset={UTR_TIME_DATASET}
+															charts={(entry.kind === 'cexdex'
+																? [
+																		{ name: entry.names[0], key: 'cexUsd' as const },
+																		{ name: entry.names[1], key: 'dexUsd' as const }
+																	]
+																: [
+																		{ name: entry.names[0], key: 'spotUsd' as const },
+																		{ name: entry.names[1], key: 'perpsUsd' as const }
+																	]
+															).map((series, index) => ({
+																type: 'bar' as const,
+																name: series.name,
+																encode: { x: 0, y: 1 },
+																stack: 'total',
+																color: metricColor(entry.colors[index]),
+																data: entry.chart!.points.map((point): [number, number] => [
+																	toTime(point.date),
+																	(point as Record<string, any>)[series.key] ?? 0
+																])
+															}))}
+															valueSymbol="$"
+															containerClassName={CHART_FILL}
+															hideDefaultLegend={false}
+															hideDataZoom
+															exportButtons="hidden"
+														/>
+													</ChartPanelBody>
+												</>
+											) : null
+										}
 									>
-										{entry.chart?.points.length ? (
-											<>
-												<ChartCaption>
-													{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
-												</ChartCaption>
-												<MultiSeriesChart
-													dataset={UTR_TIME_DATASET}
-													charts={(entry.kind === 'cexdex'
-														? [
-																{ name: entry.names[0], key: 'cexUsd' as const },
-																{ name: entry.names[1], key: 'dexUsd' as const }
-															]
-														: [
-																{ name: entry.names[0], key: 'spotUsd' as const },
-																{ name: entry.names[1], key: 'perpsUsd' as const }
-															]
-													).map((series, index) => ({
-														type: 'bar' as const,
-														name: series.name,
-														encode: { x: 0, y: 1 },
-														stack: 'total',
-														color: metricColor(entry.colors[index]),
-														data: entry.chart!.points.map((point): [number, number] => [
-															toTime(point.date),
-															(point as Record<string, any>)[series.key] ?? 0
-														])
-													}))}
-													valueSymbol="$"
-													height="240px"
-													hideDefaultLegend={false}
-													hideDataZoom
-													exportButtons="hidden"
-												/>
-											</>
-										) : null}
 										<KvTable
 											rows={[
 												[
@@ -1209,11 +1223,7 @@ export function TokenPageLive({
 													</div>
 												))}
 											</div>
-											{disclosedGroups.length > 0 ? (
-												<div className="p-4">
-													<DisclosedVestingChart groups={disclosedGroups} />
-												</div>
-											) : null}
+											{disclosedGroups.length > 0 ? <DisclosedVestingChart groups={disclosedGroups} /> : null}
 										</div>
 										<div className="flex flex-col border-t border-subtle lg:w-[460px] lg:shrink-0 lg:border-t-0 lg:border-l">
 											<div className="flex flex-1 flex-col gap-2 p-4">

@@ -15,7 +15,7 @@ import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -278,6 +278,7 @@ export function BreakdownChartCard({
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
 						valueSymbol={deferredChart.isDominance ? '%' : valueSymbol}
 						{...(deferredChart.isDominance
@@ -378,6 +379,7 @@ export function TokensBreakdownPieChartCard({
 					<PieChart
 						chartData={deferredPresentation.chartData}
 						stackColors={deferredPresentation.stackColors}
+						containerClassName={CHART_FILL}
 						onReady={handleChartReady}
 					/>
 				</React.Suspense>

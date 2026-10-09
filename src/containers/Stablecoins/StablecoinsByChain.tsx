@@ -52,7 +52,13 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -609,17 +615,19 @@ export function StablecoinsByChain({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
-						<React.Suspense fallback={<div className="min-h-[600px]" />}>
-							<TreemapChart
-								treeData={
-									marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
-								}
-								variant="rwa"
-								height="600px"
-								onReady={handleChartReady}
-								valueLabel="Market Cap"
-							/>
-						</React.Suspense>
+						<ChartPanelBody className="min-h-[600px]">
+							<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+								<TreemapChart
+									treeData={
+										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
+									}
+									variant="rwa"
+									height="600px"
+									onReady={handleChartReady}
+									valueLabel="Market Cap"
+								/>
+							</React.Suspense>
+						</ChartPanelBody>
 					) : (
 						<MultiSeriesChartPanel
 							state={activeChartState}

@@ -1,11 +1,11 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
-import { CardSkeleton, ChartCard } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -100,91 +100,96 @@ export default function CreditCard() {
 			</div>
 
 			{tvlLoading ? (
-				<CardSkeleton title="TVL" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="TVL">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="TVL"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={tvlDataset}
 							charts={TVL_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{feesLoading ? (
-				<CardSkeleton title="Fees" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Fees">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Fees"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={feesDataset}
 							charts={FEES_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{feesLoading ? (
-				<CardSkeleton title="Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={revenueDataset}
 							charts={REVENUE_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{!feesLoading && hasHoldersRevenue && (
-				<ChartCard title="Holders Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Holders Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={holdersRevenueDataset}
 							charts={HOLDERS_REVENUE_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{tvlLoading ? (
-				<CardSkeleton title="USD Inflows" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="USD Inflows">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="USD Inflows"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}
 							charts={INFLOWS_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 		</div>
 	)

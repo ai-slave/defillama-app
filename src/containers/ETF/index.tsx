@@ -20,7 +20,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -126,7 +126,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							charts={finalCharts.charts}
 							selectedCharts={selectedCharts}
 							groupBy={groupBy}
-							containerClassName="flex-1 min-h-[360px]"
+							containerClassName={CHART_FILL}
 							onReady={handleChartReady}
 						/>
 					</React.Suspense>

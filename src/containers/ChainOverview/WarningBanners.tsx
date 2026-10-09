@@ -1,28 +1,19 @@
-import type { IChainOverviewData } from './types'
+import { InlineStatus } from '~/ui/Status'
 
-export function ChainWarningBanners({
-	warningBanners,
-	chainName
+const VARIANT = { rug: 'error', alert: 'warning', low: 'info' } as const
+
+/** Notices the data attaches to a chain or protocol page (a rug pull, an exploit, a renamed site), most severe first
+    as the data orders them. */
+export function WarningBanners({
+	banners,
+	entityName
 }: {
-	warningBanners: IChainOverviewData['warningBanners']
-	chainName: string
+	banners: ReadonlyArray<{ message: string; level: keyof typeof VARIANT }> | null | undefined
+	entityName: string
 }) {
-	return (
-		<>
-			{warningBanners?.map((banner) => (
-				<p
-					className={`relative rounded-md border p-2 text-center body-sm text-primary ${
-						banner.level === 'rug'
-							? 'border-error bg-error-tint-strong'
-							: banner.level === 'alert'
-								? 'border-warning bg-warning-tint-strong'
-								: 'border-(--bg-color) bg-surface-elevated-1'
-					}`}
-					key={`${banner.message}-${banner.level}-${chainName}`}
-				>
-					{banner.message}
-				</p>
-			))}
-		</>
-	)
+	return banners?.map((banner) => (
+		<InlineStatus key={`${banner.message}-${banner.level}-${entityName}`} variant={VARIANT[banner.level]}>
+			{banner.message}
+		</InlineStatus>
+	))
 }

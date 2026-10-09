@@ -6,6 +6,7 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { PanelLoadingStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
 import { breakdownToSeries, groupTopN, SeriesTrendChart, TOP_CHAINS, trimLeadingZeros } from './TrendChart'
 import {
@@ -188,7 +189,7 @@ export default function Overview() {
 					subtitle="Swap volume across all versions, split by chain (top chains plus Others)."
 					series={volumeByChain.data}
 					isLoading={volumeByChain.isLoading}
-					isError={volumeByChain.isError}
+					failedRead={queryReadFailed(volumeByChain) ? volumeByChain : null}
 					defaultView="month"
 					minBucket="week"
 				/>
@@ -197,7 +198,7 @@ export default function Overview() {
 					subtitle="Swap volume split by protocol version."
 					series={volumeByVersion.data}
 					isLoading={volumeByVersion.isLoading}
-					isError={volumeByVersion.isError}
+					failedRead={queryReadFailed(volumeByVersion) ? volumeByVersion : null}
 					defaultView="month"
 					minBucket="week"
 				/>
@@ -223,7 +224,7 @@ export default function Overview() {
 					subtitle="Swap fees paid by users, split by protocol version."
 					series={feesByVersion.data}
 					isLoading={feesByVersion.isLoading}
-					isError={feesByVersion.isError}
+					failedRead={queryReadFailed(feesByVersion) ? feesByVersion : null}
 					defaultView="month"
 					minBucket="week"
 				/>
@@ -232,7 +233,7 @@ export default function Overview() {
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, cumulative."
 					series={protocolFees.data}
 					isLoading={protocolFees.isLoading}
-					isError={protocolFees.isError}
+					failedRead={queryReadFailed(protocolFees) ? protocolFees : null}
 					defaultView="cumulative"
 					minBucket="week"
 					stacked={false}

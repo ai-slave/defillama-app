@@ -5,7 +5,14 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
 import { limitRwaHorizontalBarData, type RwaNamedValue } from './chartDataset'
@@ -97,9 +104,11 @@ export function RWASnapshotChartPanel({
 	}, [deferredSlices, groupLabel, nestedTreemap, treemapLimit])
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const viewFilename = `${filename}-${view}`
+	/* The treemap keeps 600px so its tiles stay readable; pie and bars sit on the 360px floor. */
+	const bodyClassName = view === 'treemap' ? 'min-h-[600px]' : undefined
 
 	return (
-		<ChartPanel className={view === 'treemap' ? undefined : 'min-h-[420px]'}>
+		<ChartPanel>
 			<ChartPanelToolbar>
 				{toolbarStart}
 				{view === 'treemap' ? treemapControls : null}
@@ -127,46 +136,50 @@ export function RWASnapshotChartPanel({
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
 			</ChartPanelToolbar>
-			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
-			) : isLoading ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
-			) : deferredSlices.length === 0 ? (
-				<ChartPanelBodyFallback className="body-sm text-tertiary">No data for this view.</ChartPanelBodyFallback>
-			) : (
-				<Suspense fallback={view === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}>
-					{view === 'pie' ? (
-						<PieChart
-							chartData={presentation.pie}
-							stackColors={presentation.colors}
-							radius={pieChartRadius}
-							legendPosition={pieChartLegendPosition}
-							legendTextStyle={pieChartLegendTextStyle}
-							valueSymbol={valueSymbol}
-							onReady={handleChartReady}
-						/>
-					) : view === 'hbar' ? (
-						<HBarChart
-							categories={presentation.bars.categories}
-							values={presentation.bars.values}
-							colors={presentation.bars.colors}
-							valueSymbol={valueSymbol}
-							onReady={handleChartReady}
-						/>
-					) : (
-						<TreemapChart
-							treeData={presentation.treemap}
-							variant="rwa"
-							height="600px"
-							valueLabel={valueLabel}
-							valueSymbol={valueSymbol}
-							onReady={handleChartReady}
-						/>
-					)}
-				</Suspense>
-			)}
+			<ChartPanelBody className={bodyClassName}>
+				{failedRead ? (
+					<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+				) : isLoading ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : deferredSlices.length === 0 ? (
+					<ChartPanelBodyFallback className="body-sm text-tertiary">No data for this view.</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback className={bodyClassName} />}>
+						{view === 'pie' ? (
+							<PieChart
+								chartData={presentation.pie}
+								stackColors={presentation.colors}
+								radius={pieChartRadius}
+								legendPosition={pieChartLegendPosition}
+								legendTextStyle={pieChartLegendTextStyle}
+								valueSymbol={valueSymbol}
+								containerClassName={CHART_FILL}
+								onReady={handleChartReady}
+							/>
+						) : view === 'hbar' ? (
+							<HBarChart
+								categories={presentation.bars.categories}
+								values={presentation.bars.values}
+								colors={presentation.bars.colors}
+								valueSymbol={valueSymbol}
+								containerClassName={CHART_FILL}
+								onReady={handleChartReady}
+							/>
+						) : (
+							<TreemapChart
+								treeData={presentation.treemap}
+								variant="rwa"
+								height="600px"
+								valueLabel={valueLabel}
+								valueSymbol={valueSymbol}
+								onReady={handleChartReady}
+							/>
+						)}
+					</Suspense>
+				)}
+			</ChartPanelBody>
 		</ChartPanel>
 	)
 }

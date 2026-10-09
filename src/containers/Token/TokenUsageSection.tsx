@@ -22,6 +22,7 @@ import {
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -40,7 +41,7 @@ const columnHelper = createColumnHelper<typeof paginatedTableFeatures, TokenUsag
 const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {
-	loading: () => <div className="min-h-[480px]" />
+	loading: () => <ChartPanelBodyFallback className="min-h-[480px]" />
 }) as React.FC<TreemapChartProps>
 
 const columns = columnHelper.columns([
@@ -266,14 +267,16 @@ export function TokenUsageSection({
 			}
 		>
 			{view === 'treemap' ? (
-				<TreemapChart
-					treeData={treemapTreeData}
-					variant="rwa"
-					height="480px"
-					valueLabel="Amount"
-					valueSymbol="$"
-					onReady={handleTreemapChartReady}
-				/>
+				<ChartPanelBody className="min-h-[480px]">
+					<TreemapChart
+						treeData={treemapTreeData}
+						variant="rwa"
+						height="480px"
+						valueLabel="Amount"
+						valueSymbol="$"
+						onReady={handleTreemapChartReady}
+					/>
+				</ChartPanelBody>
 			) : (
 				<Suspense fallback={<div className="min-h-[360px]" />}>
 					<DeferredPaginatedTable

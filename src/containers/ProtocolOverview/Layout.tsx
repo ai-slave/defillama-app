@@ -5,6 +5,7 @@ import { Announcement } from '~/components/Announcement'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { WarningBanners } from '~/containers/ChainOverview/WarningBanners'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
 import { IrTabMenu } from '~/containers/Investors/IrTabMenu'
 import { getMainSiteIrBaseHref } from '~/containers/Investors/mainSiteDashboards'
@@ -12,6 +13,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { InlineStatus } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
 import {
@@ -137,7 +139,7 @@ export function ProtocolOverviewLayout({
 			{...(toggleOptions !== undefined ? { tvlOptions: toggleOptions } : {})}
 		>
 			{showsActiveLoansTvlNotice(tab, category) ? (
-				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center body-sm text-primary">
+				<InlineStatus variant="info">
 					<p>
 						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info, read
 						the{' '}
@@ -151,23 +153,10 @@ export function ProtocolOverviewLayout({
 						</a>
 						.
 					</p>
-				</div>
+				</InlineStatus>
 			) : null}
 
-			{warningBanners?.map((banner) => (
-				<div
-					className={`relative rounded-md border p-2 text-center body-sm text-primary ${
-						banner.level === 'rug'
-							? 'border-error bg-error-tint-strong'
-							: banner.level === 'alert'
-								? 'border-warning bg-warning-tint-strong'
-								: 'border-(--bg-color) bg-surface-elevated-1'
-					}`}
-					key={`${banner.message}-${banner.level}-${name}`}
-				>
-					<p>{banner.message}</p>
-				</div>
-			))}
+			<WarningBanners banners={warningBanners} entityName={name} />
 
 			{dashboardAnnouncement ? (
 				<Announcement

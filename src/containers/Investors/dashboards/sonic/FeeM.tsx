@@ -5,7 +5,7 @@ import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/Treema
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -16,15 +16,6 @@ import { SonicIcon } from './SonicIcon'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
@@ -37,14 +28,14 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 		treeData.push({ name: item.name || 'Sonic', value: [item.collectedRewards, null, null] })
 	}
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+		<Suspense fallback={<ChartPanelBodyFallback />}>
 			<TreemapChart
 				treeData={treeData}
 				variant="flat"
 				colorMode="categorical"
 				valueLabel="Collected"
 				valueSymbol="S"
-				height="400px"
+				height="360px"
 			/>
 		</Suspense>
 	)
@@ -199,27 +190,29 @@ export default function FeeM() {
 			{/* Daily Stats Chart */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Daily Activity</SectionHeader>
-				<ChartCard title={data.dailyStatsTitle}>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.dailyStatsModel.dataset}
 							charts={data.dailyStatsModel.charts}
 							valueSymbol=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={lastNDaysZoom(data.dailyStatsLength)}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			{/* Rewards Treemap */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Rewards Distribution</SectionHeader>
-				<ChartCard title="Collected Rewards by Protocol">
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by Protocol</ChartPanelTitle>} />
 					<FeeMTreemap leaderboard={data.leaderboard} />
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			{/* FeeM Leaderboard */}

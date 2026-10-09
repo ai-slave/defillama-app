@@ -17,7 +17,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -211,8 +211,8 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	const height = `${Math.max(300, data.length * 28)}px`
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">Funding Rates (Annualized) — Top 20 by OI</h3>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (Annualized) — Top 20 by OI</ChartPanelTitle>} />
 			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: height }} />}>
 				<HBarChart
 					categories={sorted.map((d) => d.name)}
@@ -222,7 +222,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 					height={height}
 				/>
 			</Suspense>
-		</div>
+		</ChartPanel>
 	)
 }
 
@@ -453,12 +453,13 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 	for (let index = 0; index < data.length; index++) stackColors[data[index].name] = OI_COLORS[index % OI_COLORS.length]
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">Open Interest Distribution</h3>
-			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest Distribution</ChartPanelTitle>} />
+			{/* A side tile beside the scatter, so the donut keeps its own height rather than the 360 body floor. */}
+			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[400px]" />}>
 				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 			</Suspense>
-		</div>
+		</ChartPanel>
 	)
 }
 
@@ -479,9 +480,11 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	if (points.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">Volume vs Open Interest (bubble size = funding magnitude)</h3>
-			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '450px' }} />}>
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={<ChartPanelTitle>Volume vs Open Interest (bubble size = funding magnitude)</ChartPanelTitle>}
+			/>
+			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[450px]" />}>
 				<ScatterChart
 					chartData={points}
 					xAxisLabel="24h Volume ($)"
@@ -494,7 +497,7 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 					}
 				/>
 			</Suspense>
-		</div>
+		</ChartPanel>
 	)
 }
 

@@ -13,6 +13,7 @@ import {
 import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { ChartPanelBody, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -753,11 +754,12 @@ export function IncomeStatement({
 			) : null}
 
 			{showSankey ? (
-				<div className={`border-subtle ${showTable ? 'border-t pt-4' : ''}`}>
+				<div className={`border-subtle ${showTable ? 'border-t pt-2' : ''}`}>
 					{sankeyData.nodes.length > 0 ? (
 						<>
-							<div className="mb-2 flex flex-wrap items-center gap-2 px-2">
-								{showTitles ? <h3 className="mr-auto heading-xs">Income Flow Visualization</h3> : null}
+							<ChartPanelToolbar
+								leading={showTitles ? <ChartPanelTitle>Income Flow Visualization</ChartPanelTitle> : undefined}
+							>
 								<TagGroup
 									variant="default"
 									size="md"
@@ -789,36 +791,41 @@ export function IncomeStatement({
 									title={`Income Statement for ${name}`}
 									iconUrl={tokenIconUrl(name)}
 								/>
-							</div>
-							<Suspense
-								fallback={
-									// The same heights the chart takes: its own on desktop, its stacked column on a phone.
-									<div
-										role="status"
-										className="flex min-h-(--sankey-height) items-center justify-center max-[37.5rem]:min-h-(--sankey-mobile-height)"
-										style={
-											{
-												'--sankey-height': sankeyHeight,
-												'--sankey-mobile-height': sankeyMobileMinHeight(sankeyData.nodes.length)
-											} as CSSProperties
-										}
-									>
-										<LoadingIndicator />
-									</div>
+							</ChartPanelToolbar>
+							{/* The body and its fallback take the chart's own heights: its node-count height on desktop, its
+							    stacked column on a phone. */}
+							<ChartPanelBody
+								className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)"
+								style={
+									{
+										'--sankey-height': sankeyHeight,
+										'--sankey-mobile-height': sankeyMobileMinHeight(sankeyData.nodes.length)
+									} as CSSProperties
 								}
 							>
-								<SankeyChart
-									nodes={sankeyData.nodes}
-									links={sankeyData.links}
-									height={sankeyHeight}
-									onReady={handleSankeyChartReady}
-								/>
-							</Suspense>
+								<Suspense
+									fallback={
+										<ChartPanelBodyFallback
+											role="status"
+											className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)"
+										>
+											<LoadingIndicator />
+										</ChartPanelBodyFallback>
+									}
+								>
+									<SankeyChart
+										nodes={sankeyData.nodes}
+										links={sankeyData.links}
+										height={sankeyHeight}
+										onReady={handleSankeyChartReady}
+									/>
+								</Suspense>
+							</ChartPanelBody>
 						</>
 					) : (
-						<div className="flex h-[200px] items-center justify-center body-sm text-tertiary">
+						<ChartPanelBodyFallback role="status" className="min-h-[200px] body-sm text-tertiary">
 							No data available for the selected period
-						</div>
+						</ChartPanelBodyFallback>
 					)}
 				</div>
 			) : null}

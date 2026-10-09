@@ -7,6 +7,7 @@ import type {
 	MultiSeriesYAxisOption
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
+import { CHART_FILL } from '~/ui/ChartPanel'
 import { buildProtocolChartPresentation, shouldHideProtocolDataZoom } from './chartPresentation'
 import { buildProtocolYAxis } from './chartYAxis'
 import type { IProtocolCoreChartProps } from './types'
@@ -29,7 +30,6 @@ export default function ProtocolChart({
 	hallmarks,
 	rangeHallmarks,
 	chartOptions = EMPTY_CHART_OPTIONS,
-	height,
 	unlockTokenSymbol = '',
 	gasUsedValueSymbol,
 	isThemeDark,
@@ -94,7 +94,7 @@ export default function ProtocolChart({
 			{...(hallmarks !== null ? { hallmarks } : {})}
 			rangeHallmarks={rangeHallmarks}
 			hallmarksInMs
-			{...(height !== undefined ? { height } : {})}
+			containerClassName={CHART_FILL}
 			hideDataZoom={effectiveHideDataZoom}
 			autoHideDataZoom={false}
 			hideDefaultLegend

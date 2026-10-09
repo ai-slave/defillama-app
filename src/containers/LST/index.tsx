@@ -27,7 +27,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -420,13 +420,16 @@ export function LSTOverview({
 											}}
 										/>
 									</ChartPanelToolbar>
-									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<PieChart
-											chartData={deferredPiePresentation.chartData}
-											stackColors={deferredPiePresentation.stackColors}
-											onReady={handlePieReady}
-										/>
-									</React.Suspense>
+									<ChartPanelBody>
+										<React.Suspense fallback={<ChartPanelBodyFallback />}>
+											<PieChart
+												chartData={deferredPiePresentation.chartData}
+												stackColors={deferredPiePresentation.stackColors}
+												containerClassName={CHART_FILL}
+												onReady={handlePieReady}
+											/>
+										</React.Suspense>
+									</ChartPanelBody>
 								</div>
 								<div className="flex flex-col">
 									<ChartPanelToolbar>
@@ -448,22 +451,25 @@ export function LSTOverview({
 											csvSource={selectedBreakdownPresentation?.csvSource ?? null}
 										/>
 									</ChartPanelToolbar>
-									{selectedBreakdownPresentation ? (
-										<React.Suspense fallback={<ChartPanelBodyFallback />}>
-											<MultiSeriesChart
-												dataset={selectedBreakdownPresentation.dataset}
-												charts={selectedBreakdownPresentation.charts}
-												csvSource={selectedBreakdownPresentation.csvSource}
-												stacked
-												expandTo100Percent
-												hideDefaultLegend
-												valueSymbol="%"
-												onReady={handleBreakdownReady}
-											/>
-										</React.Suspense>
-									) : (
-										<ChartPanelBodyFallback />
-									)}
+									<ChartPanelBody>
+										{selectedBreakdownPresentation ? (
+											<React.Suspense fallback={<ChartPanelBodyFallback />}>
+												<MultiSeriesChart
+													dataset={selectedBreakdownPresentation.dataset}
+													charts={selectedBreakdownPresentation.charts}
+													csvSource={selectedBreakdownPresentation.csvSource}
+													stacked
+													expandTo100Percent
+													containerClassName={CHART_FILL}
+													hideDefaultLegend
+													valueSymbol="%"
+													onReady={handleBreakdownReady}
+												/>
+											</React.Suspense>
+										) : (
+											<ChartPanelBodyFallback />
+										)}
+									</ChartPanelBody>
 								</div>
 							</div>
 						) : (
@@ -510,29 +516,32 @@ export function LSTOverview({
 									/>
 								</ChartPanelToolbar>
 
-								{selectedInflowsPresentation ? (
-									<React.Suspense fallback={<ChartPanelBodyFallback />}>
-										<MultiSeriesChart
-											dataset={selectedInflowsPresentation.dataset}
-											charts={selectedInflowsPresentation.charts}
-											csvSource={selectedInflowsPresentation.csvSource}
-											hideDefaultLegend
-											groupBy={renderedGroupBy}
-											valueSymbol="ETH"
-											showTotalInTooltip
-											{...(selectedInflowTokens.length > 1
-												? {
-														chartOptions: {
-															tooltip: { formatter: inflowsTooltipFormatter }
+								<ChartPanelBody>
+									{selectedInflowsPresentation ? (
+										<React.Suspense fallback={<ChartPanelBodyFallback />}>
+											<MultiSeriesChart
+												dataset={selectedInflowsPresentation.dataset}
+												charts={selectedInflowsPresentation.charts}
+												csvSource={selectedInflowsPresentation.csvSource}
+												containerClassName={CHART_FILL}
+												hideDefaultLegend
+												groupBy={renderedGroupBy}
+												valueSymbol="ETH"
+												showTotalInTooltip
+												{...(selectedInflowTokens.length > 1
+													? {
+															chartOptions: {
+																tooltip: { formatter: inflowsTooltipFormatter }
+															}
 														}
-													}
-												: {})}
-											onReady={handleInflowsReady}
-										/>
-									</React.Suspense>
-								) : (
-									<ChartPanelBodyFallback />
-								)}
+													: {})}
+												onReady={handleInflowsReady}
+											/>
+										</React.Suspense>
+									) : (
+										<ChartPanelBodyFallback />
+									)}
+								</ChartPanelBody>
 							</div>
 						)}
 					</TabPanel>

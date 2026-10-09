@@ -7,6 +7,7 @@ import type {
 } from 'echarts'
 import type { LineSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
+import type { ReactNode } from 'react'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { ChartExportButtonsMode } from '~/components/ChartExport/types'
 import type { StateTimelineOption } from './stateTimeline'
@@ -142,6 +143,9 @@ export interface IMultiSeriesChartProps {
 	/** Explicit complete export source when `dataset` is only a visual presentation. */
 	csvSource?: ChartCsvSource
 	title?: string
+	/** Drawn under `title` in the chart's own header row, beside the export buttons. */
+	subtitle?: ReactNode
+	titleTooltip?: string
 	headingAs?: 'h1' | 'h2' | 'h3'
 	/** One logo per category dimension, rendered below a category x-axis. */
 	categoryLogos?: Array<string>

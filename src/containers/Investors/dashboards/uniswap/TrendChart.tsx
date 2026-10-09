@@ -4,8 +4,10 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
+import type { QueryRetry } from '~/utils/query'
 import {
 	BUCKET_DAYS,
 	type Bucket,
@@ -15,7 +17,7 @@ import {
 	type Chart,
 	type TrendSeries
 } from './transform'
-import { ChartCard, createStackTooltipFormatter, seriesColor, useTooltipMaxItems } from './ui'
+import { CardTitle, createStackTooltipFormatter, seriesColor, useTooltipMaxItems } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -155,7 +157,7 @@ export function SeriesTrendChart({
 	subtitle,
 	series,
 	isLoading,
-	isError,
+	failedRead,
 	valueSymbol = '$',
 	defaultView,
 	minBucket,
@@ -166,7 +168,8 @@ export function SeriesTrendChart({
 	subtitle?: string
 	series?: Array<TrendSeries> | undefined
 	isLoading?: boolean
-	isError?: boolean
+	/** The read that failed, or null: its Try again reruns it, and the error stays on screen while it does. */
+	failedRead?: QueryRetry | null
 	valueSymbol?: string
 	/** Opening view; ignored when the data is coarser than it. Defaults to the data's own cadence. */
 	defaultView?: View
@@ -203,29 +206,28 @@ export function SeriesTrendChart({
 		[groupBy, valueSymbol, maxItems, stacked]
 	)
 	return (
-		<ChartCard
-			title={title}
-			{...(subtitle !== undefined ? { subtitle } : {})}
-			control={
-				<>
-					{extraControl}
-					<SegmentedControl<View>
-						variant="default"
-						size="sm"
-						label={`${title} period`}
-						options={viewOptions}
-						value={view}
-						onValueChange={setPicked}
-					/>
-				</>
-			}
-		>
-			{isLoading ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Loading…</div>
-			) : isError ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Failed to load data</div>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />}>
+				{extraControl}
+				<SegmentedControl<View>
+					variant="default"
+					size="md"
+					label={`${title} period`}
+					options={viewOptions}
+					value={view}
+					onValueChange={setPicked}
+				/>
+			</ChartPanelToolbar>
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load data</ChartPanelBodyError>
+			) : isLoading ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator />
+				</ChartPanelBodyFallback>
 			) : chartSeries.length === 0 ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">No data</div>
+				<ChartPanelBodyFallback>
+					<p className="body-sm text-tertiary">No data</p>
+				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
@@ -233,13 +235,13 @@ export function SeriesTrendChart({
 						charts={model.charts}
 						valueSymbol={valueSymbol}
 						groupBy={groupBy}
-						height="360px"
+						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 					/>
 				</Suspense>
 			)}
-		</ChartCard>
+		</ChartPanel>
 	)
 }

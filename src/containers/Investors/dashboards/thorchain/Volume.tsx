@@ -54,7 +54,7 @@ export default function Volume() {
 	const walletToggle = (
 		<SegmentedControl<WalletView>
 			variant="default"
-			size="sm"
+			size="md"
 			label="Unique wallets period"
 			options={WALLET_VIEWS.filter((v) => data.uniqueWalletsCharts?.[v.value])}
 			value={walletView}

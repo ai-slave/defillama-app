@@ -344,16 +344,12 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 	const upstreamChart = data.stakingDelegationChart
 	let chart = null
 	if (upstreamChart) {
-		const colors = {}
-		const seriesNames = new Array<string>(upstreamChart.series.length)
 		// Stacked (not overlaid): both series get area fill + a shared stack
 		// group, so the top of the stack reads as the combined total.
 		const charts = new Array<MultiSeriesChartSeriesConfig>(upstreamChart.series.length)
 		for (let i = 0; i < upstreamChart.series.length; i++) {
 			const name = upstreamChart.series[i].name
 			const color = /ftso|deleg/i.test(name) ? FLARE_BLUE : FLARE_ORANGE
-			colors[name] = color
-			seriesNames[i] = name
 			charts[i] = {
 				type: 'line',
 				name,
@@ -368,9 +364,7 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 			titleTooltip: upstreamChart.tooltip,
 			dataset: buildColumnarTimeSeriesDataset(upstreamChart.dates, upstreamChart.series, parseDateToTimestampMs, 0),
 			chartOptions: timeSeriesChartOptions(upstreamChart.dates.length, ''),
-			charts,
-			seriesNames,
-			colors
+			charts
 		}
 	}
 

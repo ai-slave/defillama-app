@@ -139,7 +139,7 @@ export default function PressReleases() {
 		<div className="space-y-8 py-6">
 			{/* Header */}
 			<div className="flex flex-col gap-2">
-				<h1 className="heading-lg text-primary">Reports & Press Releases</h1>
+				<h2 className="heading-lg text-primary">Reports & Press Releases</h2>
 				<p className="body-md text-secondary">Latest news, announcements, and updates from Spark Protocol</p>
 			</div>
 

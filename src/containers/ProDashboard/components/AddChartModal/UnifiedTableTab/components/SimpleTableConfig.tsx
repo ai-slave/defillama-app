@@ -383,7 +383,10 @@ export function SimpleTableConfig({
 							{selectedTokens.map((token) => {
 								const option = tokenOptionMap.get(token)
 								return (
-									<div key={token} className="inline-flex items-center gap-1.5 rounded-md bg-(--chip-bg) px-2.5 py-1">
+									<div
+										key={token}
+										className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated-1 px-2.5 py-1"
+									>
 										{option?.logo ? (
 											<img
 												src={option.logo}

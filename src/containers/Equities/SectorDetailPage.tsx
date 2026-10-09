@@ -10,7 +10,7 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -48,7 +48,6 @@ const CONSTITUENT_PAGE_SIZES = [25, 50, 100] as const
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 const CONCENTRATION_PIE_HEIGHT = '220px'
-const VALUATION_CHART_HEIGHT = '300px'
 
 const constituentColumns = constituentColumnHelper.columns([
 	constituentColumnHelper.accessor('name', {
@@ -449,27 +448,27 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 							</p>
 						</div>
 					</PanelHeader>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
+						<HBarChart
+							categories={valuationComparisonRows.map(([label]) => label)}
+							values={[]}
+							series={[
+								{
+									name: sector.sector,
+									values: valuationComparisonRows.map(([, value, median]) => (value / median) * 100),
+									color: chartColor(0)
+								},
+								{
+									name: 'Market',
+									values: valuationComparisonRows.map(() => 100),
+									color: chartColor(1)
+								}
+							]}
+							valueSymbol=""
+							containerClassName={CHART_FILL}
+						/>
+					</Suspense>
 					<div className="flex flex-col gap-3 p-4">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: VALUATION_CHART_HEIGHT }} />}>
-							<HBarChart
-								categories={valuationComparisonRows.map(([label]) => label)}
-								values={[]}
-								series={[
-									{
-										name: sector.sector,
-										values: valuationComparisonRows.map(([, value, median]) => (value / median) * 100),
-										color: chartColor(0)
-									},
-									{
-										name: 'Market',
-										values: valuationComparisonRows.map(() => 100),
-										color: chartColor(1)
-									}
-								]}
-								valueSymbol=""
-								height={VALUATION_CHART_HEIGHT}
-							/>
-						</Suspense>
 						<div className="grid gap-2 sm:grid-cols-2">
 							{valuationRows.map(([label, value, median, kind]) => (
 								<p key={label} className="body-sm text-secondary">

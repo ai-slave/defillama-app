@@ -8,10 +8,19 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
+import { mergeFailedReads, queryReadFailed, type QueryRetry } from '~/utils/query'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
-import { ChartCard, DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
+import { DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -112,7 +121,7 @@ function TrendCard({
 	setView,
 	chartSeries,
 	isLoading,
-	isError
+	failedRead
 }: {
 	title: string
 	subtitle?: string
@@ -121,7 +130,8 @@ function TrendCard({
 	setView: (v: View) => void
 	chartSeries: ReturnType<typeof aggregate>
 	isLoading: boolean
-	isError?: boolean
+	/** The read that failed, or null: its Try again reruns it, and the error stays on screen while it does. */
+	failedRead?: QueryRetry | null
 }) {
 	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
@@ -133,26 +143,25 @@ function TrendCard({
 		[groupBy, valueSymbol]
 	)
 	return (
-		<ChartCard
-			title={title}
-			{...(subtitle !== undefined ? { subtitle } : {})}
-			control={
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>}>
 				<SegmentedControl
 					variant="default"
-					size="sm"
+					size="md"
 					label={`${title} period`}
 					options={VIEWS}
 					value={view}
 					onValueChange={setView}
 				/>
-			}
-		>
-			{isLoading ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Loading…</div>
-			) : isError ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">Failed to load data</div>
+			</ChartPanelToolbar>
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+			) : isLoading ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator />
+				</ChartPanelBodyFallback>
 			) : chartSeries.length === 0 ? (
-				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">No data</div>
+				<SurfaceBodyStatus variant="empty">No data</SurfaceBodyStatus>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
@@ -160,14 +169,14 @@ function TrendCard({
 						charts={model.charts}
 						valueSymbol={valueSymbol}
 						groupBy={groupBy}
-						height="360px"
+						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 					/>
 				</Suspense>
 			)}
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -188,7 +197,7 @@ export function ChainBreakdownChart({
 	limit?: number
 }) {
 	const [view, setView] = useState<View>('day')
-	const { data, isLoading, isError } = useQuery<{ series: Array<RawSeries> }>({
+	const breakdown = useQuery<{ series: Array<RawSeries> }>({
 		queryKey: ['thorchain-breakdown', protocol, metric, limit],
 		queryFn: () => fetchProtocolChainBreakdownData({ protocol, metric, limit }),
 		...QUERY_OPTS
@@ -202,7 +211,7 @@ export function ChainBreakdownChart({
 	// order the legend by lifetime size (catch-all "Others" bucket last).
 	const series = useMemo(() => {
 		const total = (s: RawSeries) => s.data.reduce((t, [, v]) => t + (v || 0), 0)
-		const chains = (data?.series ?? []).map((s) => (s.name === 'Thorchain' ? { ...s, name: THORCHAIN } : s))
+		const chains = (breakdown.data?.series ?? []).map((s) => (s.name === 'Thorchain' ? { ...s, name: THORCHAIN } : s))
 		// The native L1 tx fee comes from its own adapter but is THORChain-chain activity, so it
 		// adds to that chain's bucket rather than reading as a separate chain in the legend.
 		if (networkFee.data?.length) {
@@ -223,7 +232,7 @@ export function ChainBreakdownChart({
 		})
 		// Chains take the palette by their rank in this legend, not the server's ranking.
 		return chains.map((s, rank) => ({ ...s, color: s.name.startsWith('Others') ? OTHERS_COLOR : chartColor(rank) }))
-	}, [data, networkFee.data])
+	}, [breakdown.data, networkFee.data])
 	const chartSeries = useMemo(() => aggregate(series, view, true), [series, view])
 	return (
 		<TrendCard
@@ -233,8 +242,8 @@ export function ChainBreakdownChart({
 			view={view}
 			setView={setView}
 			chartSeries={chartSeries}
-			isLoading={isLoading || networkFee.isLoading}
-			isError={isError}
+			isLoading={breakdown.isLoading || networkFee.isLoading}
+			failedRead={queryReadFailed(breakdown) ? breakdown : null}
 		/>
 	)
 }
@@ -300,20 +309,21 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 	}, [chart, subtitle])
 	if (!model) return null
 	return (
-		<ChartCard title={model.title} {...(model.subtitle !== undefined ? { subtitle: model.subtitle } : {})}>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={model.subtitle}>{model.title}</ChartPanelTitle>} />
 			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={model.dataset}
 					charts={model.charts}
 					valueSymbol="$"
 					groupBy="daily"
-					height="360px"
+					containerClassName={CHART_FILL}
 					chartOptions={CHART_OPTIONS}
 					hideDefaultLegend={false}
 					exportButtons="hidden"
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -358,7 +368,7 @@ export function FeeRevenueChart({
 			setView={setView}
 			chartSeries={chartSeries}
 			isLoading={fees.isLoading || revenue.isLoading}
-			isError={fees.isError || revenue.isError}
+			failedRead={mergeFailedReads([queryReadFailed(fees) ? fees : null, queryReadFailed(revenue) ? revenue : null])}
 		/>
 	)
 }

@@ -14,7 +14,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -228,7 +228,7 @@ function LiquidationsDistributionChartCard({
 					charts={deferredChartModel.charts}
 					selectedCharts={deferredChartModel.selectedCharts}
 					chartOptions={deferredChartModel.chartOptions}
-					containerClassName="min-h-[360px]"
+					containerClassName={CHART_FILL}
 					hideDataZoom={displayOptions.shouldHideDataZoom}
 					hideDefaultLegend={!displayOptions.showBreakdownLegend}
 					onReady={onChartReady}

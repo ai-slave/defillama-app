@@ -6,7 +6,14 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -17,6 +24,7 @@ import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } fro
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
+const EMISSIONS_TITLE = 'Comparison of protocol revenue relative to token issuance'
 const EMISSIONS_PERCENTAGE_CHART_OPTIONS = createSingleSeriesChartOptions('%')
 const EMISSIONS_ABSOLUTE_CHART_OPTIONS = createTimeSeriesChartOptions(' NEAR')
 
@@ -42,16 +50,6 @@ const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChartProps['charts'] = [
 		encode: { x: 'timestamp', y: 'Cumulative Emissions' }
 	}
 ]
-
-function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-1 label-md text-secondary">{title}</h3>
-			{subtitle && <p className="mb-3 body-sm text-secondary">{subtitle}</p>}
-			{children}
-		</div>
-	)
-}
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
@@ -259,44 +257,56 @@ export default function Revenue() {
 
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Total Fees Generated in NEAR</SectionHeader>
-				<ChartCard
-					title="All fees earned by NEAR Protocol and Products"
-					subtitle={`Converted from USD to NEAR at daily prices. Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				<ChartPanel>
+					<ChartPanelToolbar
+						leading={
+							<ChartPanelTitle
+								subtitle={`Converted from USD to NEAR at daily prices. Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
+							>
+								All fees earned by NEAR Protocol and Products
+							</ChartPanelTitle>
+						}
+					/>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={chartView.feesModel.dataset}
 							charts={chartView.feesModel.charts}
 							groupBy={aggregation}
 							valueSymbol=" NEAR"
-							height="400px"
+							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Revenue Over Time</SectionHeader>
-				<ChartCard
-					title="NEAR received by protocol"
-					subtitle={`Intents fee wallets (fefundsadmin + 1csfundsadmin) plus protocol transaction fees (70% burned). Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				<ChartPanel>
+					<ChartPanelToolbar
+						leading={
+							<ChartPanelTitle
+								subtitle={`Intents fee wallets (fefundsadmin + 1csfundsadmin) plus protocol transaction fees (70% burned). Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
+							>
+								NEAR received by protocol
+							</ChartPanelTitle>
+						}
+					/>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={chartView.revenueModel.dataset}
 							charts={chartView.revenueModel.charts}
 							groupBy={aggregation}
 							valueSymbol=" NEAR"
-							height="400px"
+							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			<div className="flex flex-col gap-4">
@@ -314,38 +324,38 @@ export default function Revenue() {
 						]}
 					/>
 				</div>
-				<ChartCard
-					title="Comparison of protocol revenue relative to token issuance"
-					subtitle={
-						emissionsView === 'percentage'
-							? 'Cumulative revenue as percentage of cumulative emissions'
-							: 'Cumulative revenue vs cumulative emissions'
-					}
-				>
+				<ChartPanel>
+					{/* Both views draw the title in their own header; only the percentage view adds the export buttons. */}
 					{emissionsView === 'percentage' ? (
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title={EMISSIONS_TITLE}
+								subtitle="Cumulative revenue as percentage of cumulative emissions"
+								headingAs="h3"
 								dataset={emissionsDataset}
 								charts={EMISSIONS_PERCENTAGE_CHART}
 								valueSymbol="%"
 								chartOptions={EMISSIONS_PERCENTAGE_CHART_OPTIONS}
-								height="400px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title={EMISSIONS_TITLE}
+								subtitle="Cumulative revenue vs cumulative emissions"
+								headingAs="h3"
 								dataset={emissionsDataset}
 								charts={EMISSIONS_ABSOLUTE_CHARTS}
 								valueSymbol=" NEAR"
 								chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
-								height="400px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
 					)}
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (

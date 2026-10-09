@@ -29,7 +29,7 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -183,6 +183,7 @@ function USDInflowsChartCard({
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
+					containerClassName={CHART_FILL}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
@@ -270,6 +271,7 @@ function InflowsByTokenChartCard({
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
 						valueSymbol="$"
 						selectedCharts={deferredChart.selectedCharts}

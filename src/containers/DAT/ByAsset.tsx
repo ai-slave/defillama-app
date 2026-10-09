@@ -15,7 +15,13 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -84,6 +90,7 @@ export function DATByAsset({
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							containerClassName={CHART_FILL}
 							dataset={dailyFlowsChart.dataset}
 							charts={dailyFlowsChart.charts}
 							valueSymbol={metadata.ticker}
@@ -373,6 +380,7 @@ function MNAVChart({
 					charts={data.charts}
 					selectedCharts={selectedCharts}
 					dataset={data.dataset}
+					containerClassName={CHART_FILL}
 					valueSymbol=""
 					hideDataZoom={data.dataset.source.length < 2}
 					onReady={handleChartReady}

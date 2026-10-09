@@ -5,8 +5,8 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -62,15 +62,6 @@ const INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 		stack: 'a'
 	}
 ]
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
 
 function CardSkeleton({ title }: { title: string }) {
 	return (
@@ -228,150 +219,158 @@ export default function SparkLend() {
 			</div>
 
 			{tvlLoading ? (
-				<CardSkeleton title="TVL" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="TVL">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="TVL"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={tvlDataset}
 							charts={TVL_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{breakdownLoading ? (
-				<CardSkeleton title="TVL by Chain" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : tvlByChain.charts.length > 0 ? (
-				<ChartCard title="TVL by Chain">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="TVL by Chain"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={tvlByChain.dataset}
 							charts={tvlByChain.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							stacked
 							solidChartAreaStyle
 							chartOptions={DOLLAR_STACKED_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			{borrowedLoading ? (
-				<CardSkeleton title="Total Borrowed" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Total Borrowed">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Total Borrowed"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={borrowedDataset}
 							charts={BORROWED_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{feesLoading ? (
-				<CardSkeleton title="Fees" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Fees">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Fees"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={feesDataset}
 							charts={FEES_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{breakdownLoading ? (
-				<CardSkeleton title="Fees by Chain" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : feesByChain.charts.length > 0 ? (
-				<ChartCard title="Fees by Chain">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Fees by Chain"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={feesByChain.dataset}
 							charts={feesByChain.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							hideDefaultLegend={feesByChain.charts.length < 2}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			{feesLoading ? (
-				<CardSkeleton title="Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={revenueDataset}
 							charts={REVENUE_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{feesLoading ? (
-				<CardSkeleton title="Supply Side Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Supply Side Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Supply Side Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={supplySideRevenueDataset}
 							charts={SUPPLY_SIDE_REVENUE_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{tvlLoading ? (
-				<CardSkeleton title="USD Inflows" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="USD Inflows">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="USD Inflows"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}
 							charts={INFLOWS_CHARTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{poolsLoading ? <CardSkeleton title="Yield Pools" /> : <YieldPoolsTable data={pools} />}

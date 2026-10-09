@@ -5,7 +5,7 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -538,7 +538,7 @@ export function RWAOverviewChartPanel({
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
 									groupBy={groupedFlowChart.groupBy}
-									containerClassName="flex-1 min-h-[360px]"
+									containerClassName={CHART_FILL}
 									hideDefaultLegend={false}
 									valueSymbol="$"
 									onReady={handleMultiSeriesChartReady}
@@ -548,7 +548,7 @@ export function RWAOverviewChartPanel({
 							<Suspense fallback={<ChartPanelBodyFallback />}>
 								<RWAFlowsChart
 									chart={flowChart}
-									containerClassName="flex-1 min-h-[360px]"
+									containerClassName={CHART_FILL}
 									{...(flowDefaultStartTimestamp !== undefined
 										? { defaultStartTimestamp: flowDefaultStartTimestamp }
 										: {})}
@@ -570,7 +570,7 @@ export function RWAOverviewChartPanel({
 							<MultiSeriesChart
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}
-								containerClassName="flex-1 min-h-[360px]"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								expandTo100Percent={deferredTimeSeriesChart.isShare}
 								showTotalInTooltip={

@@ -102,15 +102,6 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 	)
 }
 
-export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-5">
-			<h3 className="mb-4 title-sm tracking-wider text-tertiary uppercase">{title}</h3>
-			{children}
-		</div>
-	)
-}
-
 export function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">

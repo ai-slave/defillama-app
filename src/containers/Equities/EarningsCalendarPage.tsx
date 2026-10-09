@@ -8,7 +8,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
@@ -169,24 +169,26 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 		dimensions: ['Period', 'Reports'],
 		source: labels.map((label, index) => [label, index === 0 ? summary.pastCount : months[index - 1]!.count])
 	}
-	const height = '220px'
 
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: height }} />}>
-			<MultiSeriesChart
-				dataset={dataset}
-				charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
-				chartOptions={{
-					...createCategoryChartOptions(''),
-					yAxis: { min: 0, minInterval: 1, name: 'Companies' },
-					xAxis: { type: 'category', boundaryGap: true, axisLabel: { interval: 0, rotate: 30 } }
-				}}
-				valueSymbol=""
-				exportButtons="hidden"
-				hideDataZoom
-				height={height}
-			/>
-		</Suspense>
+		// Compact beside the "At stake this week" panel, which holds about 180px of content.
+		<ChartPanelBody className="min-h-[220px]">
+			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[220px]" />}>
+				<MultiSeriesChart
+					dataset={dataset}
+					charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
+					chartOptions={{
+						...createCategoryChartOptions(''),
+						yAxis: { min: 0, minInterval: 1, name: 'Companies' },
+						xAxis: { type: 'category', boundaryGap: true, axisLabel: { interval: 0, rotate: 30 } }
+					}}
+					valueSymbol=""
+					exportButtons="hidden"
+					hideDataZoom
+					containerClassName={`${CHART_FILL} min-h-[220px]`}
+				/>
+			</Suspense>
+		</ChartPanelBody>
 	)
 }
 

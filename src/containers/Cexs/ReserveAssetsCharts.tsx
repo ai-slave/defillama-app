@@ -20,6 +20,7 @@ import {
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { CHART_FILL } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -118,6 +119,7 @@ function ChainsChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
@@ -189,6 +191,7 @@ function TokenValuesUSDChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"
@@ -272,6 +275,7 @@ function TokensBreakdownPieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
+					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -341,6 +345,7 @@ function TokenBalancesRawChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol=""
@@ -375,6 +380,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
+					containerClassName={CHART_FILL}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
@@ -444,6 +450,7 @@ function InflowsByTokenChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					hideDefaultLegend={false}
 					valueSymbol="$"

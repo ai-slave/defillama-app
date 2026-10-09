@@ -48,7 +48,7 @@ export default function Network() {
 	const polToggle = (
 		<SegmentedControl<PolView>
 			variant="default"
-			size="sm"
+			size="md"
 			label="POL value denomination"
 			options={POL_VIEWS.filter((o) => data.polCharts?.[o.value])}
 			value={polView}

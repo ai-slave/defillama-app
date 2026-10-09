@@ -8,12 +8,12 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import { BarListCard, ChartCard, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, CardTitle, ChartCard, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -112,8 +112,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 				dataset={dataset}
 				charts={charts}
 				valueSymbol="$"
-				title=""
-				height="360px"
+				containerClassName={CHART_FILL}
 				hideDefaultLegend={false}
 				exportButtons="hidden"
 				chartOptions={chartOptions}
@@ -281,12 +280,17 @@ export default function Security() {
 						['avgVoteTurnoutUni', 'Avg Vote Turnout (UNI)', undefined]
 					]}
 				/>
-				<ChartCard
-					title="Vote Turnout by Proposal (USD)"
-					subtitle={data.voteTurnout?.note ?? 'Governor Bravo proposals; USD at vote-time UNI price.'}
-				>
+				<ChartPanel>
+					<ChartPanelToolbar
+						leading={
+							<CardTitle
+								title="Vote Turnout by Proposal (USD)"
+								subtitle={data.voteTurnout?.note ?? 'Governor Bravo proposals; USD at vote-time UNI price.'}
+							/>
+						}
+					/>
 					{data.voteTurnout ? <VoteTurnoutChart chart={data.voteTurnout} /> : null}
-				</ChartCard>
+				</ChartPanel>
 				<TimeAreaCard
 					chart={data.delegatedUni}
 					valueSymbol=""

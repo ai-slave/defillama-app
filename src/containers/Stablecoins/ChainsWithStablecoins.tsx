@@ -40,7 +40,13 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
@@ -395,17 +401,19 @@ export function ChainsWithStablecoins({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
-						<React.Suspense fallback={<div className="min-h-[600px]" />}>
-							<TreemapChart
-								treeData={
-									marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
-								}
-								variant="rwa"
-								height="600px"
-								onReady={handleChartReady}
-								valueLabel="Market Cap"
-							/>
-						</React.Suspense>
+						<ChartPanelBody className="min-h-[600px]">
+							<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+								<TreemapChart
+									treeData={
+										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
+									}
+									variant="rwa"
+									height="600px"
+									onReady={handleChartReady}
+									valueLabel="Market Cap"
+								/>
+							</React.Suspense>
+						</ChartPanelBody>
 					) : chartType === 'volume' ? (
 						<SelectedChainsChart
 							data={deferredVolumeChartData}

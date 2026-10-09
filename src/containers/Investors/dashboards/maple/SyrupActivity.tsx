@@ -4,7 +4,8 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -20,7 +21,6 @@ import {
 import { aggregateByMonth, aggregateDripByMonth, monthTimestampMs, type DripRow, type TxRow } from './chartData'
 import {
 	CardSkeleton,
-	ChartCard,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_DOLLAR_TIME_CHART_OPTIONS,
 	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
@@ -368,40 +368,44 @@ export default function SyrupActivity() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Monthly stSyrup Deposits vs Withdrawals" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : monthlyChart.source.length > 0 ? (
-				<ChartCard title="Monthly stSyrup Deposits vs Withdrawals">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Monthly stSyrup Deposits vs Withdrawals"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={monthlyChart}
 							groupBy="monthly"
 							charts={MONTHLY_ACTIVITY_CHARTS}
 							valueSymbol="$"
-							height="400px"
 							hideDefaultLegend={false}
 							chartOptions={MAPLE_DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			{isLoading ? (
-				<CardSkeleton title="Monthly Syrup Token Migrations" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : migrationChart.source.length > 0 ? (
-				<ChartCard title="Monthly Syrup Token Migrations">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Monthly Syrup Token Migrations"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={migrationChart}
 							groupBy="monthly"
 							charts={MIGRATIONS_CHART}
 							valueSymbol=""
-							height="400px"
 							chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
@@ -425,21 +429,23 @@ export default function SyrupActivity() {
 				</div>
 
 				{dripLoading ? (
-					<CardSkeleton title="Monthly Drip Claims" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : dripMonthlyChart.source.length > 0 ? (
-					<ChartCard title="Monthly Drip Claims">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Monthly Drip Claims"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								dataset={dripMonthlyChart}
 								groupBy="monthly"
 								charts={DRIP_CLAIMS_CHART}
 								valueSymbol=""
-								height="400px"
 								chartOptions={MAPLE_UNITLESS_TIME_CHART_OPTIONS}
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 			</div>
 

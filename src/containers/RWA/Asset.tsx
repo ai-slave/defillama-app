@@ -15,7 +15,7 @@ import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
@@ -990,7 +990,7 @@ export function RWAAssetPage({
 										hideDefaultLegend={false}
 										exportButtons="hidden"
 										onReady={onNativeYieldChartReady}
-										containerClassName="flex-1 min-h-[360px]"
+										containerClassName={CHART_FILL}
 									/>
 								</Suspense>
 							)}

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
@@ -163,7 +163,7 @@ export function CompositionSection({
 			    table width on every tab, sized to the longest names (the overview's lines), so
 			    the chart and table line up as you switch tabs. */}
 			<div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
-				<Card>
+				<ChartPanel className="min-w-0">
 					{model ? (
 						<>
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
@@ -173,19 +173,23 @@ export function CompositionSection({
 									chartOptions={chartOptions}
 									valueSymbol="$"
 									title=""
-									height="360px"
+									containerClassName={CHART_FILL}
 									solidChartAreaStyle
 								/>
 							</Suspense>
 							{/* A hole the line joins across, named under the chart rather than left to
 							    read as a measurement. */}
-							{note && <p className="mt-2 body-sm text-tertiary">{note}</p>}
-							{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
+							{note || model.line ? (
+								<div className="px-2 pb-2">
+									{note && <p className="mt-2 body-sm text-tertiary">{note}</p>}
+									{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
+								</div>
+							) : null}
 						</>
 					) : (
-						<SurfaceBodyLoadingStatus />
+						<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 					)}
-				</Card>
+				</ChartPanel>
 				<Card>
 					{/* The payload's own title, the same string the chip above carries. A hard space
 					    while it is in flight — a collapsed empty heading would jump the table below. */}

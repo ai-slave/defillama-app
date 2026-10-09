@@ -2,12 +2,20 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
-import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -277,111 +285,160 @@ export default function Growth() {
 
 			<SectionHeader>Loopr · Daily Activity (Combined)</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
-					<ChartSkeleton title="Active Accounts" />
-				) : (
-					<ChartCard title="Active Accounts" subtitle="Owner-deduped across chains">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+				<ChartPanel>
+					{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Active Accounts"
+								subtitle="Owner-deduped across chains"
+								headingAs="h3"
 								dataset={looprTotalDatasets.activeAccounts}
 								charts={ACTIVE_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								height="280px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
-					<ChartSkeleton title="Active Positions" />
-				) : (
-					<ChartCard title="Active Positions" subtitle="Combined open positions">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Active Positions"
+								subtitle="Combined open positions"
+								headingAs="h3"
 								dataset={looprTotalDatasets.activePositions}
 								charts={ACTIVE_POSITIONS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								height="280px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
+					)}
+				</ChartPanel>
 			</div>
 
 			<SectionHeader>Loopr · Cumulative Onboarding</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<ChartCard title="Cumulative Accounts" subtitle="Owner-deduped across chains">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
-						<MultiSeriesChart
-							dataset={looprTotalDatasets.cumulativeAccounts}
-							charts={CUMULATIVE_ACCOUNTS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
-					</Suspense>
-				</ChartCard>
-				<ChartCard title="Cumulative Positions" subtitle="Across all chains">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
-						<MultiSeriesChart
-							dataset={looprTotalDatasets.cumulativePositions}
-							charts={CUMULATIVE_POSITIONS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
-					</Suspense>
-				</ChartCard>
+				<ChartPanel>
+					{isLoading ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<MultiSeriesChart
+								title="Cumulative Accounts"
+								subtitle="Owner-deduped across chains"
+								headingAs="h3"
+								dataset={looprTotalDatasets.cumulativeAccounts}
+								charts={CUMULATIVE_ACCOUNTS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								containerClassName={CHART_FILL}
+							/>
+						</Suspense>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					{isLoading ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<MultiSeriesChart
+								title="Cumulative Positions"
+								subtitle="Across all chains"
+								headingAs="h3"
+								dataset={looprTotalDatasets.cumulativePositions}
+								charts={CUMULATIVE_POSITIONS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								containerClassName={CHART_FILL}
+							/>
+						</Suspense>
+					)}
+				</ChartPanel>
 			</div>
 
 			<SectionHeader>Loopr · Per-Chain Activity</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
-					<ChartCard title="Active Users by Chain">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by Chain</ChartPanelTitle>} />
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
 								charts={perChainModels.activeUsers.charts}
 								valueSymbol=""
-								height="280px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 				{perChainModels?.activePositions && (
-					<ChartCard title="Active Positions by Chain">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by Chain</ChartPanelTitle>} />
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
 								charts={perChainModels.activePositions.charts}
 								valueSymbol=""
-								height="280px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 			</div>
 
 			{depositsModel && (
 				<>
 					<SectionHeader>Loopr · Deposits by Chain</SectionHeader>
-					<ChartCard title="Total deposits over time" subtitle="USD deposits per chain">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
+						/>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={depositsModel.dataset}
 								charts={depositsModel.charts}
 								valueSymbol="$"
-								height="320px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				</>
 			)}
 
@@ -426,69 +483,84 @@ export default function Growth() {
 			<SectionHeader>Token Prices</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
-					<ChartCard title="MET Price" subtitle="Metronome governance token">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="MET Price"
+								subtitle="Metronome governance token"
+								headingAs="h3"
 								dataset={tokenPriceDatasets.met}
 								charts={MET_PRICE_CHART}
 								valueSymbol="$"
 								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-								height="280px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 				{tokenPriceDatasets.vsp.source.length > 0 && (
-					<ChartCard title="VSP Price" subtitle="Vesper governance token">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="VSP Price"
+								subtitle="Vesper governance token"
+								headingAs="h3"
 								dataset={tokenPriceDatasets.vsp}
 								charts={VSP_PRICE_CHART}
 								valueSymbol="$"
 								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-								height="280px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 			</div>
 
 			{marketComboModel && (
 				<>
 					<SectionHeader>Ecosystem TVL Change vs ETH (cumulative)</SectionHeader>
-					<ChartCard
-						title="Cumulative % change since baseline"
-						subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window"
-					>
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window">
+									Cumulative % change since baseline
+								</ChartPanelTitle>
+							}
+						/>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={marketComboModel.dataset}
 								charts={marketComboModel.charts}
 								valueSymbol="%"
-								height="320px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				</>
 			)}
 
 			{morphoMarketModel && (
 				<>
 					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
-					<ChartCard title="Featured Morpho market" subtitle="Daily supply / borrow / utilization">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '340px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle subtitle="Daily supply / borrow / utilization">Featured Morpho market</ChartPanelTitle>
+							}
+						/>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={morphoMarketModel.dataset}
 								charts={morphoMarketModel.charts}
 								valueSymbol="$"
-								height="340px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				</>
 			)}
 
@@ -498,22 +570,25 @@ export default function Growth() {
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoMarkets.map(({ market, model }) => {
 							return (
-								<ChartCard
-									key={market.id}
-									title={market.title || market.label}
-									subtitle="Daily supply / borrow / utilization"
-								>
-									<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+								<ChartPanel key={market.id}>
+									<ChartPanelToolbar
+										leading={
+											<ChartPanelTitle subtitle="Daily supply / borrow / utilization">
+												{market.title || market.label}
+											</ChartPanelTitle>
+										}
+									/>
+									<Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}
 											valueSymbol="$"
-											height="300px"
+											containerClassName={CHART_FILL}
 											hideDefaultLegend={false}
 											exportButtons="hidden"
 										/>
 									</Suspense>
-								</ChartCard>
+								</ChartPanel>
 							)
 						})}
 					</div>
@@ -523,31 +598,33 @@ export default function Growth() {
 			{spendVsTvl && (
 				<>
 					<SectionHeader>Incentive Spend vs Pool TVL · Efficiency</SectionHeader>
-					<ChartCard
-						title={`${spendVenue} — weekly spend vs pool TVL`}
-						subtitle="Compare incentive outlay against the TVL it attracted"
-					>
-						<SegmentedControl
-							variant="default"
-							size="sm"
-							label="Spend venue"
-							className="mb-3"
-							options={SPEND_VENUES}
-							value={spendVenue}
-							onValueChange={setSpendVenue}
-						/>
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '340px' }} />}>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle subtitle="Compare incentive outlay against the TVL it attracted">{`${spendVenue} — weekly spend vs pool TVL`}</ChartPanelTitle>
+							}
+						>
+							<SegmentedControl
+								variant="default"
+								size="md"
+								label="Spend venue"
+								options={SPEND_VENUES}
+								value={spendVenue}
+								onValueChange={setSpendVenue}
+							/>
+						</ChartPanelToolbar>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								key={spendVenue}
 								dataset={spendVsTvl.model.dataset}
 								charts={spendVsTvl.model.charts}
 								valueSymbol="$"
-								height="340px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				</>
 			)}
 		</div>

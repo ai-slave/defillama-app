@@ -4,7 +4,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatCompactNumber,
@@ -18,7 +19,6 @@ import { useMapleActivePools } from './api'
 import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
 	CardSkeleton,
-	ChartCard,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_PERCENT_CATEGORY_CHART_OPTIONS,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
@@ -177,55 +177,61 @@ export default function PoolsOverview() {
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{isLoading ? (
-					<CardSkeleton title="TVL by Pool" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : (
-					<ChartCard title="TVL by Pool">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="TVL by Pool"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								dataset={data.tvl}
 								charts={TVL_CHART}
 								valueSymbol="$"
-								height="400px"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 
 				{isLoading ? (
-					<CardSkeleton title="Pool Utilization" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.utilization.source.length > 0 ? (
-					<ChartCard title="Pool Utilization">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Pool Utilization"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								dataset={data.utilization}
 								charts={UTILIZATION_CHART}
 								valueSymbol="%"
-								height="400px"
 								chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Spot APY by Pool" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.apy.source.length > 0 ? (
-				<ChartCard title="Spot APY by Pool">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Spot APY by Pool"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={data.apy}
 							charts={APY_CHART}
 							valueSymbol="%"
-							height="400px"
 							chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			{isLoading ? <CardSkeleton title="Active Pools" /> : <PoolsTable data={poolRows} />}

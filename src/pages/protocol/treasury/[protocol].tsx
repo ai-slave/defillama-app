@@ -26,7 +26,7 @@ import {
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
@@ -115,6 +115,7 @@ function TokensBreakdownPieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
+					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -154,6 +155,7 @@ function HistoricalTreasuryChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
+					containerClassName={CHART_FILL}
 					hideDefaultLegend={false}
 					valueSymbol="$"
 					selectedCharts={TREASURY_SERIES}
@@ -234,6 +236,7 @@ function TokensMultiSeriesChartCard({
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
+					containerClassName={CHART_FILL}
 					hideDefaultLegend={false}
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}

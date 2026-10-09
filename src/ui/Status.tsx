@@ -111,10 +111,12 @@ const INLINE_STATUS = {
 		icon: 'alert-triangle',
 		iconColor: 'text-warning'
 	},
-	empty: { box: 'border-medium bg-surface-elevated-1 text-tertiary', icon: null, iconColor: '' }
+	empty: { box: 'border-medium bg-surface-elevated-1 text-tertiary', icon: null, iconColor: '' },
+	info: { box: 'border-medium bg-surface-elevated-1 text-primary', icon: null, iconColor: '' }
 } as const
 
-/** A message in a dialog or above content: a request that failed, a caveat, an empty note. Error and warning take
+/** A message in a dialog or above content: a request that failed, a caveat, an empty note, a neutral notice (`info`:
+    a protocol renamed its site, a default the reader can change) in primary text. Error and warning take
     their tinted box and status icon, so the two never differ by colour alone; the message stays primary text. The
     icon sits centred on the first line (`h-lh`), so a wrapped message keeps it beside its opening words. `action` is
     the one sm Button that answers it (Try again, Renew); with it, icon and text centre on that button's 24px row.
@@ -126,7 +128,7 @@ export function InlineStatus({
 	action
 }: {
 	children: ReactNode
-	variant: 'empty' | 'error' | 'warning'
+	variant: 'empty' | 'error' | 'warning' | 'info'
 	action?: ReactNode
 }) {
 	const { box, icon, iconColor } = INLINE_STATUS[variant]

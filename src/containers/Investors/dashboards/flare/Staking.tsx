@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
-import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -70,46 +70,40 @@ export default function Staking() {
 			</div>
 
 			{chart && chart.dataset.source.length > 0 && (
-				<ChartCard title={chart.title} titleTooltip={chart.titleTooltip}>
-					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 body-sm text-secondary">
-						{chart.seriesNames.map((name) => (
-							<span key={name} className="flex items-center gap-1.5">
-								<span className="size-2.5 rounded-full" style={{ backgroundColor: chart.colors[name] }} />
-								{name}
-							</span>
-						))}
-					</div>
+				<ChartPanel>
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={chart.dataset}
 							charts={chart.charts}
 							valueSymbol=""
-							title=""
-							height="360px"
+							title={chart.title}
+							subtitle={chart.subtitle}
+							titleTooltip={chart.titleTooltip}
+							headingAs="h3"
+							containerClassName={CHART_FILL}
+							hideDefaultLegend={false}
 							chartOptions={chart.chartOptions}
 						/>
 					</Suspense>
-					{chart.subtitle && <p className="mt-2 body-sm text-secondary">{chart.subtitle}</p>}
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{pctChart && (
-				<ChartCard
-					title={pctChart.title ?? '% of Circulating Supply Staked or Delegated'}
-					subtitle={pctChart.subtitle}
-					titleTooltip={pctChart.titleTooltip}
-				>
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={pctChart.dataset}
 							charts={pctChart.charts}
 							valueSymbol="%"
-							title=""
-							height="300px"
+							title={pctChart.title ?? '% of Circulating Supply Staked or Delegated'}
+							subtitle={pctChart.subtitle}
+							titleTooltip={pctChart.titleTooltip}
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							chartOptions={pctChart.chartOptions}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 		</div>
 	)

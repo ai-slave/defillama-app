@@ -12,7 +12,7 @@ import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/Brid
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -395,9 +395,11 @@ export function BridgesOverviewByChain({
 							{chartScopeNote}
 
 							{chartView === 'netflow' && netflowsData ? (
-								<React.Suspense fallback={<div className="min-h-[600px]" />}>
-									<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
-								</React.Suspense>
+								<ChartPanelBody className="min-h-[600px]">
+									<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+										<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
+									</React.Suspense>
+								</ChartPanelBody>
 							) : chartView === 'volume' ? (
 								<BridgeVolumeChart data={rawBridgeVolumeData} height="360px" onReady={handleChartReady} />
 							) : null}

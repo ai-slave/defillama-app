@@ -22,6 +22,7 @@ import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapter
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
+	CHART_FILL,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
 	ChartPanelExportShellFallback,
@@ -369,6 +370,7 @@ function ChartByType({
 					showTotalInTooltip
 					{...(hallmarks !== undefined ? { hallmarks } : {})}
 					onReady={handleChartReady}
+					containerClassName={CHART_FILL}
 				/>
 			</React.Suspense>
 		</>

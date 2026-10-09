@@ -6,13 +6,14 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { useTab, chartToModel, type RevenueResponse } from './api'
-import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -263,73 +264,86 @@ export default function Revenue() {
 					</>
 				)}
 			</div>
-			{isLoading || !dailyModel ? (
-				<ChartSkeleton title="Daily Revenue" />
-			) : (
-				<ChartCard title="Daily Claimed Revenue" subtitle="Stacked by protocol">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily Claimed Revenue</ChartPanelTitle>}
+				/>
+				{isLoading || !dailyModel ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={dailyModel.dataset}
 							charts={dailyModel.charts}
 							valueSymbol="$"
-							height="320px"
+							containerClassName={CHART_FILL}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
-			{isLoading || (!holderModel && !holdersByMonthModel) ? (
-				<ChartSkeleton title="Holder Buybacks" />
-			) : (
-				<ChartCard title="Holder Buybacks" subtitle="Revenue routed to token holders (MET / VSP)">
-					<div className="mb-3 flex justify-end">
-						<SegmentedControl<'daily' | 'monthly'>
-							variant="default"
-							size="sm"
-							label="Holder buybacks period"
-							value={holderMode}
-							onValueChange={setHolderMode}
-							options={[
-								{ value: 'monthly', label: 'Monthly' },
-								{ value: 'daily', label: 'Daily' }
-							]}
-						/>
-					</div>
-					{holderMode === 'monthly' ? (
-						holdersByMonthModel ? (
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
-								<MultiSeriesChart
-									key="hb-monthly"
-									dataset={holdersByMonthModel.dataset}
-									charts={holdersByMonthModel.charts}
-									valueSymbol="$"
-									groupBy="monthly"
-									height="300px"
-									hideDefaultLegend={false}
-									exportButtons="hidden"
-								/>
-							</Suspense>
-						) : (
-							<div className="px-2 py-6 body-sm text-secondary">No monthly holder data</div>
-						)
-					) : holderModel ? (
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+				)}
+			</ChartPanel>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={
+						<ChartPanelTitle subtitle="Revenue routed to token holders (MET / VSP)">Holder Buybacks</ChartPanelTitle>
+					}
+				>
+					<SegmentedControl<'daily' | 'monthly'>
+						variant="default"
+						size="md"
+						label="Holder buybacks period"
+						value={holderMode}
+						onValueChange={setHolderMode}
+						options={[
+							{ value: 'monthly', label: 'Monthly' },
+							{ value: 'daily', label: 'Daily' }
+						]}
+					/>
+				</ChartPanelToolbar>
+				{isLoading || (!holderModel && !holdersByMonthModel) ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : holderMode === 'monthly' ? (
+					holdersByMonthModel ? (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								key="hb-daily"
-								dataset={holderModel.dataset}
-								charts={holderModel.charts}
+								key="hb-monthly"
+								dataset={holdersByMonthModel.dataset}
+								charts={holdersByMonthModel.charts}
 								valueSymbol="$"
-								height="300px"
+								groupBy="monthly"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
 					) : (
-						<div className="px-2 py-6 body-sm text-secondary">No daily holder data</div>
-					)}
-				</ChartCard>
-			)}
+						<ChartPanelBodyFallback>
+							<p className="body-sm text-tertiary">No monthly holder data</p>
+						</ChartPanelBodyFallback>
+					)
+				) : holderModel ? (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
+						<MultiSeriesChart
+							key="hb-daily"
+							dataset={holderModel.dataset}
+							charts={holderModel.charts}
+							valueSymbol="$"
+							containerClassName={CHART_FILL}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
+				) : (
+					<ChartPanelBodyFallback>
+						<p className="body-sm text-tertiary">No daily holder data</p>
+					</ChartPanelBodyFallback>
+				)}
+			</ChartPanel>
 
 			{/* Metronome breakdown · canonical from financial-statement adapter */}
 			{mc && (
@@ -366,27 +380,29 @@ export default function Revenue() {
 
 			{/* 3 · Unclaimed pipeline */}
 			<SectionHeader>Unclaimed Pipeline · Overview</SectionHeader>
-			<div className="rounded-lg border border-subtle bg-surface p-5">
-				<div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-					<div>
-						<div className="label-sm tracking-wide text-secondary uppercase">Pipeline Total</div>
-						<div className="mt-1 mono-xl text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
-					</div>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={
+						<div>
+							<div className="label-sm tracking-wide text-secondary uppercase">Pipeline Total</div>
+							<div className="mt-1 mono-xl text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
+						</div>
+					}
+				>
 					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
-				</div>
+				</ChartPanelToolbar>
 				{up.pie && (
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<PieChart
 							chartData={up.pie}
 							valueSymbol="$"
-							height="320px"
 							showLegend
 							legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
 							stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, chartColor(i)]))}
 						/>
 					</Suspense>
 				)}
-			</div>
+			</ChartPanel>
 
 			<SectionHeader>Treasury LP Positions · Pending Rewards</SectionHeader>
 			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>

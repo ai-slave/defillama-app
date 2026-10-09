@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
-import { ChartCard, SectionHeader } from './ui'
+import { SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -48,41 +48,39 @@ export default function Network() {
 			</div>
 
 			{c.transactions.dataset.source.length > 0 && (
-				<ChartCard
-					title={c.transactions.title ?? 'Daily Transactions'}
-					subtitle="Transactions settled on Flare each day."
-				>
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '360px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={c.transactions.dataset}
 							charts={c.transactions.charts}
 							valueSymbol=""
-							title=""
-							height="320px"
+							title={c.transactions.title ?? 'Daily Transactions'}
+							subtitle="Transactions settled on Flare each day."
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							exportButtons={CSV_ONLY_EXPORT}
 							chartOptions={c.transactions.chartOptions}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{c.activeAccounts.dataset.source.length > 0 && (
-				<ChartCard
-					title={c.activeAccounts.title ?? 'Daily Active Accounts'}
-					subtitle="Unique accounts active on Flare each day."
-				>
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '360px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={c.activeAccounts.dataset}
 							charts={c.activeAccounts.charts}
 							valueSymbol=""
-							title=""
-							height="320px"
+							title={c.activeAccounts.title ?? 'Daily Active Accounts'}
+							subtitle="Unique accounts active on Flare each day."
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							exportButtons={CSV_ONLY_EXPORT}
 							chartOptions={c.activeAccounts.chartOptions}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 		</div>
 	)

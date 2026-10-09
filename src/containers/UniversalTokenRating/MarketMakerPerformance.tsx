@@ -5,6 +5,7 @@ import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSer
 import { Select } from '~/components/Select/Select'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
+import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -295,47 +296,46 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 							daily breakdown.
 						</div>
 					</div>
-					<div className="flex min-w-0 flex-col gap-3 p-4">
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<h4 className="label-md">Daily Breakdown</h4>
-							<div className="flex flex-wrap gap-2">
-								<SegmentedControl
-									label="Breakdown unit"
-									variant="solid"
-									size="md"
-									value={unit}
-									onValueChange={(value) => setUnit(value as ValueUnit)}
-									options={[
-										{ value: 'usd', label: '$' },
-										{ value: 'percent', label: '%' }
-									]}
-								/>
-								<SegmentedControl
-									label="Breakdown display"
-									variant="default"
-									size="md"
-									value={display}
-									onValueChange={(value) => setDisplay(value as 'chart' | 'table')}
-									options={[
-										{ value: 'chart', label: 'Chart' },
-										{ value: 'table', label: 'Table' }
-									]}
-								/>
-							</div>
-						</div>
-						{display === 'chart' ? (
-							<MultiSeriesChart
-								dataset={UTR_TIME_DATASET}
-								charts={series}
-								valueSymbol={unit === 'percent' ? '%' : '$'}
-								chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
-								height="320px"
-								hideDefaultLegend={false}
-								hideDataZoom
-								exportButtons="hidden"
+					<div className="flex min-w-0 flex-col">
+						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h4">Daily Breakdown</ChartPanelTitle>}>
+							<SegmentedControl
+								label="Breakdown unit"
+								variant="solid"
+								size="md"
+								value={unit}
+								onValueChange={(value) => setUnit(value as ValueUnit)}
+								options={[
+									{ value: 'usd', label: '$' },
+									{ value: 'percent', label: '%' }
+								]}
 							/>
+							<SegmentedControl
+								label="Breakdown display"
+								variant="default"
+								size="md"
+								value={display}
+								onValueChange={(value) => setDisplay(value as 'chart' | 'table')}
+								options={[
+									{ value: 'chart', label: 'Chart' },
+									{ value: 'table', label: 'Table' }
+								]}
+							/>
+						</ChartPanelToolbar>
+						{display === 'chart' ? (
+							<ChartPanelBody>
+								<MultiSeriesChart
+									dataset={UTR_TIME_DATASET}
+									charts={series}
+									valueSymbol={unit === 'percent' ? '%' : '$'}
+									chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
+									containerClassName={CHART_FILL}
+									hideDefaultLegend={false}
+									hideDataZoom
+									exportButtons="hidden"
+								/>
+							</ChartPanelBody>
 						) : (
-							<div className="max-h-[320px] overflow-auto rounded-lg border border-subtle">
+							<div className="m-2 max-h-[360px] overflow-auto rounded-lg border border-subtle">
 								<table className="w-full body-sm">
 									<thead className="sticky top-0 bg-surface">
 										<tr className="border-b border-subtle text-left label-sm text-secondary">

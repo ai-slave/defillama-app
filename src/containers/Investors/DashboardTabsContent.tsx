@@ -25,6 +25,26 @@ const SKELETON_WIDTHS = [
 
 const PLACEHOLDER_COLS = ['', '', '', '', '']
 
+/** The page's h1, always present: a custom project header shows the name in its own type, and phones hide the visible
+    heading for space, so there it stays for screen readers and search only. */
+function DashboardHeading({
+	hidden,
+	title,
+	displayName
+}: {
+	hidden?: boolean
+	title: string | undefined
+	displayName: string
+}) {
+	if (hidden)
+		return <h1 className="sr-only">{title && title !== displayName ? `${displayName}: ${title}` : displayName}</h1>
+	return (
+		<header className="flex items-center gap-3 max-md:sr-only">
+			<h1 className="heading-sm tracking-tight text-primary">{title}</h1>
+		</header>
+	)
+}
+
 /** The loading table; `still` when it is the backdrop of a "Coming Soon" note, which waits for nothing. */
 export function SkeletonTable({ still }: { still?: boolean }) {
 	return (
@@ -120,13 +140,11 @@ export function InvestorsContent({
 
 	return (
 		<>
-			{!hasCustomHeader && (
-				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight text-primary">
-						{activeTab === 'dashboard' ? displayName || 'Dashboard' : tabs.find((t) => t.id === activeTab)?.label}
-					</h1>
-				</header>
-			)}
+			<DashboardHeading
+				hidden={hasCustomHeader}
+				title={activeTab === 'dashboard' ? displayName || 'Dashboard' : tabs.find((t) => t.id === activeTab)?.label}
+				displayName={displayName}
+			/>
 
 			{activeTab === 'dashboard' && (
 				<ProDashboardAPIProvider
@@ -162,13 +180,11 @@ export function CustomOnlyContent({
 
 	return (
 		<>
-			{!hasCustomHeader && (
-				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight text-primary">
-						{tabs.find((t) => t.id === activeTab)?.label ?? displayName}
-					</h1>
-				</header>
-			)}
+			<DashboardHeading
+				hidden={hasCustomHeader}
+				title={tabs.find((t) => t.id === activeTab)?.label ?? displayName}
+				displayName={displayName}
+			/>
 
 			{activeCustomTab &&
 				!activeCustomTab.externalHref &&

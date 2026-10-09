@@ -48,7 +48,7 @@ export default function Products() {
 			<div className="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="heading-sm text-primary">Protocol</h1>
+					<h2 className="heading-sm text-primary">Protocol</h2>
 				</div>
 				<p className="max-w-3xl body-md text-secondary">
 					NEAR is the unified commerce layer for assets and agents. NEAR is where cross-chain execution is unified,

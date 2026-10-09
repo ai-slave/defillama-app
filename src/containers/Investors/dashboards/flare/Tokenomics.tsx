@@ -1,7 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -10,7 +19,7 @@ import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
-import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -85,6 +94,9 @@ export default function Tokenomics() {
 
 	const [burnView, setBurnView] = useState<BurnView>('daily')
 	const [protocolView, setProtocolView] = useState<'emitted' | 'burned'>('burned')
+	const protocolExport = useGetChartInstance()
+	const burnExport = useGetChartInstance()
+	const fireExport = useGetChartInstance()
 
 	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
 	if (queryReadFailed(query) && !query.data)
@@ -119,51 +131,52 @@ export default function Tokenomics() {
 						<StatTile label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
 					</div>
 					{inf.pctChart && (
-						<ChartCard title={inf.pctChart.title ?? 'Annualized Inflation Rate'} subtitle={inf.pctChart.subtitle}>
+						<ChartPanel>
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart
 									dataset={inf.pctChart.dataset}
 									charts={inf.pctChart.charts}
 									valueSymbol="%"
-									title=""
-									height="360px"
+									title={inf.pctChart.title ?? 'Annualized Inflation Rate'}
+									subtitle={inf.pctChart.subtitle}
+									headingAs="h3"
+									containerClassName={CHART_FILL}
 									exportButtons={CSV_ONLY_EXPORT}
 									chartOptions={inf.pctChart.chartOptions}
 								/>
 							</Suspense>
-						</ChartCard>
+						</ChartPanel>
 					)}
 					<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 						{inf.circulatingChart && (
-							<ChartCard
-								title={inf.circulatingChart.title ?? 'Circulating Supply (Monthly)'}
-								subtitle={inf.circulatingChart.subtitle}
-							>
+							<ChartPanel>
 								<Suspense fallback={<ChartPanelExportShellFallback />}>
 									<MultiSeriesChart
 										dataset={inf.circulatingChart.dataset}
 										charts={inf.circulatingChart.charts}
 										valueSymbol=""
-										title=""
-										height="360px"
+										title={inf.circulatingChart.title ?? 'Circulating Supply (Monthly)'}
+										subtitle={inf.circulatingChart.subtitle}
+										headingAs="h3"
+										containerClassName={CHART_FILL}
 										exportButtons={CSV_ONLY_EXPORT}
 										chartOptions={inf.circulatingChart.chartOptions}
 									/>
 								</Suspense>
-							</ChartCard>
+							</ChartPanel>
 						)}
 						{protocolChart && (
-							<div className="rounded-lg border border-subtle bg-surface p-4">
-								<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-									<div className="min-w-0">
-										<h3 className="title-md text-primary">{protocolChart.title ?? 'FLR by Protocol (Monthly)'}</h3>
-										{protocolChart.subtitle && (
-											<p className="mt-0.5 body-sm text-secondary">{protocolChart.subtitle}</p>
-										)}
-									</div>
+							<ChartPanel>
+								<ChartPanelToolbar
+									leading={
+										<ChartPanelTitle subtitle={protocolChart.subtitle}>
+											{protocolChart.title ?? 'FLR by Protocol (Monthly)'}
+										</ChartPanelTitle>
+									}
+								>
 									<SegmentedControl<typeof protocolView>
 										variant="default"
-										size="sm"
+										size="md"
 										label="FLR by protocol flow"
 										options={[
 											{ value: 'burned', label: 'Burned' },
@@ -172,19 +185,25 @@ export default function Tokenomics() {
 										value={protocolView}
 										onValueChange={setProtocolView}
 									/>
-								</div>
-								<Suspense fallback={<ChartPanelExportShellFallback />}>
+									<ChartExportButtons
+										chartInstance={protocolExport.chartInstance}
+										filename="flr-by-protocol"
+										showPng={false}
+										csvSource={{ type: 'dataset', prepare: () => protocolChart.dataset }}
+									/>
+								</ChartPanelToolbar>
+								<Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart
 										dataset={protocolChart.dataset}
 										charts={protocolChart.charts}
 										valueSymbol=""
-										title=""
-										height="360px"
-										exportButtons={CSV_ONLY_EXPORT}
+										containerClassName={CHART_FILL}
+										exportButtons="hidden"
+										onReady={protocolExport.handleChartReady}
 										chartOptions={protocolChart.chartOptions}
 									/>
 								</Suspense>
-							</div>
+							</ChartPanel>
 						)}
 					</div>
 				</>
@@ -199,17 +218,17 @@ export default function Tokenomics() {
 				<StatTile label="Total Burned" value={bk.totalGasBurned} />
 			</div>
 
-			<div className="rounded-lg border border-subtle bg-surface p-4">
-				<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-					<div className="min-w-0">
-						<h3 className="title-md text-primary">{b.burnTitle}</h3>
-						<p className="mt-0.5 body-sm text-secondary">
-							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
-						</p>
-					</div>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={
+						<ChartPanelTitle subtitle="FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.">
+							{b.burnTitle}
+						</ChartPanelTitle>
+					}
+				>
 					<SegmentedControl<BurnView>
 						variant="default"
-						size="sm"
+						size="md"
 						label="FLR burn period"
 						options={[
 							{ value: 'daily', label: 'Daily' },
@@ -218,32 +237,42 @@ export default function Tokenomics() {
 						value={burnView}
 						onValueChange={setBurnView}
 					/>
-				</div>
-				{burnView === 'daily' ? (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<ChartExportButtons
+						chartInstance={burnExport.chartInstance}
+						filename={`flr-burn-${burnView}`}
+						showPng={false}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => (burnView === 'daily' ? b.dailyDataset : b.cumulativeDataset)
+						}}
+					/>
+				</ChartPanelToolbar>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
+					{burnView === 'daily' ? (
 						<MultiSeriesChart
+							key="daily"
 							dataset={b.dailyDataset}
 							charts={b.charts.daily}
 							valueSymbol=""
-							title=""
-							height="360px"
-							exportButtons={CSV_ONLY_EXPORT}
+							containerClassName={CHART_FILL}
+							exportButtons="hidden"
+							onReady={burnExport.handleChartReady}
 							chartOptions={b.chartOptions}
 						/>
-					</Suspense>
-				) : (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					) : (
 						<MultiSeriesChart
+							key="cumulative"
 							dataset={b.cumulativeDataset}
 							charts={b.charts.cumulative}
 							valueSymbol=""
-							title=""
-							height="360px"
+							containerClassName={CHART_FILL}
+							exportButtons="hidden"
+							onReady={burnExport.handleChartReady}
 							chartOptions={b.chartOptions}
 						/>
-					</Suspense>
-				)}
-			</div>
+					)}
+				</Suspense>
+			</ChartPanel>
 
 			<SectionHeader>FLR Emissions</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -254,19 +283,20 @@ export default function Tokenomics() {
 				<StatTile label="Epochs Tracked" value={ek.epochsTracked} />
 				<StatTile label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
-			<ChartCard title={e.emissionsTitle}>
+			<ChartPanel>
 				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
 						dataset={e.perEpochDataset}
 						charts={e.charts.perEpoch}
 						valueSymbol=""
-						title=""
-						height="360px"
+						title={e.emissionsTitle}
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						exportButtons={CSV_ONLY_EXPORT}
 						chartOptions={e.perEpochChartOptions}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 
 			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -291,20 +321,21 @@ export default function Tokenomics() {
 					tooltip="FLR emitted minus FLR burned, over the trailing 30 days."
 				/>
 			</div>
-			<ChartCard title={e.burnVsEmitTitle}>
-				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+			<ChartPanel>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart
 						dataset={e.burnVsEmitDataset}
 						charts={e.charts.burnVsEmit}
 						valueSymbol=""
-						title=""
-						height="400px"
+						title={e.burnVsEmitTitle}
+						headingAs="h3"
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
 						exportButtons={CSV_ONLY_EXPORT}
 						chartOptions={e.burnVsEmitChartOptions}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 			{e.burnVsEmitSubtitle && <p className="body-sm text-secondary">{e.burnVsEmitSubtitle}</p>}
 
 			<SectionHeader>FIRE (FIP.16)</SectionHeader>
@@ -332,31 +363,37 @@ export default function Tokenomics() {
 						)}
 						<StatTile label="Tag Fees" value={fire.kpis.tagsCollectedUsd} tooltip="Fees from Flare's Tags product." />
 					</div>
-					<div className="rounded-lg border border-subtle bg-surface p-4">
-						<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-							<div className="min-w-0">
-								<h3 className="title-md text-primary">{fire.title}</h3>
-								<p className="mt-0.5 body-sm text-secondary">
-									{fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}
-								</p>
-							</div>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle subtitle={fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}>
+									{fire.title}
+								</ChartPanelTitle>
+							}
+						>
 							<span className="rounded-full border border-medium px-2.5 py-0.5 label-xs tracking-wide text-success uppercase">
 								Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}
 							</span>
-						</div>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<ChartExportButtons
+								chartInstance={fireExport.chartInstance}
+								filename="flare-fire-fees"
+								showPng={false}
+								csvSource={{ type: 'dataset', prepare: () => fire.dataset }}
+							/>
+						</ChartPanelToolbar>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={fire.dataset}
 								charts={fire.charts}
 								valueSymbol="$"
-								title=""
-								height="360px"
+								containerClassName={CHART_FILL}
 								hideDefaultLegend={false}
-								exportButtons={CSV_ONLY_EXPORT}
+								exportButtons="hidden"
+								onReady={fireExport.handleChartReady}
 								chartOptions={fire.chartOptions}
 							/>
 						</Suspense>
-					</div>
+					</ChartPanel>
 					{fire.wallets.length > 0 && (
 						<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 							<table className="w-full text-left body-md">

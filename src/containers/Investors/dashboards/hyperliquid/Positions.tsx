@@ -15,6 +15,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate } from '~/utils/dateFormat'
@@ -133,9 +134,8 @@ function PortfolioTrend({
 	const changePct = first ? ((last - first) / first) * 100 : 0
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<div className="mb-3 flex items-center justify-between">
-				<h3 className="label-md text-secondary">Portfolio Trend ({window})</h3>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle>Portfolio Trend ({window})</ChartPanelTitle>}>
 				<span className={changePct >= 0 ? 'body-sm text-success' : 'body-sm text-error'}>
 					{changePct >= 0 ? '+' : ''}
 					{formatPercent(changePct, {
@@ -145,26 +145,26 @@ function PortfolioTrend({
 						useGrouping: false
 					})}
 				</span>
-			</div>
-			<Suspense fallback={<div className="h-[220px]" />}>
+			</ChartPanelToolbar>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={PORTFOLIO_CHARTS}
 					valueSymbol="$"
 					chartOptions={PORTFOLIO_CHART_OPTIONS}
 					hideDataZoom
-					height="220px"
+					containerClassName={CHART_FILL}
 					exportButtons="hidden"
 				/>
 			</Suspense>
-			<div className="mt-2 flex items-center justify-between body-sm text-secondary">
+			<div className="flex items-center justify-between px-2 pb-2 body-sm text-secondary">
 				<span>{formatDate(points[0].time, { input: 'milliseconds' })}</span>
 				<span>
 					Last: {formatUsd(last, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</span>
 				<span>{formatDate(points[points.length - 1].time, { input: 'milliseconds' })}</span>
 			</div>
-		</div>
+		</ChartPanel>
 	)
 }
 

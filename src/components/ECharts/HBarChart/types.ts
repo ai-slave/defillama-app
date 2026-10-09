@@ -6,6 +6,8 @@ export interface IHBarChartProps {
 	title?: string
 	valueSymbol?: string
 	height?: string
+	/** Replaces the fixed height: pass CHART_FILL to grow with a stretched panel. */
+	containerClassName?: string
 	color?: string
 	colors?: Array<string>
 	logos?: Array<string>

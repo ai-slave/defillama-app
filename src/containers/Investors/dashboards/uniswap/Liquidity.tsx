@@ -1,11 +1,11 @@
 import { lazy, Suspense, useState } from 'react'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import { BarListCard, ChartCard, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, CardTitle, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
 interface TopPoolRow {
 	pool: string
@@ -114,15 +114,20 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 			}
 		})
 	return (
-		<ChartCard
-			title={sankey.title ?? 'LP Owners - Custody & Activity'}
-			subtitle={sankey.note ?? 'Each owner counted once; Active = a liquidity action in the last 7 days.'}
-		>
-			{/* Below 37.5rem SankeyChart is max(450px, 64px a node) tall, and this card has seven nodes at most. */}
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={
+					<CardTitle
+						title={sankey.title ?? 'LP Owners - Custody & Activity'}
+						subtitle={sankey.note ?? 'Each owner counted once; Active = a liquidity action in the last 7 days.'}
+					/>
+				}
+			/>
+			{/* Below 37.5rem SankeyChart is max(450px, 64px a node) tall, and this panel has seven nodes at most. */}
 			<Suspense fallback={<ChartPanelBodyFallback className="max-[37.5rem]:min-h-[450px]" />}>
 				<SankeyChart nodes={nodes} links={sankey.links} nodeColors={SANKEY_COLORS} height="360px" />
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -214,7 +219,7 @@ export default function Liquidity() {
 					control={
 						<SegmentedControl<'total' | 'chain'>
 							variant="default"
-							size="sm"
+							size="md"
 							label="TVL breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },
@@ -247,7 +252,7 @@ export default function Liquidity() {
 								control: (
 									<SegmentedControl<LpView>
 										variant="default"
-										size="sm"
+										size="md"
 										label="LP positions breakdown"
 										options={lpOptions}
 										value={resolvedLpView}

@@ -3,6 +3,7 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -114,10 +115,6 @@ const TAB_SERIES: Record<DirectoryOverviewTab, Array<SeriesSpec>> = {
 
 const UTC_DAY = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
 
-// Inline so it beats ChartPanelBody's shared 360px floor. Toolbar + 320px body lands on
-// the 360px the summary card next to it occupies, leaving neither column with dead space.
-const CHART_BODY_HEIGHT = { minHeight: 320 }
-
 interface ResolvedSeries {
 	spec: SeriesSpec
 	values: Array<number | null>
@@ -202,22 +199,23 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 					The totals and this chart ignore {ignoredFiltersPhrase(ignoredFilters)} and show every exchange.
 				</ScopeNote>
 			) : null}
+			{/* Toolbar plus a 320px body matches the 360px summary card beside the chart. */}
 			{chart ? (
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */
 				<React.Suspense
 					fallback={
-						<ChartPanelBodyFallback style={CHART_BODY_HEIGHT}>
+						<ChartPanelBodyFallback className="min-h-[320px]">
 							<LoadingIndicator />
 						</ChartPanelBodyFallback>
 					}
 				>
-					<ChartPanelBody role="img" aria-label={overviewAriaLabel(chart, resolved)} style={CHART_BODY_HEIGHT}>
+					<ChartPanelBody className="min-h-[320px]" role="img" aria-label={overviewAriaLabel(chart, resolved)}>
 						<MultiSeriesChart
 							key={tab}
 							dataset={chartModel.dataset}
 							charts={chartModel.charts}
 							valueSymbol="$"
-							height="320px"
+							containerClassName={`${CHART_FILL} min-h-[320px]`}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 							hallmarks={hallmarks}
@@ -225,11 +223,11 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 					</ChartPanelBody>
 				</React.Suspense>
 			) : failedRead ? (
-				<ChartPanelBodyError retry={failedRead} style={CHART_BODY_HEIGHT}>
+				<ChartPanelBodyError retry={failedRead} style={{ minHeight: '320px' }}>
 					Failed to load the exchange overview.
 				</ChartPanelBodyError>
 			) : (
-				<ChartPanelBodyFallback style={CHART_BODY_HEIGHT} role="status" aria-live="polite">
+				<ChartPanelBodyFallback className="min-h-[320px]" role="status" aria-live="polite">
 					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			)}

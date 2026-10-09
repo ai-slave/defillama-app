@@ -3,9 +3,9 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -15,13 +15,7 @@ import {
 } from '~/utils/numberFormat'
 import type { TimeWindow } from './api'
 import { num, pct, useAaveAPYHistory, useAaveGHOReserve, useAaveMarkets } from './api'
-import {
-	AAVE_AREA_EXPORT,
-	AAVE_PERCENT_TIME_CHART_OPTIONS,
-	CardSkeleton,
-	InvestorsTable,
-	SectionHeader
-} from './shared'
+import { AAVE_AREA_EXPORT, AAVE_PERCENT_TIME_CHART_OPTIONS, InvestorsTable, SectionHeader } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -215,23 +209,25 @@ export default function GHO() {
 				</div>
 
 				{apyLoading ? (
-					<CardSkeleton title="" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : borrowApyDataset.source.length > 0 ? (
-					<div className="rounded-lg border border-subtle bg-surface p-5">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
 								dataset={borrowApyDataset}
 								charts={BORROW_APY_CHART}
 								valueSymbol="%"
 								title=""
-								height="400px"
+								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</div>
+					</ChartPanel>
 				) : (
-					<CardSkeleton title="" />
+					<PanelStatus variant="empty" className="min-h-[400px]">
+						No GHO borrow APY history for this window.
+					</PanelStatus>
 				)}
 			</div>
 

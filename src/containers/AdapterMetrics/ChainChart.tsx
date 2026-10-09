@@ -18,7 +18,14 @@ import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { getAdapterDashboardType } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
@@ -54,7 +61,7 @@ const BAR_VALUE_MODES_CHAINS_BY_ADAPTER = ['Absolute', 'Relative'] as const
 type ChainsByAdapterValueMode = (typeof BAR_VALUE_MODES_CHAINS_BY_ADAPTER)[number]
 const BAR_LAYOUTS_CHAINS_BY_ADAPTER = ['Stacked', 'Separate'] as const
 type ChainsByAdapterBarLayout = (typeof BAR_LAYOUTS_CHAINS_BY_ADAPTER)[number]
-const CHAINS_BY_ADAPTER_CHART_HEIGHT = '420px'
+/* Treemaps and ranked bars list every chain, so they keep 520px; the time series fill the 360px body floor. */
 const CHAINS_BY_ADAPTER_TREEMAP_HEIGHT = '520px'
 const CHART_KIND_OPTIONS = [
 	{ key: 'Bar', name: 'Bar Chart' },
@@ -157,14 +164,14 @@ function getChartKindQueryUpdate(
 	}
 }
 
-function getChartHeight(chartState: ChainsByAdapterChartState): string {
+function getChartBodyClassName(chartState: ChainsByAdapterChartState): string | undefined {
 	switch (chartState.chartKind) {
 		case 'bar':
 		case 'dominance':
-			return CHAINS_BY_ADAPTER_CHART_HEIGHT
+			return undefined
 		case 'treemap':
 		case 'hbar':
-			return CHAINS_BY_ADAPTER_TREEMAP_HEIGHT
+			return 'min-h-[520px]'
 		default:
 			return assertNever(chartState)
 	}
@@ -445,7 +452,7 @@ export function AdapterByChainChart({
 				? 'Separate'
 				: 'Stacked'
 			: null
-	const breakdownChartHeight = getChartHeight(breakdownChartState)
+	const breakdownChartBodyClassName = getChartBodyClassName(breakdownChartState)
 	const breakdownMultiSeriesChartOptions = React.useMemo(() => {
 		switch (deferredBreakdownPresentation.kind) {
 			case 'treemap':
@@ -641,66 +648,68 @@ export function AdapterByChainChart({
 					<span className="sr-only">Loading chart data</span>
 				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' ? (
-				<React.Suspense
-					fallback={
-						<div
-							style={{
-								height: breakdownChartHeight
-							}}
-						/>
-					}
-				>
-					{deferredBreakdownPresentation.kind === 'treemap' ? (
-						<BuilderTreemapChart
-							data={deferredBreakdownPresentation.data}
-							height={breakdownChartHeight}
-							onReady={handleChartReady}
-						/>
-					) : deferredBreakdownPresentation.kind === 'hbar' ? (
-						<HBarChart
-							categories={deferredBreakdownPresentation.data.map((item) => item.name)}
-							values={deferredBreakdownPresentation.data.map((item) => item.value)}
-							colors={deferredBreakdownPresentation.data.map((item) => item.itemStyle.color)}
-							height={breakdownChartHeight}
-							valueSymbol="$"
-							onReady={handleChartReady}
-						/>
-					) : (
-						<MultiSeriesChart
-							dataset={deferredBreakdownPresentation.dataset}
-							charts={deferredBreakdownPresentation.charts}
-							csvSource={deferredBreakdownPresentation.csvSource}
-							height={breakdownChartHeight}
-							valueSymbol={
-								deferredBreakdownPresentation.kind === 'bar' && deferredBreakdownPresentation.valueMode === 'absolute'
-									? '$'
-									: '%'
-							}
-							solidChartAreaStyle={deferredBreakdownPresentation.kind === 'dominance'}
-							{...(breakdownMultiSeriesChartOptions ? { chartOptions: breakdownMultiSeriesChartOptions } : {})}
-							groupBy={deferredBreakdownPresentation.groupBy}
-							hideDefaultLegend={deferredBreakdownPresentation.charts.length === 1}
-							showTotalInTooltip={
-								deferredBreakdownPresentation.kind === 'bar' ? deferredBreakdownPresentation.showTotalInTooltip : false
-							}
-							onReady={handleChartReady}
-						/>
-					)}
-				</React.Suspense>
+				<ChartPanelBody className={breakdownChartBodyClassName}>
+					<React.Suspense fallback={<ChartPanelBodyFallback className={breakdownChartBodyClassName} />}>
+						{deferredBreakdownPresentation.kind === 'treemap' ? (
+							<BuilderTreemapChart
+								data={deferredBreakdownPresentation.data}
+								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								onReady={handleChartReady}
+							/>
+						) : deferredBreakdownPresentation.kind === 'hbar' ? (
+							<HBarChart
+								categories={deferredBreakdownPresentation.data.map((item) => item.name)}
+								values={deferredBreakdownPresentation.data.map((item) => item.value)}
+								colors={deferredBreakdownPresentation.data.map((item) => item.itemStyle.color)}
+								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								valueSymbol="$"
+								onReady={handleChartReady}
+							/>
+						) : (
+							<MultiSeriesChart
+								dataset={deferredBreakdownPresentation.dataset}
+								charts={deferredBreakdownPresentation.charts}
+								csvSource={deferredBreakdownPresentation.csvSource}
+								containerClassName={CHART_FILL}
+								valueSymbol={
+									deferredBreakdownPresentation.kind === 'bar' && deferredBreakdownPresentation.valueMode === 'absolute'
+										? '$'
+										: '%'
+								}
+								solidChartAreaStyle={deferredBreakdownPresentation.kind === 'dominance'}
+								{...(breakdownMultiSeriesChartOptions ? { chartOptions: breakdownMultiSeriesChartOptions } : {})}
+								groupBy={deferredBreakdownPresentation.groupBy}
+								hideDefaultLegend={deferredBreakdownPresentation.charts.length === 1}
+								showTotalInTooltip={
+									deferredBreakdownPresentation.kind === 'bar'
+										? deferredBreakdownPresentation.showTotalInTooltip
+										: false
+								}
+								onReady={handleChartReady}
+							/>
+						)}
+					</React.Suspense>
+				</ChartPanelBody>
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart
-						dataset={deferredCombinedFinalCharts.dataset}
-						charts={deferredCombinedFinalCharts.charts}
-						csvSource={{
-							type: 'dataset',
-							prepare: () => ({ ...deferredCombinedFinalCharts.dataset, groupBy: deferredCombinedFinalCharts.groupBy })
-						}}
-						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
-						groupBy={deferredCombinedFinalCharts.groupBy}
-						onReady={handleChartReady}
-					/>
-				</React.Suspense>
+				<ChartPanelBody>
+					<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<MultiSeriesChart
+							dataset={deferredCombinedFinalCharts.dataset}
+							charts={deferredCombinedFinalCharts.charts}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									...deferredCombinedFinalCharts.dataset,
+									groupBy: deferredCombinedFinalCharts.groupBy
+								})
+							}}
+							containerClassName={CHART_FILL}
+							hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
+							groupBy={deferredCombinedFinalCharts.groupBy}
+							onReady={handleChartReady}
+						/>
+					</React.Suspense>
+				</ChartPanelBody>
 			)}
 		</ChartPanel>
 	)
@@ -912,7 +921,7 @@ export function ChainsByAdapterChart({
 		chartState.chartKind === 'bar' ? (chartState.valueMode === 'relative' ? 'Relative (%)' : 'Absolute ($)') : null
 	const barLayoutLabel =
 		chartState.chartKind === 'bar' ? (chartState.barLayout === 'separate' ? 'Separate' : 'Stacked') : null
-	const chartHeight = getChartHeight(chartState)
+	const chartBodyClassName = getChartBodyClassName(chartState)
 	const multiSeriesChartOptions = React.useMemo(() => {
 		switch (deferredChartPresentation.kind) {
 			case 'treemap':
@@ -1017,58 +1026,55 @@ export function ChainsByAdapterChart({
 					/>
 				) : null}
 			</ChartPanelToolbar>
-			<React.Suspense
-				fallback={
-					<div
-						style={{
-							height: chartHeight
-						}}
-					/>
-				}
-			>
+			<ChartPanelBody className={chartBodyClassName}>
 				{queryReadFailed(baseChartQuery) ? (
 					<ChartPanelBodyError retry={baseChartQuery}>Failed to load chart data.</ChartPanelBodyError>
 				) : baseChartQuery.isLoading ? (
-					<div
-						role="status"
-						aria-live="polite"
-						className="flex items-center justify-center text-tertiary"
-						style={{ height: chartHeight }}
-					>
+					<ChartPanelBodyFallback role="status" aria-live="polite" className={chartBodyClassName}>
 						<LoadingIndicator />
 						<span className="sr-only">Loading chart data</span>
-					</div>
-				) : deferredChartPresentation.kind === 'treemap' ? (
-					<BuilderTreemapChart data={deferredChartPresentation.data} height={chartHeight} onReady={handleChartReady} />
-				) : deferredChartPresentation.kind === 'hbar' ? (
-					<HBarChart
-						categories={deferredChartPresentation.data.map((item) => item.name)}
-						values={deferredChartPresentation.data.map((item) => item.value)}
-						colors={deferredChartPresentation.data.map((item) => item.itemStyle.color)}
-						height={chartHeight}
-						valueSymbol="$"
-						onReady={handleChartReady}
-					/>
+					</ChartPanelBodyFallback>
 				) : (
-					<MultiSeriesChart
-						dataset={deferredChartPresentation.dataset}
-						charts={deferredChartPresentation.charts}
-						csvSource={deferredChartPresentation.csvSource}
-						height={chartHeight}
-						valueSymbol={
-							deferredChartPresentation.kind === 'bar' && deferredChartPresentation.valueMode === 'absolute' ? '$' : '%'
-						}
-						solidChartAreaStyle={deferredChartPresentation.kind === 'dominance'}
-						{...(multiSeriesChartOptions ? { chartOptions: multiSeriesChartOptions } : {})}
-						groupBy={deferredChartPresentation.groupBy}
-						hideDefaultLegend={deferredChartPresentation.charts.length === 1}
-						showTotalInTooltip={
-							deferredChartPresentation.kind === 'bar' ? deferredChartPresentation.showTotalInTooltip : false
-						}
-						onReady={handleChartReady}
-					/>
+					<React.Suspense fallback={<ChartPanelBodyFallback className={chartBodyClassName} />}>
+						{deferredChartPresentation.kind === 'treemap' ? (
+							<BuilderTreemapChart
+								data={deferredChartPresentation.data}
+								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								onReady={handleChartReady}
+							/>
+						) : deferredChartPresentation.kind === 'hbar' ? (
+							<HBarChart
+								categories={deferredChartPresentation.data.map((item) => item.name)}
+								values={deferredChartPresentation.data.map((item) => item.value)}
+								colors={deferredChartPresentation.data.map((item) => item.itemStyle.color)}
+								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								valueSymbol="$"
+								onReady={handleChartReady}
+							/>
+						) : (
+							<MultiSeriesChart
+								dataset={deferredChartPresentation.dataset}
+								charts={deferredChartPresentation.charts}
+								csvSource={deferredChartPresentation.csvSource}
+								containerClassName={CHART_FILL}
+								valueSymbol={
+									deferredChartPresentation.kind === 'bar' && deferredChartPresentation.valueMode === 'absolute'
+										? '$'
+										: '%'
+								}
+								solidChartAreaStyle={deferredChartPresentation.kind === 'dominance'}
+								{...(multiSeriesChartOptions ? { chartOptions: multiSeriesChartOptions } : {})}
+								groupBy={deferredChartPresentation.groupBy}
+								hideDefaultLegend={deferredChartPresentation.charts.length === 1}
+								showTotalInTooltip={
+									deferredChartPresentation.kind === 'bar' ? deferredChartPresentation.showTotalInTooltip : false
+								}
+								onReady={handleChartReady}
+							/>
+						)}
+					</React.Suspense>
 				)}
-			</React.Suspense>
+			</ChartPanelBody>
 		</ChartPanel>
 	)
 }

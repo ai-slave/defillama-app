@@ -5,8 +5,8 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
@@ -114,24 +114,6 @@ const BEND_REVENUE_CHART = [
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
 const STACKED_DOLLAR_CHART_OPTIONS = createChartOptions('$', true)
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
-
-function CardSkeleton({ title }: { title: string }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
-		</div>
-	)
-}
-
 function SectionHeader({ title }: { title: string }) {
 	return <h2 className="heading-xs tracking-tight text-primary">{title}</h2>
 }
@@ -222,59 +204,62 @@ export default function IncomeBreakdown() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Cumulative Revenue (all sources)" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Cumulative Revenue (all sources)">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Cumulative Revenue (all sources)"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={totalRevenue.cumulative}
 							charts={TOTAL_REVENUE_CHARTS}
 							chartOptions={STACKED_DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 							solidChartAreaStyle
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Monthly Breakdown" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Monthly Breakdown">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Monthly Breakdown"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							{...berachain.monthly}
 							charts={BERACHAIN_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_CHART_EXPORTS}
 							hideDefaultLegend={false}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Cumulative Chain Fees" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Cumulative Chain Fees">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Cumulative Chain Fees"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={berachain.chainFeesCumulative}
 							charts={CHAIN_FEES_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{/* BEX Section */}
@@ -294,39 +279,41 @@ export default function IncomeBreakdown() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Monthly Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Monthly Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Monthly Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							{...bex.monthly}
 							charts={BEX_MONTHLY_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Cumulative Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Cumulative Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Cumulative Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={bex.cumulative}
 							charts={BEX_CUMULATIVE_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{/* Bend Section */}
@@ -346,58 +333,61 @@ export default function IncomeBreakdown() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Monthly Breakdown" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Monthly Breakdown">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Monthly Breakdown"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							{...bend.monthly}
 							charts={BEND_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_CHART_EXPORTS}
 							hideDefaultLegend={false}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Cumulative Fees" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Cumulative Fees">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Cumulative Fees"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={bend.feesCumulative}
 							charts={BEND_FEES_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Cumulative Revenue" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Cumulative Revenue">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Cumulative Revenue"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={bend.revenueCumulative}
 							charts={BEND_REVENUE_CHART}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={AREA_CHART_EXPORTS}
 							valueSymbol="$"
-							title=""
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 		</div>
 	)

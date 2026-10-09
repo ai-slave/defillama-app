@@ -111,7 +111,7 @@ export function buildDistributionViewModel({ charts }: DistributionResponse): Di
 }
 
 export function useDistributionData() {
-	const query = useQuery<DistributionViewModel>({
+	return useQuery<DistributionViewModel>({
 		queryKey: ['spark-distribution-rewards'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/spark/distribution-rewards')
@@ -122,7 +122,4 @@ export function useDistributionData() {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-
-	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
-	return { data: query.data, isLoading: false }
 }

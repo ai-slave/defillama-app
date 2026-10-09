@@ -129,6 +129,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		csvSource,
 		exportButtons,
 		title,
+		subtitle,
+		titleTooltip,
 		headingAs,
 		containerClassName,
 		categoryLogos,
@@ -886,6 +888,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				title || shouldEnableCSVDownload || shouldEnableImageExport ? (
 					<ChartHeader
 						title={title}
+						subtitle={subtitle}
+						titleTooltip={titleTooltip}
 						headingAs={headingAs}
 						exportButtons={
 							<ChartExportButtons

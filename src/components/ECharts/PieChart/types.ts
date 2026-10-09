@@ -16,6 +16,8 @@ export interface IPieChartProps {
 	headingAs?: 'h1' | 'h2' | 'h3'
 	chartData: Array<{ name: string; value: number }>
 	height?: string
+	/** Replaces the fixed height: pass CHART_FILL to grow with a stretched panel. */
+	containerClassName?: string
 	stackColors?: Record<string, string>
 	valueSymbol?: string
 	radius?: [string, string]

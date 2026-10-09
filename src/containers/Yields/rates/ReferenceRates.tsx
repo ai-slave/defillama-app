@@ -20,6 +20,7 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -151,6 +152,7 @@ function RatesChart({
 				charts={spec.charts}
 				chartOptions={RATES_CHART_OPTIONS}
 				valueSymbol="%"
+				containerClassName={CHART_FILL}
 				hideDefaultLegend={false}
 				exportButtons="hidden"
 				{...(onReady ? { onReady } : {})}

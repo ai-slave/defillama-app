@@ -1,9 +1,10 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -12,7 +13,6 @@ import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { assignColors } from './api'
 import {
-	AREA_EXPORT,
 	DOLLAR_CHART_OPTIONS,
 	DOLLAR_SCROLL_CHART_OPTIONS,
 	DOLLAR_STACKED_SCROLL_CHART_OPTIONS,
@@ -28,26 +28,6 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC
 function sparkExportTitle(title: string) {
 	const lowerTitle = title.toLowerCase()
 	return lowerTitle.includes('spark') || title.startsWith('SPK') ? title : `Spark ${title}`
-}
-
-function ChartCard({
-	title,
-	actions,
-	children
-}: {
-	title: string
-	actions?: React.ReactNode
-	children: React.ReactNode
-}) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="label-md text-secondary">{title}</h3>
-				{actions}
-			</div>
-			{children}
-		</div>
-	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
@@ -82,6 +62,7 @@ function AllocatedAssetsSection({
 	>
 }) {
 	const [view, setView] = useState<'breakdown' | 'historical'>('breakdown')
+	const historical = useGetChartInstance()
 	const [dimension, setDimension] = useState<AADimension>('byProtocol')
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
 
@@ -107,33 +88,39 @@ function AllocatedAssetsSection({
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SLL Allocated Assets</SectionHeader>
-			<div className="rounded-lg border border-subtle bg-surface p-4">
-				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-					<h3 className="label-md text-secondary">{allocatedAssets.title}</h3>
-					<div className="flex flex-wrap items-center gap-2">
-						<SegmentedControl<typeof view>
-							variant="default"
-							size="sm"
-							label="Allocated assets view"
-							options={AA_VIEW_OPTIONS}
-							value={view}
-							onValueChange={setView}
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>{allocatedAssets.title}</ChartPanelTitle>}>
+					<SegmentedControl<typeof view>
+						variant="default"
+						size="md"
+						label="Allocated assets view"
+						options={AA_VIEW_OPTIONS}
+						value={view}
+						onValueChange={setView}
+					/>
+					<SegmentedControl
+						variant="default"
+						size="md"
+						label="Allocated assets grouping"
+						options={AA_DIMENSION_OPTIONS}
+						value={dimension}
+						onValueChange={onDimensionChange}
+					/>
+					{view === 'historical' ? (
+						<ChartExportButtons
+							chartInstance={historical.chartInstance}
+							filename={`spark-allocated-assets-${dimension}`}
+							title={sparkExportTitle(allocatedAssets.title)}
+							csvSource={{ type: 'dataset', prepare: () => hist.dataset }}
 						/>
-						<SegmentedControl
-							variant="default"
-							size="sm"
-							label="Allocated assets grouping"
-							options={AA_DIMENSION_OPTIONS}
-							value={dimension}
-							onValueChange={onDimensionChange}
-						/>
-					</div>
-				</div>
+					) : null}
+				</ChartPanelToolbar>
 
 				{view === 'breakdown' ? (
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+					/* The donut is a side tile beside its list, so it keeps its own height rather than the 360 body floor. */
+					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[320px]" />}>
 								<PieChart
 									chartData={currentEntries}
 									stackColors={pieColors}
@@ -202,21 +189,21 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={hist.dataset}
 							charts={hist.charts}
 							valueSymbol="$"
-							title=""
 							stacked
 							solidChartAreaStyle
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-							exportButtons={AREA_EXPORT}
+							exportButtons="hidden"
+							onReady={historical.handleChartReady}
 						/>
 					</Suspense>
 				)}
-			</div>
+			</ChartPanel>
 		</div>
 	)
 }
@@ -229,56 +216,50 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Monthly Returns</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartCard
-					title={data.monthlyGross.title}
-					actions={
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyGross.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={gross.chartInstance}
 							filename="gross-returns"
 							title={sparkExportTitle(data.monthlyGross.title)}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.monthlyGross.dataset}
 							charts={data.monthlyGross.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							hideDefaultLegend={data.monthlyGross.charts.length < 2}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={gross.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
-				<ChartCard
-					title={data.monthlyNet.title}
-					actions={
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyNet.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={net.chartInstance}
 							filename="net-returns"
 							title={sparkExportTitle(data.monthlyNet.title)}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.monthlyNet.dataset}
 							charts={data.monthlyNet.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							hideDefaultLegend={data.monthlyNet.charts.length < 2}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={net.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 		</div>
 	)
@@ -292,56 +273,50 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 		<div className="flex flex-col gap-4">
 			<SectionHeader>sUSDS Distribution</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartCard
-					title="Spark-distributed USDS"
-					actions={
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Spark-distributed USDS</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={total.chartInstance}
 							filename="spark-distributed-usds"
 							title={sparkExportTitle('Spark-distributed USDS')}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.supplyTotal.dataset}
 							charts={data.supplyTotal.charts}
 							valueSymbol=""
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={UNITLESS_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={total.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
-				<ChartCard
-					title={data.supplyByChain.title}
-					actions={
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.supplyByChain.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={byChain.chartInstance}
 							filename="susds-by-chain"
 							title={sparkExportTitle(data.supplyByChain.title)}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.supplyByChain.dataset}
 							charts={data.supplyByChain.charts}
 							valueSymbol=""
-							title=""
 							stacked
 							solidChartAreaStyle
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={byChain.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 		</div>
 	)
@@ -355,32 +330,29 @@ function TvlSection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Total Value Locked</SectionHeader>
 			<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
-			<ChartCard
-				title={data.tvl.title}
-				actions={
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>{data.tvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={tvl.chartInstance}
 						filename="tvl"
 						title={sparkExportTitle(data.tvl.title)}
 						smol
 					/>
-				}
-			>
-				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				</ChartPanelToolbar>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={data.tvl.dataset}
 						charts={data.tvl.charts}
 						valueSymbol="$"
-						title=""
 						stacked
 						solidChartAreaStyle
-						height="400px"
+						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={tvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 		</div>
 	)
 }
@@ -392,54 +364,48 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SparkLend Deposits &amp; Borrows</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartCard
-					title={data.deposits.title}
-					actions={
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.deposits.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={deposits.chartInstance}
 							filename="sparklend-deposits"
 							title={sparkExportTitle(data.deposits.title)}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.deposits.dataset}
 							charts={data.deposits.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={deposits.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
-				<ChartCard
-					title={data.borrows.title}
-					actions={
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.borrows.title}</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={borrows.chartInstance}
 							filename="sparklend-borrows"
 							title={sparkExportTitle(data.borrows.title)}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.borrows.dataset}
 							charts={data.borrows.charts}
 							valueSymbol="$"
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={borrows.handleChartReady}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 		</div>
 	)
@@ -450,32 +416,29 @@ function SllTvlSection({ data }: { data: FinData }) {
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SLL TVL by Chain</SectionHeader>
-			<ChartCard
-				title={data.sllTvl.title}
-				actions={
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>{data.sllTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={sllTvl.chartInstance}
 						filename="sll-tvl-by-chain"
 						title={sparkExportTitle(data.sllTvl.title)}
 						smol
 					/>
-				}
-			>
-				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				</ChartPanelToolbar>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={data.sllTvl.dataset}
 						charts={data.sllTvl.charts}
 						valueSymbol="$"
-						title=""
 						stacked
 						solidChartAreaStyle
-						height="400px"
+						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={sllTvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 		</div>
 	)
 }
@@ -485,32 +448,29 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Spark Savings TVL by Chain</SectionHeader>
-			<ChartCard
-				title={data.savingsTvl.title}
-				actions={
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>{data.savingsTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={savingsTvl.chartInstance}
 						filename="spark-savings-tvl-by-chain"
 						title={sparkExportTitle(data.savingsTvl.title)}
 						smol
 					/>
-				}
-			>
-				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				</ChartPanelToolbar>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={data.savingsTvl.dataset}
 						charts={data.savingsTvl.charts}
 						valueSymbol="$"
-						title=""
 						stacked
 						solidChartAreaStyle
-						height="400px"
+						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={savingsTvl.handleChartReady}
 					/>
 				</Suspense>
-			</ChartCard>
+			</ChartPanel>
 		</div>
 	)
 }
@@ -560,52 +520,48 @@ function TreasurySection({ data }: { data: FinData }) {
 				</div>
 			</div>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<ChartCard
-					title="Total Treasury"
-					actions={
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Total Treasury</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={treasury.chartInstance}
 							filename="total-treasury"
 							title={sparkExportTitle('Total Treasury')}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.treasuryModel.dataset}
 							charts={data.treasuryModel.charts}
 							valueSymbol="$"
-							height="400px"
+							containerClassName={CHART_FILL}
 							onReady={treasury.handleChartReady}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-				<ChartCard
-					title="SPK Buybacks"
-					actions={
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>SPK Buybacks</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={buybacks.chartInstance}
 							filename="spk-buybacks"
 							title={sparkExportTitle('SPK Buybacks')}
 							smol
 						/>
-					}
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={data.buybacksModel.dataset}
 							charts={data.buybacksModel.charts}
 							valueSymbol=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							onReady={buybacks.handleChartReady}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 		</div>
 	)
@@ -636,11 +592,12 @@ export default function Financials() {
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Projected Returns Breakdown</SectionHeader>
-				<div className="rounded-lg border border-subtle bg-surface p-4">
-					<h3 className="mb-3 label-md text-secondary">{data.projectedBreakdown.title}</h3>
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>} />
+					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}
+					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[300px]">
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[300px]" />}>
 								<PieChart
 									chartData={data.projectedBreakdown.series}
 									stackColors={data.breakdownColors}
@@ -683,7 +640,7 @@ export default function Financials() {
 							</div>
 						</div>
 					</div>
-				</div>
+				</ChartPanel>
 			</div>
 
 			{/* Section 3: Monthly Returns */}

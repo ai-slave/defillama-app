@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
@@ -19,7 +19,6 @@ import {
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
-	ChartCard,
 	InvestorsTable,
 	SectionHeader
 } from './shared'
@@ -281,34 +280,36 @@ export default function Markets() {
 			)}
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-				<ChartCard title="Market Size by Chain">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={marketSizeDataset}
 							charts={MARKET_SIZE_CHART}
 							valueSymbol="$"
-							title=""
-							height="400px"
+							title="Market Size by Chain"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
 							exportButtons={AAVE_BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 
 				{utilizationDataset.source.length > 0 && (
-					<ChartCard title="Utilization by Top Assets">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
 								dataset={utilizationDataset}
 								charts={UTILIZATION_CHART}
 								valueSymbol="%"
-								title=""
-								height="400px"
+								title="Utilization by Top Assets"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
 								exportButtons={AAVE_BAR_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 			</div>
 

@@ -4,6 +4,7 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Panel } from '~/ui/Panel'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -39,9 +40,9 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 					/>
 				</div>
 				<div className="flex flex-col gap-3 xl:w-96 xl:shrink-0">
-					<div className="flex flex-1 rounded-lg border border-subtle bg-surface">
+					<Panel padding="none" className="flex-1">
 						<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[280px] w-full flex-1" />
-					</div>
+					</Panel>
 					<div className="flex gap-3">
 						<Button
 							as={BasicLink}
@@ -159,9 +160,9 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 				mode={mode}
 				gradingScale={grading?.performance.scale}
 			/>
-			<div className="rounded-lg border border-subtle bg-surface">
+			<Panel padding="none">
 				<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[260px] w-full" />
-			</div>
+			</Panel>
 			<div className="flex gap-3">
 				<Button as={BasicLink} href={`/universal-token-rating/compare?token=${row.asset}`} size="md" className="flex-1">
 					Compare

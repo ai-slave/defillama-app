@@ -13,6 +13,8 @@ export type CandlestickPoint = [
 export interface ICandlestickChartProps {
 	data: Array<CandlestickPoint>
 	height?: string
+	/** Replaces the fixed height: pass CHART_FILL to grow with a stretched panel; the price grid takes the extra space. */
+	containerClassName?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	indicators?: Array<{
 		name: string

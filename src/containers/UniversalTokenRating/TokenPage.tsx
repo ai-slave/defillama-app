@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { forgdCtaSecondaryButtonStyles } from '~/containers/MarketMakers/styles'
 import { Button } from '~/ui/Button'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -205,8 +206,9 @@ export function CardDivider() {
 	return <div className="-mx-4 border-t border-subtle" />
 }
 
+/** A score card chart's caption, as the title of its chart toolbar. */
 export function ChartCaption({ children }: { children: ReactNode }) {
-	return <p className="-mb-2 text-center label-sm text-secondary">{children}</p>
+	return <ChartPanelToolbar leading={<p className="label-sm text-secondary">{children}</p>} />
 }
 
 export function KvTable({ rows }: { rows: Array<[ReactNode, ReactNode]> }) {
@@ -233,6 +235,7 @@ export function MetricCard({
 	gradingScale,
 	percentile,
 	onOpen,
+	chart,
 	children
 }: {
 	title: string
@@ -242,6 +245,9 @@ export function MetricCard({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 	onOpen?: () => void
+	/** The card's ChartCaption and ChartPanelBody, flush under the header. The body takes a stretched row's extra
+	    height, so paired cards line up their figures and footers. */
+	chart?: ReactNode
 	children: ReactNode
 }) {
 	return (
@@ -260,7 +266,8 @@ export function MetricCard({
 					</Tooltip>
 				) : null}
 			</div>
-			<div className="flex flex-1 flex-col gap-3 p-4">{children}</div>
+			{chart}
+			<div className={`flex flex-col gap-3 p-4 ${chart ? 'border-t border-subtle' : 'flex-1'}`}>{children}</div>
 			<GradeFooter score={score} grade={grade} gradingScale={gradingScale} percentile={percentile} divider={false} />
 		</Panel>
 	)

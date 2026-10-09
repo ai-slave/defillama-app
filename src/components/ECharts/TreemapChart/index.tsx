@@ -66,6 +66,7 @@ function TreemapChart({
 	variant,
 	colorMode = 'value',
 	height,
+	containerClassName,
 	onReady,
 	showRootLabel = true,
 	valueLabel = 'Market Cap',
@@ -342,10 +343,12 @@ function TreemapChart({
 	// its canvas. Inset the canvas itself so zoomed nodes preserve the edge gap.
 	const chart = (
 		<div
-			className="w-full overflow-hidden"
-			style={{ height: resolvedHeight, padding: CHART_INSET, boxSizing: 'border-box' }}
+			className={
+				containerClassName ? `flex w-full flex-col overflow-hidden ${containerClassName}` : 'w-full overflow-hidden'
+			}
+			style={{ height: containerClassName ? undefined : resolvedHeight, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
-			<div ref={containerRef} className="h-full w-full" />
+			<div ref={containerRef} className={containerClassName ? 'flex-1' : 'h-full w-full'} />
 		</div>
 	)
 

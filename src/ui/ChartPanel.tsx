@@ -3,6 +3,7 @@ import type { QueryRetry } from '~/utils/query'
 import { Button } from './Button'
 import { focusRegionOnLeave } from './focus'
 import { Panel } from './Panel'
+import { QuestionHelper } from './QuestionHelper'
 
 /* ----------------------------------------------------------------------------
    ChartPanel — the chart shell: `Panel padding="none"`, an optional
@@ -12,10 +13,13 @@ import { Panel } from './Panel'
    Toolbar: px-2 pt-2, 32px (md) controls, 6px gaps. What the chart shows
    goes in `leading`: the title, the view switch (Combined / Breakdown, chart
    type), or the Add Metrics picker with its chips. It stays left as one
-   group in every mode, so switching views never moves it. Every other child
+   group in every mode, so switching views never moves it. A title there is
+   ChartPanelTitle, never a hand-styled heading. Every other child
    hugs the right in one order: filters and grouping, then Embed, Add to
    dashboard, reset, .csv, .png. Embed, .csv and .png render only while the
-   chart plots a series. Controls keep their natural width and wrap right
+   chart plots a series. A chart under this toolbar sets
+   `exportButtons="hidden"` and its ChartExportButtons go here, so the
+   chart never adds a second header row. Controls keep their natural width and wrap right
    below sm: `filter` select triggers and `default` segmented controls,
    never `responsive`. Callers never pass `justify-*`, hand-roll the toolbar
    div, or push groups with `ml-auto` (the `chart-toolbar-auto-margin` rule
@@ -59,11 +63,35 @@ export function ChartPanelToolbar({ leading, className, children, ...props }: Ch
 	)
 }
 
+/** A chart's title for the toolbar's `leading`: the heading, a "?" for a definition too long for the subtitle, and one
+    line under it. A chart that draws its own header (`title` on the renderer) renders this through ChartHeader. */
+export function ChartPanelTitle({
+	children,
+	subtitle,
+	titleTooltip,
+	headingAs: Heading = 'h3'
+}: {
+	children: ReactNode
+	subtitle?: ReactNode
+	titleTooltip?: string | undefined
+	headingAs?: 'h1' | 'h2' | 'h3' | 'h4' | undefined
+}) {
+	return (
+		<div className="flex min-w-0 flex-col gap-1">
+			<Heading className="flex items-center gap-1 heading-xs">
+				<span>{children}</span>
+				{titleTooltip ? <QuestionHelper text={titleTooltip} /> : null}
+			</Heading>
+			{subtitle ? <p className="body-sm text-tertiary">{subtitle}</p> : null}
+		</div>
+	)
+}
+
 /* Panels in a row stretch to the tallest one, so the body grows with them and its 360px is a FLOOR, not a fixed
    height: a fixed body left dead space under the chart in every panel the grid stretched. Pass CHART_FILL to the chart
    itself so it fills the body it sits in. The floor is an `initial:` default, as in Status.tsx, so a deliberately tall
    chart (a 600px treemap) raises it with its own min-h-* class on the body and on its fallback. */
-export const CHART_FILL = 'flex-1 min-h-[360px]'
+export const CHART_FILL = 'flex-1 initial:min-h-[360px]'
 
 export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return <div className={`relative flex flex-1 flex-col initial:min-h-[360px] ${className ?? ''}`.trim()} {...props} />

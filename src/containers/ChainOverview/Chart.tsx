@@ -10,6 +10,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
+import { CHART_FILL } from '~/ui/ChartPanel'
 import { buildChainChartPresentation } from './chartPresentation'
 import { buildChainYAxis } from './chartYAxis'
 import type { ChainChartLabels } from './constants'
@@ -21,7 +22,6 @@ interface ChainCoreChartProps {
 	chartColors: Partial<Record<ChainChartLabels, string>>
 	valueSymbol?: string
 	chartOptions?: MultiSeriesChartOptions
-	height?: string
 	unlockTokenSymbol?: string
 	isThemeDark: boolean
 	groupBy?: ChartTimeGroupingWithCumulative
@@ -44,7 +44,6 @@ export default function ChainCoreChart({
 	chartColors,
 	valueSymbol = '',
 	chartOptions = EMPTY_CHART_OPTIONS,
-	height,
 	unlockTokenSymbol = '',
 	isThemeDark,
 	groupBy,
@@ -98,7 +97,7 @@ export default function ChainCoreChart({
 			chartOptions={finalChartOptions}
 			valueSymbol={valueSymbol}
 			{...(groupBy !== undefined ? { groupBy } : {})}
-			{...(height !== undefined ? { height } : {})}
+			containerClassName={CHART_FILL}
 			autoHideDataZoom={false}
 			hideDefaultLegend
 			exportButtons="hidden"

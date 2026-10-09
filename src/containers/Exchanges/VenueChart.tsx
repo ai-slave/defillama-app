@@ -5,6 +5,7 @@ import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSerie
 import { chartColor } from '~/constants/colors'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -272,7 +273,7 @@ function VenueChartView({
 						dataset={chartModel.dataset}
 						charts={chartModel.charts}
 						valueSymbol={active.valueSymbol}
-						height="360px"
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 						hallmarks={hallmarks}

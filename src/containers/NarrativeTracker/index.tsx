@@ -15,7 +15,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { SegmentedControl, TagGroup } from '~/ui/SegmentedControl'
@@ -246,7 +246,7 @@ export function CategoryPerformanceContainer({
 				) : null}
 			</div>
 
-			<Card padding="none">
+			<ChartPanel>
 				<ChartPanelToolbar
 					leading={
 						<SegmentedControl<NarrativeChartType>
@@ -305,43 +305,39 @@ export function CategoryPerformanceContainer({
 					/>
 				</ChartPanelToolbar>
 
-				<div className="min-h-[360px]">
-					{chartType === 'barchart' ? (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
+				<ChartPanelBody className="min-h-[533px]">
+					<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[533px]" />}>
+						{chartType === 'barchart' ? (
 							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.barCharts}
 								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
-								height="533px"
+								containerClassName={`${CHART_FILL} min-h-[533px]`}
 								hideDataZoom={false}
 								chartOptions={barChartOptions}
 								exportButtons="hidden"
 								onReady={onChartReady}
 							/>
-						</React.Suspense>
-					) : chartType === 'linechart' ? (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
+						) : chartType === 'linechart' ? (
 							<MultiSeriesChart
 								dataset={deferredChartData.dataset}
 								charts={deferredChartData.lineCharts}
 								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
-								height="533px"
+								containerClassName={`${CHART_FILL} min-h-[533px]`}
 								solidChartAreaStyle={false}
 								chartOptions={lineChartOptions}
 								tooltipMaxItems={30}
 								exportButtons="hidden"
 								onReady={onChartReady}
 							/>
-						</React.Suspense>
-					) : (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
+						) : (
 							<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" onReady={onChartReady} />
-						</React.Suspense>
-					)}
-				</div>
-			</Card>
+						)}
+					</React.Suspense>
+				</ChartPanelBody>
+			</ChartPanel>
 
 			<SearchTableProvider
 				options={{

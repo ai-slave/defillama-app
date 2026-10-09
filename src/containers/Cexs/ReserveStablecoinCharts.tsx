@@ -24,6 +24,7 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { CHART_FILL } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -111,6 +112,7 @@ function MultiSeriesChartCard({
 				<MultiSeriesChart
 					dataset={presentation.dataset}
 					charts={presentation.charts}
+					containerClassName={CHART_FILL}
 					csvSource={presentation.csvSource}
 					{...(valueSymbol ? { valueSymbol } : {})}
 					hideDefaultLegend={false}
@@ -180,6 +182,7 @@ function PieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
+					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>

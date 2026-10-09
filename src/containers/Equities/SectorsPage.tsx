@@ -10,7 +10,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -47,7 +47,6 @@ const TREEMAP_OPTIONS = [
 ] as const
 
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
-const PERFORMANCE_CHART_HEIGHT = '420px'
 
 function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregateHolding; compact?: boolean }) {
 	const href = `/equities/${buildEquityTickerCountrySlug(holding.ticker, 'US')}`
@@ -302,16 +301,18 @@ function SectorsReadyPage({
 					/>
 				</PanelHeader>
 				{performanceRows.length > 0 ? (
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: PERFORMANCE_CHART_HEIGHT }} />}>
-						<HBarChart
-							categories={performanceRows.map(({ row }) => row.sector)}
-							values={performanceRows.map(({ value }) => value)}
-							color={chartColor(0)}
-							valueSymbol="%"
-							height={PERFORMANCE_CHART_HEIGHT}
-							showValueLabels
-						/>
-					</Suspense>
+					<ChartPanelBody>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
+							<HBarChart
+								categories={performanceRows.map(({ row }) => row.sector)}
+								values={performanceRows.map(({ value }) => value)}
+								color={chartColor(0)}
+								valueSymbol="%"
+								showValueLabels
+								containerClassName={CHART_FILL}
+							/>
+						</Suspense>
+					</ChartPanelBody>
 				) : (
 					<SurfaceBodyStatus variant="empty">No sector returns are available for this period.</SurfaceBodyStatus>
 				)}

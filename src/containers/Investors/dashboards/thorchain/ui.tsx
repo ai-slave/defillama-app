@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { SurfaceBodyStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { readInvestorApiJson } from '../../api.types'
@@ -160,7 +164,6 @@ const colorMap = (names: Array<string>): Record<string, string> =>
 	Object.fromEntries(names.map((n, i) => [n, paletteColor(i)]))
 
 const THREE_MONTHS = 90
-const CSV_ONLY_EXPORT = { csv: true, png: false } as const
 function lastNDaysZoom(len: number, days = THREE_MONTHS): { dataZoom: { start: number; end: number } } | undefined {
 	if (len <= days) return undefined
 	const start = ((len - days) / len) * 100
@@ -233,60 +236,25 @@ export function KpiBand({ label, children }: { label: string; children: React.Re
 	)
 }
 
-// Card chrome with an "awaiting data" body + the awaited API field, so the target
+// The chart's panel with an "awaiting data" body + the awaited API field, so the target
 // layout is visible before the backend ships the data.
 export function PlaceholderCard({
 	title,
 	subtitle,
-	note,
-	height = '360px'
+	note
 }: {
 	title: string
 	subtitle?: string | undefined
 	note?: string
-	height?: string
 }) {
 	return (
-		<ChartCard title={title} subtitle={subtitle}>
-			<div
-				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium text-center"
-				style={{ height }}
-			>
-				<span className="body-sm text-tertiary">Awaiting data</span>
-				{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
-			</div>
-		</ChartCard>
-	)
-}
-
-export function ChartCard({
-	title,
-	subtitle,
-	value,
-	control,
-	children
-}: {
-	title: string
-	subtitle?: string | undefined
-	value?: string | undefined
-	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
-	control?: React.ReactNode
-	children: React.ReactNode
-}) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-				<div className="min-w-0">
-					<h3 className="title-md text-primary">{title}</h3>
-					{subtitle && <p className="mt-0.5 body-sm text-tertiary">{subtitle}</p>}
-				</div>
-				<div className="flex min-w-0 items-center gap-3">
-					{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
-					{control}
-				</div>
-			</div>
-			{children}
-		</div>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>} />
+			<SurfaceBodyStatus variant="empty" contentClassName="flex flex-col items-center gap-2">
+				Awaiting data
+				{note ? <code className="rounded-sm bg-page px-2 py-0.5 mono-sm">{note}</code> : null}
+			</SurfaceBodyStatus>
+		</ChartPanel>
 	)
 }
 
@@ -329,21 +297,35 @@ export function TimeAreaCard({
 			}
 		}
 	}, [chart, fullRange, resolvedValueSymbol])
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<Suspense fallback={<ChartPanelExportShellFallback />}>
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
+			>
+				{value ? <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p> : null}
+				{control}
+				<ChartExportButtons
+					chartInstance={chartInstance}
+					filename={slug(chart.title ?? 'thorchain')}
+					title={chart.title}
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
+				/>
+			</ChartPanelToolbar>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					title=""
-					height="360px"
+					containerClassName={CHART_FILL}
 					chartOptions={chartOptions}
+					exportButtons="hidden"
+					onReady={handleChartReady}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -383,24 +365,37 @@ export function TimeBarCard({
 			}
 		}
 	}, [chart, resolvedValueSymbol])
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<Suspense fallback={<ChartPanelExportShellFallback />}>
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
+			>
+				{value ? <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p> : null}
+				{control}
+				<ChartExportButtons
+					chartInstance={chartInstance}
+					filename={slug(chart.title ?? 'thorchain')}
+					showPng={false}
+					csvSource={{ type: 'dataset', prepare: () => ({ ...dataset, groupBy }) }}
+				/>
+			</ChartPanelToolbar>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					title=""
-					height="360px"
+					containerClassName={CHART_FILL}
 					hideDefaultLegend={charts.length < 2}
-					exportButtons={CSV_ONLY_EXPORT}
+					exportButtons="hidden"
+					onReady={handleChartReady}
 					chartOptions={chartOptions}
 					{...(groupBy ? { groupBy } : {})}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -415,17 +410,20 @@ export function CategoryBarCard({
 	valueSymbol?: string
 }) {
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle}>
+		<ChartPanel>
+			<ChartPanelToolbar
+				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
+			/>
 			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<HBarChart
 					categories={chart.dates}
 					values={chart.series[0]?.data ?? []}
 					color={THOR_TEAL}
 					valueSymbol={valueSymbol ?? (unitSymbol(chart.unit) || '$')}
-					height="360px"
+					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 
@@ -442,14 +440,15 @@ export function DonutCard({
 	// drop the legend below the chart instead.
 	const isSmall = useMedia('(max-width: 640px)')
 	return (
-		<ChartCard title={dist.title ?? ''} subtitle={subtitle}>
+		<ChartPanel>
+			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{dist.title ?? ''}</ChartPanelTitle>} />
 			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<PieChart
 					chartData={dist.data}
 					stackColors={colorMap(dist.data.map((d) => d.name))}
 					valueSymbol={valueSymbol}
 					radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}
-					height="360px"
+					containerClassName={CHART_FILL}
 					showLegend
 					legendPosition={
 						isSmall
@@ -458,7 +457,7 @@ export function DonutCard({
 					}
 				/>
 			</Suspense>
-		</ChartCard>
+		</ChartPanel>
 	)
 }
 

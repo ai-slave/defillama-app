@@ -1,10 +1,19 @@
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
@@ -18,11 +27,9 @@ import type { TimeWindow } from './api'
 import { useAaveAPYHistory, useAaveMarkets } from './api'
 import {
 	AAVE_AREA_EXPORT,
-	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
 	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
-	ChartCard,
 	InvestorsTable,
 	SectionHeader
 } from './shared'
@@ -160,6 +167,7 @@ export default function Rates() {
 
 	const [selectedAsset, setSelectedAsset] = useState<string>('')
 	const [selectedWindow, setSelectedWindow] = useState<TimeWindow>('LAST_MONTH')
+	const rateCurve = useGetChartInstance()
 
 	const activeAsset = selectedAsset || assetOptions[0]?.value || ''
 
@@ -281,49 +289,53 @@ export default function Rates() {
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				{supplyLoading ? (
-					<CardSkeleton title="Supply APY History" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : supplyDataset.source.length > 0 ? (
-					<ChartCard title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}>
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
 								dataset={supplyDataset}
 								charts={SUPPLY_APY_CHART}
 								valueSymbol="%"
-								title=""
-								height="400px"
+								title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 
 				{borrowLoading ? (
-					<CardSkeleton title="Borrow APY History" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : borrowDataset.source.length > 0 ? (
-					<ChartCard title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}>
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
 								dataset={borrowDataset}
 								charts={BORROW_APY_CHART}
 								valueSymbol="%"
-								title=""
-								height="400px"
+								title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 			</div>
 
 			{rateCurveDataset ? (
-				<div className="rounded-lg border border-subtle bg-surface p-5">
-					<div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-						<h3 className="title-sm tracking-wider text-tertiary uppercase">
-							{activeAsset} Interest Rate Model{' '}
-							<span className="font-normal normal-case">· {primaryReserve?.chain}</span>
-						</h3>
+				<ChartPanel>
+					<ChartPanelToolbar
+						leading={
+							<ChartPanelTitle>
+								{activeAsset} Interest Rate Model · {primaryReserve?.chain}
+							</ChartPanelTitle>
+						}
+					>
 						{kpis?.optimalUtil && (
 							<span className="body-sm text-tertiary">
 								Optimal <span className="font-jetbrains font-bold text-secondary">{kpis.optimalUtil}</span>
@@ -339,20 +351,26 @@ export default function Rates() {
 								Slope 2 <span className="font-jetbrains font-bold text-secondary">{kpis.slope2}</span>
 							</span>
 						)}
-					</div>
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<ChartExportButtons
+							chartInstance={rateCurve.chartInstance}
+							filename={`aave-${activeAsset.toLowerCase()}-interest-rate-model`}
+							showPng={false}
+							csvSource={{ type: 'dataset', prepare: () => rateCurveDataset }}
+						/>
+					</ChartPanelToolbar>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={rateCurveDataset}
 							charts={RATE_CURVE_CHARTS}
 							valueSymbol="%"
-							title=""
-							height="400px"
+							containerClassName={CHART_FILL}
 							hideDefaultLegend={false}
 							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
-							exportButtons={AAVE_BAR_EXPORT}
+							exportButtons="hidden"
+							onReady={rateCurve.handleChartReady}
 						/>
 					</Suspense>
-				</div>
+				</ChartPanel>
 			) : null}
 
 			{marketsLoading ? (

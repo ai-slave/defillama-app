@@ -4,7 +4,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -14,7 +15,7 @@ import {
 } from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
-import { CardSkeleton, ChartCard, MAPLE_CSV_ONLY_EXPORT, MAPLE_USD_CATEGORY_CHART_OPTIONS, Pagination } from './shared'
+import { CardSkeleton, MAPLE_CSV_ONLY_EXPORT, MAPLE_USD_CATEGORY_CHART_OPTIONS, Pagination } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -181,55 +182,61 @@ export default function Loans() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Principal by Pool" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.principalByPool.source.length > 0 ? (
-				<ChartCard title="Principal by Pool">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Principal by Pool"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={data.principalByPool}
 							charts={PRINCIPAL_BY_POOL_CHART}
 							valueSymbol="$"
-							height="400px"
 							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			) : null}
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{isLoading ? (
-					<CardSkeleton title="Interest Rate Distribution" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.rateDistribution.source.length > 0 ? (
-					<ChartCard title="Interest Rate Distribution">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Interest Rate Distribution"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								dataset={data.rateDistribution}
 								charts={RATE_DISTRIBUTION_CHART}
 								valueSymbol="$"
-								height="400px"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 
 				{isLoading ? (
-					<CardSkeleton title="Loan Age Distribution" />
+					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.ageDistribution.source.length > 0 ? (
-					<ChartCard title="Loan Age Distribution">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<ChartPanel>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Loan Age Distribution"
+								headingAs="h3"
+								containerClassName={CHART_FILL}
 								dataset={data.ageDistribution}
 								charts={AGE_DISTRIBUTION_CHART}
 								valueSymbol="$"
-								height="400px"
 								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
 								exportButtons={MAPLE_CSV_ONLY_EXPORT}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				) : null}
 			</div>
 

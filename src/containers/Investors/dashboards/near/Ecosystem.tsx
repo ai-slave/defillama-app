@@ -5,9 +5,16 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
@@ -169,24 +176,6 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	)
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
-
-function ChartSkeleton({ title }: { title: string }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<SurfaceBodyLoadingStatus className="min-h-[350px]" />
-		</div>
-	)
-}
-
 function SectionTitle({ children }: { children: React.ReactNode }) {
 	return <h2 className="heading-xs tracking-tight text-primary">{children}</h2>
 }
@@ -235,7 +224,7 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="mono-xl text-primary">Ecosystem</h1>
+					<h2 className="mono-xl text-primary">Ecosystem</h2>
 				</div>
 				<p className="max-w-2xl body-md text-secondary">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.
@@ -285,71 +274,83 @@ export default function Ecosystem() {
 				)}
 			</div>
 
-			{isLoading || !intentModels.volume ? (
-				<ChartSkeleton title="NEAR Intents Daily Volume" />
-			) : (
-				<ChartCard title="NEAR Intents Daily Volume">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>} />
+				{isLoading || !intentModels.volume ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={intentModels.volume.dataset}
 							charts={intentModels.volume.charts}
 							valueSymbol="$"
-							height="400px"
+							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{isLoading || !intentModels.fees ? (
-					<ChartSkeleton title="NEAR Intents Fees" />
-				) : (
-					<ChartCard title="NEAR Intents Fees">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>} />
+					{isLoading || !intentModels.fees ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={intentModels.fees.dataset}
 								charts={intentModels.fees.charts}
 								valueSymbol="$"
-								height="350px"
+								containerClassName={CHART_FILL}
 								showTotalInTooltip
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || !intentModels.activity ? (
-					<ChartSkeleton title="NEAR Intents Swap Activity" />
-				) : (
-					<ChartCard title="NEAR Intents Swap Activity">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>} />
+					{isLoading || !intentModels.activity ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={intentModels.activity.dataset}
 								charts={intentModels.activity.charts}
 								valueSymbol=""
-								height="350px"
+								containerClassName={CHART_FILL}
 								showTotalInTooltip
 								hideDefaultLegend={false}
 								exportButtons="hidden"
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
+					)}
+				</ChartPanel>
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{isLoading || !tokenPie ? (
-					<ChartSkeleton title="Volume by Token (All-Time, Top 10)" />
-				) : (
-					<ChartCard title="Volume by Token (All-Time, Top 10)">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '380px' }} />}>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Token (All-Time, Top 10)</ChartPanelTitle>} />
+					{isLoading || !tokenPie ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={tokenPie}
 								valueSymbol="$"
-								height="380px"
+								containerClassName={CHART_FILL}
 								showLegend
 								legendPosition={{
 									orient: 'vertical',
@@ -358,17 +359,20 @@ export default function Ecosystem() {
 								}}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || !blockchainPie ? (
-					<ChartSkeleton title="Volume by Blockchain (All-Time)" />
-				) : (
-					<ChartCard title="Volume by Blockchain (All-Time)">
-						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '380px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Blockchain (All-Time)</ChartPanelTitle>} />
+					{isLoading || !blockchainPie ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={blockchainPie}
 								valueSymbol="$"
-								height="380px"
+								containerClassName={CHART_FILL}
 								showLegend
 								legendPosition={{
 									orient: 'vertical',
@@ -377,25 +381,27 @@ export default function Ecosystem() {
 								}}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
+					)}
+				</ChartPanel>
 			</div>
 
-			{isLoading || !channelBars ? (
-				<ChartSkeleton title="Fees by Referral Channel" />
-			) : (
-				<ChartCard title="Fees by Referral Channel">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>Fees by Referral Channel</ChartPanelTitle>} />
+				{isLoading || !channelBars ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<HBarChart
 							categories={channelBars.categories}
 							values={channelBars.values}
 							valueSymbol="$"
-							height="400px"
 							colors={channelBars.categories.map((_, i) => BREAKDOWN_PALETTE[i % BREAKDOWN_PALETTE.length])}
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
 			{/* Base-Chain Activity */}
 			<SectionTitle>Base-Chain Activity</SectionTitle>
@@ -433,66 +439,98 @@ export default function Ecosystem() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{isLoading || !areaDatasets.transactions ? (
-					<ChartSkeleton title="Daily Transactions" />
-				) : (
-					<ChartCard title="Daily Transactions">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+				<ChartPanel>
+					{isLoading || !areaDatasets.transactions ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Daily Transactions"
+								headingAs="h3"
 								dataset={areaDatasets.transactions}
 								charts={DAILY_TRANSACTIONS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								height="300px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || !areaDatasets.activeAccounts ? (
-					<ChartSkeleton title="Daily Active Accounts" />
-				) : (
-					<ChartCard title="Daily Active Accounts">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					{isLoading || !areaDatasets.activeAccounts ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Daily Active Accounts"
+								headingAs="h3"
 								dataset={areaDatasets.activeAccounts}
 								charts={ACTIVE_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								height="300px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || !areaDatasets.newAccounts ? (
-					<ChartSkeleton title="New Accounts Created" />
-				) : (
-					<ChartCard title="New Accounts Created">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					{isLoading || !areaDatasets.newAccounts ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="New Accounts Created"
+								headingAs="h3"
 								dataset={areaDatasets.newAccounts}
 								charts={NEW_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								height="300px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
-				{isLoading || !areaDatasets.gasFees ? (
-					<ChartSkeleton title="Daily Gas Fees (NEAR)" />
-				) : (
-					<ChartCard title="Daily Gas Fees (NEAR)">
-						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+					)}
+				</ChartPanel>
+				<ChartPanel>
+					{isLoading || !areaDatasets.gasFees ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="flex items-center justify-center"
+						>
+							<LoadingIndicator />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
+								title="Daily Gas Fees (NEAR)"
+								headingAs="h3"
 								dataset={areaDatasets.gasFees}
 								charts={GAS_FEES_CHART}
 								valueSymbol=" NEAR"
 								chartOptions={NEAR_SINGLE_SERIES_CHART_OPTIONS}
-								height="300px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
-				)}
+					)}
+				</ChartPanel>
 			</div>
 
 			{/* Token Overview */}
@@ -517,38 +555,45 @@ export default function Ecosystem() {
 				)}
 			</div>
 
-			{isLoading || !areaDatasets.nearPrice ? (
-				<ChartSkeleton title="NEAR Price (USD)" />
-			) : (
-				<ChartCard title="NEAR Price (USD)">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '390px' }} />}>
+			<ChartPanel>
+				{isLoading || !areaDatasets.nearPrice ? (
+					<ChartPanelExportShellFallback role="status" aria-live="polite" className="flex items-center justify-center">
+						<LoadingIndicator />
+					</ChartPanelExportShellFallback>
+				) : (
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="NEAR Price (USD)"
+							headingAs="h3"
 							dataset={areaDatasets.nearPrice}
 							charts={NEAR_PRICE_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-							height="350px"
+							containerClassName={CHART_FILL}
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
-			{isLoading || !supplyModel ? (
-				<ChartSkeleton title="Token Supply" />
-			) : (
-				<ChartCard title="Token Supply">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>} />
+				{isLoading || !supplyModel ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={supplyModel.dataset}
 							charts={supplyModel.charts}
 							valueSymbol=" NEAR"
-							height="350px"
+							containerClassName={CHART_FILL}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
 			{/* Protocol */}
 			<SectionTitle>Protocol</SectionTitle>

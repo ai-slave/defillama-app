@@ -2,11 +2,11 @@ import { lazy, Suspense } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useEtherfiCashTransactions } from './cashApi'
-import { CardSkeleton, ChartCard } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -129,95 +129,100 @@ export default function CashTransactions() {
 			</div>
 
 			{isLoading ? (
-				<CardSkeleton title="Weekly Transactions by Class" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Weekly Transactions by Class">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Weekly Transactions by Class"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={transactionsByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
-							title=""
-							height="400px"
 							hideDefaultLegend={classCharts.length < 2}
 							chartOptions={SCROLL_LEGEND}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Weekly Users by Class" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Weekly Users by Class">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Weekly Users by Class"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={usersByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
-							title=""
-							height="400px"
 							hideDefaultLegend={classCharts.length < 2}
 							chartOptions={SCROLL_LEGEND}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Weekly Transactions" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Weekly Transactions">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Weekly Transactions"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={weeklyTxnsDataset}
 							charts={WEEKLY_TXNS_CHART}
 							valueSymbol=""
-							title=""
-							height="400px"
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Weekly Active Users" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Weekly Active Users">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Weekly Active Users"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={weeklyUsersDataset}
 							charts={WEEKLY_USERS_CHART}
 							valueSymbol=""
-							title=""
-							height="400px"
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			{isLoading ? (
-				<CardSkeleton title="Weekly Average Txns per User" />
+				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
-				<ChartCard title="Weekly Average Txns per User">
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title="Weekly Average Txns per User"
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={weeklyAvgDataset}
 							charts={WEEKLY_AVG_CHART}
 							valueSymbol=""
-							title=""
-							height="400px"
 							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 		</div>
 	)

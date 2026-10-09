@@ -2,13 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareFAssetsData, type FAssetsAPIResponse } from './data'
-import { ChartCard, NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -65,27 +72,33 @@ export default function FAssets() {
 			</div>
 
 			{charts.locked && (
-				<ChartCard
-					title={charts.locked.title}
-					subtitle={charts.locked.subtitle}
-					titleTooltip={charts.locked.titleTooltip}
-				>
+				<ChartPanel>
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							dataset={charts.locked.dataset}
 							charts={charts.locked.charts}
 							valueSymbol=""
-							title=""
-							height="360px"
+							title={charts.locked.title}
+							subtitle={charts.locked.subtitle}
+							titleTooltip={charts.locked.titleTooltip}
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							chartOptions={charts.locked.chartOptions}
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			)}
 
 			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 				{charts.dist && (
-					<ChartCard title={charts.dist.title} subtitle={charts.dist.subtitle} titleTooltip={charts.dist.titleTooltip}>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle subtitle={charts.dist.subtitle} titleTooltip={charts.dist.titleTooltip}>
+									{charts.dist.title}
+								</ChartPanelTitle>
+							}
+						/>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={charts.dist.data}
@@ -98,19 +111,24 @@ export default function FAssets() {
 									top: 'middle'
 								}}
 								valueSymbol="$"
-								title=""
-								height="360px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 
 				{charts.allNetworksDist && (
-					<ChartCard
-						title={charts.allNetworksDist.title}
-						subtitle={charts.allNetworksDist.subtitle}
-						titleTooltip={charts.allNetworksDist.titleTooltip}
-					>
+					<ChartPanel>
+						<ChartPanelToolbar
+							leading={
+								<ChartPanelTitle
+									subtitle={charts.allNetworksDist.subtitle}
+									titleTooltip={charts.allNetworksDist.titleTooltip}
+								>
+									{charts.allNetworksDist.title}
+								</ChartPanelTitle>
+							}
+						/>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart
 								chartData={charts.allNetworksDist.data}
@@ -123,11 +141,10 @@ export default function FAssets() {
 									top: 'middle'
 								}}
 								valueSymbol="$"
-								title=""
-								height="360px"
+								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
-					</ChartCard>
+					</ChartPanel>
 				)}
 			</div>
 

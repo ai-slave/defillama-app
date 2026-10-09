@@ -48,6 +48,7 @@ function HBarChart({
 	title: _title,
 	valueSymbol = '$',
 	height = '360px',
+	containerClassName,
 	color = CHART_COLORS[0],
 	colors,
 	logos,
@@ -327,8 +328,11 @@ function HBarChart({
 	])
 
 	return (
-		<div style={{ position: 'relative', height }}>
-			<div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+		<div
+			className={containerClassName ? 'relative flex flex-1 flex-col' : 'relative'}
+			style={containerClassName ? undefined : { height }}
+		>
+			<div ref={containerRef} className={containerClassName ?? 'h-full w-full'} />
 			<div ref={overlayRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} aria-hidden />
 		</div>
 	)

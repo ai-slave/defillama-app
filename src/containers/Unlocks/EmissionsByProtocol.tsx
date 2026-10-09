@@ -13,7 +13,13 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -1049,6 +1055,7 @@ function ChartContainer({
 									// Slightly larger pie to better utilize available canvas.
 									radius={allocationPieChartRadius}
 									exportButtons={allocationExportButtons}
+									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
 						</ChartPanel>
@@ -1067,6 +1074,7 @@ function ChartContainer({
 									stackColors={unlockedPieChartStackColors}
 									valueSymbol="%"
 									exportButtons={unlockedExportButtons}
+									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
 						</ChartPanel>

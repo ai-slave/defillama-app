@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import {
@@ -12,7 +13,7 @@ import {
 	type MorphoMarketHistory,
 	type TvlResponse
 } from './api'
-import { ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
+import { ChartCard, SectionHeader, SimpleTable, UtilBar, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -195,63 +196,77 @@ export default function Tvl() {
 			</div>
 
 			<SectionHeader>Total Ecosystem TVL</SectionHeader>
-			{isLoading || !ecoModel ? (
-				<ChartSkeleton title="Ecosystem TVL" />
-			) : (
-				<ChartCard
-					title="Ecosystem TVL"
-					subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history"
-				>
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={
+						<ChartPanelTitle subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history">
+							Ecosystem TVL
+						</ChartPanelTitle>
+					}
+				/>
+				{isLoading || !ecoModel ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={ecoModel.dataset}
 							charts={ecoModel.charts}
 							valueSymbol="$"
-							height="400px"
+							containerClassName={CHART_FILL}
 							chartOptions={ecoZoom}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
 			<SectionHeader>TVL vs ETH Price</SectionHeader>
-			{isLoading || !ethOverlay ? (
-				<ChartSkeleton title="TVL vs ETH" />
-			) : (
-				<ChartCard title="Ecosystem TVL vs ETH/USD" subtitle="Correlation overlay">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+			<ChartPanel>
+				<ChartPanelToolbar
+					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
+				/>
+				{isLoading || !ethOverlay ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
+					</ChartPanelBodyFallback>
+				) : (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={ethOverlay.dataset}
 							charts={ethOverlay.charts}
 							valueSymbol="$"
-							height="350px"
+							containerClassName={CHART_FILL}
 							chartOptions={ethZoom}
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 						/>
 					</Suspense>
-				</ChartCard>
-			)}
+				)}
+			</ChartPanel>
 
 			<SectionHeader>TVL by Chain</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
-						<ChartCard key={protocol.protocol} title={protocol.protocol} subtitle="Stacked by chain">
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+						<ChartPanel key={protocol.protocol}>
+							<ChartPanelToolbar
+								leading={<ChartPanelTitle subtitle="Stacked by chain">{protocol.protocol}</ChartPanelTitle>}
+							/>
+							<Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart
 									dataset={model.dataset}
 									charts={model.charts}
 									valueSymbol="$"
-									height="280px"
+									containerClassName={CHART_FILL}
 									chartOptions={zoom}
 									hideDefaultLegend={false}
 									exportButtons="hidden"
 								/>
 							</Suspense>
-						</ChartCard>
+						</ChartPanel>
 					)
 				})}
 			</div>
@@ -351,22 +366,25 @@ export default function Tvl() {
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoHistoryModels.map(({ market, model }) => {
 							return (
-								<ChartCard
-									key={market.marketId}
-									title={market.name || market.marketId}
-									subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}
-								>
-									<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+								<ChartPanel key={market.marketId}>
+									<ChartPanelToolbar
+										leading={
+											<ChartPanelTitle subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}>
+												{market.name || market.marketId}
+											</ChartPanelTitle>
+										}
+									/>
+									<Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}
 											valueSymbol="$"
-											height="300px"
+											containerClassName={CHART_FILL}
 											hideDefaultLegend={false}
 											exportButtons="hidden"
 										/>
 									</Suspense>
-								</ChartCard>
+								</ChartPanel>
 							)
 						})}
 					</div>

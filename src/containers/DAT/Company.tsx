@@ -12,10 +12,17 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -241,6 +248,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						{chartData != null ? (
 							<MultiSeriesChart
+								containerClassName={CHART_FILL}
 								dataset={chartData.holdingsChart.dataset}
 								charts={chartData.holdingsChart.charts}
 								valueSymbol={chartData.ticker}
@@ -261,6 +269,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MultiSeriesChart
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
+								containerClassName={CHART_FILL}
 								valueSymbol=""
 								hideDefaultLegend={false}
 								title="mNAV"
@@ -280,6 +289,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MultiSeriesChart
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
+								containerClassName={CHART_FILL}
 								valueSymbol=""
 								hideDefaultLegend={false}
 								title="Fully Diluted Shares"
@@ -294,13 +304,16 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</ChartPanel>
 				) : null}
 				{props.ohlcvChartData != null ? (
-					<Panel padding="none" className="col-span-full min-h-[480px]">
-						<h2 className="mr-auto p-2 heading-xs">Share Price</h2>
-						<Suspense fallback={<div className="h-[480px]" />}>
-							<CandlestickChart data={props.ohlcvChartData} />
-						</Suspense>
+					<ChartPanel className="col-span-full">
+						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share Price</ChartPanelTitle>} />
+						{/* The candlestick sets its own height: 480px plus any indicator panels. */}
+						<ChartPanelBody className="min-h-[480px]">
+							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[480px]" />}>
+								<CandlestickChart data={props.ohlcvChartData} />
+							</Suspense>
+						</ChartPanelBody>
 						<p className="p-2 pt-0 body-sm text-tertiary">Source: Yahoo Finance</p>
-					</Panel>
+					</ChartPanel>
 				) : null}
 				{props.totalAssetValueChart != null ? (
 					<ChartPanel className="col-span-full">

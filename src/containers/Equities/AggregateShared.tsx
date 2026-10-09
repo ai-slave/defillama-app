@@ -6,7 +6,7 @@ import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedT
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -125,10 +125,9 @@ export function AggregateTreemap({
 		<ChartPanel>
 			<ChartPanelToolbar
 				leading={
-					<div>
-						<h2 className="heading-xs">{title}</h2>
-						<p className="body-sm text-tertiary">{subtitle}</p>
-					</div>
+					<ChartPanelTitle headingAs="h2" subtitle={subtitle}>
+						{title}
+					</ChartPanelTitle>
 				}
 			>
 				<div className="flex flex-wrap items-center gap-2">

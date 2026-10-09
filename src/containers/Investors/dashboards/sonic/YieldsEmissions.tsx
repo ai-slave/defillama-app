@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
@@ -13,15 +13,6 @@ import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			{children}
-		</div>
-	)
-}
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
@@ -97,19 +88,21 @@ export default function YieldsEmissions() {
 			{/* Emissions */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>S Token Emissions</SectionHeader>
-				<ChartCard title={data.emissions.title}>
-					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
+							title={data.emissions.title}
+							headingAs="h3"
+							containerClassName={CHART_FILL}
 							dataset={data.emissions.dataset}
 							charts={data.emissions.charts}
 							valueSymbol=""
 							stacked
 							solidChartAreaStyle
 							chartOptions={STACKED_UNITLESS_TIME_CHART_OPTIONS}
-							height="400px"
 						/>
 					</Suspense>
-				</ChartCard>
+				</ChartPanel>
 			</div>
 
 			{/* Burns */}

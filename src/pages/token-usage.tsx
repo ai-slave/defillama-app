@@ -30,12 +30,11 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
-import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -182,7 +181,7 @@ export default function Tokens() {
 					No protocols found
 				</PanelStatus>
 			) : (
-				<Panel padding="none" className="w-full flex-1">
+				<ChartPanel className="w-full flex-1">
 					<ChartPanelToolbar>
 						<div className="mr-auto flex flex-col">
 							<h2 className="heading-xs">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
@@ -240,8 +239,10 @@ export default function Tokens() {
 						</div>
 					</ChartPanelToolbar>
 
+					{/* No ChartPanelBody: the panel fills the page and holds the table too, so a growing body (and the
+					    body fallback's auto margins) would open a gap between the treemap and the table. */}
 					{treemapTreeData.length > 0 ? (
-						<Suspense fallback={<div style={{ height: '480px' }} />}>
+						<Suspense fallback={<div className="min-h-[480px]" />}>
 							<TreemapChart
 								treeData={treemapTreeData}
 								variant="rwa"
@@ -258,7 +259,7 @@ export default function Tokens() {
 					>
 						<VirtualTable table={tableInstance} />
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			)}
 			<SignInModal store={signInDialogStore} />
 		</Layout>

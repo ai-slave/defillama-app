@@ -520,12 +520,22 @@ const COLOR_CLASS = new RegExp(
 	`(?<![\\w-])(?:[\\w\\-[\\]&=.'*@():>]+:)*!?((?:${COLOR_PROPS})-([a-z][\\w-]*))(\\/[\\w.[\\]]+)?(?![\\w-])`,
 	'g'
 )
+// Every custom property the stylesheets define. A `border-(--name)` whose variable is defined nowhere resolves to
+// nothing, and the border falls back to the text colour.
+const DEFINED_PROPERTIES = new Set([...TOKEN_CSS.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]))
+const VAR_CLASS = new RegExp(`(?<![\\w-])(?:[\\w\\-[\\]&=.'*@():>]+:)*!?(?:${COLOR_PROPS})-\\((--[\\w-]+)\\)`, 'g')
 function matchUnresolvedTokenUtility(content) {
 	const found = []
 	for (const [token, utility, name, modifier] of content.matchAll(COLOR_CLASS)) {
 		if (TOKEN_UTILITIES.has(utility)) {
 			if (modifier) found.push(token)
 		} else if (!THEME_NAMES.has(name) && UTILITY_COLORS.has(name)) found.push(token)
+	}
+	for (const [token, property] of content.matchAll(VAR_CLASS)) {
+		// A variable the file sets itself (an inline style or a [--name:…] class) is defined where it is used.
+		if (DEFINED_PROPERTIES.has(property) || content.includes(`'${property}'`) || content.includes(`[${property}:`))
+			continue
+		found.push(token)
 	}
 	return found.length > 0 ? found : null
 }
@@ -968,6 +978,17 @@ const RULES = [
 		description:
 			'ml-auto group or last-of-type:mr-auto inside ChartPanelToolbar — put the title, view switch or metric chips in its `leading` slot; everything else hugs the right',
 		match: matchChartToolbarAutoMargin
+	},
+	{
+		id: 'chart-fill-literal',
+		exceptions: {
+			'src/containers/UniversalTokenRating/TokenPageLive.tsx':
+				'two stacked charts split one ChartPanelBody, so each shrinks below the 360px floor (`min-h-0 flex-1`)'
+		},
+		description:
+			'a chart sized with a literal `containerClassName` (`flex-1 min-h-[360px]`): pass CHART_FILL from src/ui/ChartPanel.tsx, plus a min-h-* class for a deliberately taller or shorter chart, so every chart follows the shared floor',
+		match: (content) => content.match(/\bcontainerClassName="[^"]*\b(?:flex-1|min-h-\[)[^"]*"/g),
+		skipTests: true
 	},
 	{
 		id: 'lazy-chart-without-boundary',

@@ -303,7 +303,6 @@ export interface IProtocolCoreChartProps {
 	hallmarks: Array<[number, string]> | null
 	rangeHallmarks: Array<[[number, number], string]> | null
 	chartOptions?: MultiSeriesChartOptions
-	height?: string
 	unlockTokenSymbol?: string | null
 	gasUsedValueSymbol?: string
 	isThemeDark: boolean

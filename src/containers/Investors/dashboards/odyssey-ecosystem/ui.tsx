@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
@@ -23,15 +22,6 @@ export function ChartCard({
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
-
-export function ChartSkeleton({ title }: { title: string }) {
-	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
-			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<SurfaceBodyLoadingStatus className="min-h-[350px]" />
-		</div>
-	)
 }
 
 export interface Col<Row> {

@@ -8,7 +8,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -163,7 +163,7 @@ export function RWAEntityChartPanel<K extends string>({
 						charts={deferredChart.series}
 						hallmarks={deferredChart.hallmarks}
 						hallmarksInMs
-						containerClassName="flex-1 min-h-[360px]"
+						containerClassName={CHART_FILL}
 						hideDefaultLegend={deferredChart.series.length < 2}
 						valueSymbol="$"
 						groupBy={deferredChart.period}

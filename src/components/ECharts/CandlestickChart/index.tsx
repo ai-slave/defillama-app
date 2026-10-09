@@ -65,7 +65,13 @@ const INDICATOR_COLORS = [chartColor(1), chartColor(2), chartColor(3), chartColo
 const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
 
-function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS, onReady }: ICandlestickChartProps) {
+function CandleStickAndVolumeChart({
+	data,
+	height,
+	containerClassName,
+	indicators = EMPTY_INDICATORS,
+	onReady
+}: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartTheme = useChartTheme(isThemeDark)
@@ -455,7 +461,13 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		)
 	}, [series, data, defaultChartSettings])
 
-	return <div ref={containerRef} style={{ height: height ?? `${chartHeight}px` }} />
+	return (
+		<div
+			ref={containerRef}
+			className={containerClassName}
+			style={containerClassName ? undefined : { height: height ?? `${chartHeight}px` }}
+		/>
+	)
 }
 
 export default withEChartsRenderVisibility(CandleStickAndVolumeChart)

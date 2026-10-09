@@ -4,7 +4,9 @@ import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChar
 import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
+import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { disclosedVestingDurationMonths, disclosedVestingSchedule } from './disclosedVesting'
@@ -116,25 +118,27 @@ export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTo
 	const { months, series } = disclosedVestingSchedule(groups)
 	const source = months.map((month, row) => [String(month), ...series.map((entry) => entry.data[row])])
 	return (
-		<div className="flex flex-col gap-2">
+		<>
 			<ChartCaption>Disclosed Maximum Token Supply (%) | Months Since TGE</ChartCaption>
-			<MultiSeriesChart
-				dataset={{ source, dimensions: ['month', ...series.map((entry) => entry.name)] }}
-				charts={series.map((entry, index) => ({
-					type: 'bar' as const,
-					name: entry.name,
-					encode: { x: 0, y: index + 1 },
-					stack: 'vesting',
-					color: tokenomicsGroupColor(index)
-				}))}
-				valueSymbol="%"
-				chartOptions={VESTING_CHART_OPTIONS}
-				height="260px"
-				hideDefaultLegend={false}
-				hideDataZoom
-				exportButtons="hidden"
-			/>
-		</div>
+			<ChartPanelBody>
+				<MultiSeriesChart
+					dataset={{ source, dimensions: ['month', ...series.map((entry) => entry.name)] }}
+					charts={series.map((entry, index) => ({
+						type: 'bar' as const,
+						name: entry.name,
+						encode: { x: 0, y: index + 1 },
+						stack: 'vesting',
+						color: tokenomicsGroupColor(index)
+					}))}
+					valueSymbol="%"
+					chartOptions={VESTING_CHART_OPTIONS}
+					containerClassName={CHART_FILL}
+					hideDefaultLegend={false}
+					hideDataZoom
+					exportButtons="hidden"
+				/>
+			</ChartPanelBody>
+		</>
 	)
 }
 
@@ -150,8 +154,10 @@ function GroupName({ name, index }: { name: string; index: number }) {
 function VestingSchedule({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup> }) {
 	return (
 		<>
-			<div className="flex flex-col rounded-lg border border-subtle bg-surface">
-				<span className="border-b border-subtle px-4 py-2 label-md">Schedule preview</span>
+			<Panel padding="none">
+				<PanelHeader>
+					<PanelTitle as="h4">Schedule preview</PanelTitle>
+				</PanelHeader>
 				<div className="grid grid-cols-2 border-b border-subtle">
 					<span className="flex flex-col gap-1 px-4 py-3">
 						<span className="body-sm text-tertiary">Disclosed Duration</span>
@@ -162,10 +168,8 @@ function VestingSchedule({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup
 						<span className="label-md">{groups.length}</span>
 					</span>
 				</div>
-				<div className="p-4">
-					<DisclosedVestingChart groups={groups} />
-				</div>
-			</div>
+				<DisclosedVestingChart groups={groups} />
+			</Panel>
 			<h4 className="label-lg">Vesting Schedule</h4>
 			<DisclosureTable
 				columns={[
