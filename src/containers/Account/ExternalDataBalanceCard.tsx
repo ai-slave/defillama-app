@@ -48,7 +48,7 @@ export function ExternalDataBalanceCard({
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Icon name="box" height={28} width={28} className="text-primary" />
+					<Icon name="package" height={28} width={28} className="text-primary" />
 					<span className="label-lg text-primary">External Data Balance</span>
 				</div>
 				<Button variant="primary" size="md" onClick={onTopUp}>

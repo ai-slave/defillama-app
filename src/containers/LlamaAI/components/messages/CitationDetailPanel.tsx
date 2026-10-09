@@ -94,12 +94,16 @@ export function CitationDetailPanel({
 		<>
 			{mismatch ? (
 				<div className="flex items-start gap-1.5 rounded-md bg-surface-elevated-1 px-2.5 py-2 body-sm text-secondary">
-					<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0 text-warning" />
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="alert-triangle" className="size-3.5 text-warning" />
+					</span>
 					<span>{mismatchLabel(activeRef)}</span>
 				</div>
 			) : unverified ? (
 				<div className="flex items-start gap-1.5 rounded-md bg-surface-elevated-1 px-2.5 py-2 body-sm text-secondary">
-					<Icon name="help-circle" height={14} width={14} className="mt-px shrink-0" />
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="help-circle" className="size-3.5" />
+					</span>
 					<span>{unverifiedLabel()}</span>
 				</div>
 			) : null}

@@ -1,9 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { ArtifactCard } from './messages/ArtifactCard'
 
 interface MarkdownExportArtifactProps {
 	mdExport: {
@@ -48,49 +53,69 @@ async function downloadMarkdownFile({ url, filename }: { url: string; filename: 
 
 export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: MarkdownExportArtifactProps) {
 	const safeUrl = sanitizeUrl(mdExport.url)
+	// The error stays up while a retry runs (mutation.error clears when it starts), so the retry keeps focus.
+	const [failed, setFailed] = useState(false)
 	const downloadMarkdownMutation = useMutation({
-		mutationFn: downloadMarkdownFile
+		mutationFn: downloadMarkdownFile,
+		onError: () => setFailed(true),
+		onSuccess: () => setFailed(false)
 	})
 
 	if (!safeUrl) return null
 
+	const download = () => {
+		trackUmamiEvent('llamaai-download', {
+			kind: 'artifact-md',
+			filename: mdExport.filename,
+			title: mdExport.title,
+			artifactId: mdExport.id,
+			sessionId: sessionId ?? '',
+			messageId: messageId ?? ''
+		})
+		downloadMarkdownMutation.mutate({ url: safeUrl, filename: mdExport.filename })
+	}
+
 	return (
-		<Ariakit.Button
-			type="button"
-			disabled={downloadMarkdownMutation.isPending}
-			accessibleWhenDisabled
-			onClick={() => {
-				trackUmamiEvent('llamaai-download', {
-					kind: 'artifact-md',
-					filename: mdExport.filename,
-					title: mdExport.title,
-					artifactId: mdExport.id,
-					sessionId: sessionId ?? '',
-					messageId: messageId ?? ''
-				})
-				downloadMarkdownMutation.mutate({ url: safeUrl, filename: mdExport.filename })
-			}}
-			className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3 text-left not-aria-disabled:hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-muted">
-				<Icon name="file-text" className="size-5 text-link" />
-			</span>
-			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<span className="m-0 truncate label-md text-primary">{mdExport.title}</span>
-				<span className="m-0 body-sm text-secondary">
-					{downloadMarkdownMutation.isPending
+		<div className="flex flex-col gap-2">
+			<ArtifactCard
+				as={Ariakit.Button}
+				icon="file-text"
+				title={mdExport.title}
+				meta={
+					downloadMarkdownMutation.isPending
 						? 'Downloading…'
-						: (getOwnRegistryValue(FILE_TYPE_LABELS, fileExtension(mdExport.filename)) ?? 'File')}
-				</span>
-				{downloadMarkdownMutation.error ? (
-					<span role="alert" className="m-0 body-sm text-error">
-						{downloadMarkdownMutation.error.message}
+						: (getOwnRegistryValue(FILE_TYPE_LABELS, fileExtension(mdExport.filename)) ?? 'File')
+				}
+				trailing={
+					<span className="flex shrink-0 items-center gap-1 label-sm text-link">
+						<Icon name="download-paper" className="size-3.5" />.{fileExtension(mdExport.filename)}
 					</span>
-				) : null}
-			</span>
-			<span className="flex shrink-0 items-center gap-1 label-sm text-link">
-				<Icon name="download-paper" className="size-3.5" />.{fileExtension(mdExport.filename)}
-			</span>
-		</Ariakit.Button>
+				}
+				disabled={downloadMarkdownMutation.isPending}
+				accessibleWhenDisabled
+				aria-busy={downloadMarkdownMutation.isPending || undefined}
+				onClick={download}
+				className="w-full"
+			/>
+			{failed ? (
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							type="button"
+							size="sm"
+							// The retry leaves once the download succeeds; the message region keeps focus.
+							ref={focusRegionOnLeave}
+							onClick={download}
+							pendingLabel={downloadMarkdownMutation.isPending ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					}
+				>
+					Couldn&rsquo;t download this file.
+				</InlineStatus>
+			) : null}
+		</div>
 	)
 }

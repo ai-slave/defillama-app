@@ -4,6 +4,7 @@ import {
 } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import type { TriggerType } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 
 interface EmptyAlertsStateProps {
@@ -22,10 +23,12 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 			</div>
 
 			<div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-				<button
+				<Card
+					as="button"
 					type="button"
+					padding="md"
 					onClick={() => onOpenCreate('price')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-warning-muted not-disabled:not-aria-disabled:hover:bg-warning-faint"
+					className="hover-wash-card flex cursor-pointer flex-col items-start gap-2.5 text-left"
 				>
 					<span className="flex size-9 items-center justify-center rounded-lg bg-warning-tint text-warning">
 						<Icon name="trending-up" className="size-4" />
@@ -38,12 +41,14 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 						Set a price alert
 						<Icon name="arrow-right" className="size-3.5" aria-hidden="true" />
 					</span>
-				</button>
+				</Card>
 
-				<button
+				<Card
+					as="button"
 					type="button"
+					padding="md"
 					onClick={() => onOpenCreate('schedule')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-subtle bg-page p-4 text-left not-disabled:not-aria-disabled:hover:border-brand-muted not-disabled:not-aria-disabled:hover:bg-brand-faint"
+					className="hover-wash-card flex cursor-pointer flex-col items-start gap-2.5 text-left"
 				>
 					<span className="flex size-9 items-center justify-center rounded-lg bg-brand-tint text-link">
 						<Icon name="calendar" className="size-4" />
@@ -56,7 +61,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 						Ask on a schedule
 						<Icon name="arrow-right" className="size-3.5" aria-hidden="true" />
 					</span>
-				</button>
+				</Card>
 			</div>
 
 			<div className="flex flex-col items-center gap-2.5 border-t border-subtle pt-4">
@@ -66,14 +71,10 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				</p>
 				<div className="flex flex-wrap items-center justify-center gap-2">
 					{ALERT_EMPTY_STATE_CHIPS.map((chip) => (
-						<button
-							key={chip.text}
-							type="button"
-							onClick={() => onChipSelect(chip.text, chip.variant)}
-							className="rounded-full border border-medium px-3 py-1.5 body-sm text-secondary not-disabled:not-aria-disabled:hover:border-brand-muted not-disabled:not-aria-disabled:hover:bg-brand-faint not-disabled:not-aria-disabled:hover:text-link"
-						>
-							{chip.text}
-						</button>
+						<Button key={chip.text} variant="secondary" size="sm" onClick={() => onChipSelect(chip.text, chip.variant)}>
+							{/* A suggestion runs long on a phone, so it wraps inside the pill instead of overflowing the dialog. */}
+							<span className="whitespace-normal">{chip.text}</span>
+						</Button>
 					))}
 				</div>
 				<Button

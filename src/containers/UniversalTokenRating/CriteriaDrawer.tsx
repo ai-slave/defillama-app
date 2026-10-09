@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { DialogBackButton, DialogBody, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { RailItem } from '~/ui/RailItem'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getCriterionDrawerCopy, MARKET_MAKER_MATURITY_EXCEPTION } from './criterionDrawerCopy'
 import { DisclosureDetails } from './DisclosureDetails'
@@ -120,17 +121,16 @@ function CriteriaSheetContent({
 						{state.criteria.map((criterion, index) => {
 							const current = criterion.key === active.key
 							return (
-								<button
+								<RailItem
+									as="button"
 									key={criterion.key}
 									type="button"
+									active={current}
 									aria-current={current ? 'true' : undefined}
 									onClick={() => {
 										setActiveKey(criterion.key)
 										setNarrowPane('detail')
 									}}
-									className={`hover-wash flex min-h-11 cursor-pointer items-center rounded-md px-3 py-2 text-left body-md md:min-h-9 md:body-sm ${
-										current ? 'bg-surface text-primary' : 'text-secondary'
-									}`}
 								>
 									{index + 1}.{' '}
 									{
@@ -141,7 +141,7 @@ function CriteriaSheetContent({
 											state.docs.find((entry) => entry.key === criterion.key)?.definition
 										).navigationLabel
 									}
-								</button>
+								</RailItem>
 							)
 						})}
 					</nav>

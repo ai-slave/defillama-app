@@ -207,7 +207,7 @@ test.each(['suggestion', 'picker'] as const)(
 				isPreview={false}
 			/>
 		)
-		const trigger = await waitForUi(() => button('Pick a protocol'))
+		const trigger = await waitForUi(() => button('Protocol Pick a protocol'))
 		if (via === 'suggestion') await press(button('Alpha'))
 		else await pickOption(trigger, 'Alpha')
 		await waitForUi(() => expect(accessibleName(document.activeElement!)).toBe('Metrics: None'))

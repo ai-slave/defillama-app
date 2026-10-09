@@ -773,6 +773,13 @@ const RULES = [
 		skipTests: true
 	},
 	{
+		id: 'native-select',
+		description:
+			'native <select> — use Select (or SelectWithCombobox for a long or searchable list) from src/components/Select, which owns the trigger, the phone drawer and disabled options',
+		pattern: /<select\b/g,
+		skipTests: true
+	},
+	{
 		id: 'hand-rolled-skeleton',
 		description:
 			'pulsing neutral block as a loading placeholder — use Skeleton from src/ui/Skeleton.tsx, which owns the fill and the reduced-motion rule',

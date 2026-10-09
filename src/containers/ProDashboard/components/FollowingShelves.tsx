@@ -8,7 +8,7 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { useFollowingAuthors } from '../hooks/useFollowingAuthors'
 import type { FollowingShelf } from '../services/DashboardAPI'
-import { proPanelStyles } from '../ui'
+import { DashedTile, proPanelStyles } from '../ui'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
@@ -125,13 +125,14 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 						</div>
 					))}
 					{hasMore ? (
-						<BasicLink
+						<DashedTile
+							as={BasicLink}
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-medium body-md text-secondary transition-colors hover:border-brand-muted hover:text-link md:snap-align-none"
+							className="w-[160px] shrink-0 snap-start md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
-						</BasicLink>
+						</DashedTile>
 					) : null}
 				</ShelfRail>
 			)}

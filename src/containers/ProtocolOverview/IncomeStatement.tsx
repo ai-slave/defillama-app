@@ -11,6 +11,7 @@ import {
 } from '~/components/Table/helpers'
 import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -854,20 +855,27 @@ function IncomeStatementByLabel({
 					    disclosure button, so the chevron is the only control. */}
 					<div className="flex items-center gap-1">
 						{hasBreakdownRows ? (
-							<button
-								type="button"
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="-ml-1"
 								aria-expanded={isExpanded}
 								aria-label={`${isExpanded ? 'Hide' : 'Show'} ${label} breakdown`}
 								onClick={(e) => {
 									e.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-secondary transition-transform hover:bg-hover-row focus-visible:bg-hover-row"
 							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
-							</button>
+								<Icon
+									name={isExpanded ? 'chevron-down' : 'chevron-right'}
+									height={16}
+									width={16}
+									className="text-tertiary"
+								/>
+							</Button>
 						) : alignWithBreakdownRows ? (
-							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
+							<span aria-hidden="true" className="-ml-1 block size-6 shrink-0" />
 						) : null}
 						{methodology ? (
 							<Tooltip
@@ -875,7 +883,7 @@ function IncomeStatementByLabel({
 								className="flex items-center justify-start gap-1 underline decoration-current decoration-dotted"
 							>
 								{label}
-								<Icon name="help-circle" height={14} width={14} className="relative top-0.25 shrink-0" />
+								<Icon name="help-circle" height={14} width={14} className="shrink-0" />
 							</Tooltip>
 						) : (
 							<>{label}</>
@@ -919,7 +927,7 @@ function IncomeStatementByLabel({
 						<tr key={`${protocolName}-${groupBy}-${dataType}-${breakdownlabel}`} className="group text-secondary">
 							<TokenPageTableIncomeHeaderCell
 								sticky
-								className="w-[36%] pl-9 font-normal italic group-hover:bg-hover-row"
+								className="w-[36%] pl-10 font-normal italic group-hover:bg-hover-row"
 							>
 								{breakdownMethodology[breakdownlabel] ? (
 									<Tooltip
@@ -971,7 +979,7 @@ function IncomeStatementByLabel({
 								>
 									<TokenPageTableIncomeHeaderCell
 										sticky
-										className="w-[36%] pl-9 font-normal italic group-hover:bg-hover-row"
+										className="w-[36%] pl-10 font-normal italic group-hover:bg-hover-row"
 									>
 										<Tooltip
 											content={explanation}

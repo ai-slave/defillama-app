@@ -39,6 +39,7 @@ import { Field } from '~/ui/Field'
 import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
@@ -412,24 +413,15 @@ function AddToDashboardDialog({
 									{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {
 										const isSelected = target?.kind === 'existing' && target.id === dashboard.id
 										return (
-											<button
+											<ListRow
 												key={dashboard.id}
-												type="button"
+												selected={isSelected}
 												aria-pressed={isSelected}
 												onClick={() => handleSelectDashboard(dashboard)}
-												className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
-													isSelected
-														? 'bg-brand-muted text-link'
-														: 'text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
-												}`}
 											>
-												<span
-													className={`grid size-4 shrink-0 place-items-center text-link ${isSelected ? '' : 'invisible'}`}
-												>
-													<Icon name="check" className="size-3" />
-												</span>
-												<span className="truncate">{dashboard.name}</span>
-											</button>
+												<span className="mr-auto truncate">{dashboard.name}</span>
+												<Icon name="check" className={`size-4 shrink-0 text-link ${isSelected ? '' : 'invisible'}`} />
+											</ListRow>
 										)
 									})}
 								</div>
@@ -473,7 +465,7 @@ function AddToDashboardDialog({
 						) : (
 							<div className="flex flex-col gap-1">
 								<Button type="button" size="md" onClick={handleCreateNew} className="w-full">
-									<Icon name="plus" className="size-4" />
+									<Icon name="plus" className="size-3.5" />
 									<span>Create new dashboard</span>
 								</Button>
 								{targetError ? (

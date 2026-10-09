@@ -3,7 +3,7 @@ import { useEffect, useRef, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { CreateTeamCard } from './CreateTeamCard'
 import { TeamFaqCard } from './TeamFaqCard'
@@ -80,11 +80,7 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 					Make sure you&apos;re signed in with the email address the invite was sent to. If the connection dropped,
 					check whether you already joined.
 				</p>
-				{isTeamError ? (
-					<p role="alert" className="body-sm text-error">
-						Could not check membership.
-					</p>
-				) : null}
+				{isTeamError ? <InlineStatus variant="error">Could not check membership.</InlineStatus> : null}
 				<Button
 					type="button"
 					size="md"

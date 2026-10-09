@@ -10,10 +10,12 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -218,15 +220,24 @@ const columns = columnHelper.columns([
 		header: 'Agreement',
 		enableSorting: false,
 		cell: ({ row }) => (
-			<a
-				href={row.original.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="flex shrink-0 items-center justify-center rounded-md bg-brand-muted px-6 py-1.5 hover:bg-(--interim-brand-tint-hover)"
-			>
-				<Icon name="arrow-up-right" height={14} width={14} />
-				<span className="sr-only">open in new tab</span>
-			</a>
+			<div className="flex justify-end">
+				<Tooltip
+					content="Open agreement in a new tab"
+					render={
+						<Button
+							as="a"
+							href={row.original.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							size="sm"
+							square
+							aria-label={`Open the ${row.original.name} agreement in a new tab`}
+						/>
+					}
+				>
+					<Icon name="arrow-up-right" className="size-4" />
+				</Tooltip>
+			</div>
 		),
 		meta: {
 			headerClassName: 'w-[120px]',

@@ -239,7 +239,9 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 				<ul className="flex flex-col gap-2.5">
 					{PLAN_INCLUDES.map((item) => (
 						<li key={item} className="flex items-start gap-2.5 body-md">
-							<Icon name="check" className="mt-0.5 size-3.5 shrink-0 text-link" />
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="check" className="size-3.5 text-link" />
+							</span>
 							<span className="text-primary">{item}</span>
 						</li>
 					))}

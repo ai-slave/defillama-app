@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
@@ -33,15 +34,25 @@ export function Menu({
 	asPath: string
 }) {
 	const [show, setShow] = useState(false)
+	// An explicit store: inside the Tooltip's provider the disclosure would otherwise open the tooltip's own store.
+	const dialog = Ariakit.useDialogStore({ open: show, setOpen: setShow })
 
 	return (
-		<Ariakit.DialogProvider open={show} setOpen={setShow}>
-			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow-raised hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover">
-				<span className="sr-only">Open navigation menu</span>
+		<>
+			<Tooltip
+				content="Open navigation menu"
+				render={
+					<Ariakit.DialogDisclosure
+						store={dialog}
+						render={<Button variant="onBrand" size="lg" square aria-label="Open navigation menu" className="-my-0.5" />}
+					/>
+				}
+			>
 				<Icon name="menu" height={16} width={16} />
-			</Ariakit.DialogDisclosure>
+			</Tooltip>
 
 			<Ariakit.Dialog
+				store={dialog}
 				aria-label="Navigation menu"
 				ref={catchLostFocus}
 				// Keep expanded navigation sections and the scroll position when reopening.
@@ -138,7 +149,7 @@ export function Menu({
 					<Account />
 				</nav>
 			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+		</>
 	)
 }
 

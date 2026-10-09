@@ -39,9 +39,9 @@ export function PreIpoCompanyPage({
 							className="size-6 shrink-0 rounded-full object-contain"
 						/>
 						<div className="min-w-0 flex-1">
-							<h1 className="flex min-w-0 items-center gap-2 heading-sm">
+							<h1 className="flex min-h-8 min-w-0 items-center gap-2 heading-sm">
 								<span className="truncate">{summary.name}</span>
-								<span className="-m-2 ml-auto shrink-0">
+								<span className="ml-auto shrink-0">
 									<WebsiteGlobeLink
 										url={summary.website}
 										name={summary.name}

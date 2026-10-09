@@ -63,6 +63,8 @@ export function CopyDashboardButton({
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
 			<Button
+				doneLabel="Copied"
+				done={copy.isSuccess}
 				type="button"
 				variant="primary"
 				size="md"
@@ -82,8 +84,8 @@ export function CopyDashboardButton({
 					})
 				}}
 			>
-				<Icon name={copy.isSuccess ? 'check' : 'copy'} height={14} width={14} />
-				{copy.isSuccess ? 'Copied' : 'Copy Dashboard'}
+				<Icon name="copy" height={14} width={14} />
+				Copy Dashboard
 			</Button>
 			<span role="status" className="sr-only">
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}

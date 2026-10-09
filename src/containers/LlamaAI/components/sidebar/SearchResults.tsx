@@ -1,8 +1,9 @@
 import { memo } from 'react'
 import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { ListRow } from '~/ui/ListRow'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 
 function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
@@ -34,15 +35,16 @@ export const SearchResults = memo(function SearchResults({
 }) {
 	if (failed) {
 		return (
-			<div
-				role="alert"
-				className="flex flex-col items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 text-center body-sm text-error"
+			<InlineStatus
+				variant="error"
+				action={
+					<Button type="button" size="sm" pendingLabel={isSearching ? 'Retrying…' : null} onClick={onRetry}>
+						Try again
+					</Button>
+				}
 			>
-				<span>Search failed</span>
-				<Button type="button" size="sm" onClick={onRetry}>
-					Retry
-				</Button>
-			</div>
+				Couldn&rsquo;t search your chats.
+			</InlineStatus>
 		)
 	}
 
@@ -78,16 +80,15 @@ export const SearchResults = memo(function SearchResults({
 						{result.matches
 							.filter((m) => m.message_id)
 							.map((match, i) => (
-								<button
+								<ListRow
 									// oxlint-disable-next-line react/no-array-index-key -- A message can yield multiple anonymous search chunks; these preview slots share its navigation target.
 									key={`${result.session_id}-${match.message_id}-${i}`}
-									type="button"
 									onClick={() => match.message_id && onMatchClick(result.session_id, match.message_id)}
-									className="flex items-start gap-1.5 rounded-md px-1 py-1 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
+									className="items-start gap-1.5"
 								>
 									<SourceBadge type={match.source_type} />
-									<span className="line-clamp-2 min-w-0 body-sm text-secondary">{match.content_preview}</span>
-								</button>
+									<span className="line-clamp-2 min-w-0 text-secondary">{match.content_preview}</span>
+								</ListRow>
 							))}
 					</div>
 				</div>

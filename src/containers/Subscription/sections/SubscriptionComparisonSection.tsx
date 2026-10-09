@@ -139,14 +139,14 @@ export function SubscriptionComparisonSection({
 					<div className="flex" role="row">
 						<div
 							role="columnheader"
-							className="sticky left-0 z-30 box-border flex h-[132px] w-[233px] shrink-0 items-center bg-surface px-2 md:h-[129px] md:w-[400px] md:rounded-tl-[24px] md:px-4"
+							className="sticky left-0 z-30 box-border flex h-[132px] w-[233px] shrink-0 items-center bg-surface px-2 md:w-[400px] md:rounded-tl-[24px] md:px-4"
 						>
 							<h2 className="heading-sm text-primary md:w-[220px]">Compare Plans and Features</h2>
 						</div>
 
 						<div className="min-w-0 flex-1 overflow-hidden">
 							<div ref={headerPlanTrackRef} className="w-max [will-change:transform]">
-								<div className="flex h-[132px] rounded-t-[16px] border-t border-subtle md:h-[129px] md:rounded-t-[24px]">
+								<div className="flex h-[132px] rounded-t-[16px] border-t border-subtle md:rounded-t-[24px]">
 									{planOrder.map((plan, index) => (
 										<ComparisonPlanHead
 											key={`plan-head-${plan}`}

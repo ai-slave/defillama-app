@@ -3,6 +3,7 @@ import { useSyncExternalStore, type ReactNode } from 'react'
 import { StoreButtons } from '~/containers/MobileApp'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
 import { catchLostFocus, pageContent, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import {
@@ -52,8 +53,17 @@ function MobileAppPromotion() {
 				className="pointer-events-none absolute -top-24 left-1/2 h-56 w-[480px] max-w-full -translate-x-1/2 rounded-full bg-brand-tint-strong blur-[100px] dark:bg-sub-blue dark:opacity-25"
 			/>
 
-			<Ariakit.DialogDismiss className="absolute top-[max(16px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))] flex size-9 items-center justify-center rounded-full text-tertiary transition-colors hover:bg-hover-row hover:text-primary">
-				<Icon name="x" height={18} width={18} />
+			<Ariakit.DialogDismiss
+				render={
+					<Button
+						variant="ghost"
+						size="md"
+						square
+						className="absolute top-[max(16px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))]"
+					/>
+				}
+			>
+				<Icon name="x" className="size-4" />
 				<span className="sr-only">Close</span>
 			</Ariakit.DialogDismiss>
 
@@ -102,14 +112,15 @@ function MobileAppPromotion() {
 					<div className="w-full" onClickCapture={continueOnWeb}>
 						<StoreButtons eventSuffix="llamaai-gate" size="lg" />
 					</div>
-					<button
-						type="button"
+					<Button
+						variant="secondary"
+						size="lg"
 						onClick={continueOnWeb}
 						data-umami-event="mobile-app-llamaai-gate-continue-web"
-						className="hover-wash flex h-11 w-full max-w-[300px] items-center justify-center rounded-xl border border-medium bg-surface px-6 label-md text-secondary transition-colors hover:text-primary"
+						className="w-full max-w-[300px]"
 					>
 						Continue on the web
-					</button>
+					</Button>
 				</div>
 			</div>
 		</Ariakit.Dialog>

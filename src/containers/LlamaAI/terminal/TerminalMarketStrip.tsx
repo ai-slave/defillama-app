@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useEffect, useId, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { AI_SERVER } from '~/constants'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Tag } from '~/ui/Tag'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -197,7 +200,9 @@ export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetch
 	const {
 		data: rest,
 		dataUpdatedAt,
-		isError
+		isError,
+		isFetching,
+		refetch
 	} = useQuery({
 		queryKey: ['llamaai-terminal-stats', symbol],
 		queryFn: () => fetchTerminalStats(symbol, fetchFn),
@@ -216,11 +221,22 @@ export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetch
 	}
 	if (data === undefined && isError) {
 		return (
-			<Card padding="strip">
-				<p role="alert" className="body-sm text-error">
-					Market data for {pairName(symbol)} could not be loaded.
-				</p>
-			</Card>
+			<InlineStatus
+				variant="error"
+				action={
+					<Button
+						// The retry leaves once the read succeeds; the region keeps focus.
+						ref={focusRegionOnLeave}
+						size="sm"
+						pendingLabel={isFetching ? 'Retrying…' : null}
+						onClick={() => void refetch()}
+					>
+						Try again
+					</Button>
+				}
+			>
+				Market data for {pairName(symbol)} could not be loaded.
+			</InlineStatus>
 		)
 	}
 	return <InlineStatStrip stacked items={statItems(symbol, data)} />

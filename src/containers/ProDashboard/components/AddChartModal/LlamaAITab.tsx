@@ -127,8 +127,11 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 					return (
 						<div
 							key={chart.id}
-							className={`relative flex flex-col gap-2 rounded-lg border p-3 transition-colors ${
-								selected ? 'border-brand bg-brand-faint' : 'border-medium hover:border-brand-strong'
+							// OptionTile's look; the tile holds a delete button, so it cannot be one button itself.
+							className={`relative flex flex-col gap-2 rounded-lg border p-3 ${
+								selected
+									? 'border-brand bg-brand-muted'
+									: 'border-medium hover:bg-hover-row has-focus-visible:bg-hover-row'
 							}`}
 						>
 							<div className="flex items-start gap-2">

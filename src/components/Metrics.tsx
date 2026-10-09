@@ -9,6 +9,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
 import trendingPages from '~/public/trending.json'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -262,8 +263,10 @@ export function LinkToMetricOrToolPage({
 			style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 120px' }}
 			data-pinned={isPinned}
 		>
-			<BasicLink
-				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-lg border border-subtle bg-surface p-3"
+			<Card
+				as={BasicLink}
+				padding="md"
+				className="hover-wash-card flex flex-1 flex-col items-start gap-1.5"
 				href={page.route}
 				target={isExternalLink ? '_blank' : undefined}
 				rel={isExternalLink ? 'noopener noreferrer' : undefined}
@@ -278,7 +281,7 @@ export function LinkToMetricOrToolPage({
 					<span className="body-sm text-link">{getTotalTracked(totalTrackedByMetric, page.totalTrackedKey)}</span>
 				) : null}
 				<span className="text-start body-md whitespace-pre-wrap text-secondary">{page.description ?? ''}</span>
-			</BasicLink>
+			</Card>
 
 			<Tooltip
 				content={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
@@ -384,10 +387,10 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 						))}
 					</div>
 					<Ariakit.DialogDisclosure
-						className="hover-wash flex min-h-6 w-fit items-center gap-1 rounded-md px-1.5 py-1 body-sm text-secondary hover:text-primary focus-visible:text-primary"
+						render={<Button variant="ghost" size="sm" className="w-fit" />}
 						onClick={() => trackDialogOpen('browse-search')}
 					>
-						<Icon name="search" height={12} width={12} />
+						<Icon name="search" className="size-3.5" />
 						<span className="max-sm:sr-only">Click to browse & search</span>
 					</Ariakit.DialogDisclosure>
 				</div>

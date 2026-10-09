@@ -71,7 +71,7 @@ export function AuthenticationCard() {
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
 								<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
-									<Icon name="mail-rounded" height={20} width={20} className="text-primary" />
+									<Icon name="mail" height={20} width={20} className="text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
 									<span className="body-md text-primary">{user?.email}</span>

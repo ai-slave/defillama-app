@@ -146,26 +146,30 @@ export function ProjectLanding({
 			project.error instanceof LlamaAITransportError && (project.error.status === 403 || project.error.status === 404)
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
-				<p role="alert" className="label-md text-error">
-					{notFound ? 'Project not found' : 'Project unavailable'}
-				</p>
-				<p className="body-sm text-secondary">
-					{notFound
-						? 'This project does not exist or you do not have access to it.'
-						: project.error instanceof Error
-							? project.error.message
-							: 'Failed to load project'}
-				</p>
-				{notFound ? null : (
-					<Button
-						ref={focusRegionOnLeave}
-						variant="secondary"
-						size="sm"
-						pendingLabel={project.isFetching ? 'Retrying…' : null}
-						onClick={() => void project.refetch()}
+				{notFound ? (
+					<>
+						<p role="alert" className="label-md text-primary">
+							Project not found
+						</p>
+						<p className="body-sm text-secondary">This project does not exist or you do not have access to it.</p>
+					</>
+				) : (
+					<InlineStatus
+						variant="error"
+						action={
+							<Button
+								ref={focusRegionOnLeave}
+								variant="secondary"
+								size="sm"
+								pendingLabel={project.isFetching ? 'Retrying…' : null}
+								onClick={() => void project.refetch()}
+							>
+								Try again
+							</Button>
+						}
 					>
-						Try again
-					</Button>
+						Couldn&rsquo;t load this project.
+					</InlineStatus>
 				)}
 				<span className="label-sm">
 					<Button as={BasicLink} href="/ai/projects" variant="link">

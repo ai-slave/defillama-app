@@ -1,8 +1,9 @@
-// @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+// @vitest-environment happy-dom
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { EmbedSnippetDialog } from '../EmbedSnippetDialog'
 
@@ -34,7 +35,7 @@ afterEach(async () => {
 
 function copyButton() {
 	return Array.from(document.body.querySelectorAll('button')).find((node) =>
-		['Copy code', 'Copied'].includes(node.textContent?.trim() ?? '')
+		['Copy code', 'Copied'].includes(accessibleName(node))
 	)!
 }
 
@@ -43,10 +44,10 @@ test('copying the code confirms on the button for two seconds instead of a toast
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	await act(async () => copyButton().click())
 	expect(writeText).toHaveBeenCalledExactlyOnceWith('<iframe dark>')
-	expect(copyButton().textContent).toBe('Copied')
+	expect(accessibleName(copyButton())).toBe('Copied')
 	expect(toast.success).not.toHaveBeenCalled()
 	await act(async () => vi.advanceTimersByTime(2000))
-	expect(copyButton().textContent).toBe('Copy code')
+	expect(accessibleName(copyButton())).toBe('Copy code')
 })
 
 test('a failed copy explains itself inside the dialog instead of a toast', async () => {
@@ -57,7 +58,7 @@ test('a failed copy explains itself inside the dialog instead of a toast', async
 			'Could not copy to clipboard. Select the code and copy it manually.'
 		)
 	)
-	expect(copyButton().textContent).toBe('Copy code')
+	expect(accessibleName(copyButton())).toBe('Copy code')
 	expect(toast.error).not.toHaveBeenCalled()
 })
 

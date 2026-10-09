@@ -11,8 +11,11 @@ import { tw } from './tw'
  * Not a value label (that is `Tag`) and not a count (`CountBadge`). `promoBadgeStyles` is the same look for a badge
  * that is itself a link or carries A/B display classes; it sets no `display`, so the caller adds `inline-flex` (or
  * its experiment's hidden/inline-flex pair).
+ *
+ * It is 16px tall, the line of a control's label (label-sm), so a badge inside a Button, a tab or a segment never makes
+ * that control taller than its siblings.
  */
-export const promoBadgeStyles = tw`shrink-0 items-center gap-1 rounded-md border border-brand-muted bg-brand-tint px-1.5 py-0.5 label-xs whitespace-nowrap text-link`
+export const promoBadgeStyles = tw`shrink-0 items-center gap-1 rounded-md border border-brand-muted bg-brand-tint px-1.5 py-px label-xs whitespace-nowrap text-link`
 
 export function PromoBadge({ children, icon }: { children: ReactNode; icon?: IIcon['name'] }) {
 	return (

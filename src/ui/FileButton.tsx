@@ -1,4 +1,4 @@
-import { type ReactNode, useRef } from 'react'
+import { type ReactNode, type Ref, useRef } from 'react'
 import { Button } from './Button'
 
 /* ----------------------------------------------------------------------------
@@ -8,6 +8,9 @@ import { Button } from './Button'
    chosen name, an upload's progress and its error show beside or under it, in
    the caller's own copy. The input is cleared after each pick, so picking the
    same file again after an error or a removal still reports it.
+   `ref` reaches the Button, so a form can hand focus back to it after a file
+   is removed or an error is dismissed; `accessibleWhenDisabled` keeps it
+   focusable when it disables itself at a limit (ten files picked).
 ---------------------------------------------------------------------------- */
 
 export function FileButton({
@@ -18,6 +21,8 @@ export function FileButton({
 	variant,
 	pendingLabel,
 	disabled,
+	accessibleWhenDisabled,
+	ref,
 	className,
 	children,
 	'data-umami-event': umamiEvent
@@ -31,6 +36,8 @@ export function FileButton({
 	variant?: 'secondary' | 'primary' | 'outline'
 	pendingLabel?: string | null
 	disabled?: boolean
+	accessibleWhenDisabled?: boolean
+	ref?: Ref<HTMLButtonElement>
 	/** Layout placement only. */
 	className?: string
 	children: ReactNode
@@ -57,6 +64,8 @@ export function FileButton({
 				variant={variant}
 				pendingLabel={pendingLabel}
 				disabled={disabled}
+				accessibleWhenDisabled={accessibleWhenDisabled}
+				ref={ref}
 				className={className}
 				data-umami-event={umamiEvent}
 				onClick={() => inputRef.current!.click()}

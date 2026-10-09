@@ -4,11 +4,11 @@ import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
+import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
-	inputStyles,
 	searchFieldFlexibleWrapperStyles,
 	searchFieldIconStyles,
 	searchFieldInputPlacementStyles
@@ -25,6 +25,12 @@ import { getProjectTier } from './tier'
 import type { ProjectWithStats } from './types'
 
 type SortBy = 'updated' | 'created' | 'name'
+
+const SORT_OPTIONS: Array<{ key: SortBy; name: string }> = [
+	{ key: 'updated', name: 'Recently updated' },
+	{ key: 'created', name: 'Recently created' },
+	{ key: 'name', name: 'Name' }
+]
 const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
 export function ProjectsGrid() {
@@ -138,18 +144,22 @@ export function ProjectsGrid() {
 									: `${allProjects.length} / ${projectLimit} projects`}
 							</span>
 						) : null}
-						<label className="flex items-center gap-1.5 label-sm text-secondary">
-							Sort
-							<select
-								value={sortBy}
-								onChange={(e) => startTransition(() => setSortBy(e.target.value as SortBy))}
-								className={inputStyles}
-							>
-								<option value="updated">Recently updated</option>
-								<option value="created">Recently created</option>
-								<option value="name">Name</option>
-							</select>
-						</label>
+						<Select
+							heading="Sort"
+							allValues={SORT_OPTIONS}
+							selectedValues={sortBy}
+							setSelectedValues={(value: string) => startTransition(() => setSortBy(value as SortBy))}
+							label={
+								<>
+									<span className="text-secondary">Sort:</span>
+									<span>{SORT_OPTIONS.find((option) => option.key === sortBy)!.name}</span>
+								</>
+							}
+							labelType="none"
+							variant="filter"
+							size="md"
+							triggerProps={{ 'aria-label': 'Sort projects' }}
+						/>
 						{createProjectButton}
 					</div>
 				) : null}

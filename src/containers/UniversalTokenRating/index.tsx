@@ -290,7 +290,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				/>
 				<div className="p-3">
 					<div className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2.5 body-sm text-secondary">
-						<Icon name="circle-help" height={16} width={16} className="shrink-0 text-link" />
+						<Icon name="help-circle" height={16} width={16} className="shrink-0 text-link" />
 						View the full chart on desktop
 					</div>
 				</div>

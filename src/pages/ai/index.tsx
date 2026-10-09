@@ -6,6 +6,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
+import { GoldCta } from '~/containers/LlamaAI/components/GoldCta'
 import { ComposerFrame } from '~/containers/LlamaAI/components/input/ComposerFrame'
 import {
 	FREE_DAILY_ALLOWANCE,
@@ -25,6 +26,8 @@ import { StoreButtons } from '~/containers/MobileApp'
 import { LlamaAIMobileAppPromotion } from '~/containers/MobileApp/LlamaAIMobileAppGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -142,25 +145,24 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					</div>
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 						{displayed.map((q, i) => (
-							<button
+							<Card
+								as="button"
 								type="button"
+								padding="md"
 								// oxlint-disable-next-line react/no-array-index-key -- Landing suggestions are a read-only snapshot with no IDs; text and tags may repeat.
 								key={i}
 								onClick={() => handleClick(q)}
-								className={clsx(
-									'group flex flex-col items-start gap-3 rounded-xl border border-subtle bg-surface p-4 text-left transition-all duration-200',
-									'hover:-translate-y-0.5 hover:border-ai-gold-muted hover:shadow-ai-halo dark:hover:shadow-ai-halo-faint'
-								)}
+								className="hover-wash-card group flex cursor-pointer flex-col items-start gap-3 text-left"
 							>
 								<span className="inline-block rounded-full border border-ai-gold-muted bg-ai-gold-tint px-2.5 py-0.5 label-sm text-ai-gold-deep">
 									{q.tag}
 								</span>
 								<span className="flex-1 body-md text-secondary">{q.text}</span>
-								<span className="flex items-center gap-1 label-md text-ai-gold-deep opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+								<span className="flex items-center gap-1 label-md text-ai-gold-deep opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
 									Ask this
-									<Icon name="arrow-right" height={12} width={12} />
+									<Icon name="arrow-right" className="size-3.5" />
 								</span>
-							</button>
+							</Card>
 						))}
 					</div>
 
@@ -194,13 +196,10 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 								placeholder="Or ask your own question…"
 								className="min-h-8 min-w-0 flex-1 bg-transparent px-1.5 py-1 body-lg text-primary outline-hidden placeholder:text-tertiary sm:body-md"
 							/>
-							<button
-								type="submit"
-								className="flex min-h-8 shrink-0 items-center gap-1 rounded-lg bg-ai-gold-cta px-3 py-1.5 label-sm text-ai-on-gold-strong transition-shadow duration-200 hover:shadow-ai-gold-spark"
-							>
+							<GoldCta type="submit" size="md">
 								Ask
-								<Icon name="arrow-right" height={14} width={14} />
-							</button>
+								<Icon name="arrow-right" className="size-3.5" />
+							</GoldCta>
 						</ComposerFrame>
 					</form>
 				</section>
@@ -225,23 +224,23 @@ function TrialBadge({ centered = false }: { centered?: boolean }) {
 
 function MobileAppButton() {
 	return (
-		<BasicLink
+		<Button
+			as={BasicLink}
+			variant="secondary"
+			size="lg"
 			href="/app"
 			data-umami-event="mobile-app-ai-landing-hero-click"
-			className={clsx(
-				'group relative z-10 inline-flex items-center justify-center gap-2.5 rounded-xl px-5 py-3 label-lg transition-all duration-200',
-				'border border-medium bg-surface text-primary hover:-translate-y-0.5 hover:border-ai-gold-muted hover:shadow-ai-halo dark:hover:shadow-ai-halo-faint'
-			)}
+			className="relative z-10"
 		>
 			<img src="/assets/app/app-icon.png" alt="" width={20} height={20} className="size-5 shrink-0 rounded-md" />
-			<span className="whitespace-nowrap">Get the mobile app</span>
-		</BasicLink>
+			<span>Get the mobile app</span>
+		</Button>
 	)
 }
 
 function MobileAppCard() {
 	return (
-		<div className="relative overflow-hidden rounded-2xl border border-subtle bg-surface">
+		<Card padding="none" className="relative overflow-hidden">
 			<div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6 sm:pr-44">
 				<div className="flex items-start gap-3">
 					<img src="/assets/app/app-icon.png" alt="" width={40} height={40} className="size-10 shrink-0 rounded-xl" />
@@ -278,57 +277,54 @@ function MobileAppCard() {
 				loading="lazy"
 				className="pointer-events-none absolute top-6 -right-6 hidden w-40 -rotate-6 rounded-3xl border border-subtle shadow-raised sm:block"
 			/>
-		</div>
+		</Card>
 	)
 }
 
-// The landing page's one gold call to action; every copy differs only in its hover shadow.
-const GOLD_CTA =
-	'llamaai-glow relative z-10 inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-ai-gold-cta px-6 py-3 label-lg text-ai-on-gold-strong shadow-ai-gold-cta transition-all duration-300 hover:scale-[1.02]'
-
-function CTAButton({ className = '', label }: { className?: string; label?: string }) {
+function CTAButton() {
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
 
 	if (loaders.userLoading) {
 		return (
-			<span className={clsx(GOLD_CTA, 'opacity-70', className)}>
+			<GoldCta as="span" size="lg" aria-disabled className="relative z-10">
 				<svg className="size-4 shrink-0">
 					<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 				</svg>
-				<span className="whitespace-nowrap">{label ?? 'LlamaAI'}</span>
-			</span>
+				<span>LlamaAI</span>
+			</GoldCta>
 		)
 	}
 
-	const defaultLabel = isAuthenticated && hasActiveSubscription ? 'Ask LlamaAI' : 'Try LlamaAI for free'
-	const displayLabel = label ?? defaultLabel
-
 	return isAuthenticated && hasActiveSubscription ? (
-		<BasicLink
+		<GoldCta
+			as={BasicLink}
+			size="lg"
 			href="/ai/chat"
 			data-umami-event="llamaai-landing-cta-subscribed"
-			className={clsx(GOLD_CTA, 'hover:shadow-ai-beacon-soft', className)}
+			className="relative z-10"
 		>
 			<svg className="size-4 shrink-0">
 				<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 			</svg>
-			<span className="whitespace-nowrap">{displayLabel}</span>
-		</BasicLink>
+			<span>Ask LlamaAI</span>
+		</GoldCta>
 	) : (
-		<a
+		<GoldCta
+			as="a"
+			size="lg"
 			href="#free-questions"
 			onClick={(e) => {
 				e.preventDefault()
 				document.getElementById('free-questions')?.scrollIntoView({ behavior: 'smooth' })
 			}}
 			data-umami-event="llamaai-landing-cta-unsubscribed"
-			className={clsx(GOLD_CTA, 'animate-cta-glow cursor-pointer hover:shadow-ai-beacon', className)}
+			className="relative z-10"
 		>
 			<svg className="size-4 shrink-0">
 				<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 			</svg>
-			<span className="whitespace-nowrap">{displayLabel}</span>
-		</a>
+			<span>Try LlamaAI for free</span>
+		</GoldCta>
 	)
 }
 
@@ -382,16 +378,14 @@ function ExampleShowcase() {
 				</div>
 			</div>
 
-			<a
+			<Card
+				as="a"
+				padding="none"
 				href={example.url}
 				target="_blank"
 				rel="noopener noreferrer"
 				onClick={() => trackUmamiEvent('llamaai-landing-showcase-click', { example: example.id })}
-				className={clsx(
-					'group relative block overflow-hidden rounded-2xl border border-subtle shadow-raised transition-all duration-500',
-					'hover:-translate-y-1 hover:border-ai-gold-muted hover:shadow-ai-gold-wash',
-					'dark:hover:shadow-ai-gold-wash-faint'
-				)}
+				className="hover-wash-card group relative block overflow-hidden"
 			>
 				<div
 					className={clsx(
@@ -402,32 +396,32 @@ function ExampleShowcase() {
 					<img
 						src={`${example.screenshot}.png`}
 						alt={`LlamaAI ${example.category} example`}
-						className="hidden size-full object-cover object-top transition-transform duration-700 group-hover:scale-105 dark:block"
+						className="hidden size-full object-cover object-top dark:block"
 					/>
 					<img
 						src={`${example.screenshot}-light.png`}
 						alt={`LlamaAI ${example.category} example`}
-						className="block size-full object-cover object-top transition-transform duration-700 group-hover:scale-105 dark:hidden"
+						className="block size-full object-cover object-top dark:hidden"
 					/>
-					<div className="absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-500 group-hover:opacity-100">
+					<div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-visible:opacity-100">
 						<span
 							aria-hidden="true"
 							className="absolute inset-0 bg-linear-to-t from-ai-black via-transparent to-transparent opacity-50"
 						/>
-						<span className="relative flex translate-y-4 items-center gap-2 rounded-full bg-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold shadow-ai-halo-bright transition-all duration-500 group-hover:translate-y-0">
+						<span className="relative flex items-center gap-2 rounded-full bg-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold">
 							View full conversation
 							<Icon name="arrow-up-right" height={14} width={14} />
 						</span>
 					</div>
 				</div>
-				<div className="flex items-center justify-between bg-surface px-4 py-3">
+				<div className="flex items-center justify-between px-4 py-3">
 					<span className="body-md text-tertiary">{example.description}</span>
-					<span className="flex shrink-0 items-center gap-1 title-md text-ai-gold-deep transition-all group-hover:gap-2">
+					<span className="flex shrink-0 items-center gap-1 title-md text-ai-gold-deep">
 						View
-						<Icon name="arrow-up-right" height={12} width={12} />
+						<Icon name="arrow-up-right" className="size-3.5" />
 					</span>
 				</div>
-			</a>
+			</Card>
 
 			<div className="mt-1 flex items-center justify-center">
 				{EXAMPLE_CONVERSATIONS.map((conversation, i) => (
@@ -502,19 +496,6 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				description="AI-powered research across DeFi, TradFi, and onchain data. Parallel agents, scheduled alerts, custom memory, and DefiLlama's full dataset through natural conversation."
 				canonicalUrl="/ai"
 			/>
-			<style>{`
-				@keyframes cta-glow-pulse {
-					0%, 100% { box-shadow: 0px 0px 30px 0px color-mix(in srgb, var(--ai-gold-bright) 50%, transparent), 0px 0px 1px 2px color-mix(in srgb, var(--ai-white) 10%, transparent); }
-					50% { box-shadow: 0px 0px 45px 5px color-mix(in srgb, var(--ai-gold-bright) 70%, transparent), 0px 0px 1px 2px color-mix(in srgb, var(--ai-white) 10%, transparent); }
-				}
-				.animate-cta-glow {
-					animation: cta-glow-pulse 2s ease-in-out infinite;
-				}
-				@keyframes bentoBarShimmer {
-					0%, 100% { opacity: 0.3; }
-					50% { opacity: 0.7; }
-				}
-			`}</style>
 			<LlamaAIMobileAppPromotion />
 			<div className="col-span-full flex min-h-screen flex-col overflow-x-hidden bg-page">
 				{/* Header */}
@@ -651,7 +632,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						</h2>
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 							{/* DeFi & TradFi - wide card */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted md:col-span-2">
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 md:col-span-2">
 								<h3 className="mb-1.5 title-lg text-ai-gold-deep">DeFi, TradFi & Onchain</h3>
 								<p className="mb-4 max-w-lg body-md text-tertiary">
 									DefiLlama's 5,000+ protocols paired with stocks, macro, and onchain data. Questions that used to need
@@ -695,7 +676,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</div>
 
 							{/* Scheduled Alerts */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted">
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5">
 								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Scheduled alerts</h3>
 								<p className="mb-4 body-md text-tertiary">
 									Automate recurring prompts. Set up daily price checks, portfolio summaries, or custom data monitors on
@@ -739,7 +720,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</div>
 
 							{/* Memory & Settings */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted">
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5">
 								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Customize your experience</h3>
 								<p className="mb-4 body-md text-tertiary">
 									LlamaAI learns what you care about and tailors responses to your style. Set custom instructions and
@@ -786,7 +767,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</div>
 
 							{/* Research Reports - wide card */}
-							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold-muted md:col-span-2">
+							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 md:col-span-2">
 								<h3 className="mb-1.5 title-lg text-ai-gold-deep">Research reports</h3>
 								<p className="mb-4 max-w-lg body-md text-tertiary">
 									Generate in-depth research reports on any protocol, sector, or trend. Multiple agents research in
@@ -850,7 +831,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							</h2>
 							<p className="body-lg text-tertiary">Watch a full walkthrough of LlamaAI</p>
 						</div>
-						<div className="group relative overflow-hidden rounded-2xl border border-subtle shadow-raised">
+						<div className="group relative overflow-hidden rounded-2xl border border-subtle">
 							<div className="relative aspect-video w-full">
 								{!isVideoPlaying ? (
 									<button
@@ -865,10 +846,10 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 										<img
 											src="https://img.youtube.com/vi/rEJz1gfC0Oc/maxresdefault.jpg"
 											alt="LlamaAI Demo"
-											className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
+											className="absolute inset-0 size-full object-cover"
 										/>
 										<div className="absolute inset-0 bg-linear-to-t from-ai-black to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40" />
-										<div className="relative z-10 flex size-16 items-center justify-center rounded-full bg-linear-to-br from-ai-gold-bright to-ai-gold shadow-ai-halo-strong transition-all duration-300 group-hover:scale-110 group-hover:shadow-ai-gold-glow-lg md:size-20">
+										<div className="relative z-10 flex size-16 items-center justify-center rounded-full bg-linear-to-br from-ai-gold-bright to-ai-gold shadow-ai-halo-strong md:size-20">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 24 24"
@@ -978,10 +959,12 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				<section className="relative z-10 -mt-12 px-4 pb-10 md:-mt-16 md:px-8 md:pb-14">
 					<div className="mx-auto flex max-w-3xl flex-col gap-4">
 						<MobileAppCard />
+						{/* Card's surface fill cannot carry the MCP violet, so this upsell keeps its own fill and border on Card's
+						    shape: 8px, the card wash on hover, no lift. */}
 						<BasicLink
 							href="/mcp"
 							onClick={() => trackUmamiEvent('llamaai-mcp-upsell-click')}
-							className="group flex flex-col gap-4 rounded-2xl border border-ai-violet-muted bg-ai-violet-faint p-5 transition-colors hover:border-ai-violet-strong sm:flex-row sm:items-center sm:justify-between sm:p-6"
+							className="hover-wash-card group flex flex-col gap-4 rounded-lg border border-ai-violet-muted bg-ai-violet-faint p-4 sm:flex-row sm:items-center sm:justify-between"
 						>
 							<div>
 								<h3 className="font-semibold text-primary">
@@ -992,7 +975,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 									for TVL, yields, prices, protocol metrics, and more.
 								</p>
 							</div>
-							<span className="shrink-0 self-start rounded-lg border border-ai-violet-muted px-4 py-2 label-md text-ai-violet transition-colors group-hover:bg-ai-violet-tint sm:self-center">
+							<span className="flex min-h-8 shrink-0 items-center self-start rounded-lg border border-ai-violet-muted px-3 py-1.5 label-sm text-ai-violet group-hover:bg-ai-violet-tint group-focus-visible:bg-ai-violet-tint sm:self-center">
 								Explore MCP
 							</span>
 						</BasicLink>

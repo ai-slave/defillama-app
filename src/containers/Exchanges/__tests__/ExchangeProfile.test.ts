@@ -99,6 +99,7 @@ describe('profile country view states', () => {
 		data: patch.data,
 		isLoading: patch.isLoading ?? false,
 		isError: patch.isError ?? false,
+		isFetching: false,
 		refetch: vi.fn()
 	})
 	const regional = (availability: ExchangeRegionStatus): ExchangeRegionalMetadataModel => {

@@ -6,6 +6,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { getErrorMessage } from '~/utils/error'
 import type { ProjectChatSession } from './types'
@@ -105,9 +106,9 @@ export function ProjectSessionItem({
 					</Tooltip>
 				</form>
 				{renameError ? (
-					<p role="alert" className="mt-1 body-sm text-error">
-						{renameError} Edit the title or retry saving.
-					</p>
+					<div className="mt-1">
+						<InlineStatus variant="error">{renameError} Edit the title or save again.</InlineStatus>
+					</div>
 				) : null}
 			</li>
 		)

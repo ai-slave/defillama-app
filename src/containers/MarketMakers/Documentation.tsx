@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { RailItem } from '~/ui/RailItem'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
 import { MarketMakersFooter } from './Footer'
 import { GRADE_BANDS } from './gradeBands'
@@ -390,9 +391,9 @@ function ShareButton() {
 		}
 	}
 	return (
-		<Button type="button" onClick={onShare} size="md">
-			{copied ? 'Copied' : 'Share'}
-			<Icon name={copied ? 'check-circle' : 'share'} className="size-3.5" />
+		<Button type="button" onClick={onShare} size="md" doneLabel="Copied" done={copied}>
+			<Icon name="share" className="size-3.5" />
+			Share
 		</Button>
 	)
 }
@@ -403,17 +404,15 @@ function TocList({ active, onNavigate }: { active: string; onNavigate?: () => vo
 			{TOC_ITEMS.map((item) => {
 				const isActive = active === item.id
 				return (
-					<a
+					<RailItem
 						key={item.id}
 						href={`#${item.id}`}
 						onClick={onNavigate}
-						aria-current={isActive ? 'true' : undefined}
-						className={`rounded-md px-3 py-1.5 label-md transition-colors ${
-							isActive ? 'bg-hover-row text-primary' : 'text-secondary hover:bg-hover-row hover:text-primary'
-						}`}
+						active={isActive}
+						aria-current={isActive ? 'location' : undefined}
 					>
 						{item.label}
-					</a>
+					</RailItem>
 				)
 			})}
 		</nav>

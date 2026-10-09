@@ -53,7 +53,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 				{articles.map((article, i) => (
 					<Link
 						key={article.id}
-						className="group relative top-0 transition-all duration-200 ease-out hover:top-[-4px]"
+						className="group relative"
 						href={articleHref(article)}
 						onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', 'DefiLlama Research Spotlight widget')}
 					>

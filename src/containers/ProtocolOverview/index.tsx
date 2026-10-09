@@ -149,14 +149,14 @@ function ProtocolHeader({
 
 	return (
 		<>
-			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
+			<Tag className="flex min-h-8 flex-wrap items-center gap-2 heading-sm">
 				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 				<span>{props.name}</span>
 				{props.token?.symbol && props.token.symbol !== '-' ? (
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
 				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
-				<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+				<span className="ml-auto flex items-center justify-end gap-1">
 					{props.website ? (
 						<WebsiteGlobeLink
 							url={props.website}

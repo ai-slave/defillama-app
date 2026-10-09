@@ -52,6 +52,8 @@ export function Card<T extends ElementType = 'div'>({
 	const Tag = (as ?? 'div') as ElementType
 	return (
 		<Tag
+			// A launcher card is a plain button, never a form's submit.
+			{...(as === 'button' ? { type: 'button' } : {})}
 			className={`${RADIUS[radius]} border border-subtle bg-surface${PADDING[padding]}${className ? ` ${className}` : ''}`}
 			{...props}
 		/>

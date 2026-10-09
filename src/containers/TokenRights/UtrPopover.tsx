@@ -9,25 +9,26 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import { getUtrFacts, type TokenRightsLink, type TokenRightsUtrSummary } from './badge'
-import { TokenCardHeader } from './TokenCardHeader'
+import { TokenCardHeader, TokenCardLink } from './TokenCardHeader'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { TokenRightsPreview } from './types'
 import { getTokenRightsPieTones } from './utils'
 
 function RightsLink({ rights, href, entity }: { rights: TokenRightsPreview; href: string; entity: string }) {
 	return (
-		<BasicLink
+		<TokenCardLink
 			href={href}
 			data-umami-event="token-rights-link"
 			data-umami-event-card="utr"
 			data-umami-event-entity={entity}
 			aria-label="View token rights"
-			className="flex shrink-0 items-center gap-1.5 rounded-md border border-subtle px-1.5 py-1 label-xs text-tertiary hover:bg-surface-elevated-1"
 		>
-			Rights
-			<TokenRightsPieChart tones={getTokenRightsPieTones(rights)} showLabels={false} className="size-5 shrink-0" />
-			<Icon name="arrow-right" className="size-3.5 text-link" />
-		</BasicLink>
+			<span className="flex items-center gap-1.5">
+				Rights
+				<TokenRightsPieChart tones={getTokenRightsPieTones(rights)} showLabels={false} className="size-5 shrink-0" />
+				<Icon name="arrow-right" className="size-3.5 text-link" />
+			</span>
+		</TokenCardLink>
 	)
 }
 

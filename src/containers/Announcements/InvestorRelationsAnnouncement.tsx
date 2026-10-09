@@ -1,5 +1,5 @@
 import { useAuthContext } from '~/auth'
-import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
+import { Announcement, announcementCtaStyles, type AnnouncementTracking } from '~/components/Announcement'
 import { Icon } from '~/ui/Icon'
 
 /** Shared with the announcement registry; bump the version to re-show the banner to everyone. */
@@ -18,11 +18,11 @@ export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTr
 			announcementId={INVESTOR_RELATIONS_ANNOUNCEMENT.id}
 			version={INVESTOR_RELATIONS_ANNOUNCEMENT.version}
 			dismissTracking={track.dismiss}
-			className="border border-ir-announcement-border bg-(image:--ir-announcement-bg) text-ir-announcement-text shadow-ir-announcement"
+			className="ir-announcement-scope border border-ir-announcement-border bg-(image:--ir-announcement-bg) text-ir-announcement-text shadow-ir-announcement"
 			contentClassName="text-center"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-ir-announcement-badge-text shadow-raised dark:ring-1 dark:ring-ir-announcement-ring">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-ir-announcement-badge-text dark:ring-1 dark:ring-ir-announcement-ring">
 					<Icon name="bar-chart-2" height={12} width={12} />
 					IR
 				</span>
@@ -35,7 +35,7 @@ export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTr
 					href={`https://investors.defillama.com${user?.id ? `?referrer=${user.id}` : ''}`}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 rounded-full bg-ir-announcement-link px-2.5 py-0.5 title-sm text-ir-announcement-text ring-1 ring-ir-announcement-ring transition-colors hover:bg-ir-announcement-link-hover"
+					className={announcementCtaStyles}
 				>
 					See how it works
 					<Icon name="arrow-right" height={12} width={12} />

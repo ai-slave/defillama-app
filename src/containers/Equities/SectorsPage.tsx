@@ -8,6 +8,7 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor } from '~/constants/colors'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -48,18 +49,19 @@ const TREEMAP_OPTIONS = [
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 
 function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregateHolding; compact?: boolean }) {
+	const href = `/equities/${buildEquityTickerCountrySlug(holding.ticker, 'US')}`
+	if (compact) {
+		return (
+			<Link href={href} className="flex rounded-full">
+				<TokenLogo kind="equities" name={holding.ticker} country="US" size={24} alt={`Logo of ${holding.name}`} />
+			</Link>
+		)
+	}
 	return (
-		<Link
-			href={`/equities/${buildEquityTickerCountrySlug(holding.ticker, 'US')}`}
-			className={
-				compact
-					? 'flex rounded-full'
-					: 'flex items-center gap-1.5 rounded-md border border-medium px-2 py-1 label-sm text-link hover:bg-hover-row hover:underline'
-			}
-		>
-			<TokenLogo kind="equities" name={holding.ticker} country="US" size={24} alt={`Logo of ${holding.name}`} />
-			{compact ? null : holding.ticker}
-		</Link>
+		<Button as={Link} href={href} size="md">
+			<TokenLogo kind="equities" name={holding.ticker} country="US" size={16} alt={`Logo of ${holding.name}`} />
+			{holding.ticker}
+		</Button>
 	)
 }
 
@@ -386,7 +388,7 @@ function SectorsReadyPage({
 									<HoldingLink key={holding.ticker} holding={holding} />
 								))}
 								{sector.companyCount > Math.min(3, sector.topHoldings.length) ? (
-									<span className="rounded-md border border-medium px-2 py-1 label-sm text-secondary">
+									<span className="label-sm text-secondary">
 										+{sector.companyCount - Math.min(3, sector.topHoldings.length)}
 									</span>
 								) : null}

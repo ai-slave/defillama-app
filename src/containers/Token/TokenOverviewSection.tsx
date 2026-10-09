@@ -202,11 +202,11 @@ export function TokenPageHero({
 				) : (
 					<TokenLogo name={overview.name} kind="token" size={24} alt={`Logo of ${overview.name}`} />
 				)}
-				<Heading className="flex flex-wrap items-center gap-2 heading-xs">
+				<Heading className="flex min-h-8 flex-wrap items-center gap-2 heading-xs">
 					<span>{overview.name}</span>
 					{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
 				</Heading>
-				<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+				<span className="ml-auto flex items-center justify-end gap-1">
 					<TokenPriceAlertButton
 						overview={overview}
 						geckoId={geckoId}

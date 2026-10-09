@@ -10,9 +10,11 @@ import {
 	setPendingSuggestedFlag
 } from '~/containers/LlamaAI/pendingPrompt'
 import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
+import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface Props {
@@ -25,9 +27,6 @@ interface Props {
 
 const tileStyles =
 	'hover-wash-card flex min-h-8 shrink-0 snap-start touch-pan-x items-center rounded-lg border border-subtle bg-surface px-3 py-1.5 body-sm whitespace-nowrap text-secondary hover:text-primary focus-visible:text-primary'
-
-const arrowStyles =
-	'pointer-events-auto hidden size-7 place-items-center rounded-full border border-medium bg-surface text-secondary hover:text-primary focus-visible:text-primary sm:grid'
 
 const SignInDialog = lazy(() =>
 	import('~/containers/Subscription/SignInDialog').then((module) => ({ default: module.SignInDialog }))
@@ -152,28 +151,42 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					</div>
 					{edges.left ? (
 						<div className="pointer-events-none absolute inset-y-0 left-0 flex w-16 items-center bg-linear-to-l from-transparent to-page">
-							<button
-								ref={previousArrowRef}
-								type="button"
-								onClick={() => scrollBy(-1)}
-								aria-label="Previous questions"
-								className={arrowStyles}
+							<Tooltip
+								content="Previous questions"
+								render={
+									<Button
+										ref={previousArrowRef}
+										variant="floating"
+										size="md"
+										square
+										onClick={() => scrollBy(-1)}
+										aria-label="Previous questions"
+										className="pointer-events-auto max-sm:hidden"
+									/>
+								}
 							>
-								<Icon name="chevron-left" height={14} width={14} />
-							</button>
+								<Icon name="chevron-left" className="size-4" />
+							</Tooltip>
 						</div>
 					) : null}
 					{edges.right ? (
 						<div className="pointer-events-none absolute inset-y-0 right-0 flex w-16 items-center justify-end bg-linear-to-r from-transparent to-page">
-							<button
-								ref={nextArrowRef}
-								type="button"
-								onClick={() => scrollBy(1)}
-								aria-label="More questions"
-								className={arrowStyles}
+							<Tooltip
+								content="More questions"
+								render={
+									<Button
+										ref={nextArrowRef}
+										variant="floating"
+										size="md"
+										square
+										onClick={() => scrollBy(1)}
+										aria-label="More questions"
+										className="pointer-events-auto max-sm:hidden"
+									/>
+								}
 							>
-								<Icon name="chevron-right" height={14} width={14} />
-							</button>
+								<Icon name="chevron-right" className="size-4" />
+							</Tooltip>
 						</div>
 					) : null}
 				</div>

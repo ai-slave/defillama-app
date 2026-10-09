@@ -24,7 +24,14 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
+import {
+	keepFocus,
+	neighbourRowControl,
+	pageContent,
+	passFocusOnLeave,
+	showFieldErrors,
+	focusRegionOnLeave
+} from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
@@ -225,7 +232,7 @@ export function ResearchSponsorsAdminView() {
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
 	const [submitted, setSubmitted] = useState(false)
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: SPONSORS_QUERY_KEY,
 		queryFn: () => listResearchSponsors(authorizedFetch),
 		retry: false
@@ -292,10 +299,22 @@ export function ResearchSponsorsAdminView() {
 
 			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading clients…</div> : null}
 			{error ? (
-				<Card padding="md" className="grid gap-2">
-					<h2 className="heading-xs text-primary">Couldn't load clients</h2>
-					<p className="body-sm text-error">{mutationMessage(error, 'Failed to load clients')}</p>
-				</Card>
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							// The retry leaves once the read succeeds; the region keeps focus.
+							ref={focusRegionOnLeave}
+							size="sm"
+							onClick={() => void refetch()}
+							pendingLabel={isFetching ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					}
+				>
+					Couldn't load clients. {mutationMessage(error, 'Failed to load clients')}
+				</InlineStatus>
 			) : null}
 			{!isLoading && !error && data?.length === 0 ? (
 				<div className="rounded-lg border border-dashed border-medium bg-surface p-8 text-center">

@@ -1,9 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
+import { ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
 import { type UploadResult, type UploadScope, useImageUpload } from './useImageUpload'
 
 type Props = {
@@ -39,10 +38,9 @@ export function ImageUploadButton({
 		await uploadFile(file).then(onUploaded, () => {})
 		if (inputRef.current) inputRef.current.value = ''
 	}
+	// Re-picking the file is the retry: the upload control sits right beside the error.
 	const status = errorMessage ? (
-		<p role="alert" className="body-sm text-error">
-			{errorMessage}
-		</p>
+		<InlineStatus variant="error">{errorMessage}</InlineStatus>
 	) : helperText ? (
 		<p className="body-sm text-tertiary">{helperText}</p>
 	) : null
@@ -66,37 +64,21 @@ export function ImageUploadButton({
 			{isSquare ? (
 				<>
 					{currentUrl ? (
-						<Ariakit.Button
-							type="button"
+						<ImageReplaceTile
+							shape="round"
+							src={currentUrl}
+							pendingLabel={isUploading ? 'Uploading…' : null}
 							onClick={open}
-							disabled={isUploading}
-							accessibleWhenDisabled
-							aria-busy={isUploading || undefined}
 							aria-label={`Replace ${name}`}
-							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium transition-[border-color] not-aria-disabled:hover:border-brand-strong aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60"
-						>
-							{/* eslint-disable-next-line @next/next/no-img-element */}
-							<img
-								src={currentUrl}
-								alt=""
-								className="size-full object-cover transition-opacity group-hover:opacity-70"
-							/>
-							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-research-white opacity-0 transition-opacity group-hover:opacity-100 group-aria-busy:opacity-100">
-								{isUploading ? 'Uploading…' : 'Replace'}
-							</span>
-						</Ariakit.Button>
+						/>
 					) : (
-						<Ariakit.Button
-							type="button"
+						<UploadTile
+							shape="round"
+							icon="image-plus"
+							label="Upload"
+							pendingLabel={isUploading ? 'Uploading…' : null}
 							onClick={open}
-							disabled={isUploading}
-							accessibleWhenDisabled
-							aria-busy={isUploading || undefined}
-							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
-						>
-							{isUploading ? <LoadingSpinner size={14} /> : <Icon name="image-plus" className="size-5" />}
-							<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload'}</span>
-						</Ariakit.Button>
+						/>
 					)}
 					<div className="flex min-w-0 flex-col gap-2 pt-1">
 						<div className="flex flex-wrap gap-2">
@@ -130,25 +112,13 @@ export function ImageUploadButton({
 				<>
 					{currentUrl ? (
 						<div className="grid gap-2">
-							<Ariakit.Button
-								type="button"
+							<ImageReplaceTile
+								shape="wide"
+								src={currentUrl}
+								pendingLabel={isUploading ? 'Uploading…' : null}
 								onClick={open}
-								disabled={isUploading}
-								accessibleWhenDisabled
-								aria-busy={isUploading || undefined}
 								aria-label={`Replace ${name}`}
-								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium transition-[border-color] not-aria-disabled:hover:border-brand-strong aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed"
-							>
-								{/* eslint-disable-next-line @next/next/no-img-element */}
-								<img
-									src={currentUrl}
-									alt=""
-									className="size-full object-cover transition-opacity group-hover:opacity-70"
-								/>
-								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-research-white opacity-0 transition-opacity group-hover:opacity-100 group-aria-busy:opacity-100">
-									{isUploading ? 'Uploading…' : 'Replace'}
-								</span>
-							</Ariakit.Button>
+							/>
 							<div className="flex flex-wrap gap-2">
 								<Button
 									type="button"
@@ -172,18 +142,14 @@ export function ImageUploadButton({
 							</div>
 						</div>
 					) : (
-						<Ariakit.Button
+						<UploadTile
 							ref={uploadRef}
-							type="button"
-							disabled={isUploading}
-							accessibleWhenDisabled
-							aria-busy={isUploading || undefined}
+							shape="wide"
+							icon="image-plus"
+							label={`Upload ${name}`}
+							pendingLabel={isUploading ? 'Uploading…' : null}
 							onClick={open}
-							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
-						>
-							{isUploading ? <LoadingSpinner size={14} /> : <Icon name="image-plus" className="size-5" />}
-							<span className="label-sm">{isUploading ? 'Uploading…' : `Upload ${name}`}</span>
-						</Ariakit.Button>
+						/>
 					)}
 					{status}
 				</>

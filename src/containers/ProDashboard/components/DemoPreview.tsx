@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
@@ -511,26 +510,30 @@ export function DemoPreview() {
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-secondary">Access to public dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-secondary">View community-created dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-secondary">Basic DeFi data access</span>
 									</li>
 								</ul>
-								<Link href={createAccountHref}>
-									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-link transition-colors hover:bg-brand-tint">
-										Create Free Account
-									</span>
-								</Link>
+								<Button as={BasicLink} href={createAccountHref} variant="outline" size="lg">
+									Create Free Account
+								</Button>
 							</div>
 
-							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand-faint to-pro-ai-tint px-6 py-8 text-center shadow-overlay transition-transform hover:scale-[1.02]">
+							<div className="relative flex flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand-faint to-pro-ai-tint px-6 py-8 text-center">
 								<h3 className="mb-3 bg-linear-to-r from-link to-pro-ai-text bg-clip-text heading-sm text-transparent">
 									Pro
 								</h3>
@@ -539,36 +542,46 @@ export function DemoPreview() {
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
-										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-link" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="star" height={14} width={14} className="text-link" />
+										</span>
 										<span className="font-semibold text-primary">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-primary">Create unlimited custom dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-primary">CSV data downloads</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-primary">Advanced analytics & custom columns</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-primary">Full LlamaFeed access with AI summaries</span>
 									</li>
 									<li className="flex items-start gap-2">
-										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check" height={14} width={14} className="text-success" />
+										</span>
 										<span className="text-primary">Priority access to new features</span>
 									</li>
 								</ul>
-								<Link href={createAccountHref}>
-									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-pro-ai px-8 py-3 font-semibold text-on-brand transition-[filter] hover:brightness-110">
-										<Icon name="sparkles" height={16} width={16} />
-										Upgrade to Pro
-									</span>
-								</Link>
+								<Button as={BasicLink} href={createAccountHref} variant="primary" size="lg">
+									<Icon name="sparkles" height={14} width={14} />
+									Upgrade to Pro
+								</Button>
 							</div>
 						</div>
 					</div>

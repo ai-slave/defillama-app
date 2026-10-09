@@ -23,6 +23,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
@@ -81,22 +82,11 @@ function SelectableRow({
 	trailing?: React.ReactNode
 }) {
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			aria-pressed={selected}
-			className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm ${
-				selected
-					? 'bg-brand-muted text-link'
-					: 'text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
-			}`}
-		>
-			<span className={`grid size-4 shrink-0 place-items-center text-link ${selected ? '' : 'invisible'}`}>
-				<Icon name="check" className="size-3" />
-			</span>
+		<ListRow selected={selected} onClick={onClick} aria-pressed={selected}>
 			<span className="min-w-0 flex-1 truncate">{children}</span>
 			{trailing}
-		</button>
+			<Icon name="check" className={`size-4 shrink-0 text-link ${selected ? '' : 'invisible'}`} />
+		</ListRow>
 	)
 }
 

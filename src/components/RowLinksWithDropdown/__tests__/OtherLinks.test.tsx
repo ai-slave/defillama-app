@@ -28,6 +28,7 @@ test('the links drawer is named after its list, not the active link on its trigg
 				heading="Chains"
 				name="Ethereum"
 				isActive
+				size="md"
 				options={[
 					{ label: 'All', to: '/stablecoins' },
 					{ label: 'Ethereum', to: '/stablecoins/Ethereum' }

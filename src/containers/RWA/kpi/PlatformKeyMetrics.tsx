@@ -30,7 +30,9 @@ export function RWAPlatformKeyMetrics({ meta, kpi }: RWAPlatformKeyMetricsProps)
 					</h1>
 					{meta.suspicious === true && meta.suspiciousReason ? (
 						<p className="flex items-start gap-1.5 body-sm text-error">
-							<Icon name="alert-triangle" className="mt-0.5 size-3.5 shrink-0" />
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="alert-triangle" className="size-3.5" />
+							</span>
 							{meta.suspiciousReason}
 						</p>
 					) : null}

@@ -143,8 +143,10 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 				) : (
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
 						<div className="flex min-w-0 flex-col gap-1">
-							<span className="flex items-center gap-2 title-lg text-primary">
-								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-link" />
+							<span className="flex items-start gap-2 title-lg text-primary">
+								<span className="flex h-lh shrink-0 items-center">
+									<Icon name="mail" height={20} width={20} className="text-link" />
+								</span>
 								Get DefiLlama in your inbox
 							</span>
 							<span className="max-w-md body-md text-secondary">
@@ -157,12 +159,12 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						<form
 							noValidate
 							onSubmit={handleSubmit}
-							className="flex flex-col gap-3 @sm:grid @sm:grid-cols-[minmax(0,1fr)_auto] @sm:grid-rows-[auto_auto_auto_auto] @sm:gap-x-3 @sm:gap-y-0 @2xl:grid-cols-[auto_minmax(0,14rem)_auto] @2xl:grid-rows-[auto_auto_auto] @2xl:justify-start @5xl:shrink-0"
+							className="flex flex-col gap-3 @sm:grid @sm:grid-cols-[minmax(0,1fr)_auto] @sm:grid-rows-[auto_auto_auto_auto] @sm:gap-x-3 @sm:gap-y-1 @2xl:grid-cols-[auto_minmax(0,14rem)_auto] @2xl:grid-rows-[auto_auto_auto] @2xl:justify-start @5xl:shrink-0"
 						>
 							<FieldGroup
 								label="Send me"
 								error={submitted ? listMessage : null}
-								className="@sm:col-span-2 @sm:mb-3 @2xl:col-span-1 @2xl:row-span-3 @2xl:mb-0 @2xl:grid @2xl:grid-rows-subgrid"
+								className="@sm:col-span-2 @sm:mb-2 @2xl:col-span-1 @2xl:row-span-3 @2xl:mb-0 @2xl:grid @2xl:grid-rows-subgrid"
 							>
 								<div className="flex flex-wrap items-center gap-2">
 									{NEWSLETTERS.map(({ key, label }) => {
@@ -171,13 +173,18 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 											<Ariakit.Checkbox
 												key={key}
 												render={
-													<Button variant="toggle" size="md" data-active={on} aria-label={`Subscribe to ${label}`} />
+													<Button
+														variant="toggle"
+														size="md"
+														data-active={on}
+														stateIcon
+														aria-label={`Subscribe to ${label}`}
+													/>
 												}
 												checked={on}
 												onChange={() => toggle(key)}
 												disabled={isPending}
 											>
-												{on ? <Icon name="check" className="size-3.5" /> : null}
 												{label.replace('DefiLlama ', '')}
 											</Ariakit.Checkbox>
 										)
@@ -221,7 +228,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="mail-rounded" height={28} width={28} className="text-primary" />
+				<Icon name="mail" height={28} width={28} className="text-primary" />
 				<span className="label-lg text-primary">Newsletters</span>
 			</div>
 
@@ -290,8 +297,10 @@ function NewsletterSuccess({
 }) {
 	if (layout === 'strip') {
 		return (
-			<div role="status" className="flex items-center gap-2 body-md text-primary">
-				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-link" />
+			<div role="status" className="flex items-start gap-2 body-md text-primary">
+				<span className="flex h-lh shrink-0 items-center">
+					<Icon name="check-circle" height={20} width={20} className="text-link" />
+				</span>
 				<span>Subscribed to selected newsletters.</span>
 			</div>
 		)

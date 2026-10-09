@@ -20,9 +20,9 @@ export function badgeFor(sourceType?: string): string {
 	return getOwnRegistryValue(BADGE, sourceType) ?? 'Source'
 }
 
-export function iconFor(sourceType?: string): 'layers' | 'earth' | 'sparkles' | 'file-text' | 'twitter' | 'code' {
+export function iconFor(sourceType?: string): 'layers' | 'globe' | 'sparkles' | 'file-text' | 'twitter' | 'code' {
 	if (sourceType === 'x') return 'twitter'
-	if (sourceType === 'web') return 'earth'
+	if (sourceType === 'web') return 'globe'
 	if (sourceType === 'file') return 'file-text'
 	if (sourceType === 'computed') return 'code'
 	if (sourceType === 'data') return 'layers'

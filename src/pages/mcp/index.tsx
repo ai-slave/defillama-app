@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import MCPContainer from '~/containers/MCP'
+import { Button } from '~/ui/Button'
 import { StaleText } from '~/ui/StaleText'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
@@ -26,24 +27,15 @@ export default function MCP() {
 						</BasicLink>
 
 						<nav className="flex items-center gap-1">
-							<BasicLink
-								href="#tools"
-								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-							>
+							<Button as={BasicLink} href="#tools" variant="ghost" size="md">
 								Tools
-							</BasicLink>
-							<BasicLink
-								href="#setup"
-								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-							>
+							</Button>
+							<Button as={BasicLink} href="#setup" variant="ghost" size="md">
 								Setup
-							</BasicLink>
-							<BasicLink
-								href="/"
-								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-							>
+							</Button>
+							<Button as={BasicLink} href="/" variant="ghost" size="md">
 								Back to Main
-							</BasicLink>
+							</Button>
 						</nav>
 					</div>
 				</header>

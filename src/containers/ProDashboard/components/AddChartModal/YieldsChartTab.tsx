@@ -546,8 +546,10 @@ export function YieldsChartTab({
 																})
 																closePoolPicker()
 															}}
-															className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
-																isSelected ? 'bg-brand-tint' : ''
+															className={`grid w-full cursor-pointer grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm sm:grid-cols-[1fr_100px_100px_80px] ${
+																isSelected
+																	? 'bg-brand-muted'
+																	: 'hover:bg-hover-row focus-visible:bg-hover-row active:bg-pressed-row'
 															}`}
 															style={{
 																position: 'absolute',
@@ -684,16 +686,21 @@ export function YieldsChartTab({
 
 								<div className="h-[280px]">
 									{queryReadFailed(previewHistory) && !previewHistory.data ? (
-										<div role="alert" className="flex h-full flex-col items-center justify-center gap-2">
-											<p className="body-md text-error">Couldn't load this pool's history.</p>
-											<Button
-												type="button"
-												size="sm"
-												pendingLabel={previewHistory.isFetching ? 'Retrying…' : null}
-												onClick={() => void previewHistory.refetch()}
+										<div className="flex h-full items-center justify-center">
+											<InlineStatus
+												variant="error"
+												action={
+													<Button
+														size="sm"
+														pendingLabel={previewHistory.isFetching ? 'Retrying…' : null}
+														onClick={() => void previewHistory.refetch()}
+													>
+														Try again
+													</Button>
+												}
 											>
-												Try again
-											</Button>
+												Couldn't load this pool's history.
+											</InlineStatus>
 										</div>
 									) : isPreviewLoading ? (
 										<div role="status" aria-live="polite" className="flex h-full items-center justify-center">

@@ -16,7 +16,7 @@ import {
 } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
@@ -165,13 +165,16 @@ function ClaimForm({
 							and proceed with your access.
 						</p>
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<div className="flex flex-col gap-1">
-								<span className="label-sm text-secondary">Name of organization</span>
-								<div className={`${inputStyles} flex items-center gap-2`} aria-readonly>
-									<TokenLogo src={marketMakerLogo ?? null} size={18} />
-									<span className="truncate">{marketMakerName}</span>
-								</div>
-							</div>
+							<Field label="Name of organization">
+								{(control) => (
+									<Input
+										{...control}
+										readOnly
+										value={marketMakerName}
+										prefix={<TokenLogo src={marketMakerLogo ?? null} size={18} />}
+									/>
+								)}
+							</Field>
 							<Field label="Position at organization" error={submitted ? errors.position : null}>
 								{(control) => (
 									// The form's first field: the organization beside it is fixed.

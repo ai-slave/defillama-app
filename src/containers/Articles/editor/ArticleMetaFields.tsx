@@ -61,14 +61,6 @@ export function MetaSwitch({
 	)
 }
 
-export function MetaFieldHint({ children, error }: { children?: ReactNode; error?: string | null }) {
-	if (error) {
-		return (
-			<p role="alert" className="body-sm text-error">
-				{error}
-			</p>
-		)
-	}
-	if (!children) return null
+export function MetaFieldHint({ children }: { children: ReactNode }) {
 	return <p className="body-sm text-tertiary">{children}</p>
 }

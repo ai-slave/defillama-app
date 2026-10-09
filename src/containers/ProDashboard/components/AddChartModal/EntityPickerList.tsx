@@ -2,10 +2,12 @@ import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { LoadingIndicator } from '~/ui/Status'
 import { getItemIconUrl } from '../../utils'
 
@@ -155,14 +157,12 @@ export function EntityPickerList({
 									const isChild = entity.isChild && !!entity.parentValue && visibleEntityValues.has(entity.parentValue)
 
 									return (
-										<button
+										<ListRow
 											key={entity.value}
-											type="button"
 											aria-pressed={isSelected}
 											onClick={() => onToggle(entity.value)}
-											className={`flex w-full items-center gap-3 py-2 pr-3 text-left label-sm transition-all ${
-												isSelected ? 'bg-brand-tint' : ''
-											} ${isChild ? 'pl-8' : 'pl-3'}`}
+											nested={isChild}
+											className="gap-3"
 											style={{
 												position: 'absolute',
 												top: 0,
@@ -171,13 +171,7 @@ export function EntityPickerList({
 												transform: `translateY(${row.start}px)`
 											}}
 										>
-											<div
-												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-													isSelected ? 'border-brand bg-brand' : 'border-subtle bg-surface-elevated-1'
-												}`}
-											>
-												{isSelected ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}
-											</div>
+											<CheckboxIndicator checked={isSelected} />
 
 											{iconUrl ? (
 												<img
@@ -189,10 +183,8 @@ export function EntityPickerList({
 												/>
 											) : null}
 
-											<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-primary'}`}>
-												{entity.label}
-											</span>
-										</button>
+											<span className="truncate">{entity.label}</span>
+										</ListRow>
 									)
 								})}
 							</div>

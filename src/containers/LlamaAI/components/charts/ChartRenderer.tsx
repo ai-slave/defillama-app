@@ -50,8 +50,10 @@ import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransf
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -820,13 +822,9 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 // Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.
 function ChartErrorPlaceholder({ message = 'This chart couldn’t be drawn.' }: { message?: string }) {
 	return (
-		<div
-			role="alert"
-			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-error"
-		>
-			<Icon name="alert-triangle" height={16} width={16} />
-			<p>{message}</p>
-		</div>
+		<ChartPanelBodyFallback className="px-4">
+			<InlineStatus variant="error">{message}</InlineStatus>
+		</ChartPanelBodyFallback>
 	)
 }
 

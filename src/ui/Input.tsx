@@ -59,14 +59,13 @@ import { tw } from './tw'
    in this file, not a className override.
 
    An Ariakit host that renders its own input (Ariakit.Combobox) renders the
-   component: `render={<Input />}`. `inputStyles` stays exported only for a
-   native <select> and the few field-styled pick triggers, until each moves
-   onto Select.
+   component: `render={<Input />}`. A pick is a Select, never a native
+   select element or a button drawn as a field.
 ---------------------------------------------------------------------------- */
 
 const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary placeholder:text-tertiary not-focus:not-disabled:not-aria-disabled:not-aria-invalid:hover:border-strong focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-disabled aria-busy:cursor-progress aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled aria-invalid:border-error aria-invalid:focus:border-error`
 
-export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
+const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 
 /** Multiline prose needs the body ramp; callers own rows, resizing, and height limits. */
 const textareaStyles = `${fieldSurfaceStyles} py-2 max-sm:placeholder:text-sm/6 sm:body-md`

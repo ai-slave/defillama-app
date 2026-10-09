@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { RailItem } from '~/ui/RailItem'
 import { UTR_GRADE_COLORS, type UtrGradeLabel } from './gradeBands'
 import type { UtrScoringConfig } from './types'
 import {
@@ -246,20 +247,19 @@ function UtrDocsDrawerBody({
 							const active = chapter.id === activeId
 							return (
 								<li key={chapter.id}>
-									<button
+									<RailItem
+										as="button"
 										type="button"
+										active={active}
 										aria-current={active ? 'location' : undefined}
 										onClick={() => {
 											setActiveId(chapter.id)
 											setActiveSubId(null)
 											scrollToId(`utr-docs-${chapter.id}`)
 										}}
-										className={`flex min-h-11 w-full cursor-pointer items-center border-l-2 px-3 text-left body-md md:min-h-9 ${
-											active ? 'border-brand text-link' : 'border-transparent text-secondary hover:text-primary'
-										}`}
 									>
 										{chapter.label}
-									</button>
+									</RailItem>
 								</li>
 							)
 						})}
@@ -270,19 +270,18 @@ function UtrDocsDrawerBody({
 								const active = activeSubId === subsection.id || (activeSubId == null && subsection.label === '1. Intro')
 								return (
 									<li key={subsection.id}>
-										<button
+										<RailItem
+											as="button"
 											type="button"
+											active={active}
 											onClick={() => {
 												setActiveSubId(subsection.id)
 												scrollToId(subsection.id)
 											}}
 											aria-current={active ? 'location' : undefined}
-											className={`flex min-h-11 w-full cursor-pointer items-center px-3 text-left body-sm md:min-h-8 ${
-												active ? 'text-link' : 'text-secondary hover:text-primary'
-											}`}
 										>
 											{subsection.label}
-										</button>
+										</RailItem>
 									</li>
 								)
 							})}

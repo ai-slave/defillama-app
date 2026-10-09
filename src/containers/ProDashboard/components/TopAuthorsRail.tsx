@@ -3,11 +3,12 @@ import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
-import { ProMeta, proCardShellStyles } from '../ui'
+import { ProMeta } from '../ui'
 import { DiscoveryShelfHeading } from './DiscoverySection'
 
 const RAIL_TITLE = 'Top Authors'
@@ -20,9 +21,11 @@ function compact(value: number): string {
 function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 	const { author } = entry
 	return (
-		<BasicLink
+		<Card
+			as={BasicLink}
 			href={`/authors/${author.slug}`}
-			className={`${proCardShellStyles} group flex h-full flex-col gap-2 p-3 transition-colors hover:border-brand-muted`}
+			padding="md"
+			className="hover-wash-card flex h-full flex-col gap-2"
 		>
 			<div className="flex items-center gap-2">
 				{author.avatarUrl ? (
@@ -37,7 +40,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					</span>
 				)}
 				<div className="min-w-0">
-					<p className="truncate title-md text-primary group-hover:text-link">{author.displayName}</p>
+					<p className="truncate title-md text-primary">{author.displayName}</p>
 					<p className="truncate body-sm text-tertiary">@{author.slug}</p>
 				</div>
 			</div>
@@ -50,7 +53,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					`${compact(entry.totalLikes)} stars`
 				]}
 			/>
-		</BasicLink>
+		</Card>
 	)
 }
 

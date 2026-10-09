@@ -1,4 +1,5 @@
 import { CheckboxIndicator } from '~/ui/Checkbox'
+import { OptionTile } from '~/ui/OptionTile'
 import type { MetricWithAvailability } from '../types'
 
 interface MetricCardProps {
@@ -11,15 +12,14 @@ interface MetricCardProps {
 export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCardProps) {
 	return (
 		// The whole card is the checkbox, so the box inside is only its indicator.
-		<button
-			type="button"
+		<OptionTile
+			layout="row"
+			selected={isSelected}
 			role="checkbox"
 			aria-checked={isSelected}
 			onClick={onToggle}
 			disabled={!metric.isValid}
-			className={`group flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled ${
-				isSelected ? 'border-brand bg-brand-faint' : 'border-subtle not-disabled:hover:border-brand-muted'
-			}`}
+			className="group"
 		>
 			<CheckboxIndicator checked={isSelected} className="group-disabled:border-disabled" />
 
@@ -33,6 +33,6 @@ export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCa
 					</span>
 				</span>
 			</span>
-		</button>
+		</OptionTile>
 	)
 }

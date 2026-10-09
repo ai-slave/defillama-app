@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ImagePreviewModal } from '../ImagePreviewModal'
 
@@ -16,7 +17,7 @@ let blobs: Map<string, Blob>
 const imageA = 'https://images.example/chart-a.png'
 const imageB = 'https://images.example/chart-b.png'
 function button(name: string) {
-	const result = [...document.querySelectorAll('button')].find((el) => el.textContent?.trim() === name)
+	const result = [...document.querySelectorAll('button')].find((el) => accessibleName(el) === name)
 	expect(result, `button ${name}`).not.toBeUndefined()
 	return result!
 }

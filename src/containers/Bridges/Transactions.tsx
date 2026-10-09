@@ -603,7 +603,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				as="form"
 				noValidate
 				onSubmit={handleSubmit}
-				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:grid-rows-[auto_auto_auto] md:gap-y-0"
+				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:grid-rows-[auto_auto_auto] md:gap-y-1"
 			>
 				<Field
 					label="Bridge"
@@ -750,16 +750,10 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 			) : null}
 
 			{!isPending && transactionResult.truncated ? (
-				<div
-					role="status"
-					className="flex items-start gap-2 rounded-md border border-warning-muted bg-warning-tint px-3 py-2 body-md text-primary"
-				>
-					<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-warning" />
-					<p>
-						Results reached the 50-page limit. Counts, statistics, table rows, and CSV cover the newest loaded
-						transactions only. Narrow the date range for a complete result.
-					</p>
-				</div>
+				<InlineStatus variant="warning">
+					Results reached the 50-page limit. Counts, statistics, table rows, and CSV cover the newest loaded
+					transactions only. Narrow the date range for a complete result.
+				</InlineStatus>
 			) : null}
 
 			{!isPending && tableData.length > 0 ? (

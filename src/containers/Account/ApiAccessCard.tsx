@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
@@ -75,11 +76,7 @@ export function ApiAccessCard({
 						<Icon name="key" height={14} width={14} />
 						Generate API key
 					</Button>
-					{generateError ? (
-						<p role="alert" className="body-md text-error">
-							{generateError}
-						</p>
-					) : null}
+					{generateError ? <InlineStatus variant="error">{generateError}</InlineStatus> : null}
 				</div>
 			</div>
 		)
@@ -108,9 +105,15 @@ export function ApiAccessCard({
 							<Icon name={showKey ? 'eye-off' : 'eye'} height={14} width={14} />
 							{showKey ? 'Hide' : 'Show'}
 						</Button>
-						<Button size="sm" onClick={() => copy.mutate()} pendingLabel={copy.isPending ? 'Copying…' : null}>
+						<Button
+							size="sm"
+							onClick={() => copy.mutate()}
+							pendingLabel={copy.isPending ? 'Copying…' : null}
+							doneLabel="Copied"
+							done={copy.isSuccess && copy.data === apiKey}
+						>
 							<Icon name="copy" height={14} width={14} />
-							{copy.isSuccess && copy.data === apiKey ? 'Copied' : 'Copy'}
+							Copy
 						</Button>
 						<Button
 							size="sm"
@@ -127,11 +130,7 @@ export function ApiAccessCard({
 				</div>
 			</div>
 
-			{copy.error ? (
-				<p role="alert" className="body-md text-error">
-					Could not copy the API key. Try again.
-				</p>
-			) : null}
+			{copy.error ? <InlineStatus variant="error">Could not copy the API key. Try again.</InlineStatus> : null}
 			{confirmRegenerate ? (
 				<ConfirmActionDialog
 					title="Regenerate API key?"
@@ -190,11 +189,7 @@ export function ApiAccessCard({
 						<br />
 						We will notify you via email if you approach your plan limits.
 					</p>
-					{overage.error ? (
-						<p role="alert" className="body-sm text-error">
-							{overage.error}
-						</p>
-					) : null}
+					{overage.error ? <InlineStatus variant="error">{overage.error}</InlineStatus> : null}
 				</div>
 			)}
 

@@ -31,6 +31,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { getErrorMessage } from '~/utils/error'
@@ -267,9 +268,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</Tooltip>
 				</div>
 				{updateTitle.error ? (
-					<p role="alert" className="w-full p-1.5 body-sm text-error">
-						{updateTitle.error.message} Edit the title or retry saving.
-					</p>
+					<div className="w-full p-1.5">
+						<InlineStatus variant="error">{updateTitle.error.message} Edit the title or save again.</InlineStatus>
+					</div>
 				) : null}
 			</form>
 		)

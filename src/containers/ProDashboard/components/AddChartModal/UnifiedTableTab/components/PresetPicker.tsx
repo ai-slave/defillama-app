@@ -1,5 +1,6 @@
 import type { UnifiedTablePreset } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
 import { UNIFIED_TABLE_PRESETS } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
+import { OptionTile } from '~/ui/OptionTile'
 
 export function PresetPicker({
 	activePresetId,
@@ -21,19 +22,17 @@ export function PresetPicker({
 			{presetList.map((preset) => {
 				const isActive = preset.id === activePresetId
 				return (
-					<button
-						type="button"
+					<OptionTile
 						key={preset.id}
+						layout="stack"
+						selected={isActive}
 						aria-pressed={isActive}
 						onClick={() => onSelect(preset.id)}
-						className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-3 text-left transition ${
-							isActive ? 'border-brand bg-brand-tint' : 'border-medium hover:border-brand'
-						}`}
 					>
 						<span className="title-md text-primary">{preset.name}</span>
 						{preset.description ? <span className="body-sm text-secondary">{preset.description}</span> : null}
 						{isActive ? <span className="rounded-sm bg-brand-tint px-2 py-0.5 label-sm text-link">Active</span> : null}
-					</button>
+					</OptionTile>
 				)
 			})}
 		</div>

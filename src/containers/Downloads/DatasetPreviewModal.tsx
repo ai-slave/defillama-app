@@ -12,6 +12,7 @@ import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
+import { InlineStatus } from '~/ui/Status'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
@@ -168,7 +169,9 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	const {
 		data: csvText,
 		isLoading: loading,
-		error
+		isFetching,
+		error,
+		refetch
 	} = useQuery({
 		queryKey: ['downloads-preview', dataset.slug, selectedChain, isPreview],
 		queryFn: async () => {
@@ -600,13 +603,17 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 								</div>
 							</div>
 						) : error ? (
-							<div className="flex flex-1 items-center justify-center">
-								<div className="flex flex-col items-center gap-2">
-									<Icon name="alert-triangle" className="size-6 text-error" />
-									<p className="body-md text-error">
-										{error instanceof Error ? error.message : 'Failed to fetch data'}
-									</p>
-								</div>
+							<div className="flex flex-1 items-center justify-center p-4">
+								<InlineStatus
+									variant="error"
+									action={
+										<Button size="sm" pendingLabel={isFetching ? 'Retrying…' : null} onClick={() => void refetch()}>
+											Try again
+										</Button>
+									}
+								>
+									{error instanceof Error ? error.message : 'Failed to fetch data'}
+								</InlineStatus>
 							</div>
 						) : columnMeta.length === 0 ? (
 							<div className="flex flex-1 items-center justify-center">

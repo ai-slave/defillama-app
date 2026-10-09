@@ -3,9 +3,11 @@ import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterS
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 
 const EMPTY_FILTERS: Array<{ name: string; key: string }> = []
 
@@ -16,10 +18,16 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 
 	return (
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues}>
-			<ComboboxSelectTrigger className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow-raised hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover">
-				<span className="sr-only">Open Settings Menu</span>
+			<Tooltip
+				content="Settings"
+				render={
+					<ComboboxSelectTrigger
+						render={<Button variant="onBrand" size="lg" square aria-label="Open Settings Menu" className="-my-0.5" />}
+					/>
+				}
+			>
 				<Icon name="settings" height={16} width={16} />
-			</ComboboxSelectTrigger>
+			</Tooltip>
 			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
 			<ComboboxSurface variant="panel" heading="Settings" unmountOnHide={false}>
 				{tvlOptions.map((option) => (

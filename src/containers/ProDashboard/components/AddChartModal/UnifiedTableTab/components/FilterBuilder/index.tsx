@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -278,7 +279,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						<span className="truncate title-sm">{config.label}</span>
 						{config.description ? (
 							<Tooltip content={config.description} placement="top">
-								<Icon name="circle-help" className="size-3 text-tertiary" />
+								<Icon name="help-circle" className="size-3 text-tertiary" />
 							</Tooltip>
 						) : null}
 						{categoryBadge}
@@ -304,7 +305,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 							<span className="truncate title-sm">{config.label}</span>
 							{config.description ? (
 								<Tooltip content={config.description} placement="top">
-									<Icon name="circle-help" className="size-3 text-tertiary" />
+									<Icon name="help-circle" className="size-3 text-tertiary" />
 								</Tooltip>
 							) : null}
 							{categoryBadge}
@@ -325,7 +326,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						<span className="truncate title-sm">{config.label}</span>
 						{config.description ? (
 							<Tooltip content={config.description} placement="top">
-								<Icon name="circle-help" className="size-3 text-tertiary" />
+								<Icon name="help-circle" className="size-3 text-tertiary" />
 							</Tooltip>
 						) : null}
 						{categoryBadge}
@@ -628,26 +629,25 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 								{isExpanded && availableFilters.length > 0 ? (
 									<div className="border-t border-subtle bg-surface p-1">
 										{availableFilters.map((filter) => (
-											<button
+											<ListRow
 												key={filter.id}
-												type="button"
 												data-filter-id={filter.id}
 												onClick={() => handleAddFilter(filter)}
-												className="group flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 text-left transition-all hover:bg-hover-row"
+												className="group justify-between"
 											>
-												<div className="flex items-center gap-1.5">
-													<span className="truncate label-sm text-primary">{filter.label}</span>
+												<div className="flex min-w-0 items-center gap-1.5">
+													<span className="truncate">{filter.label}</span>
 													{filter.description ? (
 														<Tooltip content={filter.description} placement="right">
-															<Icon name="circle-help" className="size-3 text-tertiary" />
+															<Icon name="help-circle" className="size-3 text-tertiary" />
 														</Tooltip>
 													) : null}
 												</div>
 												<Icon
 													name="plus"
-													className="size-3 shrink-0 text-tertiary opacity-0 transition-opacity group-hover:opacity-100"
+													className="size-3.5 shrink-0 text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
 												/>
-											</button>
+											</ListRow>
 										))}
 									</div>
 								) : null}

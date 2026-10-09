@@ -31,26 +31,27 @@ export default function Sheets() {
 						</BasicLink>
 
 						<nav aria-label="Sheets navigation" className="hidden items-center gap-1.5 sm:flex">
-							<BasicLink
+							<Button
+								as={BasicLink}
 								href="https://docs.llama.fi/spreadsheet-functions/function-reference"
 								data-umami-event="sheets-functions-reference-click"
-								className="rounded-lg px-3.5 py-1.5 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+								variant="ghost"
+								size="md"
 							>
 								Functions Reference
-							</BasicLink>
-							<BasicLink
+							</Button>
+							<Button
+								as={BasicLink}
 								href="https://docs.llama.fi/spreadsheet-functions/templates"
 								data-umami-event="sheets-templates-click-header"
-								className="rounded-lg px-3.5 py-1.5 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+								variant="ghost"
+								size="md"
 							>
 								Templates
-							</BasicLink>
-							<BasicLink
-								href="/"
-								className="rounded-lg px-3.5 py-1.5 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-							>
+							</Button>
+							<Button as={BasicLink} href="/" variant="ghost" size="md">
 								Return to Main Page
-							</BasicLink>
+							</Button>
 						</nav>
 
 						<nav aria-label="Sheets navigation" className="sm:hidden">

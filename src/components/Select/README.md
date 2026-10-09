@@ -20,6 +20,7 @@ The pickers in this folder share one surface (`ComboboxSurface` in `src/ui/Popov
 - Callers choose the trigger `variant` and `size`; product surfaces pin their own values instead of inheriting a default.
 - The trigger's `className` appends placement and layout classes (`ml-auto`, `w-full`, `flex-1`). `triggerProps` cannot carry a `className`, because replacing the trigger's classes would override its `variant` and `size`.
 - Every trigger is `ComboboxSelectTrigger`, so Escape on an open list closes only the list, inside a dialog too.
+- A trigger is named `{label} dropdown` unless `triggerProps` gives it an `id`: inside a `Field` the visible label names it, so never also pass an `aria-label` there. With `labelType="none"`, an empty single pick shows its `label` as a tertiary placeholder.
 
 ## Search and sheet height
 

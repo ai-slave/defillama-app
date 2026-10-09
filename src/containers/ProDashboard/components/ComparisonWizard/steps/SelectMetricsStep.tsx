@@ -53,20 +53,13 @@ export function SelectMetricsStep() {
 						<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
 							<Icon name="bar-chart-2" height={18} width={18} />
 						</div>
-						<div className="flex min-w-0 flex-col items-start">
+						<div className="flex min-w-0 flex-col items-start label-sm">
 							<p className="label-sm text-primary">
 								{validMetrics.length} metric{validMetrics.length === 1 ? '' : 's'} available
 							</p>
 							<p className="body-sm text-tertiary">Based on data availability for your selected {typeLabel}.</p>
 							{invalidMetrics.length > 0 ? (
-								// -ml-2.25 (px-2 + 1px border) puts the label on the text edge; -mb-1 bleeds the hover into the padding.
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									onClick={() => setShowInvalid(!showInvalid)}
-									className="-mb-1 -ml-2.25"
-								>
+								<Button variant="link" onClick={() => setShowInvalid(!showInvalid)}>
 									{showInvalid ? 'Hide' : 'Show'} unavailable ({invalidMetrics.length})
 								</Button>
 							) : null}
@@ -77,13 +70,10 @@ export function SelectMetricsStep() {
 						<span className="label-sm text-secondary">
 							{state.selectedMetrics.length} metric{state.selectedMetrics.length !== 1 ? 's' : ''} selected
 						</span>
-						{/* -mr-2.25 (px-2 + 1px border) puts the last label on the cards' edge; -my-1 keeps the row 16px. */}
-						<div className="-my-1 -mr-2.25 flex items-center">
+						<div className="flex items-center gap-3 label-sm">
 							{/* Both stay rendered, disabled when they have nothing to do, so the pressed one keeps focus. */}
 							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
+								variant="link"
 								disabled={state.selectedMetrics.length >= validMetrics.length}
 								accessibleWhenDisabled
 								onClick={() => actions.selectAllMetrics(validMetrics.map((m) => m.metric))}
@@ -91,9 +81,7 @@ export function SelectMetricsStep() {
 								Select all
 							</Button>
 							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
+								variant="link"
 								disabled={state.selectedMetrics.length === 0}
 								accessibleWhenDisabled
 								onClick={() => actions.clearMetrics()}

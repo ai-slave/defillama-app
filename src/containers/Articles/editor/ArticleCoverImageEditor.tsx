@@ -1,10 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
-import { Icon as SharedIcon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
+import { UploadTile } from '~/ui/UploadTile'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater } from './ArticleEditorTypes'
@@ -56,35 +54,26 @@ export function ArticleCoverImageEditor({
 									: 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
 							}`}
 						>
-							<button
-								type="button"
-								onClick={onOpenCoverDetails}
-								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-white-line bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-research-white backdrop-blur-sm transition-colors hover:bg-research-backdrop-strong"
-							>
+							<Button variant="onMedia" size="md" onClick={onOpenCoverDetails} className="pointer-events-auto">
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
-							</button>
-							<Ariakit.Button
-								type="button"
-								disabled={isUploadingCover}
+							</Button>
+							<Button
+								variant="onMedia"
+								size="md"
 								onClick={openCoverPicker}
-								accessibleWhenDisabled
-								aria-busy={isUploadingCover || undefined}
-								className="pointer-events-auto flex min-h-8 items-center gap-1.5 rounded-md border border-research-white-line bg-research-backdrop-soft px-2.5 py-1.5 label-sm text-research-white backdrop-blur-sm transition-colors not-aria-disabled:hover:bg-research-backdrop-strong aria-busy:cursor-progress"
+								pendingLabel={isUploadingCover ? 'Uploading…' : null}
+								className="pointer-events-auto"
 							>
-								{isUploadingCover ? (
-									<>
-										<LoadingSpinner size={14} />
-										Uploading…
-									</>
-								) : (
-									'Replace'
-								)}
-							</Ariakit.Button>
+								Replace
+							</Button>
 							<Tooltip
 								content="Remove cover"
 								render={
-									<Ariakit.Button
+									<Button
+										variant="onMedia"
+										size="md"
+										square
 										disabled={isUploadingCover}
 										accessibleWhenDisabled
 										aria-label="Remove cover"
@@ -96,7 +85,7 @@ export function ArticleCoverImageEditor({
 												() => editor.querySelector('button')
 											)
 										}}
-										className="pointer-events-auto flex aspect-square min-h-8 items-center justify-center rounded-md border border-research-white-line bg-research-backdrop-soft p-1.5 text-research-white backdrop-blur-sm transition-colors not-aria-disabled:hover:border-error-muted not-aria-disabled:hover:bg-error-tint not-aria-disabled:hover:text-error aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled"
+										className="pointer-events-auto"
 									/>
 								}
 							>
@@ -146,18 +135,14 @@ export function ArticleCoverImageEditor({
 					})()}
 				</figure>
 			) : (
-				<Ariakit.Button
-					type="button"
-					disabled={isUploadingCover}
+				<UploadTile
+					shape="cover"
+					icon="image-plus"
+					label="Add cover image"
+					hint="PNG, JPEG, WebP, or GIF · up to 8 MB"
+					pendingLabel={isUploadingCover ? 'Uploading…' : null}
 					onClick={openCoverPicker}
-					accessibleWhenDisabled
-					aria-busy={isUploadingCover || undefined}
-					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
-				>
-					{isUploadingCover ? <LoadingSpinner size={24} /> : <SharedIcon name="image-plus" className="size-6" />}
-					<span className="label-md">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>
-					<span className="body-sm text-tertiary">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
-				</Ariakit.Button>
+				/>
 			)}
 			{publishError ? <p className="mt-2 body-sm text-error">{publishError}</p> : null}
 		</div>

@@ -261,6 +261,7 @@ export function LinksWithDropdown({
 				keyPrefix={name}
 				isActive={isActiveLinkInList}
 				options={links}
+				size="sm"
 				className="w-full justify-between"
 			/>
 		)
@@ -291,7 +292,8 @@ export function LinksWithDropdown({
 					isActive={isLinkInDropdown}
 					options={links}
 					keyPrefix={name}
-					className="mr-1 ml-1 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand data-[active=true]:*:text-on-brand"
+					size="sm"
+					className="mx-1"
 				/>
 			) : null}
 		</>

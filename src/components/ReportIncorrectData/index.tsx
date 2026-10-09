@@ -2,13 +2,14 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { Select } from '~/components/Select/Select'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, Textarea } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
@@ -125,6 +126,7 @@ function ReportSession({
 	const messageError = message.trim() ? null : 'Enter what’s wrong with the data.'
 	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
 	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
+	const [selectedDataType, setSelectedDataType] = useState<string>(dataTypes[0])
 
 	const onSubmit = (event: FormSubmitEvent) => {
 		event.preventDefault()
@@ -132,17 +134,13 @@ function ReportSession({
 		const form = event.currentTarget
 		if (messageError) return showFieldErrors(form, () => setSubmitted(true))
 		const values = new FormData(form)
-		// A select cannot stay read-only; preserve focus before disabling it.
-		if (document.activeElement === form.elements.namedItem('dataType')) {
-			form.querySelector<HTMLButtonElement>('button[type="submit"]')!.focus()
-		}
 		const subjectPayload = subject.type === 'exchange' ? { subject } : { protocol: subject.name }
 		// The dialog locks while the report sends, but leaving the page still unmounts it. The promise settles either
 		// way, so a form that is gone by then reports the outcome as a toast.
 		report
 			.mutateAsync({
 				...subjectPayload,
-				dataType: dataType ?? values.get('dataType'),
+				dataType: dataType ?? selectedDataType,
 				message,
 				correctSource: values.get('correctSource'),
 				contact: values.get('contact')
@@ -185,13 +183,19 @@ function ReportSession({
 						{dataType ? null : (
 							<Field label="Data type">
 								{(control) => (
-									<select {...control} disabled={pending} name="dataType" className={inputStyles}>
-										{dataTypes.map((option) => (
-											<option key={option} value={option}>
-												{option}
-											</option>
-										))}
-									</select>
+									<Select
+										allValues={dataTypes}
+										selectedValues={selectedDataType}
+										setSelectedValues={setSelectedDataType}
+										label={selectedDataType}
+										labelType="none"
+										heading="Data type"
+										variant="input"
+										size="md"
+										className="w-full"
+										// Locked while the report sends; it keeps focus, so a reader who submitted from it stays there.
+										triggerProps={{ ...control, disabled: pending, accessibleWhenDisabled: true }}
+									/>
 								)}
 							</Field>
 						)}

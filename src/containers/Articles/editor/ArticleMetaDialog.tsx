@@ -1,17 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
+import { Select } from '~/components/Select/Select'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
-import { Input, inputStyles, Textarea } from '~/ui/Input'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -37,6 +34,8 @@ import { ArticlePageAssetPicker } from './ArticlePageAssetPicker'
 import type { useArticleCollaborators } from './useArticleCollaborators'
 
 type DialogStore = ReturnType<typeof Ariakit.useDialogStore>
+
+const SECTION_OPTIONS = ARTICLE_SECTIONS.map((section) => ({ key: section, name: ARTICLE_SECTION_LABELS[section] }))
 
 const GUEST_AUTHOR_TYPE_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleGuestAuthorType>> = [
 	{
@@ -308,33 +307,26 @@ function MetaSheet({
 								error={publishErrors.section}
 							>
 								{(control) => (
-									<Ariakit.ComboboxProvider
-										selectedValue={article.section ?? ''}
-										setSelectedValue={(v) => {
-											const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
-											updateArticle('section', (next || null) as ArticleSection | null)
-										}}
-									>
-										<ComboboxSelectTrigger
-											{...control}
-											className={`${inputStyles} flex items-center justify-between gap-2 text-left ${article.section ? '' : 'text-tertiary'}`}
-										>
-											<span className="truncate">
-												{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Select a section…'}
-											</span>
-											<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
-										</ComboboxSelectTrigger>
-										<ComboboxSurface variant="panel" heading="Section" sameWidth>
-											{ARTICLE_SECTIONS.map((section) => (
-												<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
-													<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-													<span className={popoverSingleSelectCheckStyles(article.section === section)} aria-hidden>
-														{article.section === section ? <SelectCheckIcon /> : null}
-													</span>
-												</Ariakit.ComboboxItem>
-											))}
-										</ComboboxSurface>
-									</Ariakit.ComboboxProvider>
+									<Select
+										allValues={SECTION_OPTIONS}
+										selectedValues={article.section ?? ''}
+										setSelectedValues={(value: string) =>
+											updateArticle('section', (value || null) as ArticleSection | null)
+										}
+										label={
+											article.section ? (
+												ARTICLE_SECTION_LABELS[article.section]
+											) : (
+												<span className="text-tertiary">Select a section…</span>
+											)
+										}
+										labelType="none"
+										heading="Section"
+										variant="input"
+										size="md"
+										className="w-full justify-between"
+										triggerProps={{ ...control }}
+									/>
 								)}
 							</Field>
 						</MetaSection>

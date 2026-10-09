@@ -420,8 +420,10 @@ export function MeasuredCard({
 			{reportedNote ? <span className="text-secondary">{reportedNote}</span> : null}
 			{verified.apy_note ? <span className="text-secondary">{verified.apy_note}</span> : null}
 			{feeWarning ? (
-				<span className="flex items-center gap-1.5 text-warning">
-					<Icon name="alert-triangle" height={12} width={12} className="shrink-0" aria-hidden />
+				<span className="flex items-start gap-1.5 text-warning">
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="alert-triangle" height={12} width={12} aria-hidden />
+					</span>
 					{feeWarning}
 				</span>
 			) : null}

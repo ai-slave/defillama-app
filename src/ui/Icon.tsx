@@ -11,7 +11,6 @@ export const ICON_GROUPS = [
 			'arrow-left',
 			'arrow-right',
 			'arrow-up-right',
-			'arrow-up-right-2',
 			'chevron-up',
 			'chevron-down',
 			'chevron-left',
@@ -32,7 +31,6 @@ export const ICON_GROUPS = [
 			'minus',
 			'x',
 			'check',
-			'checkmark',
 			'pencil',
 			'square-pen',
 			'copy',
@@ -63,9 +61,7 @@ export const ICON_GROUPS = [
 			'circle-x',
 			'alert-triangle',
 			'alert-triangle-filled',
-			'alert-warning',
 			'help-circle',
-			'circle-help',
 			'badge-check',
 			'shield-check',
 			'lock',
@@ -88,7 +84,6 @@ export const ICON_GROUPS = [
 			'panel-left-close',
 			'align-left',
 			'settings',
-			'gear-settings',
 			'sun',
 			'moon',
 			'smartphone'
@@ -116,7 +111,6 @@ export const ICON_GROUPS = [
 			'dollar-sign',
 			'wallet',
 			'credit-card',
-			'card',
 			'banknote',
 			'receipt',
 			'landmark',
@@ -145,8 +139,7 @@ export const ICON_GROUPS = [
 			'cli',
 			'tag',
 			'pencil-ruler',
-			'package',
-			'box'
+			'package'
 		]
 	],
 	[
@@ -159,7 +152,6 @@ export const ICON_GROUPS = [
 			'graduation-cap',
 			'gift',
 			'mail',
-			'mail-rounded',
 			'chat',
 			'message-square',
 			'message-square-plus',
@@ -167,7 +159,7 @@ export const ICON_GROUPS = [
 			'headset'
 		]
 	],
-	['Web and places', ['earth', 'globe', 'map']],
+	['Web and places', ['globe', 'map']],
 	['Brands', ['github', 'google', 'twitter', 'telegram', 'discord', 'linkedin', 'farcaster', 'bluesky', 'mastodon']]
 ] as const
 
@@ -181,7 +173,7 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/v50.svg#${name}`} />
+			<use href={`/icons/v51.svg#${name}`} />
 		</svg>
 	)
 }

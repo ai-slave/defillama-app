@@ -76,8 +76,10 @@ export function FreshnessFooter({
 		<div className="flex flex-col gap-2 body-sm text-secondary">
 			<DriftBanner entries={[...driftMap.values()]} protocolId={protocolId} />
 			{stale ? (
-				<p className="flex items-center gap-1.5 body-sm text-(--yield-warning-text)">
-					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
+				<p className="flex items-start gap-1.5 body-sm text-(--yield-warning-text)">
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="alert-triangle" className="size-3.5" />
+					</span>
 					<span>
 						This pool wasn&apos;t refreshed in the latest run — showing the last-known-good snapshot
 						{lastUpdatedTs != null ? ` from ${formatVerified(tsToIso(lastUpdatedTs))}` : ''}.
@@ -85,9 +87,13 @@ export function FreshnessFooter({
 				</p>
 			) : null}
 			{staleMap.size > 0 ? (
-				<p className="flex items-center gap-1.5 body-sm text-secondary">
-					<Icon name="clock" className="size-3.5" />
-					{staleMap.size} reading{staleMap.size === 1 ? '' : 's'} could not be refreshed this run.
+				<p className="flex items-start gap-1.5 body-sm text-secondary">
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="clock" className="size-3.5" />
+					</span>
+					<span>
+						{staleMap.size} reading{staleMap.size === 1 ? '' : 's'} could not be refreshed this run.
+					</span>
 				</p>
 			) : null}
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">

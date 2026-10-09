@@ -217,12 +217,13 @@ test('adding or removing a series hands focus to the neighbouring row, and the l
 test('series additions stop at eight and become available after removing a series', async () => {
 	await render(<Harness config={{ ...initial, yCols: Array.from({ length: 8 }, (_, i) => `value${i}`) }} />)
 	await click(button('Y series'))
-	expect(button('Add value8').disabled).toBe(true)
+	// At the limit the row stays focusable and announces itself as unavailable.
+	expect(button('Add value8').getAttribute('aria-disabled')).toBe('true')
 	expect(document.body.textContent).toContain('Up to 8 series. Remove one to add another.')
 	await click(button('Add value8'))
 	expect(current.yCols).toHaveLength(8)
 	await click(button('Remove value0'))
-	expect(button('Add value8').disabled).toBe(false)
+	expect(button('Add value8').getAttribute('aria-disabled')).not.toBe('true')
 	expect(document.body.textContent).not.toContain('Up to 8 series')
 	await click(button('Add value8'))
 	expect(current.yCols).toEqual(['value1', 'value2', 'value3', 'value4', 'value5', 'value6', 'value7', 'value8'])

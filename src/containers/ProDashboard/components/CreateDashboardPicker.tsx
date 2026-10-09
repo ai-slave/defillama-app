@@ -7,6 +7,7 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import {
 	Dialog,
 	DialogBackButton,
@@ -230,41 +231,39 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 				</Ariakit.DialogDescription>
 
 				<div className="grid gap-4 sm:grid-cols-2">
-					<Ariakit.Button
-						type="button"
+					<Card
+						as={Ariakit.Button}
+						padding="md"
 						disabled={pending}
 						autoFocus={view.from === 'scratch'}
 						onClick={() => setView({ mode: 'scratch', from: null })}
-						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-brand-muted"
+						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
+						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="file-plus" height={20} width={20} />
-						</div>
-						<div>
-							<span className="block label-md text-primary">From scratch</span>
-							<span className="mt-1 block body-sm text-tertiary">
-								Create an empty dashboard and add charts manually
-							</span>
-						</div>
-					</Ariakit.Button>
+						</span>
+						<span className="flex flex-col gap-1">
+							<span className="label-md text-primary">From scratch</span>
+							<span className="body-sm text-tertiary">Create an empty dashboard and add charts manually</span>
+						</span>
+					</Card>
 
-					<Ariakit.Button
-						type="button"
+					<Card
+						as={Ariakit.Button}
+						padding="md"
 						disabled={pending}
 						autoFocus={view.from === 'comparison'}
 						onClick={() => setView({ mode: 'comparison', from: null })}
-						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-brand-muted"
+						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
+						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="bar-chart-2" height={20} width={20} />
-						</div>
-						<div>
-							<span className="block label-md text-primary">Comparison</span>
-							<span className="mt-1 block body-sm text-tertiary">
-								Compare chains or protocols with pre-built charts
-							</span>
-						</div>
-					</Ariakit.Button>
+						</span>
+						<span className="flex flex-col gap-1">
+							<span className="label-md text-primary">Comparison</span>
+							<span className="body-sm text-tertiary">Compare chains or protocols with pre-built charts</span>
+						</span>
+					</Card>
 				</div>
 
 				<div className="border-t border-subtle pt-4">
@@ -363,8 +362,6 @@ function DashboardTemplates({
 				{cards.map(({ template, selection, failed, loading, empty }) => {
 					const creating = pendingName === template.name
 					const unavailable = pendingName !== null || failed || loading || empty
-					// The card being created keeps its look; every other unavailable card reads as disabled.
-					const dimmed = unavailable && !creating
 					const status = creating
 						? 'Creating dashboard…'
 						: loading
@@ -372,10 +369,12 @@ function DashboardTemplates({
 							: empty
 								? 'No matching data available.'
 								: ''
+					// The card being created keeps full colour (aria-busy); every other unavailable card dims.
 					return (
-						<Ariakit.Button
+						<Card
 							key={template.id}
-							type="button"
+							as={Ariakit.Button}
+							padding="md"
 							aria-label={template.name}
 							aria-describedby={`${id}-${template.id}`}
 							aria-busy={creating}
@@ -393,19 +392,19 @@ function DashboardTemplates({
 									variables: generated.variables
 								})
 							}}
-							className={`rounded-lg border p-3 text-left transition-colors aria-disabled:cursor-not-allowed ${creating ? 'border-brand-muted' : dimmed ? 'border-disabled bg-disabled' : 'border-subtle hover:border-brand-muted'}`}
+							className="hover-wash-card flex flex-col gap-0.5 text-left aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60"
 						>
-							<span className={`flex items-center gap-2 label-md ${dimmed ? 'text-disabled' : 'text-primary'}`}>
+							<span className="flex items-center gap-2 label-md text-primary">
 								{template.name}
 								{creating || loading ? <LoadingSpinner size={14} /> : null}
 							</span>
-							<span id={`${id}-${template.id}`} className="mt-0.5 block body-sm text-tertiary">
+							<span id={`${id}-${template.id}`} className="block body-sm text-tertiary">
 								<span className="block">{template.description}</span>
 								<span role="status" className="block">
 									{status}
 								</span>
 							</span>
-						</Ariakit.Button>
+						</Card>
 					)
 				})}
 			</div>

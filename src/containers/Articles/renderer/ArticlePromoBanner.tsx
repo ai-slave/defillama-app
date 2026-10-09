@@ -7,6 +7,7 @@ import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import { articlePromoLinkUrl, isExternalUrl } from '~/containers/Articles/promoLinks'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
+import { Card } from '~/ui/Card'
 
 export function usePromoBanner(articleId: string | null | undefined): Banner | null {
 	const allArticlesBannerQuery = useQuery<BannerLookupResult>({
@@ -40,10 +41,10 @@ function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) 
 	const trackClick = () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel)
 
 	const frame = (
-		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-muted">
+		<Card padding="none" className="overflow-hidden">
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img src={imageUrl} alt={alt} className="block h-auto w-full" loading="lazy" />
-		</div>
+		</Card>
 	)
 
 	const content = !linkUrl ? (

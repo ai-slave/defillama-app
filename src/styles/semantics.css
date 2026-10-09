@@ -102,6 +102,16 @@
 	--bg-veil: color-mix(in srgb, var(--bg-surface) 65%, transparent);
 	--bg-on-brand-control: color-mix(in srgb, var(--bg-surface) 15%, transparent);
 	--bg-on-brand-control-hover: color-mix(in srgb, var(--bg-surface) 25%, transparent);
+	--bg-on-brand-control-pressed: color-mix(in srgb, var(--bg-surface) 35%, transparent);
+	/* Controls laid over an image, a video or a dark scrim (Button onMedia, the upload tile's Replace scrim). They sit
+	   on the picture, not on the page, so they keep one value in both modes. */
+	--bg-media-control: rgb(0 0 0 / 0.4);
+	--bg-media-control-hover: rgb(0 0 0 / 0.6);
+	--bg-media-control-pressed: rgb(0 0 0 / 0.7);
+	--border-media-control: rgb(255 255 255 / 0.3);
+	--text-media-control: #ffffff;
+	--text-media-control-disabled: rgb(255 255 255 / 0.45);
+	--border-media-control-disabled: rgb(255 255 255 / 0.15);
 	/* The seam between joined buttons on a brand fill (a split button). */
 	--border-on-brand-seam: color-mix(in srgb, var(--text-on-brand) 25%, transparent);
 
@@ -411,6 +421,30 @@ html.dark,
 @utility bg-on-brand-control-hover {
 	background-color: var(--bg-on-brand-control-hover);
 }
+@utility bg-on-brand-control-pressed {
+	background-color: var(--bg-on-brand-control-pressed);
+}
+@utility bg-media-control {
+	background-color: var(--bg-media-control);
+}
+@utility bg-media-control-hover {
+	background-color: var(--bg-media-control-hover);
+}
+@utility bg-media-control-pressed {
+	background-color: var(--bg-media-control-pressed);
+}
+@utility border-media-control {
+	border-color: var(--border-media-control);
+}
+@utility text-media-control {
+	color: var(--text-media-control);
+}
+@utility text-media-control-disabled {
+	color: var(--text-media-control-disabled);
+}
+@utility border-media-control-disabled {
+	border-color: var(--border-media-control-disabled);
+}
 @utility border-l-on-brand-seam {
 	border-left-color: var(--border-on-brand-seam);
 }
@@ -465,6 +499,12 @@ html.dark,
 .hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
 		[aria-pressed='true']
 	):active {
+	background-image: linear-gradient(var(--bg-pressed-row), var(--bg-pressed-row));
+}
+
+/* The pressed wash alone, stacked over the resting fill, for a control that hovers by swapping its fill (a trigger on
+   bg-surface-elevated-1 that hovers to elevated-2, the last step) and so has no fill step left for pressed. */
+.press-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):active {
 	background-image: linear-gradient(var(--bg-pressed-row), var(--bg-pressed-row));
 }
 

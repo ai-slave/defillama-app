@@ -81,10 +81,12 @@ export function TrustPanel({
 			{/* markets correctly have no vault operators — say so, so empty reads as intentional */}
 			{isMarket ? (
 				<Card padding="sm" className="flex items-start gap-2">
-					<Icon
-						name={immutableMarket ? 'check-circle' : 'help-circle'}
-						className={`mt-0.5 size-4 shrink-0 ${immutableMarket ? toneClasses('good').text : 'text-secondary'}`}
-					/>
+					<span className="flex h-lh shrink-0 items-center body-sm">
+						<Icon
+							name={immutableMarket ? 'check-circle' : 'help-circle'}
+							className={`size-4 ${immutableMarket ? toneClasses('good').text : 'text-secondary'}`}
+						/>
+					</span>
 					{/* trailing copy is a single string expression so SSR and client normalize leading
 					    whitespace identically — avoids a hydration mismatch */}
 					<p className="body-sm text-secondary">

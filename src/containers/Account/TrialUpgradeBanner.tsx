@@ -22,9 +22,11 @@ export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 					<p className="sub-gradient-text heading-xs">Unlock the full power of DefiLlama</p>
 					<ul className="flex flex-col gap-1.5">
 						{BENEFITS.map((b) => (
-							<li key={b} className="flex items-start gap-1.5">
-								<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-link" />
-								<span className="body-sm text-primary">{b}</span>
+							<li key={b} className="flex items-start gap-1.5 body-sm">
+								<span className="flex h-lh shrink-0 items-center">
+									<Icon name="check" height={14} width={14} className="text-link" />
+								</span>
+								<span className="text-primary">{b}</span>
 							</li>
 						))}
 					</ul>

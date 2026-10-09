@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
+import { Icon } from './Icon'
 import { LoadingSpinner } from './Loaders'
 
 /* ----------------------------------------------------------------------------
@@ -30,12 +31,22 @@ import { LoadingSpinner } from './Loaders'
                   never hand-roll the pill classes
    - toggle:      elevated neutral fill, brand border/tint/text-link
                   when `data-active`: toolbar filters and selectable options
+                  (`stateIcon` shows that state as an icon, below)
    - metricBrowse: dashed brand pill in the home metrics browse toolbar
-   - overlay:     opaque surface with a border and shadow, for a rail scroll
-                  arrow that floats over scrolling content. It owns its
-                  reveal: hidden until the pointer enters the `group/rail`
-                  container around it or it takes focus. The call site
-                  passes placement only
+   - floating:    opaque overlay fill, border and menu shadow, always
+                  visible: a control that floats over page content, such as
+                  the Edit button pinned over a research article
+   - overlay:     floating, plus its reveal, for a rail scroll arrow that
+                  floats over scrolling content: hidden until the pointer
+                  enters the `group/rail` container around it or it takes
+                  focus. The call site passes placement only
+   - onMedia:     a control laid over an image, a video or a dark scrim
+                  (cover editor, carousel arrows): translucent dark
+                  backdrop, white line and text, a light shadow. Round when
+                  square. A toolbar that already draws its own frosted bar
+                  over the picture holds ghost-like buttons instead
+   - onBrand:     a control on the brand-blue mobile header: translucent
+                  white fill, white icon. Header squares are lg (44px)
    - link:        text-link with no padding, no height and no type of its own,
                   so it inherits the sentence or label it sits in, case
                   included (preflight resets a button's text-transform): "Back to
@@ -53,6 +64,16 @@ import { LoadingSpinner } from './Loaders'
    field) is `secondary` sm with no active state.
    Variants with a selected state use the additive `hover-wash`, so the
    active tint stays under hover. Variants never inject icons.
+   `stateIcon` (toggle and filter pills that add or remove something, such
+   as newsletter picks): Button draws a 14px plus when off and a check when
+   on, from `data-active`, in one slot before the label. The pill keeps its
+   width when picked, so nothing after it moves; never render the check only
+   when on.
+   `doneLabel` with `done` (Copy → Copied, Share → Copied): pass the label
+   always and set `done` while it shows. Button draws a check and the label
+   in the same grid cell as the idle content, both always laid out, so the
+   button keeps one width in both states and its neighbours never move.
+   Never swap a Button's text by hand.
 
    Pressed: while held down, every variant goes one ramp step past its hover
    (the neutral wash deepens, a tint goes to step 5, primary darkens), with no
@@ -130,7 +151,10 @@ type ButtonVariant =
 	| 'filter'
 	| 'toggle'
 	| 'metricBrowse'
+	| 'floating'
 	| 'overlay'
+	| 'onMedia'
+	| 'onBrand'
 	| 'ghostDestructive'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
@@ -151,9 +175,14 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link',
 	metricBrowse:
 		'border border-dashed border-brand bg-brand-tint text-primary not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong not-disabled:not-aria-disabled:active:bg-brand-tint-pressed',
-	// Hidden until the pointer enters the rail or the arrow takes focus.
+	floating: 'hover-wash border border-medium bg-overlay text-primary shadow-overlay',
+	// Floating, hidden until the pointer enters the rail or the arrow takes focus.
 	overlay:
-		'hover-wash border border-medium bg-surface text-primary shadow-overlay opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
+		'hover-wash border border-medium bg-overlay text-primary shadow-overlay opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
+	onMedia:
+		'border border-media-control bg-media-control text-media-control shadow-raised backdrop-blur-sm not-disabled:not-aria-disabled:hover:bg-media-control-hover focus-visible:bg-media-control-hover not-disabled:not-aria-disabled:active:bg-media-control-pressed',
+	onBrand:
+		'border border-transparent bg-on-brand-control text-on-brand shadow-raised not-disabled:not-aria-disabled:hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover focus-visible:focus-ring-on-brand not-disabled:not-aria-disabled:active:bg-on-brand-control-pressed',
 	ghostDestructive:
 		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error not-disabled:not-aria-disabled:active:bg-error-tint-pressed'
 }
@@ -161,8 +190,14 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 /* Every variant disables to one neutral look (design.md → Color ramps): disabled text, plus the disabled fill on
    filled variants and the disabled border on outlined ones, never the variant's own colors at reduced opacity.
    A pending button (aria-busy) keeps its look. */
+const DISABLED_TEXT = 'disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:text-disabled'
 const DISABLED_FILL = 'disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:bg-disabled'
 const DISABLED_BORDER = 'disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:border-disabled'
+// Controls on a picture or the blue header keep their translucent fill and dim their white text (and line) instead:
+// the neutral disabled text would vanish on a dark scrim.
+const DISABLED_ON_BRAND =
+	'disabled:not-aria-busy:text-media-control-disabled aria-disabled:not-aria-busy:text-media-control-disabled'
+const DISABLED_ON_MEDIA = `${DISABLED_ON_BRAND} disabled:not-aria-busy:border-media-control-disabled aria-disabled:not-aria-busy:border-media-control-disabled`
 const DISABLED_CLASSES: Record<ButtonVariant, string> = {
 	secondary: DISABLED_BORDER,
 	primary: DISABLED_FILL,
@@ -172,7 +207,10 @@ const DISABLED_CLASSES: Record<ButtonVariant, string> = {
 	filter: DISABLED_BORDER,
 	toggle: `${DISABLED_FILL} ${DISABLED_BORDER}`,
 	metricBrowse: `${DISABLED_FILL} ${DISABLED_BORDER}`,
+	floating: DISABLED_BORDER,
 	overlay: DISABLED_BORDER,
+	onMedia: DISABLED_ON_MEDIA,
+	onBrand: DISABLED_ON_BRAND,
 	ghostDestructive: ''
 }
 
@@ -215,9 +253,9 @@ type ButtonLook =
 function buttonStyles(look: ButtonLook): string {
 	if (look.variant === 'link') return LINK_CLASSES
 	const { variant = 'secondary', size, square = false } = look
-	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:text-disabled aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:text-disabled aria-busy:cursor-progress ${DISABLED_CLASSES[variant]} ${
+	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
-	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
+	} ${variant === 'filter' || (variant === 'onMedia' && square) ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
 
 type ButtonProps<T extends ElementType> = ButtonLook & {
@@ -232,6 +270,11 @@ type ButtonProps<T extends ElementType> = ButtonLook & {
 	'aria-disabled'?: boolean | 'true' | 'false'
 	/** The selected state of ghost, filter and toggle buttons, or a filter picker whose popover is open. */
 	'data-active'?: boolean | string
+	/** Draw the selected state as a plus or a check before the label, in one slot that keeps the width. */
+	stateIcon?: boolean
+	/** A short success label ("Copied") shown with a check while `done`; the button keeps the wider width throughout. */
+	doneLabel?: string
+	done?: boolean
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
@@ -246,20 +289,52 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 		accessibleWhenDisabled = false,
 		'data-active': dataActive,
 		'aria-disabled': ariaDisabled,
+		stateIcon = false,
+		doneLabel,
+		done = false,
 		className,
 		...props
 	} = buttonProps
 	const classes = `${buttonStyles(buttonProps)} ${className ?? ''}`.trim()
-	if (as) {
-		const Component = as as ElementType
-		return <Component className={classes} data-active={dataActive} aria-disabled={ariaDisabled} {...props} />
-	}
-	const pending = pendingLabel !== null
-	const children = pending ? (
-		<PendingContent square={square} label={pendingLabel} idle={props.children} />
+	const idleContent = stateIcon ? (
+		<>
+			<Icon name={dataActive === true || dataActive === 'true' ? 'check' : 'plus'} className="size-3.5" aria-hidden />
+			{props.children}
+		</>
 	) : (
 		props.children
 	)
+	const content =
+		doneLabel === undefined ? (
+			idleContent
+		) : (
+			// Both states stay laid out in one grid cell, so the button is always as wide as the wider one.
+			<span className="grid">
+				<span
+					aria-hidden={done || undefined}
+					className={`col-start-1 row-start-1 flex items-center justify-center gap-1 ${done ? 'invisible' : ''}`}
+				>
+					{idleContent}
+				</span>
+				<span
+					aria-hidden={!done || undefined}
+					className={`col-start-1 row-start-1 flex items-center justify-center gap-1 ${done ? '' : 'invisible'}`}
+				>
+					<Icon name="check" className="size-3.5" aria-hidden />
+					{doneLabel}
+				</span>
+			</span>
+		)
+	if (as) {
+		const Component = as as ElementType
+		return (
+			<Component className={classes} data-active={dataActive} aria-disabled={ariaDisabled} {...props}>
+				{content}
+			</Component>
+		)
+	}
+	const pending = pendingLabel !== null
+	const children = pending ? <PendingContent square={square} label={pendingLabel} idle={content} /> : content
 	return (
 		<Ariakit.Button
 			className={classes}

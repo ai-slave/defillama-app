@@ -179,18 +179,19 @@ export function ColumnManagementPanel({
 									{group.columns
 										.filter((col) => columnVisibility[col.id] === false)
 										.map((column) => (
-											<button
-												type="button"
+											<Button
 												key={column.id}
+												variant="secondary"
+												size="md"
 												onClick={(event) => toggleFromRow(event, event.currentTarget, column.id)}
-												className="hover-wash flex w-full items-center gap-2 rounded-md border border-subtle bg-surface-elevated-1 p-2 text-left transition-colors"
+												className="w-full justify-start"
 											>
 												<Icon name="plus" className="size-3.5" />
-												<span className="label-sm text-primary">{column.name}</span>
+												{column.name}
 												{column.id.endsWith('_share') ? (
 													<span className="ml-auto rounded-md bg-brand-tint px-1 py-0.5 label-sm text-link">%</span>
 												) : null}
-											</button>
+											</Button>
 										))}
 								</div>
 							</div>

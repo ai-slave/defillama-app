@@ -27,6 +27,7 @@ import type { ArticleAuthor, ArticleDocument, ArticlePublicAuthorProfile } from 
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -156,13 +157,16 @@ function OwnerEditChip({ article }: { article: PublicArticleDocument }) {
 	if (!canEdit) return null
 	return (
 		<div className="pointer-events-none fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 justify-center sm:bottom-8">
-			<Link
+			<Button
+				as={Link}
 				href={`/research/edit/${article.id}`}
-				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-overlay px-3 py-2 label-md text-primary shadow-overlay transition-colors hover:border-brand-muted hover:text-link"
+				variant="floating"
+				size="md"
+				className="pointer-events-auto"
 			>
-				<Icon name="pencil" className="size-4" />
+				<Icon name="pencil" className="size-3.5" />
 				Edit research
-			</Link>
+			</Button>
 		</div>
 	)
 }

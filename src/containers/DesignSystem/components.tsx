@@ -13,15 +13,18 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { metricChipStyles, metricOptionChipStyles, metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
+import { OptionTile } from '~/ui/OptionTile'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { RailItem } from '~/ui/RailItem'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
@@ -38,6 +41,7 @@ import { Switch } from '~/ui/Switch'
 import { Tabs } from '~/ui/Tabs'
 import { Tag, TagButton } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
+import { ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
 import { Cell, Example, type ForcedState, Group, NotApplicable, Row, StateGrid } from './shared'
 
 /* ------------------------------- Actions -------------------------------- */
@@ -53,14 +57,18 @@ const BUTTON_VARIANTS = [
 	'filter',
 	'toggle',
 	'metricBrowse',
-	'overlay'
+	'floating',
+	'overlay',
+	'onMedia',
+	'onBrand'
 ] as const
 const SELECTABLE = new Set(['ghost', 'filter', 'toggle'])
 
-function buttonRow(variant: (typeof BUTTON_VARIANTS)[number], size: 'sm' | 'md', square: boolean): ReactNode {
+function buttonRow(variant: (typeof BUTTON_VARIANTS)[number], size: 'sm' | 'md' | 'lg', square: boolean): ReactNode {
 	const label = square ? <Icon name="settings" className="size-4" aria-hidden /> : 'Action'
 	const common = { variant, size, square, 'aria-label': square ? 'Settings' : undefined }
 	// The overlay arrow stays hidden until its rail is hovered, so its cells sit in a rail that is forced hovered.
+	// onMedia and onBrand only read on what they are built for: a picture and the blue header.
 	const cell = (force: ForcedState | undefined, node: ReactNode) =>
 		variant === 'overlay' ? (
 			<Cell force="hover">
@@ -68,6 +76,14 @@ function buttonRow(variant: (typeof BUTTON_VARIANTS)[number], size: 'sm' | 'md',
 					<Cell force={force}>{node}</Cell>
 				</div>
 			</Cell>
+		) : variant === 'onMedia' ? (
+			<div className="rounded-md bg-cover bg-center p-1.5" style={{ backgroundImage: 'url(/reports/rwafi.png)' }}>
+				<Cell force={force}>{node}</Cell>
+			</div>
+		) : variant === 'onBrand' ? (
+			<div className="rounded-md bg-brand p-1.5">
+				<Cell force={force}>{node}</Cell>
+			</div>
 		) : (
 			<Cell force={force}>{node}</Cell>
 		)
@@ -166,15 +182,49 @@ export function ActionsGroup() {
 				wide
 				name="Button"
 				prop="square"
-				note="Icon-only, 16px icon, with a Tooltip as the button (render) on a page."
+				note="Icon-only, 16px icon, with a Tooltip as the button (render) on a page. onMedia turns round when square; onBrand squares on the mobile header are lg."
 			>
 				<StateGrid
 					columns={BUTTON_STATES}
-					rows={(['secondary', 'ghost', 'ghostDestructive', 'primary'] as const).flatMap((variant) => [
-						[`${variant} md`, buttonRow(variant, 'md', true)],
-						[`${variant} sm`, buttonRow(variant, 'sm', true)]
-					])}
+					rows={[
+						...(['secondary', 'ghost', 'ghostDestructive', 'primary'] as const).flatMap((variant) => [
+							[`${variant} md`, buttonRow(variant, 'md', true)] as [string, ReactNode],
+							[`${variant} sm`, buttonRow(variant, 'sm', true)] as [string, ReactNode]
+						]),
+						['onMedia md', buttonRow('onMedia', 'md', true)],
+						['onBrand lg', buttonRow('onBrand', 'lg', true)]
+					]}
 				/>
+			</Example>
+			<Example
+				name="Button"
+				prop="stateIcon"
+				note="A toggle pill that adds or removes something shows plus when off and check when on, in one slot: picking never changes its width."
+			>
+				<Row>
+					<Button variant="toggle" size="md" stateIcon>
+						Newsletter
+					</Button>
+					<Button variant="toggle" size="md" stateIcon data-active>
+						Research Notes
+					</Button>
+				</Row>
+			</Example>
+			<Example
+				name="Button"
+				prop="doneLabel"
+				note="A button that confirms in its label keeps one width: the idle and done labels share a grid cell."
+			>
+				<Row>
+					<Button size="md" doneLabel="Copied">
+						<Icon name="copy" className="size-3.5" aria-hidden />
+						Copy link
+					</Button>
+					<Button size="md" doneLabel="Copied" done>
+						<Icon name="copy" className="size-3.5" aria-hidden />
+						Copy link
+					</Button>
+				</Row>
 			</Example>
 			<Example
 				name="Button"
@@ -223,6 +273,65 @@ export function ActionsGroup() {
 					<Icon name="paperclip" className="size-3.5" aria-hidden />
 					Upload CSV file
 				</FileButton>
+			</Example>
+			<Example
+				wide
+				name="UploadTile"
+				prop='shape="wide" | "round"'
+				note="The dashed target that opens a file picker. A pending upload swaps the icon for a spinner and reads the pending label."
+			>
+				<StateGrid
+					columns={['Rest', 'Hover', 'Pressed', 'Uploading', 'Disabled']}
+					rows={(['wide', 'round'] as const).map((shape) => [
+						shape,
+						<>
+							{([undefined, 'hover', 'active'] as const).map((force) => (
+								<Cell key={force ?? 'rest'} force={force}>
+									<UploadTile
+										shape={shape}
+										icon="image-plus"
+										label="Upload logo"
+										pendingLabel={null}
+										className={shape === 'wide' ? 'w-48' : undefined}
+									/>
+								</Cell>
+							))}
+							<UploadTile
+								shape={shape}
+								icon="image-plus"
+								label="Upload logo"
+								pendingLabel="Uploading…"
+								className={shape === 'wide' ? 'w-48' : undefined}
+							/>
+							<UploadTile
+								shape={shape}
+								icon="image-plus"
+								label="Upload logo"
+								pendingLabel={null}
+								disabled
+								className={shape === 'wide' ? 'w-48' : undefined}
+							/>
+						</>
+					])}
+				/>
+			</Example>
+			<Example
+				name="ImageReplaceTile"
+				prop='shape="round"'
+				note="The current image; hover, focus and a pending upload show the media scrim."
+			>
+				<Row>
+					<ImageReplaceTile shape="round" src="/assets/llama.png" pendingLabel={null} aria-label="Replace avatar" />
+					<Cell force="hover">
+						<ImageReplaceTile shape="round" src="/assets/llama.png" pendingLabel={null} aria-label="Replace avatar" />
+					</Cell>
+					<ImageReplaceTile
+						shape="round"
+						src="/assets/llama.png"
+						pendingLabel="Uploading…"
+						aria-label="Replace avatar"
+					/>
+				</Row>
 			</Example>
 		</Group>
 	)
@@ -285,6 +394,93 @@ export function NavigationGroup() {
 						]}
 					/>
 				</Tabs>
+			</Example>
+			<Example
+				name="RailItem"
+				prop="active"
+				note="A side nav, table of contents or criteria rail. Third row forced hovered, fourth pressed."
+			>
+				<div className="flex w-48 flex-col gap-0.5">
+					<RailItem as="button" type="button">
+						Overview
+					</RailItem>
+					<RailItem as="button" type="button" active aria-current="location">
+						Revenue
+					</RailItem>
+					<Cell force="hover">
+						<RailItem as="button" type="button">
+							Token unlocks
+						</RailItem>
+					</Cell>
+					<Cell force="active">
+						<RailItem as="button" type="button">
+							Governance
+						</RailItem>
+					</Cell>
+				</div>
+			</Example>
+			<Example
+				name="ListRow"
+				prop="selected"
+				note="A dialog or panel list that picks one item; the check slot keeps labels in place. Second row picked, third hovered."
+			>
+				<div className="flex w-64 flex-col gap-0.5">
+					{['Stablecoins overview', 'Ethereum fees', 'Yields watchlist'].map((label, i) => {
+						const row = (
+							<ListRow selected={i === 1} aria-pressed={i === 1}>
+								<span className="flex-1 truncate">{label}</span>
+								<Icon name="check" className={`size-4 text-link ${i === 1 ? '' : 'invisible'}`} aria-hidden />
+							</ListRow>
+						)
+						return i === 2 ? (
+							<Cell key={label} force="hover">
+								{row}
+							</Cell>
+						) : (
+							<div key={label} className="contents">
+								{row}
+							</div>
+						)
+					})}
+				</div>
+			</Example>
+			<Example
+				wide
+				name="OptionTile"
+				prop='layout="stack" | "row" | "center"'
+				note="A selectable tile with more than one line. The caller sets aria-pressed or role=checkbox."
+			>
+				<StateGrid
+					columns={['Rest', 'Hover', 'Pressed', 'Selected', 'Disabled']}
+					rows={(['stack', 'row', 'center'] as const).map((layout) => {
+						const tile = (props: { selected?: boolean; disabled?: boolean }) => (
+							<OptionTile
+								layout={layout}
+								selected={props.selected ?? false}
+								disabled={props.disabled}
+								aria-pressed={props.selected ?? false}
+								className="w-40"
+							>
+								{layout === 'row' ? <Icon name="layers" className="size-4 shrink-0 text-tertiary" aria-hidden /> : null}
+								{layout === 'center' ? <Icon name="layers" className="size-5 text-tertiary" aria-hidden /> : null}
+								<span className="flex flex-col gap-0.5">
+									<span className="label-md">By chain</span>
+									<span className="body-xs text-secondary">One row per chain</span>
+								</span>
+							</OptionTile>
+						)
+						return [
+							layout,
+							<>
+								<Cell>{tile({})}</Cell>
+								<Cell force="hover">{tile({})}</Cell>
+								<Cell force="active">{tile({})}</Cell>
+								<Cell>{tile({ selected: true })}</Cell>
+								<Cell>{tile({ disabled: true })}</Cell>
+							</>
+						]
+					})}
+				/>
 			</Example>
 		</Group>
 	)

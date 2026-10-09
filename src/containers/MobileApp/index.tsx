@@ -306,7 +306,7 @@ function Features() {
 					{ASK_EXAMPLES.map((example) => (
 						<span
 							key={example}
-							className="rounded-full border border-medium bg-surface px-3 py-1.5 body-sm text-secondary transition-colors duration-200 hover:border-brand-muted hover:text-primary"
+							className="rounded-full border border-medium bg-surface px-3 py-1.5 body-sm text-secondary"
 						>
 							{example}
 						</span>
@@ -316,10 +316,7 @@ function Features() {
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{FEATURES.map((feature) => (
-					<div
-						key={feature.title}
-						className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-muted hover:shadow-sub-blue-glow"
-					>
+					<div key={feature.title} className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-6">
 						<span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-brand to-sub-brand-soft text-on-brand shadow-sub-blue-glow">
 							<Icon name={feature.icon} height={20} width={20} />
 						</span>
@@ -349,7 +346,7 @@ function Previews() {
 							width={760}
 							height={1245}
 							loading="lazy"
-							className="w-full rounded-3xl border border-subtle shadow-dialog transition-transform duration-300 md:hover:-translate-y-1.5"
+							className="w-full rounded-3xl border border-subtle shadow-dialog"
 						/>
 						<figcaption className="text-center label-lg text-secondary">{preview.caption}</figcaption>
 					</figure>

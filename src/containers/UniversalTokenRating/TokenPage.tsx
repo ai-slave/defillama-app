@@ -61,8 +61,10 @@ export function ClaimProfileBanner({ asset }: { asset?: string | null }) {
 		: '/universal-token-rating/claim'
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand p-4">
-			<div className="flex gap-3">
-				<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
+			<div className="flex items-start gap-3">
+				<span className="flex h-lh shrink-0 items-center label-lg">
+					<Icon name="shield-check" height={24} width={24} className="text-on-brand" />
+				</span>
 				<div className="flex flex-col gap-1">
 					<p className="label-lg text-on-brand">Claim this token profile</p>
 					<p className="body-sm text-on-brand">

@@ -268,7 +268,8 @@ export function Select(props: ISelect) {
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues} placement={placement}>
 			<ComboboxSelectTrigger
 				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
-				aria-label={`${labelText} dropdown`}
+				// A trigger with an id is a Field's control: the Field's visible label names it.
+				aria-label={triggerProps?.id ? undefined : `${labelText} dropdown`}
 				{...triggerProps}
 			>
 				{labelType === 'smol' ? (
@@ -287,6 +288,8 @@ export function Select(props: ISelect) {
 									: selectedValues.join(', ')}
 						</span>
 					</>
+				) : labelType === 'none' && canSelectOnlyOne && selectedCount === 0 ? (
+					<span className="text-tertiary">{label}</span>
 				) : (
 					<>{label}</>
 				)}

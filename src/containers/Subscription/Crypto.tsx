@@ -34,7 +34,7 @@ export function PaymentButton({
 
 	const isStripe = paymentMethod === 'stripe'
 	const pending = loading === paymentMethod
-	const icon = isStripe ? 'card' : 'wallet'
+	const icon = isStripe ? 'credit-card' : 'wallet'
 	const text = isStripe ? 'Pay with Card' : 'Pay with Crypto'
 
 	// Signed out, the button opens sign-in and the reader presses it again to pay. The dialog stays mounted through

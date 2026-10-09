@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import type { CSSProperties } from 'react'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { RESEARCH_FEED_URL } from '~/containers/Articles/researchFeed'
+import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { feedSchemeUrl } from './readers'
@@ -28,15 +30,24 @@ function CopyFeedUrlButton({ value }: { value: string }) {
 	const { copied, copy } = useCopy()
 	return (
 		<>
-			<button
-				type="button"
-				onClick={() => void copy(value)}
-				aria-label="Copy feed URL"
-				className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-live px-5 py-2.5 label-md text-research-banner transition-[filter,transform] duration-150 hover:brightness-110 motion-safe:active:scale-[0.97] sm:w-auto"
+			{/* The feed page's RSS theme: Button primary in the live orange, through the brand tokens. */}
+			<span
+				className="flex w-full shrink-0 sm:w-auto"
+				style={{ '--bg-brand': 'var(--research-live)', '--text-on-brand': 'var(--research-banner)' } as CSSProperties}
 			>
-				<Icon name={copied ? 'check' : 'copy'} height={15} width={15} />
-				{copied ? 'Copied' : 'Copy'}
-			</button>
+				<Button
+					variant="primary"
+					size="lg"
+					onClick={() => void copy(value)}
+					aria-label="Copy feed URL"
+					doneLabel="Copied"
+					done={copied}
+					className="w-full"
+				>
+					<Icon name="copy" className="size-3.5" />
+					Copy
+				</Button>
+			</span>
 			<span role="status" className="sr-only">
 				{copied ? 'Feed URL copied' : ''}
 			</span>
@@ -118,13 +129,10 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 						</div>
 
 						<div className="dl-feed-reveal mt-8" style={{ animationDelay: '190ms' }}>
-							<a
-								href={feedSchemeUrl(RESEARCH_FEED_URL)}
-								className="inline-flex items-center gap-2.5 rounded-lg border border-medium px-5 py-2.5 title-md text-primary transition-[color,background-color,border-color,transform] duration-150 hover:border-brand-strong hover:bg-surface motion-safe:active:scale-[0.98]"
-							>
-								<RssMark size={16} />
+							<Button as="a" href={feedSchemeUrl(RESEARCH_FEED_URL)} variant="secondary" size="lg" className="w-fit">
+								<RssMark size={14} />
 								Open in your RSS app
-							</a>
+							</Button>
 							<p className="mt-4 max-w-xl body-md text-tertiary">
 								Works with any reader: NetNewsWire, Reeder, Readwise Reader, Feedly, and more. Or paste the URL above
 								into the app you already use.

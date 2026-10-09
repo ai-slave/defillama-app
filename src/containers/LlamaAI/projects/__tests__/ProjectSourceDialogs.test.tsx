@@ -336,13 +336,17 @@ test('file loading and failure do not look empty, retry restores the upload targ
 	api.files.mockReturnValueOnce(request.promise).mockResolvedValueOnce({ files: [] })
 	await mountFiles()
 	expect(container.textContent).toContain('Loading files')
-	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
+	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.getAttribute('aria-disabled')).toBe(
+		'true'
+	)
 	await act(async () => request.reject(new Error('Offline')))
 	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
 	)
-	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
-	await click('Retry files')
+	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.getAttribute('aria-disabled')).toBe(
+		'true'
+	)
+	await click('Try again')
 	await waitForUi(() => expect(container.querySelector('[role="alert"]')).toBeNull())
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(api.files).toHaveBeenCalledTimes(2)
@@ -362,7 +366,7 @@ test('connected source failure has its own retry without hiding available files'
 	)
 	await waitForUi(() => expect(container.textContent).toContain('notes.md'))
 	expect(container.querySelector('[aria-label="Delete notes.md"]')).toBeNull()
-	await click('Retry sources')
+	await click('Try again')
 	await waitForUi(() => expect(container.querySelector('[role="alert"]')).toBeNull())
 	expect(container.textContent).toContain('notes.md')
 	expect(api.sources).toHaveBeenCalledTimes(2)
@@ -438,7 +442,7 @@ test('file picking stays unavailable until both file and source requests settle'
 	const drop = [...container.querySelectorAll<HTMLButtonElement>('button')].find((node) =>
 		node.textContent?.includes('Drop files here')
 	)!
-	expect(drop.disabled).toBe(true)
+	expect(drop.getAttribute('aria-disabled')).toBe('true')
 	expect(drop.getAttribute('aria-hidden')).toBe('true')
 	expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
 	expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading files')
@@ -446,7 +450,7 @@ test('file picking stays unavailable until both file and source requests settle'
 	await waitForUi(() => expect(container.textContent).toContain('Loading connected sources'))
 	expect(drop.getAttribute('aria-hidden')).toBe('true')
 	await act(async () => sources.resolve([]))
-	await waitForUi(() => expect(drop.disabled).toBe(false))
+	await waitForUi(() => expect(drop.hasAttribute('aria-disabled')).toBe(false))
 	expect(drop.hasAttribute('aria-hidden')).toBe(false)
 	expect(container.querySelector('[role="status"]')).toBeNull()
 })

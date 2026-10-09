@@ -3,6 +3,7 @@ import { useId, useMemo, useRef, useState, type ChangeEvent, type FormEvent, typ
 import { flushSync } from 'react-dom'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { Select } from '~/components/Select/Select'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import type { CustomColumnDef } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
@@ -17,11 +18,20 @@ import {
 } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS, replaceAliases } from './customColumnsUtils'
 import { evaluateFormula, formatCustomColumnValue, type FormulaValue } from './formula.service'
 import type { IProtocol } from './types'
+
+const FORMAT_OPTIONS: Array<{ key: CustomColumnDef['formatType']; name: string }> = [
+	{ key: 'auto', name: 'Auto' },
+	{ key: 'number', name: 'Number' },
+	{ key: 'usd', name: 'USD' },
+	{ key: 'percent', name: 'Percent' },
+	{ key: 'string', name: 'String' },
+	{ key: 'boolean', name: 'Boolean (checkmark)' }
+]
 
 type CustomColumnDraft = Omit<CustomColumnDef, 'id'>
 
@@ -313,22 +323,22 @@ function CustomColumnForm({
 						}
 					>
 						{(control) => (
-							<select
-								{...control}
-								className={`${inputStyles} w-full`}
-								value={state.formatType}
-								// The options below are exactly the format values.
-								onChange={(e) =>
-									setState((prev) => ({ ...prev, formatType: e.target.value as CustomColumnDef['formatType'] }))
+							<Select
+								heading="Format"
+								allValues={FORMAT_OPTIONS}
+								selectedValues={state.formatType}
+								// The options are exactly the format values.
+								setSelectedValues={(value: string) =>
+									setState((prev) => ({ ...prev, formatType: value as CustomColumnDef['formatType'] }))
 								}
-							>
-								<option value="auto">Auto</option>
-								<option value="number">Number</option>
-								<option value="usd">USD</option>
-								<option value="percent">Percent</option>
-								<option value="string">String</option>
-								<option value="boolean">Boolean (checkmark)</option>
-							</select>
+								label={FORMAT_OPTIONS.find((option) => option.key === state.formatType)!.name}
+								labelType="none"
+								variant="input"
+								size="md"
+								className="w-full"
+								// Select names its trigger with an aria-label, which would hide the Field's label.
+								triggerProps={{ ...control }}
+							/>
 						)}
 					</Field>
 					<div className="flex flex-col gap-1">

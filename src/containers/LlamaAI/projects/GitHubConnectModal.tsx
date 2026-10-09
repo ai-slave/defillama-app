@@ -2,12 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useMemo, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
+import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -229,24 +230,33 @@ function GitHubConnectForm({
 						<>
 							<Field label="Installation">
 								{(control) => (
-									<select
-										{...control}
-										// A retry that succeeds replaces its button with this control, which takes the focus it drops.
-										ref={takeLostFocus}
-										disabled={fieldsLocked}
-										value={effectiveInstallId ?? ''}
-										onChange={(e) => {
-											setSelectedInstallId(Number(e.target.value))
+									<Select
+										heading="Installation"
+										allValues={(installs.data ?? []).map((i) => ({
+											key: String(i.installation_id),
+											name: i.account_login
+										}))}
+										selectedValues={effectiveInstallId === null ? '' : String(effectiveInstallId)}
+										setSelectedValues={(value: string) => {
+											setSelectedInstallId(Number(value))
 											selectRepository('')
 										}}
-										className={inputStyles}
-									>
-										{installs.data?.map((i) => (
-											<option key={i.installation_id} value={i.installation_id}>
-												{i.account_login}
-											</option>
-										))}
-									</select>
+										label={
+											installs.data?.find((i) => i.installation_id === effectiveInstallId)?.account_login ??
+											'Pick an installation'
+										}
+										labelType="none"
+										variant="input"
+										size="md"
+										className="w-full justify-between"
+										triggerProps={{
+											...control,
+											// A retry that succeeds replaces its button with this control, which takes the focus it drops.
+											ref: takeLostFocus,
+											'aria-label': 'Installation',
+											disabled: fieldsLocked
+										}}
+									/>
 								)}
 							</Field>
 

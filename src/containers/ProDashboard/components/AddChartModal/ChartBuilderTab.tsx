@@ -19,6 +19,7 @@ import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -800,17 +801,20 @@ export function ChartBuilderTab({
 						style={{ minHeight: '450px' }}
 					>
 						{queryReadFailed(preview) && !previewData ? (
-							<div role="alert" className="flex flex-col items-center gap-2 text-center">
-								<p className="body-md text-error">Couldn't load the preview.</p>
-								<Button
-									type="button"
-									size="sm"
-									pendingLabel={preview.isFetching ? 'Retrying…' : null}
-									onClick={() => void preview.refetch()}
-								>
-									Try again
-								</Button>
-							</div>
+							<InlineStatus
+								variant="error"
+								action={
+									<Button
+										size="sm"
+										pendingLabel={preview.isFetching ? 'Retrying…' : null}
+										onClick={() => void preview.refetch()}
+									>
+										Try again
+									</Button>
+								}
+							>
+								Couldn't load the preview.
+							</InlineStatus>
 						) : previewLoading ? (
 							<div className="flex flex-col items-center gap-2 text-center text-tertiary">
 								<LoadingSpinner size={24} />

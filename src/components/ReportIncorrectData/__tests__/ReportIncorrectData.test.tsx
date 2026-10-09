@@ -5,12 +5,14 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportIncorrectData, type ReportSubject } from '..'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/' }) }))
 
 let container: HTMLDivElement
 let root: Root
@@ -54,15 +56,44 @@ async function typeMessage(value: string) {
 	})
 }
 
+function dataTypeTrigger() {
+	return [...document.querySelectorAll<HTMLButtonElement>('button[role="combobox"]')].find(
+		(button) => accessibleName(button) === 'Data type'
+	)!
+}
+
+async function press(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+		await Promise.resolve()
+	})
+}
+
+async function chooseDataType(dataType: string) {
+	await press(dataTypeTrigger())
+	const option = await waitForUi(() => {
+		const match = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(el) => el.textContent === dataType
+		)
+		expect(match).toBeDefined()
+		return match!
+	})
+	await press(option)
+	expect(dataTypeTrigger().textContent).toContain(dataType)
+}
+
+async function sendForm() {
+	const form = document.querySelector('form')!
+	await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+}
+
 async function submitReport(dataType: string) {
-	const form = document.querySelector('form')
-	const select = form?.elements.namedItem('dataType') as HTMLSelectElement | null
-	expect(form).not.toBeNull()
-	expect(select).not.toBeNull()
-	select!.value = dataType
+	await chooseDataType(dataType)
 	await typeMessage('Incorrect value')
-	await act(async () => form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
-	return JSON.parse(mocks.fetchJson.mock.calls[0][1].body)
+	await sendForm()
+	return JSON.parse(mocks.fetchJson.mock.calls.at(-1)![1].body)
 }
 
 describe('ReportIncorrectData', () => {
@@ -70,7 +101,7 @@ describe('ReportIncorrectData', () => {
 		await openReport({ type: 'exchange', name: 'Binance.US', slug: 'binance-us' })
 
 		expect(document.body.textContent).toContain('Exchange')
-		expect(document.body.textContent).toContain('Open Interest')
+		// Open Interest is offered only for exchanges; picking it proves the exchange list is the one shown.
 		const payload = await submitReport('Open Interest')
 
 		expect(payload.subject).toEqual({ type: 'exchange', name: 'Binance.US', slug: 'binance-us' })
@@ -173,9 +204,13 @@ test.each(['dataType', 'contact', 'submit-btn'])(
 		mocks.fetchJson.mockReturnValueOnce(request.promise)
 		await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 		const form = document.querySelector('form')!
-		const focusedControl = form.elements.namedItem(focusedField) as HTMLElement
+		await chooseDataType('Fees')
+		await typeMessage('Incorrect value')
+		const focusedControl =
+			focusedField === 'dataType' ? dataTypeTrigger() : (form.elements.namedItem(focusedField) as HTMLElement)
 		await act(async () => focusedControl.focus())
-		const payload = await submitReport('Fees')
+		await sendForm()
+		const payload = JSON.parse(mocks.fetchJson.mock.calls[0][1].body)
 		await waitForPending()
 
 		expect(payload).toEqual({
@@ -185,18 +220,17 @@ test.each(['dataType', 'contact', 'submit-btn'])(
 			correctSource: '',
 			contact: ''
 		})
-		const pendingFocus = form.elements.namedItem(focusedField === 'dataType' ? 'submit-btn' : focusedField)
-		expect(document.activeElement).toBe(pendingFocus)
+		expect(document.activeElement).toBe(focusedControl)
 		expect(document.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true')
-		expect(document.querySelector('select')?.disabled).toBe(true)
+		expect(dataTypeTrigger().getAttribute('aria-disabled')).toBe('true')
 		expect(document.querySelector('button[type="submit"]')?.textContent).toContain('Sending…')
 
 		await act(async () => request.reject(new Error('Offline')))
 		await waitForUi(() =>
 			expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
 		)
-		expect(document.activeElement).toBe(pendingFocus)
-		expect(document.querySelector('select')?.disabled).toBe(false)
+		expect(document.activeElement).toBe(focusedControl)
+		expect(dataTypeTrigger().getAttribute('aria-disabled')).toBeNull()
 		expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
 	}
 )

@@ -379,7 +379,7 @@ export function PeggedAssetInfo({
 			<SummaryCardGrid>
 				{/* Stats card — variant 3 stat stack; body is intentionally not StatItem */}
 				<SummaryStatsCard>
-					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
+					<h1 className="flex min-h-8 flex-wrap items-center gap-2 heading-sm">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						{showStablecoinMenu ? (
 							<span className="flex min-w-0 flex-col gap-0.5">
@@ -407,7 +407,7 @@ export function PeggedAssetInfo({
 						{!showStablecoinMenu && symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
 						{lifecycleStatus ? <DeprecatedProtocolMarker size={18} content={lifecycleStatus} /> : null}
 						{url ? (
-							<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+							<span className="ml-auto flex items-center justify-end gap-1">
 								<WebsiteGlobeLink
 									url={url}
 									name={name}

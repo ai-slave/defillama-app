@@ -4,6 +4,7 @@ import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { popoverRowStyles } from '~/ui/Popover'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { canUseChartType, type ChartConfig, type ChartType, type NumberFormat, type StackMode } from '../chartConfig'
@@ -247,14 +248,15 @@ function YSeriesPicker({
 						{available.filter((n) => !yCols.includes(n)).length === 0 ? (
 							<div className="px-2 py-1 body-sm text-tertiary">No more numeric columns</div>
 						) : (
-							// `contents` keeps the rows in the column's gap; the wrapper makes them each other's only neighbours.
-							<div className="contents">
+							// Popover rows run edge to edge; the wrapper also makes them each other's only neighbours.
+							<div className="-mx-2 flex flex-col">
 								{available
 									.filter((n) => !yCols.includes(n))
 									.map((name) => (
-										<button
-											type="button"
+										<Ariakit.Button
+											// At the limit the rows stay focusable, so focus never drops to the page.
 											disabled={yCols.length >= 8}
+											accessibleWhenDisabled
 											aria-label={`Add ${name}`}
 											key={name}
 											onClick={(event) => {
@@ -265,11 +267,11 @@ function YSeriesPicker({
 													() => next
 												)
 											}}
-											className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 mono-sm text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled"
+											className={popoverRowStyles}
 										>
-											<Icon name="plus" className="size-3 text-tertiary" />
-											<span className="truncate">{name}</span>
-										</button>
+											<Icon name="plus" className="size-3.5 shrink-0 text-tertiary" />
+											<span className="flex-1 truncate mono-sm">{name}</span>
+										</Ariakit.Button>
 									))}
 							</div>
 						)}

@@ -26,7 +26,7 @@ function ProductCard({
 	links?: Array<{ url: string; label: string }>
 }) {
 	return (
-		<div className="flex flex-col gap-3 rounded-xl border border-subtle bg-surface p-6 transition-all hover:border-brand-muted">
+		<div className="flex flex-col gap-3 rounded-xl border border-subtle bg-surface p-6">
 			<h3 className="heading-xs text-primary">{title}</h3>
 			<div className="flex flex-col gap-3 body-md text-secondary">{children}</div>
 			{links && links.length > 0 && (
@@ -127,7 +127,7 @@ export default function Products() {
 				</ProductCard>
 			</div>
 
-			<div className="rounded-xl border border-subtle bg-surface p-6 transition-all hover:border-brand-muted">
+			<div className="rounded-xl border border-subtle bg-surface p-6">
 				<div className="flex items-center justify-between">
 					<h3 className="heading-xs text-primary">Governance: House of Stake</h3>
 					<ExternalLink href="https://houseofstake.org/">houseofstake.org</ExternalLink>

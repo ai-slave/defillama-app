@@ -1,3 +1,4 @@
+export { DashedTile } from './DashedTile'
 export { InlineTextField } from './InlineTextField'
 export { keepKeyboardEventsInsideCard } from './keyboard'
 export { ProBadge, type ProBadgeTone } from './ProBadge'

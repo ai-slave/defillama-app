@@ -1,4 +1,6 @@
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 
 const dlResearchReports = [
@@ -55,7 +57,7 @@ export default function ReportsPage() {
 			canonicalUrl="/reports"
 		>
 			{/* DL Research Section */}
-			<div className="relative overflow-hidden rounded-lg border border-brand-muted bg-surface p-4 shadow-research-glow-wide">
+			<div className="relative overflow-hidden rounded-lg border border-brand-muted bg-surface p-4">
 				{/* Dot pattern decorations */}
 				<div
 					className="pointer-events-none absolute top-0 left-0 h-full w-16"
@@ -128,7 +130,7 @@ interface Report {
 function DLReportCard({ report }: { report: Report }) {
 	if (report.comingSoon) {
 		return (
-			<div className="relative flex flex-col overflow-hidden rounded-md border border-brand-muted bg-surface shadow-research-glow transition-shadow duration-300 hover:shadow-research-glow-md">
+			<Card padding="none" className="relative flex flex-col overflow-hidden">
 				{report.image && (
 					<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
 						<img src={report.image} alt="" className="size-full object-cover opacity-40" />
@@ -167,36 +169,30 @@ function DLReportCard({ report }: { report: Report }) {
 						))}
 					</div>
 					{report.spotlightHref && (
-						<a
-							href={report.spotlightHref}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="mt-1 flex items-center gap-1.5 rounded-md border border-brand-muted bg-brand-faint px-3 py-2 body-md text-link transition-colors hover:bg-brand-tint"
-						>
-							<Icon name="file-text" height={14} width={14} />
-							<span className="flex-1">Spotlight: {report.spotlightTitle}</span>
-							<Icon name="arrow-up-right" height={12} width={12} className="shrink-0" />
-						</a>
+						<div className="mt-1 grid justify-items-start gap-2">
+							<p className="body-sm text-secondary">Spotlight: {report.spotlightTitle}</p>
+							<ExternalLinkButton href={report.spotlightHref} icon="file-text">
+								Read the Spotlight
+							</ExternalLinkButton>
+						</div>
 					)}
 				</div>
-			</div>
+			</Card>
 		)
 	}
 
 	return (
-		<a
+		<Card
+			as="a"
+			padding="none"
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group relative flex flex-col overflow-hidden rounded-md border border-brand-muted bg-surface shadow-research-glow transition-all duration-300 hover:border-brand-strong hover:shadow-research-glow-strong"
+			className="group hover-wash-card relative flex flex-col overflow-hidden"
 		>
 			{report.image && (
 				<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
-					<img
-						src={report.image}
-						alt=""
-						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
-					/>
+					<img src={report.image} alt="" className="size-full object-cover opacity-60" />
 					<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
 					<h3 className="absolute bottom-3 left-4 heading-xs text-primary">{report.title}</h3>
 				</div>
@@ -220,12 +216,7 @@ function DLReportCard({ report }: { report: Report }) {
 							{report.author}
 						</span>
 					)}
-					<Icon
-						name="arrow-up-right"
-						height={14}
-						width={14}
-						className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-					/>
+					<Icon name="arrow-up-right" height={14} width={14} className="ml-auto shrink-0 text-tertiary" />
 				</div>
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
@@ -236,25 +227,23 @@ function DLReportCard({ report }: { report: Report }) {
 					))}
 				</div>
 			</div>
-		</a>
+		</Card>
 	)
 }
 
 function ReportCard({ report }: { report: Report }) {
 	return (
-		<a
+		<Card
+			as="a"
+			padding="none"
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group hover-wash-card relative flex flex-col overflow-hidden rounded-md border border-medium bg-surface"
+			className="group hover-wash-card relative flex flex-col overflow-hidden"
 		>
 			{report.image && (
 				<div className="theme-dark relative h-36 w-full overflow-hidden bg-page">
-					<img
-						src={report.image}
-						alt=""
-						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
-					/>
+					<img src={report.image} alt="" className="size-full object-cover opacity-60" />
 					<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
 					<h3 className="absolute bottom-3 left-4 heading-xs text-primary">{report.title}</h3>
 				</div>
@@ -278,12 +267,7 @@ function ReportCard({ report }: { report: Report }) {
 							{report.author}
 						</span>
 					)}
-					<Icon
-						name="arrow-up-right"
-						height={14}
-						width={14}
-						className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-					/>
+					<Icon name="arrow-up-right" height={14} width={14} className="ml-auto shrink-0 text-tertiary" />
 				</div>
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
@@ -294,7 +278,7 @@ function ReportCard({ report }: { report: Report }) {
 					))}
 				</div>
 			</div>
-		</a>
+		</Card>
 	)
 }
 

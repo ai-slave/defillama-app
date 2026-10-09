@@ -22,7 +22,7 @@ const KIND_META: Record<string, KindMeta> = {
 }
 
 export function kindMeta(kind: RiskKind): KindMeta {
-	return KIND_META[kind] ?? { label: titleCase(String(kind)), icon: 'alert-warning' }
+	return KIND_META[kind] ?? { label: titleCase(String(kind)), icon: 'alert-triangle' }
 }
 
 // Oracle type → the depeg story. `unknown` is a valid long-tail value, NOT an error.

@@ -7,8 +7,10 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { UploadTile } from '~/ui/UploadTile'
 import { queryReadFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
+import { RetryNotice } from '../components/RetryNotice'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { formatProjectBytes } from './format'
@@ -86,17 +88,11 @@ export function ProjectFilesPanel({
 	const isInitialLoading = !filesFailed && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
 
 	const fileErrorNotice = filesFailed ? (
-		<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
-			<p>Couldn&apos;t load files.</p>
-			<Button
-				type="button"
-				size="sm"
-				pendingLabel={filesQuery.isFetching ? 'Retrying…' : null}
-				onClick={() => void filesQuery.refetch()}
-			>
-				Retry files
-			</Button>
-		</div>
+		<RetryNotice
+			message="Couldn't load files."
+			retrying={filesQuery.isFetching}
+			onRetry={() => void filesQuery.refetch()}
+		/>
 	) : null
 
 	return (
@@ -151,17 +147,11 @@ export function ProjectFilesPanel({
 
 			<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
 			{queryReadFailed(sourcesQuery) ? (
-				<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
-					<p>Couldn&apos;t load connected sources.</p>
-					<Button
-						type="button"
-						size="sm"
-						pendingLabel={sourcesQuery.isFetching ? 'Retrying…' : null}
-						onClick={() => void sourcesQuery.refetch()}
-					>
-						Retry sources
-					</Button>
-				</div>
+				<RetryNotice
+					message="Couldn't load connected sources."
+					retrying={sourcesQuery.isFetching}
+					onRetry={() => void sourcesQuery.refetch()}
+				/>
 			) : null}
 			{githubSources.length > 0 ? (
 				<ul className="flex flex-col gap-1">
@@ -187,7 +177,7 @@ export function ProjectFilesPanel({
 										<Button
 											type="button"
 											size="sm"
-											variant="ghost"
+											variant="ghostDestructive"
 											square
 											aria-label={`Disconnect ${source.mount_path}`}
 											onClick={(event) => {
@@ -202,7 +192,7 @@ export function ProjectFilesPanel({
 										/>
 									}
 								>
-									<Icon name="trash-2" height={14} width={14} className="text-error" />
+									<Icon name="trash-2" className="size-4" />
 								</Tooltip>
 							</li>
 						)
@@ -211,32 +201,31 @@ export function ProjectFilesPanel({
 			) : null}
 
 			{files.length > 0 ? fileErrorNotice : null}
-			<div className="min-h-32 flex-1 overflow-auto rounded-md border border-dashed border-medium">
-				{isInitialLoading || files.length === 0 ? (
-					<div className="relative">
-						{/* Keep the upload copy in layout so wrapping and zoom cannot move the storage row when feedback clears. */}
-						<Ariakit.Button
-							type="button"
-							onClick={onPick}
-							disabled={isInitialLoading || filesFailed || isUploading}
-							// The upload it starts keeps focus on it; the hidden loading and failed states leave the tab order.
-							accessibleWhenDisabled={!isInitialLoading && !filesFailed}
-							aria-hidden={isInitialLoading || filesFailed || undefined}
-							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
-						>
-							<Icon name="file-plus" height={16} width={16} className="text-tertiary" />
-							<span>Drop files here or choose files</span>
-							<span>Markdown, text, code, JSON, CSV. Up to 100 MB per file.</span>
-						</Ariakit.Button>
-						{fileErrorNotice ? (
-							<div className="absolute inset-0 flex items-center justify-center p-4">{fileErrorNotice}</div>
-						) : isInitialLoading ? (
-							<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center p-4">
-								<LoadingIndicator label={filesQuery.isLoading ? 'Loading files' : 'Loading connected sources'} />
-							</div>
-						) : null}
-					</div>
-				) : (
+			{isInitialLoading || files.length === 0 ? (
+				<div className="relative">
+					{/* The tile stays in layout, hidden, while files load or fail, so the storage row below never moves. The
+					    upload it starts keeps focus on it. */}
+					<UploadTile
+						shape="wide"
+						icon="file-plus"
+						label="Drop files here or choose files"
+						hint="Markdown, text, code, JSON, CSV. Up to 100 MB per file."
+						pendingLabel={isUploading ? 'Uploading…' : null}
+						onClick={onPick}
+						disabled={isInitialLoading || filesFailed}
+						aria-hidden={isInitialLoading || filesFailed || undefined}
+						className={isInitialLoading || filesFailed ? 'invisible' : undefined}
+					/>
+					{fileErrorNotice ? (
+						<div className="absolute inset-0 flex items-center justify-center p-3">{fileErrorNotice}</div>
+					) : isInitialLoading ? (
+						<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center p-4">
+							<LoadingIndicator label={filesQuery.isLoading ? 'Loading files' : 'Loading connected sources'} />
+						</div>
+					) : null}
+				</div>
+			) : (
+				<div className="min-h-32 flex-1 overflow-auto rounded-md border border-dashed border-medium">
 					<ul className="flex flex-col">
 						{files.map((file) => {
 							const source = sourceById.get(file.source_id)
@@ -262,7 +251,7 @@ export function ProjectFilesPanel({
 												<Button
 													type="button"
 													size="sm"
-													variant="ghost"
+													variant="ghostDestructive"
 													square
 													aria-label={`Delete ${file.path}`}
 													onClick={(event) => {
@@ -277,15 +266,15 @@ export function ProjectFilesPanel({
 												/>
 											}
 										>
-											<Icon name="trash-2" height={14} width={14} className="text-error" />
+											<Icon name="trash-2" className="size-4" />
 										</Tooltip>
 									) : null}
 								</li>
 							)
 						})}
 					</ul>
-				)}
-			</div>
+				</div>
+			)}
 
 			{isUploading ? (
 				<p role="status" className="flex items-center gap-1.5 body-sm text-secondary">

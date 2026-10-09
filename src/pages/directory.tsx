@@ -8,7 +8,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -191,23 +191,18 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 
 				<div className="mx-auto my-8 w-full max-w-3xl min-w-0">
 					<div className="relative">
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Ariakit.Combobox
 							aria-label="Search protocols"
 							placeholder="Search protocols..."
 							autoSelect
-							className={`${inputStyles} w-full rounded-b-none pl-9`}
-						/>
-						<Icon
-							name="search"
-							height={18}
-							width={18}
-							className="absolute top-0 bottom-0 left-3 my-auto text-tertiary"
+							render={<Input className={searchFieldInputPlacementStyles} />}
 						/>
 					</div>
 					<Ariakit.ComboboxList
 						ref={comboboxRef}
 						alwaysVisible
-						className="h-80 overflow-y-auto overscroll-contain rounded-b-lg border border-t-0 border-medium bg-overlay"
+						className="mt-2 h-80 overflow-y-auto overscroll-contain rounded-lg border border-subtle bg-surface"
 					>
 						{matches.length > 0 ? (
 							<>

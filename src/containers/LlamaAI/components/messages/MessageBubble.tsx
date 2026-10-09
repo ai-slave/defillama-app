@@ -34,6 +34,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
+import { ArtifactCard } from './ArtifactCard'
 
 // Keyboard hints under the edit box.
 const KBD = 'rounded-sm border border-medium bg-surface-elevated-1 px-1 py-px mono-sm text-secondary'
@@ -543,17 +544,17 @@ function MessageBubbleContent({
 									)
 								}
 								return (
-									<a
+									<ArtifactCard
+										as="a"
 										key={`sent-file-${image.url}`}
 										href={image.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-16 items-center gap-2 rounded-lg border border-medium bg-page px-3 body-sm text-primary hover:bg-hover-row"
-									>
-										<Icon name="file-text" height={16} width={16} className="text-secondary" />
-										<span className="max-w-[120px] truncate">{displayName}</span>
-										<Icon name="external-link" height={14} width={14} className="text-tertiary" />
-									</a>
+										icon="file-text"
+										title={displayName}
+										trailing={<Icon name="external-link" className="size-3.5 shrink-0 text-tertiary" />}
+										className="w-56 max-w-full"
+									/>
 								)
 							})}
 						</div>
@@ -774,21 +775,19 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 		.join(' · ')
 
 	return (
-		<button
-			type="button"
+		<ArtifactCard
 			onClick={toggleDashboardPanel}
 			aria-expanded={isDashboardPanelOpen}
-			className="my-2 flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface px-3 py-2.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
-		>
-			<Icon name="layout-grid" className="size-4 shrink-0 text-link" />
-			<div className="min-w-0 flex-1">
-				<div className="flex items-center gap-2">
-					<span className="truncate label-md text-primary">{dashboard.dashboardName}</span>
-					<span className="shrink-0 body-sm text-tertiary">{dashboard.items.length} items</span>
-				</div>
-				<div className="truncate body-sm text-secondary">{summary}</div>
-			</div>
-			<Icon name={isDashboardPanelOpen ? 'chevron-right' : 'chevron-left'} className="size-4 shrink-0 text-tertiary" />
-		</button>
+			icon="layout-grid"
+			title={dashboard.dashboardName}
+			meta={summary ? `${dashboard.items.length} items · ${summary}` : `${dashboard.items.length} items`}
+			trailing={
+				<Icon
+					name={isDashboardPanelOpen ? 'chevron-right' : 'chevron-left'}
+					className="size-4 shrink-0 text-tertiary"
+				/>
+			}
+			className="my-2 w-full"
+		/>
 	)
 }

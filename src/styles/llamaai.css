@@ -125,9 +125,7 @@
 	box-shadow:
 		0px 0px 60px color-mix(in srgb, var(--ai-gold-bright) 50%, transparent),
 		0px 0px 2px 4px rgba(255, 255, 255, 0.1);
-	transition:
-		transform 0.2s ease,
-		box-shadow 0.2s ease;
+	transition: box-shadow 0.2s ease;
 }
 
 .llamaai-glow svg {
@@ -153,7 +151,6 @@
 }
 
 .llamaai-glow:hover {
-	transform: translateY(-2px);
 	box-shadow:
 		0px 0px 80px color-mix(in srgb, var(--ai-gold-bright) 70%, transparent),
 		0px 0px 2px 4px rgba(255, 255, 255, 0.2);
@@ -162,10 +159,6 @@
 .llamaai-glow:hover svg {
 	--star-1-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 	--star-2-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.llamaai-glow:active {
-	transform: translateY(0px);
 }
 
 .llamaai-glow .ai-icon {
@@ -188,10 +181,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.llamaai-glow,
-	.llamaai-glow:hover,
-	.llamaai-glow:active {
-		transform: none;
+	.llamaai-glow {
 		transition: none;
 	}
 	.llamaai-glow:hover::before {

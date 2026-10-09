@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -255,7 +256,7 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 				render={
 					<Ariakit.MenuButton
 						aria-label="New tab"
-						className="hover-wash mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-page text-tertiary transition-colors hover:text-primary"
+						render={<Button variant="ghost" size="md" square className="mb-px ml-0.5 shrink-0 self-start" />}
 					/>
 				}
 			>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { RailItem } from '~/ui/RailItem'
 import { docsAsset, FigureRadar, FigureTable } from './DocsFigures'
 import { GRADE_BANDS } from './gradeBands'
 import {
@@ -141,16 +142,15 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 									const active = item.id === activeId
 									return (
 										<li key={item.id}>
-											<button
+											<RailItem
+												as="button"
 												type="button"
+												active={active}
 												aria-current={active ? 'location' : undefined}
 												onClick={() => scrollToSection(item.id)}
-												className={`flex min-h-11 w-full cursor-pointer items-center border-l-2 px-3 text-left body-md md:min-h-9 ${
-													active ? 'border-brand text-link' : 'border-transparent text-secondary hover:text-primary'
-												}`}
 											>
 												{item.label}
-											</button>
+											</RailItem>
 										</li>
 									)
 								})}
@@ -160,9 +160,11 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 
 					<div ref={spySections} className="flex min-w-0 flex-1 flex-col gap-8 p-4 md:p-6">
 						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-brand-muted p-2">
-							<div className="flex items-center gap-2">
-								<DocFileIcon />
-								<p className="label-md text-primary">Looking for the full Market Maker Leaderboard documentation?</p>
+							<div className="flex items-start gap-2 label-md">
+								<span className="flex h-lh shrink-0 items-center">
+									<DocFileIcon />
+								</span>
+								<p className="text-primary">Looking for the full Market Maker Leaderboard documentation?</p>
 							</div>
 							<Button as={BasicLink} href="/market-makers/documentation" variant="primary" size="md">
 								Read the docs

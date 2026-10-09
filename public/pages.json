@@ -1028,7 +1028,7 @@
     {
       "name": "Chains",
       "route": "/chains",
-      "icon": "earth",
+      "icon": "globe",
       "searchKeywords": [
         "chain",
         "chains"

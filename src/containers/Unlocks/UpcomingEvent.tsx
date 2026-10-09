@@ -27,8 +27,8 @@ interface CalendarButtonProps {
 
 function ProtocolPageButton() {
 	return (
-		<Ariakit.MenuButton className="flex items-center gap-2 rounded-sm p-2 hover:bg-hover-row focus-visible:bg-hover-row">
-			<Icon name="calendar-plus" width={16} height={16} />
+		<Ariakit.MenuButton render={<Button variant="ghost" size="md" />}>
+			<Icon name="calendar-plus" className="size-3.5" />
 			Add to Calendar
 		</Ariakit.MenuButton>
 	)
@@ -36,9 +36,12 @@ function ProtocolPageButton() {
 
 function RegularButton() {
 	return (
-		<Ariakit.MenuButton render={<Button variant="ghost" size="md" square />} aria-label="Add to calendar">
+		<Tooltip
+			content="Add to calendar"
+			render={<Ariakit.MenuButton render={<Button variant="ghost" size="md" square />} aria-label="Add to calendar" />}
+		>
 			<Icon name="calendar-plus" width={16} height={16} />
-		</Ariakit.MenuButton>
+		</Tooltip>
 	)
 }
 

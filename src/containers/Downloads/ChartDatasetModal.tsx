@@ -13,6 +13,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
+import { InlineStatus } from '~/ui/Status'
 import { slug as toSlug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -1115,13 +1116,21 @@ export function ChartDatasetModal({
 									</div>
 								</div>
 							) : dataError ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2">
-										<Icon name="alert-triangle" className="size-6 text-error" />
-										<p className="body-md text-error">
-											{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
-										</p>
-									</div>
+								<div className="flex flex-1 items-center justify-center p-4">
+									<InlineStatus
+										variant="error"
+										action={
+											<Button
+												size="sm"
+												pendingLabel={(isCategoryMode ? breakdownQuery : activeQuery!).isFetching ? 'Retrying…' : null}
+												onClick={() => void (isCategoryMode ? breakdownQuery : activeQuery!).refetch()}
+											>
+												Try again
+											</Button>
+										}
+									>
+										{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
+									</InlineStatus>
 								</div>
 							) : columnMeta.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">

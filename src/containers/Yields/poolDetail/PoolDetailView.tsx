@@ -316,7 +316,9 @@ export function PoolDetailView({
 					role="alert"
 					className="flex items-start gap-3 rounded-lg border border-l-4 border-error-muted border-l-error bg-error-tint p-3 body-md"
 				>
-					<Icon name="alert-triangle-filled" height={20} width={20} className="mt-px shrink-0 text-error" />
+					<span className="flex h-lh shrink-0 items-center">
+						<Icon name="alert-triangle-filled" height={20} width={20} className="text-error" />
+					</span>
 					<span className="flex flex-col">
 						<span className="font-semibold text-error">Exploit or ongoing incident</span>
 						<span>

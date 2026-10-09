@@ -9,6 +9,9 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartStyleEditor } from '../ChartStyleEditor'
 
+// The series pickers are Selects, which read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
+
 const revenueSeries: ChartConfiguration['series'][number] = {
 	name: 'Revenue',
 	type: 'line',
@@ -45,6 +48,24 @@ const view = { logScale: false, stacked: false, showLabels: false, percentage: f
 const resetView = { logScale: false, stacked: true, showLabels: false, percentage: false }
 const PREVIEW_DELAY = 350
 const noop = () => {}
+async function pointerClick(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+	})
+}
+/** Opens a Select and picks the option with this name. */
+async function pick(trigger: HTMLElement, name: string) {
+	await pointerClick(trigger)
+	const option = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await pointerClick(option)
+}
+
 // The pane's fields carry a screen-reader-only label (Field hideLabel).
 function labelled(name: string) {
 	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === name)
@@ -223,15 +244,19 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} />))
 
-		const selects = document.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
-		expect([...selects].map((select) => select.value)).toEqual(['unknown', 'unknown', 'stock'])
+		const pickers = () => [...document.querySelectorAll<HTMLButtonElement>('button[aria-label$="aggregation"]')]
+		expect(pickers().map((picker) => picker.textContent)).toEqual([
+			'Choose aggregation',
+			'Choose aggregation',
+			'End-of-period value'
+		])
 
-		await act(async () => {
-			selects[0].value = 'flow'
-			selects[0].dispatchEvent(new Event('change', { bubbles: true }))
-		})
-		const after = document.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
-		expect([...after].map((select) => select.value)).toEqual(['flow', 'flow', 'stock'])
+		await pick(pickers()[0], 'Sum per period')
+		expect(pickers().map((picker) => picker.textContent)).toEqual([
+			'Sum per period',
+			'Sum per period',
+			'End-of-period value'
+		])
 
 		const saveButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === 'Save'
@@ -327,16 +352,13 @@ describe('ChartStyleEditor', () => {
 			const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 			const onPreview = vi.fn((_config: ChartConfiguration) => undefined)
 			await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
-			const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
-			if (!select) throw new Error('Expected aggregation select')
-			await act(async () => {
-				select.value = 'flow'
-				select.dispatchEvent(new Event('change', { bubbles: true }))
-			})
+			const picker = document.querySelector<HTMLButtonElement>('button[aria-label="Series 1 aggregation"]')
+			if (!picker) throw new Error('Expected aggregation picker')
+			await pick(picker, 'Sum per period')
 			expect(onPreview.mock.lastCall?.[0].series[0].metricClass).toBe('flow')
 
 			await clickButton('Reset')
-			expect(select.value).toBe(metricClass)
+			expect(picker.textContent).toBe(metricClass === 'unknown' ? 'Choose aggregation' : 'End-of-period value')
 			expect(onPreview.mock.lastCall?.[0].series[0].metricClass).toBe(metricClass)
 			await clickButton('Save')
 			const [savedConfig, patch] = onSave.mock.calls[0]

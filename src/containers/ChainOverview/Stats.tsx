@@ -123,11 +123,11 @@ export function Stats(props: IStatsProps) {
 		<SummaryCardGrid className="h-full">
 			<SummaryStatsCard {...summaryStatsCardProps}>
 				{props.metadata.name !== 'All' ? (
-					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
+					<h1 className="flex min-h-8 flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
 						<span className="heading-xs">{props.metadata.name}</span>
 						{props.metadata.deprecated ? <DeprecatedEntityText /> : null}
-						<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+						<span className="ml-auto flex items-center justify-end gap-1">
 							{props.website ? (
 								<WebsiteGlobeLink
 									url={props.website}

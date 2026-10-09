@@ -23,7 +23,7 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 				contentClassName="text-center"
 			>
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-0.5 title-sm text-[#111827] shadow-raised dark:border-[#38f5a6]/30 dark:bg-white/12 dark:text-[#b6ffd8]">
+					<span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-0.5 title-sm text-[#111827] dark:border-[#38f5a6]/30 dark:bg-white/12 dark:text-[#b6ffd8]">
 						<TokenLogo src={NEAR_CHAIN_ICON} size={14} alt="Logo of NEAR" />
 						NEAR IR
 					</span>
@@ -52,7 +52,7 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 				contentClassName="text-center"
 			>
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2 py-0.5 title-sm text-[#124c8d] shadow-raised dark:border-white/10 dark:bg-white/12 dark:text-[#aac7ff]">
+					<span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2 py-0.5 title-sm text-[#124c8d] dark:border-white/10 dark:bg-white/12 dark:text-[#aac7ff]">
 						<TokenLogo name="Sonic" kind="chain" size={14} alt="Logo of Sonic" />
 						Sonic IR
 					</span>

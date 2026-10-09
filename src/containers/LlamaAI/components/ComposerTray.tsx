@@ -36,10 +36,9 @@ export function ComposerTray({
 			{/* The text keeps its own width, so a long message pushes the actions onto their own line
 			    instead of squeezing into a narrow column beside them. */}
 			<span className="flex min-w-0 flex-[1_1_auto] items-start gap-1.5">
-				<Icon
-					name="alert-triangle"
-					className={`mt-0.5 size-3.5 shrink-0 ${tone === 'error' ? 'text-error' : 'text-warning'}`}
-				/>
+				<span className="flex h-lh shrink-0 items-center">
+					<Icon name="alert-triangle" className={`size-3.5 ${tone === 'error' ? 'text-error' : 'text-warning'}`} />
+				</span>
 				<span className="min-w-0">{children}</span>
 			</span>
 			{actions ? <span className="ml-auto flex shrink-0 items-center gap-1">{actions}</span> : null}

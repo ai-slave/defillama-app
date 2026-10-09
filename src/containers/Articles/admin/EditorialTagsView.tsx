@@ -27,8 +27,9 @@ import {
 import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
-import { passFocusOnLeave } from '~/ui/focus'
+import { passFocusOnLeave, focusRegionOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 
 export function EditorialTagsView() {
 	return (
@@ -61,7 +62,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	const revalidateLanding = useResearchLandingRevalidation()
 	const limit = definition.cardinality === 'singleton' ? 1 : 30
 
-	const { data, isLoading, error } = useQuery<ArticleByTagResponse>({
+	const { data, isLoading, error, refetch, isFetching } = useQuery<ArticleByTagResponse>({
 		queryKey: ['research', 'admin', 'editorial-tag', definition.slug],
 		queryFn: () => listArticlesByTag(definition.slug, limit, authorizedFetch),
 		retry: false
@@ -169,9 +170,22 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			</div>
 
 			{error ? (
-				<div role="alert" className="rounded-md border border-error-muted bg-error-faint px-3 py-2 body-sm text-error">
-					<p>{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}</p>
-				</div>
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							// The retry leaves once the read succeeds; the region keeps focus.
+							ref={focusRegionOnLeave}
+							size="sm"
+							onClick={() => void refetch()}
+							pendingLabel={isFetching ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					}
+				>
+					{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}
+				</InlineStatus>
 			) : isLoading ? (
 				<p className="body-md text-tertiary">Loading…</p>
 			) : items.length === 0 ? (

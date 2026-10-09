@@ -169,7 +169,10 @@ function PastDueSubscriptionCard({
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-warning-muted bg-warning-tint p-4">
 			<div className="flex items-start gap-2">
-				<Icon name="alert-warning" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
+				{/* Centred on the heading's first line. */}
+				<span className="flex h-lh shrink-0 items-center title-lg">
+					<Icon name="alert-triangle" height={20} width={20} className="text-warning" />
+				</span>
 				<div className="flex flex-col gap-1">
 					<h3 className="title-lg text-warning">{planName} subscription past due</h3>
 					<p className="body-md text-warning">
@@ -202,9 +205,11 @@ function PastDueSubscriptionCard({
 
 function LegacyWarning() {
 	return (
-		<div className="flex items-start gap-2 rounded-2xl border border-warning-muted bg-warning-tint p-4">
-			<Icon name="alert-warning" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
-			<p className="body-md text-warning">
+		<div className="flex items-start gap-2 rounded-2xl border border-warning-muted bg-warning-tint p-4 body-md">
+			<span className="flex h-lh shrink-0 items-center">
+				<Icon name="alert-triangle" height={20} width={20} className="text-warning" />
+			</span>
+			<p className="text-warning">
 				Your current subscription is a legacy plan. You need to unsubscribe via{' '}
 				<a href="https://subscriptions.llamapay.io/" target="_blank" rel="noopener noreferrer" className="underline">
 					LlamaPay

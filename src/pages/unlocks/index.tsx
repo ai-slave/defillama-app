@@ -42,6 +42,7 @@ import {
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -325,13 +326,10 @@ export default function Protocols({
 						<UpcomingUnlockMetric days={30} values={upcomingUnlocks30d} />
 						<MetricRow label="Total Protocols Tracked" value={totalProtocols} />
 					</div>
-					<BasicLink
-						href="/unlocks/calendar"
-						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
-					>
+					<Button as={BasicLink} href="/unlocks/calendar" size="md" className="mt-auto">
 						<span>View unlocks calendar</span>
-						<Icon name="arrow-right" className="size-4" />
-					</BasicLink>
+						<Icon name="arrow-right" className="size-3.5" />
+					</Button>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<UpcomingUnlockVolumeChart series={unlockChartSeries} ignoresTableFilters={chartIgnoresTableFilters} />

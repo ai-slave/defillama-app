@@ -80,7 +80,7 @@ import {
 } from '../ProDashboardAPIContext'
 import { StreamDoneContext, StreamItemReadinessContext } from '../queries'
 import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type SectionConfig, type SqlChartConfig } from '../types'
-import { ProMeta } from '../ui'
+import { DashedTile, ProMeta } from '../ui'
 import { proCardShellStyles } from '../ui/styles'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { type DashboardItemPlacement, type DashboardWriteResult, toastRefusal } from '../useDashboardActions'
@@ -811,14 +811,10 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 	}
 
 	const addItemTile = (placement?: DashboardItemPlacement) => (
-		<button
-			type="button"
-			onClick={() => onAddChartClick(placement)}
-			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-medium label-md text-link hover:bg-hover-row focus-visible:bg-hover-row"
-		>
-			<Icon name="plus" height={16} width={16} />
+		<DashedTile onClick={() => onAddChartClick(placement)} className="col-span-full min-h-12 w-full">
+			<Icon name="plus" height={14} width={14} />
 			Add card
-		</button>
+		</DashedTile>
 	)
 
 	const renderGroups = (

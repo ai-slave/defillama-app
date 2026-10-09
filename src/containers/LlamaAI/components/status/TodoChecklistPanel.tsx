@@ -92,7 +92,7 @@ export function TodoChecklistPanel({
 					const isCancelled = todo.status === 'cancelled'
 					return (
 						<li key={todo.id} className="flex items-start gap-2 p-0.5">
-							<span className="mt-0.5">
+							<span className="flex h-lh shrink-0 items-center body-sm">
 								<TodoStatusIcon status={todo.status} animated={isLive} />
 							</span>
 							<p

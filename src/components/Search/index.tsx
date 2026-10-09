@@ -7,6 +7,7 @@ import { useAuthContext } from '~/auth'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { freeLabelAOnly, freeLabelBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
+import { GoldCta } from '~/containers/LlamaAI/components/GoldCta'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -68,9 +69,12 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 
 	return (
 		<>
-			<BasicLink
+			<GoldCta
+				as={BasicLink}
+				size="lg"
+				square
 				href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-				className="llamaai-glow relative -my-0.5 overflow-hidden rounded-md bg-ai-gold-cta p-3 text-black shadow-ai-gold-cta lg:hidden"
+				className="-my-0.5 lg:hidden"
 				data-umami-event="llamaai-mobile-nav-link"
 				data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 				onClick={freeLabel.trackEntryClick}
@@ -86,13 +90,22 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 						<span className={freeLabelBOnly}>Ask LlamaAI for free</span>
 					</span>
 				)}
-			</BasicLink>
+			</GoldCta>
 			{searchTrigger ?? (
 				<Ariakit.DialogProvider store={siteSearchStore}>
-					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow-raised hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden">
-						<span className="sr-only">Search</span>
-						<Icon name="search" height={16} width={16} />
-					</Ariakit.DialogDisclosure>
+					<Tooltip
+						content="Search"
+						render={
+							// Inside a Tooltip the provider context is the tooltip's, so the disclosure names its dialog's store.
+							<Ariakit.DialogDisclosure
+								store={siteSearchStore}
+								render={<Button variant="onBrand" size="lg" square className="-my-0.5 lg:hidden" />}
+								aria-label="Search"
+							/>
+						}
+					>
+						<Icon name="search" className="size-4" />
+					</Tooltip>
 
 					<SiteSearchDialog store={siteSearchStore} />
 				</Ariakit.DialogProvider>
@@ -321,9 +334,11 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{!hideLlamaAiCta ? (
-				<BasicLink
+				<GoldCta
+					as={BasicLink}
+					size="md"
 					href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-4 py-2 label-sm text-black shadow-ai-gold-cta lg:flex"
+					className="mr-auto max-lg:hidden"
 					data-umami-event="llamaai-nav-link"
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 					onClick={freeLabel.trackEntryClick}
@@ -339,7 +354,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 							<span className={`whitespace-nowrap ${freeLabelBOnly}`}>Ask LlamaAI for free</span>
 						</>
 					)}
-				</BasicLink>
+				</GoldCta>
 			) : null}
 		</>
 	)

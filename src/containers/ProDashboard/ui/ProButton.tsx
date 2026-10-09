@@ -4,13 +4,14 @@ import { tw } from '~/ui/tw'
 
 /* ProButton exists only for Pro's create and generate CTAs: the soft light-blue `primary` tint (create a
    dashboard or card) and the soft purple `ai` tint (generate with LlamaAI). Every other Pro control is
-   src/ui Button. */
+   src/ui Button. Like Button's tints, each rests on ramp step 3, hovers to step 4 and goes to step 5 while
+   held, with no scale or movement. */
 
-const PRO_BUTTON_BASE = tw`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent whitespace-nowrap transition-[color,background-color,border-color,translate,scale] duration-120 ease-out-quart active:translate-y-px active:scale-[.985]`
+const PRO_BUTTON_BASE = tw`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent whitespace-nowrap`
 
 const PRO_BUTTON_VARIANTS = {
-	primary: tw`bg-brand-tint text-link hover:bg-brand-tint-strong`,
-	ai: tw`bg-pro-ai-tint text-pro-ai-text hover:bg-pro-ai-tint-strong`
+	primary: tw`bg-brand-tint text-link hover:bg-brand-tint-strong active:bg-brand-tint-pressed`,
+	ai: tw`bg-pro-ai-tint text-pro-ai-text hover:bg-pro-ai-tint-strong active:bg-pro-ai-tint-pressed`
 }
 
 // The same type styles, heights and radius (rounded-lg) as src/ui Button's md and lg, so a ProButton sits level with the Buttons in its row.

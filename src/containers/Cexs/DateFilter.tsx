@@ -5,13 +5,14 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { Select } from '~/components/Select/Select'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
@@ -24,6 +25,11 @@ export function getCexDateRangeState(startDate: number | null, endDate: number |
 	if (startDate == null || endDate == null || startDate >= endDate - 3_600_000) return 'invalid'
 	return 'valid'
 }
+
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+	key: i.toString(),
+	name: `${i.toString().padStart(2, '0')}:00`
+}))
 
 const formatDateForInput = (timestamp: number | null) => {
 	if (timestamp == null) return ''
@@ -238,19 +244,19 @@ function CustomRangeForm({
 				</Field>
 				<Field label="Start Hour (optional)">
 					{(control) => (
-						<select
-							{...control}
-							name="startHour"
-							className={`${inputStyles} w-full`}
-							value={localStartHour}
-							onChange={(e) => setLocalStartHour(e.target.value)}
-						>
-							{Array.from({ length: 24 }, (_, i) => (
-								<option key={`start-${i}`} value={i}>
-									{i.toString().padStart(2, '0')}:00
-								</option>
-							))}
-						</select>
+						<Select
+							heading="Start hour"
+							allValues={HOUR_OPTIONS}
+							selectedValues={localStartHour}
+							setSelectedValues={setLocalStartHour}
+							label={HOUR_OPTIONS[Number(localStartHour)].name}
+							labelType="none"
+							variant="input"
+							size="md"
+							className="w-full"
+							// Select names its trigger with an aria-label, which would hide the Field's label.
+							triggerProps={{ ...control }}
+						/>
 					)}
 				</Field>
 				<Field label="End Date" error={submitted ? endError : null}>
@@ -269,19 +275,19 @@ function CustomRangeForm({
 				</Field>
 				<Field label="End Hour (optional)" error={submitted ? rangeError : null}>
 					{(control) => (
-						<select
-							{...control}
-							name="endHour"
-							className={`${inputStyles} w-full`}
-							value={localEndHour}
-							onChange={(e) => setLocalEndHour(e.target.value)}
-						>
-							{Array.from({ length: 24 }, (_, i) => (
-								<option key={`end-${i}`} value={i}>
-									{i.toString().padStart(2, '0')}:00
-								</option>
-							))}
-						</select>
+						<Select
+							heading="End hour"
+							allValues={HOUR_OPTIONS}
+							selectedValues={localEndHour}
+							setSelectedValues={setLocalEndHour}
+							label={HOUR_OPTIONS[Number(localEndHour)].name}
+							labelType="none"
+							variant="input"
+							size="md"
+							className="w-full"
+							// Select names its trigger with an aria-label, which would hide the Field's label.
+							triggerProps={{ ...control }}
+						/>
 					)}
 				</Field>
 				<div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row">

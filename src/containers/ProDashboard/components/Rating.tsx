@@ -169,7 +169,7 @@ function RatingStars({
 				{RATING_VALUES.map((star) => (
 					<span
 						key={star}
-						className={`relative rounded-sm p-1 transition-transform has-focus-visible:focus-ring has-aria-disabled:text-disabled ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
+						className={`relative rounded-sm p-1 has-focus-visible:focus-ring has-aria-disabled:text-disabled ${disabled ? '' : 'cursor-pointer'}`}
 					>
 						<Ariakit.Radio
 							accessibleWhenDisabled

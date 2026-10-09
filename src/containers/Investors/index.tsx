@@ -5,6 +5,7 @@ import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContex
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { RailItem } from '~/ui/RailItem'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { getInvestorsProjects, type InvestorsSite } from './config'
@@ -123,8 +124,11 @@ function InvestorsShell({
 												{project.name}
 											</div>
 										) : (
-											<button
+											<RailItem
+												as="button"
 												type="button"
+												// The open project's selected tab carries the selection; a collapsed project shows it on its own row.
+												active={isActive && !isExpanded}
 												aria-expanded={isExpanded}
 												onClick={() => {
 													if (isActive) {
@@ -137,9 +141,6 @@ function InvestorsShell({
 														closeSidebar()
 													}
 												}}
-												className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left label-md transition-colors ${
-													isActive ? 'text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
-												}`}
 											>
 												<svg
 													viewBox="0 0 12 12"
@@ -156,7 +157,7 @@ function InvestorsShell({
 													/>
 												</svg>
 												{project.name}
-											</button>
+											</RailItem>
 										)}
 
 										{isExpanded && (
@@ -177,7 +178,13 @@ function InvestorsShell({
 																<Tab
 																	value={tab.id}
 																	onClick={closeSidebar}
-																	className={`w-full rounded-md px-3 py-1.5 text-left label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary data-[active=true]:bg-brand-tint data-[active=true]:text-link ${isSoloGroup && idx !== 0 ? 'mt-3' : ''}`}
+																	render={
+																		<RailItem
+																			as="button"
+																			active={resolvedTab === tab.id}
+																			className={isSoloGroup && idx !== 0 ? 'mt-3' : undefined}
+																		/>
+																	}
 																>
 																	<TabLabel tab={tab} />
 																</Tab>
@@ -191,12 +198,11 @@ function InvestorsShell({
 															key={tab.id}
 															content={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
 															render={
-																<a
+																<RailItem
 																	href={tab.externalHref}
 																	target="_blank"
 																	rel="noopener noreferrer"
 																	onClick={closeSidebar}
-																	className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 																/>
 															}
 														>

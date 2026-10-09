@@ -4,21 +4,25 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 
 function CheckIcon() {
 	return (
-		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link">
-			<svg
-				viewBox="0 0 24 24"
-				className="size-3"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2.5"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			>
-				<polyline points="20 6 9 17 4 12" />
-			</svg>
+		// Centred on the first line of the bullet beside it, whose type sets the line height.
+		<span className="flex h-lh shrink-0 items-center">
+			<span className="flex size-5 items-center justify-center rounded-full bg-brand-tint text-link">
+				<svg
+					viewBox="0 0 24 24"
+					className="size-3"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2.5"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+				>
+					<polyline points="20 6 9 17 4 12" />
+				</svg>
+			</span>
 		</span>
 	)
 }
@@ -242,7 +246,7 @@ function HeroMock() {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-subtle bg-surface shadow-raised">
+		<div className="overflow-hidden rounded-2xl border border-subtle bg-surface">
 			<div className="flex items-center gap-2.5 border-b border-subtle px-4 py-2 body-sm">
 				<span className="min-w-[36px] rounded-sm border border-medium bg-page px-2 py-0.75 text-center mono-sm text-tertiary">
 					B2
@@ -348,7 +352,7 @@ function MockTable({
 	}
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-subtle bg-surface shadow-raised">
+		<div className="overflow-hidden rounded-xl border border-subtle bg-surface">
 			{formulaBar ? (
 				<div className="grid grid-cols-[28px_1fr] border-b border-subtle">
 					<div className="border-r border-subtle bg-surface-elevated-1 px-2.5 py-2" />
@@ -426,14 +430,16 @@ function TemplatesSection() {
 			</div>
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{templates.map((tpl) => (
-					<a
+					<Card
+						as="a"
+						padding="md"
 						key={tpl.title}
 						href={tpl.href}
 						target="_blank"
 						rel="noopener noreferrer"
 						data-umami-event="sheets-templates-click"
 						data-umami-event-template={tpl.title}
-						className="flex flex-col gap-2.5 rounded-2xl border border-subtle bg-surface p-7 transition-all hover:border-brand"
+						className="hover-wash-card flex flex-col gap-2.5"
 					>
 						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-link [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 							{tpl.icon}
@@ -441,7 +447,7 @@ function TemplatesSection() {
 						<h3 className="title-md">{tpl.title}</h3>
 						<p className="body-md text-tertiary">{tpl.desc}</p>
 						<span className="mt-auto flex items-center gap-1 label-md text-link">View template &rarr;</span>
-					</a>
+					</Card>
 				))}
 			</div>
 		</section>

@@ -70,9 +70,9 @@ export function ReferralCard() {
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center justify-between">
 					<span className="body-md text-primary">Your referral link</span>
-					<Button variant="secondary" size="sm" onClick={handleCopy}>
+					<Button variant="secondary" size="sm" onClick={handleCopy} doneLabel="Copied" done={copied}>
 						<Icon name="copy" className="size-3.5" />
-						{copied ? 'Copied' : 'Copy'}
+						Copy
 					</Button>
 				</div>
 				<div className="rounded-lg bg-surface-elevated-1 px-3 py-2.5">

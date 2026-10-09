@@ -1,7 +1,9 @@
 import { useId, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { useUpdateProject } from './hooks'
 import {
@@ -39,10 +41,15 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 	const dirty = isInstructionsDraftDirty(draft)
 	const status = getInstructionsSaveStatus({ isPending: update.isPending, hasError: !!update.error, dirty })
 
-	// The mutation owns the outcome: `update.error` is the inline message, and the next save clears it.
+	// The mutation owns the save status. The inline notice keeps the last failure until a save succeeds: `update.error`
+	// clears when a retry starts, which would unmount the focused Try again.
+	const [saveError, setSaveError] = useState<unknown>(null)
 	const saveDraft = (instructions: string | null) => {
 		setDraft((current) => ({ ...current, edited: false }))
-		update.mutate({ custom_instructions: instructions })
+		update.mutate(
+			{ custom_instructions: instructions },
+			{ onError: (error) => setSaveError(error), onSuccess: () => setSaveError(null) }
+		)
 	}
 
 	const onBlur = () => {
@@ -73,8 +80,8 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 			</header>
 			<Textarea
 				id={inputId}
-				aria-describedby={`${inputId}-hint${update.error ? ` ${inputId}-error` : ''}`}
-				aria-invalid={!!update.error}
+				aria-describedby={`${inputId}-hint${saveError !== null ? ` ${inputId}-error` : ''}`}
+				aria-invalid={saveError !== null}
 				value={draft.value}
 				onChange={(e) => {
 					setDraft((current) => ({ ...current, value: e.target.value, edited: true }))
@@ -85,17 +92,25 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 				placeholder="How should LlamaAI respond in this project?"
 				className="field-sizing-content max-h-64 min-h-20 resize-y"
 			/>
-			{update.error ? (
-				<div role="alert" id={`${inputId}-error`} className="flex flex-wrap items-center gap-2 body-sm text-error">
-					<p>{saveInstructionsError(update.error)}</p>
-					<Button
-						type="button"
-						size="sm"
-						onClick={() => saveDraft(draft.value.trim() || null)}
-						disabled={update.isPending}
+			{saveError !== null ? (
+				<div id={`${inputId}-error`}>
+					<InlineStatus
+						variant="error"
+						action={
+							<Button
+								type="button"
+								size="sm"
+								// The retry leaves once the save succeeds; the section keeps focus.
+								ref={focusRegionOnLeave}
+								onClick={() => saveDraft(draft.value.trim() || null)}
+								pendingLabel={update.isPending ? 'Saving…' : null}
+							>
+								Try again
+							</Button>
+						}
 					>
-						Retry save
-					</Button>
+						{saveInstructionsError(saveError)}
+					</InlineStatus>
 				</div>
 			) : null}
 			<p id={`${inputId}-hint`} className="body-sm text-secondary">

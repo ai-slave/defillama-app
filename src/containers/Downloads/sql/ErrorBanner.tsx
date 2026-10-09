@@ -1,5 +1,6 @@
 import { matchSorter } from 'match-sorter'
 import { useMemo, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { datasets } from '../datasets'
 import { identifierize, type RegisteredTable } from './useTableRegistry'
@@ -109,15 +110,10 @@ export function ErrorBanner({
 				<div className="flex flex-wrap items-center gap-1.5 body-sm">
 					<span className="text-error">Did you mean</span>
 					{analysis.suggestions.map((s) => (
-						<button
-							key={s}
-							type="button"
-							onClick={() => onApplyFix(analysis.offendingIdentifier!, s)}
-							className="inline-flex items-center gap-1 rounded-sm border border-error-muted bg-error-faint px-1.5 py-0.5 mono-sm text-error transition-colors hover:border-error-strong hover:bg-error-tint"
-						>
-							<Icon name="arrow-right" className="size-2.5" />
-							{s}
-						</button>
+						<Button key={s} variant="secondary" size="sm" onClick={() => onApplyFix(analysis.offendingIdentifier!, s)}>
+							<Icon name="arrow-right" className="size-3.5" />
+							<code className="mono-sm">{s}</code>
+						</Button>
 					))}
 					<span className="text-error">?</span>
 				</div>

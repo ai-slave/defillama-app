@@ -57,9 +57,16 @@ export function ShareQueryButton({
 	}
 
 	return (
-		<Button variant="secondary" size="md" onClick={onClick} disabled={disabled || !hasContent}>
-			<Icon name={copied ? 'check' : 'share'} className="size-3.5" />
-			{copied ? 'Copied' : 'Share'}
+		<Button
+			variant="secondary"
+			size="md"
+			onClick={onClick}
+			disabled={disabled || !hasContent}
+			doneLabel="Copied"
+			done={copied}
+		>
+			<Icon name="share" className="size-3.5" />
+			Share
 		</Button>
 	)
 }

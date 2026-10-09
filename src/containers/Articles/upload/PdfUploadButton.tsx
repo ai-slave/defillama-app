@@ -1,9 +1,9 @@
-import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
+import { UploadTile } from '~/ui/UploadTile'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import type { ArticlePdf } from '../types'
 import { type PdfUploadResult, usePdfUpload } from './usePdfUpload'
@@ -89,23 +89,19 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					</div>
 				</div>
 			) : (
-				<Ariakit.Button
+				<UploadTile
 					ref={uploadRef}
-					type="button"
-					disabled={disabled}
+					shape="wide"
+					icon="file-text"
+					label="Upload PDF"
+					pendingLabel={isUploading ? 'Uploading…' : null}
+					disabled={!articleId}
 					onClick={open}
-					accessibleWhenDisabled
-					aria-busy={isUploading || undefined}
-					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors not-aria-disabled:hover:border-brand-strong not-aria-disabled:hover:text-primary aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled"
-				>
-					{isUploading ? <LoadingSpinner size={14} /> : <Icon name="file-text" className="size-5" />}
-					<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
-				</Ariakit.Button>
+				/>
 			)}
+			{/* Re-picking the file is the retry: the upload control sits right above the error. */}
 			{errorMessage ? (
-				<p role="alert" className="body-sm text-error">
-					{errorMessage}
-				</p>
+				<InlineStatus variant="error">{errorMessage}</InlineStatus>
 			) : helperText ? (
 				<p className="body-sm text-tertiary">{helperText}</p>
 			) : null}

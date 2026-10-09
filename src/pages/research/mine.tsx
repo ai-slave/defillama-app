@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { Select } from '~/components/Select/Select'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
@@ -15,12 +16,13 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl } from '~/ui/focus'
+import { neighbourRowControl, focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 
@@ -37,6 +39,11 @@ const SORT_LABELS: Record<SortKey, string> = {
 	created: 'Recently created',
 	title: 'Title (A–Z)'
 }
+const SORT_OPTIONS = [
+	{ key: 'updated', name: SORT_LABELS.updated },
+	{ key: 'created', name: SORT_LABELS.created },
+	{ key: 'title', name: SORT_LABELS.title }
+]
 
 function wordCount(text: string | undefined): number {
 	if (!text) return 0
@@ -74,7 +81,7 @@ function MyArticlesContent() {
 	const search = useDebouncedValue(searchInput, 200).trim().toLowerCase()
 
 	const myArticlesQueryKey = ['research', 'my-articles'] as const
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: myArticlesQueryKey,
 		queryFn: () => listMyArticles({ limit: FETCH_LIMIT }, authorizedFetch),
 		enabled: !loaders.userLoading && isAuthenticated,
@@ -253,18 +260,18 @@ function MyArticlesContent() {
 								className="w-full pl-8 sm:w-56"
 							/>
 						</label>
-						<select
-							value={sortKey}
-							onChange={(e) => setSortKey(e.target.value as SortKey)}
-							className={`${inputStyles} cursor-pointer`}
-							aria-label="Sort"
-						>
-							{(Object.keys(SORT_LABELS) as Array<SortKey>).map((k) => (
-								<option key={k} value={k}>
-									{SORT_LABELS[k]}
-								</option>
-							))}
-						</select>
+						<Select
+							allValues={SORT_OPTIONS}
+							selectedValues={sortKey}
+							setSelectedValues={(value: string) => setSortKey(value as SortKey)}
+							label={SORT_LABELS[sortKey]}
+							labelType="none"
+							heading="Sort"
+							variant="input"
+							size="md"
+							className="shrink-0"
+							triggerProps={{ 'aria-label': 'Sort' }}
+						/>
 					</div>
 				</div>
 
@@ -285,9 +292,22 @@ function MyArticlesContent() {
 			</header>
 
 			{error ? (
-				<div className="rounded-md border border-error-muted bg-error-faint p-4 body-md text-error">
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							// The retry leaves once the read succeeds; the region keeps focus.
+							ref={focusRegionOnLeave}
+							size="sm"
+							onClick={() => void refetch()}
+							pendingLabel={isFetching ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					}
+				>
 					{error instanceof Error ? error.message : 'Failed to load research'}
-				</div>
+				</InlineStatus>
 			) : null}
 
 			{showLoading ? (

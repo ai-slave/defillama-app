@@ -271,7 +271,9 @@ test.each([403, 404])('shows the same not-found page for inaccessible or missing
 test('keeps retry available for temporary project failures', async () => {
 	detailReply = () => Response.json({ error: 'Service unavailable' }, { status: 503 })
 	await render()
-	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project unavailable'))
+	await until(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Couldn’t load this project.')
+	)
 	detailReply = () => project('project-1', 'Research', 'Saved instructions')
 	await act(async () => button('Try again').click())
 	await until(() => expect(tabs()).toHaveLength(2))

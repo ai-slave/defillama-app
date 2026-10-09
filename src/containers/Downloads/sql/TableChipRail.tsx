@@ -272,10 +272,10 @@ function CopyForAIButton() {
 	return (
 		<Tooltip
 			content="Copies a dataset and SQL dialect brief to paste into an AI assistant."
-			render={<Button variant="secondary" size="sm" onClick={onCopy} />}
+			render={<Button variant="secondary" size="sm" onClick={onCopy} doneLabel="Copied for AI" done={copied} />}
 		>
-			<Icon name={copied ? 'check' : 'sparkles'} className="size-3.5" />
-			{copied ? 'Copied for AI' : 'Copy for AI'}
+			<Icon name="sparkles" className="size-3.5" />
+			Copy for AI
 		</Tooltip>
 	)
 }

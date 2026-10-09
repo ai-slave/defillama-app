@@ -4,24 +4,28 @@
 
 ## Where the work goes
 
-| To do this                               | Use                                                                                          | Example                                  |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Send a prompt, edit, resume or replay    | `runAgenticRequest`; attach to a running execution only through `useChatExecutionOwner`      | `hooks/useChatExecutionOwner.ts`         |
-| Run a latest-wins side request           | Its own `AbortScope`, so it never takes stream ownership                                     | restore, pagination                      |
-| Add an SSE event                         | Parse it in `fetchAgenticResponse.ts`, consume it through the guarded `streamCallbacks.ts`   | `fact_check_citations`                   |
-| Commit an assistant message              | `StreamAccumulator` → `buildAssistantMessage`; reducer state is only the live snapshot       | `streamState.ts`                         |
-| Show a persisted or shared message       | API shape → `Message` in `messageMappers.ts`, message → blocks in `renderModel.ts`           | `parseMessageToRenderModel`              |
-| Accept a chart or dashboard payload      | Normalize it in `chartPayloads.ts`; family behavior in `utils/chartAdapters/*`               | `utils/chartAdapter.ts` stays the facade |
-| Call an authenticated JSON endpoint      | `llamaAIRequest` in `api/transport.ts`                                                       | `api/telegram.ts`, `projects/api.ts`     |
-| Strip a report marker                    | `utils/reportMarkers.ts`                                                                     | `stripBeforeReportStart`                 |
-| Set the prompt mode                      | `AgenticAnswerMode`; `quick` is left out of the request body, other modes go as `mode`       | `types.ts`                               |
-| Key a project query                      | `projects/queryKeys.ts`                                                                      | `projectSessionsKey`                     |
-| Create, move, rename or delete a session | `hooks/useSessionMutations.ts`, which updates the global and project session caches          | moving a chat into a project             |
-| Link Telegram or Slack                   | `useIntegrationLink` / `useSlackIntegrationLink`; components read derived state, never poll  | `components/SlackIntegrationRow.tsx`     |
-| Show status in the thread                | `ChatStatusLine`                                                                             | `components/status/ChatStatusLine.tsx`   |
-| Show state that blocks the next prompt   | `ComposerTray`; the composer box holds the draft only                                        | failed prompt, full queue, context limit |
-| Draw the box around a prompt             | `ComposerFrame` (`row` or `stack`; `gold` on the /ai landing), never a hand-built border     | `components/input/ComposerFrame.tsx`     |
-| Pick a color                             | A `semantics.css` token; `--ai-*` only for the exceptions in `src/styles/themes/llamaai.css` | gold welcome action                      |
+| To do this                               | Use                                                                                          | Example                                     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Send a prompt, edit, resume or replay    | `runAgenticRequest`; attach to a running execution only through `useChatExecutionOwner`      | `hooks/useChatExecutionOwner.ts`            |
+| Run a latest-wins side request           | Its own `AbortScope`, so it never takes stream ownership                                     | restore, pagination                         |
+| Add an SSE event                         | Parse it in `fetchAgenticResponse.ts`, consume it through the guarded `streamCallbacks.ts`   | `fact_check_citations`                      |
+| Commit an assistant message              | `StreamAccumulator` → `buildAssistantMessage`; reducer state is only the live snapshot       | `streamState.ts`                            |
+| Show a persisted or shared message       | API shape → `Message` in `messageMappers.ts`, message → blocks in `renderModel.ts`           | `parseMessageToRenderModel`                 |
+| Accept a chart or dashboard payload      | Normalize it in `chartPayloads.ts`; family behavior in `utils/chartAdapters/*`               | `utils/chartAdapter.ts` stays the facade    |
+| Call an authenticated JSON endpoint      | `llamaAIRequest` in `api/transport.ts`                                                       | `api/telegram.ts`, `projects/api.ts`        |
+| Strip a report marker                    | `utils/reportMarkers.ts`                                                                     | `stripBeforeReportStart`                    |
+| Set the prompt mode                      | `AgenticAnswerMode`; `quick` is left out of the request body, other modes go as `mode`       | `types.ts`                                  |
+| Key a project query                      | `projects/queryKeys.ts`                                                                      | `projectSessionsKey`                        |
+| Create, move, rename or delete a session | `hooks/useSessionMutations.ts`, which updates the global and project session caches          | moving a chat into a project                |
+| Link Telegram or Slack                   | `useIntegrationLink` / `useSlackIntegrationLink`; components read derived state, never poll  | `components/SlackIntegrationRow.tsx`        |
+| Show status in the thread                | `ChatStatusLine`                                                                             | `components/status/ChatStatusLine.tsx`      |
+| Show state that blocks the next prompt   | `ComposerTray`; the composer box holds the draft only                                        | failed prompt, full queue, context limit    |
+| Draw the box around a prompt             | `ComposerFrame` (`row` or `stack`; `gold` on the /ai landing), never a hand-built border     | `components/input/ComposerFrame.tsx`        |
+| Pick a color                             | A `semantics.css` token; `--ai-*` only for the exceptions in `src/styles/themes/llamaai.css` | gold welcome action                         |
+| Draw a gold LlamaAI call to action       | `GoldCta` (Button sizes, no lift); never a hand-built gold gradient                          | `components/GoldCta.tsx`                    |
+| Pick an alert's schedule or Slack target | `AlertScheduleFields`, `SlackTargetPickers`; forms keep the values in state                  | `components/alerts/AlertScheduleFields.tsx` |
+| Show a file or dashboard in a message    | `ArtifactCard`, one height and fill for every attachment                                     | `components/messages/ArtifactCard.tsx`      |
+| Show a failed read with its retry        | `RetryNotice` (an `InlineStatus` with Try again)                                             | `components/RetryNotice.tsx`                |
 
 ## Checks a table can't express
 

@@ -1,6 +1,9 @@
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
+import { InlineStatus } from '~/ui/Status'
 
+/** A failed read in a LlamaAI panel, menu or form, with its Try again. A retry that succeeds removes the notice with
+    focus inside it, so the region around it takes that focus. */
 export function RetryNotice({
 	message,
 	retrying,
@@ -11,11 +14,17 @@ export function RetryNotice({
 	onRetry: () => void
 }) {
 	return (
-		<div ref={focusRegionOnLeave} role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
-			<p>{message}</p>
-			<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
-				Try again
-			</Button>
+		<div ref={focusRegionOnLeave} className="w-full min-w-0">
+			<InlineStatus
+				variant="error"
+				action={
+					<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
+						Try again
+					</Button>
+				}
+			>
+				{message}
+			</InlineStatus>
 		</div>
 	)
 }

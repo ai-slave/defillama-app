@@ -188,3 +188,36 @@
 	--color-data-announcement-link: var(--data-announcement-link);
 	--color-data-announcement-link-hover: var(--data-announcement-link-hover);
 }
+
+/* Each banner's call-to-action pill (announcementCtaStyles in src/components/Announcement.tsx) reads these four
+   variables; the banner carries its scope class. */
+.ir-announcement-scope {
+	--announcement-cta: var(--ir-announcement-link);
+	--announcement-cta-hover: var(--ir-announcement-link-hover);
+	--announcement-cta-text: var(--ir-announcement-text);
+	--announcement-cta-ring: var(--ir-announcement-ring);
+}
+.app-announcement-scope {
+	--announcement-cta: var(--app-announcement-link);
+	--announcement-cta-hover: var(--app-announcement-link-hover);
+	--announcement-cta-text: var(--app-announcement-text);
+	--announcement-cta-ring: var(--app-announcement-ring);
+}
+.data-announcement-scope {
+	--announcement-cta: var(--data-announcement-link);
+	--announcement-cta-hover: var(--data-announcement-link-hover);
+	--announcement-cta-text: var(--data-announcement-text);
+	--announcement-cta-ring: var(--data-announcement-ring);
+}
+.verified-announcement-scope {
+	--announcement-cta: var(--verified-announcement-button);
+	--announcement-cta-hover: var(--verified-announcement-button-hover);
+	--announcement-cta-text: var(--verified-announcement-button-text);
+	--announcement-cta-ring: var(--verified-announcement-button);
+}
+.llamaai-announcement-scope {
+	--announcement-cta: var(--llamaai-announcement-link);
+	--announcement-cta-hover: var(--llamaai-announcement-link-hover);
+	--announcement-cta-text: var(--llamaai-announcement-link-text);
+	--announcement-cta-ring: var(--llamaai-announcement-ring);
+}

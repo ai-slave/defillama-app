@@ -50,7 +50,7 @@ function PricingResult({ tokenKey, details }: { tokenKey: string; details: Prici
 		<Card padding="strip" className="flex flex-col gap-3" role="status" aria-live="polite">
 			<div className="flex flex-wrap items-center gap-2">
 				<Icon
-					name={currentPrice ? 'check-circle' : 'circle-help'}
+					name={currentPrice ? 'check-circle' : 'help-circle'}
 					height={18}
 					width={18}
 					className={currentPrice ? 'shrink-0 text-success' : 'shrink-0 text-warning'}
@@ -161,7 +161,7 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 				<form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
 					{/* From md the fields share subgrid rows (label, control, error), so an error under one field never moves the
 					    controls beside it. */}
-					<div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] md:grid-rows-[auto_auto_auto] md:gap-y-0">
+					<div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] md:grid-rows-[auto_auto_auto] md:gap-y-1">
 						<Field
 							label="Chain"
 							error={submitted ? chainError : null}
@@ -268,10 +268,7 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 			{result.status === 'done' ? (
 				<PricingResult tokenKey={result.key} details={result.details} />
 			) : result.status === 'error' ? (
-				<Card padding="md" className="flex items-center gap-3" role="alert">
-					<Icon name="alert-triangle" height={18} width={18} className="shrink-0 text-error" />
-					<p className="body-md text-primary">{result.message}</p>
-				</Card>
+				<InlineStatus variant="error">{result.message}</InlineStatus>
 			) : null}
 		</div>
 	)

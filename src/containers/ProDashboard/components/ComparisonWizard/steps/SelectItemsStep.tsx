@@ -354,7 +354,7 @@ export function SelectItemsStep() {
 												onClick={() => actions.toggleSelectedItem(option.value)}
 												disabled={isDisabled}
 												className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-													isSelected ? 'bg-brand-faint' : 'not-disabled:hover:bg-hover-row'
+													isSelected ? 'bg-brand-muted' : 'not-disabled:hover:bg-hover-row'
 												} ${option.isChild ? 'pl-8' : ''}`}
 												style={{
 													height: `${virtualRow.size}px`,

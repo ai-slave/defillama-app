@@ -237,7 +237,9 @@ export function CoveragePricingContent({
 			<ul className="flex flex-col gap-2">
 				{FEATURES[card.key].map((feature) => (
 					<li key={feature} className="flex items-start gap-2 body-md text-primary">
-						<Icon name="check" width={14} height={14} className="mt-1 shrink-0 text-link" aria-hidden="true" />
+						<span className="flex h-lh shrink-0 items-center">
+							<Icon name="check" width={14} height={14} className="text-link" aria-hidden="true" />
+						</span>
 						{feature}
 					</li>
 				))}

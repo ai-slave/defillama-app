@@ -35,7 +35,7 @@ import type {
 import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import styles from '../LlamaAIChat.module.css'
 import { ComposerTray } from './ComposerTray'
@@ -987,15 +987,19 @@ export function EmptyConversationErrorState({
 }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<p role="alert" className="body-md text-error">
+			<InlineStatus
+				variant="error"
+				action={
+					onRetry ? (
+						<Button type="button" size="sm" onClick={onRetry}>
+							Try again
+						</Button>
+					) : null
+				}
+			>
 				{message}
-			</p>
+			</InlineStatus>
 			<div className="flex items-center gap-2">
-				{onRetry ? (
-					<Button type="button" size="md" onClick={onRetry}>
-						Retry
-					</Button>
-				) : null}
 				<Button type="button" size="md" variant="ghost" onClick={onNewChat}>
 					Start a new chat
 				</Button>

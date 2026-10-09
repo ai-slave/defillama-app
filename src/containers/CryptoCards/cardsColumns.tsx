@@ -253,9 +253,11 @@ export function buildCardsColumns(
 				return (
 					<div className={`relative flex w-full min-w-0 items-center gap-2 ${nestedCard ? 'pl-12' : 'pl-6'}`}>
 						{row.getCanExpand() ? (
-							<button
-								type="button"
-								className={`absolute flex size-6 items-center justify-center rounded-md hover:bg-hover-row ${nestedCard ? 'left-5' : '-left-1'}`}
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className={`absolute ${nestedCard ? 'left-5' : '-left-1'}`}
 								onClick={row.getToggleExpandedHandler()}
 								aria-expanded={row.getIsExpanded()}
 							>
@@ -270,7 +272,7 @@ export function buildCardsColumns(
 										<span className="sr-only">{`View ${expansionLabel}`}</span>
 									</>
 								)}
-							</button>
+							</Button>
 						) : null}
 						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
 						{/* The name opens the card page; the Get pill beside it is the one way to the issuer. */}

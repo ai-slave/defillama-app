@@ -140,7 +140,6 @@ export function ChainOverview(props: IChainOverviewData) {
 										padding="sm"
 										className="hover-wash-card relative flex max-h-[64px] w-full max-w-[70vw] min-w-[270px] flex-1 items-center gap-2.5 overflow-hidden"
 									>
-										{app.background}
 										<>{app.icon}</>
 										<span className="flex flex-1 flex-col gap-0.5">
 											<span className="truncate title-md">{app.name}</span>
@@ -148,7 +147,7 @@ export function ChainOverview(props: IChainOverviewData) {
 												<span className="truncate body-md text-secondary">{app.description}</span>
 											)}
 										</span>
-										<Icon name="arrow-up-right-2" className="size-6 shrink-0" />
+										<Icon name="arrow-up-right" className="size-6 shrink-0" />
 									</Card>
 								))}
 							</div>
@@ -201,8 +200,7 @@ const linksToOtherLlamaApps = [
 					className="visible absolute inset-0 h-full w-full object-contain dark:invisible"
 				/>
 			</span>
-		),
-		background: <span className="llama-app-background" />
+		)
 	},
 	{
 		name: 'LlamaSearch',
@@ -217,8 +215,7 @@ const linksToOtherLlamaApps = [
 				width={39.28}
 				className="z-10 object-contain"
 			/>
-		),
-		background: <span className="llama-app-background" />
+		)
 	},
 	{
 		name: 'LlamaSwap',
@@ -226,8 +223,7 @@ const linksToOtherLlamaApps = [
 		href: 'https://swap.defillama.com',
 		icon: (
 			<img src="/assets/llamaswap.svg" loading="lazy" alt="" height={44} width={44} className="z-10 object-contain" />
-		),
-		background: <span className="llama-app-background" />
+		)
 	},
 	{
 		name: 'DefiLlama API',
@@ -235,8 +231,7 @@ const linksToOtherLlamaApps = [
 		href: 'https://defillama.com/pro-api/docs',
 		icon: (
 			<img src="/assets/llamaswap.svg" loading="lazy" alt="" height={44} width={44} className="z-10 object-contain" />
-		),
-		background: <span className="llama-app-background" />
+		)
 	},
 	{
 		name: 'LlamaFeed',
@@ -244,7 +239,6 @@ const linksToOtherLlamaApps = [
 		href: 'https://llamafeed.io/',
 		icon: (
 			<img src="/assets/llamafeed.svg" loading="lazy" alt="" height={44} width={44} className="z-10 object-contain" />
-		),
-		background: <span className="llama-app-background" />
+		)
 	}
 ]

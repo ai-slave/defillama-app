@@ -154,12 +154,12 @@ function PromptItem({ prompt, onClick }: { prompt: string; onClick: (prompt: str
 				<p className="m-0 flex-1 body-md text-primary group-hover:text-primary group-focus-visible:text-primary">
 					{prompt}
 				</p>
-				<Icon
-					name="arrow-right"
-					height={14}
-					width={14}
-					className="mt-0.5 shrink-0 text-tertiary opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
-				/>
+				<span className="flex h-lh shrink-0 items-center body-md">
+					<Icon
+						name="arrow-right"
+						className="size-3.5 text-tertiary opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+					/>
+				</span>
 			</Ariakit.PopoverDismiss>
 		</li>
 	)

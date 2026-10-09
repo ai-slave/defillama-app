@@ -1,4 +1,4 @@
-import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
+import { Announcement, announcementCtaStyles, type AnnouncementTracking } from '~/components/Announcement'
 import { SealGlyph } from './Tables/Measured'
 import { useSubscribeProModal } from './useSubscribeProModal'
 import { useVerifiedAccess } from './useVerifiedAccess'
@@ -35,7 +35,7 @@ export function VerifiedApyAnnouncement({
 			<Announcement
 				announcementId={VERIFIED_APY_ANNOUNCEMENT.id}
 				version={VERIFIED_APY_ANNOUNCEMENT.version}
-				className="border border-verified-announcement-border bg-(image:--verified-announcement-bg) text-verified-announcement-text shadow-verified-announcement"
+				className="verified-announcement-scope border border-verified-announcement-border bg-(image:--verified-announcement-bg) text-verified-announcement-text shadow-verified-announcement"
 				contentClassName="flex items-center gap-x-3 gap-y-2 py-0.5 pl-1.5 text-left sm:flex-wrap"
 				dismissLabel="Dismiss"
 				dismissTracking={track?.dismiss}
@@ -48,12 +48,7 @@ export function VerifiedApyAnnouncement({
 						Every day we simulate a real holder withdrawing from each pool on-chain and record what they received.
 					</span>
 				</span>
-				<button
-					type="button"
-					{...track?.cta}
-					onClick={show}
-					className="ml-auto shrink-0 rounded-lg bg-verified-announcement-button px-3 py-1.5 label-sm text-verified-announcement-button-text transition-colors hover:bg-verified-announcement-button-hover"
-				>
+				<button type="button" {...track?.cta} onClick={show} className={`ml-auto ${announcementCtaStyles}`}>
 					Unlock<span className="hidden sm:inline"> Verified APY</span>
 				</button>
 			</Announcement>

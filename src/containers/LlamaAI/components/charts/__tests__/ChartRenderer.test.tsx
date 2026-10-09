@@ -181,13 +181,27 @@ async function setInputValue(input: HTMLInputElement, value: string) {
 	})
 }
 
-async function setSelectValue(select: HTMLSelectElement, value: string) {
-	const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
-	if (!setter) throw new Error('Expected native select value setter')
+async function pointerClick(element: HTMLElement) {
 	await act(async () => {
-		setter.call(select, value)
-		select.dispatchEvent(new Event('change', { bubbles: true }))
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
 	})
+}
+
+/** Opens a Select and picks the option with this name. */
+async function pick(trigger: HTMLElement, name: string) {
+	await pointerClick(trigger)
+	const option = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await pointerClick(option)
+}
+
+function aggregationPicker() {
+	return document.querySelector<HTMLElement>('[aria-label="Series 1 aggregation"]')
 }
 
 // The style editor's title field carries a screen-reader-only label (Field hideLabel).
@@ -298,16 +312,16 @@ describe('ChartRenderer', () => {
 			render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
 		)
 		await click(container, '[aria-label="Edit chart style"]')
-		const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
-		if (!select) throw new Error('Expected aggregation select for promoted dates')
-		expect(select.value).toBe('unknown')
-		await setSelectValue(select, 'flow')
-		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		const picker = aggregationPicker()
+		if (!picker) throw new Error('Expected aggregation picker for promoted dates')
+		expect(picker.textContent).toContain('Choose aggregation')
+		await pick(picker, 'Sum per period')
+		expect(aggregationPicker()?.textContent).toContain('Sum per period')
 		await clickButton(document, 'Save')
 
 		await click(container, '[aria-label="Edit chart style"]')
 		await clickButton(document, 'Reset')
-		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		expect(aggregationPicker()?.textContent).toContain('Sum per period')
 		await clickButton(document, 'Save')
 		await chooseGrouping(container, 'Month')
 		expect(grouping(container)).toBe('Month')

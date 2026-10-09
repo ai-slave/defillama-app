@@ -31,6 +31,11 @@ import { type ReactNode, useId } from 'react'
      </Field>
    `aria-invalid` turns the Input recipe's border red; callers never add an
    error border. `className` is layout placement only.
+   Fields in a row with a button: the row is a grid with label, control and
+   error rows, each Field spans them as a subgrid (`row-span-3 grid
+   grid-rows-subgrid`), the button sits in the control row, and the grid's
+   row gap is the Field's own 4px (`gap-y-1`). Any other row gap stretches
+   the control row and the button beside it grows taller than the field.
    `hideLabel`: only for a control a search icon or its surface already
    names (a search box, a link bubble's URL); the label stays for screen
    readers. Every other field shows its label (design.md).

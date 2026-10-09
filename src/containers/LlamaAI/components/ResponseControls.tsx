@@ -242,7 +242,7 @@ export function ResponseControls({
 									/>
 								}
 							>
-								<Icon name="circle-help" height={16} width={16} />
+								<Icon name="help-circle" height={16} width={16} />
 							</Tooltip>
 							<PopoverSurface variant="panel" heading="Response details" gutter={8}>
 								<div className="flex justify-between gap-4 p-3 body-sm text-primary">

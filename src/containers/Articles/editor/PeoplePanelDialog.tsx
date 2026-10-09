@@ -1,4 +1,4 @@
-import * as Ariakit from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { useMutationState, type MutationKey } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -8,9 +8,9 @@ import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
 import { useImageUpload } from '../upload/useImageUpload'
 import {
 	makeEmptyPeoplePanelConfig,
@@ -215,7 +215,7 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 	}
 
 	return (
-		<fieldset className="grid grid-cols-[80px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:gap-4">
+		<fieldset className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:gap-4">
 			{/* Every field has its visible label; the legend tells the rows apart for screen readers, as the move and
 			    remove buttons' names do. */}
 			<legend className="sr-only">Person {person}</legend>
@@ -230,35 +230,30 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 			{/* The image has no visible label of its own, so the row wires its error by hand; data-invalid lets an insert
 			    focus the first image that is missing. */}
 			<div data-invalid={imageError ? '' : undefined} className="col-start-1 row-start-1 flex flex-col gap-1.5">
-				<Ariakit.Button
-					disabled={isUploading || !articleId}
-					accessibleWhenDisabled
-					aria-busy={isUploading || undefined}
-					aria-invalid={imageError ? true : undefined}
-					aria-describedby={imageError ? `${fieldId}-image-error` : undefined}
-					onClick={() => inputRef.current?.click()}
-					className={`group relative aspect-square w-20 overflow-hidden rounded-full border bg-surface transition-[border-color] not-aria-disabled:hover:border-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
-						imageError ? 'border-error' : 'border-medium'
-					}`}
-					aria-label={item.src ? 'Replace image' : 'Upload image'}
-				>
-					{item.src ? (
-						<>
-							<img src={item.src} alt="" className="h-full w-full object-cover" />
-							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-research-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-								Replace
-							</span>
-						</>
-					) : (
-						<span className="flex h-full w-full items-center justify-center label-sm text-tertiary">Upload</span>
-					)}
-					{isUploading ? (
-						<span className="absolute inset-0 flex items-center justify-center bg-research-backdrop-soft">
-							<LoadingSpinner size={16} />
-							<span className="sr-only">Uploading</span>
-						</span>
-					) : null}
-				</Ariakit.Button>
+				{item.src ? (
+					<ImageReplaceTile
+						shape="round"
+						src={item.src}
+						pendingLabel={isUploading ? 'Uploading…' : null}
+						disabled={!articleId}
+						aria-invalid={imageError ? true : undefined}
+						aria-describedby={imageError ? `${fieldId}-image-error` : undefined}
+						aria-label="Replace image"
+						onClick={() => inputRef.current?.click()}
+					/>
+				) : (
+					<UploadTile
+						shape="round"
+						icon="image-plus"
+						label="Upload"
+						pendingLabel={isUploading ? 'Uploading…' : null}
+						disabled={!articleId}
+						aria-invalid={imageError ? true : undefined}
+						aria-describedby={imageError ? `${fieldId}-image-error` : undefined}
+						aria-label="Upload image"
+						onClick={() => inputRef.current?.click()}
+					/>
+				)}
 			</div>
 
 			<div className="col-span-2 row-start-2 flex min-w-0 flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:row-start-1">

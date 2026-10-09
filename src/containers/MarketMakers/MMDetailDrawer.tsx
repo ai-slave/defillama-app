@@ -222,8 +222,10 @@ function DetailSections({ detail }: { detail: Dict }) {
 
 function ClaimBanner({ onClaim }: { onClaim: () => void }) {
 	return (
-		<section className="flex gap-3 rounded-lg bg-brand p-4">
-			<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
+		<section className="flex items-start gap-3 rounded-lg bg-brand p-4">
+			<span className="flex h-lh shrink-0 items-center label-lg">
+				<Icon name="shield-check" height={24} width={24} className="text-on-brand" />
+			</span>
 			<div className="flex flex-col gap-2">
 				<h3 className="label-lg text-on-brand">Claim this organization</h3>
 				<p className="body-md text-on-brand">

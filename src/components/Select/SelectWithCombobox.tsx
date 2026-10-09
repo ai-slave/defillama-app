@@ -421,7 +421,8 @@ export function SelectWithCombobox({
 		>
 			<ComboboxSelectTrigger
 				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
-				aria-label={`${label} dropdown`}
+				// A trigger with an id is a Field's control: the Field's visible label names it.
+				aria-label={triggerProps?.id ? undefined : `${label} dropdown`}
 				{...triggerProps}
 			>
 				{labelType === 'smol' ? (

@@ -38,7 +38,7 @@ import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -393,7 +393,9 @@ export function TokenUsageSearch() {
 						<LoadingIndicator />
 					</p>
 				) : error ? (
-					<p className="px-3 py-6 text-center body-sm text-error" role="alert">{`Error: ${error.message}`}</p>
+					<div className="p-3">
+						<InlineStatus variant="error">{`Error: ${error.message}`}</InlineStatus>
+					</div>
 				) : !data?.length ? (
 					<NoResults />
 				) : (

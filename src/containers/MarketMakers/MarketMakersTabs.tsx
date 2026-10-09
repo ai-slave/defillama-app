@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
+import { RailItem } from '~/ui/RailItem'
 import { tabTrackStyles, TabLink } from '~/ui/Tab'
 import { DepthIcon, DocumentationIcon, KpiIcon, PerformanceIndexIcon, SpreadIcon, VolumeIcon } from './TabIcons'
 
@@ -46,15 +47,16 @@ export function MarketMakersTabs({ active }: { active: string }) {
 					<div className="overflow-hidden" inert={!open}>
 						<nav className="flex flex-col gap-1 border-t border-subtle p-1" aria-label="Market makers pages">
 							{MARKET_MAKER_TABS.map((tab) => (
-								<BasicLink
+								<RailItem
+									as={BasicLink}
 									key={tab.to}
 									href={tab.to}
+									active={tab.label === active}
 									aria-current={tab.label === active ? 'page' : undefined}
-									className="hover-wash flex items-center gap-2 rounded-md px-2.5 py-2 label-md text-primary aria-[current=page]:bg-brand-muted aria-[current=page]:text-link"
 								>
-									<tab.Icon />
+									<tab.Icon className="size-3.5" />
 									{tab.label}
-								</BasicLink>
+								</RailItem>
 							))}
 						</nav>
 					</div>

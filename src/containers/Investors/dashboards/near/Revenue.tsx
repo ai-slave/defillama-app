@@ -142,7 +142,7 @@ export default function Revenue() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<details className="group rounded-xl border border-subtle bg-surface transition-all hover:border-strong">
+			<details className="group rounded-xl border border-subtle bg-surface">
 				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-primary">
 					<span>Quick Investment Thesis</span>
 					<svg
@@ -384,25 +384,27 @@ export default function Revenue() {
 					<SectionHeader>Frequently Asked Questions</SectionHeader>
 					<div className="flex flex-col gap-3">
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
-							<details
-								key={key}
-								className="group overflow-hidden rounded-lg border border-subtle bg-surface transition-all hover:border-strong"
-							>
+							<details key={key} className="group overflow-hidden rounded-lg border border-subtle bg-surface">
 								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-primary transition-colors hover:bg-hover-row">
 									<span className="flex items-start gap-3">
-										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-(--text-secondary) label-sm text-(--bg-surface)">
-											{idx + 1}
+										<span className="flex h-lh shrink-0 items-center">
+											<span className="flex size-6 items-center justify-center rounded-sm bg-(--text-secondary) label-sm text-(--bg-surface)">
+												{idx + 1}
+											</span>
 										</span>
-										<span className="pt-0.5">{item.question}</span>
+										<span>{item.question}</span>
 									</span>
-									<svg
-										className="mt-1 size-5 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-									</svg>
+									<span className="flex h-lh shrink-0 items-center">
+										<svg
+											className="size-5 text-secondary transition-transform duration-200 group-open:rotate-180"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+											aria-hidden="true"
+										>
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+										</svg>
+									</span>
 								</summary>
 								<div className="border-t border-subtle bg-hover-row px-5 pt-4 pb-5">
 									<p className="pl-9 body-md text-secondary">{item.answer}</p>

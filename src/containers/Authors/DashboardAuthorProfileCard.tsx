@@ -154,8 +154,10 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 			{missing.length > 0 ? (
 				<ul className="grid gap-1">
 					{missing.map((label) => (
-						<li key={label} className="flex items-center gap-1.5 body-sm text-secondary">
-							<Icon name="plus" height={12} width={12} />
+						<li key={label} className="flex items-start gap-1.5 body-sm text-secondary">
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="plus" height={12} width={12} />
+							</span>
 							{label}
 						</li>
 					))}

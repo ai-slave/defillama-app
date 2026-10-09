@@ -8,6 +8,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { ListRow } from '~/ui/ListRow'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -210,15 +211,15 @@ function TokenOptionRow({
 	const [name, value, geckoId] = option
 	return (
 		// An option of the search field's listbox: ↑↓ from the field move the highlight, so rows stay out of the Tab order.
-		<button
+		<ListRow
 			id={id}
-			type="button"
 			role="option"
 			tabIndex={-1}
 			onClick={() => onToggle(value, selected)}
 			aria-selected={selected}
-			data-active={active}
-			className="group flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-md hover:bg-hover-row focus-visible:bg-hover-row data-[active=true]:bg-hover-row"
+			// The keyboard highlight; the check, not a fill, marks a pick.
+			data-active-item={active || undefined}
+			className="min-h-10 gap-2.5"
 		>
 			<LeadMark value={value} geckoId={geckoId} size={22} />
 			<span className="truncate font-medium text-primary">{name}</span>
@@ -228,7 +229,7 @@ function TokenOptionRow({
 			>
 				<SelectCheckIcon />
 			</span>
-		</button>
+		</ListRow>
 	)
 }
 

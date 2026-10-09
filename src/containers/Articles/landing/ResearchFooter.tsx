@@ -1,11 +1,10 @@
-import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { emailError } from '~/utils/email'
 
@@ -247,26 +246,16 @@ function FooterMediaKit() {
 						className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 body-md text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden aria-invalid:border-error aria-invalid:focus:border-error"
 					/>
 					{/* Sending leaves nothing to submit until the email changes, so the pressed button disables itself. */}
-					<Ariakit.Button
+					<ResearchPill
 						type="submit"
-						aria-busy={isPending}
-						disabled={isPending || isSent}
-						accessibleWhenDisabled
-						className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 label-md text-on-brand not-aria-disabled:hover:brightness-110 focus-visible:focus-ring-on-brand aria-disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:text-disabled ${
-							isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
-						}`}
+						tone="brand"
+						size="md"
+						pendingLabel={isPending ? 'Sending…' : null}
+						disabled={isSent}
+						className="shrink-0"
 					>
-						{isPending ? (
-							<>
-								<LoadingSpinner size={16} />
-								<span className="sr-only">Sending…</span>
-							</>
-						) : isSent ? (
-							'Sent'
-						) : (
-							'Get the media kit'
-						)}
-					</Ariakit.Button>
+						{isSent ? 'Sent' : 'Get the media kit'}
+					</ResearchPill>
 				</div>
 				{error ? (
 					<p id={errorId} className="body-sm text-error">

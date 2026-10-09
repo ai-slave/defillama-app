@@ -114,7 +114,8 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	await mount(<ApiHarness />)
 	await click('Copy')
 	await waitForUi(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
-	expect(container.textContent).not.toContain('Copied')
+	// The done label is laid out but hidden until the copy succeeds, so no button is named Copied yet.
+	expect([...container.querySelectorAll('button')].some((el) => accessibleName(el) === 'Copied')).toBe(false)
 	await act(async () => request.reject(new Error('Permission denied')))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
 	await click('Copy')

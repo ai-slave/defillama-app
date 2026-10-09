@@ -7,6 +7,7 @@ import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articl
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument, Banner, BannerLookupResult } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
 
 const NAV_ITEMS: Array<{ id: string; label: string; anchor: string }> = [
 	{ id: 'spotlight', label: 'Spotlights', anchor: '#spotlight' },
@@ -191,13 +192,9 @@ export function ResearchLatest({ articles = EMPTY_ARTICLES, initialData }: Resea
 		<div>
 			<div className="mb-8 grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:justify-center">
 				{NAV_ITEMS.map((cat) => (
-					<Link
-						key={cat.id}
-						href={cat.anchor}
-						className="w-full rounded-[4px] border border-brand-muted px-3.75 py-0.75 text-center label-md text-link uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-brand hover:bg-brand-tint focus-visible:border-brand focus-visible:bg-brand-tint motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto"
-					>
+					<Button key={cat.id} as={Link} href={cat.anchor} variant="outline" size="md" className="w-full lg:w-auto">
 						{cat.label}
-					</Link>
+					</Button>
 				))}
 			</div>
 

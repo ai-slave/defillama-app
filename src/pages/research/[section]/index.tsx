@@ -13,6 +13,7 @@ import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const SECTION_LANDING_CACHE_CONTROL = 'public, s-maxage=60'
@@ -78,10 +79,7 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 	const interviewee = intervieweeLabel(article)
 	const firstInterviewee = (article.interviewees ?? []).find((p) => p?.name?.trim())
 	return (
-		<Link
-			href={articleHref(article)}
-			className="group grid content-start gap-3 rounded-md border border-medium bg-surface p-4 transition-colors hover:border-brand-muted"
-		>
+		<Card as={Link} padding="md" href={articleHref(article)} className="group hover-wash-card grid content-start gap-3">
 			<div className="flex items-center justify-between gap-3 label-xs tracking-[0.18em] text-tertiary uppercase">
 				<span>Interview</span>
 				<span className="tabular-nums">{readingMinutes(article)} min</span>
@@ -114,7 +112,7 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 			<span className="label-xs tracking-[0.18em] text-tertiary uppercase tabular-nums">
 				{formatDate(article.displayDate ?? article.publishedAt)}
 			</span>
-		</Link>
+		</Card>
 	)
 }
 

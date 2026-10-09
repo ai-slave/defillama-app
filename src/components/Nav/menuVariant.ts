@@ -18,7 +18,7 @@ export const MENU_VARIANT_B: Array<TNavLink> = [
 	{
 		name: 'DeFi',
 		route: '/chains',
-		icon: 'earth',
+		icon: 'globe',
 		children: [
 			{ name: 'Chains', route: '/chains' },
 			{ name: 'Categories', route: '/categories' },

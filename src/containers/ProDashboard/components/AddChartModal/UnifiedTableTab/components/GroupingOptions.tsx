@@ -1,6 +1,7 @@
 import { useMemo, type ComponentProps } from 'react'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { Icon } from '~/ui/Icon'
+import { OptionTile } from '~/ui/OptionTile'
 
 type IconName = ComponentProps<typeof Icon>['name']
 
@@ -49,14 +50,13 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 				{GROUPING_OPTIONS.map((option) => {
 					const active = rowHeaders.includes(option.value)
 					return (
-						<button
+						<OptionTile
 							key={option.value}
-							type="button"
+							layout="stack"
+							selected={active}
 							onClick={() => onToggleRowHeader(option.value)}
 							aria-pressed={active}
-							className={`group flex h-full flex-col gap-1 rounded-lg border p-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-								active ? 'border-brand bg-brand-tint ' : 'border-medium hover:border-brand hover:bg-brand-faint'
-							}`}
+							className="h-full"
 						>
 							<span className="flex items-center gap-1.5">
 								<Icon height={13} width={13} name={option.icon} className={active ? 'text-link' : 'text-tertiary'} />
@@ -64,7 +64,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 								{active ? <Icon name="check" height={11} width={11} className="text-link" /> : null}
 							</span>
 							<p className="body-sm text-secondary">{option.description}</p>
-						</button>
+						</OptionTile>
 					)
 				})}
 			</div>

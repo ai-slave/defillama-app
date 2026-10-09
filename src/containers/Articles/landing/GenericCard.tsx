@@ -1,15 +1,13 @@
 import Link from 'next/link'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Card } from '~/ui/Card'
 
 export function GenericCard({ article }: { article: ArticleDocument }) {
 	const cover = article.coverImage?.url || null
 	const primaryTag = article.tags?.[0]
 	return (
-		<Link
-			href={articleHref(article)}
-			className="group grid content-start gap-3 rounded-md border border-medium bg-surface p-4 transition-colors hover:border-brand-muted"
-		>
+		<Card as={Link} padding="md" href={articleHref(article)} className="group hover-wash-card grid content-start gap-3">
 			<div className="flex items-center justify-between gap-3 label-xs tracking-[0.18em] text-tertiary uppercase">
 				<span>{primaryTag?.replace(/-/g, ' ') || 'Story'}</span>
 				<span className="tabular-nums">{readingMinutes(article)} min</span>
@@ -37,6 +35,6 @@ export function GenericCard({ article }: { article: ArticleDocument }) {
 				) : null}
 				<span>{formatDate(article.displayDate ?? article.publishedAt)}</span>
 			</span>
-		</Link>
+		</Card>
 	)
 }

@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { Card } from '~/ui/Card'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { readInvestorApiJson, type ApiUnixMillisecondsString } from '../../api.types'
 
@@ -53,12 +55,14 @@ export function splitSparkPosts(posts: Array<ParagraphPost>, now: Date) {
 
 function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 	return posts.map((post) => (
-		<a
+		<Card
+			as="a"
+			padding="none"
 			key={post.id}
 			href={`https://paragraph.com/@spark-11/${post.slug}`}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface transition-all duration-200 hover:border-brand"
+			className="hover-wash-card group flex flex-col overflow-hidden"
 		>
 			{/* Image */}
 			{post.imageUrl && (
@@ -86,25 +90,20 @@ function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 				</div>
 
 				{/* Title */}
-				<h3 className="line-clamp-2 heading-xs text-primary transition-colors group-hover:text-link">{post.title}</h3>
+				<h3 className="line-clamp-2 heading-xs text-primary group-hover:text-link">{post.title}</h3>
 
 				{/* Subtitle */}
 				{post.subtitle && <p className="line-clamp-3 flex-1 body-md text-secondary">{post.subtitle}</p>}
 
 				{/* Read More */}
-				<div className="flex items-center gap-2 pt-2 label-md text-link transition-all group-hover:gap-3">
+				<div className="flex items-center gap-2 pt-2 label-md text-link">
 					<span>Read more</span>
-					<svg
-						className="size-4 transition-transform group-hover:translate-x-1"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
+					<svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
 					</svg>
 				</div>
 			</div>
-		</a>
+		</Card>
 	))
 }
 
@@ -160,7 +159,8 @@ export default function PressReleases() {
 								href={`https://paragraph.com/@spark-11/${post.slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="group flex flex-col overflow-hidden rounded-xl border-2 border-brand-muted bg-linear-to-br from-brand-faint to-transparent transition-all duration-200 hover:border-brand-strong"
+								// A featured report keeps its brand fill, which Card cannot draw.
+								className="group flex flex-col overflow-hidden rounded-lg border border-brand-muted bg-linear-to-br from-brand-faint to-transparent"
 							>
 								{/* Image */}
 								{post.imageUrl && (
@@ -175,20 +175,13 @@ export default function PressReleases() {
 									<time className="label-sm text-secondary">
 										<RelativeTime value={Number(post.publishedAt)} input="milliseconds" />
 									</time>
-									<h3 className="line-clamp-2 title-lg text-primary transition-colors group-hover:text-link">
-										{post.title}
-									</h3>
+									<h3 className="line-clamp-2 title-lg text-primary group-hover:text-link">{post.title}</h3>
 									{post.subtitle && <p className="line-clamp-2 body-md text-secondary">{post.subtitle}</p>}
 
 									{/* Read More */}
-									<div className="flex items-center gap-2 pt-2 label-md text-link transition-all group-hover:gap-3">
+									<div className="flex items-center gap-2 pt-2 label-md text-link">
 										<span>View report</span>
-										<svg
-											className="size-4 transition-transform group-hover:translate-x-1"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
+										<svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
 										</svg>
 									</div>
@@ -223,27 +216,7 @@ export default function PressReleases() {
 
 			{/* Footer */}
 			<div className="flex items-center justify-center pt-4">
-				<a
-					href="https://paragraph.com/@spark-11"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="group hover-wash flex items-center gap-2 rounded-lg border border-medium bg-surface px-4 py-2.5 label-md text-primary transition-all hover:border-brand"
-				>
-					<span>View all on Paragraph</span>
-					<svg
-						className="size-4 transition-transform group-hover:translate-x-1"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-						/>
-					</svg>
-				</a>
+				<ExternalLinkButton href="https://paragraph.com/@spark-11">View all on Paragraph</ExternalLinkButton>
 			</div>
 		</div>
 	)

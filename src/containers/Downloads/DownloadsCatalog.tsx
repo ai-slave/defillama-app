@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
@@ -8,6 +9,7 @@ import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLim
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -269,19 +271,23 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									<h2 className="heading-xs text-primary">{category}</h2>
 									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										{items.map((dataset) => {
-											const disabled = !!isUserLoading
+											const pending = !!isUserLoading
 											return (
-												<button
+												<Card
+													as={Ariakit.Button}
+													padding="md"
 													key={dataset.slug}
-													type="button"
-													disabled={disabled}
+													// Waiting for the account: busy, still focusable, presses ignored.
+													disabled={pending}
+													accessibleWhenDisabled
+													aria-busy={pending || undefined}
 													onClick={() => openCard({ kind: 'dataset', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="hover-wash-card group flex cursor-pointer touch-manipulation flex-col gap-3 text-left aria-busy:cursor-progress"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
 															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
-																{disabled ? (
+																{pending ? (
 																	<LoadingSpinner size={18} />
 																) : (
 																	<Icon name="file-text" className="size-5 text-link" />
@@ -289,13 +295,12 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 															</div>
 															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
-														<Icon
-															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
-														/>
+														<span className="flex h-10 shrink-0 items-center">
+															<Icon name="arrow-up-right" className="size-4 text-secondary group-hover:text-link" />
+														</span>
 													</div>
 													<p className="body-md text-secondary">{dataset.description}</p>
-												</button>
+												</Card>
 											)
 										})}
 									</div>
@@ -312,7 +317,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								onClick={() => {
 									setOpened(isTrial ? { kind: 'trialLimit' } : { kind: 'multiMetric' })
 								}}
-								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand-muted bg-linear-to-br from-brand-faint to-transparent p-4 text-left transition-all hover:border-brand-strong"
+								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-lg border border-brand-muted bg-linear-to-br from-brand-faint to-transparent p-4 text-left"
 							>
 								<div className="flex items-start gap-3">
 									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint-strong">
@@ -325,9 +330,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										</p>
 									</div>
 								</div>
-								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand transition-transform group-hover:translate-x-0.5">
-									Open builder
-									<Icon name="arrow-up-right" className="size-3.5" />
+								<span className="flex h-10 shrink-0 items-center">
+									<span className="inline-flex items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand group-hover:brightness-110 group-focus-visible:brightness-110 group-active:brightness-90">
+										Open builder
+										<Icon name="arrow-up-right" className="size-3.5" />
+									</span>
 								</span>
 							</button>
 
@@ -336,19 +343,23 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									<h2 className="heading-xs text-primary">{category}</h2>
 									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										{items.map((dataset) => {
-											const disabled = !!isUserLoading
+											const pending = !!isUserLoading
 											return (
-												<button
+												<Card
+													as={Ariakit.Button}
+													padding="md"
 													key={dataset.slug}
-													type="button"
-													disabled={disabled}
+													// Waiting for the account: busy, still focusable, presses ignored.
+													disabled={pending}
+													accessibleWhenDisabled
+													aria-busy={pending || undefined}
 													onClick={() => openCard({ kind: 'chart', dataset })}
-													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-subtle p-5 text-left transition-all duration-150 hover:border-brand-muted active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+													className="hover-wash-card group flex cursor-pointer touch-manipulation flex-col gap-3 text-left aria-busy:cursor-progress"
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
 															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
-																{disabled ? (
+																{pending ? (
 																	<LoadingSpinner size={18} />
 																) : (
 																	<Icon name="bar-chart-2" className="size-5 text-link" />
@@ -356,16 +367,15 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 															</div>
 															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
-														<Icon
-															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
-														/>
+														<span className="flex h-10 shrink-0 items-center">
+															<Icon name="arrow-up-right" className="size-4 text-secondary group-hover:text-link" />
+														</span>
 													</div>
 													<p className="body-md text-secondary">{dataset.description}</p>
 													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-surface-elevated-1 px-2 py-0.5 body-sm text-tertiary">
 														Select {dataset.paramLabel}
 													</span>
-												</button>
+												</Card>
 											)
 										})}
 									</div>
@@ -616,7 +626,7 @@ function RecentDownloadsStrip({
 										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
 											name="arrow-up-right"
-											className="size-3 shrink-0 -translate-x-1 text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-link group-hover:opacity-100"
+											className="size-3 shrink-0 text-tertiary opacity-0 transition-opacity group-hover:text-link group-hover:opacity-100"
 										/>
 									</span>
 								</button>

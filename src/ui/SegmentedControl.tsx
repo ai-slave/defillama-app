@@ -66,7 +66,7 @@ export const TAG_GROUP_VARIANTS = {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash inline-flex shrink-0 items-center justify-center gap-1 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'touch-target pointer-coarse:before:inset-x-0 hover-wash inline-flex shrink-0 items-center justify-center gap-1 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	mode: {
 		container: 'body-sm grid shrink-0 auto-cols-fr gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
@@ -89,7 +89,7 @@ export const TAG_GROUP_VARIANTS = {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'touch-target pointer-coarse:before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',

@@ -16,6 +16,8 @@ import { AlertsModal } from '../AlertsModal'
 // Heavy children whose output these tests do not read.
 vi.mock('../CreateAlertModal', () => ({ CreateAlertModal: () => null }))
 vi.mock('../markdown/ChatMarkdownRenderer', () => ({ ChatMarkdownRenderer: () => null, SourcesList: () => null }))
+// The editor's schedule and Slack pickers are Selects, which read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
 
 const session = installSubscriberSession('user')
 const ALERTS_URL = 'https://ai.llama.fi/alerts'
@@ -280,6 +282,23 @@ async function press(button: HTMLElement) {
 		button.click()
 	})
 }
+async function pointerClick(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+	})
+}
+/** Opens a Select and picks the option with this name. */
+async function pick(trigger: HTMLElement, name: string) {
+	await pointerClick(trigger)
+	const option = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await pointerClick(option)
+}
 // The dialog's first control, where its net puts focus that has nowhere better to go.
 const closeButton = () => buttonNamed(document, 'Close dialog')
 
@@ -525,19 +544,15 @@ test('a schedule edit survives opening a run from history and coming back, and c
 	await render()
 	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
 	await press(buttonNamed(document, 'Edit Weekly yields'))
-	const frequency = () => document.querySelector<HTMLSelectElement>('select[aria-label="Frequency"]')!
-	await act(async () => {
-		frequency().value = 'weekly'
-		frequency().dispatchEvent(new Event('input', { bubbles: true }))
-		frequency().dispatchEvent(new Event('change', { bubbles: true }))
-	})
+	const frequency = () => document.querySelector<HTMLButtonElement>('[aria-label="Frequency"]')!
+	await pick(frequency(), 'Weekly')
 	await press(buttonNamed(document, 'View history of Weekly yields'))
 	await waitForUi(() => expect(document.getElementById('alert-run-run')).not.toBeNull())
 	await press(document.getElementById('alert-run-run')!)
 	await waitForUi(() => expect(buttonNamed(document, 'Back to history')).toBeDefined())
 	await press(buttonNamed(document, 'Back to history'))
 
-	expect(frequency().value).toBe('weekly')
+	expect(frequency().textContent).toBe('Weekly')
 	await press(closeButton())
 	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard alert changes?')
 })
@@ -556,9 +571,9 @@ test('saving a Slack alert with no workspace picked focuses the workspace picker
 	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
 	await press(buttonNamed(document, 'Edit Weekly yields'))
 	const workspace = await waitForUi(() => {
-		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')
-		expect(select).not.toBeNull()
-		return select!
+		const picker = document.querySelector<HTMLButtonElement>('[aria-label="Slack workspace"]')
+		expect(picker).not.toBeNull()
+		return picker!
 	})
 	await press(buttonNamed(document, 'Save'))
 	expect(document.activeElement).toBe(workspace)

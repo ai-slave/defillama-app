@@ -327,15 +327,11 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 				</p>
 				<div className="flex flex-wrap items-center gap-2">
 					{pillars.map((pillar) => (
-						<a
-							key={pillar.key}
-							href={`#pillar-${pillar.key}`}
-							className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1 hover:bg-surface-elevated-1"
-						>
+						<Button as="a" key={pillar.key} href={`#pillar-${pillar.key}`} size="sm">
 							<span className="mono-sm-bold text-link">{pillar.key}</span>
-							<span className="label-sm">{pillar.label}</span>
+							{pillar.label}
 							<span className="mono-sm-bold text-secondary">{pillar.weight}</span>
-						</a>
+						</Button>
 					))}
 					<span className="body-sm text-tertiary">points out of 100 · weights redistribute over measured pillars</span>
 				</div>

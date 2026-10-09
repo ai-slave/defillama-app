@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 export function SqlChartUpsell() {
@@ -18,12 +19,12 @@ export function SqlChartUpsell() {
 				<li>· Any chart type — bar, line, pie, treemap or table</li>
 				<li>· Cross-join datasets the standard cards can't</li>
 			</ul>
-			<BasicLink
-				href="/subscription"
-				className="mt-2 rounded-md bg-brand px-4 py-2 label-md text-on-brand transition-[filter] hover:brightness-110"
-			>
-				Upgrade to API plan
-			</BasicLink>
+			{/* The API plan's purple, through its token scope. */}
+			<div className="sub-api-accent mt-2">
+				<Button as={BasicLink} href="/subscription" variant="primary" size="md">
+					Upgrade to API plan
+				</Button>
+			</div>
 		</div>
 	)
 }

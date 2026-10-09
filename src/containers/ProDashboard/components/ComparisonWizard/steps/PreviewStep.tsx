@@ -1,5 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
+import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
@@ -131,23 +133,14 @@ export function PreviewStep() {
 							const label = info?.title || metric
 							const isSelected = state.metricsForCards.includes(metric)
 							return (
-								<label
+								<Ariakit.Checkbox
 									key={metric}
-									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 label-sm transition-colors has-focus-visible:focus-ring ${
-										isSelected
-											? 'border-brand bg-brand-muted text-link'
-											: 'border-medium text-secondary hover:border-brand-muted'
-									}`}
+									render={<Button variant="toggle" size="sm" data-active={isSelected} stateIcon />}
+									checked={isSelected}
+									onChange={() => actions.toggleMetricForCard(metric)}
 								>
-									<input
-										type="checkbox"
-										checked={isSelected}
-										onChange={() => actions.toggleMetricForCard(metric)}
-										className="sr-only"
-									/>
-									{isSelected ? <Icon name="check" height={10} width={10} /> : null}
 									{label}
-								</label>
+								</Ariakit.Checkbox>
 							)
 						})}
 					</div>

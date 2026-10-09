@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -28,6 +27,7 @@ import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/c
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 
@@ -191,11 +191,11 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 	const cover = resolveCover(article)
 	const sectionLabel = article.section ? humanizeTag(article.section) : null
 	return (
-		<li className="group relative top-0 grid grid-cols-1 gap-3.5 py-5.5 transition-all duration-200 ease-out hover:top-[-2px] sm:grid-cols-[clamp(180px,28vw,260px)_minmax(0,1fr)] sm:gap-6">
+		<li className="group grid grid-cols-1 gap-3.5 py-5.5 sm:grid-cols-[clamp(180px,28vw,260px)_minmax(0,1fr)] sm:gap-6">
 			<Link
 				href={articleHref(article)}
 				aria-label={article.title}
-				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-surface-elevated-1"
+				className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-surface-elevated-1"
 			>
 				{cover ? (
 					<img
@@ -203,7 +203,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 						alt={article.coverImage?.alt ?? ''}
 						loading="lazy"
 						decoding="async"
-						className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+						className="size-full object-cover"
 					/>
 				) : (
 					<div className="grid size-full place-items-center text-tertiary">
@@ -275,11 +275,6 @@ function Pagination({
 	const prevPage = Math.max(1, page - 1)
 	const nextPage = Math.min(totalPages, page + 1)
 
-	const btnBase =
-		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 label-sm tracking-[0.08em] uppercase transition-colors'
-	const enabledStyle = 'bg-brand-tint text-link hover:bg-brand-tint-strong'
-	const disabledStyle = 'cursor-not-allowed bg-disabled text-disabled'
-
 	return (
 		<nav
 			aria-label="Search results pagination"
@@ -291,29 +286,31 @@ function Pagination({
 			<div className="flex items-center gap-2">
 				{/* Focusable at the ends: paging to the last page disables the Next that was pressed. A failed page replaces
 				    the pager with the error, so focus moves to the page instead of dropping to the body. */}
-				<Ariakit.Button
+				<Button
 					ref={focusRegionOnLeave}
+					variant="outline"
+					size="md"
 					onClick={() => go(prevPage)}
 					disabled={page <= 1}
 					accessibleWhenDisabled
-					className={`${btnBase} ${page <= 1 ? disabledStyle : enabledStyle}`}
 				>
-					<span aria-hidden>←</span>
+					<Icon name="arrow-left" className="size-3.5" />
 					<span>Prev</span>
-				</Ariakit.Button>
+				</Button>
 				<span className="px-2 mono-sm tracking-[0.12em] text-secondary tabular-nums">
 					{page} / {totalPages}
 				</span>
-				<Ariakit.Button
+				<Button
 					ref={focusRegionOnLeave}
+					variant="outline"
+					size="md"
 					onClick={() => go(nextPage)}
 					disabled={page >= totalPages}
 					accessibleWhenDisabled
-					className={`${btnBase} ${page >= totalPages ? disabledStyle : enabledStyle}`}
 				>
 					<span>Next</span>
-					<span aria-hidden>→</span>
-				</Ariakit.Button>
+					<Icon name="arrow-right" className="size-3.5" />
+				</Button>
 			</div>
 		</nav>
 	)
@@ -491,20 +488,21 @@ export default function ResearchSearch() {
 
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
 			{failed ? (
-				<div className="grid justify-items-start gap-3 border border-error-muted bg-error-faint p-6">
-					<h2 className="text-xl font-semibold text-research-navy">Couldn't load research</h2>
-					<p role="alert" className="body-md text-error">
-						{error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
-					</p>
-					<Button
-						ref={focusRegionOnLeave}
-						size="sm"
-						onClick={() => void refetch()}
-						pendingLabel={isFetching ? 'Retrying…' : null}
-					>
-						Try again
-					</Button>
-				</div>
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							ref={focusRegionOnLeave}
+							size="sm"
+							onClick={() => void refetch()}
+							pendingLabel={isFetching ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					}
+				>
+					Couldn't load research. {error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
+				</InlineStatus>
 			) : resultsLoading ? (
 				<div className="grid min-h-[280px] place-items-center py-12">
 					<ResearchLoader />

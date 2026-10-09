@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { formatDate, parseDateTimestamp } from '~/utils/dateFormat'
 import { InviteMemberModal } from './InviteMemberModal'
 import type { TeamInvite } from './types'
@@ -47,9 +48,9 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 		<>
 			{/* Phones stack the actions under the invite, so the address, expiry and any error keep the full width. */}
 			<div className="flex flex-col gap-3 rounded-lg border border-subtle p-3 sm:flex-row sm:items-center">
-				<div className="min-w-0 flex-1">
+				<div className="flex min-w-0 flex-1 flex-col gap-1">
 					<span className="block truncate body-md text-primary">{invite.email}</span>
-					<div className="mt-1 flex items-center gap-2">
+					<div className="flex items-center gap-2">
 						<span className={`body-sm ${isExpired ? 'text-error' : 'text-tertiary'}`}>
 							{/* An expired token can't be resent; the supported flow is revoke, then invite again. */}
 							{isExpired
@@ -57,11 +58,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 								: `Expires ${formatDate(invite.expiresAt) ?? 'Unknown'}`}
 						</span>
 					</div>
-					{resendError ? (
-						<p role="alert" className="mt-1 body-sm text-error">
-							{resendError}
-						</p>
-					) : null}
+					{resendError ? <InlineStatus variant="error">{resendError}</InlineStatus> : null}
 				</div>
 				<div className="flex gap-2 max-sm:*:flex-1">
 					{!isExpired && (

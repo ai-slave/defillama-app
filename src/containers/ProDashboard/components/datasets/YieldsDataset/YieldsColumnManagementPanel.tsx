@@ -143,15 +143,16 @@ function ColumnButton(props: ColumnButtonProps) {
 		<Tooltip
 			content={metadata.description}
 			render={
-				<button
-					type="button"
+				<Button
+					variant="secondary"
+					size="md"
 					onClick={(event) => toggleFromRow(event, event.currentTarget, columnKey, true)}
-					className="hover-wash flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
+					className="w-full justify-start"
 				/>
 			}
 		>
 			<Icon name="plus" className="size-3.5" />
-			<span className="body-sm text-primary">{metadata.name}</span>
+			{metadata.name}
 		</Tooltip>
 	)
 }

@@ -2,6 +2,7 @@ import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { Fragment, type MouseEvent, useId, useRef, useState } from 'react'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -9,10 +10,11 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { UploadTile } from '~/ui/UploadTile'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
@@ -72,6 +74,7 @@ function requiredLabel(label: string) {
 
 type CellControlProps = { 'aria-invalid': true | undefined; 'aria-describedby': string | undefined }
 
+const CLEAR_CELL = '__clear__'
 function CellInput({
 	column,
 	control,
@@ -86,21 +89,27 @@ function CellInput({
 	if (column.type === 'select') {
 		const options = column.options ?? []
 		return (
-			<select
-				{...control}
-				className={`${inputStyles} w-full cursor-pointer`}
-				aria-label={column.label}
-				value={value}
-				disabled={column.optionSource != null && options.length === 0}
-				onChange={(event) => onChange(event.target.value)}
-			>
-				<option value="" />
-				{options.map((option) => (
-					<option key={option.value} value={option.value}>
-						{option.label}
-					</option>
-				))}
-			</select>
+			<SelectWithCombobox
+				heading={column.label}
+				// The native select's empty first option let a reader clear a cell; None keeps that.
+				allValues={[
+					{ key: CLEAR_CELL, name: 'None' },
+					...options.map((option) => ({ key: option.value, name: option.label }))
+				]}
+				selectedValues={value ? [value] : []}
+				setSelectedValues={(values) => onChange(!values[0] || values[0] === CLEAR_CELL ? '' : values[0])}
+				singleSelect
+				label={options.find((option) => option.value === value)?.label ?? 'Choose…'}
+				labelType="none"
+				variant="input"
+				size="md"
+				className="w-full"
+				triggerProps={{
+					...control,
+					'aria-label': column.label,
+					disabled: column.optionSource != null && options.length === 0
+				}}
+			/>
 		)
 	}
 	if (column.type === 'percent' || column.type === 'months') {
@@ -295,49 +304,42 @@ function AttachDocuments({
 	onRemove: (index: number) => void
 	onClearError: () => void
 }) {
-	const unavailable = status.state === 'uploading' || receipts.length >= 10
 	const inputRef = useRef<HTMLInputElement>(null)
-	// A removed file's × hands focus to the next file's ×, the one before it, or the attach control.
+	const tileRef = useRef<HTMLButtonElement>(null)
+	// A removed file's × hands focus to the next file's ×, the one before it, or the attach tile.
 	const removeReceipt = (index: number, remove: HTMLElement) => {
 		const next = neighbourRowControl(remove.parentElement!, remove)
 		keepFocus(
 			() => onRemove(index),
-			() => next ?? inputRef.current
+			() => next ?? tileRef.current
 		)
 	}
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-3">
-				<label
-					htmlFor={id}
-					className={`flex items-center gap-1.5 rounded-lg border border-medium px-3 py-1.5 label-md text-primary ${
-						unavailable ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-hover-row'
-					}`}
-				>
-					{/* A file input cannot be read-only, and a disabled one drops the focus it holds while the upload it
-					    started runs. It stays enabled and refuses to open the picker instead. */}
-					<input
-						ref={inputRef}
-						id={id}
-						type="file"
-						multiple
-						accept={UTR_CLAIM_FILE_ACCEPT}
-						className="sr-only"
-						aria-disabled={unavailable || undefined}
-						onClick={(event) => {
-							if (unavailable) event.preventDefault()
-						}}
-						onChange={(event) => {
-							const files = Array.from(event.target.files ?? [])
-							event.target.value = ''
-							if (files.length > 0) onFiles(files)
-						}}
-					/>
-					{status.state === 'uploading' ? 'Uploading…' : 'Attach documents'}
-					<Icon name="link" height={14} width={14} />
-				</label>
-				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
-			</div>
+			{/* The tile keeps focus while the upload it started runs, and at the 10-file limit. */}
+			<UploadTile
+				ref={tileRef}
+				id={id}
+				shape="wide"
+				icon="link"
+				label="Attach documents"
+				hint={ATTACH_HINT}
+				pendingLabel={status.state === 'uploading' ? 'Uploading…' : null}
+				disabled={receipts.length >= 10}
+				onClick={() => inputRef.current!.click()}
+			/>
+			<input
+				ref={inputRef}
+				type="file"
+				multiple
+				accept={UTR_CLAIM_FILE_ACCEPT}
+				hidden
+				onChange={(event) => {
+					const files = Array.from(event.target.files ?? [])
+					event.target.value = ''
+					if (files.length > 0) onFiles(files)
+				}}
+			/>
 			{receipts.length > 0 ? (
 				<div className="flex flex-wrap gap-2">
 					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
@@ -365,12 +367,16 @@ function AttachDocuments({
 				</div>
 			) : null}
 			{status.state === 'failed' ? (
-				<div className="flex items-center gap-2 body-sm text-error">
-					<span>{status.error}</span>
-					<Button variant="link" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
-						Dismiss
-					</Button>
-				</div>
+				<InlineStatus
+					variant="error"
+					action={
+						<Button size="sm" onClick={() => keepFocus(onClearError, () => tileRef.current)}>
+							Dismiss
+						</Button>
+					}
+				>
+					{status.error}
+				</InlineStatus>
 			) : null}
 		</div>
 	)
@@ -583,20 +589,27 @@ export function ClaimTokenProfile({
 							<Field label="Token to claim" error={submitted ? errors.token : null}>
 								{(control) => (
 									<span className="flex flex-wrap items-center gap-2">
-										<select
-											{...control}
-											className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
-											value={token}
-											disabled={projects.length === 0}
-											onChange={(event) => setToken(event.target.value)}
-										>
-											{projects.length > 0 ? null : <option value="">Token list unavailable</option>}
-											{projects.map((project) => (
-												<option key={project.arcticId} value={project.arcticId}>
-													{project.projectName} ({project.symbol})
-												</option>
-											))}
-										</select>
+										<SelectWithCombobox
+											heading="Token to claim"
+											allValues={projects.map((project) => ({
+												key: project.arcticId,
+												name: `${project.projectName} (${project.symbol})`
+											}))}
+											selectedValues={token ? [token] : []}
+											setSelectedValues={(values) => setToken(values[0] ?? '')}
+											singleSelect
+											label={
+												selectedProject
+													? `${selectedProject.projectName} (${selectedProject.symbol})`
+													: 'Token list unavailable'
+											}
+											labelType="none"
+											variant="input"
+											size="md"
+											className="min-w-64 flex-1"
+											// The picker names its trigger with an aria-label, which would hide the Field's label.
+											triggerProps={{ ...control, disabled: projects.length === 0 }}
+										/>
 										<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 mono-sm text-secondary">
 											{selectedProjectStatus ?? 'Token list unavailable'}
 										</span>

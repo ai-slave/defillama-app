@@ -48,7 +48,7 @@ export function ResearchCollections({ title, articles }: ResearchCollectionsProp
 							<Link
 								key={article.id}
 								ref={i === 0 ? measureFirstCard : undefined}
-								className="group relative top-0 flex w-full shrink-0 overflow-hidden transition-all duration-200 ease-out hover:top-[-4px] lg:w-auto"
+								className="group relative flex w-full shrink-0 overflow-hidden lg:w-auto"
 								href={articleHref(article)}
 								onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}
 							>

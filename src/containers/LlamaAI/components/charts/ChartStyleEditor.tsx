@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { type ReactNode, useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { chartColor } from '~/constants/colors'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
@@ -10,12 +11,18 @@ import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHea
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 
 const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
 const SERIES_TYPES = ['line', 'bar', 'area'] as const
+
+// A series of unknown aggregation shows neither, so the owner has to choose.
+const AGGREGATION_OPTIONS = [
+	{ key: 'flow', name: 'Sum per period', help: 'Adds up the values in each week or month' },
+	{ key: 'stock', name: 'End-of-period value', help: 'Keeps the last value in each week or month' }
+]
 
 // Only offer type swaps the current data shape can actually render — otherwise the chart says
 // "no data available" (e.g. scatter needs a numeric x; pie/hbar need categories).
@@ -495,13 +502,11 @@ export function ChartStyleEditor({
 														}
 													/>
 													{caps.showGrouping ? (
-														<select
-															className={`${inputStyles} min-w-0 flex-1 basis-36 truncate`}
-															aria-label={`Series ${i + 1} aggregation`}
-															title="How this series combines into week/month buckets"
-															value={s.metricClass}
-															onChange={(e) => {
-																const metricClass = e.target.value
+														<Select
+															heading="How this series combines into week and month buckets"
+															allValues={AGGREGATION_OPTIONS}
+															selectedValues={s.metricClass}
+															setSelectedValues={(metricClass: string) => {
 																if (metricClass !== 'flow' && metricClass !== 'stock') return
 																const yField = s.dataMapping.yField
 																update((d) => {
@@ -510,33 +515,33 @@ export function ChartStyleEditor({
 																	}
 																}, 'immediate')
 															}}
-														>
-															{s.metricClass === 'unknown' ? (
-																<option value="unknown" disabled>
-																	Aggregation: choose
-																</option>
-															) : null}
-															<option value="flow">Sum per period</option>
-															<option value="stock">End-of-period value</option>
-														</select>
+															label={
+																AGGREGATION_OPTIONS.find((option) => option.key === s.metricClass)?.name ??
+																'Choose aggregation'
+															}
+															labelType="none"
+															variant="input"
+															size="md"
+															className="min-w-0 flex-1 basis-36"
+															triggerProps={{ 'aria-label': `Series ${i + 1} aggregation` }}
+														/>
 													) : null}
 													{isCombo ? (
-														<select
-															className={`${inputStyles} min-w-0 flex-1 basis-20 truncate`}
-															aria-label={`Series ${i + 1} type`}
-															value={s.type}
-															onChange={(e) => {
-																if (!isSeriesType(e.target.value)) return
-																const type = e.target.value
+														<Select
+															heading={`Series ${i + 1} type`}
+															allValues={SERIES_TYPES}
+															selectedValues={s.type}
+															setSelectedValues={(type: string) => {
+																if (!isSeriesType(type)) return
 																update((d) => updateItemAt(d.series, i, (item) => (item.type = type)), 'immediate')
 															}}
-														>
-															{SERIES_TYPES.map((t) => (
-																<option key={t} value={t}>
-																	{t}
-																</option>
-															))}
-														</select>
+															label={s.type}
+															labelType="none"
+															variant="input"
+															size="md"
+															className="min-w-0 flex-1 basis-20"
+															triggerProps={{ 'aria-label': `Series ${i + 1} type` }}
+														/>
 													) : null}
 													{canReorder ? (
 														<div className="flex shrink-0 gap-0.5">

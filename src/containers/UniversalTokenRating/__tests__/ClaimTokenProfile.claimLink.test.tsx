@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
 import type { UtrClaimProjectOption } from '../types'
 
@@ -33,9 +34,10 @@ const render = () =>
 			</QueryClientProvider>
 		)
 	)
-const tokenSelect = () => {
+/** The picked token, as the picker's trigger shows it. */
+const tokenPicker = () => {
 	const label = [...container.querySelectorAll('label')].find((el) => el.textContent === 'Token to claim')!
-	return document.getElementById(label.htmlFor) as HTMLSelectElement
+	return document.getElementById(label.htmlFor) as HTMLButtonElement
 }
 
 beforeEach(() => {
@@ -56,17 +58,22 @@ afterEach(async () => {
 test('a claim link preselects its token after hydration, and a token the reader picks sticks', async () => {
 	// A static page's query is empty until hydration, so the first render shows the first project.
 	await render()
-	expect(tokenSelect().value).toBe('a')
+	expect(tokenPicker().textContent).toBe('Aave (AAVE)')
 
 	router.isReady = true
 	router.query = { token: 'ena' }
 	await render()
-	expect(tokenSelect().value).toBe('b')
+	expect(tokenPicker().textContent).toBe('Ethena (ENA)')
 
-	await act(async () => {
-		tokenSelect().value = 'c'
-		tokenSelect().dispatchEvent(new Event('change', { bubbles: true }))
+	await act(async () => tokenPicker().click())
+	const uniswap = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) =>
+			el.textContent?.includes('Uniswap (UNI)')
+		)
+		expect(found).toBeDefined()
+		return found!
 	})
+	await act(async () => uniswap.click())
 	await render()
-	expect(tokenSelect().value).toBe('c')
+	expect(tokenPicker().textContent).toBe('Uniswap (UNI)')
 })

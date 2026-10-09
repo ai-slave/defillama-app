@@ -16,3 +16,10 @@ test('every icon name has a symbol in the sprite, and every symbol has a name', 
 	expect(ICON_NAMES.filter((name) => !ids.includes(name))).toEqual([])
 	expect(ids.filter((id) => !(ICON_NAMES as ReadonlyArray<string>).includes(id))).toEqual([])
 })
+
+// pages.json names nav and directory icons as plain strings, which typecheck cannot hold to Icon's names.
+test('every icon pages.json names exists', () => {
+	const pages = readFileSync(join(process.cwd(), 'public', 'pages.json'), 'utf8')
+	const names = [...pages.matchAll(/"icon":\s*"([^"]+)"/g)].map((match) => match[1])
+	expect(names.filter((name) => !(ICON_NAMES as ReadonlyArray<string>).includes(name))).toEqual([])
+})

@@ -11,6 +11,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -160,7 +161,7 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 							<p>Couldn&apos;t load your saved charts.</p>
 							<Button
 								type="button"
-								size="md"
+								size="sm"
 								pendingLabel={isFetching ? 'Retrying…' : null}
 								onClick={() =>
 									void refetch().then((result) => {
@@ -186,26 +187,25 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 					<ul className="flex flex-col gap-0.5 sm:min-h-90">
 						{charts.map((item) => {
 							const inserting = insertingId === item.id
+							const unavailable = insertingId !== null && !inserting
 							return (
 								<li key={item.id}>
-									{/* The row being inserted stays focusable (aria-disabled) so focus does not drop while it loads;
-									    handleInsert ignores clicks while any insertion runs. */}
-									<button
-										type="button"
-										disabled={insertingId !== null && !inserting}
-										aria-disabled={inserting || undefined}
+									{/* Every row stays focusable (aria-disabled) while an insertion runs, so focus does not drop;
+									    handleInsert ignores clicks until it settles. */}
+									<ListRow
+										aria-disabled={insertingId !== null || undefined}
 										aria-busy={inserting || undefined}
 										onClick={() => handleInsert(item)}
-										className="group flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed aria-busy:cursor-progress"
+										className="min-h-11 gap-3"
 									>
 										<Icon
 											name="bar-chart-2"
-											className="size-4 shrink-0 text-tertiary group-disabled:text-disabled"
+											className={`size-4 shrink-0 ${unavailable ? 'text-disabled' : 'text-tertiary'}`}
 											aria-hidden="true"
 										/>
 										<span className="flex min-w-0 flex-1 flex-col">
-											<span className="truncate body-md text-primary group-disabled:text-disabled">{item.title}</span>
-											<span className="body-sm text-tertiary group-disabled:text-disabled">
+											<span className="truncate body-md">{item.title}</span>
+											<span className={`body-sm ${unavailable ? 'text-disabled' : 'text-tertiary'}`}>
 												{chartTypeLabel(item.chart_type)} · saved {formatDate(item.created_at) ?? '-'}
 												{item.frozen ? ' · data frozen when saved' : null}
 											</span>
@@ -216,7 +216,7 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 												Inserting…
 											</span>
 										) : null}
-									</button>
+									</ListRow>
 									{insertError?.id === item.id ? (
 										<div className="px-2 pt-1 pb-2">
 											<InlineStatus variant="error">{insertError.message}</InlineStatus>

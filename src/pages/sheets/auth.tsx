@@ -7,6 +7,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { Toast } from '~/components/Toast'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { ClientOnly } from '~/layout/ClientOnly'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -110,18 +111,12 @@ function AuthContent() {
 							)}
 						</div>
 
-						<div className="space-y-3">
-							<button
-								type="button"
-								onClick={logout}
-								className="w-full rounded-lg border border-medium py-3 font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-							>
-								Sign out
-							</button>
-						</div>
+						<Button size="lg" className="w-full" onClick={logout}>
+							Sign out
+						</Button>
 					</div>
 				) : (
-					<div className="flex w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-medium bg-overlay shadow-dialog">
+					<div className="flex w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-medium bg-overlay">
 						<SignInFlow />
 					</div>
 				)}

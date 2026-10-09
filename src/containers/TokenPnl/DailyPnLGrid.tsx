@@ -33,7 +33,7 @@ export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 								content={`${formatPnlPercent(day.percentChange)} • ${formatDateLabel(day.timestamp)}`}
 							>
 								<span
-									className="flex size-8 shrink-0 items-end justify-center rounded-md border border-medium transition-transform duration-200 hover:scale-[0.99]"
+									className="flex size-8 shrink-0 items-end justify-center rounded-md border border-medium"
 									style={{ background: backgroundColor }}
 								>
 									<span className="sr-only">{`${formatPnlPercent(day.percentChange)} on ${formatDateLabel(day.timestamp)}`}</span>

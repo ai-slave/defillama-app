@@ -5,11 +5,11 @@ import { useMemo, useState } from 'react'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { Select } from '~/components/Select/Select'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -215,12 +215,12 @@ function CoinPicker({
 }) {
 	return (
 		<div className="flex w-full flex-col gap-1.5 sm:row-span-2 sm:grid sm:grid-rows-subgrid">
-			<span className="body-sm text-secondary">{label}</span>
+			<span className="label-sm text-secondary">{label}</span>
 			<Ariakit.DialogDisclosure
 				store={dialogStore}
 				onClick={onPick}
 				aria-label={`${label}: ${coin?.name ?? 'none'}`}
-				className={`${inputStyles} flex w-full cursor-pointer items-center justify-start gap-2 overflow-hidden text-left`}
+				className={`${selectTriggerStyles('input', 'md')} w-full overflow-hidden`}
 			>
 				{coin != null ? (
 					<>

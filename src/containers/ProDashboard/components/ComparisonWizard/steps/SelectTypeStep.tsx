@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useId } from 'react'
 import { Icon } from '~/ui/Icon'
+import { OptionTile } from '~/ui/OptionTile'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { ComparisonType } from '../types'
 
@@ -56,20 +57,16 @@ export function SelectTypeStep() {
 							<Ariakit.Button
 								key={option.type}
 								autoFocus={state.comparisonType === null ? index === 0 : isSelected}
-								type="button"
 								aria-pressed={isSelected}
 								onClick={() => actions.setComparisonType(option.type)}
-								className={`flex flex-col items-center gap-4 rounded-lg border p-6 text-center transition-colors ${
-									isSelected ? 'border-brand bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
-								}`}
+								render={<OptionTile layout="center" selected={isSelected} />}
 							>
-								<div
-									className={`flex size-16 items-center justify-center rounded-lg transition-colors ${
-										isSelected ? 'bg-brand-muted text-link' : 'text-secondary'
-									}`}
-								>
-									<Icon name={option.icon} height={32} width={32} />
-								</div>
+								<Icon
+									name={option.icon}
+									height={32}
+									width={32}
+									className={isSelected ? 'text-link' : 'text-secondary'}
+								/>
 								<div>
 									<span className="block label-md text-primary">{option.title}</span>
 									<span className="mt-1 block body-sm text-tertiary">{option.description}</span>

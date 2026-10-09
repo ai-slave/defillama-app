@@ -117,6 +117,8 @@ function EmbedSnippetContent({
 			</DialogBody>
 			<DialogFooter leading={<p className="body-sm text-secondary">Paste this into your page&apos;s HTML.</p>}>
 				<Button
+					doneLabel="Copied"
+					done={copyStatus === 'copied'}
 					type="button"
 					size="md"
 					variant="primary"
@@ -125,8 +127,8 @@ function EmbedSnippetContent({
 						void copySnippet()
 					}}
 				>
-					<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} className="size-4" aria-hidden="true" />
-					{copyStatus === 'copied' ? 'Copied' : 'Copy code'}
+					<Icon name="copy" className="size-3.5" aria-hidden="true" />
+					Copy code
 				</Button>
 			</DialogFooter>
 			<span role="status" className="sr-only">

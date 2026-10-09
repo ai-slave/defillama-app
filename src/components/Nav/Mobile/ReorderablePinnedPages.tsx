@@ -70,15 +70,22 @@ function ReorderableRow({ page }: { page: TNavLink }) {
 				data-dragging={isDragging}
 			>
 				<div className="flex w-full items-center gap-2">
-					<button
-						type="button"
-						className="flex size-7 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row"
-						aria-label={`Drag ${page.name}`}
-						{...attributes}
-						{...listeners}
+					<Tooltip
+						content="Drag to reorder"
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								square
+								className="touch-none"
+								aria-label={`Drag ${page.name}`}
+								{...attributes}
+								{...listeners}
+							/>
+						}
 					>
-						<Icon name="menu" className="size-4" />
-					</button>
+						<Icon name="menu" className="size-4 text-tertiary" />
+					</Tooltip>
 					<NavItemContent name={page.name} icon={page.icon} attention={page.attention} />
 					<Tooltip
 						content="Unpin from navigation"

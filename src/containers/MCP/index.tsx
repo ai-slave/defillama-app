@@ -6,6 +6,7 @@ import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -161,9 +162,11 @@ function CopyButton({ text, label, className }: { text: string; label: string; c
 			aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
 			variant="ghost"
 			size="sm"
+			doneLabel="Copied"
+			done={copied}
 			className={className}
 		>
-			{copied ? 'Copied!' : 'Copy'}
+			Copy
 		</Button>
 	)
 }
@@ -473,10 +476,12 @@ export default function MCPContainer() {
 				</Card>
 
 				{/* LlamaAI Upsell */}
-				<a
+				<Card
+					as="a"
 					href="/ai"
+					padding="md"
 					onClick={() => trackUmamiEvent('mcp-llamaai-upsell-click')}
-					className="group mt-10 flex flex-col gap-4 rounded-md border border-warning-muted bg-warning-faint p-5 transition-colors hover:border-warning-strong sm:flex-row sm:items-center sm:justify-between sm:p-6"
+					className="hover-wash-card mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
 				>
 					<div className="flex items-start gap-4">
 						<img
@@ -496,10 +501,11 @@ export default function MCPContainer() {
 							</p>
 						</div>
 					</div>
-					<span className="shrink-0 self-start rounded-md border border-warning-muted px-4 py-2 label-md text-warning transition-colors group-hover:bg-warning-tint sm:self-center">
+					<span className="flex shrink-0 items-center gap-1 self-start label-md text-link sm:self-center">
 						Explore LlamaAI
+						<Icon name="arrow-right" className="size-3.5" />
 					</span>
-				</a>
+				</Card>
 			</section>
 
 			{/* Tools */}
@@ -524,18 +530,20 @@ export default function MCPContainer() {
 				<div className="grid gap-2 sm:grid-cols-2">
 					{skills.map((s) => (
 						<Card key={s.name} padding="sm" className="flex items-start gap-3">
-							<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-faint">
-								<svg
-									viewBox="0 0 24 24"
-									className="size-3"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2.5"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								>
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+							<span className="flex h-lh shrink-0 items-center mono-md">
+								<span className="flex size-5 items-center justify-center rounded-full bg-brand-faint">
+									<svg
+										viewBox="0 0 24 24"
+										className="size-3"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2.5"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="20 6 9 17 4 12" />
+									</svg>
+								</span>
 							</span>
 							<div>
 								<code className="mono-md text-primary">{s.name}</code>

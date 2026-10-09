@@ -6,6 +6,7 @@ import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articl
 import { isExternalUrl } from '~/containers/Articles/promoLinks'
 import { articleBannerCandidates } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
+import { Card } from '~/ui/Card'
 
 type Props = {
 	articleId: string
@@ -57,10 +58,10 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 	const trackClick = () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel)
 
 	const frame = (
-		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-muted">
+		<Card padding="none" className="overflow-hidden">
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img src={banner.imageUrl} alt={alt} className="block h-auto w-full" loading="lazy" />
-		</div>
+		</Card>
 	)
 
 	const content = !linkUrl ? (

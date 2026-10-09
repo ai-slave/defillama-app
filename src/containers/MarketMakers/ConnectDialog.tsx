@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useRef, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
@@ -19,8 +20,8 @@ import {
 import { Field, type FieldControlProps } from '~/ui/Field'
 import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { Input } from '~/ui/Input'
+import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -30,10 +31,10 @@ import { useSubmitLead } from './client'
 import { LeadHoneypot, LeadSuccess } from './LeadForm'
 
 const INTEREST_OPTIONS = [
-	{ value: 'engage-market-maker', label: 'Engage a market maker' },
-	{ value: 'treasury-management', label: 'Treasury management' },
-	{ value: 'other', label: 'Other' }
-] as const
+	{ key: 'engage-market-maker', name: 'Engage a market maker' },
+	{ key: 'treasury-management', name: 'Treasury management' },
+	{ key: 'other', name: 'Other' }
+]
 
 const TOKEN_STATUS_OPTIONS = [
 	{ value: 'pre-tge', label: 'Pre-TGE' },
@@ -42,45 +43,6 @@ const TOKEN_STATUS_OPTIONS = [
 ] as const
 
 type TokenStatus = (typeof TOKEN_STATUS_OPTIONS)[number]['value']
-
-function InterestSelect({
-	control,
-	value,
-	onChange
-}: {
-	control: FieldControlProps
-	value: string
-	onChange: (value: string) => void
-}) {
-	const selected = INTEREST_OPTIONS.find((option) => option.value === value)
-	return (
-		<Ariakit.ComboboxProvider selectedValue={value} setSelectedValue={onChange}>
-			{/* The form's first field. */}
-			<Ariakit.ComboboxSelect
-				{...control}
-				autoFocus
-				className={`${inputStyles} flex w-full items-center justify-between gap-2`}
-			>
-				<span className={selected ? '' : 'text-tertiary'}>{selected?.label ?? 'Select an option'}</span>
-				<Ariakit.ComboboxSelectArrow />
-			</Ariakit.ComboboxSelect>
-			<ComboboxSurface variant="list" heading="Interest" sameWidth>
-				{INTEREST_OPTIONS.map((option) => (
-					<Ariakit.ComboboxItem key={option.value} value={option.value} className={popoverRowWithBorderStyles}>
-						<span>{option.label}</span>
-						<Ariakit.ComboboxItemSelected>
-							{(isSelected) => (
-								<span className={popoverSingleSelectCheckStyles(isSelected)}>
-									<Icon name="check" className="size-3" />
-								</span>
-							)}
-						</Ariakit.ComboboxItemSelected>
-					</Ariakit.ComboboxItem>
-				))}
-			</ComboboxSurface>
-		</Ariakit.ComboboxProvider>
-	)
-}
 
 function TokenCombobox({
 	control,
@@ -292,7 +254,22 @@ function ConnectForm({
 							Share your details and Forgd will put you in direct contact with {marketMakerName}.
 						</p>
 						<Field label="What are you interested in?" error={submitted ? errors.interest : null}>
-							{(control) => <InterestSelect control={control} value={interest} onChange={setInterest} />}
+							{(control) => (
+								<Select
+									heading="Interest"
+									allValues={INTEREST_OPTIONS}
+									selectedValues={interest}
+									setSelectedValues={setInterest}
+									label={INTEREST_OPTIONS.find((option) => option.key === interest)?.name ?? 'Select an option'}
+									labelType="none"
+									variant="input"
+									size="md"
+									className="w-full"
+									// The form's first field. Select names its trigger with an aria-label, which would hide the
+									// Field's label.
+									triggerProps={{ ...control, autoFocus: true }}
+								/>
+							)}
 						</Field>
 						<div className="flex flex-col gap-1">
 							<span className="label-sm text-secondary">What is the status of your token?</span>
@@ -311,33 +288,38 @@ function ConnectForm({
 							<Field label="Your token" error={submitted ? errors.token : null}>
 								{(control) =>
 									selectedToken ? (
-										<div className={`${inputStyles} flex items-center justify-between gap-2`}>
-											<span className="flex min-w-0 items-center gap-2">
-												<TokenLogo src={selectedToken.logo} size={20} />
-												<span className="truncate">{selectedToken.name}</span>
-												<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
-											</span>
-											<Tooltip
-												content="Change token"
-												render={
-													<Button
-														ref={changeTokenRef}
-														variant="ghost"
-														size="sm"
-														square
-														onClick={() =>
-															keepFocus(
-																() => setSelectedToken(null),
-																() => tokenSearchRef.current
-															)
+										<Input
+											{...control}
+											readOnly
+											value={selectedToken.name}
+											className="w-full"
+											prefix={<TokenLogo src={selectedToken.logo} size={20} />}
+											suffix={
+												<span className="flex items-center gap-2">
+													{selectedToken.symbol}
+													<Tooltip
+														content="Change token"
+														render={
+															<Button
+																ref={changeTokenRef}
+																variant="ghost"
+																size="sm"
+																square
+																onClick={() =>
+																	keepFocus(
+																		() => setSelectedToken(null),
+																		() => tokenSearchRef.current
+																	)
+																}
+																aria-label="Change token"
+															/>
 														}
-														aria-label="Change token"
-													/>
-												}
-											>
-												<Icon name="x" className="size-4" />
-											</Tooltip>
-										</div>
+													>
+														<Icon name="x" className="size-4" />
+													</Tooltip>
+												</span>
+											}
+										/>
 									) : (
 										<TokenCombobox
 											control={control}

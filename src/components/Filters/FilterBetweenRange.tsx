@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
-import clsx from 'clsx'
 import { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
+import { selectTriggerStyles } from '~/components/Select/types'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
@@ -74,18 +74,8 @@ export function FilterBetweenRange({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
-				className={clsx(
-					'flex cursor-pointer flex-nowrap items-center justify-between gap-2 label-sm',
-					{
-						primary: 'relative border border-medium text-primary hover:bg-hover-row focus-visible:bg-hover-row',
-						secondary:
-							'bg-surface-elevated-1 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2'
-					}[variant],
-					{
-						sm: 'min-h-6 rounded-md px-2 py-0.5',
-						md: 'min-h-8 rounded-lg px-3 py-1.5'
-					}[size]
-				)}
+				// The trigger opens a picker-like panel, so it wears the Select trigger beside the other filters.
+				className={`${selectTriggerStyles(variant === 'primary' ? 'filter' : 'default', size)} justify-between`}
 			>
 				{trigger}
 				<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />

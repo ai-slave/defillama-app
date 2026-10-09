@@ -16,6 +16,8 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
+import { NoResults } from '~/ui/NoResults'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
@@ -355,7 +357,8 @@ export function MetricSentenceBuilder({
 	const protocolVirtualizer = useVirtualItems({
 		count: subjectTab === 'protocol' ? filteredProtocolOptions.length : 0,
 		getScrollElement: () => protocolListRef.current,
-		estimateSize: () => 42,
+		// A child protocol's row holds two lines (48px); the slots are fixed, so every row takes that height.
+		estimateSize: () => 48,
 		overscan: 8
 	})
 
@@ -449,17 +452,15 @@ export function MetricSentenceBuilder({
 				return (
 					<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1.5" data-metric-token="true">
 						{AGGREGATOR_OPTIONS.map((option) => (
-							<button
+							<ListRow
 								key={option.value}
-								type="button"
+								selected={option.value === aggregator}
 								onClick={() => handleSelectAggregator(option.value)}
-								className={`w-full rounded-md px-2.5 py-1.5 text-left label-md transition-colors ${
-									option.value === aggregator ? 'text-primary' : 'text-secondary'
-								}`}
+								className="flex-col items-start gap-0"
 							>
-								<div>{option.label}</div>
-								<div className="body-sm text-tertiary">{option.description}</div>
-							</button>
+								<span className="label-md">{option.label}</span>
+								<span className="body-sm text-tertiary">{option.description}</span>
+							</ListRow>
 						))}
 					</div>
 				)
@@ -467,17 +468,15 @@ export function MetricSentenceBuilder({
 				return (
 					<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1.5" data-metric-token="true">
 						{WINDOW_OPTIONS.map((option) => (
-							<button
+							<ListRow
 								key={option.value}
-								type="button"
+								selected={option.value === metricWindow}
 								onClick={() => handleSelectWindow(option.value)}
-								className={`w-full rounded-md px-2.5 py-1.5 text-left label-md transition-colors ${
-									option.value === metricWindow ? 'text-primary' : 'text-secondary'
-								}`}
+								className="flex-col items-start gap-0"
 							>
-								<div>{option.label}</div>
-								<div className="body-sm text-tertiary">{option.description}</div>
-							</button>
+								<span className="label-md">{option.label}</span>
+								<span className="body-sm text-tertiary">{option.description}</span>
+							</ListRow>
 						))}
 					</div>
 				)
@@ -497,27 +496,18 @@ export function MetricSentenceBuilder({
 							</div>
 						</div>
 						<div className="p-1.5">
-							{baseMetricTypes.length === 0 ? (
-								<p className="px-2 py-3 body-md text-tertiary">No metrics available.</p>
-							) : null}
+							{baseMetricTypes.length === 0 ? <NoResults>No metrics available.</NoResults> : null}
 							{baseMetricTypes.length > 0 && filteredMetrics.length === 0 ? (
-								<p className="px-2 py-3 body-md text-tertiary">No metrics match that search.</p>
+								<NoResults>No metrics match that search.</NoResults>
 							) : null}
 							{filteredMetrics.map((value) => {
 								const label = getProDashboardChartTypeConfig(value)?.title || value
 								const isActive = value === metricType
 								return (
-									<button
-										key={value}
-										type="button"
-										onClick={() => handleSelectMetric(value)}
-										className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-											isActive ? 'text-primary' : 'text-secondary'
-										}`}
-									>
-										<span>{label}</span>
-										{isActive ? <Icon name="check" width={14} height={14} /> : null}
-									</button>
+									<ListRow key={value} selected={isActive} onClick={() => handleSelectMetric(value)}>
+										<span className="mr-auto">{label}</span>
+										<Icon name="check" className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`} />
+									</ListRow>
 								)
 							})}
 						</div>
@@ -548,21 +538,21 @@ export function MetricSentenceBuilder({
 										{subjectParameter.options.map((option) => {
 											const variable = subjectParameter.resolveSelection(option.value)
 											if (!variable) return null
+											const bound = subjectParameter.boundVariable?.id === variable.id
 											return (
-												<button
+												<Button
 													key={option.value}
-													type="button"
+													variant="toggle"
+													size="md"
+													data-active={bound}
+													aria-pressed={bound}
 													onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
 													data-umami-event="dashboard-parameter-bind-metric-subject"
-													className={`flex items-center justify-between gap-2 rounded-md border border-medium px-2.5 py-1.5 text-left label-md transition-colors ${
-														subjectParameter.boundVariable?.id === variable.id
-															? 'bg-brand-tint text-primary'
-															: 'text-secondary hover:bg-surface'
-													}`}
+													className="w-full justify-between"
 												>
 													<span className="truncate">{variable.label}</span>
 													<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
-												</button>
+												</Button>
 											)
 										})}
 									</div>
@@ -587,7 +577,9 @@ export function MetricSentenceBuilder({
 														const isActive = metricChain === option.value
 														const iconUrl = option.value === 'All' ? null : getItemIconUrl('chain', null, option.value)
 														return (
-															<ComboboxItem
+															<ListRow
+																as={ComboboxItem}
+																selected={isActive}
 																key={option.value}
 																value={option.value}
 																setValueOnClick={false}
@@ -595,9 +587,7 @@ export function MetricSentenceBuilder({
 																	handleChainSelect(option)
 																	closePopover()
 																}}
-																className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																	isActive ? 'bg-brand-tint text-primary' : 'text-secondary'
-																}`}
+																className="justify-between"
 																style={{
 																	position: 'absolute',
 																	top: 0,
@@ -618,14 +608,17 @@ export function MetricSentenceBuilder({
 																	) : null}
 																	<span className="truncate">{option.label}</span>
 																</div>
-																{isActive ? <Icon name="check" width={14} height={14} /> : null}
-															</ComboboxItem>
+																<Icon
+																	name="check"
+																	className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`}
+																/>
+															</ListRow>
 														)
 													})}
 												</div>
 											</ComboboxList>
 										) : (
-											<p className="px-2 py-6 text-center body-md text-tertiary">No chains found.</p>
+											<NoResults>No chains found.</NoResults>
 										)
 									) : filteredProtocolOptions.length > 0 ? (
 										<ComboboxList ref={protocolListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
@@ -636,7 +629,9 @@ export function MetricSentenceBuilder({
 													const isActive = metricProtocol === option.value
 													const iconUrl = getItemIconUrl('protocol', option, option.value)
 													return (
-														<ComboboxItem
+														<ListRow
+															as={ComboboxItem}
+															selected={isActive}
 															key={option.value}
 															value={option.value}
 															setValueOnClick={false}
@@ -644,9 +639,7 @@ export function MetricSentenceBuilder({
 																handleProtocolSelect(option)
 																closePopover()
 															}}
-															className={`flex items-center justify-between rounded-md px-2.5 py-1.5 label-md transition-colors ${
-																isActive ? 'bg-brand-tint text-primary' : 'text-secondary'
-															}`}
+															className="justify-between"
 															style={{
 																position: 'absolute',
 																top: 0,
@@ -674,14 +667,17 @@ export function MetricSentenceBuilder({
 																	) : null}
 																</div>
 															</div>
-															{isActive ? <Icon name="check" width={14} height={14} /> : null}
-														</ComboboxItem>
+															<Icon
+																name="check"
+																className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`}
+															/>
+														</ListRow>
 													)
 												})}
 											</div>
 										</ComboboxList>
 									) : (
-										<p className="px-2 py-6 text-center body-md text-tertiary">No protocols found.</p>
+										<NoResults>No protocols found.</NoResults>
 									)}
 								</div>
 							</div>

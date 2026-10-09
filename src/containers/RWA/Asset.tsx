@@ -340,7 +340,9 @@ function ChainBadge({
 }) {
 	return (
 		<Card padding="sm" className="flex items-start gap-1.5">
-			<img src={chainIconUrl(chain)} alt={chain} className="mt-0.5 size-5 rounded-full" loading="lazy" />
+			<span className="flex h-lh shrink-0 items-center label-md">
+				<img src={chainIconUrl(chain)} alt={chain} className="size-5 rounded-full" loading="lazy" />
+			</span>
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex items-center gap-1.5">
 					<p className="label-md">{chain}</p>

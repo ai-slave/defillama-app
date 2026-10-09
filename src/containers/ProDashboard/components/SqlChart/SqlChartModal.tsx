@@ -35,6 +35,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
@@ -412,17 +413,12 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 							)}
 						</Field>
 
-						{loadingStage || engineLoading || engineError || controls.queryChanged ? (
+						{loadingStage || engineLoading || controls.queryChanged ? (
 							<div className="flex shrink-0 flex-wrap items-center gap-3">
 								{loadingStage ? <span className="body-sm text-tertiary">{loadingStage}</span> : null}
 								{engineLoading ? (
 									<span className="body-sm text-tertiary">
 										Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.
-									</span>
-								) : null}
-								{engineError ? (
-									<span role="alert" className="body-sm text-error">
-										SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 									</span>
 								) : null}
 								{controls.queryChanged ? (
@@ -431,14 +427,14 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 							</div>
 						) : null}
 
-						{queryError ? (
-							<div
-								role="alert"
-								className="shrink-0 rounded-md border border-error-muted bg-error-tint px-3 py-2 body-sm text-error"
-							>
-								{queryError}
-							</div>
+						{/* The engine loads again the next time a SQL surface opens, so this error has no retry of its own. */}
+						{engineError ? (
+							<InlineStatus variant="error">
+								SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
+							</InlineStatus>
 						) : null}
+
+						{queryError ? <InlineStatus variant="error">{queryError}</InlineStatus> : null}
 					</div>
 					<div
 						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex ${pane === 'results' ? 'flex' : 'hidden'}`}

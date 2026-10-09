@@ -200,9 +200,13 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 											<button type="button" onClick={() => onAsk(bullet.question)} className={questionCardStyles}>
 												<span className="body-md text-primary">{bullet.text}</span>
 												<span className={`flex items-start gap-1.5 body-sm ${askStyles}`}>
-													<Icon name="sparkles" height={14} width={14} className="mt-px shrink-0" />
+													<span className="flex h-lh shrink-0 items-center">
+														<Icon name="sparkles" className="size-3.5" />
+													</span>
 													<span className="line-clamp-2 flex-1">{bullet.question}</span>
-													<Icon name="chevron-right" height={14} width={14} className="mt-px shrink-0" />
+													<span className="flex h-lh shrink-0 items-center">
+														<Icon name="chevron-right" className="size-3.5" />
+													</span>
 												</span>
 											</button>
 										</li>

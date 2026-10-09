@@ -4,6 +4,7 @@ import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { AI_SERVER } from '~/constants'
 import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
@@ -13,9 +14,12 @@ import {
 	type SlackAcquisition
 } from '~/containers/Subscription/utils/slackAcquisition'
 import { readAppStorage, setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { OptionTile } from '~/ui/OptionTile'
+import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -78,7 +82,7 @@ const ONBOARDING_OPTIONS = [
 		label: 'Just exploring everything',
 		description: null,
 		iconType: 'icon' as const,
-		iconName: 'earth' as const,
+		iconName: 'globe' as const,
 		color: '#8a8c90',
 		destination: null
 	}
@@ -310,13 +314,9 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
 					<h2 className="heading-sm text-primary">Payment not completed</h2>
 					<p className="body-md text-tertiary">Your payment didn't go through, so your plan hasn't changed.</p>
-					<button
-						type="button"
-						onClick={() => void Router.push('/subscription')}
-						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-					>
+					<Button size="md" onClick={() => void Router.push('/subscription')}>
 						Back to plans
-					</button>
+					</Button>
 				</div>
 			</div>
 		)
@@ -328,13 +328,9 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
 					<h2 className="heading-sm text-primary">Sign in to continue</h2>
 					<p className="body-md text-tertiary">Sign in with the account you subscribed with to see your plan.</p>
-					<button
-						type="button"
-						onClick={onSignIn}
-						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-					>
+					<Button size="md" onClick={onSignIn}>
 						Sign in
-					</button>
+					</Button>
 				</div>
 			</div>
 		)
@@ -363,13 +359,9 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 							<LoadingIndicator label="Checking your payment" />
 						</div>
 					) : null}
-					<button
-						type="button"
-						onClick={() => window.location.reload()}
-						className="rounded-lg border border-medium px-4 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-					>
+					<Button size="md" onClick={() => window.location.reload()}>
 						Refresh
-					</button>
+					</Button>
 				</div>
 			</div>
 		)
@@ -421,29 +413,17 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 							const c = option.color
 							return (
 								<Ariakit.Checkbox
-									render={<button type="button" aria-label={option.label} />}
+									render={<OptionTile layout="row" selected={isSelected} aria-label={option.label} />}
 									aria-description={option.description ?? undefined}
 									key={option.id}
 									checked={isSelected}
 									onChange={() => toggleFeature(option.id)}
-									style={{
-										animationDelay: `${i * 40}ms`,
-										...(isSelected
-											? {
-													borderColor: `color-mix(in srgb, ${c} 40%, transparent)`,
-													backgroundColor: `color-mix(in srgb, ${c} 6%, transparent)`
-												}
-											: {})
-									}}
-									className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus-visible:focus-ring ${
-										isSelected ? '' : 'border-medium hover:bg-hover-row'
-									}`}
+									style={{ animationDelay: `${i * 40}ms` }}
+									className="animate-[fadein_0.2s_ease-out_both]"
 								>
-									<div
-										className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-										style={{
-											backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)`
-										}}
+									<span
+										className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+										style={{ backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)` }}
 									>
 										{option.iconType === 'svg' ? (
 											<svg className="size-[18px]" style={{ color: isSelected ? '#FDE0A9' : c }}>
@@ -454,47 +434,30 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 												name={option.iconName}
 												height={18}
 												width={18}
-												className="transition-colors duration-200"
 												style={{ color: isSelected ? c : 'var(--text-tertiary)' }}
 											/>
 										)}
-									</div>
-									<div className="flex min-w-0 flex-col">
-										<span className={`label-md ${isSelected ? 'text-primary' : 'text-secondary'}`}>{option.label}</span>
-										{option.description ? (
-											<span className="mt-0.5 label-sm text-tertiary">{option.description}</span>
-										) : null}
-									</div>
-									<div className="ml-auto shrink-0">
-										<div
-											className={`flex size-[18px] items-center justify-center rounded-full border transition-all duration-200 ${
-												isSelected ? '' : 'border-medium group-hover:border-strong'
-											}`}
-											style={isSelected ? { borderColor: c, backgroundColor: c } : undefined}
-										>
-											{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
-										</div>
-									</div>
+									</span>
+									<span className="flex min-w-0 flex-col gap-0.5">
+										<span className="label-md">{option.label}</span>
+										{option.description ? <span className="label-sm text-tertiary">{option.description}</span> : null}
+									</span>
+									<span className={popoverMultiSelectCheckStyles(isSelected)} aria-hidden>
+										{isSelected ? <SelectCheckIcon /> : null}
+									</span>
 								</Ariakit.Checkbox>
 							)
 						})}
 					</div>
 				</FieldGroup>
 
-				<div className="mt-6 flex w-full flex-col items-center gap-2">
-					<button
-						type="submit"
-						className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow"
-					>
+				<div className="sub-api-accent mt-6 flex w-full flex-col items-center gap-2">
+					<Button type="submit" variant="primary" size="lg" className="w-full">
 						Get started
-					</button>
-					<button
-						type="button"
-						onClick={() => void Router.push('/account')}
-						className="py-1 label-sm text-tertiary transition-colors hover:text-secondary"
-					>
+					</Button>
+					<Button variant="ghost" size="md" onClick={() => void Router.push('/account')}>
 						Skip
-					</button>
+					</Button>
 				</div>
 			</form>
 		</div>

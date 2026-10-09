@@ -364,8 +364,10 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					) : null}
 					{note ? <span className="text-secondary">{note}</span> : null}
 					{feeWarning ? (
-						<span className="flex items-center gap-1.5 text-warning">
-							<Icon name="alert-triangle" height={12} width={12} className="shrink-0" />
+						<span className="flex items-start gap-1.5 text-warning">
+							<span className="flex h-lh shrink-0 items-center">
+								<Icon name="alert-triangle" height={12} width={12} />
+							</span>
 							{feeWarning}
 						</span>
 					) : null}

@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import {
 	DndContext,
 	DragOverlay,
@@ -23,6 +22,7 @@ import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tan
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { Select } from '~/components/Select/Select'
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
 import {
 	compileExpression,
@@ -42,10 +42,12 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
@@ -692,37 +694,21 @@ export function ColumnManager({
 
 				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
-						<p className="flex h-16 items-center justify-center body-sm text-tertiary">No columns match</p>
+						<NoResults>No columns match</NoResults>
 					) : (
-						<div className="flex flex-col gap-1">
+						<div className="flex flex-col">
 							{filteredColumns.map((column) => {
 								const isSelected = selectedColumnsSet.has(column.id)
 								return (
-									<button
+									<Checkbox
 										key={column.id}
-										type="button"
-										aria-pressed={isSelected}
-										onClick={() => handleToggleColumn(column.id)}
-										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
-											isSelected ? 'border-brand-muted bg-brand-faint' : 'border-transparent hover:border-medium'
-										}`}
+										variant="default"
+										checked={isSelected}
+										onChange={() => handleToggleColumn(column.id)}
 									>
-										<div
-											className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-												isSelected
-													? 'border-brand bg-brand text-on-brand'
-													: 'border-medium group-hover:border-brand-strong'
-											}`}
-										>
-											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
-										</div>
-										<span className={`flex-1 truncate label-sm ${isSelected ? 'text-primary' : 'text-secondary'}`}>
-											{column.header}
-										</span>
-										<span className="rounded-sm px-1 py-0.5 label-xs text-tertiary uppercase">
-											{GROUP_LABELS[column.group]}
-										</span>
-									</button>
+										<span className="flex-1 truncate">{column.header}</span>
+										<span className="label-xs text-tertiary uppercase">{GROUP_LABELS[column.group]}</span>
+									</Checkbox>
 								)
 							})}
 						</div>
@@ -917,7 +903,7 @@ export function ColumnManager({
 						{customColumns.map((col) => (
 							<div
 								key={col.id}
-								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand-faint' : 'border-subtle'}`}
+								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand-muted' : 'border-subtle'}`}
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
@@ -1033,6 +1019,9 @@ function SortableChip({
 	)
 }
 
+// Select options need a key; the empty sort column is this one.
+const NO_SORT_KEY = '__no-sort__'
+
 function SortingSection({
 	currentSortColumn,
 	isDescending,
@@ -1048,8 +1037,6 @@ function SortingSection({
 	onDirectionChange: (desc: boolean) => void
 	onReset: () => void
 }) {
-	const popover = usePopoverStore({ placement: 'bottom-start' })
-
 	const selectedLabel = useMemo(() => {
 		if (!currentSortColumn) return 'No sorting'
 		const selected = selectableColumns.find((col) => col.id === currentSortColumn)
@@ -1060,67 +1047,25 @@ function SortingSection({
 		<section className="rounded-lg border border-subtle bg-surface p-3">
 			<h4 className="mb-2 title-sm text-primary">Sorting</h4>
 			<div className="flex flex-wrap items-center gap-2 body-sm">
-				<div className="min-w-[140px] flex-1">
-					<PopoverDisclosure
-						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-medium px-2 py-1.5 body-sm transition-colors hover:border-brand-muted focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-					>
-						<span className={`truncate ${currentSortColumn ? 'text-primary' : 'text-tertiary'}`}>{selectedLabel}</span>
-						<Icon name="chevron-down" className="ml-2 size-3.5 shrink-0 text-tertiary" />
-					</PopoverDisclosure>
-					<Popover
-						store={popover}
-						modal={false}
-						portal
-						flip={false}
-						gutter={4}
-						className="z-50 rounded-md border border-medium bg-overlay shadow-overlay"
-						style={{ width: 'var(--popover-anchor-width)' }}
-					>
-						<div className="max-h-[280px] overflow-y-auto p-1">
-							<button
-								type="button"
-								onClick={() => {
-									onColumnChange('')
-									popover.setOpen(false)
-								}}
-								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-									!currentSortColumn
-										? 'bg-brand-muted text-link'
-										: 'text-secondary hover:bg-hover-row hover:text-primary'
-								}`}
-							>
-								<span>No sorting</span>
-								{!currentSortColumn ? (
-									<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-link" />
-								) : null}
-							</button>
-							{selectableColumns.map((col) => {
-								const isActive = col.id === currentSortColumn
-								return (
-									<button
-										key={col.id}
-										type="button"
-										onClick={() => {
-											onColumnChange(col.id)
-											popover.setOpen(false)
-										}}
-										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-											isActive ? 'bg-brand-muted text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
-										}`}
-									>
-										<span className="truncate">{col.header}</span>
-										{isActive ? <Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-link" /> : null}
-									</button>
-								)
-							})}
-						</div>
-					</Popover>
-				</div>
+				<Select
+					allValues={[
+						{ key: NO_SORT_KEY, name: 'No sorting' },
+						...selectableColumns.map((col) => ({ key: col.id, name: col.header }))
+					]}
+					selectedValues={currentSortColumn || NO_SORT_KEY}
+					setSelectedValues={(value) => onColumnChange(value === NO_SORT_KEY ? '' : value)}
+					label={selectedLabel}
+					labelType="none"
+					heading="Sort column"
+					triggerProps={{ 'aria-label': 'Sort column' }}
+					variant="input"
+					size="md"
+					className="min-w-[140px] flex-1"
+				/>
 				<SegmentedControl
 					label="Sort direction"
 					variant="default"
-					size="sm"
+					size="md"
 					value={currentSortColumn ? (isDescending ? 'desc' : 'asc') : null}
 					onValueChange={(direction) => onDirectionChange(direction === 'desc')}
 					options={[

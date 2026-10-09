@@ -556,7 +556,7 @@ export function TokenPageLive({
 				<div className="flex items-center gap-2 max-lg:w-full">
 					<Button type="button" size="md" onClick={() => setAboutOpen(true)} className="justify-center max-lg:flex-1">
 						About {asset.symbol}
-						<Icon name="circle-help" height={14} width={14} />
+						<Icon name="help-circle" height={14} width={14} />
 					</Button>
 					<Button type="button" size="md" className="justify-center max-lg:flex-1">
 						Share

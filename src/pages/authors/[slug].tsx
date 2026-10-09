@@ -8,6 +8,7 @@ import { AuthorProfileView, compactText, fallbackAuthorStats } from '~/container
 import { AuthorOgImage, buildAuthorJsonLd } from '~/containers/Authors/AuthorSeo'
 import type { AuthorDashboardSort } from '~/containers/Authors/types'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -55,9 +56,9 @@ function AuthorNotFound({ canonicalPath }: { canonicalPath: string }) {
 					</h1>
 					<p className="max-w-lg body-md text-secondary">This dashboard author profile is not available.</p>
 				</div>
-				<BasicLink href="/pro" className="rounded-md bg-brand px-4 py-2 label-md text-on-brand hover:brightness-110">
+				<Button as={BasicLink} href="/pro" variant="primary" size="md">
 					Browse dashboards
-				</BasicLink>
+				</Button>
 			</div>
 		</Layout>
 	)

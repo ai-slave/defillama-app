@@ -58,7 +58,7 @@ export function VisibilityField({
 						disabled,
 						label: (
 							<>
-								<Icon name="earth" height={14} width={14} />
+								<Icon name="globe" height={14} width={14} />
 								Public
 							</>
 						)

@@ -334,16 +334,20 @@ export function PortfolioNotifications({
 						<p className="body-sm text-secondary">
 							{preferences ? (
 								preferences.active ? (
-									<span className="flex items-center gap-2">
-										<Icon name="check-circle" height={14} width={14} className="text-success" />
+									<span className="flex items-start gap-2">
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="check-circle" height={14} width={14} className="text-success" />
+										</span>
 										<span>
 											Weekly email notifications are <strong className="text-success">active</strong> for "
 											{selectedPortfolio}" portfolio
 										</span>
 									</span>
 								) : (
-									<span className="flex items-center gap-2">
-										<Icon name="pause" height={14} width={14} className="text-secondary" />
+									<span className="flex items-start gap-2">
+										<span className="flex h-lh shrink-0 items-center">
+											<Icon name="pause" height={14} width={14} className="text-secondary" />
+										</span>
 										<span>
 											Weekly email notifications are <strong className="text-secondary">disabled</strong> for "
 											{selectedPortfolio}" portfolio

@@ -2,9 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { downloadBlob } from '~/utils/download'
 
@@ -15,6 +17,12 @@ interface ImagePreviewModalProps {
 	sessionId?: string | null
 	messageId?: string
 }
+
+/* The frosted bar over the picture holds plain round buttons (design.md: a toolbar that draws its own bar over an
+   image keeps borderless buttons), at the 32px md height. While an action runs, a button keeps Button's pending model:
+   aria-busy, a spinner with the pending label, and focus kept through accessibleWhenDisabled. */
+const TOOLBAR_BUTTON =
+	'touch-target flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 label-sm text-ai-white not-aria-disabled:hover:bg-ai-ink-wash focus-visible:bg-ai-ink-wash not-aria-disabled:active:bg-ai-ink-wash-strong aria-busy:cursor-progress'
 
 function extractFilename(url: string): string {
 	try {
@@ -41,12 +49,17 @@ export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePrevi
 			}}
 		>
 			{imageUrl ? <ImagePreviewContent key={imageUrl} imageUrl={imageUrl} {...tracking} /> : null}
-			<Ariakit.DialogDismiss
-				className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-ink-wash text-ai-white backdrop-blur-md hover:bg-ai-ink-wash-strong"
-				aria-label="Close preview"
+			<Tooltip
+				content="Close preview"
+				render={
+					<Ariakit.DialogDismiss
+						render={<Button variant="onMedia" size="md" square className="absolute top-4 right-4" />}
+						aria-label="Close preview"
+					/>
+				}
 			>
-				<Icon name="x" height={16} width={16} />
-			</Ariakit.DialogDismiss>
+				<Icon name="x" className="size-4" />
+			</Tooltip>
 		</Ariakit.Dialog>
 	)
 }
@@ -119,14 +132,29 @@ function ImagePreviewContent({
 					disabled={copy.isPending}
 					accessibleWhenDisabled
 					aria-busy={copy.isPending || undefined}
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-ink-wash aria-busy:cursor-progress"
+					className={TOOLBAR_BUTTON}
 				>
 					{copy.isPending ? (
 						<LoadingSpinner size={14} />
 					) : (
 						<Icon name={copy.isSuccess ? 'check' : 'copy'} height={14} width={14} />
 					)}
-					<span>{copy.isPending ? 'Copying…' : copy.isSuccess ? 'Copied' : 'Copy URL'}</span>
+					{/* All three labels stay laid out in one grid cell, so the button keeps its widest width and Download
+					    beside it never moves. */}
+					<span className="grid">
+						{(['Copy URL', 'Copying…', 'Copied'] as const).map((label) => {
+							const shown = label === (copy.isPending ? 'Copying…' : copy.isSuccess ? 'Copied' : 'Copy URL')
+							return (
+								<span
+									key={label}
+									aria-hidden={!shown || undefined}
+									className={`col-start-1 row-start-1 ${shown ? '' : 'invisible'}`}
+								>
+									{label}
+								</span>
+							)
+						})}
+					</span>
 				</Ariakit.Button>
 				<Ariakit.Button
 					type="button"
@@ -134,7 +162,7 @@ function ImagePreviewContent({
 					disabled={download.isPending}
 					accessibleWhenDisabled
 					aria-busy={download.isPending || undefined}
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-ink-wash aria-busy:cursor-progress"
+					className={TOOLBAR_BUTTON}
 				>
 					{download.isPending ? (
 						<LoadingSpinner size={14} />
@@ -143,12 +171,7 @@ function ImagePreviewContent({
 					)}
 					<span>{download.isPending ? 'Downloading…' : download.isSuccess ? 'Download again' : 'Download'}</span>
 				</Ariakit.Button>
-				<a
-					href={imageUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="flex items-center gap-1.5 rounded-full px-3 py-2.5 label-sm text-ai-white hover:bg-ai-ink-wash"
-				>
+				<a href={imageUrl} target="_blank" rel="noopener noreferrer" className={TOOLBAR_BUTTON}>
 					<Icon name="external-link" height={14} width={14} />
 					<span>
 						Open<span className="sr-only"> in new tab</span>

@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig } from '../chartConfig'
 import { Keycap } from '../primitives'
 import type { NotebookCell as NotebookCellType, NotebookCellType as CellType, ResultsView } from '../useSqlTabs'
@@ -242,12 +243,12 @@ function CellMenu({
 	const otherTypes: Array<CellType> = (['sql', 'markdown', 'chart'] as Array<CellType>).filter((t) => t !== cellType)
 	return (
 		<Ariakit.MenuProvider>
-			<Ariakit.MenuButton
-				className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary"
-				aria-label="Cell actions"
+			<Tooltip
+				content="Cell actions"
+				render={<Ariakit.MenuButton aria-label="Cell actions" render={<Button variant="ghost" size="sm" square />} />}
 			>
-				<Icon name="ellipsis" className="size-3.5" />
-			</Ariakit.MenuButton>
+				<Icon name="ellipsis" className="size-4" />
+			</Tooltip>
 			<MenuSurface variant="actions" gutter={4}>
 				{cellType === 'sql' ? (
 					<>

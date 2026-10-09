@@ -12,6 +12,8 @@ import { ConnectDialog } from '../ConnectDialog'
 
 // The Cloudflare widget cannot run in Node; the form only needs it mounted, never verified.
 vi.mock('@marsidev/react-turnstile', () => ({ Turnstile: () => null }))
+// The interest picker is a Select, which reads the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/market-makers' }) }))
 
 const http = installFixtureFetch()
 

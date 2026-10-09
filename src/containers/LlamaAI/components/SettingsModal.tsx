@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { memo, useId, useRef, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
+import { Select } from '~/components/Select/Select'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey, IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
@@ -34,7 +35,7 @@ import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from 
 import { Field } from '~/ui/Field'
 import { neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, Textarea } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -48,6 +49,8 @@ import { RetryNotice } from './RetryNotice'
 import { RAIL_TAB } from './tabRailStyles'
 
 const MAX_LENGTH = 5000
+// The picker's key for "no override": the settings store an empty string, which a picker option cannot carry.
+const DEFAULT_OPTION = 'default'
 
 type MemoryRemoval = { kind: 'entry'; id: string } | { kind: 'all'; target: 'user' | 'memory' }
 
@@ -314,16 +317,14 @@ export const SettingsModal = memo(function SettingsModal({
 		void requestNotificationPermission(markNotifBannerDismissed).finally(() => setIsRequestingNotif(false))
 	}
 
-	const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const nextModel = e.target.value
+	const handleModelChange = (nextModel: string) => {
 		saveSetting('capabilities', saveSettings({ model: nextModel }))
 		if (settings.effort && !isEffortAvailableForModel(settings.effort, nextModel)) {
 			saveSetting('capabilities', saveSettings({ effort: '' }))
 		}
 	}
 
-	const handleEffortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const nextEffort = e.target.value
+	const handleEffortChange = (nextEffort: string) => {
 		if (nextEffort && !isEffortAvailableForModel(nextEffort, settings.model)) return
 		saveSetting('capabilities', saveSettings({ effort: nextEffort }))
 	}
@@ -386,10 +387,10 @@ export const SettingsModal = memo(function SettingsModal({
 	const tabs: Array<{
 		id: SettingsTabId
 		label: string
-		icon: 'pencil' | 'gear-settings' | 'sparkles' | 'flame' | 'link' | 'wallet'
+		icon: 'pencil' | 'settings' | 'sparkles' | 'flame' | 'link' | 'wallet'
 	}> = [
 		{ id: 'persona', label: 'Persona', icon: 'pencil' },
-		{ id: 'app', label: 'App', icon: 'gear-settings' },
+		{ id: 'app', label: 'App', icon: 'settings' },
 		{ id: 'capabilities', label: 'Capabilities', icon: 'sparkles' },
 		{ id: 'integrations', label: 'Integrations', icon: 'link' },
 		{ id: 'memory', label: 'Memory', icon: 'sparkles' },
@@ -725,37 +726,61 @@ export const SettingsModal = memo(function SettingsModal({
 										<div>
 											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
 											<div className="mt-3 space-y-3 rounded-lg border border-subtle bg-surface p-4">
-												<SelectField
-													id="llamaai-model-select"
-													label="Model"
-													value={settings.model}
-													onChange={handleModelChange}
-												>
-													<option value="">Default (Sonnet 4.6)</option>
-													{availableModels.map((m) => (
-														<option key={m.id} value={m.id}>
-															{m.label}
-														</option>
-													))}
-												</SelectField>
+												<Field label="Model">
+													{(control) => (
+														<Select
+															heading="Model"
+															allValues={[
+																{ key: DEFAULT_OPTION, name: 'Default (Sonnet 4.6)' },
+																...availableModels.map((m) => ({ key: m.id, name: m.label }))
+															]}
+															selectedValues={settings.model || DEFAULT_OPTION}
+															setSelectedValues={(value: string) =>
+																handleModelChange(value === DEFAULT_OPTION ? '' : value)
+															}
+															label={
+																availableModels.find((m) => m.id === settings.model)?.label ?? 'Default (Sonnet 4.6)'
+															}
+															labelType="none"
+															variant="input"
+															size="md"
+															className="w-full justify-between"
+															triggerProps={{ ...control }}
+														/>
+													)}
+												</Field>
 												{availableEfforts.length > 0 ? (
-													<SelectField
-														id="llamaai-effort-select"
-														label="Reasoning effort"
-														value={settings.effort}
-														onChange={handleEffortChange}
-													>
-														<option value="">Default</option>
-														{availableEfforts.map((effort) => (
-															<option
-																key={effort.id}
-																value={effort.id}
-																disabled={!isEffortAvailableForModel(effort.id, settings.model)}
-															>
-																{effort.label}
-															</option>
-														))}
-													</SelectField>
+													<Field label="Reasoning effort">
+														{(control) => (
+															<Select
+																heading="Reasoning effort"
+																allValues={[
+																	{ key: DEFAULT_OPTION, name: 'Default' },
+																	...availableEfforts.map((effort) => {
+																		const disabled = !isEffortAvailableForModel(effort.id, settings.model)
+																		return {
+																			key: effort.id,
+																			name: effort.label,
+																			disabled,
+																			help: disabled ? 'Not available for this model' : undefined
+																		}
+																	})
+																]}
+																selectedValues={settings.effort || DEFAULT_OPTION}
+																setSelectedValues={(value: string) =>
+																	handleEffortChange(value === DEFAULT_OPTION ? '' : value)
+																}
+																label={
+																	availableEfforts.find((effort) => effort.id === settings.effort)?.label ?? 'Default'
+																}
+																labelType="none"
+																variant="input"
+																size="md"
+																className="w-full justify-between"
+																triggerProps={{ ...control }}
+															/>
+														)}
+													</Field>
 												) : null}
 											</div>
 										</div>
@@ -1159,37 +1184,6 @@ function ToggleRow({
 				describedBy={descriptionId}
 				className="mt-0.5 shrink-0"
 			/>
-		</div>
-	)
-}
-
-function SelectField({
-	id,
-	label,
-	value,
-	onChange,
-	children
-}: {
-	id: string
-	label: string
-	value: string
-	onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
-	children: React.ReactNode
-}) {
-	return (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="label-sm text-secondary">
-				{label}
-			</label>
-			<div className="relative">
-				<select id={id} value={value} onChange={onChange} className={`${inputStyles} w-full appearance-none pr-9`}>
-					{children}
-				</select>
-				<Icon
-					name="chevron-down"
-					className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-tertiary"
-				/>
-			</div>
 		</div>
 	)
 }

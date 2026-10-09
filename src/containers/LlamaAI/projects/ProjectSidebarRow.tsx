@@ -91,7 +91,8 @@ export function ProjectSidebarRow({
 					type="button"
 					aria-expanded={isExpanded}
 					onClick={() => (isExpanded ? removeStorageItem(storageKey) : setStorageItem(storageKey, project.id))}
-					className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md py-1.5 pr-2 text-left hover:bg-hover-row focus-visible:bg-hover-row"
+					// The row surface around it washes on hover and focus, so the button draws no wash of its own.
+					className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md py-1.5 pr-2 text-left"
 				>
 					<Icon
 						name={isExpanded ? 'chevron-down' : 'chevron-right'}

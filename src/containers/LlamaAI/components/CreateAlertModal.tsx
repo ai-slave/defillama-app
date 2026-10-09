@@ -6,6 +6,11 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
+import {
+	type AlertSchedule,
+	AlertScheduleFields,
+	SlackTargetPickers
+} from '~/containers/LlamaAI/components/alerts/AlertScheduleFields'
 import { createManualAlert } from '~/containers/LlamaAI/components/alerts/api'
 import {
 	ALERT_PROMPT_SUGGESTIONS,
@@ -29,16 +34,9 @@ import {
 	validatePrompt
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { ALERTS_QUERY_KEY } from '~/containers/LlamaAI/components/alerts/queryKeys'
-import {
-	DAYS_OF_WEEK,
-	formatScheduleExpression,
-	getTimezoneLabel,
-	getUserTimezone,
-	GMT_OFFSETS
-} from '~/containers/LlamaAI/components/alerts/schedule'
+import { formatScheduleExpression, getUserTimezone } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { DeliveryChannel } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertFieldLabelClass,
 	AlertsHeaderIcon,
 	PriceInput,
 	PRICE_OPERATOR_OPTIONS,
@@ -46,7 +44,6 @@ import {
 	SegmentedToggle,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
-import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { SESSIONS_QUERY_KEY, useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
@@ -68,7 +65,7 @@ import {
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, Textarea } from '~/ui/Input'
+import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { queryReadFailed } from '~/utils/query'
@@ -187,10 +184,12 @@ function CreateAlertModalForm({
 	const [triggerType, setTriggerType] = useState<TriggerType>(openTab)
 	const [prompt, setPrompt] = useState('')
 
-	const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily')
-	const [hour, setHour] = useState(9)
-	const [dayOfWeek, setDayOfWeek] = useState(1)
-	const [timezone, setTimezone] = useState(() => getUserTimezone())
+	const [schedule, setSchedule] = useState<AlertSchedule>(() => ({
+		frequency: 'daily',
+		hour: 9,
+		dayOfWeek: 1,
+		timezone: getUserTimezone()
+	}))
 
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
 	const [priceToken, setPriceToken] = useState<{
@@ -244,15 +243,6 @@ function CreateAlertModalForm({
 	})
 	const slackChannelsQuery = useSlackChannels(deliveryChannel === 'slack' && slackTeamId ? slackTeamId : null)
 	const slackChannels = slackChannelsQuery.data?.channels
-	const selectableSlackChannels = useMemo(() => {
-		const channels = (slackChannels ?? []).filter((c) => !c.is_archived)
-		channels.sort((a, b) => Number(a.is_private) - Number(b.is_private) || a.name.localeCompare(b.name))
-		return channels
-	}, [slackChannels])
-	const timezoneOptions = useMemo(() => {
-		if (GMT_OFFSETS.some((option) => option.value === timezone)) return GMT_OFFSETS
-		return [...GMT_OFFSETS, { value: timezone, label: getTimezoneLabel(timezone) }]
-	}, [timezone])
 
 	// This component only exists while the dialog is open, so mounting is the open. Reporting the tab the
 	// dialog opened on keeps this off the live triggerType, which a later switch would re-report.
@@ -314,7 +304,7 @@ function CreateAlertModalForm({
 			title: title.trim() || derivedTitle,
 			triggerType,
 			prompt,
-			schedule: { frequency, hour, dayOfWeek, timezone },
+			schedule,
 			price: { tokenNk: priceToken?.tokenNk ?? '', value: priceValue, op: priceOp },
 			delivery: { channel: deliveryChannel, slackTeamId, slackChannelId, slackChannelName }
 		})
@@ -324,7 +314,7 @@ function CreateAlertModalForm({
 	const handleJustAsk = () => {
 		const example = buildJustAskExample({
 			triggerType,
-			frequency,
+			frequency: schedule.frequency,
 			prompt,
 			symbol: priceToken?.symbol ?? null,
 			op: priceOp,
@@ -344,7 +334,7 @@ function CreateAlertModalForm({
 				: 'Email'
 	const triggerSummary =
 		triggerType === 'schedule'
-			? `Runs ${formatScheduleExpression(buildScheduleExpressionRaw({ frequency, hour, dayOfWeek, timezone }))}`
+			? `Runs ${formatScheduleExpression(buildScheduleExpressionRaw(schedule))}`
 			: getPriceCaption(priceToken?.symbol.toUpperCase() ?? 'the token', priceOp, priceValue || '0')
 	const currentPrice = priceToken?.currentPrice
 
@@ -533,59 +523,7 @@ function CreateAlertModalForm({
 					)}
 
 					{triggerType === 'schedule' ? (
-						<div className="flex flex-col gap-1.5">
-							<span className={alertFieldLabelClass}>When should it arrive?</span>
-							<div className="flex flex-wrap items-center gap-2">
-								<select
-									value={frequency}
-									aria-label="Frequency"
-									onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-									className={inputStyles}
-								>
-									<option value="daily">Daily</option>
-									<option value="weekly">Weekly</option>
-								</select>
-								{frequency === 'weekly' ? (
-									<select
-										value={dayOfWeek}
-										aria-label="Day of week"
-										onChange={(e) => setDayOfWeek(Number(e.target.value))}
-										className={inputStyles}
-									>
-										{DAYS_OF_WEEK.map((day, idx) => (
-											<option key={day} value={idx}>
-												{day}
-											</option>
-										))}
-									</select>
-								) : null}
-								<span className="body-sm text-secondary">at</span>
-								<select
-									value={hour}
-									aria-label="Hour"
-									onChange={(e) => setHour(Number(e.target.value))}
-									className={inputStyles}
-								>
-									{Array.from({ length: 24 }, (_, h) => (
-										<option key={h} value={h}>
-											{h.toString().padStart(2, '0')}:00
-										</option>
-									))}
-								</select>
-								<select
-									value={timezone}
-									aria-label="Timezone"
-									onChange={(e) => setTimezone(e.target.value)}
-									className={inputStyles}
-								>
-									{timezoneOptions.map((tz) => (
-										<option key={tz.value} value={tz.value}>
-											{tz.label}
-										</option>
-									))}
-								</select>
-							</div>
-						</div>
+						<AlertScheduleFields label="When should it arrive?" schedule={schedule} onChange={setSchedule} />
 					) : (
 						<Field label="Add context to the ping (optional)">
 							{(control) => (
@@ -623,69 +561,14 @@ function CreateAlertModalForm({
 								options={DELIVERY_OPTIONS}
 							/>
 							{deliveryChannel === 'slack' ? (
-								<>
-									{slackWorkspacesQuery.isLoading ? (
-										<span className="body-sm text-tertiary">Loading workspaces…</span>
-									) : activeSlackWorkspaces.length > 0 ? (
-										<select
-											value={slackTeamId}
-											aria-label="Slack workspace"
-											// The group's error names the Slack pick it needs; that pick takes the submit's focus.
-											aria-invalid={shown?.delivery && !slackTeamId ? true : undefined}
-											onChange={(e) => {
-												const workspace = activeSlackWorkspaces.find((w) => w.team_id === e.target.value)
-												setPickedSlack({
-													teamId: e.target.value,
-													channelId: workspace?.default_channel_id ?? ''
-												})
-											}}
-											className={inputStyles}
-										>
-											<option value="" disabled>
-												Pick workspace
-											</option>
-											{activeSlackWorkspaces.map((w) => (
-												<option key={w.team_id} value={w.team_id}>
-													{w.team_name}
-												</option>
-											))}
-										</select>
-									) : null}
-									{slackTeamId ? (
-										// A failed read keeps its notice through the retry, so the retry shows "Retrying…".
-										queryReadFailed(slackChannelsQuery) ? (
-											<RetryNotice
-												message="Couldn't load Slack channels."
-												retrying={slackChannelsQuery.isFetching}
-												onRetry={() => void slackChannelsQuery.refetch()}
-											/>
-										) : slackChannelsQuery.isLoading ? (
-											<span className="body-sm text-tertiary">Loading channels…</span>
-										) : (
-											<select
-												// A retried channel list takes the focus its Try again drops as it leaves.
-												ref={takeLostFocus}
-												value={slackChannelId}
-												aria-label="Slack channel"
-												aria-invalid={shown?.delivery && !slackChannelId ? true : undefined}
-												// The workspace travels with the channel, so a later workspace change cannot inherit it.
-												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
-												className={inputStyles}
-											>
-												<option value="" disabled>
-													Pick channel
-												</option>
-												{selectableSlackChannels.map((c) => (
-													<option key={c.id} value={c.id} disabled={c.is_private && !c.is_member}>
-														{c.is_private ? '🔒 ' : '# '}
-														{c.name}
-														{c.is_private && !c.is_member ? ' (invite bot first)' : ''}
-													</option>
-												))}
-											</select>
-										)
-									) : null}
-								</>
+								<SlackTargetPickers
+									workspaces={activeSlackWorkspaces}
+									workspacesLoading={slackWorkspacesQuery.isLoading}
+									target={{ teamId: slackTeamId, channelId: slackChannelId }}
+									channelsQuery={slackChannelsQuery}
+									invalid={!!shown?.delivery}
+									onPick={setPickedSlack}
+								/>
 							) : null}
 						</div>
 					</FieldGroup>

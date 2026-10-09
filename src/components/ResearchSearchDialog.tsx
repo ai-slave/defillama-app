@@ -3,16 +3,20 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
 import { listArticles } from '~/containers/Articles/api'
+import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import { listResearchNewsletterItems, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar, useOpeningKey } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 
@@ -46,15 +50,6 @@ const SECTION_ICONS = {
 	roundtables: 'users',
 	press_release: 'mail'
 } as const satisfies Record<ArticleSection, IIcon['name']>
-
-const SEARCH_TRIGGER_STYLES: Record<SearchDialogVariant, string> = {
-	mobile:
-		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-on-brand-control text-on-brand shadow-raised transition-colors hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden',
-	article:
-		'hidden h-11 min-w-[113px] items-center justify-center gap-2 rounded-full border border-medium bg-surface px-4 label-md text-primary transition-colors hover:border-brand hover:text-link lg:inline-flex',
-	desktop:
-		'inline-flex h-[45px] min-w-[113px] items-center justify-center gap-2 rounded-full bg-research-white px-4 label-lg text-research-banner transition-colors hover:bg-research-banner hover:text-research-white focus-visible:bg-research-banner focus-visible:text-research-white'
-}
 
 const RESEARCH_TOPICS = [
 	{ label: 'DeFi', query: 'DeFi' },
@@ -219,39 +214,42 @@ function ResultMetadata({ item, compact = false }: { item: ResearchSearchItem; c
 function SearchResult({ item, onSelect }: { item: ResearchSearchItem; onSelect: () => void }) {
 	return (
 		<li>
-			<Link
+			<ListRow
+				as={Link}
 				href={item.href}
 				target={item.external ? '_blank' : undefined}
 				rel={item.external ? 'noreferrer noopener' : undefined}
 				onClick={onSelect}
-				className="group grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-hover-row focus-visible:bg-hover-row sm:px-3"
+				className="min-h-16 gap-3"
 			>
 				<ResultVisual item={item} />
-				<span className="min-w-0 space-y-1">
-					<span className="line-clamp-2 label-md text-primary transition-colors group-hover:text-link">
-						{item.title}
-					</span>
+				<span className="min-w-0 flex-1 space-y-1">
+					<span className="line-clamp-2 label-md text-primary">{item.title}</span>
 					{item.description ? (
 						<span className="hidden truncate body-sm text-tertiary sm:block">{item.description}</span>
 					) : null}
 					<ResultMetadata item={item} compact />
 				</span>
-				<span className="grid size-7 place-items-center rounded-md text-tertiary transition-colors group-hover:bg-brand-faint group-hover:text-link">
-					<Icon name={item.external ? 'arrow-up-right' : 'chevron-right'} className="size-4" aria-hidden />
-				</span>
-			</Link>
+				<Icon
+					name={item.external ? 'arrow-up-right' : 'chevron-right'}
+					className="size-4 shrink-0 text-tertiary"
+					aria-hidden
+				/>
+			</ListRow>
 		</li>
 	)
 }
 
 function FeaturedResult({ item, label, onSelect }: { item: ResearchSearchItem; label: string; onSelect: () => void }) {
 	return (
-		<Link
+		<Card
+			as={Link}
+			padding="sm"
 			href={item.href}
 			target={item.external ? '_blank' : undefined}
 			rel={item.external ? 'noreferrer noopener' : undefined}
 			onClick={onSelect}
-			className="group grid grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-xl bg-brand-faint p-2.5 hover:bg-brand-tint focus-visible:bg-brand-tint sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4 sm:p-3"
+			className="group hover-wash-card grid grid-cols-[104px_minmax(0,1fr)] gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4"
 		>
 			<ResultVisual item={item} featured />
 			<span className="flex min-w-0 flex-col justify-center gap-2 py-0.5 sm:py-1">
@@ -267,7 +265,7 @@ function FeaturedResult({ item, label, onSelect }: { item: ResearchSearchItem; l
 				) : null}
 				<ResultMetadata item={item} />
 			</span>
-		</Link>
+		</Card>
 	)
 }
 
@@ -312,15 +310,50 @@ function EmptyState({ query, section }: { query: string; section: SearchContentT
 	)
 }
 
-function SearchDialogTrigger({ variant }: { variant: SearchDialogVariant }) {
+function SearchDialogTrigger({ variant, store }: { variant: SearchDialogVariant; store: Ariakit.DialogStore }) {
+	if (variant === 'mobile') {
+		return (
+			<Tooltip
+				content="Search Research"
+				render={
+					<Ariakit.DialogDisclosure
+						store={store}
+						render={
+							<Button
+								variant="onBrand"
+								size="lg"
+								square
+								aria-label="Search DefiLlama Research and Newsletters"
+								className="-my-0.5 lg:hidden"
+							/>
+						}
+					/>
+				}
+			>
+				<Icon name="search" className="size-4" aria-hidden />
+			</Tooltip>
+		)
+	}
+	if (variant === 'article') {
+		return (
+			<Ariakit.DialogDisclosure
+				store={store}
+				aria-label="Search DefiLlama Research and Newsletters"
+				render={<Button size="md" />}
+			>
+				<Icon name="search" className="size-3.5" aria-hidden />
+				<span>Search</span>
+			</Ariakit.DialogDisclosure>
+		)
+	}
 	return (
 		<Ariakit.DialogDisclosure
-			type="button"
+			store={store}
 			aria-label="Search DefiLlama Research and Newsletters"
-			className={SEARCH_TRIGGER_STYLES[variant]}
+			render={<ResearchPill tone="white" size="lg" />}
 		>
-			<Icon name="search" height={20} width={20} aria-hidden />
-			{variant !== 'mobile' ? <span>Search</span> : null}
+			<Icon name="search" className="size-5" aria-hidden />
+			<span>Search</span>
 		</Ariakit.DialogDisclosure>
 	)
 }
@@ -434,9 +467,11 @@ function SearchResults({
 export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant }) {
 	const [open, setOpen] = useState(false)
 	const opening = useOpeningKey(open)
+	// An explicit store: inside the mobile trigger's Tooltip the disclosure would otherwise open the tooltip's store.
+	const dialog = Ariakit.useDialogStore({ open, setOpen })
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
-			<SearchDialogTrigger variant={variant} />
+		<Ariakit.DialogProvider store={dialog}>
+			<SearchDialogTrigger variant={variant} store={dialog} />
 			<Dialog size="md" fullSheet portal unmountOnHide>
 				<ResearchSearch key={opening} onSelectResult={() => setOpen(false)} />
 			</Dialog>

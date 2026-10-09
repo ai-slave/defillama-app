@@ -63,7 +63,7 @@ function ResearchGridWithScrollbarScroller({
 						<Link
 							key={article.id}
 							ref={i === 0 ? measureFirstCard : undefined}
-							className="group relative top-0 overflow-hidden rounded-lg transition-all duration-200 ease-out hover:top-[-4px]"
+							className="group relative overflow-hidden rounded-lg"
 							href={articleHref(article)}
 							onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}
 						>

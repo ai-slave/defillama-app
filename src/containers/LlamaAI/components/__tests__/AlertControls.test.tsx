@@ -43,6 +43,14 @@ afterEach(async () => {
 async function settle() {
 	await new Promise((resolve) => setTimeout(resolve, 40))
 }
+async function pointerClick(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+		await settle()
+	})
+}
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
 		element.focus()
@@ -477,22 +485,28 @@ test('a missing Slack workspace or channel focuses that picker, not the delivery
 	await press(radio('Delivery channel', 'Email'), 'End')
 	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
 	const workspace = await waitForUi(() => {
-		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')
-		expect(select).not.toBeNull()
-		return select!
+		const picker = document.querySelector<HTMLButtonElement>('[aria-label="Slack workspace"]')
+		expect(picker).not.toBeNull()
+		return picker!
 	})
 	await act(async () => submit().click())
 	expect(document.activeElement).toBe(workspace)
 	expect(workspace.getAttribute('aria-invalid')).toBe('true')
-	await act(async () => {
-		workspace.value = 'T1'
-		workspace.dispatchEvent(new Event('change', { bubbles: true }))
-	})
+	await pointerClick(workspace)
+	await pointerClick(
+		await waitForUi(() => {
+			const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+				(el) => el.textContent === 'Llama Research'
+			)
+			expect(option).toBeDefined()
+			return option!
+		})
+	)
 	expect(workspace.getAttribute('aria-invalid')).toBeNull()
 	const channel = await waitForUi(() => {
-		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack channel"]')
-		expect(select).not.toBeNull()
-		return select!
+		const picker = document.querySelector<HTMLButtonElement>('[aria-label="Slack channel"]')
+		expect(picker).not.toBeNull()
+		return picker!
 	})
 	await act(async () => submit().click())
 	expect(document.activeElement).toBe(channel)

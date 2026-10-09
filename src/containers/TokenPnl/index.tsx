@@ -7,6 +7,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import {
 	getGeckoIdFromSearchId,
@@ -22,10 +23,11 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ComparisonPanel } from './ComparisonPanel'
@@ -107,30 +109,32 @@ function TokenPnlContent({
 	selectedCoinId,
 	selectedCoinInfo
 }: TokenPnlContentProps) {
-	if (!routerReady || isLoading || isFetching) {
-		return <PanelLoadingStatus />
-	}
-
-	if (isError) {
+	// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
+	if (routerReady && isError) {
 		return (
-			<Panel padding="sm" className="flex-1 items-center justify-center gap-2 text-center">
-				<p className="heading-xs text-error" role="alert">
-					Failed to load data
-				</p>
-				<p className="body-sm text-error">
-					{error instanceof Error ? error.message : 'Something went wrong fetching price data.'}
-				</p>
-				<Button
-					type="button"
-					onClick={() => {
-						void onRetry()
-					}}
-					size="md"
+			<Panel padding="sm" className="flex-1 items-center justify-center">
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							// The retry leaves once the read succeeds; the region keeps focus.
+							ref={focusRegionOnLeave}
+							size="sm"
+							pendingLabel={isFetching ? 'Retrying…' : null}
+							onClick={() => void onRetry()}
+						>
+							Try again
+						</Button>
+					}
 				>
-					Retry
-				</Button>
+					Failed to load data. {error instanceof Error ? error.message : 'Something went wrong fetching price data.'}
+				</InlineStatus>
 			</Panel>
 		)
+	}
+
+	if (!routerReady || isLoading || isFetching) {
+		return <PanelLoadingStatus />
 	}
 
 	if (!pnlData || pnlData.priceSeries.length === 0) {
@@ -476,7 +480,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 							type="button"
 							onClick={() => dialogStore.toggle()}
 							aria-label={`Token: ${selectedCoinInfo?.name ?? 'none'}`}
-							className={`${inputStyles} flex w-full cursor-pointer items-center justify-start gap-2 overflow-hidden text-left dark:scheme-dark`}
+							className={`${selectTriggerStyles('input', 'md')} w-full overflow-hidden`}
 						>
 							{selectedCoinInfo != null ? (
 								<>

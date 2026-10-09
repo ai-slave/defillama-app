@@ -9,6 +9,7 @@ import { Icon } from '~/ui/Icon'
 import { getExperimentVariant } from '~/utils/analytics/experiment'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { ChatLandingProps } from './ChatLanding'
+import { GoldCta } from './GoldCta'
 
 const CAPABILITY_BADGES = [
 	['bar-chart-2', 'Charts'],
@@ -402,13 +403,9 @@ export function OnboardingWalkthrough({
 								))}
 							</div>
 
-							<button
-								type="button"
-								onClick={nextStep}
-								className="w-full rounded-xl bg-ai-gold-cta py-2.5 label-md text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
-							>
+							<GoldCta size="lg" onClick={nextStep} className="w-full">
 								Show me around
-							</button>
+							</GoldCta>
 							<ProgressFooter currentStep="intro" steps={steps} onSkip={() => finish('skip')} />
 						</div>
 					</div>
@@ -554,26 +551,16 @@ export function OnboardingWalkthrough({
 
 								<div className="mb-4 flex flex-col gap-1.5">
 									{ONBOARDING_PROMPTS.map((p) => (
-										<button
-											type="button"
+										<Button
 											key={p.label}
+											variant="secondary"
+											size="md"
 											onClick={() => handlePromptClick(p.prompt)}
-											className="group flex items-center gap-3 rounded-lg border border-medium px-3 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row"
+											className="w-full justify-start"
 										>
-											<Icon
-												name={p.icon}
-												height={14}
-												width={14}
-												className="shrink-0 text-secondary group-hover:text-link group-focus-visible:text-link"
-											/>
-											<span className="label-md text-primary">{p.label}</span>
-											<Icon
-												name="arrow-right"
-												height={14}
-												width={14}
-												className="ml-auto shrink-0 text-secondary opacity-0 group-hover:text-link group-hover:opacity-100 group-focus-visible:text-link group-focus-visible:opacity-100"
-											/>
-										</button>
+											<Icon name={p.icon} className="size-3.5 shrink-0" />
+											<span>{p.label}</span>
+										</Button>
 									))}
 								</div>
 

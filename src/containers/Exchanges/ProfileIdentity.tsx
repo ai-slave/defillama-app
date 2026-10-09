@@ -10,7 +10,7 @@ import { selectVenueDestination } from './venueLinks'
 export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) {
 	const venueDestination = selectVenueDestination(profile.slug, profile.metadata.referralUrl, profile.metadata.website)
 	return (
-		<h1 className="flex flex-wrap items-center gap-2 heading-sm">
+		<h1 className="flex min-h-8 flex-wrap items-center gap-2 heading-sm">
 			<TokenLogo
 				name={profile.slug}
 				kind="exchange"
@@ -20,7 +20,7 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 			/>
 			<span>{profile.name}</span>
 			<Tag>{profile.kind.toUpperCase()}</Tag>
-			<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+			<span className="ml-auto flex items-center justify-end gap-1">
 				{venueDestination ? (
 					<Tooltip
 						content={`Open ${profile.name} website`}

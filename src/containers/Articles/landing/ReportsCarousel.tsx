@@ -1,14 +1,16 @@
-import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
+import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 import { useResize } from '~/hooks/useResize'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 const MOBILE_QUERY = '(max-width: 767px)'
 const IMG_ASPECT = { w: 294, h: 394 }
@@ -68,22 +70,25 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 	const label = direction === 'prev' ? 'Previous slide' : 'Next slide'
 
 	return (
-		<Ariakit.Button
-			type="button"
-			disabled={disabled}
-			accessibleWhenDisabled
-			onClick={onClick}
-			onMouseEnter={onMouseEnter}
-			onMouseLeave={onMouseLeave}
-			className={clsx(
-				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-research-white transition-all duration-200 hover:bg-research-white-wash',
-				disabled && 'cursor-not-allowed opacity-50',
-				className
-			)}
-			aria-label={label}
+		<Tooltip
+			content={label}
+			render={
+				<Button
+					variant="onMedia"
+					size="md"
+					square
+					disabled={disabled}
+					accessibleWhenDisabled
+					onClick={onClick}
+					onMouseEnter={onMouseEnter}
+					onMouseLeave={onMouseLeave}
+					aria-label={label}
+					className={className}
+				/>
+			}
 		>
-			<Icon name={direction === 'prev' ? 'chevron-left' : 'chevron-right'} className="size-4 text-on-brand" />
-		</Ariakit.Button>
+			<Icon name={direction === 'prev' ? 'chevron-left' : 'chevron-right'} className="size-4" />
+		</Tooltip>
 	)
 }
 
@@ -133,16 +138,20 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			<p className="my-3 line-clamp-4 body-sm">{blurb || article.title}</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm">
+					{/* The slide link under the overlay takes the click; this pill only shows where it goes. */}
+					<ResearchPill as="span" tone="whiteOutline" size="md" className="w-full">
 						Read more
-					</span>
+					</ResearchPill>
 					{pdfUrl ? (
-						<DownloadPdfLink
+						<ResearchPill
+							as={DownloadPdfLink}
+							tone="white"
+							size="md"
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-banner transition-[filter] hover:brightness-90"
+							className="pointer-events-auto w-full"
 						/>
 					) : null}
 				</div>
@@ -154,18 +163,18 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 						e.stopPropagation()
 					}}
 				>
-					<Link
-						href={href}
-						className="w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm text-on-brand transition-colors hover:bg-research-white-wash"
-					>
+					<ResearchPill as={Link} href={href} tone="whiteOutline" size="md" className="w-full">
 						Read more
-					</Link>
+					</ResearchPill>
 					{pdfUrl ? (
-						<DownloadPdfLink
+						<ResearchPill
+							as={DownloadPdfLink}
+							tone="white"
+							size="md"
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-banner transition-[filter] hover:brightness-90"
+							className="w-full"
 						/>
 					) : null}
 				</div>

@@ -11,11 +11,13 @@ import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
@@ -1116,7 +1118,13 @@ export function UnlocksCharts({
 	hideTokenStats?: boolean
 }) {
 	const shouldFetch = !initialData
-	const { data = null, isLoading, error } = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
+	const {
+		data = null,
+		isLoading,
+		error,
+		isFetching,
+		refetch
+	} = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
 
 	if (shouldFetch && isLoading) {
 		return (
@@ -1129,8 +1137,25 @@ export function UnlocksCharts({
 	const resolvedData: ProtocolEmissionResult | null = initialData ?? data
 	if (!resolvedData || resolvedData.name === null) {
 		return (
-			<div role="alert" className="flex flex-1 flex-col items-center justify-center">
-				<p className="p-2 body-sm text-error">{error instanceof Error ? error.message : 'Failed to fetch'}</p>
+			<div className="flex flex-1 flex-col items-center justify-center p-2">
+				<InlineStatus
+					variant="error"
+					action={
+						error ? (
+							<Button
+								// The retry leaves once the read succeeds; the region keeps focus.
+								ref={focusRegionOnLeave}
+								size="sm"
+								onClick={() => void refetch()}
+								pendingLabel={isFetching ? 'Retrying…' : null}
+							>
+								Try again
+							</Button>
+						) : undefined
+					}
+				>
+					{error instanceof Error ? error.message : 'Failed to fetch'}
+				</InlineStatus>
 			</div>
 		)
 	}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import type { Message } from '~/containers/LlamaAI/types'
 import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
+import { RailItem } from '~/ui/RailItem'
 import { Tooltip } from '~/ui/Tooltip'
 
 type Section = { text: string; msgId: string; offset: number }
@@ -76,7 +77,7 @@ export function SectionsTOC({
 	return (
 		<div className="w-0 shrink-0">
 			<nav className="sticky top-0 hidden max-h-dvh w-56 -translate-x-full overflow-y-auto py-6 pr-4 min-[1428px]:block">
-				<p className="mb-3 px-2 label-sm text-secondary">Sections</p>
+				<p className="mb-3 px-3 label-sm text-secondary">Sections</p>
 				<ol className="flex flex-col gap-0.5">
 					{sections.map((section, i) => {
 						const isActive = activeIndex === i
@@ -86,24 +87,24 @@ export function SectionsTOC({
 									content={section.text}
 									placement="right"
 									render={
-										<button
+										<RailItem
+											as="button"
 											type="button"
+											active={isActive}
 											onClick={() => handleClick(i)}
 											aria-current={isActive ? 'location' : undefined}
-											className={`flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left ${
-												isActive
-													? 'bg-surface-elevated-1 label-sm text-primary'
-													: 'body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary'
-											}`}
+											className="items-start"
 										/>
 									}
 								>
-									<span
-										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm label-xs ${
-											isActive ? 'bg-brand-muted text-link' : 'bg-surface-elevated-1 text-tertiary'
-										}`}
-									>
-										{i + 1}
+									<span className="flex h-lh shrink-0 items-center">
+										<span
+											className={`flex size-5 items-center justify-center rounded-sm label-xs ${
+												isActive ? 'bg-brand-tint-strong text-link' : 'bg-surface-elevated-1 text-tertiary'
+											}`}
+										>
+											{i + 1}
+										</span>
 									</span>
 									<span className="line-clamp-2">{section.text}</span>
 								</Tooltip>

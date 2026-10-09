@@ -175,12 +175,6 @@ function VerifiedByDefiLlamaMark() {
 	)
 }
 
-const primaryCtaStyles =
-	'inline-flex items-center justify-center rounded-lg bg-brand px-7 py-3.5 label-md text-on-brand transition-[filter] hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand'
-
-const secondaryCtaStyles =
-	'inline-flex items-center justify-center gap-2 rounded-lg border border-subtle px-7 py-3.5 label-md text-primary transition-colors hover:bg-hover-row focus-visible:focus-ring'
-
 function SiteHeader() {
 	return (
 		<header className="sticky top-0 z-50 border-b border-subtle bg-surface-glass backdrop-blur-md">
@@ -202,20 +196,18 @@ function SiteHeader() {
 					</span>
 				</BasicLink>
 				<nav className="hidden items-center gap-1 md:flex">
-					{[
-						['#reconcile', 'Public record'],
-						['#who', "Who it's for"],
-						['#how', 'How it works'],
-						['#faq', 'FAQ']
-					].map(([href, label]) => (
-						<a
-							key={href}
-							href={href}
-							className="rounded-md px-3.5 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-						>
-							{label}
-						</a>
-					))}
+					<Button as="a" href="#reconcile" variant="ghost" size="md">
+						Public record
+					</Button>
+					<Button as="a" href="#who" variant="ghost" size="md">
+						Who it's for
+					</Button>
+					<Button as="a" href="#how" variant="ghost" size="md">
+						How it works
+					</Button>
+					<Button as="a" href="#faq" variant="ghost" size="md">
+						FAQ
+					</Button>
 				</nav>
 				<Button as="a" href="#get" variant="primary" size="md">
 					<span className="font-semibold">Get verified</span>
@@ -382,7 +374,7 @@ function DemoFrame({
 	return (
 		<div
 			ref={frameRef}
-			className="attn-demo overflow-hidden rounded-xl border border-medium bg-surface shadow-[0_18px_38px_-26px_rgba(9,11,12,0.5)] dark:bg-surface-elevated-1"
+			className="attn-demo overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3 sm:px-5">
 				<div className="flex min-w-0 items-center gap-2.5">
@@ -821,7 +813,7 @@ const PERSONA_KEYS = ['issuer', 'strategy'] as const
 function PersonaDossier() {
 	const id = useId()
 	return (
-		<div className="overflow-hidden rounded-xl border border-medium bg-surface shadow-[0_16px_32px_-20px_rgba(9,11,12,0.45)] dark:bg-surface-elevated-1">
+		<div className="overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1">
 			<TabProvider defaultSelectedId={`${id}-issuer`} selectOnMove={false} orientation="both">
 				<TabList
 					className="grid border-b border-subtle sm:grid-cols-2 sm:divide-x sm:divide-(--border-subtle)"
@@ -1295,7 +1287,9 @@ function PublicProofSection() {
 										/>
 									</span>
 								) : null}
-								<span className={`mt-1 size-2 rounded-full ${state.dotTone}`} aria-hidden />
+								<span className="flex h-lh items-center label-sm" aria-hidden>
+									<span className={`size-2 rounded-full ${state.dotTone}`} />
+								</span>
 								<span>
 									<span className="block label-sm">{state.label}</span>
 									<span className="mt-1 block body-sm text-tertiary">{state.detail}</span>
@@ -1344,9 +1338,9 @@ export default function VerifiedLanding() {
 											them with public liabilities, and publishes a current verification record.
 										</p>
 										<div className="mt-8 flex flex-wrap items-center gap-5">
-											<a href="#get" className={primaryCtaStyles}>
+											<Button as="a" href="#get" variant="primary" size="lg">
 												Get verified
-											</a>
+											</Button>
 											<a href="#reconcile" className="label-sm text-link hover:underline">
 												See the public record ↓
 											</a>
@@ -1429,18 +1423,19 @@ export default function VerifiedLanding() {
 									</p>
 								</div>
 								<div className="flex flex-wrap items-center gap-3 xl:shrink-0 xl:flex-nowrap">
-									<a href="mailto:patrick@defillama.com" className={primaryCtaStyles}>
+									<Button as="a" href="mailto:patrick@defillama.com" variant="primary" size="lg">
 										Get verified
-									</a>
-									<a
+									</Button>
+									<Button
+										as="a"
 										href="https://calendly.com/patrick-defillama"
 										target="_blank"
 										rel="noopener noreferrer"
-										className={secondaryCtaStyles}
+										size="lg"
 									>
 										<span>Book a call</span>
-										<ResearchIcon name="calendly-mark" className="size-5 shrink-0" aria-hidden />
-									</a>
+										<ResearchIcon name="calendly-mark" className="size-3.5 shrink-0" aria-hidden />
+									</Button>
 								</div>
 							</div>
 						</section>

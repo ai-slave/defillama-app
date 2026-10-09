@@ -10,6 +10,7 @@ import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 import { queryReadFailed } from '~/utils/query'
+import { navLinkStyles } from './shared'
 
 // A retry that succeeds leaves; the account link above it stays, so it takes focus.
 const focusAccountOnLeave = passFocusOnLeave((retry) =>
@@ -46,10 +47,7 @@ export function Account() {
 				</div>
 			) : isAuthenticated && user ? (
 				<div data-account className="flex w-full flex-col">
-					<BasicLink
-						href="/account"
-						className="flex w-full items-center gap-3 rounded-md p-1 hover:bg-hover-row focus-visible:bg-hover-row"
-					>
+					<BasicLink href="/account" className={navLinkStyles}>
 						<img src="/assets/account_avatar.png" alt="Account avatar" className="size-6 shrink-0 rounded-full" />
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<span className="label-sm text-primary">My Account</span>
@@ -66,7 +64,7 @@ export function Account() {
 						<Icon name="chevron-right" className="size-5 shrink-0 text-tertiary" />
 					</BasicLink>
 					{failed ? (
-						<div className="ml-10 flex flex-wrap items-center gap-2">
+						<div className="ml-9 flex flex-wrap items-center gap-2">
 							{unavailable ? null : <span className="label-xs text-error">Subscription unavailable</span>}
 							<Button
 								size="sm"

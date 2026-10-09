@@ -15,6 +15,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -667,7 +668,11 @@ export function MultiMetricModal({
 							) : activeLoading ? (
 								<CenteredLoader />
 							) : activeError ? (
-								<CenteredError error={activeError} />
+								<CenteredError
+									error={activeError}
+									retrying={activeQuery!.isFetching}
+									onRetry={() => void activeQuery!.refetch()}
+								/>
 							) : !parsedActive || parsedActive.rows.length === 0 ? (
 								<CenteredHint icon="eye-off" text="No data" />
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
@@ -857,14 +862,19 @@ function CenteredLoader() {
 	)
 }
 
-function CenteredError({ error }: { error: unknown }) {
-	const msg = error instanceof Error ? error.message : 'Failed to fetch data'
+function CenteredError({ error, retrying, onRetry }: { error: unknown; retrying: boolean; onRetry: () => void }) {
 	return (
-		<div className="flex flex-1 items-center justify-center px-6">
-			<div className="flex max-w-md flex-col items-center gap-2 text-center">
-				<Icon name="alert-triangle" className="size-6 text-error" />
-				<p className="body-md text-error">{msg}</p>
-			</div>
+		<div className="flex flex-1 items-center justify-center p-4">
+			<InlineStatus
+				variant="error"
+				action={
+					<Button size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={onRetry}>
+						Try again
+					</Button>
+				}
+			>
+				{error instanceof Error ? error.message : 'Failed to fetch data'}
+			</InlineStatus>
 		</div>
 	)
 }

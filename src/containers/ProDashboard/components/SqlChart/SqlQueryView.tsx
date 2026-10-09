@@ -80,9 +80,9 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 					<span className="body-xs text-tertiary">No registered data sources</span>
 				)}
 				<div className="flex shrink-0 items-center gap-2">
-					<Button type="button" size="sm" onClick={copySql}>
-						<Icon name={copied ? 'check' : 'copy'} className="size-3" />
-						{copied ? 'Copied' : 'Copy SQL'}
+					<Button type="button" size="sm" onClick={copySql} doneLabel="Copied" done={copied}>
+						<Icon name="copy" className="size-3.5" />
+						Copy SQL
 					</Button>
 					<Button as="a" variant="primary" size="sm" href={buildSqlStudioHref(config)} target="_blank" rel="noreferrer">
 						Open in SQL Studio

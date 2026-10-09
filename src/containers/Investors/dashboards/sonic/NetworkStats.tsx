@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { Card } from '~/ui/Card'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { useNetworkStatsData } from './networkStatsApi'
@@ -295,11 +296,13 @@ export default function NetworkStats() {
 			)}
 
 			{/* Uptime Link */}
-			<a
+			<Card
+				as="a"
+				padding="md"
 				href={data.uptimeUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="group hover-wash-card flex items-center justify-between rounded-lg border border-subtle bg-surface p-4 transition-colors"
+				className="hover-wash-card flex items-center justify-between"
 			>
 				<div>
 					<span className="label-md text-primary">Network Uptime</span>
@@ -310,11 +313,12 @@ export default function NetworkStats() {
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className="size-4 text-secondary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+					aria-hidden="true"
+					className="size-4 text-secondary"
 				>
 					<path d="M7 17L17 7M17 7H7M17 7v10" />
 				</svg>
-			</a>
+			</Card>
 		</div>
 	)
 }

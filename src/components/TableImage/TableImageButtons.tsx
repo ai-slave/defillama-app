@@ -7,12 +7,13 @@ import {
 	type PrepareCsv,
 	useCsvDownload
 } from '~/components/CsvDownloadButton'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { popoverMenuItemStyles } from '~/ui/Popover'
+import { popoverMenuItemStyles, popoverMultiSelectCheckStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
@@ -198,15 +199,12 @@ export function TableImageButtons({
 							checked={watermarkEnabled}
 							onChange={toggleWatermark}
 							hideOnClick={false}
-							className={`${popoverMenuItemStyles} border-t border-medium`}
+							className={`${popoverMenuItemStyles} border-t border-subtle`}
 						>
-							<Icon
-								name={watermarkEnabled ? 'checkmark' : 'box'}
-								height={14}
-								width={14}
-								className={watermarkEnabled ? '' : 'opacity-40'}
-							/>
 							<span>Include watermark</span>
+							<span className={popoverMultiSelectCheckStyles(watermarkEnabled)} aria-hidden>
+								{watermarkEnabled ? <SelectCheckIcon /> : null}
+							</span>
 						</Ariakit.MenuItemCheckbox>
 					) : null}
 				</MenuSurface>

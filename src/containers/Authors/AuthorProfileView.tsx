@@ -1,10 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import Image from 'next/image'
 import { useMemo, type ReactNode } from 'react'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { CardLikeButton } from '~/containers/ProDashboard/components/CardLikeButton'
 import { DashboardPreview } from '~/containers/ProDashboard/components/DashboardPreview'
 import { buildDashboardPreview } from '~/containers/ProDashboard/components/dashboardPreview.utils'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -224,17 +227,17 @@ function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }
 function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 4) : []
 	return (
-		<div className="group relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-brand-strong">
-			<div className="absolute inset-x-0 top-0 z-10 h-1 bg-brand opacity-0 transition-opacity group-hover:opacity-100" />
+		<Card
+			padding="none"
+			className="group hover-wash-card relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden"
+		>
 			<AuthorDashboardPreview dashboard={dashboard} className="border-b border-subtle" />
 			<div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
 				<div className="flex items-start justify-between gap-3">
 					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-primary group-hover:text-link">
 						{dashboardName(dashboard)}
 					</h2>
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-medium text-tertiary transition-colors group-hover:border-brand-muted group-hover:text-link">
-						<Icon name="arrow-up-right" className="size-4" />
-					</span>
+					<Icon name="arrow-up-right" className="size-4 shrink-0 text-tertiary" />
 				</div>
 
 				<div className="grid content-start gap-3">
@@ -258,17 +261,17 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 					<DashboardCardStats dashboard={dashboard} />
 				</div>
 			</div>
-			<BasicLink href={`/pro/${dashboard.slug || dashboard.id}`} className="absolute inset-0">
+			<BasicLink href={`/pro/${dashboard.slug || dashboard.id}`} className="absolute inset-0 rounded-lg">
 				<span className="sr-only">{dashboardName(dashboard)}</span>
 			</BasicLink>
-		</div>
+		</Card>
 	)
 }
 
 function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 6) : []
 	return (
-		<section className="group relative isolate overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-strong">
+		<Card as="section" padding="none" className="group hover-wash-card relative isolate overflow-hidden">
 			<div className="absolute inset-x-0 top-0 h-1 bg-brand" />
 			<div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-7">
 				<div className="grid content-start gap-3">
@@ -301,10 +304,10 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 					</div>
 				</div>
 			</div>
-			<BasicLink href={`/pro/${dashboard.slug || dashboard.id}`} className="absolute inset-0">
+			<BasicLink href={`/pro/${dashboard.slug || dashboard.id}`} className="absolute inset-0 rounded-lg">
 				<span className="sr-only">{dashboardName(dashboard)}</span>
 			</BasicLink>
-		</section>
+		</Card>
 	)
 }
 
@@ -368,23 +371,18 @@ function AuthorHero({
 
 					<div className="flex min-h-8 flex-wrap items-center gap-2">
 						{isOwnProfile ? (
-							<BasicLink
-								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-brand-muted bg-brand-tint px-3 py-2 label-sm text-link transition-colors hover:border-brand-strong hover:bg-brand-tint-strong"
-							>
+							<Button as={BasicLink} href="/account?tab=profile" variant="outline" size="md">
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
-							</BasicLink>
+							</Button>
 						) : null}
 						<FollowAuthorButton slug={author.slug} following={following} isOwnProfile={isOwnProfile} />
 						<ShareProfileButton slug={author.slug} displayName={author.displayName} />
 						{socials.map(([key, value]) => (
-							<a
+							<ExternalLinkButton
 								key={key}
 								href={value}
-								target="_blank"
-								rel="noreferrer noopener"
-								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 label-sm text-secondary transition-colors hover:border-brand-strong hover:text-link"
+								icon={socialIconName(key)}
 								{...(key === 'website'
 									? {
 											'data-umami-event': 'author-website-click',
@@ -394,9 +392,8 @@ function AuthorHero({
 										}
 									: {})}
 							>
-								<Icon name={socialIconName(key)} className="size-3.5" />
 								{socialLabel(key)}
-							</a>
+							</ExternalLinkButton>
 						))}
 					</div>
 				</div>
@@ -457,9 +454,9 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 				<p className="max-w-lg body-md text-tertiary">
 					Build a dashboard and make it public to start collecting views, likes, and followers here.
 				</p>
-				<BasicLink href="/pro" className="rounded-md bg-brand px-4 py-2 label-md text-on-brand hover:brightness-110">
+				<Button as={BasicLink} href="/pro" variant="primary" size="md">
 					Create your first dashboard
-				</BasicLink>
+				</Button>
 			</div>
 		)
 	}

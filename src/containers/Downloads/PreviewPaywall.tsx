@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { type ColumnMeta, formatCellValue, getCellTone } from './previewFormatting'
 
@@ -22,13 +23,10 @@ export function PreviewPaywall() {
 				<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 					<p className="title-md text-primary">This is a preview — subscribe to download full datasets</p>
 					<p className="body-sm text-tertiary">Get access to all rows, all columns, and unlimited CSV downloads</p>
-					<Link
-						href="/subscribe"
-						className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 title-md text-on-brand transition-all hover:brightness-110"
-					>
-						<Icon name="arrow-up-right" className="size-4" />
+					<Button as={Link} href="/subscribe" variant="primary" size="lg" className="mt-1">
+						<Icon name="arrow-up-right" className="size-3.5" />
 						Subscribe
-					</Link>
+					</Button>
 				</div>
 			</div>
 		</>

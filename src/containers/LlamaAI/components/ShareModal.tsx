@@ -236,9 +236,11 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 						onClick={() => copyLink(shareLink)}
 						disabled={!shareLink || copy.error?.message === CLIPBOARD_UNAVAILABLE}
 						accessibleWhenDisabled
+						doneLabel="Copied"
+						done={copy.isSuccess}
 					>
-						<Icon name={copy.isSuccess ? 'check-circle' : 'copy'} height={14} width={14} />
-						{copy.isSuccess ? 'Copied' : 'Copy link'}
+						<Icon name="copy" height={14} width={14} />
+						Copy link
 					</Button>
 				) : null}
 			</DialogFooter>

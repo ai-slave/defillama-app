@@ -5,7 +5,7 @@ import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { TokenRightsUtrSummary } from './badge'
-import { TokenCardHeader } from './TokenCardHeader'
+import { TokenCardHeader, TokenCardLink } from './TokenCardHeader'
 import { TokenRightsChipList } from './TokenRightsChips'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { TokenRightsPreview } from './types'
@@ -26,26 +26,25 @@ function UtrLink({ utr, name }: { utr: TokenRightsUtrSummary; name: string }) {
 		utr.performanceGrade ? `performance ${utr.performanceGrade}` : null
 	].filter(Boolean)
 	return (
-		<BasicLink
+		<TokenCardLink
 			href={utr.href}
 			data-umami-event="utr-link"
 			data-umami-event-card="token-rights"
 			data-umami-event-entity={name}
 			aria-label={`Universal Token Rating ${utr.grade}${axes.length > 0 ? ` (${axes.join(', ')})` : ''}, view rating`}
-			className="group flex shrink-0 flex-col items-end gap-0.5 rounded-md border border-subtle px-1.5 py-1 hover:bg-surface-elevated-1"
 		>
-			<span className="flex items-center gap-1.5 label-xs text-tertiary">
+			<span className="flex items-center gap-1.5">
 				UTR
 				<GradeBadge score={null} grade={utr.grade} className="shrink-0" />
 				<Icon name="arrow-right" className="size-3.5 text-link" />
 			</span>
 			{utr.disclosureGrade || utr.performanceGrade ? (
-				<span className="flex gap-1.5 label-xs text-tertiary">
+				<span className="flex gap-1.5">
 					<UtrAxisGrade label="Disclosure" grade={utr.disclosureGrade} />
 					<UtrAxisGrade label="Performance" grade={utr.performanceGrade} />
 				</span>
 			) : null}
-		</BasicLink>
+		</TokenCardLink>
 	)
 }
 

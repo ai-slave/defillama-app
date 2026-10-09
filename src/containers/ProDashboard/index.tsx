@@ -34,6 +34,7 @@ import { CopyDashboardButton, EditDoneButton, UndoAIGenerationButton } from './c
 import { DashboardLoadProgress } from './components/DashboardLoadProgress'
 import { type DashboardMenuAction, DashboardOverflowMenu } from './components/DashboardOverflowMenu'
 import { DashboardVariablesBar } from './components/DashboardVariablesBar'
+import { DemoPreviewFallback } from './components/DemoPreviewFallback'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
 import { ParameterHint } from './components/ParameterHint'
@@ -151,10 +152,12 @@ function AuthorProfileSetupNotice() {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand-muted bg-brand-tint px-3 py-2">
 			<div className="flex min-w-0 items-start gap-2">
-				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
-				<div className="min-w-0">
+				<span className="flex h-lh shrink-0 items-center label-md">
+					<Icon name="users" className="size-4 text-link" />
+				</span>
+				<div className="flex min-w-0 flex-col gap-0.5">
 					<p className="label-md text-primary">Set up your dashboard author profile</p>
-					<p className="mt-0.5 body-sm text-secondary">
+					<p className="body-sm text-secondary">
 						Add your name, avatar, and links so visitors can see who built this dashboard.
 					</p>
 				</div>
@@ -237,20 +240,6 @@ function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) 
 				</>
 			)}
 		</Tooltip>
-	)
-}
-
-function DemoPreviewFallback() {
-	return (
-		<div
-			role="alert"
-			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-subtle bg-surface p-6 text-center"
-		>
-			<p className="body-sm text-error">The preview could not be displayed.</p>
-			<BasicLink href="/pro?tab=discover" className="label-sm text-link hover:underline">
-				See community dashboards
-			</BasicLink>
-		</div>
 	)
 }
 

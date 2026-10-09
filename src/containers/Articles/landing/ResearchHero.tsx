@@ -3,6 +3,7 @@ import React from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
+import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { ResearchHeaderWash } from '~/containers/Articles/ResearchHeaderWash'
 import type { ArticleDocument } from '~/containers/Articles/types'
 
@@ -34,36 +35,30 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 
 					<div className="flex flex-col items-center gap-9 lg:flex-row">
 						<div className="flex flex-wrap justify-center gap-3">
-							<Link
+							<ResearchPill
+								as={Link}
 								href="/newsletters"
 								aria-label="Subscribe to DefiLlama newsletters"
-								className="flex items-center gap-2 rounded-full bg-research-white px-3.5 py-3 body-lg text-research-accent-ink md:px-6 md:py-3.5"
+								tone="white"
+								size="lg"
 							>
 								<span>Subscribe</span>
-								<ResearchIcon
-									name="newsletter-mark"
-									width={20}
-									height={20}
-									className="text-research-accent-ink"
-									aria-hidden
-								/>
-							</Link>
-							<a
-								href="mailto:research@defillama.com"
-								className="flex items-center rounded-full bg-research-white px-3.5 py-3 body-lg text-research-accent-ink md:px-6 md:py-3.5"
-							>
+								<ResearchIcon name="newsletter-mark" width={20} height={20} aria-hidden />
+							</ResearchPill>
+							<ResearchPill as="a" href="mailto:research@defillama.com" tone="white" size="lg">
 								Contact us
-							</a>
-							<Link
+							</ResearchPill>
+							<ResearchPill
+								as={Link}
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-research-white px-3.5 py-3 body-lg text-on-brand md:px-6 md:py-3.5"
+								tone="whiteOutline"
+								size="lg"
 							>
 								<span>Book a call</span>
-
-								<ResearchIcon name="calendly-mark" width={28} height={29} className="text-on-brand" aria-hidden />
-							</Link>
+								<ResearchIcon name="calendly-mark" width={20} height={20} aria-hidden />
+							</ResearchPill>
 						</div>
 
 						<div className="flex gap-1.75">

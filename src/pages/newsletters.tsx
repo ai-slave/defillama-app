@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { isWalletEmail } from '~/containers/Account/utils'
@@ -9,6 +8,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { OptionTile } from '~/ui/OptionTile'
 import { emailError } from '~/utils/email'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
@@ -139,7 +139,7 @@ export default function NewslettersPage() {
 					<header className="flex flex-col gap-5 border-b border-medium pb-6">
 						<div className="flex max-w-3xl flex-col gap-3">
 							<p className="flex items-center gap-2 title-md text-link">
-								<Icon name="mail-rounded" height={20} width={20} aria-hidden />
+								<Icon name="mail" height={20} width={20} aria-hidden />
 								DefiLlama newsletters
 							</p>
 							<h1 className="max-w-3xl text-[clamp(2.25rem,4.25vw,4.5rem)] leading-[0.96] font-bold tracking-tight text-primary">
@@ -182,71 +182,73 @@ export default function NewslettersPage() {
 									const on = selected[key]
 									const details = newsletterDetails[key]
 									return (
-										<Ariakit.Button
+										<OptionTile
 											key={key}
-											type="button"
+											layout="stack"
+											selected={on}
 											aria-pressed={on}
 											onClick={() => toggle(key)}
 											disabled={isPending}
-											accessibleWhenDisabled
-											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
-												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
-											} ${on ? 'border-brand bg-brand-muted' : 'border-medium bg-surface hover:border-brand-strong'}`}
+											className="w-full"
 										>
-											<span className="flex min-h-16 items-center justify-start">
-												<img
-													src={details.logo.src}
-													alt={details.logo.alt}
-													width={details.logo.width}
-													height={details.logo.height}
-													loading="lazy"
-													decoding="async"
-													className={`${details.logo.className ?? 'h-full w-auto max-w-full object-contain'} ${
-														details.logo.darkSrc ? 'dark:hidden' : ''
-													}`}
-												/>
-												{details.logo.darkSrc ? (
+											<span className="flex w-full flex-col gap-4">
+												<span className="flex min-h-16 items-center justify-start">
 													<img
-														src={details.logo.darkSrc}
-														alt=""
+														src={details.logo.src}
+														alt={details.logo.alt}
 														width={details.logo.width}
 														height={details.logo.height}
 														loading="lazy"
 														decoding="async"
-														className={`${details.logo.className ?? 'h-full w-auto max-w-full object-contain'} hidden dark:block`}
-													/>
-												) : null}
-											</span>
-											<span className="flex min-w-0 flex-col gap-3">
-												<span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-													<span className="flex min-w-0 flex-wrap items-center gap-3">
-														<span className="title-sm tracking-[0.14em] text-link uppercase">{details.eyebrow}</span>
-													</span>
-													<span
-														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 label-sm whitespace-nowrap transition-colors ${
-															on ? 'border-brand bg-brand text-on-brand' : 'border-medium text-secondary'
+														className={`${details.logo.className ?? 'h-full w-auto max-w-full object-contain'} ${
+															details.logo.darkSrc ? 'dark:hidden' : ''
 														}`}
-														aria-hidden
-													>
-														{on ? <Icon name="check" height={13} width={13} /> : null}
-														{on ? 'Selected' : 'Add'}
+													/>
+													{details.logo.darkSrc ? (
+														<img
+															src={details.logo.darkSrc}
+															alt=""
+															width={details.logo.width}
+															height={details.logo.height}
+															loading="lazy"
+															decoding="async"
+															className={`${details.logo.className ?? 'h-full w-auto max-w-full object-contain'} hidden dark:block`}
+														/>
+													) : null}
+												</span>
+												<span className="flex min-w-0 flex-col gap-3">
+													<span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+														<span className="flex min-w-0 flex-wrap items-center gap-3">
+															<span className="title-sm tracking-[0.14em] text-link uppercase">{details.eyebrow}</span>
+														</span>
+														<span
+															className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 label-sm whitespace-nowrap transition-colors ${
+																on ? 'border-brand bg-brand text-on-brand' : 'border-medium text-secondary'
+															}`}
+															aria-hidden
+														>
+															{on ? <Icon name="check" height={13} width={13} /> : null}
+															{on ? 'Selected' : 'Add'}
+														</span>
+													</span>
+													<span>
+														<span className="block text-xl leading-tight font-semibold text-primary">{label}</span>
+														<span className="mt-2 block max-w-2xl body-md text-secondary">{details.description}</span>
+													</span>
+													<span className="block label-md text-primary">{details.bestFor}</span>
+													<span className="grid gap-2">
+														{details.bullets.map((bullet) => (
+															<span key={bullet} className="flex items-start gap-2 body-md text-secondary">
+																<span className="flex h-lh shrink-0 items-center" aria-hidden>
+																	<span className="size-1 rounded-full bg-link" />
+																</span>
+																{bullet}
+															</span>
+														))}
 													</span>
 												</span>
-												<span>
-													<span className="block text-xl leading-tight font-semibold text-primary">{label}</span>
-													<span className="mt-2 block max-w-2xl body-md text-secondary">{details.description}</span>
-												</span>
-												<span className="block label-md text-primary">{details.bestFor}</span>
-												<span className="grid gap-2">
-													{details.bullets.map((bullet) => (
-														<span key={bullet} className="flex gap-2 body-md text-secondary">
-															<span className="mt-2 size-1 shrink-0 rounded-full bg-link" aria-hidden />
-															{bullet}
-														</span>
-													))}
-												</span>
 											</span>
-										</Ariakit.Button>
+										</OptionTile>
 									)
 								})}
 							</div>
@@ -286,7 +288,9 @@ export default function NewslettersPage() {
 								<div className="min-h-14">
 									{succeeded ? (
 										<div role="status" className="flex items-start gap-2 body-md text-primary">
-											<Icon name="check-circle" height={18} width={18} className="mt-1 shrink-0 text-link" />
+											<span className="flex h-lh shrink-0 items-center">
+												<Icon name="check-circle" height={18} width={18} className="text-link" />
+											</span>
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>
 									) : null}

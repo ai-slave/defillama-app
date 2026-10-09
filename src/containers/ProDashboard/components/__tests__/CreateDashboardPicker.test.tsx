@@ -380,8 +380,10 @@ describe('a subscriber', () => {
 			[...document.querySelectorAll('span')].find((span) => span.textContent === 'Output')!.nextElementSibling!
 				.textContent
 		expect(output()).toBe('1 chart + 1 table')
-		const metricCard = [...document.querySelectorAll('label')].find((label) => label.textContent === 'TVL')!
-		await act(async () => metricCard.querySelector('input')!.click())
+		const metricCard = [...document.querySelectorAll<HTMLElement>('[role="checkbox"]')].find(
+			(checkbox) => checkbox.textContent === 'TVL'
+		)!
+		await act(async () => metricCard.click())
 		expect(output()).toBe('1 card + 1 chart + 1 table')
 	})
 

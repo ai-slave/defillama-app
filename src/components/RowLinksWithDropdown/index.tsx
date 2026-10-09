@@ -29,7 +29,8 @@ export function RowLinksWithDropdown(props: IRowLinksProps) {
 					options={props.links}
 					keyPrefix={props.name}
 					isActive
-					className="min-h-8 w-full justify-between"
+					size="md"
+					className="w-full justify-between"
 				/>
 			</span>
 			<div className="flex flex-nowrap rounded-lg border border-subtle bg-surface max-sm:hidden">

@@ -1,3 +1,5 @@
+import { Card } from '~/ui/Card'
+
 const REPORTS = [
 	{
 		source: 'Bitwise',
@@ -79,11 +81,13 @@ const ABOUT_NEAR = [
 
 function ReportCard({ source, title, url, color }: { source: string; title: string; url: string; color: string }) {
 	return (
-		<a
+		<Card
+			as="a"
+			padding="md"
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted"
+			className="hover-wash-card group flex gap-4"
 		>
 			<div
 				className="flex size-10 shrink-0 items-center justify-center rounded-lg"
@@ -97,18 +101,21 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				<span className="title-sm tracking-wider uppercase" style={{ color }}>
 					{source}
 				</span>
-				<span className="label-md text-primary transition-colors group-hover:text-link">{title}</span>
+				<span className="label-md text-primary group-hover:text-link">{title}</span>
 			</div>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				className="mt-1 size-4 shrink-0 text-tertiary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
-			>
-				<path d="M7 17L17 7M17 7H7M17 7v10" />
-			</svg>
-		</a>
+			<span className="flex h-lh shrink-0 items-center title-sm">
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					aria-hidden="true"
+					className="size-4 text-tertiary group-hover:text-link"
+				>
+					<path d="M7 17L17 7M17 7H7M17 7v10" />
+				</svg>
+			</span>
+		</Card>
 	)
 }
 
@@ -124,64 +131,72 @@ function PaperCard({
 	icon: string
 }) {
 	return (
-		<a
+		<Card
+			as="a"
+			padding="md"
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-subtle bg-surface p-5 transition-all hover:border-brand-muted"
+			className="hover-wash-card group flex gap-4"
 		>
 			<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 				<span className="title-md text-link">{icon}</span>
 			</div>
 			<div className="flex flex-1 flex-col gap-1">
-				<span className="title-md text-primary transition-colors group-hover:text-link">{title}</span>
+				<span className="title-md text-primary group-hover:text-link">{title}</span>
 				<span className="body-sm text-secondary">{description}</span>
 			</div>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				className="mt-1 size-4 shrink-0 text-tertiary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
-			>
-				<path d="M7 17L17 7M17 7H7M17 7v10" />
-			</svg>
-		</a>
+			<span className="flex h-lh shrink-0 items-center title-md">
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					aria-hidden="true"
+					className="size-4 text-tertiary group-hover:text-link"
+				>
+					<path d="M7 17L17 7M17 7H7M17 7v10" />
+				</svg>
+			</span>
+		</Card>
 	)
 }
 
 function LinkItem({ title, url }: { title: string; url: string }) {
 	return (
-		<a
+		<Card
+			as="a"
+			padding="md"
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-5 py-3.5 transition-all hover:border-brand-muted"
+			className="hover-wash-card group flex items-center justify-between gap-4"
 		>
-			<span className="label-md text-primary transition-colors group-hover:text-link">{title}</span>
+			<span className="label-md text-primary group-hover:text-link">{title}</span>
 			<svg
 				viewBox="0 0 24 24"
 				fill="none"
 				stroke="currentColor"
 				strokeWidth="2"
-				className="size-4 shrink-0 text-tertiary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
+				aria-hidden="true"
+				className="size-4 shrink-0 text-tertiary group-hover:text-link"
 			>
 				<path d="M7 17L17 7M17 7H7M17 7v10" />
 			</svg>
-		</a>
+		</Card>
 	)
 }
 
 export default function Research() {
 	return (
 		<div className="flex flex-col gap-8">
-			<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-6">
+			<Card padding="md" className="flex flex-col gap-2">
 				<h1 className="heading-sm text-primary">Reports & Research</h1>
 				<p className="max-w-2xl body-md text-secondary">
 					Independent analysis, technical papers, and foundational resources covering NEAR&apos;s investment case,
 					architecture, and ecosystem growth.
 				</p>
-			</div>
+			</Card>
 
 			<div>
 				<h2 className="mb-4 heading-xs tracking-tight text-primary">Reports</h2>

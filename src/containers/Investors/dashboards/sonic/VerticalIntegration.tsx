@@ -42,7 +42,7 @@ export default function VerticalIntegration() {
 				<div className="relative flex-1">
 					<SkeletonTable still />
 					<div className="absolute inset-0 flex items-center justify-center">
-						<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary shadow-overlay">
+						<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary">
 							Dashboard — Coming Soon
 						</span>
 					</div>

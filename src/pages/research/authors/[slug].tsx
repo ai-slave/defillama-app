@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { ArticleApiError, getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { isResearcher } from '~/containers/Articles/ArticlesAccessGate'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
+import { ResearchPill } from '~/containers/Articles/landing/ResearchPill'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import {
 	ResearchAuthorBackground,
@@ -15,6 +17,8 @@ import {
 } from '~/containers/Articles/profile/ResearchAuthorBackground'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -74,17 +78,7 @@ export const getServerSideProps = withServerSidePropsTelemetry('/research/author
 
 function SocialLink({ kind, value }: { kind: string; value: string }) {
 	const href = value.startsWith('http') ? value : `https://${value}`
-	return (
-		<a
-			href={href}
-			target="_blank"
-			rel="noreferrer noopener"
-			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-medium px-3 label-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
-		>
-			<span>{kind.replace(/-/g, ' ')}</span>
-			<Icon name="arrow-up-right" className="size-3" />
-		</a>
-	)
+	return <ExternalLinkButton href={href}>{kind.replace(/-/g, ' ')}</ExternalLinkButton>
 }
 
 function AuthorPageState({
@@ -113,18 +107,12 @@ function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
 	if (!isMine) return null
 	return (
 		<>
-			<BasicLink
-				href="/research/profile"
-				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
-			>
+			<Button as={BasicLink} href="/research/profile" size="sm">
 				Edit profile
-			</BasicLink>
-			<BasicLink
-				href="/research/mine"
-				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-brand-muted hover:text-link"
-			>
+			</Button>
+			<Button as={BasicLink} href="/research/mine" size="sm">
 				Your research
-			</BasicLink>
+			</Button>
 		</>
 	)
 }
@@ -160,22 +148,21 @@ function BrandHero() {
 				</p>
 
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
-					<a
-						href="mailto:research@defillama.com"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-research-white px-5 label-lg whitespace-nowrap text-research-accent-ink transition-[filter] hover:brightness-95"
-					>
+					<ResearchPill as="a" href="mailto:research@defillama.com" tone="white" size="lg">
 						<span>Contact us</span>
 						<Icon name="mail" className="size-5 shrink-0" />
-					</a>
-					<BasicLink
+					</ResearchPill>
+					<ResearchPill
+						as={BasicLink}
 						href="https://calendly.com/research-defillama/30min"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-research-white px-6 label-lg whitespace-nowrap text-on-brand transition-colors hover:bg-research-white-wash"
+						tone="whiteOutline"
+						size="lg"
 					>
 						<span>Book a call</span>
-						<ResearchIcon name="calendly-mark" className="size-7 shrink-0" />
-					</BasicLink>
+						<ResearchIcon name="calendly-mark" className="size-5 shrink-0" />
+					</ResearchPill>
 				</div>
 			</div>
 		</header>
@@ -462,9 +449,11 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 					<>
 						{lead ? (
 							<section>
-								<BasicLink
+								<Card
+									as={BasicLink}
+									padding="none"
 									href={articleHref(lead)}
-									className="group grid overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-brand-muted md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
+									className="group hover-wash-card grid overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
 										<div className="flex items-center gap-2 body-sm tracking-wide text-tertiary uppercase">
@@ -485,14 +474,10 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 									</div>
 									{lead.coverImage?.url ? (
 										<div className="order-1 overflow-hidden md:order-2">
-											<img
-												src={lead.coverImage.url}
-												alt=""
-												className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] md:h-full"
-											/>
+											<img src={lead.coverImage.url} alt="" className="h-44 w-full object-cover md:h-full" />
 										</div>
 									) : null}
-								</BasicLink>
+								</Card>
 							</section>
 						) : null}
 

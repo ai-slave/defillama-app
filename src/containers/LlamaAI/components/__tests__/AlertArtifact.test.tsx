@@ -1,13 +1,16 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AlertArtifact } from '../AlertArtifact'
+
+// The schedule and Slack pickers are Selects, which read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
 
 const session = installSubscriberSession('reader', { resolved: true })
 const AI = 'https://ai.llama.fi'
@@ -92,7 +95,7 @@ test('a test send hands focus from its button to its progress, then to the outco
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Test sent! Check your inbox'))
 })
 
-test('a failed test send focuses Retry, and a failed retry focuses its error', async () => {
+test('a failed test send focuses Try again, and a failed retry focuses its error', async () => {
 	session.serve({
 		[`${AI}/alerts/alert/test`]: () => new Response(null, { status: 500 }),
 		[`${AI}/alerts/alert`]: { alert: { test_sent: false } }
@@ -100,9 +103,9 @@ test('a failed test send focuses Retry, and a failed retry focuses its error', a
 	await render(['alert'])
 	await waitForUi(() => expect(buttonNamed('Send test alert')?.disabled).toBe(false))
 	await press(buttonNamed('Send test alert')!)
-	await waitForUi(() => expect(document.activeElement).toBe(buttonNamed('Retry')))
-	await press(buttonNamed('Retry')!)
-	await waitForUi(() => expect(buttonNamed('Retry')).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement).toBe(buttonNamed('Try again')))
+	await press(buttonNamed('Try again')!)
+	await waitForUi(() => expect(buttonNamed('Try again')).toBeUndefined())
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Test failed: 500'))
 })
 
@@ -125,15 +128,15 @@ test('Save alert with no Slack channel picked focuses the channel picker, not th
 	})
 	await render(undefined, { ...intent, deliveryChannel: 'slack', slackTeamId: 'T1' })
 	const channel = await waitForUi(() => {
-		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack channel"]')
-		expect(select).not.toBeNull()
-		return select!
+		const picker = document.querySelector<HTMLButtonElement>('[aria-label="Slack channel"]')
+		expect(picker).not.toBeNull()
+		return picker!
 	})
 	await press(buttonNamed('Save alert')!)
 	expect(document.activeElement).toBe(channel)
 	expect(channel.getAttribute('aria-invalid')).toBe('true')
 	expect(
-		document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')!.getAttribute('aria-invalid')
+		document.querySelector<HTMLButtonElement>('[aria-label="Slack workspace"]')!.getAttribute('aria-invalid')
 	).toBeNull()
 	expect(fieldErrorTexts()).toEqual(['Choose a Slack channel.'])
 })

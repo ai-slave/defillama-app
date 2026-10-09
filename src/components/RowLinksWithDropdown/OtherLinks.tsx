@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -18,10 +19,13 @@ interface IProps {
 	name: string
 	keyPrefix?: string
 	isActive: boolean
+	/** sm beside the 24px link pills; md as the full-width phone trigger. */
+	size: 'sm' | 'md'
+	/** Layout placement only. */
 	className?: string
 }
 
-export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', isActive, className }: IProps) {
+export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', isActive, size, className }: IProps) {
 	const [searchValue, setSearchValue] = useState('')
 	const matches = useMemo(() => {
 		if (!searchValue) return options
@@ -53,13 +57,12 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 		>
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
-					data-active={isActive}
-					className={`my-auto flex items-center gap-0.5 rounded-md border border-medium bg-surface-elevated-1 py-1 pr-1 pl-2 body-sm whitespace-nowrap text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2 ${
-						className ?? ''
-					}`}
+					render={
+						<Button variant="toggle" size={size} data-active={isActive} className={`my-auto ${className ?? ''}`} />
+					}
 				>
 					<span>{name}</span>
-					<Icon name="chevron-down" className="size-3 shrink-0 text-tertiary" />
+					<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 				</Ariakit.MenuButton>
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}

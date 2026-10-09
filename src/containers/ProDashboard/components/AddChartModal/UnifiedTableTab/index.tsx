@@ -34,6 +34,7 @@ import { applyPresetToConfig } from '../../UnifiedTable/utils/configHelpers'
 import { getOrderedCustomColumnIds } from '../../UnifiedTable/utils/customColumns'
 import { getActiveFilterChips } from '../../UnifiedTable/utils/filterChips'
 import { useModalFieldBinding } from '../bindingContext'
+import { DatasetLauncher, type DatasetLauncherCard } from '../DatasetLauncher'
 import { applyUnifiedTableBinding } from '../modalSubmissions'
 import type { CombinedTableType } from '../types'
 import type { FilterPill } from './components/ActiveFilterPills'
@@ -130,77 +131,60 @@ const sortingEqual = (a: SortingState, b: SortingState) => {
 	})
 }
 
-type TableTypeCardIcon =
-	| 'layers'
-	| 'trending-up'
-	| 'credit-card'
-	| 'chain'
-	| 'dollar-sign'
-	| 'pie-chart'
-	| 'flame'
-	| 'landmark'
-	| 'bar-chart-2'
-
-const TABLE_TYPE_CARDS: Array<{
-	value: CombinedTableType
-	label: string
-	description: string
-	icon: TableTypeCardIcon
-	tags: Array<string>
-}> = [
+const TABLE_TYPE_CARDS: Array<DatasetLauncherCard<CombinedTableType>> = [
 	{
-		value: 'protocols',
-		label: 'Protocols',
+		id: 'protocols',
+		title: 'Protocols',
 		description:
 			'Build custom protocol tables with advanced grouping by chain, category, or parent protocol. Filter by TVL, volume, fees, and 30+ metrics. Add custom calculated columns.',
 		icon: 'layers',
 		tags: ['Grouping', 'Chains', 'Categories', 'Custom columns', '30+ Filters', 'Presets']
 	},
 	{
-		value: 'yields',
-		label: 'Yields',
+		id: 'yields',
+		title: 'Yields',
 		description: 'V2 earn pools with supply APY, TVL, stability, and borrow-market facts',
 		icon: 'trending-up',
 		tags: ['Supply APY', 'TVL', 'Borrow Cost']
 	},
 	{
-		value: 'cex-analytics',
-		label: 'CEXs',
+		id: 'cex-analytics',
+		title: 'CEXs',
 		description: 'Spot volume, derivatives volume, open interest, leverage, and CEX efficiency.',
 		icon: 'credit-card',
 		tags: ['Spot', 'Derivatives', 'Open Interest', 'Leverage']
 	},
 	{
-		value: 'chains',
-		label: 'Chains',
+		id: 'chains',
+		title: 'Chains',
 		description: 'Blockchain metrics including TVL, users, volume, and fees',
 		icon: 'chain',
 		tags: ['TVL', 'Users', 'Fees']
 	},
 	{
-		value: 'stablecoins',
-		label: 'Stablecoins',
+		id: 'stablecoins',
+		title: 'Stablecoins',
 		description: 'Stablecoin market caps, price stability, and chains',
 		icon: 'dollar-sign',
 		tags: ['Market Cap', 'Dominance']
 	},
 	{
-		value: 'token-usage',
-		label: 'Token Usage',
+		id: 'token-usage',
+		title: 'Token Usage',
 		description: 'Track protocol adoption by token usage',
 		icon: 'pie-chart',
 		tags: ['Adoption', 'Protocols']
 	},
 	{
-		value: 'rwa',
-		label: 'RWA',
+		id: 'rwa',
+		title: 'RWA',
 		description: 'Real World Assets overview and chain breakdown',
 		icon: 'landmark',
 		tags: ['Active AUM', 'Onchain AUM', 'DeFi TVL']
 	},
 	{
-		value: 'equities',
-		label: 'Equities',
+		id: 'equities',
+		title: 'Equities',
 		description: 'Stock market companies, financials & SEC filings',
 		icon: 'bar-chart-2',
 		tags: ['Price', 'Market Cap', 'Financials', 'Filings']
@@ -758,96 +742,31 @@ export function UnifiedTableTab({
 	}
 
 	if (selectedTableType === null) {
-		const heroCard = TABLE_TYPE_CARDS[0]
-		const otherCards = TABLE_TYPE_CARDS.slice(1)
-		if (!heroCard) throw new Error('The table type catalog must define a primary card')
+		const isProLocked = (type: CombinedTableType) =>
+			(type === 'token-usage' || type === 'rwa' || type === 'equities') && !hasActiveSubscription
 
 		return (
 			<div className="flex h-full flex-col">
-				<button
-					type="button"
-					onClick={() => handleSelectTableType(heroCard.value)}
-					className="group relative flex flex-col rounded-lg border border-subtle p-5 text-left transition-all hover:border-brand-muted"
-				>
-					<div className="mb-3 flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint">
-								<Icon name={heroCard.icon} height={22} width={22} className="text-link" />
-							</div>
-							<h3 className="heading-xs text-primary">{heroCard.label}</h3>
-						</div>
-						<Icon
-							name="arrow-right"
-							height={18}
-							width={18}
-							className="text-secondary transition-transform group-hover:translate-x-1 group-hover:text-link"
-						/>
-					</div>
-					<p className="mb-4 body-md text-secondary">{heroCard.description}</p>
-					<div className="flex flex-wrap gap-1.5">
-						{heroCard.tags.map((tag) => (
-							<span
-								key={tag}
-								className="rounded-full px-2.5 py-1 label-sm text-secondary transition-colors group-hover:bg-brand-tint group-hover:text-link"
-							>
-								{tag}
-							</span>
-						))}
-					</div>
-				</button>
-
-				<div className="mt-4">
-					<span className="mb-2.5 block title-sm text-secondary">Other datasets</span>
-					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-						{otherCards.map((card) => {
-							const isProLocked =
-								(card.value === 'token-usage' || card.value === 'rwa' || card.value === 'equities') &&
-								!hasActiveSubscription
-							const isRwa = card.value === 'rwa'
-							const isEquities = card.value === 'equities'
-
-							return (
-								<button
-									key={card.value}
-									type="button"
-									onClick={() => {
-										if (isProLocked) {
-											setSignupSource('pro-dashboard')
-											subscribeModalStore.show()
-											return
-										}
-										if (isRwa) {
-											onTableTypeChange('rwa-chains')
-											setShowRwaSelector(true)
-										} else if (isEquities) {
-											onTableTypeChange('equities')
-											setShowEquitiesSelector(true)
-										} else {
-											handleSelectTableType(card.value)
-										}
-									}}
-									className="group flex items-start gap-2.5 rounded-lg border border-subtle p-3 text-left transition-all hover:border-brand-muted"
-								>
-									<div className="flex size-8 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-brand-tint">
-										<Icon
-											name={isProLocked ? 'file-lock-2' : card.icon}
-											height={16}
-											width={16}
-											className="text-secondary group-hover:text-link"
-										/>
-									</div>
-									<div className="min-w-0 flex-1">
-										<span className="label-md text-primary">
-											{card.label}
-											{isProLocked ? <span className="ml-1 body-sm opacity-60">(Pro)</span> : null}
-										</span>
-										<p className="mt-0.5 line-clamp-1 body-sm text-secondary">{card.description}</p>
-									</div>
-								</button>
-							)
-						})}
-					</div>
-				</div>
+				<DatasetLauncher
+					cards={TABLE_TYPE_CARDS}
+					isLocked={isProLocked}
+					onSelect={(type) => {
+						if (isProLocked(type)) {
+							setSignupSource('pro-dashboard')
+							subscribeModalStore.show()
+							return
+						}
+						if (type === 'rwa') {
+							onTableTypeChange('rwa-chains')
+							setShowRwaSelector(true)
+						} else if (type === 'equities') {
+							onTableTypeChange('equities')
+							setShowEquitiesSelector(true)
+						} else {
+							handleSelectTableType(type)
+						}
+					}}
+				/>
 
 				<LazySubscribeProModal dialogStore={subscribeModalStore} />
 			</div>

@@ -87,7 +87,8 @@ async function attach(input: HTMLInputElement, names: Array<string>) {
 	})
 	await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })))
 }
-const attachInput = () => container.querySelector<HTMLInputElement>('#attach-alignment')!
+const attachTile = () => container.querySelector<HTMLButtonElement>('#attach-alignment')!
+const attachInput = () => container.querySelector<HTMLInputElement>('#attach-alignment + input[type="file"]')!
 
 test('deleting a disclosure row hands focus to the next row, and the last one to Add more', async () => {
 	const addMore = [...container.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
@@ -110,18 +111,18 @@ test('removing an attached file hands focus to the next file, and the last one t
 	await press(button('Remove a.pdf'))
 	expect(document.activeElement).toBe(button('Remove b.pdf'))
 	await press(button('Remove b.pdf'))
-	expect(document.activeElement).toBe(attachInput())
+	expect(document.activeElement).toBe(attachTile())
 })
 
 test('the attach control keeps focus while the upload it started runs', async () => {
 	const answer = Promise.withResolvers<Response>()
 	http.serve({ '/api/public/utr/claim/documents': () => answer.promise })
-	await act(async () => attachInput().focus())
+	await act(async () => attachTile().focus())
 	await attach(attachInput(), ['a.pdf'])
 	expect(container.textContent).toContain('Uploading…')
-	expect(attachInput().disabled).toBe(false)
-	expect(attachInput().getAttribute('aria-disabled')).toBe('true')
-	expect(document.activeElement).toBe(attachInput())
+	expect(attachTile().disabled).toBe(false)
+	expect(attachTile().getAttribute('aria-busy')).toBe('true')
+	expect(document.activeElement).toBe(attachTile())
 	await act(async () => answer.resolve(Response.json([receipt('a.pdf')])))
 	await waitForUi(() => expect(button('Remove a.pdf')).toBeTruthy())
 })
@@ -130,7 +131,7 @@ test('dismissing an upload error hands focus to the attach control', async () =>
 	await attach(attachInput(), ['notes.exe'])
 	await press(button('Dismiss'))
 	expect(container.textContent).not.toContain('supported formats')
-	expect(document.activeElement).toBe(attachInput())
+	expect(document.activeElement).toBe(attachTile())
 })
 
 async function fillRequiredFields() {

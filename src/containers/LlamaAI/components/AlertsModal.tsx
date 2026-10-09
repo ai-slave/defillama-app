@@ -6,6 +6,11 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import {
+	type AlertSchedule,
+	AlertScheduleFields,
+	SlackTargetPickers
+} from '~/containers/LlamaAI/components/alerts/AlertScheduleFields'
+import {
 	applyAlertUpdateToList,
 	execChipLabel,
 	execChipTone,
@@ -34,11 +39,8 @@ import { EmptyAlertsState } from '~/containers/LlamaAI/components/alerts/EmptyAl
 import { PriceAlertEditor } from '~/containers/LlamaAI/components/alerts/PriceAlertEditor'
 import { ALERTS_QUERY_KEY } from '~/containers/LlamaAI/components/alerts/queryKeys'
 import {
-	DAYS_OF_WEEK,
 	formatScheduleExpression,
-	getTimezoneLabel,
 	getUserTimezone,
-	GMT_OFFSETS,
 	parseScheduleExpression
 } from '~/containers/LlamaAI/components/alerts/schedule'
 import type {
@@ -51,7 +53,6 @@ import type {
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertFieldLabelClass,
 	AlertsHeaderIcon,
 	SegmentedToggle,
 	DELIVERY_OPTIONS,
@@ -70,9 +71,10 @@ import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogDiscardGuard, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Field, FieldGroup } from '~/ui/Field'
-import { keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
+import { ListRow } from '~/ui/ListRow'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -435,7 +437,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 					/>
 				</div>
 			) : selectedExec.error_message ? (
-				<p className="body-sm text-error">{selectedExec.error_message}</p>
+				<InlineStatus variant="error">{selectedExec.error_message}</InlineStatus>
 			) : (
 				<p className="body-sm text-tertiary">No content available.</p>
 			)}
@@ -506,14 +508,10 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 					</div>
 					<div className="flex shrink-0 items-center gap-0.5">
 						{isFiredOneTimePriceAlert(alert) ? (
-							<button
-								type="button"
-								onClick={rearmIntoEditor}
-								className="mr-1 hidden items-center gap-1 rounded-lg bg-warning-tint px-2 py-1 label-sm text-warning not-disabled:not-aria-disabled:hover:bg-warning-tint-strong sm:flex"
-							>
-								<Icon name="repeat" className="size-3" />
+							<Button size="md" onClick={rearmIntoEditor} className="mr-1 max-sm:hidden">
+								<Icon name="repeat" className="size-3.5" />
 								Re-arm
-							</button>
+							</Button>
 						) : null}
 						<div className="hidden items-center gap-0.5 sm:flex">
 							{alert.run_count > 0 ? (
@@ -670,13 +668,14 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 						) : (
 							<div className="flex flex-col">
 								{executionsQuery.data.map((exec) => (
-									<Ariakit.Button
+									<ListRow
+										as={Ariakit.Button}
 										key={exec.id}
 										id={`alert-run-${exec.id}`}
 										onClick={() => setSelectedExecId(exec.id)}
 										accessibleWhenDisabled
 										disabled={execDetailQuery.isLoading}
-										className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
+										className="justify-between"
 									>
 										<div className="flex items-baseline gap-2">
 											<span className="mono-sm text-primary">{formatExecDate(exec.executed_at)}</span>
@@ -685,7 +684,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 										<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>
 											{execChipLabel(exec.status)}
 										</StatusChip>
-									</Ariakit.Button>
+									</ListRow>
 								))}
 							</div>
 						)}
@@ -734,9 +733,12 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 	const titleRef = useRef<HTMLInputElement>(null)
 	// The schedule form's submit state; the price editor keeps its own.
 	const [submitted, setSubmitted] = useState(false)
-	const [frequency, setFrequency] = useState<'daily' | 'weekly'>(
-		alert.schedule_expression.includes('Weekly') ? 'weekly' : 'daily'
-	)
+	const [schedule, setSchedule] = useState<AlertSchedule>(() => ({
+		frequency: alert.schedule_expression.includes('Weekly') ? 'weekly' : 'daily',
+		dayOfWeek: parsedSchedule.dayOfWeek ?? 1,
+		hour: parsedSchedule.hour ?? 9,
+		timezone: parsedSchedule.timezone ?? getUserTimezone()
+	}))
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alert.delivery_channel ?? 'email')
 	const [slackTeamId, setSlackTeamId] = useState<string>(alert.slack_team_id ?? '')
 	const [slackChannelId, setSlackChannelId] = useState<string>(alert.slack_channel_id ?? '')
@@ -745,12 +747,6 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 	const slackChannelsQuery = useSlackChannels(deliveryChannel === 'slack' && slackTeamId ? slackTeamId : null)
 	const slackWorkspaces = (slackWorkspacesQuery.data?.workspaces ?? []).filter((w) => !w.revoked)
 	const slackChannels = slackChannelsQuery.data?.channels
-	const selectableSlackChannels = (slackChannels ?? []).filter((c) => !c.is_archived)
-	selectableSlackChannels.sort((a, b) => Number(a.is_private) - Number(b.is_private) || a.name.localeCompare(b.name))
-	const savedTimezone = parsedSchedule.timezone ?? getUserTimezone()
-	const timezoneOptions = GMT_OFFSETS.some((option) => option.value === savedTimezone)
-		? GMT_OFFSETS
-		: [...GMT_OFFSETS, { value: savedTimezone, label: getTimezoneLabel(savedTimezone) }]
 
 	const getConditionUpdate = (nextCondition: string) => {
 		const trimmedCondition = nextCondition.trim()
@@ -846,73 +842,25 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 						Telegram isn't linked yet. Link it in <SettingsIntegrationsLink />
 					</span>
 				)}
-				{deliveryChannel === 'slack' && (
-					<>
-						{slackWorkspacesQuery.isLoading ? (
-							<span className="body-sm text-tertiary">Loading workspaces…</span>
-						) : slackWorkspaces.length === 0 ? (
-							<span className="body-sm text-warning">
-								No Slack workspaces connected. Connect one from <SettingsIntegrationsLink />
-							</span>
-						) : (
-							<select
-								value={slackTeamId}
-								onChange={(e) => {
-									setSlackTeamId(e.target.value)
-									const ws = slackWorkspaces.find((w) => w.team_id === e.target.value)
-									setSlackChannelId(ws?.default_channel_id ?? '')
-								}}
-								aria-label="Slack workspace"
-								// The group's error names the Slack pick it needs; that pick takes the submit's focus.
-								aria-invalid={showErrors && deliveryError && !slackTeamId ? true : undefined}
-								className={inputStyles}
-							>
-								<option value="" disabled>
-									Pick workspace
-								</option>
-								{slackWorkspaces.map((w) => (
-									<option key={w.team_id} value={w.team_id}>
-										{w.team_name}
-									</option>
-								))}
-							</select>
-						)}
-						{slackTeamId && (
-							<>
-								{queryReadFailed(slackChannelsQuery) ? (
-									<RetryNotice
-										message="Couldn't load Slack channels."
-										retrying={slackChannelsQuery.isFetching}
-										onRetry={() => void slackChannelsQuery.refetch()}
-									/>
-								) : slackChannelsQuery.isLoading ? (
-									<span className="body-sm text-tertiary">Loading channels…</span>
-								) : (
-									<select
-										// A retried channel list takes the focus its Try again drops as it leaves.
-										ref={takeLostFocus}
-										value={slackChannelId}
-										onChange={(e) => setSlackChannelId(e.target.value)}
-										aria-label="Slack channel"
-										aria-invalid={showErrors && deliveryError && !slackChannelId ? true : undefined}
-										className={inputStyles}
-									>
-										<option value="" disabled>
-											Pick channel
-										</option>
-										{selectableSlackChannels.map((c) => (
-											<option key={c.id} value={c.id} disabled={c.is_private && !c.is_member}>
-												{c.is_private ? '🔒 ' : '# '}
-												{c.name}
-												{c.is_private && !c.is_member ? ' (invite bot first)' : ''}
-											</option>
-										))}
-									</select>
-								)}
-							</>
-						)}
-					</>
-				)}
+				{deliveryChannel === 'slack' &&
+					(!slackWorkspacesQuery.isLoading && slackWorkspaces.length === 0 ? (
+						<span className="body-sm text-warning">
+							No Slack workspaces connected. Connect one from <SettingsIntegrationsLink />
+						</span>
+					) : (
+						<SlackTargetPickers
+							workspaces={slackWorkspaces}
+							workspacesLoading={slackWorkspacesQuery.isLoading}
+							target={{ teamId: slackTeamId, channelId: slackChannelId }}
+							channelsQuery={slackChannelsQuery}
+							invalid={showErrors && deliveryError !== null}
+							onPick={(target) => {
+								setSlackTeamId(target.teamId)
+								setSlackChannelId(target.channelId)
+								onEdited()
+							}}
+						/>
+					))}
 			</div>
 		</FieldGroup>
 	)
@@ -967,12 +915,7 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 				updateAlertMutation.mutate({
 					alertId: alert.id,
 					title: (fd.get('title') as string).trim() || defaultTitle,
-					alertConfig: {
-						frequency: fd.get('frequency') as 'daily' | 'weekly',
-						hour: Number(fd.get('hour')),
-						dayOfWeek: Number(fd.get('dayOfWeek')),
-						timezone: fd.get('timezone') as string
-					},
+					alertConfig: schedule,
 					delivery_channel: deliveryChannel,
 					condition: fd.get('condition') as string,
 					...slackFields
@@ -982,52 +925,14 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 			className="mt-3 flex flex-col gap-3 border-t border-subtle pt-3"
 		>
 			{nameField}
-			<div className="flex flex-col gap-1.5">
-				<span className={alertFieldLabelClass}>Schedule</span>
-				<div className="flex flex-wrap items-center gap-2">
-					<select
-						name="frequency"
-						value={frequency}
-						onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-						aria-label="Frequency"
-						className={inputStyles}
-					>
-						<option value="daily">Daily</option>
-						<option value="weekly">Weekly</option>
-					</select>
-					{frequency === 'weekly' ? (
-						<select
-							name="dayOfWeek"
-							defaultValue={parsedSchedule.dayOfWeek ?? 1}
-							aria-label="Day of week"
-							className={inputStyles}
-						>
-							{DAYS_OF_WEEK.map((day, idx) => (
-								<option key={day} value={idx}>
-									{day}
-								</option>
-							))}
-						</select>
-					) : (
-						<input type="hidden" name="dayOfWeek" value={1} />
-					)}
-					<span className="body-sm text-secondary">at</span>
-					<select name="hour" defaultValue={parsedSchedule.hour ?? 9} aria-label="Hour" className={inputStyles}>
-						{Array.from({ length: 24 }, (_, h) => (
-							<option key={h} value={h}>
-								{h.toString().padStart(2, '0')}:00
-							</option>
-						))}
-					</select>
-					<select name="timezone" defaultValue={savedTimezone} aria-label="Timezone" className={inputStyles}>
-						{timezoneOptions.map((tz) => (
-							<option key={tz.value} value={tz.value}>
-								{tz.label}
-							</option>
-						))}
-					</select>
-				</div>
-			</div>
+			<AlertScheduleFields
+				label="Schedule"
+				schedule={schedule}
+				onChange={(next) => {
+					setSchedule(next)
+					onEdited()
+				}}
+			/>
 			{deliveryFields(submitted)}
 			<Field label="Condition (optional)">
 				{(control) => (

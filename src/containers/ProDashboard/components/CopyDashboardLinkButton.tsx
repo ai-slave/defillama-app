@@ -84,7 +84,7 @@ export function CopyDashboardLinkButton({
 			await onMakePublic()
 			actionToast({
 				message: 'Dashboard is live',
-				icon: <Icon name="earth" height={14} width={14} />,
+				icon: <Icon name="globe" height={14} width={14} />,
 				action: {
 					label: 'Copy link',
 					onClick: () => void handleCopyLink(),

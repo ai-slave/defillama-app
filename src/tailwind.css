@@ -573,7 +573,9 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 @layer components {
 	/* A 44px touch target around a smaller control on touch screens, without changing how it looks. The
 	   pseudo-element reaches (44px - height) / 2 past each edge, so a 32px control gets 6px and a 24px one
-	   10px. It lives in the components layer so a caller's absolute or sticky utility still wins. */
+	   10px. It lives in the components layer so a caller's absolute or sticky utility still wins.
+	   A caller that adjusts the pseudo-element writes `pointer-coarse:before:…`: a bare `before:` utility creates it on
+	   desktop too, where it is not positioned, so it becomes an empty flex item and the row's gap pads the label. */
 	@media (pointer: coarse) {
 		.touch-target {
 			position: relative;

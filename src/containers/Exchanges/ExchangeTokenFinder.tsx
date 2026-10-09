@@ -9,9 +9,11 @@ import { fetchTokenExchangeListings } from '~/containers/Token/api'
 import { hydrateTokenSearchOptionsByIds, mergeTokenSearchResults, searchTokens } from '~/containers/TokenSearch/search'
 import { TOKEN_SEARCH_LIMIT } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { letterLogoDataUri } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { resolveCountryAvailability } from './countryAvailability'
@@ -227,7 +229,24 @@ export function ExchangeTokenFinder({
 						<LoadingIndicator />
 					</div>
 				) : listingsQuery.isError ? (
-					<p className="p-4 body-sm text-error">Token listings failed to load.</p>
+					<div className="p-4">
+						<InlineStatus
+							variant="error"
+							action={
+								<Button
+									// The retry leaves once the read succeeds; the region keeps focus.
+									ref={focusRegionOnLeave}
+									size="sm"
+									onClick={() => void listingsQuery.refetch()}
+									pendingLabel={listingsQuery.isFetching ? 'Retrying…' : null}
+								>
+									Try again
+								</Button>
+							}
+						>
+							Token listings failed to load.
+						</InlineStatus>
+					</div>
 				) : rows.length === 0 ? (
 					<p className="p-4 body-sm text-tertiary">No exchanges match the selected tokens and region.</p>
 				) : (

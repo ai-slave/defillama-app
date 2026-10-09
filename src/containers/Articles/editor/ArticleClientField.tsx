@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
-import { inputStyles } from '~/ui/Input'
+import { selectTriggerStyles } from '~/components/Select/types'
+import { Button } from '~/ui/Button'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
 import { ArticleApiError, listResearchSponsors, setArticleClient } from '../api'
 import type { ArticleClient, ArticleClientRelation } from '../types'
 import { ARTICLE_CLIENT_RELATION_LABELS } from '../types'
@@ -74,7 +76,7 @@ export function ArticleClientField({
 				<ComboboxSelectTrigger
 					aria-label="Article client"
 					disabled={disabled}
-					className={`${inputStyles} flex items-center justify-between gap-2 text-left ${client ? '' : 'text-tertiary'}`}
+					className={`${selectTriggerStyles('input', 'md')} w-full justify-between`}
 				>
 					<span className="truncate">{client?.displayName ?? 'No client'}</span>
 					<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
@@ -105,11 +107,30 @@ export function ArticleClientField({
 					save.mutate({ sponsorId: client.id, relation: relation === 'none' ? null : relation })
 				}}
 			/>
-			<MetaFieldHint error={error}>
-				{articleId
-					? 'Optional. Saves immediately, no republish needed. Manage the list in Research admin → Clients.'
-					: 'Save the draft first to set a client.'}
-			</MetaFieldHint>
+			{error ? (
+				<InlineStatus
+					variant="error"
+					action={
+						save.error ? undefined : (
+							<Button
+								size="sm"
+								onClick={() => void sponsors.refetch()}
+								pendingLabel={sponsors.isFetching ? 'Retrying…' : null}
+							>
+								Try again
+							</Button>
+						)
+					}
+				>
+					{error}
+				</InlineStatus>
+			) : (
+				<MetaFieldHint>
+					{articleId
+						? 'Optional. Saves immediately, no republish needed. Manage the list in Research admin → Clients.'
+						: 'Save the draft first to set a client.'}
+				</MetaFieldHint>
+			)}
 		</div>
 	)
 }

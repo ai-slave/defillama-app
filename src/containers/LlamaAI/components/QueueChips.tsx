@@ -313,7 +313,9 @@ export function QueueChips({
 									/>
 								) : status?.unsavedDraft ? (
 									<>
-										<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
+										<span className="flex h-lh shrink-0 items-center body-sm">
+											<Icon name="alert-triangle" className="size-3.5 text-error" />
+										</span>
 										<div className="min-w-0 flex-1">
 											<p className="m-0 body-sm break-words whitespace-pre-wrap text-primary select-text">
 												{status.unsavedDraft}
@@ -399,7 +401,9 @@ export function QueueChips({
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
 						<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
-							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
+							<span className="flex h-lh shrink-0 items-center body-sm">
+								<Icon name="alert-triangle" className="size-3.5 text-error" />
+							</span>
 							<div className="min-w-0 flex-1">
 								<p
 									id={`queue-row-${rowKey}`}

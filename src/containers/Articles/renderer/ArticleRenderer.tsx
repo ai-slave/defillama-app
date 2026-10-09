@@ -1013,15 +1013,18 @@ export function ArticleRenderer({
 					) : null}
 					{article.section === 'report' && article.reportPdf ? (
 						<div>
-							<DownloadPdfLink
+							<Button
+								as={DownloadPdfLink}
+								variant="primary"
+								size="md"
 								article={article as ArticleDocument}
 								pdfUrl={article.reportPdf.url}
 								widgetLabel="Article page"
-								className="inline-flex items-center gap-2 rounded-md bg-brand px-3.5 py-2 label-md text-on-brand transition-[filter] hover:brightness-110 focus-visible:focus-ring-on-brand"
+								className="w-fit"
 							>
-								<Icon name="download-cloud" className="size-4" />
+								<Icon name="download-cloud" className="size-3.5" />
 								Download PDF
-							</DownloadPdfLink>
+							</Button>
 						</div>
 					) : null}
 				</header>

@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
@@ -13,7 +12,9 @@ import type * as React from 'react'
 import { EditorialTagRow } from '~/containers/Articles/admin/EditorialTagRow'
 import { buildEditorialTagReorderPayload, type EditorialTagOrderItem } from '~/containers/Articles/editorialTagOrder'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
 
@@ -114,17 +115,24 @@ function SortableEditorialTagRow({
 			pending={disabled}
 			removing={removing}
 			leading={
-				<Ariakit.Button
-					type="button"
-					disabled={disabled}
-					accessibleWhenDisabled
-					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:text-disabled ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-					aria-label={`Drag ${article.title}`}
-					{...attributes}
-					{...listeners}
+				<Tooltip
+					content="Drag to reorder"
+					render={
+						<Button
+							variant="ghost"
+							size="sm"
+							square
+							disabled={disabled}
+							accessibleWhenDisabled
+							className="touch-none"
+							aria-label={`Drag ${article.title}`}
+							{...attributes}
+							{...listeners}
+						/>
+					}
 				>
-					<Icon name="menu" className="size-4" />
-				</Ariakit.Button>
+					<Icon name="menu" className="size-4 text-tertiary" />
+				</Tooltip>
 			}
 		/>
 	)
