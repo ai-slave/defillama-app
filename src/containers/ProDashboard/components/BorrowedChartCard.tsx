@@ -178,16 +178,13 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'chainsBorrowed':
 				return (
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						dataset={canonicalDataset}
 						charts={visibleCharts}
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
-						hideDefaultLegend
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}
@@ -196,16 +193,13 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'tokenBorrowedUsd':
 				return (
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						dataset={canonicalDataset}
 						charts={visibleCharts}
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol="$"
-						hideDefaultLegend
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}
@@ -224,16 +218,13 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'tokenBorrowedRaw':
 				return (
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						dataset={canonicalDataset}
 						charts={visibleCharts}
 						selectedCharts={runtimePresentation.selectedCharts}
 						valueSymbol=""
-						hideDefaultLegend
 						chartOptions={UNITLESS_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORTS}
 						onReady={handleChartReady}

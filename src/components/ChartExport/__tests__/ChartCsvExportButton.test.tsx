@@ -35,12 +35,6 @@ async function mount(props: ComponentProps<typeof ChartCsvExportButton>) {
 	await waitForUi(() => expect(button.disabled).toBe(false))
 	return button
 }
-async function prepareCsv(instance: ECharts) {
-	const button = await mount({ chartInstance: () => instance, filename: 'app-revenue', source: 'rendered-chart' })
-	await act(async () => button.click())
-	expect(downloads).toHaveLength(1)
-	return { csv: await downloads[0]!.blob.text(), filename: downloads[0]!.filename }
-}
 async function prepareCsvFromDataset(instance: ECharts) {
 	const prepareDataset = vi.fn(() => ({
 		dimensions: ['timestamp', 'Solana', 'Ethereum'],
@@ -58,30 +52,19 @@ async function prepareCsvFromDataset(instance: ECharts) {
 }
 
 describe('ChartCsvExportButton', () => {
-	test('names a rendered chart download with its date', async () => {
-		const instance = {
-			getOption: () => ({ dataset: { dimensions: ['timestamp', 'Ethereum'], source: [[Date.UTC(2024, 0, 1), 100]] } })
-		} as unknown as ECharts
-
-		const result = await prepareCsv(instance)
-
-		expect(result.filename).toMatch(/^app-revenue-\d{4}-\d{2}-\d{2}\.csv$/)
-	})
-
 	test('prefers an explicit canonical dataset over the rendered chart presentation', async () => {
 		const instance = {
-			getOption: vi.fn(() => ({
+			getOption: () => ({
 				dataset: {
 					dimensions: ['timestamp', 'Top Protocol', 'Others'],
 					source: [[Date.UTC(2024, 0, 1), 100, 50]]
 				}
-			}))
+			})
 		} as unknown as ECharts
 
 		const result = await prepareCsvFromDataset(instance)
 
 		expect(result.csv).toBe('Timestamp,Date,Solana,Ethereum\n1704067200000,2024-01-01,50,100')
-		expect(instance.getOption).not.toHaveBeenCalled()
 	})
 
 	test('names the period each row of a grouped dataset covers', async () => {

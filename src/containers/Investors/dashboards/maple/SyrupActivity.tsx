@@ -380,7 +380,7 @@ export default function SyrupActivity() {
 							groupBy="monthly"
 							charts={MONTHLY_ACTIVITY_CHARTS}
 							valueSymbol="$"
-							hideDefaultLegend={false}
+							showLegend
 							chartOptions={MAPLE_DOLLAR_TIME_CHART_OPTIONS}
 							exportButtons={MAPLE_CSV_ONLY_EXPORT}
 						/>

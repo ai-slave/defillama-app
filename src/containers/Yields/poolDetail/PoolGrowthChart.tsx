@@ -726,7 +726,6 @@ export function PoolGrowthChart({
 							chartOptions={chartOptions}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend
 							exportButtons="hidden"
 							// The slider only narrows the view; options apply with `notMerge`, so a new day or deposit resets the zoom.
 							onReady={setInstance}

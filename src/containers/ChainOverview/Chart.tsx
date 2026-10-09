@@ -98,8 +98,6 @@ export default function ChainCoreChart({
 			valueSymbol={valueSymbol}
 			{...(groupBy !== undefined ? { groupBy } : {})}
 			containerClassName={CHART_FILL}
-			autoHideDataZoom={false}
-			hideDefaultLegend
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}
 			{...(onReady !== undefined ? { onReady } : {})}

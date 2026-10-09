@@ -38,7 +38,7 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 
 	const isDonut = config.chartType === 'donut'
 
-	const formatTooltip = (params: PieTooltipParams) => {
+	const tooltipFormatter = (params: PieTooltipParams) => {
 		const value = readSqlNumber(params.value) ?? 0
 		const percent = typeof params.percent === 'number' ? params.percent : 0
 		return `<strong>${escapeHtml(String(params.name ?? ''))}</strong><br/>${formatter.tooltip(value)} (${formatPercent(percent, { input: 'percent' })})`
@@ -67,7 +67,7 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 					radius={isDonut ? ['42%', '70%'] : undefined}
 					showLegend
 					height={height}
-					formatTooltip={formatTooltip}
+					tooltipFormatter={tooltipFormatter}
 					onReady={onReady}
 				/>
 			</Suspense>

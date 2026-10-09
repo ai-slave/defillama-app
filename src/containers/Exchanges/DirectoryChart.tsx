@@ -216,7 +216,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 							charts={chartModel.charts}
 							valueSymbol="$"
 							containerClassName={`${CHART_FILL} min-h-[320px]`}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 							hallmarks={hallmarks}
 						/>

@@ -1,3 +1,4 @@
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { escapeHtml } from './escapeHtml'
 import { formatTooltipChartDate, formatTooltipValueHtml } from './formatters'
 
@@ -119,13 +120,13 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 			if (name === 'Others') {
 				explicitOthers = row
 			} else if (item.pointed) {
-				// The stack band under the pointer leads, even past the ten rows.
+				// The stack band under the pointer leads, even past the capped rows.
 				pointed = row
-			} else if (rows.length < 10 || value < rows[rows.length - 1]!.value) {
+			} else if (rows.length < CHART_SERIES_LIMIT || value < rows[rows.length - 1]!.value) {
 				let insertAt = rows.length
 				while (insertAt > 0 && rows[insertAt - 1]!.value > value) insertAt--
 				rows.splice(insertAt, 0, row)
-				if (rows.length > 10) rows.pop()
+				if (rows.length > CHART_SERIES_LIMIT) rows.pop()
 			}
 		}
 

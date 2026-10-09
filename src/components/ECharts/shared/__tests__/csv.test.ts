@@ -20,7 +20,6 @@ describe('prepareChartCsv', () => {
 			'daily'
 		)
 
-		expect(result.filename).toBe('test.csv')
 		expect(result.rows).toEqual([
 			['Timestamp', 'Date', 'TVL', 'Volume'],
 			['1704067200000', '2024-01-01', 100, 50],

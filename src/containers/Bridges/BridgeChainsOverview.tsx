@@ -76,7 +76,6 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 							dataset={presentation.dataset}
 							charts={presentation.charts}
 							csvSource={presentation.csvSource}
-							hideDefaultLegend
 							valueSymbol="$"
 							showTotalInTooltip
 							tooltipMaxItems={30}

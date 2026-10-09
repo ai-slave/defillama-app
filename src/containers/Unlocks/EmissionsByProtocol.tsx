@@ -223,7 +223,7 @@ function groupChartDataByTime(
 
 const unlockedPieChartRadius: [string, string] = ['50%', '70%']
 const allocationPieChartRadius: [string, string] = ['0%', '82%']
-const allocationPieChartLegendToRight = 260
+const allocationPieChartLegendMinWidth = 260
 
 const unlockedPieChartStackColors = {
 	Unlocked: '#0c5dff',
@@ -494,7 +494,7 @@ function ChartContainer({
 	const tokenAllocation = data.tokenAllocation[dataType]
 	const rawChartData = data.chartData[dataType]
 	const pieChartDataRaw = data.pieChartData[dataType]
-	const hallmarks = data.hallmarks[dataType]
+	const todayLine = data.todayLine[dataType]
 
 	const { data: geckoId } = useGeckoId(data.geckoId ? null : data.token)
 
@@ -848,10 +848,10 @@ function ChartContainer({
 			dataset,
 			charts,
 			groupBy: CHART_GROUP_BY[timeGrouping],
-			hallmarks,
+			todayLine,
 			expandTo100Percent: chartType === 'bar'
 		}),
-		[dataset, charts, timeGrouping, hallmarks, chartType]
+		[dataset, charts, timeGrouping, todayLine, chartType]
 	)
 	const deferredScheduleChartData = useDeferredValue(scheduleChartData)
 	// The pie's colors follow its slices, so they are deferred with them.
@@ -1022,15 +1022,14 @@ function ChartContainer({
 								<MultiSeriesChart
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
-									hallmarks={deferredScheduleChartData.hallmarks}
-									hallmarkStyle="mark-line"
+									referenceLines={deferredScheduleChartData.todayLine}
 									expandTo100Percent={deferredScheduleChartData.expandTo100Percent}
 									solidChartAreaStyle
 									valueSymbol={data.tokenPrice.symbol ?? ''}
 									groupBy={deferredScheduleChartData.groupBy}
 									showTotalInTooltip
 									onReady={handleChartReady}
-									hideDefaultLegend={false}
+									showLegend
 								/>
 							</Suspense>
 						)}
@@ -1051,7 +1050,7 @@ function ChartContainer({
 									legendTextStyle={pieChartLegendTextStyle}
 									// Give the allocation chart a wider legend column so labels
 									// can render without ellipsis, and the pie can sit further left.
-									toRight={allocationPieChartLegendToRight}
+									legendMinWidth={allocationPieChartLegendMinWidth}
 									// Slightly larger pie to better utilize available canvas.
 									radius={allocationPieChartRadius}
 									exportButtons={allocationExportButtons}

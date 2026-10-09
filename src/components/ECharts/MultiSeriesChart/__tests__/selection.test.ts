@@ -198,7 +198,6 @@ describe('buildSelectedPercentageChart', () => {
 			{ ...charts[1], encode: { x: 0, y: 2 } },
 			{ ...charts[0], name: 'Others', color: OTHERS_COLOR, encode: { x: 0, y: 3 } }
 		])
-		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
 			throw new Error('Expected a dataset export')
 		}

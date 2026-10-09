@@ -62,7 +62,7 @@ type ChainsByAdapterValueMode = (typeof BAR_VALUE_MODES_CHAINS_BY_ADAPTER)[numbe
 const BAR_LAYOUTS_CHAINS_BY_ADAPTER = ['Stacked', 'Separate'] as const
 type ChainsByAdapterBarLayout = (typeof BAR_LAYOUTS_CHAINS_BY_ADAPTER)[number]
 /* Treemaps and ranked bars list every chain, so they keep 520px; the time series fill the 360px body floor. */
-const CHAINS_BY_ADAPTER_TREEMAP_HEIGHT = '520px'
+const CHAINS_BY_ADAPTER_CHART_CLASS = `${CHART_FILL} min-h-[520px]`
 const CHART_KIND_OPTIONS = [
 	{ key: 'Bar', name: 'Bar Chart' },
 	{ key: 'Dominance', name: 'Dominance Chart' },
@@ -653,7 +653,7 @@ export function AdapterByChainChart({
 						{deferredBreakdownPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredBreakdownPresentation.data}
-								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								onReady={handleChartReady}
 							/>
 						) : deferredBreakdownPresentation.kind === 'hbar' ? (
@@ -661,7 +661,7 @@ export function AdapterByChainChart({
 								categories={deferredBreakdownPresentation.data.map((item) => item.name)}
 								values={deferredBreakdownPresentation.data.map((item) => item.value)}
 								colors={deferredBreakdownPresentation.data.map((item) => item.itemStyle.color)}
-								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								valueSymbol="$"
 								onReady={handleChartReady}
 							/>
@@ -679,7 +679,7 @@ export function AdapterByChainChart({
 								solidChartAreaStyle={deferredBreakdownPresentation.kind === 'dominance'}
 								{...(breakdownMultiSeriesChartOptions ? { chartOptions: breakdownMultiSeriesChartOptions } : {})}
 								groupBy={deferredBreakdownPresentation.groupBy}
-								hideDefaultLegend={deferredBreakdownPresentation.charts.length === 1}
+								showLegend={deferredBreakdownPresentation.charts.length !== 1}
 								showTotalInTooltip={
 									deferredBreakdownPresentation.kind === 'bar'
 										? deferredBreakdownPresentation.showTotalInTooltip
@@ -704,7 +704,7 @@ export function AdapterByChainChart({
 								})
 							}}
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
+							showLegend={deferredCombinedFinalCharts.charts.length !== 1}
 							groupBy={deferredCombinedFinalCharts.groupBy}
 							onReady={handleChartReady}
 						/>
@@ -1039,7 +1039,7 @@ export function ChainsByAdapterChart({
 						{deferredChartPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredChartPresentation.data}
-								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								onReady={handleChartReady}
 							/>
 						) : deferredChartPresentation.kind === 'hbar' ? (
@@ -1047,7 +1047,7 @@ export function ChainsByAdapterChart({
 								categories={deferredChartPresentation.data.map((item) => item.name)}
 								values={deferredChartPresentation.data.map((item) => item.value)}
 								colors={deferredChartPresentation.data.map((item) => item.itemStyle.color)}
-								height={CHAINS_BY_ADAPTER_TREEMAP_HEIGHT}
+								containerClassName={CHAINS_BY_ADAPTER_CHART_CLASS}
 								valueSymbol="$"
 								onReady={handleChartReady}
 							/>
@@ -1065,7 +1065,7 @@ export function ChainsByAdapterChart({
 								solidChartAreaStyle={deferredChartPresentation.kind === 'dominance'}
 								{...(multiSeriesChartOptions ? { chartOptions: multiSeriesChartOptions } : {})}
 								groupBy={deferredChartPresentation.groupBy}
-								hideDefaultLegend={deferredChartPresentation.charts.length === 1}
+								showLegend={deferredChartPresentation.charts.length !== 1}
 								showTotalInTooltip={
 									deferredChartPresentation.kind === 'bar' ? deferredChartPresentation.showTotalInTooltip : false
 								}

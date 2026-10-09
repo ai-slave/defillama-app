@@ -1,8 +1,6 @@
 import type * as echarts from 'echarts/core'
 
 export interface ISankeyChartProps {
-	title?: string
-	headingAs?: 'h1' | 'h2' | 'h3'
 	height?: string
 	nodes: Array<{
 		name: string
@@ -18,7 +16,4 @@ export interface ISankeyChartProps {
 	nodeAlign?: 'left' | 'right' | 'justify'
 	orient?: 'horizontal' | 'vertical'
 	onReady?: (instance: echarts.ECharts | null) => void
-	enableImageExport?: boolean
-	imageExportFilename?: string
-	imageExportTitle?: string
 }

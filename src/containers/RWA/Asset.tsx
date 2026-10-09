@@ -582,7 +582,7 @@ export function RWAAssetPage({
 								<MultiSeriesChart
 									charts={timeSeriesCharts}
 									dataset={assetChartDataset}
-									hideDefaultLegend={false}
+									showLegend
 									exportButtons="hidden"
 									onReady={onAssetChartReady}
 								/>
@@ -987,7 +987,7 @@ export function RWAAssetPage({
 										charts={NATIVE_YIELD_CHARTS}
 										dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
 										valueSymbol="%"
-										hideDefaultLegend={false}
+										showLegend
 										exportButtons="hidden"
 										onReady={onNativeYieldChartReady}
 										containerClassName={CHART_FILL}

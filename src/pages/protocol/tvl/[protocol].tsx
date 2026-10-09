@@ -272,7 +272,7 @@ function InflowsByTokenChartCard({
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						valueSymbol="$"
 						selectedCharts={deferredChart.selectedCharts}
 						{...(deferredChart.selectedCharts.size > 1

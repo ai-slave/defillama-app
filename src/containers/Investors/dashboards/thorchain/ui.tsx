@@ -388,7 +388,7 @@ export function TimeBarCard({
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
 					containerClassName={CHART_FILL}
-					hideDefaultLegend={charts.length < 2}
+					showLegend={charts.length > 1}
 					exportButtons="hidden"
 					onReady={handleChartReady}
 					chartOptions={chartOptions}

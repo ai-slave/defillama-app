@@ -170,7 +170,7 @@ function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 						charts={chartView.charts}
 						valueSymbol="$"
 						hideDataZoom
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons="hidden"
 						chartOptions={chartOptions}
 					/>

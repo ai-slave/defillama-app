@@ -65,8 +65,7 @@ const FEES: MultiSeriesChartSeriesConfig = {
 test('draws hallmarks on an Events rail after the data series, on its own hidden axis', async () => {
 	const option = await renderOption({
 		charts: [TVL, FEES],
-		hallmarks: [[2000, 'Upgrade']],
-		hallmarksInMs: true
+		hallmarks: [[2, 'Upgrade']]
 	})
 
 	expect(option.series.map((series: { name: string; type: string }) => [series.name, series.type])).toEqual([
@@ -76,7 +75,7 @@ test('draws hallmarks on an Events rail after the data series, on its own hidden
 	])
 	const events = option.series[2]
 	expect(events.yAxisIndex).toBe(option.yAxis.length - 1)
-	expect(option.yAxis.at(-1)).toMatchObject({ show: false, min: -1, max: 1 })
+	expect(option.yAxis.at(-1).show).toBe(false)
 	expect(
 		events.data.map((event: { eventDate: number; fullText: string }) => [event.eventDate, event.fullText])
 	).toEqual([[2000, 'Upgrade']])

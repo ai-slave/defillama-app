@@ -797,7 +797,7 @@ export function TokenPageLive({
 															]}
 															valueSymbol="$"
 															containerClassName={CHART_FILL}
-															hideDefaultLegend={false}
+															showLegend
 															hideDataZoom
 															exportButtons="hidden"
 														/>
@@ -848,7 +848,7 @@ export function TokenPageLive({
 															valueSymbol="%"
 															chartOptions={PERCENT_TIME_OPTIONS}
 															containerClassName={CHART_FILL}
-															hideDefaultLegend={false}
+															showLegend
 															hideDataZoom
 															exportButtons="hidden"
 														/>
@@ -978,7 +978,7 @@ export function TokenPageLive({
 															valueSymbol="%"
 															chartOptions={PERCENT_TIME_OPTIONS}
 															containerClassName={CHART_FILL}
-															hideDefaultLegend={false}
+															showLegend
 															hideDataZoom
 															exportButtons="hidden"
 														/>
@@ -1120,7 +1120,7 @@ export function TokenPageLive({
 															}))}
 															valueSymbol="$"
 															containerClassName={CHART_FILL}
-															hideDefaultLegend={false}
+															showLegend
 															hideDataZoom
 															exportButtons="hidden"
 														/>

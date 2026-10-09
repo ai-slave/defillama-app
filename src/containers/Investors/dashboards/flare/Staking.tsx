@@ -81,7 +81,7 @@ export default function Staking() {
 							titleTooltip={chart.titleTooltip}
 							headingAs="h3"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							chartOptions={chart.chartOptions}
 						/>
 					</Suspense>

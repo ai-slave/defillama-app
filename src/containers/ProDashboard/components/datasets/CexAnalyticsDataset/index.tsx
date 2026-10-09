@@ -376,7 +376,7 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
 					valueSymbol="$"
 					height={chartHeight}
-					hideDefaultLegend={false}
+					showLegend
 				/>
 			</Suspense>
 		</div>
@@ -497,14 +497,13 @@ function VenueMarketShareChart({
 			</div>
 			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
-					title=""
 					dataset={shareChart.dataset}
 					charts={shareChart.charts}
 					chartOptions={STACKED_PERCENT_CHART_OPTIONS}
 					solidChartAreaStyle
 					valueSymbol="%"
 					height={chartHeight}
-					hideDefaultLegend={false}
+					showLegend
 					exportButtons="hidden"
 					onReady={handleChartReady}
 				/>

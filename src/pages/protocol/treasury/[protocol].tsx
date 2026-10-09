@@ -156,7 +156,7 @@ function HistoricalTreasuryChartCard({
 					dataset={dataset}
 					charts={charts}
 					containerClassName={CHART_FILL}
-					hideDefaultLegend={false}
+					showLegend
 					valueSymbol="$"
 					selectedCharts={TREASURY_SERIES}
 					onReady={handleChartReady}
@@ -237,7 +237,7 @@ function TokensMultiSeriesChartCard({
 					charts={charts}
 					csvSource={csvSource}
 					containerClassName={CHART_FILL}
-					hideDefaultLegend={false}
+					showLegend
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}
 					onReady={handleChartReady}

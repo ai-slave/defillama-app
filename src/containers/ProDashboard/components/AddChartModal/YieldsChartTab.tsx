@@ -733,7 +733,7 @@ export function YieldsChartTab({
 													chartOptions={percentTimeChartOptions}
 													title="Supply APY"
 													valueSymbol="%"
-													hideDefaultLegend={false}
+													showLegend
 												/>
 											) : null}
 											{selectedYieldChartType === 'supply-apy-7d' ? (
@@ -754,7 +754,7 @@ export function YieldsChartTab({
 													chartOptions={percentTimeChartOptions}
 													title="Borrow Cost APY"
 													valueSymbol="%"
-													hideDefaultLegend={false}
+													showLegend
 												/>
 											) : null}
 											{selectedYieldChartType === 'net-borrow-apy' ? (

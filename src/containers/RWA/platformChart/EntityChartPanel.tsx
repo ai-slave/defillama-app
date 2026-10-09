@@ -162,9 +162,8 @@ export function RWAEntityChartPanel<K extends string>({
 						dataset={EMPTY_DATASET}
 						charts={deferredChart.series}
 						hallmarks={deferredChart.hallmarks}
-						hallmarksInMs
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={deferredChart.series.length < 2}
+						showLegend={deferredChart.series.length > 1}
 						valueSymbol="$"
 						groupBy={deferredChart.period}
 						onReady={handleChartReady}

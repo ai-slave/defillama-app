@@ -139,8 +139,10 @@ test('a draft annotation is drawn in the preview but not on the applied chart', 
 	})
 	await act(async () => label.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
 
-	// Chat charts draw annotations as mark lines on the first series.
+	// Chat charts draw annotations on the event rail, the custom series named Events.
 	const annotationLabels = (option: Record<string, any>) =>
-		(option.series[0].markLine?.data ?? []).map((line: { name: string }) => line.name)
+		(option.series.find((series: { name?: string }) => series.name === 'Events')?.data ?? []).map(
+			(event: { fullText: string }) => event.fullText
+		)
 	await settle(() => expect(drawnOptions().map(annotationLabels)).toEqual([[], ['Preview note']]))
 })

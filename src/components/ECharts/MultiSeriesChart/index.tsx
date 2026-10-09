@@ -35,7 +35,7 @@ import { joinChartHoverSync } from '../shared/chartHoverSync'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import { ChartMotionContext, enterAnimationOptions } from '../shared/chartMotion'
 import {
-	CHART_HALLMARK_LABEL_RESERVE,
+	CHART_REFERENCE_LABEL_RESERVE,
 	CHART_INSET,
 	CHART_LEGEND_RESERVE,
 	chartGrid,
@@ -65,9 +65,9 @@ import {
 	getMainGridBottom,
 	getSeriesTimeBounds
 } from './eventRail'
-import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes } from './logScale'
 import { buildMultiYAxis, normalizeSeriesYAxisIndices } from './multiYAxis'
+import { buildReferenceMarkLine } from './referenceLines'
 import { selectChartDatasetColumns } from './selection'
 import { buildMultiSeries, getPointerLines, getPointerStack } from './series'
 import { assignStackColors } from './stackColors'
@@ -108,8 +108,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		height,
 		hallmarks,
 		rangeHallmarks,
-		hallmarksInMs = false,
-		hallmarkStyle = 'event-rail',
+		referenceLines,
 		stateTimeline,
 		expandTo100Percent,
 		valueSymbol = '$',
@@ -119,11 +118,10 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		stacked = false,
 		solidChartAreaStyle = false,
 		hideDataZoom,
-		autoHideDataZoom = true,
 		showTotalInTooltip = false,
 		requireCompleteTooltipTotal = false,
 		onReady,
-		hideDefaultLegend = true,
+		showLegend = false,
 		selectedCharts,
 		dataset,
 		csvSource,
@@ -255,12 +253,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				? autoExportsEnabled
 				: false
 
-	const hallmarksMarkLine = useMemo(
+	const referenceMarkLine = useMemo(
 		() =>
-			hallmarkStyle === 'mark-line' && hallmarks?.length
-				? buildHallmarksMarkLine({ hallmarks, textColor: chartTheme.text, dateInMs: hallmarksInMs })
+			referenceLines?.length
+				? buildReferenceMarkLine({ lines: referenceLines, textColor: chartTheme.text })
 				: undefined,
-		[hallmarkStyle, hallmarks, chartTheme.text, hallmarksInMs]
+		[referenceLines, chartTheme.text]
 	)
 
 	const pointerStack = useMemo(
@@ -286,7 +284,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			expandTo100Percent,
 			solidChartAreaStyle,
 			chartTheme,
-			hallmarksMarkLine,
+			referenceMarkLine,
 			getChart,
 			validLegendIcons
 		})
@@ -297,18 +295,15 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		expandTo100Percent,
 		solidChartAreaStyle,
 		selectedCharts,
-		hallmarksMarkLine,
+		referenceMarkLine,
 		getChart,
 		validLegendIcons
 	])
 	const displayValueSymbol = expandTo100Percent ? '%' : valueSymbol
 
 	const eventRailData = useMemo(
-		() =>
-			hallmarkStyle === 'event-rail'
-				? buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark, dateInMs: hallmarksInMs }).events
-				: [],
-		[hallmarkStyle, hallmarks, rangeHallmarks, isThemeDark, hallmarksInMs]
+		() => buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark }).events,
+		[hallmarks, rangeHallmarks, isThemeDark]
 	)
 
 	const { seriesSymbols, tooltipTotalExcludedSeries } = useMemo(() => {
@@ -573,7 +568,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		} = mergedChartSettings
 
 		const datasetLength = Math.max(renderedDatasetSource.length, directSeriesStats.pointCount)
-		const shouldHideDataZoom = hideDataZoom || (autoHideDataZoom && datasetLength < 2)
+		const shouldHideDataZoom = hideDataZoom || datasetLength < 2
 		const shouldShowEventRail = eventRailData.length > 0
 		const shouldShowStateTimeline = !shouldShowEventRail && (stateTimeline?.points.length ?? 0) > 0
 		const gridBottom = shouldShowStateTimeline
@@ -592,7 +587,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		)
 		const getScrollLegend = (legendOption: LegendComponentOption) =>
 			chartHorizontalScrollLegend(legendOption, legendScrollStyle)
-		const finalLegend = hideDefaultLegend
+		const finalLegend = !showLegend
 			? undefined
 			: Array.isArray(legend)
 				? legend.map(getScrollLegend)
@@ -701,8 +696,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const baseGrid = chartGrid({
 			bottom: gridBottom,
 			top: Math.max(
-				hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE,
-				hallmarksMarkLine ? CHART_INSET + CHART_HALLMARK_LABEL_RESERVE : 0
+				showLegend ? CHART_LEGEND_RESERVE : CHART_INSET,
+				referenceMarkLine ? CHART_INSET + CHART_REFERENCE_LABEL_RESERVE : 0
 			)
 		})
 		const finalGrid = mergedChartSettings.grid ? mergeDeep(baseGrid, mergedChartSettings.grid) : baseGrid
@@ -782,7 +777,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			...enterAnimationOptions(chartMotion, hasEnteredRef.current || !hasRenderableSeries, prefersReducedMotion())
 		}
 		const renderedLegend = finalLegend ?? legend
-		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
+		if (showLegend && renderedLegend !== undefined) option.legend = renderedLegend
 		if (graphic !== undefined) option.graphic = graphic
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
 		// Time axes default to UTC so ticks agree with the UTC tooltip and zoom labels; only an explicit
@@ -833,9 +828,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		chartOptions,
 		alwaysShowTooltip,
 		hideDataZoom,
-		autoHideDataZoom,
-		hideDefaultLegend,
-		hallmarksMarkLine,
+		showLegend,
+		referenceMarkLine,
 		renderedDatasetSource,
 		renderedDatasetDimensions,
 		directSeriesStats,

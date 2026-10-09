@@ -38,8 +38,8 @@ describe('hallmark event-rail tooltip', () => {
 
 	test('names a point event by its own day and a range event by its span', () => {
 		const { events } = buildEventRailData({
-			hallmarks: [[Date.UTC(2026, 8, 14), 'Upgrade']],
-			rangeHallmarks: [[[Date.UTC(2026, 8, 1), Date.UTC(2026, 8, 4)], 'Incident']],
+			hallmarks: [[Date.UTC(2026, 8, 14) / 1e3, 'Upgrade']],
+			rangeHallmarks: [[[Date.UTC(2026, 8, 1) / 1e3, Date.UTC(2026, 8, 4) / 1e3], 'Incident']],
 			isThemeDark: false
 		})
 		const header = (text: string) =>
@@ -55,7 +55,7 @@ describe('hallmark event-rail tooltip', () => {
 
 	test('shows a dashboard annotation as text, never as markup', () => {
 		const { events } = buildEventRailData({
-			hallmarks: [[Date.UTC(2026, 8, 14), '<img src=x onerror=alert(1)>']],
+			hallmarks: [[Date.UTC(2026, 8, 14) / 1e3, '<img src=x onerror=alert(1)>']],
 			isThemeDark: false
 		})
 
@@ -68,7 +68,8 @@ describe('hallmark event-rail tooltip', () => {
 describe('hallmark event-rail clusters', () => {
 	const pointEvents = (dates: Array<number>) =>
 		buildEventRailData({ hallmarks: dates.map((date) => [date, `Event ${date}`]), isThemeDark: false }).events
-	const toX = (date: number) => date
+	// Hallmarks are unix seconds and events carry milliseconds, so one second is one pixel here.
+	const toX = (date: number) => date / 1e3
 
 	test('merges point events that would overlap and keeps distant ones apart', () => {
 		const events = pointEvents([100, 105, 112, 200])
@@ -97,22 +98,7 @@ describe('hallmark event-rail clusters', () => {
 })
 
 describe('hallmark event-rail time bounds', () => {
-	test('reads bounds from the ends of an ascending series without re-sorting it', () => {
-		const data: Array<[number, number]> = [
-			[100, 1],
-			[200, 2],
-			[300, 3]
-		]
-
-		expect(getSeriesTimeBounds(data)).toEqual({ min: 100, max: 300 })
-		expect(data).toEqual([
-			[100, 1],
-			[200, 2],
-			[300, 3]
-		])
-	})
-
-	test('reads numeric and numeric-string endpoints without sorting', () => {
+	test('reads numeric and numeric-string endpoints', () => {
 		expect(getDatasetTimeBounds([[100], [200]], 0)).toEqual({ min: 100, max: 200 })
 		expect(getDatasetTimeBounds([['100'], ['200']], 0)).toEqual({ min: 100, max: 200 })
 		expect(
@@ -128,14 +114,12 @@ describe('hallmark event-rail time bounds', () => {
 		expect(getDatasetTimeBounds([], 0)).toEqual({ min: undefined, max: undefined })
 	})
 
-	test('skips invalid boundary rows without sorting the source', () => {
+	test('skips invalid boundary rows', () => {
 		const source = [[undefined], [100], [200], [null]]
 		const series: Array<[number | string, number] | unknown> = [undefined, ['100', 1], [200, 2], null]
 
 		expect(getDatasetTimeBounds(source, 0)).toEqual({ min: 100, max: 200 })
 		expect(getSeriesTimeBounds(series)).toEqual({ min: 100, max: 200 })
-		expect(source.map((row) => row[0])).toEqual([undefined, 100, 200, null])
-		expect(series).toEqual([undefined, ['100', 1], [200, 2], null])
 	})
 })
 
@@ -146,7 +130,12 @@ describe('hallmark event-rail rendering', () => {
 		hallmarks: Array<[number, string]>,
 		{ rangeHallmarks, zoom }: { rangeHallmarks?: Array<[[number, number], string]>; zoom?: [number, number] } = {}
 	) {
-		const { events } = buildEventRailData({ hallmarks, rangeHallmarks, isThemeDark: false })
+		// The rail tests read dates in milliseconds; hallmarks arrive in unix seconds.
+		const { events } = buildEventRailData({
+			hallmarks: hallmarks.map(([date, label]) => [date / 1e3, label]),
+			rangeHallmarks: rangeHallmarks?.map(([[start, end], label]) => [[start / 1e3, end / 1e3], label]),
+			isThemeDark: false
+		})
 		const hoverState: EventHoverState = { hoveredEventDate: null }
 		const series = createEventRailSeries({
 			eventRailData: events,

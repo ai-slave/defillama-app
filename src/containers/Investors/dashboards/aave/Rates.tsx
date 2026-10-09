@@ -364,7 +364,7 @@ export default function Rates() {
 							charts={RATE_CURVE_CHARTS}
 							valueSymbol="%"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
 							exportButtons="hidden"
 							onReady={rateCurve.handleChartReady}

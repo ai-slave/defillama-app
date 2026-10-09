@@ -308,7 +308,7 @@ export default function SparkLend() {
 							dataset={feesByChain.dataset}
 							charts={feesByChain.charts}
 							valueSymbol="$"
-							hideDefaultLegend={feesByChain.charts.length < 2}
+							showLegend={feesByChain.charts.length > 1}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_EXPORT}
 						/>

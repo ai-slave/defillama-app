@@ -1,4 +1,4 @@
-import type { CanonicalMultiSeriesChartDataset, MultiSeriesChartArrayRow, MultiSeriesChartSeriesConfig } from './types'
+import type { MultiSeriesChartDataset, MultiSeriesChartArrayRow, MultiSeriesChartSeriesConfig } from './types'
 
 type CartesianSeriesSpec = {
 	name: string
@@ -23,7 +23,7 @@ type AlignedCartesianSeries = CartesianSeriesSpec & {
 }
 
 export type CartesianChartModel = {
-	dataset: CanonicalMultiSeriesChartDataset
+	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 }
 

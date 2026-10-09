@@ -274,7 +274,7 @@ function VenueChartView({
 						charts={chartModel.charts}
 						valueSymbol={active.valueSymbol}
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons="hidden"
 						hallmarks={hallmarks}
 					/>

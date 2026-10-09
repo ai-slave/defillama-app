@@ -1,5 +1,6 @@
 import * as echarts from 'echarts'
 import { afterEach, expect, test } from 'vitest'
+import { readTreemapViewportExportState } from '~/components/ChartExport/chartPngExport'
 import { registerTreemapFocusTracking } from '../focus'
 
 let chart: echarts.ECharts
@@ -33,10 +34,6 @@ function treemap() {
 	return chart
 }
 
-function focusedNode() {
-	return (chart as unknown as { __llamaTreemapFocusNode?: unknown }).__llamaTreemapFocusNode
-}
-
 function dataIndexOf(name: string) {
 	const data = (chart as unknown as { getModel(): any }).getModel().getSeriesByIndex(0).getData()
 	for (let index = 0; index < data.count(); index++) if (data.getName(index) === name) return index
@@ -47,18 +44,23 @@ test('records the drilled node path for PNG export and forgets it on restore', (
 	registerTreemapFocusTracking(treemap())
 	click({ seriesType: 'treemap', seriesIndex: 0, dataIndex: dataIndexOf('Apple') })
 
-	expect(focusedNode()).toEqual({ id: 'Apple', path: ['Technology', 'Apple'], indexPath: [1, 1] })
+	expect(readTreemapViewportExportState(chart)).toEqual({
+		actionType: 'treemapZoomToNode',
+		targetNodeId: 'Apple',
+		targetNodePath: ['Technology', 'Apple'],
+		targetNodeIndexPath: [1, 1]
+	})
 
 	chart.dispatchAction({ type: 'restore' })
-	expect(focusedNode()).toBeUndefined()
+	expect(readTreemapViewportExportState(chart)).toBeNull()
 })
 
 test('ignores clicks on other series types and stops tracking once unregistered', () => {
 	const unregister = registerTreemapFocusTracking(treemap())
 	click({ seriesType: 'pie', seriesIndex: 0, dataIndex: dataIndexOf('Apple') })
-	expect(focusedNode()).toBeUndefined()
+	expect(readTreemapViewportExportState(chart)).toBeNull()
 
 	unregister()
 	click({ seriesType: 'treemap', seriesIndex: 0, dataIndex: dataIndexOf('Apple') })
-	expect(focusedNode()).toBeUndefined()
+	expect(readTreemapViewportExportState(chart)).toBeNull()
 })

@@ -833,7 +833,7 @@ export function ChartBuilderTab({
 											charts={previewChart.charts}
 											valueSymbol={displayAs === 'percentage' ? '%' : '$'}
 											hideDataZoom
-											hideDefaultLegend={false}
+											showLegend
 											solidChartAreaStyle={chartBuilder.chartType === 'stackedArea'}
 											exportButtons="hidden"
 											chartOptions={previewChartOptions}

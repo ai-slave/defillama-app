@@ -333,7 +333,6 @@ export function StablecoinsChartTab({
 		return (
 			<Suspense fallback={<ChartPanelExportShellFallback />}>
 				<MultiSeriesChart
-					title=""
 					dataset={chainChartPayload.dataset}
 					charts={chainCharts}
 					{...(showsChainSeriesSelection ? { selectedCharts: renderedChainCharts } : {})}
@@ -361,7 +360,6 @@ export function StablecoinsChartTab({
 				return (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							dataset={assetDataset}
 							charts={TOTAL_CIRCULATING_CHARTS}
 							valueSymbol={stablecoinSymbol}
@@ -377,7 +375,6 @@ export function StablecoinsChartTab({
 				return (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							dataset={assetDataset}
 							charts={assetChainCharts}
 							selectedCharts={selectedAssetCharts}
@@ -403,7 +400,6 @@ export function StablecoinsChartTab({
 				return (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							valueSymbol="%"
 							dataset={assetDataset}
 							charts={assetChainDominanceCharts}

@@ -37,7 +37,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
-	const todayHallmarks = useMemo<Array<[number, string]>>(
+	const todayLine = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)
@@ -90,7 +90,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 			`${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
 		)
 
-	const hallmarks = useDashboardAnnotationHallmarks(todayHallmarks)
+	const hallmarks = useDashboardAnnotationHallmarks()
 	const syncGroup = useChartSyncGroup()
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(360, cardHeightScale)
@@ -154,7 +154,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 							{...(apiCharts === undefined ? {} : { charts: apiCharts })}
 							selectedCharts={selectedChartsSet}
 							{...(hallmarks ? { hallmarks } : {})}
-							hallmarkStyle="mark-line"
+							referenceLines={todayLine}
 							{...(syncGroup ? { syncGroup } : {})}
 							hideDataZoom
 							valueSymbol=""

@@ -48,7 +48,7 @@ function buildPointHallmarkMap({
 	return hallmarkMap
 }
 
-function buildRangeHallmarksInMs(protocolHallmarks?: Array<RawHallmark> | null): Array<HallmarkRange> {
+function buildRangeHallmarks(protocolHallmarks?: Array<RawHallmark> | null): Array<HallmarkRange> {
 	const rangeHallmarks: Array<HallmarkRange> = []
 
 	for (const [timestampOrRange, label] of protocolHallmarks ?? []) {
@@ -56,10 +56,7 @@ function buildRangeHallmarksInMs(protocolHallmarks?: Array<RawHallmark> | null):
 
 		const [start, end] = timestampOrRange
 
-		rangeHallmarks.push([
-			[normalizeHallmarkTimestampToSeconds(start) * 1e3, normalizeHallmarkTimestampToSeconds(end) * 1e3],
-			label
-		])
+		rangeHallmarks.push([[normalizeHallmarkTimestampToSeconds(start), normalizeHallmarkTimestampToSeconds(end)], label])
 	}
 
 	return rangeHallmarks
@@ -121,7 +118,7 @@ export function buildProtocolOverviewHallmarks({
 	}
 
 	return {
-		hallmarks: hallmarks.sort((a, b) => a[0] - b[0]).map(([timestamp, label]) => [timestamp * 1e3, label]),
-		rangeHallmarks: buildRangeHallmarksInMs(protocolHallmarks)
+		hallmarks: hallmarks.sort((a, b) => a[0] - b[0]),
+		rangeHallmarks: buildRangeHallmarks(protocolHallmarks)
 	}
 }

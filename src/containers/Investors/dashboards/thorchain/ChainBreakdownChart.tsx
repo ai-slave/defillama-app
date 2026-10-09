@@ -171,7 +171,7 @@ function TrendCard({
 						groupBy={groupBy}
 						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons="hidden"
 					/>
 				</Suspense>
@@ -319,7 +319,7 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 					groupBy="daily"
 					containerClassName={CHART_FILL}
 					chartOptions={CHART_OPTIONS}
-					hideDefaultLegend={false}
+					showLegend
 					exportButtons="hidden"
 				/>
 			</Suspense>

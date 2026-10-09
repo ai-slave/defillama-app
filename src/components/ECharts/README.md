@@ -1,6 +1,16 @@
 # Chart renderers
 
-design.md → Charts picks the renderer for a chart's shape and owns its look (series palette, theme and geometry modules). `docs/charts.md` owns data contracts: tooltip readers, time axes, period grouping, pickers and CSV. This page covers what each chart kind must show and the exceptions to the shared geometry.
+design.md → Charts picks the renderer for a chart's shape and owns its look (series palette, theme and geometry modules). `docs/charts.md` owns data contracts: tooltip readers, time axes, period grouping, pickers and CSV. This page covers what each chart kind must show, the props the renderers share and the exceptions to the shared geometry.
+
+## Shared props
+
+A prop that does the same job on two renderers has the same name on both.
+
+- **Header:** only `MultiSeriesChart` and `PieChart` draw a header row, from `title` (`MultiSeriesChart` adds `subtitle`, `titleTooltip` and `headingAs`). Leave `title` out rather than passing `""`. The other renderers draw no header: their `ChartPanelToolbar` holds a `ChartPanelTitle` and `ChartExportButtons`, which reach the chart through `onReady`.
+- **Exports:** `exportButtons` on the renderers with a header: `'auto'`, `'hidden'`, or an object choosing `csv`, `png`, `filename`, `pngTitle` and `pngIconUrl`. Under a `ChartPanelToolbar` it is `'hidden'`, and the buttons go in the toolbar.
+- **Legend:** `showLegend`, off by default.
+- **Size:** `containerClassName={CHART_FILL}` inside a `ChartPanelBody` (src/ui/ChartPanel.tsx). `height` is for a fixed tile only, such as a side donut, a sparkline or a Pro dashboard card.
+- **Tooltip:** `tooltipFormatter` on the renderers that take one; `MultiSeriesChart` reads `chartOptions.tooltip`.
 
 ## What a chart must show
 
@@ -26,7 +36,10 @@ design.md → Charts picks the renderer for a chart's shape and owns its look (s
 
 ## Event rail
 
-`MultiSeriesChart` draws hallmarks on a rail under the plot (`MultiSeriesChart/eventRail.ts`).
+`MultiSeriesChart` draws hallmarks on a rail under the plot (`MultiSeriesChart/eventRail.ts`). Events from every source, Pro dashboard notes and LlamaAI included, draw here.
+
+- `hallmarks` and `rangeHallmarks` are unix seconds, the unit the API sends. A source that builds dates in milliseconds converts them before passing them in.
+- `referenceLines` is not an event: it draws a dated divider across the plot, such as Today on an unlock schedule, where the line itself splits past from future.
 
 - A point event is a 16px circle: grey for a milestone, red with a "!" when its label names a hack, exploit, attack, rug pull or depeg. The rail reads the label, so a hallmark label leads with what happened ("Hack · Access Control · $8.2m lost"), never a bare classification.
 - Point events closer than a marker's width at the current zoom share one marker that shows their count. It is red when any member is, and its tooltip lists every member.

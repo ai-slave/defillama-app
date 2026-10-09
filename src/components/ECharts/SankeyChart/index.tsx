@@ -5,16 +5,13 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
-import { ChartHeader } from '../shared/ChartHeader'
 import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { formatChartValue } from '../shared/formatters'
 import { sankeyMobileMinHeight } from './height'
@@ -62,16 +59,11 @@ function SankeyChart({
 	height = '500px',
 	nodes,
 	links,
-	title,
-	headingAs,
 	valueSymbol = '$',
 	nodeColors,
 	nodeAlign = 'justify',
 	orient = 'horizontal',
 	onReady,
-	enableImageExport = false,
-	imageExportFilename,
-	imageExportTitle,
 	...props
 }: ISankeyChartProps) {
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
@@ -79,9 +71,6 @@ function SankeyChart({
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const useMobileLayout = isSmall && orient === 'horizontal'
 	const chartTheme = useChartTheme(isDark)
-	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
-	const exportFilename = imageExportFilename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'sankey-chart')
-	const exportTitle = imageExportTitle || title
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const persistentLifecycle = usePersistentEChartsLifecycle()
@@ -268,10 +257,9 @@ function SankeyChart({
 		chartRef.current = instance
 		persistentLifecycle.restore(instance)
 		isVisibleRef.current = true
-		handleChartReady(instance)
 		onReadyRef.current?.(instance)
 		applyOption()
-	}, [applyOption, handleChartReady, persistentLifecycle])
+	}, [applyOption, persistentLifecycle])
 
 	const handleElementResize = useCallback(
 		(isVisible: boolean) => {
@@ -303,35 +291,16 @@ function SankeyChart({
 			if (instance) persistentLifecycle.capture(instance)
 			chartRef.current = null
 			isVisibleRef.current = false
-			handleChartReady(null)
 			onReadyRef.current?.(null)
 			if (instance && !instance.isDisposed()) instance.dispose()
 		}
-	}, [handleChartReady, persistentLifecycle])
+	}, [persistentLifecycle])
 
 	return (
 		<ChartContainer
 			chartRef={containerRef}
 			chartClassName=""
 			chartStyle={{ height, minHeight: useMobileLayout ? sankeyMobileMinHeight(nodes.length) : undefined }}
-			header={
-				title || enableImageExport ? (
-					<ChartHeader
-						title={title}
-						headingAs={headingAs}
-						className="mb-2 flex items-center justify-end gap-2"
-						exportButtons={
-							enableImageExport ? (
-								<ChartPngExportButton
-									chartInstance={exportChartInstance}
-									filename={exportFilename}
-									title={exportTitle}
-								/>
-							) : null
-						}
-					/>
-				) : null
-			}
 			{...props}
 		/>
 	)

@@ -479,7 +479,6 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
-											hideDefaultLegend
 											valueSymbol="$"
 											onReady={handleChartReady}
 										/>
@@ -491,7 +490,6 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
-											hideDefaultLegend
 											valueSymbol="%"
 											onReady={handleChartReady}
 										/>
@@ -503,7 +501,6 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
-											hideDefaultLegend
 											valueSymbol="$"
 											onReady={handleChartReady}
 										/>

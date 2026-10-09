@@ -151,7 +151,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 						<MultiSeriesChart
 							height={chartHeight}
 							dataset={timeSeriesDataset}
-							hideDefaultLegend={false}
+							showLegend
 							stacked
 							showTotalInTooltip={!timeSeriesDataset.dimensions.some(isRwaTotalSeriesLabel)}
 							onReady={handleChartReady}

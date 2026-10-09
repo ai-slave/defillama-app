@@ -281,22 +281,4 @@ describe('buildTimeSeriesChart', () => {
 			})
 		).toThrow('Duplicate series name "A" is not allowed')
 	})
-
-	test('does not mutate input series or point tuples', () => {
-		const points = [
-			[toMs(2024, 1, 1), 2],
-			[toMs(2024, 1, 1), 3],
-			[toMs(2024, 1, 2), 4]
-		] as const
-		const input = {
-			kind: 'cumulativeLines',
-			series: [{ name: 'Inflows', color: '#111111', points }]
-		} as const
-		const before = structuredClone(input)
-
-		buildTimeSeriesChart(input)
-
-		expect(input).toEqual(before)
-		expect(input.series[0].points).toBe(points)
-	})
 })

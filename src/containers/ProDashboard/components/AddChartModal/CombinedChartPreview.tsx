@@ -91,7 +91,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					charts={chartView.charts}
 					groupBy={DASHBOARD_CHART_GROUPING[previewGrouping]}
 					hideDataZoom
-					hideDefaultLegend={false}
+					showLegend
 					exportButtons="hidden"
 					height="450px"
 					chartOptions={CHART_OPTIONS}

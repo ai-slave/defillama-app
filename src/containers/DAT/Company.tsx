@@ -271,7 +271,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								charts={props.mNAVChart.charts}
 								containerClassName={CHART_FILL}
 								valueSymbol=""
-								hideDefaultLegend={false}
+								showLegend
 								title="mNAV"
 								exportButtons={{
 									png: true,
@@ -291,7 +291,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								charts={props.fdChart.charts}
 								containerClassName={CHART_FILL}
 								valueSymbol=""
-								hideDefaultLegend={false}
+								showLegend
 								title="Fully Diluted Shares"
 								exportButtons={{
 									png: true,

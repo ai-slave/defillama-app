@@ -113,7 +113,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 				hideDataZoom
 				chartOptions={chartOptions}
 				onReady={onReady}
-				hideDefaultLegend={false}
+				showLegend
 				exportButtons="hidden"
 			/>
 		</Suspense>

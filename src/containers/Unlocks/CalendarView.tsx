@@ -304,7 +304,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 					<MultiSeriesChart
 						dataset={selectedChart.dataset}
 						charts={selectedChart.charts}
-						hideDefaultLegend={selectedChart.charts.length < 2}
+						showLegend={selectedChart.charts.length > 1}
 						chartOptions={calendarChartOptions}
 						tooltipMaxItems={30}
 						exportButtons="hidden"
@@ -324,7 +324,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 							<MultiSeriesChart
 								dataset={selectedChart.dataset}
 								charts={selectedChart.charts}
-								hideDefaultLegend={selectedChart.charts.length < 2}
+								showLegend={selectedChart.charts.length > 1}
 								chartOptions={calendarChartOptions}
 								tooltipMaxItems={30}
 								exportButtons="hidden"

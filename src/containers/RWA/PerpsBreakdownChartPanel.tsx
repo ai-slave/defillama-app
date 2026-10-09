@@ -256,7 +256,7 @@ export function RWAPerpsBreakdownChartPanel({
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						showTotalInTooltip={deferredChart.isVolume && !deferredChart.isShare}
 						expandTo100Percent={deferredChart.isShare}
 						valueSymbol={valueSymbol}

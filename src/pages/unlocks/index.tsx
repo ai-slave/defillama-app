@@ -262,7 +262,7 @@ function UpcomingUnlockVolumeChart({
 					<MultiSeriesChart
 						dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
 						charts={selectedBreakdown?.charts ?? deferredChartData.charts}
-						hideDefaultLegend={deferredViewMode === 'Total View'}
+						showLegend={deferredViewMode !== 'Total View'}
 						groupBy={deferredTimePeriod}
 						valueSymbol="$"
 						onReady={handleChartReady}

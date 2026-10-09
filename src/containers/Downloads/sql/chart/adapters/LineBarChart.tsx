@@ -3,7 +3,7 @@ import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type {
-	CanonicalMultiSeriesChartDataset,
+	MultiSeriesChartDataset,
 	MultiSeriesChartOptions,
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesYAxisOption
@@ -83,7 +83,7 @@ export function LineBarChart({
 					hideDataZoom={chartModel.dataset.source.length < 2}
 					chartOptions={chartOptions}
 					onReady={onReady}
-					hideDefaultLegend={false}
+					showLegend
 					exportButtons="hidden"
 				/>
 			</Suspense>
@@ -182,8 +182,8 @@ export function buildSqlChartModel(
 	xAxisType: 'time' | 'category',
 	series: Array<SqlSeriesSpec>,
 	preserveNullCategory = false
-): { dataset: CanonicalMultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
-	const source: CanonicalMultiSeriesChartDataset['source'] = []
+): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
+	const source: MultiSeriesChartDataset['source'] = []
 	for (const input of rows) {
 		const parsedX = toXValue(input[xIndex], xAxisType)
 		if (parsedX == null && !(preserveNullCategory && xAxisType === 'category')) continue

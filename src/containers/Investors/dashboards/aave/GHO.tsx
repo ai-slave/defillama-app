@@ -217,7 +217,6 @@ export default function GHO() {
 								dataset={borrowApyDataset}
 								charts={BORROW_APY_CHART}
 								valueSymbol="%"
-								title=""
 								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}

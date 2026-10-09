@@ -452,7 +452,6 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						<MultiSeriesChart
 							height={chartHeight}
 							{...(hallmarks ? { hallmarks } : {})}
-							hallmarkStyle="mark-line"
 							{...(syncGroup ? { syncGroup } : {})}
 							dataset={chartView.dataset}
 							charts={chartView.charts}
@@ -461,7 +460,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 							}
 							groupBy={DASHBOARD_CHART_GROUPING[grouping]}
 							hideDataZoom
-							hideDefaultLegend={false}
+							showLegend
 							solidChartAreaStyle={chartView.solidChartAreaStyle}
 							exportButtons="hidden"
 							onReady={handleChartReady}

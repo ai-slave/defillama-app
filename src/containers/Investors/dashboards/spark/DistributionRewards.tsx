@@ -52,7 +52,7 @@ export default function DistributionRewards() {
 							charts={data.actualRevenue.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={data.actualRevenue.charts.length < 2}
+							showLegend={data.actualRevenue.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={actualRev.handleChartReady}
@@ -141,7 +141,7 @@ export default function DistributionRewards() {
 							charts={data.xrSusds.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={data.xrSusds.charts.length < 2}
+							showLegend={data.xrSusds.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={xrSusds.handleChartReady}
@@ -170,7 +170,7 @@ export default function DistributionRewards() {
 							charts={data.xrSusdc.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={data.xrSusdc.charts.length < 2}
+							showLegend={data.xrSusdc.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={xrSusdc.handleChartReady}

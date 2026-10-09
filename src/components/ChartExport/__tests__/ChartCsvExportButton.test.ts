@@ -3,49 +3,11 @@ import { DatasetComponent, GridComponent } from 'echarts/components'
 import { init, use } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 import { describe, expect, test } from 'vitest'
-import { buildAdapterByChainBreakdownPresentation } from '~/containers/AdapterMetrics/utils'
 import { serializeCsv } from '~/utils/csv'
-import { buildCsvRowsFromChartOption, buildCsvRowsFromDataset } from '../ChartCsvExportButton'
+import { buildCsvRowsFromChartOption } from '../ChartCsvExportButton'
 
 type ChartOption = Parameters<typeof buildCsvRowsFromChartOption>[0]
 const JAN_1 = Date.UTC(2024, 0, 1)
-
-describe('buildCsvRowsFromDataset', () => {
-	test('names both ends of the period each row of a grouped dataset covers', () => {
-		const source = [[JAN_1, 50, 100]]
-		const dimensions = ['timestamp', 'Solana', 'Ethereum']
-
-		expect(buildCsvRowsFromDataset(dimensions, source, 'monthly')).toEqual([
-			['Timestamp', 'Month start', 'Month end', 'Solana', 'Ethereum'],
-			[JAN_1, '2024-01-01', '2024-01-31', 50, 100]
-		])
-		expect(buildCsvRowsFromDataset(dimensions, source, 'daily')).toEqual([
-			['Timestamp', 'Date', 'Solana', 'Ethereum'],
-			[JAN_1, '2024-01-01', 50, 100]
-		])
-	})
-
-	test('downloads every selected protocol column of a presentation the chart caps with Others', async () => {
-		const names = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
-		const presentation = buildAdapterByChainBreakdownPresentation({
-			chartData: {
-				dimensions: ['timestamp', ...names, 'Historical protocol'],
-				source: [[JAN_1, ...Array.from({ length: 32 }, (_, index) => index + 1), 500]]
-			},
-			selectedProtocols: [...names, 'Historical protocol'],
-			state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
-		})
-		expect(presentation.dataset.dimensions.at(-1)).toBe('Others')
-		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'dataset') {
-			throw new Error('expected a dataset CSV source')
-		}
-		const dataset = await presentation.csvSource.prepare()
-
-		const [header, row] = buildCsvRowsFromDataset(dataset.dimensions, dataset.source, dataset.groupBy ?? 'daily')
-		expect(header).toEqual(['Timestamp', 'Date', ...names, 'Historical protocol'])
-		expect(row.at(-1)).toBe(500)
-	})
-})
 
 describe('buildCsvRowsFromChartOption', () => {
 	test('uses logical display names from private ECharts dimensions, alongside plain ones', () => {

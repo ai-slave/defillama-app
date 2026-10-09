@@ -164,7 +164,6 @@ function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: Arra
 	}
 	if (c.valueSymbol !== undefined) patch.valueSymbol = c.valueSymbol
 	if (c.seriesColors !== undefined) patch.seriesColors = c.seriesColors
-	if (c.hallmarkStyle !== undefined) patch.hallmarkStyle = c.hallmarkStyle
 	if (c.hallmarks !== undefined) {
 		const hallmarks: Array<[number, string]> = []
 		for (const hallmark of c.hallmarks) hallmarks.push([hallmark[0], hallmark[1] ?? ''])
@@ -308,7 +307,6 @@ export function ChartStyleEditor({
 	const availableTypes = useMemo(() => compatibleTypes(config.axes?.x?.type), [config])
 	const perCategory = colorsPerCategory(draft)
 	const canReorder = !perCategory && (draft.series?.length ?? 0) > 1
-	const hasHallmarks = caps.showHallmarks && (draft.hallmarks?.length ?? 0) > 0
 	const canEditHallmarks = draft.axes?.x?.type === 'time'
 	const canLegend = LEGEND_TYPES.has(draft.type) && (draft.series?.length ?? 0) > 1
 
@@ -765,25 +763,6 @@ export function ChartStyleEditor({
 								>
 									+ Add annotation
 								</Button>
-							</div>
-						) : null}
-
-						{hasHallmarks ? (
-							<div className={section}>
-								<span className={sectionLabel}>Event markers</span>
-								<div className="flex flex-wrap gap-1.5">
-									{(['mark-line', 'event-rail'] as const).map((s) => (
-										<Button
-											key={s}
-											type="button"
-											size="sm"
-											variant={(draft.hallmarkStyle ?? 'mark-line') === s ? 'primary' : 'secondary'}
-											onClick={() => update((d) => (d.hallmarkStyle = s), 'immediate')}
-										>
-											{s === 'mark-line' ? 'Lines' : 'Event rail'}
-										</Button>
-									))}
-								</div>
 							</div>
 						) : null}
 

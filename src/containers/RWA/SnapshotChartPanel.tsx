@@ -171,7 +171,7 @@ export function RWASnapshotChartPanel({
 							<TreemapChart
 								treeData={presentation.treemap}
 								variant="rwa"
-								height="600px"
+								containerClassName={`${CHART_FILL} min-h-[600px]`}
 								valueLabel={valueLabel}
 								valueSymbol={valueSymbol}
 								onReady={handleChartReady}

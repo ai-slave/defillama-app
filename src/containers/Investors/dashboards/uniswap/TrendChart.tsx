@@ -237,7 +237,7 @@ export function SeriesTrendChart({
 						groupBy={groupBy}
 						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons="hidden"
 					/>
 				</Suspense>

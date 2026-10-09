@@ -40,7 +40,7 @@ interface ProtocolEmissionResultFields {
 	futures: { openInterest?: number; fundingRate?: number }
 	categories: { documented: Array<string>; realtime: Array<string> }
 	categoriesBreakdown: Record<string, Array<string>> | null
-	hallmarks: {
+	todayLine: {
 		documented: Array<[number, string]>
 		realtime: Array<[number, string]>
 	}

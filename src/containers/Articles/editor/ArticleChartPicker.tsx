@@ -194,7 +194,7 @@ function MultiPreview({
 				charts={charts}
 				valueSymbol="$"
 				groupBy="daily"
-				hideDefaultLegend={false}
+				showLegend
 				exportButtons="hidden"
 				hideDataZoom
 				height={heightPx}

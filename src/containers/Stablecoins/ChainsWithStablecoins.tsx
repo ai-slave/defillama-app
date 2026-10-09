@@ -41,6 +41,7 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -408,7 +409,7 @@ export function ChainsWithStablecoins({
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
 									}
 									variant="rwa"
-									height="600px"
+									containerClassName={`${CHART_FILL} min-h-[600px]`}
 									onReady={handleChartReady}
 									valueLabel="Market Cap"
 								/>
@@ -419,7 +420,7 @@ export function ChainsWithStablecoins({
 							data={deferredVolumeChartData}
 							isLoading={isVolumeChartLoading}
 							failedRead={queryReadFailed(volumeChartQuery) ? volumeChartQuery : null}
-							hideDefaultLegend={!showDefaultLegend}
+							showLegend={showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={deferredVolumeChart.groupBy}
 							onReady={handleChartReady}
@@ -429,7 +430,7 @@ export function ChainsWithStablecoins({
 							data={deferredSelectedChartData}
 							isLoading={isSelectedChartLoading}
 							failedRead={queryReadFailed(chartSeriesQuery) ? chartSeriesQuery : null}
-							hideDefaultLegend={!showDefaultLegend}
+							showLegend={showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
 						/>
@@ -446,7 +447,7 @@ function SelectedChainsChart({
 	data,
 	isLoading,
 	failedRead,
-	hideDefaultLegend,
+	showLegend,
 	selectedCharts,
 	groupBy,
 	onReady
@@ -454,7 +455,7 @@ function SelectedChainsChart({
 	data: StablecoinChartSeriesPayload | null
 	isLoading: boolean
 	failedRead: QueryRetry | null
-	hideDefaultLegend: boolean
+	showLegend: boolean
 	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
 	onReady: (instance: echarts.ECharts | null) => void
@@ -486,7 +487,7 @@ function SelectedChainsChart({
 				{...(data.expandTo100Percent === undefined ? {} : { expandTo100Percent: data.expandTo100Percent })}
 				valueSymbol={data.valueSymbol}
 				showTotalInTooltip={data.showTotalInTooltip}
-				hideDefaultLegend={hideDefaultLegend}
+				showLegend={showLegend}
 				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>

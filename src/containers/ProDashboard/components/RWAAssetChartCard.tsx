@@ -96,7 +96,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 							height={chartHeight}
 							dataset={filteredDataset}
 							charts={charts}
-							hideDefaultLegend={false}
+							showLegend
 							onReady={handleChartReady}
 						/>
 					) : (

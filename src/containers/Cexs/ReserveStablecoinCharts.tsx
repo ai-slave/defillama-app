@@ -115,7 +115,7 @@ function MultiSeriesChartCard({
 					containerClassName={CHART_FILL}
 					csvSource={presentation.csvSource}
 					{...(valueSymbol ? { valueSymbol } : {})}
-					hideDefaultLegend={false}
+					showLegend
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>

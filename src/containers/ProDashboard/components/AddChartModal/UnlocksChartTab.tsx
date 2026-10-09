@@ -73,7 +73,7 @@ export function UnlocksChartTab({
 	const [unlocksEndDate] = useState(() => Date.now() / 1000 + 30 * 24 * 60 * 60)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const [totalUnlocksColor] = useState(createRandomColor)
-	const todayHallmarks = useMemo<Array<[number, string]>>(
+	const todayLine = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)
@@ -273,8 +273,7 @@ export function UnlocksChartTab({
 						charts={totalCharts}
 						valueSymbol="$"
 						hideDataZoom
-						hallmarks={todayHallmarks}
-						hallmarkStyle="mark-line"
+						referenceLines={todayLine}
 						chartOptions={TOTAL_UNLOCKS_CHART_OPTIONS}
 						exportButtons="hidden"
 					/>
@@ -292,7 +291,7 @@ export function UnlocksChartTab({
 						charts={scheduleCharts}
 						selectedCharts={scheduleSelection.selectedCharts}
 						hideDataZoom
-						hallmarks={todayHallmarks}
+						referenceLines={todayLine}
 						valueSymbol=""
 					/>
 				</Suspense>

@@ -13,6 +13,8 @@ import { InvestorsSiteProvider } from '../SiteContext'
 // Real dashboard modules from the registry. Their data is out of scope here: every request answers 503,
 // so a tab that fetches shows its own error state.
 const fetchFixtures = installFixtureFetch()
+// A tab whose code arrives before its 503 renders its loading layout first, and chart toolbars there read the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/investors', query: {} }) }))
 
 describe('standalone IR shell', () => {
 	let container: HTMLDivElement

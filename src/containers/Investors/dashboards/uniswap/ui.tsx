@@ -537,7 +537,7 @@ export function TimeAreaCard({
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
 					containerClassName={CHART_FILL}
-					hideDefaultLegend={!multipleSeries}
+					showLegend={multipleSeries}
 					groupBy={groupBy}
 					exportButtons="hidden"
 					chartOptions={chartOptions}

@@ -251,7 +251,6 @@ export function ForksOverview({
 								csvSource={selectedDominance.csvSource}
 								stacked
 								expandTo100Percent
-								hideDefaultLegend
 								valueSymbol="%"
 								onReady={handleChartReady}
 							/>

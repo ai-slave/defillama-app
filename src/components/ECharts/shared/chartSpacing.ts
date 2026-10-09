@@ -29,11 +29,11 @@ export const CHART_ZOOM_RESERVE =
 export const CHART_LEGEND_RESERVE = 40
 
 /**
- * Hallmark markLine labels use `position: 'end'`, so their ink paints ABOVE the
+ * Reference line labels use `position: 'end'`, so their ink paints ABOVE the
  * plot rect: `distance` (6) + one ~17px line. Every label shares that single row
- * regardless of hallmark count, so this reserve is a constant, not a per-item sum.
+ * regardless of line count, so this reserve is a constant, not a per-item sum.
  */
-export const CHART_HALLMARK_LABEL_RESERVE = 24
+export const CHART_REFERENCE_LABEL_RESERVE = 24
 export const CHART_VERTICAL_LEGEND_RIGHT_INSET = 16
 
 /**

@@ -83,16 +83,9 @@ export function buildRenderPlan(
 			// Match legacy LlamaAI behavior only for charts that previously rendered through
 			// the old MultiSeriesChart component. Other cartesian charts keep MSC2 defaults.
 			// An explicit legend.show overrides that default.
-			const hideDefaultLegend =
-				config.legend?.show === true
-					? false
-					: config.legend?.show === false
-						? true
-						: usedLegacyMultiSeriesChart
-							? false
-							: undefined
-			if (hideDefaultLegend === undefined) delete rendererProps.hideDefaultLegend
-			else rendererProps.hideDefaultLegend = hideDefaultLegend
+			const showLegend = config.legend?.show ?? (usedLegacyMultiSeriesChart ? true : undefined)
+			if (showLegend === undefined) delete rendererProps.showLegend
+			else rendererProps.showLegend = showLegend
 
 			return {
 				rendererKind: 'cartesian',

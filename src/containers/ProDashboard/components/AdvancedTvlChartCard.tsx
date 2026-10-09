@@ -267,15 +267,12 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			/>
 		) : (
 			<MultiSeriesChart
-				title=""
 				{...(hallmarks ? { hallmarks } : {})}
-				hallmarkStyle="mark-line"
 				{...(syncGroup ? { syncGroup } : {})}
 				dataset={canonicalDataset}
 				charts={presentation.charts}
 				{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
 				valueSymbol={presentation.valueSymbol}
-				hideDefaultLegend
 				hideDataZoom={presentation.hideDataZoom}
 				solidChartAreaStyle={presentation.solidChartAreaStyle}
 				{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}

@@ -52,7 +52,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 					valueSymbol="$"
 					containerClassName={CHART_FILL}
 					hideDataZoom
-					hideDefaultLegend={false}
+					showLegend
 					exportButtons="hidden"
 					// Category options bring a tooltip formatter built for a labelled axis;
 					// without them the chart falls back to its time-series defaults and prints

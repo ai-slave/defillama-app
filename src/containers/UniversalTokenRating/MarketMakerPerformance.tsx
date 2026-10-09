@@ -329,7 +329,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 									valueSymbol={unit === 'percent' ? '%' : '$'}
 									chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
 									containerClassName={CHART_FILL}
-									hideDefaultLegend={false}
+									showLegend
 									hideDataZoom
 									exportButtons="hidden"
 								/>

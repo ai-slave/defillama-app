@@ -89,7 +89,7 @@ export function BridgeVolumeChart({
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}
 					{...(height !== undefined ? { height } : {})}
-					hideDefaultLegend={false}
+					showLegend
 					groupBy={deferredChartData.groupBy}
 					valueSymbol={deferredChartData.metricType === 'Volume' ? '$' : ''}
 					{...(onReady !== undefined ? { onReady } : {})}

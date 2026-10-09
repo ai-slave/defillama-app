@@ -231,7 +231,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							charts={data.monthlyGross.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={data.monthlyGross.charts.length < 2}
+							showLegend={data.monthlyGross.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={gross.handleChartReady}
@@ -253,7 +253,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							charts={data.monthlyNet.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={data.monthlyNet.charts.length < 2}
+							showLegend={data.monthlyNet.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={net.handleChartReady}
@@ -536,7 +536,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
 							onReady={treasury.handleChartReady}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -557,7 +557,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							valueSymbol=""
 							containerClassName={CHART_FILL}
 							onReady={buybacks.handleChartReady}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>

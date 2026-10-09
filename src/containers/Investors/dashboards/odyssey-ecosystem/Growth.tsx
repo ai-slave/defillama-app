@@ -398,7 +398,7 @@ export default function Growth() {
 								charts={perChainModels.activeUsers.charts}
 								valueSymbol=""
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -413,7 +413,7 @@ export default function Growth() {
 								charts={perChainModels.activePositions.charts}
 								valueSymbol=""
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -434,7 +434,7 @@ export default function Growth() {
 								charts={depositsModel.charts}
 								valueSymbol="$"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -533,7 +533,7 @@ export default function Growth() {
 								charts={marketComboModel.charts}
 								valueSymbol="%"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -556,7 +556,7 @@ export default function Growth() {
 								charts={morphoMarketModel.charts}
 								valueSymbol="$"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -584,7 +584,7 @@ export default function Growth() {
 											charts={model.charts}
 											valueSymbol="$"
 											containerClassName={CHART_FILL}
-											hideDefaultLegend={false}
+											showLegend
 											exportButtons="hidden"
 										/>
 									</Suspense>
@@ -620,7 +620,7 @@ export default function Growth() {
 								charts={spendVsTvl.model.charts}
 								valueSymbol="$"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>

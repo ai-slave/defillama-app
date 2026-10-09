@@ -160,12 +160,10 @@ export function BorrowedChartTab({
 				chartContent = (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							dataset={visibleDataset}
 							charts={charts}
 							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol="$"
-							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}
@@ -177,12 +175,10 @@ export function BorrowedChartTab({
 				chartContent = (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							dataset={visibleDataset}
 							charts={charts}
 							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol="$"
-							hideDefaultLegend
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}
@@ -201,12 +197,10 @@ export function BorrowedChartTab({
 				chartContent = (
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
-							title=""
 							dataset={visibleDataset}
 							charts={charts}
 							selectedCharts={runtimePresentation.selectedCharts}
 							valueSymbol=""
-							hideDefaultLegend
 							chartOptions={UNITLESS_CHART_OPTIONS}
 							csvSource={runtimePresentation.csvSource}
 							exportButtons={PREVIEW_EXPORTS}

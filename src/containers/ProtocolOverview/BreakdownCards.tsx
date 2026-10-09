@@ -279,7 +279,7 @@ export function BreakdownChartCard({
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						valueSymbol={deferredChart.isDominance ? '%' : valueSymbol}
 						{...(deferredChart.isDominance
 							? { stacked: true, expandTo100Percent: true }

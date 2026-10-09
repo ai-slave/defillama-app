@@ -1,5 +1,5 @@
 import { assert, describe, expect, test } from 'vitest'
-import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
+import { buildCsvRowsFromDataset, type ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
@@ -854,6 +854,28 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		if (presentation.kind !== 'bar') return
 		expect(presentation.dataset).toEqual({ dimensions: ['timestamp', 'timestamp'], source: [[timestamp, 25]] })
 		expect(presentation.charts[0]).toEqual(expect.objectContaining({ name: 'timestamp', encode: { x: 0, y: 1 } }))
+	})
+
+	test('downloads every selected protocol column of a presentation the chart caps with Others', async () => {
+		const timestamp = toMs(2024, 1, 1)
+		const names = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `Protocol ${index + 1}`)
+		const presentation = buildAdapterByChainBreakdownPresentation({
+			chartData: {
+				dimensions: ['timestamp', ...names, 'Historical protocol'],
+				source: [[timestamp, ...names.map((_, index) => index + 1), 500]]
+			},
+			selectedProtocols: [...names, 'Historical protocol'],
+			state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
+		})
+		expect(presentation.dataset.dimensions.at(-1)).toBe('Others')
+		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'dataset') {
+			throw new Error('expected a dataset CSV source')
+		}
+		const dataset = await presentation.csvSource.prepare()
+
+		const [header, row] = buildCsvRowsFromDataset(dataset.dimensions, dataset.source, dataset.groupBy ?? 'daily')
+		expect(header).toEqual(['Timestamp', 'Date', ...names, 'Historical protocol'])
+		expect(row.at(-1)).toBe(500)
 	})
 
 	test('keeps protocol colors stable after filtering', () => {

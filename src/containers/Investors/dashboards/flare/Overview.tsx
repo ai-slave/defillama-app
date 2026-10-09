@@ -52,7 +52,7 @@ export default function Overview() {
 						titleTooltip={tvl.titleTooltip}
 						headingAs="h3"
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						chartOptions={tvl.chartOptions}
 					/>
 				</Suspense>

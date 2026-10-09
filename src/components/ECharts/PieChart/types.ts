@@ -23,8 +23,8 @@ export interface IPieChartProps {
 	radius?: [string, string]
 	centerY?: `${number}%`
 	showLegend?: boolean
-	toRight?: number
-	formatTooltip?: (params: PieTooltipParams) => string
+	legendMinWidth?: number
+	tooltipFormatter?: (params: PieTooltipParams) => string
 	customLabel?: PieSeriesOption['label']
 	legendPosition?: Pick<LegendComponentOption, 'left' | 'right' | 'top' | 'bottom' | 'orient'>
 	legendTextStyle?: LegendComponentOption['textStyle']

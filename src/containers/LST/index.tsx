@@ -461,7 +461,6 @@ export function LSTOverview({
 													stacked
 													expandTo100Percent
 													containerClassName={CHART_FILL}
-													hideDefaultLegend
 													valueSymbol="%"
 													onReady={handleBreakdownReady}
 												/>
@@ -524,7 +523,6 @@ export function LSTOverview({
 												charts={selectedInflowsPresentation.charts}
 												csvSource={selectedInflowsPresentation.csvSource}
 												containerClassName={CHART_FILL}
-												hideDefaultLegend
 												groupBy={renderedGroupBy}
 												valueSymbol="ETH"
 												showTotalInTooltip

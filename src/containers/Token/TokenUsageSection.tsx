@@ -22,7 +22,7 @@ import {
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -271,7 +271,7 @@ export function TokenUsageSection({
 					<TreemapChart
 						treeData={treemapTreeData}
 						variant="rwa"
-						height="480px"
+						containerClassName={`${CHART_FILL} min-h-[480px]`}
 						valueLabel="Amount"
 						valueSymbol="$"
 						onReady={handleTreemapChartReady}

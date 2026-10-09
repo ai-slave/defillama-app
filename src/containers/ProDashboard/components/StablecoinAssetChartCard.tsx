@@ -201,10 +201,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					}
 				>
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						dataset={filteredDataset!}
 						charts={TOTAL_CIRCULATING_CHARTS}
@@ -226,10 +224,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					}
 				>
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						dataset={filteredDataset!}
 						charts={chainCharts}
@@ -272,10 +268,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					}
 				>
 					<MultiSeriesChart
-						title=""
 						height={chartHeight}
 						{...(hallmarks ? { hallmarks } : {})}
-						hallmarkStyle="mark-line"
 						{...(syncGroup ? { syncGroup } : {})}
 						valueSymbol="%"
 						dataset={filteredDataset!}

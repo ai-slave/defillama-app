@@ -203,7 +203,7 @@ export function ArticleChartBlock({
 								charts={charts}
 								valueSymbol={primarySymbol}
 								groupBy="daily"
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 								hideDataZoom
 								height="380px"

@@ -2,7 +2,7 @@ import type { BarSeriesOption, DefaultLabelFormatterCallbackParams, LineSeriesOp
 import * as echarts from 'echarts/core'
 import { CHART_COLORS } from '~/constants/colors'
 import type { ChartTheme } from '../shared/chartTheme'
-import type { buildHallmarksMarkLine } from './hallmarks'
+import type { buildReferenceMarkLine } from './referenceLines'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from './types'
 
 type NamedLineSeriesOption = Omit<LineSeriesOption, 'type'> & { name: string; type: 'line' }
@@ -75,7 +75,7 @@ export function buildMultiSeries({
 	expandTo100Percent,
 	solidChartAreaStyle,
 	chartTheme,
-	hallmarksMarkLine,
+	referenceMarkLine,
 	getChart,
 	validLegendIcons
 }: {
@@ -84,7 +84,7 @@ export function buildMultiSeries({
 	expandTo100Percent: boolean | undefined
 	solidChartAreaStyle: boolean
 	chartTheme: ChartTheme
-	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine> | undefined
+	referenceMarkLine?: ReturnType<typeof buildReferenceMarkLine> | undefined
 	/** Reads the live echarts instance when the end-label formatter paints. A getter rather than a ref
 	    object so nothing ref-shaped crosses render, which is what lets MultiSeriesChart compile. */
 	getChart?: GetChartInstance | undefined
@@ -170,8 +170,8 @@ export function buildMultiSeries({
 		}
 		if (chart.markLine != null) {
 			series.markLine = chart.markLine
-		} else if (output.length === 0 && hallmarksMarkLine) {
-			series.markLine = hallmarksMarkLine
+		} else if (output.length === 0 && referenceMarkLine) {
+			series.markLine = referenceMarkLine
 		}
 		if (chart.markArea != null) series.markArea = chart.markArea
 

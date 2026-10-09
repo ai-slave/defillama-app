@@ -275,7 +275,7 @@ export default function Revenue() {
 							valueSymbol=" NEAR"
 							containerClassName={CHART_FILL}
 							showTotalInTooltip
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -302,7 +302,7 @@ export default function Revenue() {
 							valueSymbol=" NEAR"
 							containerClassName={CHART_FILL}
 							showTotalInTooltip
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -350,7 +350,7 @@ export default function Revenue() {
 								valueSymbol=" NEAR"
 								chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>

@@ -4,6 +4,7 @@ import * as echarts from 'echarts/core'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { readTreemapViewportExportState } from '~/components/ChartExport/chartPngExport'
 import { divergingColor } from '~/constants/colors'
 import type { EquitiesTreemapNode, IEquitiesTreemapLeaf } from '~/containers/Equities/treemapData'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
@@ -67,13 +68,13 @@ test('keeps one chart through data and grouping changes, dropping a stale drill-
 		seriesIndex: 0,
 		dataIndex: 1
 	})
-	expect(instance).toHaveProperty('__llamaTreemapFocusNode')
+	expect(readTreemapViewportExportState(instance)).toMatchObject({ actionType: 'treemapZoomToNode' })
 
 	const grouped = [leaf(200)]
 	await render([{ name: 'Technology', value: [200, null], children: grouped }], grouped, onReady)
 
 	expect(chart()).toBe(instance)
-	expect(instance).not.toHaveProperty('__llamaTreemapFocusNode')
+	expect(readTreemapViewportExportState(instance)).toBeNull()
 	const [group] = (instance.getOption() as Record<string, any>).series[0].data
 	expect(group.name).toBe('Technology')
 	expect(group.children.map((child: IEquitiesTreemapLeaf) => child.value)).toEqual([[200, 1.5]])

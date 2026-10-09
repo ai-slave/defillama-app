@@ -216,7 +216,7 @@ export default function Tvl() {
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
 							chartOptions={ecoZoom}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -240,7 +240,7 @@ export default function Tvl() {
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
 							chartOptions={ethZoom}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -262,7 +262,7 @@ export default function Tvl() {
 									valueSymbol="$"
 									containerClassName={CHART_FILL}
 									chartOptions={zoom}
-									hideDefaultLegend={false}
+									showLegend
 									exportButtons="hidden"
 								/>
 							</Suspense>
@@ -380,7 +380,7 @@ export default function Tvl() {
 											charts={model.charts}
 											valueSymbol="$"
 											containerClassName={CHART_FILL}
-											hideDefaultLegend={false}
+											showLegend
 											exportButtons="hidden"
 										/>
 									</Suspense>

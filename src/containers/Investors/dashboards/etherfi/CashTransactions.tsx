@@ -140,7 +140,7 @@ export default function CashTransactions() {
 							dataset={transactionsByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
-							hideDefaultLegend={classCharts.length < 2}
+							showLegend={classCharts.length > 1}
 							chartOptions={SCROLL_LEGEND}
 							exportButtons={BAR_EXPORT}
 						/>
@@ -160,7 +160,7 @@ export default function CashTransactions() {
 							dataset={usersByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
-							hideDefaultLegend={classCharts.length < 2}
+							showLegend={classCharts.length > 1}
 							chartOptions={SCROLL_LEGEND}
 							exportButtons={BAR_EXPORT}
 						/>

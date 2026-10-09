@@ -538,7 +538,7 @@ export function PeggedAssetInfo({
 							data={selectedVolumeChartData}
 							isLoading={isVolumeChartLoading}
 							failedRead={queryReadFailed(volumeChartQuery) ? volumeChartQuery : null}
-							hideDefaultLegend={chartView !== 'byChain'}
+							showLegend={chartView === 'byChain'}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={deferredVolumeChart.groupBy}
 							onReady={handleChartReady}
@@ -548,7 +548,7 @@ export function PeggedAssetInfo({
 							data={selectedChartData}
 							isLoading={isSelectedChartLoading}
 							failedRead={!usesDefaultChartData && queryReadFailed(chartSeriesQuery) ? chartSeriesQuery : null}
-							hideDefaultLegend={!showDefaultLegend}
+							showLegend={showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
 						/>
@@ -637,7 +637,7 @@ function SelectedAssetChart({
 	data,
 	isLoading,
 	failedRead,
-	hideDefaultLegend,
+	showLegend,
 	selectedCharts,
 	groupBy,
 	onReady
@@ -645,7 +645,7 @@ function SelectedAssetChart({
 	data: StablecoinChartSeriesPayload | null
 	isLoading: boolean
 	failedRead: QueryRetry | null
-	hideDefaultLegend: boolean
+	showLegend: boolean
 	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
 	onReady: (instance: echarts.ECharts | null) => void
@@ -677,7 +677,7 @@ function SelectedAssetChart({
 				{...(data.expandTo100Percent === undefined ? {} : { expandTo100Percent: data.expandTo100Percent })}
 				valueSymbol={data.valueSymbol}
 				showTotalInTooltip={data.showTotalInTooltip}
-				hideDefaultLegend={hideDefaultLegend}
+				showLegend={showLegend}
 				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>

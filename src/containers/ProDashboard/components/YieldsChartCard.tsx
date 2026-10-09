@@ -255,13 +255,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={currentChartDataset}
 								charts={tvlApyCharts}
 								valueSymbol=""
 								alwaysShowTooltip={false}
-								hideDefaultLegend={false}
+								showLegend
 								onReady={handleChartReady}
 							/>
 						) : null}
@@ -269,13 +268,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={currentChartDataset}
 								charts={SUPPLY_APY_CHARTS}
 								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 								valueSymbol="%"
-								hideDefaultLegend={false}
+								showLegend
 								onReady={handleChartReady}
 							/>
 						) : null}
@@ -283,7 +281,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={currentChartDataset}
 								charts={supplyApy7dCharts}
@@ -296,13 +293,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={currentChartDataset}
 								charts={BORROW_APY_CHARTS}
 								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
 								valueSymbol="%"
-								hideDefaultLegend={false}
+								showLegend
 								onReady={handleChartReady}
 							/>
 						) : null}
@@ -310,7 +306,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={currentChartDataset}
 								charts={netBorrowApyCharts}

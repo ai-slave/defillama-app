@@ -1,13 +1,6 @@
-export function buildHallmarksMarkLine({
-	hallmarks,
-	textColor,
-	dateInMs = false
-}: {
-	hallmarks: Array<[number, string]>
-	textColor: string
-	dateInMs?: boolean
-}) {
-	const sorted = hallmarks.toSorted((a, b) => +a[0] - +b[0])
+/** Dated dividers across the plot, each labelled at its top end. Timestamps are unix seconds. */
+export function buildReferenceMarkLine({ lines, textColor }: { lines: Array<[number, string]>; textColor: string }) {
+	const sorted = lines.toSorted((a, b) => +a[0] - +b[0])
 
 	return {
 		label: {
@@ -26,7 +19,7 @@ export function buildHallmarksMarkLine({
 			}
 		},
 		data: sorted.map(([date, event]) => {
-			const xAxis = dateInMs ? +date : +date * 1e3
+			const xAxis = +date * 1e3
 			return {
 				name: event,
 				xAxis

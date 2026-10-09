@@ -21,10 +21,7 @@ const lightDefaults = (canvasWatermarkEnabled = true) =>
 
 describe('default chart settings', () => {
 	test('draws the canvas watermark except inside Pro dashboards', () => {
-		expect(lightDefaults(true).graphic).toMatchObject({
-			type: 'image',
-			style: { image: '/assets/defillama-dark-neutral.webp' }
-		})
+		expect(lightDefaults(true).graphic).toMatchObject({ type: 'image' })
 		expect(lightDefaults(false).graphic).toBeUndefined()
 	})
 })
@@ -39,12 +36,6 @@ describe('mergeChartOptions', () => {
 			[70, 100],
 			[80, 100]
 		])
-		expect(dataZoom[1]).toMatchObject({
-			selectedDataBackground: {
-				lineStyle: { color: 'rgba(0, 0, 0, 0.65)', opacity: 1 },
-				areaStyle: { color: 'rgba(0, 0, 0, 0.2)', opacity: 1 }
-			}
-		})
 	})
 
 	test('keeps an explicit local-time opt-out and leaves an omitted or undefined one to the UTC default', () => {

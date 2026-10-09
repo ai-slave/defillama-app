@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import MultiSeriesChart from '..'
 import { EChartsRenderVisibilityProvider } from '../../renderVisibility'
-import { ChartMotionContext } from '../../shared/chartMotion'
+import { CHART_DRAW_DURATION, ChartMotionContext } from '../../shared/chartMotion'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '../types'
 
 const CHARTS: Array<MultiSeriesChartSeriesConfig> = [{ type: 'line', name: 'Value', encode: { x: 0, y: 1 } }]
@@ -86,7 +86,7 @@ describe('MultiSeriesChart lifecycle', () => {
 
 	test('draws itself in once, then updates and scroll-away remounts without redrawing', async () => {
 		await render(<Chart motion="draw" />)
-		expect(option()).toMatchObject({ animation: true, animationDuration: 700, animationEasing: 'quarticOut' })
+		expect(option()).toMatchObject({ animation: true, animationDuration: CHART_DRAW_DURATION })
 
 		await render(<Chart motion="draw" dataset={dataset(10, 20)} />)
 		expect(option().animationDuration).toBe(0)
@@ -101,7 +101,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(option().animationDuration).toBe(0)
 
 		await render(<Chart motion="draw" />)
-		expect(option()).toMatchObject({ animation: true, animationDuration: 700 })
+		expect(option()).toMatchObject({ animation: true, animationDuration: CHART_DRAW_DURATION })
 	})
 
 	test('keeps a hidden legend series hidden after scrolling away and back', async () => {
@@ -110,11 +110,11 @@ describe('MultiSeriesChart lifecycle', () => {
 			{ type: 'line', name: 'Fees', encode: { x: 0, y: 2 } }
 		]
 		const twoSeries = { dimensions: ['timestamp', 'TVL', 'Fees'], source: [[Date.UTC(2026, 8, 20), 10, 1]] }
-		await render(<Chart charts={charts} dataset={twoSeries} hideDefaultLegend={false} />)
+		await render(<Chart charts={charts} dataset={twoSeries} showLegend />)
 		chart().dispatchAction({ type: 'legendUnSelect', name: 'Fees' })
 
-		await render(<Chart charts={charts} dataset={twoSeries} hideDefaultLegend={false} visible={false} />)
-		await render(<Chart charts={charts} dataset={twoSeries} hideDefaultLegend={false} />)
+		await render(<Chart charts={charts} dataset={twoSeries} showLegend visible={false} />)
+		await render(<Chart charts={charts} dataset={twoSeries} showLegend />)
 		await act(() => new Promise((resolve) => requestAnimationFrame(resolve)))
 
 		expect(option().legend[0].selected).toEqual({ TVL: true, Fees: false })
@@ -155,8 +155,7 @@ describe('MultiSeriesChart lifecycle', () => {
 				dataset={{ dimensions: ['timestamp', 'Short', 'Long'], source: [] }}
 				charts={charts}
 				selectedCharts={new Set(['Short'])}
-				hallmarks={[[15_000, 'Event']]}
-				hallmarksInMs
+				hallmarks={[[15, 'Event']]}
 				alwaysShowTooltip
 			/>
 		)
@@ -185,7 +184,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		}
 	})
 
-	test('mirrors hover to the charts of its sync group, after a remount and until it leaves the group', async () => {
+	test('mirrors hover to the charts of its sync group and its leave, after a remount and until it leaves the group', async () => {
 		const Pair = ({ targetVisible = true, targetGroup }: { targetVisible?: boolean; targetGroup?: string }) => (
 			<>
 				<div data-chart="source">
@@ -198,10 +197,11 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 		const chartIn = (name: string) =>
 			echarts.getInstanceByDom(container.querySelector(`[data-chart="${name}"] [_echarts_instance_]`)!)!
-		// Tooltips are appended to the body; the two charts carry different values to tell them apart.
+		// Tooltips are appended to the body; the two charts carry different values to tell them apart. A tooltip
+		// that fades out stays in place with `visibility: hidden`.
 		const shownTooltips = () =>
 			[...document.querySelectorAll<HTMLElement>('.defillama-echarts-tooltip')]
-				.filter((tooltip) => tooltip.style.display !== 'none')
+				.filter((tooltip) => tooltip.style.display !== 'none' && tooltip.style.visibility !== 'hidden')
 				.map((tooltip) => tooltip.textContent)
 				.join(' | ')
 		const hoverSource = (dataIndex: number) =>
@@ -210,6 +210,13 @@ describe('MultiSeriesChart lifecycle', () => {
 		await render(<Pair targetGroup="pro-dashboard-1" />)
 		await hoverSource(1)
 		expect(shownTooltips()).toContain('Value: $80')
+
+		// The pointer leaving the source hides the mirrored tooltip after ECharts' default 100ms hide delay.
+		await act(async () => {
+			chartIn('source').getZr().trigger('globalout', {})
+			await new Promise((resolve) => setTimeout(resolve, 150))
+		})
+		expect(shownTooltips()).not.toContain('Value: $80')
 
 		await render(<Pair targetGroup="pro-dashboard-1" targetVisible={false} />)
 		await render(<Pair targetGroup="pro-dashboard-1" />)

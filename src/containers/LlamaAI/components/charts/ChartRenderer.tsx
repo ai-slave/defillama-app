@@ -173,10 +173,6 @@ function removeAdaptedChartTitle(adaptedChart: AdaptedChartData): AdaptedChartDa
 			const { title: _title, ...props } = adaptedChart.props
 			return { ...adaptedChart, props }
 		}
-		case 'scatter': {
-			const { title: _title, ...props } = adaptedChart.props
-			return { ...adaptedChart, props }
-		}
 		default:
 			return adaptedChart
 	}

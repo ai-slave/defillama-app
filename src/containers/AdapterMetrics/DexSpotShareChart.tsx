@@ -110,7 +110,6 @@ export function DexSpotShareChart({
 							valueSymbol="%"
 							groupBy={groupBy}
 							containerClassName={CHART_FILL}
-							hideDefaultLegend
 							exportButtons="hidden"
 							onReady={handleChartReady}
 						/>

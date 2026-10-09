@@ -181,14 +181,14 @@ function topAssetShare(perAsset: RWAPositionalChartDataset): Array<[number, numb
 	return out
 }
 
-/** A milestone dated YYYY-MM or YYYY-MM-DD becomes a hallmark at the start of that period, UTC. */
+/** A milestone dated YYYY-MM or YYYY-MM-DD becomes a hallmark at the start of that period, UTC, in unix seconds. */
 export function getRwaMilestoneHallmarks(milestones: Array<RWAPlatformMilestone>): Array<[number, string]> {
 	const hallmarks: Array<[number, string]> = []
 	for (const milestone of milestones) {
 		const match = milestone.date?.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/)
 		if (!match) continue
 		const [, year, month, day] = match
-		hallmarks.push([Date.UTC(Number(year), Number(month) - 1, day ? Number(day) : 1), milestone.event])
+		hallmarks.push([Date.UTC(Number(year), Number(month) - 1, day ? Number(day) : 1) / 1e3, milestone.event])
 	}
 	return hallmarks.sort((a, b) => a[0] - b[0])
 }

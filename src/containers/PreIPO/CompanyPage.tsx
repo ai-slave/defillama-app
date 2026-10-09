@@ -92,7 +92,7 @@ export function PreIpoCompanyPage({
 								charts={chart.charts}
 								chartOptions={{ xAxis: { max: chart.xAxisMaxTimestamp } }}
 								valueSymbol="$"
-								hideDefaultLegend={false}
+								showLegend
 								title={HISTORY_CHART_TITLE}
 								exportButtons={{
 									png: true,

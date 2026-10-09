@@ -197,7 +197,7 @@ export default function Incentives() {
 							chartOptions={POOL_CHART_OPTIONS}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>

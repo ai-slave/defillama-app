@@ -93,11 +93,8 @@ export default function ProtocolChart({
 			{...(groupBy !== undefined ? { groupBy } : {})}
 			{...(hallmarks !== null ? { hallmarks } : {})}
 			rangeHallmarks={rangeHallmarks}
-			hallmarksInMs
 			containerClassName={CHART_FILL}
 			hideDataZoom={effectiveHideDataZoom}
-			autoHideDataZoom={false}
-			hideDefaultLegend
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}
 			{...(onReady !== undefined ? { onReady } : {})}

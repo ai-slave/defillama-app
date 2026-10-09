@@ -341,7 +341,7 @@ export default function Ecosystem() {
 							dataset={data.fees.dataset}
 							charts={data.fees.charts}
 							valueSymbol="$"
-							hideDefaultLegend={data.fees.charts.length < 2}
+							showLegend={data.fees.charts.length > 1}
 							stacked
 							chartOptions={data.fees.chartOptions}
 							exportButtons={CSV_ONLY_EXPORT}
@@ -382,7 +382,7 @@ export default function Ecosystem() {
 							dataset={data.dexVolume.dataset}
 							charts={data.dexVolume.charts}
 							valueSymbol="$"
-							hideDefaultLegend={data.dexVolume.charts.length < 2}
+							showLegend={data.dexVolume.charts.length > 1}
 							stacked
 							chartOptions={data.dexVolume.chartOptions}
 							exportButtons={CSV_ONLY_EXPORT}

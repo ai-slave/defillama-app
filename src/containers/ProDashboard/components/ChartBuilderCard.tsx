@@ -573,14 +573,13 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							<MultiSeriesChart
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={chartView.dataset}
 								charts={chartView.charts}
 								valueSymbol={displayAs === 'percentage' ? '%' : '$'}
 								groupBy={DASHBOARD_CHART_GROUPING[builder.grouping ?? 'day']}
 								hideDataZoom
-								hideDefaultLegend={false}
+								showLegend
 								solidChartAreaStyle={config.chartType === 'stackedArea'}
 								exportButtons="hidden"
 								onReady={handleChartReady}

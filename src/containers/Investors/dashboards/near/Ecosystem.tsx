@@ -288,7 +288,7 @@ export default function Ecosystem() {
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
 							showTotalInTooltip
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -310,7 +310,7 @@ export default function Ecosystem() {
 								valueSymbol="$"
 								containerClassName={CHART_FILL}
 								showTotalInTooltip
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -330,7 +330,7 @@ export default function Ecosystem() {
 								valueSymbol=""
 								containerClassName={CHART_FILL}
 								showTotalInTooltip
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -588,7 +588,7 @@ export default function Ecosystem() {
 							charts={supplyModel.charts}
 							valueSymbol=" NEAR"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>

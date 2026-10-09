@@ -6,7 +6,14 @@ import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedT
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -14,7 +21,6 @@ import { formatCompactNumber, formatNumber, formatPercent, formatPercentChange, 
 import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
-const TREEMAP_HEIGHT = '420px'
 
 export function formatMetric(
 	value: number | null | undefined,
@@ -135,18 +141,14 @@ export function AggregateTreemap({
 					{nodes.length > 0 ? <ChartRestoreButton chartInstance={chartInstance} /> : null}
 				</div>
 			</ChartPanelToolbar>
-			<ChartPanelBody>
-				<Suspense
-					fallback={
-						<ChartPanelBodyFallback style={{ minHeight: TREEMAP_HEIGHT }}>Loading chart…</ChartPanelBodyFallback>
-					}
-				>
+			<ChartPanelBody className="min-h-[420px]">
+				<Suspense fallback={<ChartPanelBodyFallback className="min-h-[420px]">Loading chart…</ChartPanelBodyFallback>}>
 					<TreemapChart
 						treeData={nodes}
 						variant="rwa"
 						colorMode="categorical"
 						valueLabel={valueLabel}
-						height={TREEMAP_HEIGHT}
+						containerClassName={`${CHART_FILL} min-h-[420px]`}
 						onReady={handleChartReady}
 						showRootLabel={false}
 					/>

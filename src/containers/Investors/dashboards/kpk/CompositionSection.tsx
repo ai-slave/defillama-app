@@ -172,7 +172,6 @@ export function CompositionSection({
 									charts={model.charts}
 									chartOptions={chartOptions}
 									valueSymbol="$"
-									title=""
 									containerClassName={CHART_FILL}
 									solidChartAreaStyle
 								/>

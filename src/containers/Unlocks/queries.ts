@@ -387,7 +387,7 @@ interface ProtocolEmissionsScheduleData {
 		realtime: EmissionsChartConfig
 	}
 	categories: { documented: Array<string>; realtime: Array<string> }
-	hallmarks: { documented: Array<[number, string]>; realtime: Array<[number, string]> }
+	todayLine: { documented: Array<[number, string]>; realtime: Array<[number, string]> }
 }
 
 export async function getProtocolEmissionsScheduleData(protocolName: string): Promise<ProtocolEmissionsScheduleData> {
@@ -398,7 +398,7 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 		},
 		chartsConfigs: { documented: [], realtime: [] },
 		categories: { documented: [], realtime: [] },
-		hallmarks: { documented: [], realtime: [] }
+		todayLine: { documented: [], realtime: [] }
 	}
 
 	const res = await fetchProtocolEmission(protocolName)
@@ -437,7 +437,7 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 		datasets,
 		chartsConfigs,
 		categories,
-		hallmarks: {
+		todayLine: {
 			documented: documentedHasData ? [[nowSec, 'Today']] : [],
 			realtime: realtimeHasData ? [[nowSec, 'Today']] : []
 		}
@@ -915,7 +915,7 @@ export function createEmptyProtocolEmissionResult(): EmptyProtocolEmissionResult
 		futures: {},
 		categories: { documented: [], realtime: [] },
 		categoriesBreakdown: null,
-		hallmarks: { documented: [], realtime: [] },
+		todayLine: { documented: [], realtime: [] },
 		name: null,
 		tokenPrice: {},
 		unlockUsdChart: null,
@@ -1061,7 +1061,7 @@ export const getProtocolEmissons = async (
 		futures: futures ?? {},
 		categories: emissionCategories,
 		categoriesBreakdown: projectionModel.categoriesBreakdown,
-		hallmarks: {
+		todayLine: {
 			documented: documentedData.data.length > 0 ? [[nowSec, 'Today']] : [],
 			realtime: realTimeData && realTimeData.data.length > 0 ? [[nowSec, 'Today']] : []
 		},

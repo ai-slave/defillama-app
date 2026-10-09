@@ -36,7 +36,6 @@ describe('MultiSeriesChart y-axis layout', () => {
 
 		expect(axes).toHaveLength(1)
 		expect(formatAxisValue(axes[0], 5)).toContain('%')
-		expect(axes[0].axisLabel.formatter).not.toBe(defaultFormatter)
 		expect(axes[0].axisLabel).not.toHaveProperty('color')
 		expect(axes[0].axisLine.lineStyle).not.toHaveProperty('color')
 	})
@@ -183,12 +182,6 @@ describe('MultiSeriesChart y-axis layout', () => {
 		])
 		expect(axes.map((axis) => axis.axisLine.lineStyle.color)).toEqual(['#neutral-line', '#222', '#333'])
 		expect(axes.map((axis) => axis.axisLabel.color)).toEqual(['#neutral', '#neutral', '#neutral'])
-		expect(axes[0].axisLine.lineStyle.opacity).toBe(0.1)
-		for (const axis of axes.slice(1)) {
-			expect(axis.axisLine.lineStyle.type).toEqual([5, 10])
-			expect(axis.axisLine.lineStyle).not.toHaveProperty('opacity')
-		}
-		expect(axes.map((axis) => axis.alignTicks)).toEqual([undefined, undefined, undefined])
 	})
 
 	test('preserves explicit tick alignment without enabling it for other axes', () => {

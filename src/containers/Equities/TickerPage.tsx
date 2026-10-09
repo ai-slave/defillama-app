@@ -415,7 +415,6 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									charts={activePriceHistoryChart.charts}
 									chartOptions={priceHistoryChartOptions}
 									valueSymbol="$"
-									title=""
 									hideDataZoom={intradayPriceHistoryChart !== null || activePriceHistoryChart.dataset.source.length < 2}
 									onReady={handlePriceChartReady}
 								/>
@@ -471,7 +470,6 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							charts={activeFundamentalsChart.charts}
 							chartOptions={fundamentalsChartOptions}
 							valueSymbol={FUNDAMENTAL_CHART_VALUE_SYMBOLS[activeFundamentalMetric]}
-							title=""
 							hideDataZoom={activeFundamentalsChart.dataset.source.length < 2}
 							onReady={handleFundamentalsChartReady}
 						/>

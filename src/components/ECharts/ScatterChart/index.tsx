@@ -81,7 +81,6 @@ function normalizeScatterTooltipParams(params: unknown): ScatterTooltipParams {
 
 function ScatterChart({
 	chartData,
-	title,
 	xAxisLabel,
 	yAxisLabel,
 	valueSymbol = '',
@@ -250,7 +249,7 @@ function ScatterChart({
 					}
 				}
 
-				const seriesName = isScatterChartPoint(point) && point.seriesName ? point.seriesName : title || 'Data'
+				const seriesName = isScatterChartPoint(point) && point.seriesName ? point.seriesName : 'Data'
 				let group = groupedData.get(seriesName)
 				if (!group) {
 					group = { data: [] }
@@ -450,16 +449,6 @@ function ScatterChart({
 			labelLayout: { hideOverlap: true },
 			series
 		}
-		if (title) {
-			option.title = {
-				text: title,
-				textStyle: {
-					fontFamily: 'sans-serif',
-					fontWeight: 600,
-					color: chartTheme.text
-				}
-			}
-		}
 		if (showCategoricalLegend) {
 			option.legend = {
 				type: 'scroll',
@@ -492,7 +481,6 @@ function ScatterChart({
 		xAxisLabel,
 		yAxisLabel,
 		valueSymbol,
-		title,
 		showLabels,
 		entityType,
 		logScale,

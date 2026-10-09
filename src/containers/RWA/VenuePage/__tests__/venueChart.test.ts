@@ -60,7 +60,7 @@ describe('buildRwaVenueEntityChart', () => {
 
 	test('Events marks the milestones on the time axis', () => {
 		const chart = buildRwaVenueEntityChart(['openInterest', 'events'], inputs)
-		expect(chart.hallmarks).toEqual([[Date.UTC(2025, 5, 1), 'Mainnet']])
+		expect(chart.hallmarks).toEqual([[Date.UTC(2025, 5, 1) / 1e3, 'Mainnet']])
 	})
 })
 

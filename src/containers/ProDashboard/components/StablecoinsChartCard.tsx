@@ -229,10 +229,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 							/>
 						) : (
 							<MultiSeriesChart
-								title=""
 								height={chartHeight}
 								{...(hallmarks ? { hallmarks } : {})}
-								hallmarkStyle="mark-line"
 								{...(syncGroup ? { syncGroup } : {})}
 								dataset={dataset}
 								charts={charts}

@@ -279,7 +279,7 @@ export default function Revenue() {
 							charts={dailyModel.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>
@@ -317,7 +317,7 @@ export default function Revenue() {
 								valueSymbol="$"
 								groupBy="monthly"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 							/>
 						</Suspense>
@@ -334,7 +334,7 @@ export default function Revenue() {
 							charts={holderModel.charts}
 							valueSymbol="$"
 							containerClassName={CHART_FILL}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>

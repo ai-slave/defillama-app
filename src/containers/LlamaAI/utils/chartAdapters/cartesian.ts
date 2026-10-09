@@ -33,15 +33,7 @@ const normalizeHallmarks = (hallmarks?: Array<[number] | [number, string]>): Arr
 export type LlamaAICartesianChartProps = Omit<
 	Pick<
 		IMultiSeriesChartProps,
-		| 'dataset'
-		| 'charts'
-		| 'chartOptions'
-		| 'valueSymbol'
-		| 'groupBy'
-		| 'hallmarks'
-		| 'hallmarkStyle'
-		| 'hideDataZoom'
-		| 'categoryLogos'
+		'dataset' | 'charts' | 'chartOptions' | 'valueSymbol' | 'groupBy' | 'hallmarks' | 'hideDataZoom' | 'categoryLogos'
 	>,
 	'dataset'
 > & { dataset: MultiSeriesChartDataset }
@@ -551,7 +543,6 @@ export function adaptCartesianChartData(
 		if (axisType === 'time') props.groupBy = 'daily'
 		if (axisType === 'time' && config.hallmarks?.length) {
 			props.hallmarks = normalizeHallmarks(config.hallmarks)
-			props.hallmarkStyle = config.hallmarkStyle ?? 'mark-line'
 		}
 		if (categoryLogos !== undefined) props.categoryLogos = categoryLogos
 

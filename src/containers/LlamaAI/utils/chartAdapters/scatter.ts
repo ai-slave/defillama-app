@@ -52,7 +52,6 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 			chartType: 'scatter',
 			props: {
 				chartData: scatterData,
-				title: config.title,
 				xAxisLabel,
 				yAxisLabel,
 				valueSymbol: config.valueSymbol || '',
@@ -72,7 +71,7 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 		console.error('ScatterChart adapter error:', error)
 		return {
 			chartType: 'scatter',
-			props: { chartData: [], title: 'Scatter chart error', height: '360px' },
+			props: { chartData: [], height: '360px' },
 			title: config.title || 'Scatter chart error',
 			description: `Failed to render scatter chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			defaultExportKind: 'scatter'

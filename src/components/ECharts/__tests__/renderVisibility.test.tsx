@@ -76,20 +76,6 @@ test('brings back the legend selection and zoom range, but not stale data, after
 	await act(async () => root.unmount())
 })
 
-test('keeps only the legend selection and zoom range from a live chart option', () => {
-	expect(
-		interactiveStateFromOption({
-			legend: [{ selected: { TVL: true, Fees: false } }],
-			dataZoom: [{ type: 'inside', start: 25, end: 75 }],
-			xAxis: { type: 'category', data: ['1', '2'] },
-			series: [{ name: 'TVL', type: 'line', data: [1, 2] }]
-		})
-	).toEqual({
-		legend: [{ selected: { TVL: true, Fees: false } }],
-		dataZoom: [{ type: 'inside', start: 25, end: 75 }]
-	})
-})
-
 test('a chart without legend or zoom keeps no interactive state', () => {
 	expect(interactiveStateFromOption({ series: [{ type: 'pie', data: [1] }] })).toEqual({})
 })

@@ -330,7 +330,7 @@ export default function Tokenomics() {
 						title={e.burnVsEmitTitle}
 						headingAs="h3"
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons={CSV_ONLY_EXPORT}
 						chartOptions={e.burnVsEmitChartOptions}
 					/>
@@ -387,7 +387,7 @@ export default function Tokenomics() {
 								charts={fire.charts}
 								valueSymbol="$"
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								exportButtons="hidden"
 								onReady={fireExport.handleChartReady}
 								chartOptions={fire.chartOptions}

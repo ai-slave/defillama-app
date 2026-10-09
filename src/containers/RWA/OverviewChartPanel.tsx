@@ -539,7 +539,7 @@ export function RWAOverviewChartPanel({
 									charts={groupedFlowChart.charts}
 									groupBy={groupedFlowChart.groupBy}
 									containerClassName={CHART_FILL}
-									hideDefaultLegend={false}
+									showLegend
 									valueSymbol="$"
 									onReady={handleMultiSeriesChartReady}
 								/>
@@ -571,7 +571,7 @@ export function RWAOverviewChartPanel({
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}
 								containerClassName={CHART_FILL}
-								hideDefaultLegend={false}
+								showLegend
 								expandTo100Percent={deferredTimeSeriesChart.isShare}
 								showTotalInTooltip={
 									!deferredTimeSeriesChart.isShare && !deferredTimeSeriesChart.dataset.dimensions.includes('Total')

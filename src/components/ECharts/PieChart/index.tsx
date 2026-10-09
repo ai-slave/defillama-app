@@ -63,8 +63,8 @@ function PieChart({
 	showLegend = false,
 	legendPosition,
 	legendTextStyle,
-	toRight,
-	formatTooltip,
+	legendMinWidth,
+	tooltipFormatter,
 	customLabel,
 	exportButtons,
 	csvSource = 'rendered-chart',
@@ -202,11 +202,11 @@ function PieChart({
 		}
 
 		// Determine legend box width.
-		// - If `toRight` is provided, treat it as a MIN (caller intent),
+		// - If `legendMinWidth` is provided, treat it as a MIN (caller intent),
 		//   but allow growing up to a cap to reduce unnecessary ellipsis.
 		// - If not provided, shrink-to-fit up to 200px.
-		const minWidth = typeof toRight === 'number' ? toRight : 0
-		const maxWidth = typeof toRight === 'number' ? Math.max(toRight, 420) : 200
+		const minWidth = typeof legendMinWidth === 'number' ? legendMinWidth : 0
+		const maxWidth = typeof legendMinWidth === 'number' ? Math.max(legendMinWidth, 420) : 200
 		let maxTextW = 0
 		for (const item of chartData) {
 			const pct = percentByName.get(item.name) ?? '0%'
@@ -234,7 +234,7 @@ function PieChart({
 			legendLabelByName: labelByName,
 			legendAlign: needsTruncation ? 'left' : 'right'
 		}
-	}, [showLegend, isSmall, legendPosition, legendTextStyle, toRight, chartData, percentByName])
+	}, [showLegend, isSmall, legendPosition, legendTextStyle, legendMinWidth, chartData, percentByName])
 
 	// Space reserved for legend + some breathing room to the card border.
 	const reservedRight = legendBoxWidth ? legendBoxWidth + 12 + 2 : 0
@@ -359,7 +359,7 @@ function PieChart({
 				confine: true,
 				formatter: (params: unknown) => {
 					const p = normalizePieTooltipParams(params)
-					return formatTooltip ? formatTooltip(p) : formatPieTooltip(p, valueSymbol)
+					return tooltipFormatter ? tooltipFormatter(p) : formatPieTooltip(p, valueSymbol)
 				}
 			},
 			grid: {
@@ -389,7 +389,7 @@ function PieChart({
 		chartData,
 		legendPosition,
 		legendTextStyle,
-		formatTooltip,
+		tooltipFormatter,
 		legendBoxWidth,
 		legendLabelByName,
 		legendAlign,

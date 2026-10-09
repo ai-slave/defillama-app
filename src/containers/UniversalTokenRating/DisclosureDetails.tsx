@@ -133,7 +133,7 @@ export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTo
 					valueSymbol="%"
 					chartOptions={VESTING_CHART_OPTIONS}
 					containerClassName={CHART_FILL}
-					hideDefaultLegend={false}
+					showLegend
 					hideDataZoom
 					exportButtons="hidden"
 				/>

@@ -342,7 +342,7 @@ function OverviewPreview({
 			{chartView === 'timeSeries' && timeSeriesDataset ? (
 				<MultiSeriesChart
 					dataset={timeSeriesDataset}
-					hideDefaultLegend={false}
+					showLegend
 					stacked
 					showTotalInTooltip={!chartDataset.dimensions.some(isRwaTotalSeriesLabel)}
 				/>
@@ -378,7 +378,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: A
 
 	return (
 		<Suspense fallback={<ChartPanelBodyFallback />}>
-			<MultiSeriesChart dataset={chartDataset} charts={charts} hideDefaultLegend={false} />
+			<MultiSeriesChart dataset={chartDataset} charts={charts} showLegend />
 		</Suspense>
 	)
 }

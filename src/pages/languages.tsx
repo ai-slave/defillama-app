@@ -5,7 +5,7 @@ import {
 	selectChartDatasetColumns
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
-	CanonicalMultiSeriesChartDataset,
+	MultiSeriesChartDataset,
 	IMultiSeriesChartProps,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
@@ -26,7 +26,7 @@ const MultiSeriesChart = React.lazy(
 ) as React.FC<IMultiSeriesChartProps>
 
 function buildDataset(langs: Record<string, Record<string, number>>): {
-	dataset: CanonicalMultiSeriesChartDataset
+	dataset: MultiSeriesChartDataset
 	keys: Array<string>
 } {
 	const keysSet = new Set<string>()
@@ -143,7 +143,7 @@ function LanguageSeriesChart({
 	stacked,
 	expandTo100Percent
 }: {
-	dataset: CanonicalMultiSeriesChartDataset
+	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 	title: string
 	label: 'Language' | 'Source'
@@ -215,7 +215,7 @@ function LanguageSeriesChart({
 					valueSymbol={expandTo100Percent ? '%' : '$'}
 					stacked={stacked}
 					expandTo100Percent={expandTo100Percent}
-					hideDefaultLegend={false}
+					showLegend
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>

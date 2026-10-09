@@ -25,8 +25,6 @@ export type MultiSeriesChartDataset = {
 	dimensions: Array<string>
 }
 
-export type CanonicalMultiSeriesChartDataset = MultiSeriesChartDataset
-
 export type MultiSeriesTimeSeriesRow = [timestampMs: number, ...values: Array<number | null | undefined>]
 
 export type MultiSeriesTimeSeriesDataset = {
@@ -117,15 +115,18 @@ export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic'
 }
 
 export interface IMultiSeriesChartProps {
+	/** Left out, every dataset column except `timestamp` plots as a line in palette order. */
 	charts?: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts?: Set<string>
 	chartOptions?: MultiSeriesChartOptions
 	height?: string
 	groupBy?: ChartTimeGroupingWithCumulative
-	hallmarks?: Array<[number, string]>
-	rangeHallmarks?: Array<[[number, number], string]> | null
-	hallmarksInMs?: boolean
-	hallmarkStyle?: 'event-rail' | 'mark-line'
+	/** Events in unix seconds, drawn on the event rail under the plot (README → Event rail). */
+	hallmarks?: Array<[timestampSec: number, label: string]>
+	/** Spans in unix seconds, drawn as bands on the event rail. */
+	rangeHallmarks?: Array<[[startSec: number, endSec: number], label: string]> | null
+	/** Dated dividers in unix seconds, drawn as a labelled line across the plot, such as Today on an unlock schedule. Events go in `hallmarks`. */
+	referenceLines?: Array<[timestampSec: number, label: string]>
 	/** A categorical state per period, drawn as a thin row under the plot. Not drawn beside an event rail. */
 	stateTimeline?: StateTimelineOption | null
 	expandTo100Percent?: boolean
@@ -134,11 +135,11 @@ export interface IMultiSeriesChartProps {
 	containerClassName?: string
 	stacked?: boolean
 	solidChartAreaStyle?: boolean
+	/** The zoom slider also hides on its own when the chart has fewer than two rows. */
 	hideDataZoom?: boolean
-	/** Disable only when a caller has an established data-zoom rule independent of dataset row count. */
-	autoHideDataZoom?: boolean
 	onReady?: (instance: echarts.ECharts | null) => void
-	hideDefaultLegend?: boolean
+	/** Draws the legend above the plot. Hidden by default, as on PieChart. */
+	showLegend?: boolean
 	dataset: MultiSeriesChartDataset
 	/** Explicit complete export source when `dataset` is only a visual presentation. */
 	csvSource?: ChartCsvSource

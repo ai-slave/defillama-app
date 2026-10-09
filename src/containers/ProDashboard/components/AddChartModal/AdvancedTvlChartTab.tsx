@@ -238,11 +238,9 @@ export function AdvancedTvlChartTab({
 					<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 				) : (
 					<MultiSeriesChart
-						title=""
 						dataset={canonicalDataset}
 						charts={presentation.charts}
 						valueSymbol={presentation.valueSymbol}
-						hideDefaultLegend
 						hideDataZoom={presentation.hideDataZoom}
 						solidChartAreaStyle={presentation.solidChartAreaStyle}
 						{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}

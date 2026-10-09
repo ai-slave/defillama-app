@@ -121,7 +121,7 @@ function ChainsChartCard({
 					charts={charts}
 					containerClassName={CHART_FILL}
 					csvSource={csvSource}
-					hideDefaultLegend={false}
+					showLegend
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
 					showTotalInTooltip
@@ -193,7 +193,7 @@ function TokenValuesUSDChartCard({
 					charts={charts}
 					containerClassName={CHART_FILL}
 					csvSource={csvSource}
-					hideDefaultLegend={false}
+					showLegend
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
 					showTotalInTooltip
@@ -347,7 +347,7 @@ function TokenBalancesRawChartCard({
 					charts={charts}
 					containerClassName={CHART_FILL}
 					csvSource={csvSource}
-					hideDefaultLegend={false}
+					showLegend
 					valueSymbol=""
 					selectedCharts={selectedCharts}
 					onReady={handleChartReady}
@@ -452,7 +452,7 @@ function InflowsByTokenChartCard({
 					charts={charts}
 					containerClassName={CHART_FILL}
 					csvSource={csvSource}
-					hideDefaultLegend={false}
+					showLegend
 					valueSymbol="$"
 					selectedCharts={selectedCharts}
 					{...(selectedCharts.size > 1

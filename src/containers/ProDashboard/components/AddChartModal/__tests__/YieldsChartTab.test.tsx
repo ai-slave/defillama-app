@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { YieldsChartTab } from '../YieldsChartTab'
@@ -14,6 +15,8 @@ let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	// The lazy chart can load before a test ends, and happy-dom has no canvas to paint it on.
+	installChartCanvas()
 	// The pool list and the pool's history are still loading, as on the first open of a saved card.
 	const pending = () => new Promise<Response>(() => {})
 	http.serve({ 'https://': pending, 'http://': pending, '/': pending })
@@ -24,6 +27,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	vi.restoreAllMocks()
 })
 
 async function renderTab(onChartTypeChange = vi.fn()) {

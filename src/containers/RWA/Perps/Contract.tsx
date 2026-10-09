@@ -384,7 +384,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					<MultiSeriesChart
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
-						hideDefaultLegend={false}
+						showLegend
 						groupBy={deferredChartSpec.groupBy}
 						valueSymbol="$"
 						onReady={handleChartReady}

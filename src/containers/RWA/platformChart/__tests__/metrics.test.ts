@@ -141,7 +141,7 @@ describe('buildRwaPlatformEntityChart', () => {
 
 	test('turns the dated milestones into hallmarks and skips the rest', () => {
 		const chart = buildRwaPlatformEntityChart(['activeMcap', 'events'], inputs)
-		expect(chart.hallmarks).toEqual([[Date.UTC(2026, 4, 1), 'FINRA approval']])
+		expect(chart.hallmarks).toEqual([[Date.UTC(2026, 4, 1) / 1e3, 'FINRA approval']])
 		expect(chart.series).toHaveLength(1)
 	})
 

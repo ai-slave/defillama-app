@@ -190,7 +190,6 @@ export function OraclesByChain({
 								csvSource={selectedDominance.csvSource}
 								stacked
 								expandTo100Percent
-								hideDefaultLegend
 								valueSymbol="%"
 								onReady={handleChartReady}
 							/>

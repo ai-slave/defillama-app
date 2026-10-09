@@ -333,7 +333,12 @@ export function CategoryPerformanceContainer({
 								onReady={onChartReady}
 							/>
 						) : (
-							<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" onReady={onChartReady} />
+							<TreemapChart
+								treeData={treemapTreeData}
+								variant="narrative"
+								containerClassName={`${CHART_FILL} min-h-[533px]`}
+								onReady={onChartReady}
+							/>
 						)}
 					</React.Suspense>
 				</ChartPanelBody>

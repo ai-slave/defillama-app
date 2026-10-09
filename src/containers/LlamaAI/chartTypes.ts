@@ -51,7 +51,6 @@ export interface ChartConfiguration {
 		metrics: Array<string>
 	}
 	hallmarks?: Array<[number] | [number, string]>
-	hallmarkStyle?: 'event-rail' | 'mark-line'
 	legend?: { show?: boolean }
 	displayOptions?: {
 		canStack: boolean
@@ -77,7 +76,6 @@ export interface ChartStylePatch {
 	defaultStacked?: boolean
 	defaultPercentage?: boolean
 	defaultLogScale?: boolean
-	hallmarkStyle?: 'mark-line' | 'event-rail'
 	hallmarks?: Array<[number, string]>
 	legend?: { show?: boolean }
 	xAxisLabel?: string
@@ -227,13 +225,6 @@ export function isChartConfiguration(value: unknown): value is ChartConfiguratio
 	if (!Array.isArray(value.series) || value.series.length === 0 || !value.series.every(isChartSeries)) return false
 	if (!isDataTransformation(value.dataTransformation)) return false
 	if (value.hallmarks !== undefined && !isHallmarks(value.hallmarks)) return false
-	if (
-		value.hallmarkStyle !== undefined &&
-		value.hallmarkStyle !== 'event-rail' &&
-		value.hallmarkStyle !== 'mark-line'
-	) {
-		return false
-	}
 	if (value.legend !== undefined && (!isChartDataRow(value.legend) || !hasOptionalBoolean(value.legend, 'show'))) {
 		return false
 	}

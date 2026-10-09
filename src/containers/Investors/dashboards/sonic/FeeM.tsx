@@ -5,7 +5,14 @@ import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/Treema
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -28,16 +35,18 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 		treeData.push({ name: item.name || 'Sonic', value: [item.collectedRewards, null, null] })
 	}
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback />}>
-			<TreemapChart
-				treeData={treeData}
-				variant="flat"
-				colorMode="categorical"
-				valueLabel="Collected"
-				valueSymbol="S"
-				height="360px"
-			/>
-		</Suspense>
+		<ChartPanelBody>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<TreemapChart
+					treeData={treeData}
+					variant="flat"
+					colorMode="categorical"
+					valueLabel="Collected"
+					valueSymbol="S"
+					containerClassName={CHART_FILL}
+				/>
+			</Suspense>
+		</ChartPanelBody>
 	)
 }
 
@@ -199,7 +208,7 @@ export default function FeeM() {
 							valueSymbol=""
 							containerClassName={CHART_FILL}
 							chartOptions={lastNDaysZoom(data.dailyStatsLength)}
-							hideDefaultLegend={false}
+							showLegend
 							exportButtons="hidden"
 						/>
 					</Suspense>

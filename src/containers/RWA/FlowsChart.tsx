@@ -79,7 +79,7 @@ export function RWAFlowsChart({
 			charts={chart.charts}
 			groupBy={chart.groupBy}
 			chartOptions={chartOptions}
-			hideDefaultLegend={false}
+			showLegend
 			showTotalInTooltip={false}
 			{...(containerClassName ? { containerClassName } : {})}
 			onReady={handleReady}

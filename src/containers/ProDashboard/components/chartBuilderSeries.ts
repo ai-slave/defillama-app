@@ -1,7 +1,4 @@
-import type {
-	CanonicalMultiSeriesChartDataset,
-	MultiSeriesChartSeriesConfig
-} from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChartSeries } from '~/utils/breakdowns'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
 import { filterDataByTimePeriod } from '../queries'
@@ -15,7 +12,7 @@ const SNAPSHOT_METRICS = new Set(['tvl', 'stablecoins', 'open-interest'])
 export const isChartBuilderSnapshotMetric = (metric: string): boolean => SNAPSHOT_METRICS.has(metric)
 
 export type ChartBuilderSeriesView = {
-	dataset: CanonicalMultiSeriesChartDataset
+	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 	seriesNames: Array<string>
 }

@@ -84,11 +84,11 @@ function ChartRenderer({
 		]
 	}, [color, seriesName, seriesType])
 
-	const todayHallmarks = useMemo<Array<[number, string]> | undefined>(
+	const todayLine = useMemo<Array<[number, string]> | undefined>(
 		() => (type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined),
 		[todayTimestamp, type]
 	)
-	const hallmarks = useDashboardAnnotationHallmarks(todayHallmarks)
+	const hallmarks = useDashboardAnnotationHallmarks()
 	const syncGroup = useChartSyncGroup()
 	const scale = useCardHeightScale()
 	const chartHeight = scaledPx(type === 'unlocks' ? 360 : 300, scale)
@@ -118,7 +118,7 @@ function ChartRenderer({
 				height={chartHeight}
 				hideDataZoom
 				{...(hallmarks ? { hallmarks } : {})}
-				hallmarkStyle="mark-line"
+				{...(todayLine ? { referenceLines: todayLine } : {})}
 				{...(syncGroup ? { syncGroup } : {})}
 				{...(chartOptions ? { chartOptions } : {})}
 				exportButtons="hidden"

@@ -157,7 +157,7 @@ function HolderDistribution({
 					valueSymbol="%"
 					showLegend={false}
 					customLabel={{ show: false }}
-					formatTooltip={(params: unknown) => {
+					tooltipFormatter={(params: unknown) => {
 						const item = getChartTooltipItems(params)[0]
 						if (!item) return ''
 						const rawValue = item.value

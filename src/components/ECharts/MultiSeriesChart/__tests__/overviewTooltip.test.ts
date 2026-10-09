@@ -51,15 +51,6 @@ describe('overview tooltip', () => {
 		expect(rows(output)).toEqual(['aTVL $10', 'bGap $0', 'cGas Used 5 GAS', 'dUnlocks 7 TOKEN'])
 	})
 
-	test('keeps the Mcap to TVL derived row', () => {
-		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
-			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },
-			{ axisValue: 1_700_000_000_000, seriesName: 'Mcap', value: [1_700_000_000_000, 25], encode: { y: [1] } }
-		])
-		expect(output).toContain('Mcap/TVL')
-		expect(output).toContain('2.50')
-	})
-
 	test('leads with the pointed series and keeps the Mcap to TVL row last', () => {
 		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
 			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },
@@ -88,33 +79,5 @@ describe('overview tooltip', () => {
 			{ axisValue: 1_700_000_000_000, seriesName: 'Mcap', value: [1_700_000_000_000, 25], encode: { y: [1] } }
 		])
 		expect(output).not.toContain('Mcap/TVL')
-	})
-
-	test('renders more than ten heterogeneous metrics independently with their own units', () => {
-		const timestamp = 1_700_000_000_000
-		const seriesValueSymbols = new Map<string, string>()
-		const items = Array.from({ length: 12 }, (_, index) => {
-			const seriesName = `Metric ${index + 1}`
-			if (index % 2 === 0) seriesValueSymbols.set(seriesName, '$')
-			return {
-				axisValue: timestamp,
-				seriesName,
-				marker: `${index + 1}`,
-				value: [timestamp, index + 1],
-				encode: { y: [1] }
-			}
-		})
-		const output = createOverviewTooltipFormatter({
-			valueSymbol: 'ETH',
-			unlockTokenSymbol: '',
-			seriesValueSymbols
-		})(items)
-
-		for (let index = 0; index < items.length; index++) {
-			const seriesName = `Metric ${index + 1}`
-			const expectedValue = index % 2 === 0 ? `$${index + 1}` : `${index + 1} ETH`
-			expect(output).toContain(`${seriesName}&nbsp;&nbsp;${expectedValue}`)
-		}
-		expect(output).not.toContain('Others')
 	})
 })

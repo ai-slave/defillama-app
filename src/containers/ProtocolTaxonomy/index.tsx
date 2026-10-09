@@ -280,7 +280,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							dataset={deferredGroupedCharts.dataset}
 							charts={deferredGroupedCharts.charts}
 							groupBy={chartGroupBy}
-							hideDefaultLegend={false}
+							showLegend
 							valueSymbol="$"
 							onReady={handleChartReady}
 						/>

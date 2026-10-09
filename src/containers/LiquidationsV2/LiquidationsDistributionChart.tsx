@@ -230,7 +230,7 @@ function LiquidationsDistributionChartCard({
 					chartOptions={deferredChartModel.chartOptions}
 					containerClassName={CHART_FILL}
 					hideDataZoom={displayOptions.shouldHideDataZoom}
-					hideDefaultLegend={!displayOptions.showBreakdownLegend}
+					showLegend={displayOptions.showBreakdownLegend}
 					onReady={onChartReady}
 					valueSymbol={deferredChartModel.valueSymbol}
 				/>

@@ -113,7 +113,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 				charts={charts}
 				valueSymbol="$"
 				containerClassName={CHART_FILL}
-				hideDefaultLegend={false}
+				showLegend
 				exportButtons="hidden"
 				chartOptions={chartOptions}
 			/>

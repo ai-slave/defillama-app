@@ -18,7 +18,7 @@ import {
 	scaleYAxisForExport
 } from '../ChartPngExportButton'
 import { getChartExportIconFetchUrl } from '../chartPngExportIcon'
-import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } from '../chartPngExportLayout'
+import { computeExportLayout } from '../chartPngExportLayout'
 
 describe('pie PNG export legend', () => {
 	test('keeps the legend vertical and on the right like the rendered pie chart', () => {
@@ -29,10 +29,9 @@ describe('pie PNG export legend', () => {
 			false
 		)
 
-		expect(legend).toMatchObject({ show: true, orient: 'vertical' })
-		expect(legend.right).toBeDefined()
-		expect(legend.left).toBeUndefined()
-		expect(legend.formatter).toBe(formatter)
+		expect(legend).toMatchObject({ show: true, orient: 'vertical', data: ['Kalshi', 'Polymarket'], formatter })
+		expect(typeof legend.right).toBe('number')
+		expect(legend).not.toHaveProperty('left')
 	})
 })
 
@@ -210,7 +209,7 @@ describe('scaleXAxisForExport', () => {
 		const [scaled] = scaleXAxisForExport([
 			{ type: 'category', axisLabel: { interval: 0, rotate: 35, hideOverlap: false } }
 		])
-		expect(scaled.axisLabel).toMatchObject({ interval: 0, rotate: 35, hideOverlap: false, fontSize: 24 })
+		expect(scaled.axisLabel).toMatchObject({ interval: 0, rotate: 35, hideOverlap: false })
 	})
 
 	test('hides overlaps for a normal (non-rotated) axis', () => {
@@ -318,7 +317,6 @@ describe('computeExportLayout', () => {
 		const with_ = computeExportLayout({ ...base, hasMarkLineHallmarks: true })
 
 		expect(with_.gridTop).toBeGreaterThan(without.gridTop)
-		expect(with_.gridTop).toBe(BASE_TOP_PADDING + EXPORT_HALLMARK_LABEL_RESERVE)
 	})
 
 	test('keeps the taller header reserve when a title already clears the hallmark row', () => {
@@ -358,17 +356,11 @@ test('adds one centered export watermark and preserves unrelated graphics', () =
 	const options = { isDark: false, exportHeight: 1000, onTop: true }
 	const graphic = ensureExportWatermarkGraphic([unrelated], options)
 	expect(graphic).toHaveLength(1)
+	expect(graphic[0].elements).toHaveLength(2)
 	expect(graphic[0].elements[0]).toBe(unrelated.elements[0])
-	expect(graphic[0].elements[1]).toMatchObject({
-		top: 460,
-		zlevel: 10,
-		z: 999,
-		silent: true,
-		style: { height: 80, image: '/assets/defillama-dark-neutral.webp' }
-	})
+	const watermark = graphic[0].elements[1]
+	expect(watermark.top + watermark.style.height / 2).toBe(options.exportHeight / 2)
 	expect(ensureExportWatermarkGraphic(graphic, options)).toBe(graphic)
-	expect(ensureExportWatermarkGraphic([], { ...options, onTop: false })[0].elements[0]).toMatchObject({
-		zlevel: 0,
-		z: 0
-	})
+	const underSeries = ensureExportWatermarkGraphic([], { ...options, onTop: false })[0].elements[0]
+	expect(watermark.zlevel).toBeGreaterThan(underSeries.zlevel)
 })

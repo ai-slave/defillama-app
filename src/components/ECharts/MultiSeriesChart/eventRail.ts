@@ -55,10 +55,6 @@ function isDangerLabel(label: string) {
 	return DANGER_KEYWORDS.some((keyword) => normalized.includes(keyword))
 }
 
-function normalizeTimestamp(value: number, dateInMs: boolean) {
-	return dateInMs ? value : value * 1e3
-}
-
 // Ramp steps as hex, because canvas cannot read var(); the contrast policy (rule 5) fails when a copy drifts from its
 // token. Every point fill holds 3:1 on the plot surface and its ink 4.5:1 on the fill, so a marker reads by its fill,
 // not only its 1px border: the light grey is step 9 with white ink, since step 8 is 2.9:1 on white.
@@ -83,23 +79,21 @@ const EVENT_DOTS = {
 export function buildEventRailData({
 	hallmarks,
 	rangeHallmarks,
-	isThemeDark,
-	dateInMs = true
+	isThemeDark
 }: {
 	hallmarks?: Array<[number, string]> | null | undefined
 	rangeHallmarks?: Array<[[number, number], string]> | null | undefined
 	isThemeDark: boolean
-	dateInMs?: boolean
 }) {
 	const sortedEvents = [
 		...(hallmarks ?? []).map(([timestamp, label]) => ({
-			timestamp: normalizeTimestamp(timestamp, dateInMs),
+			timestamp: timestamp * 1e3,
 			fullText: label,
 			isRange: false as const
 		})),
 		...(rangeHallmarks ?? []).map(([[start, end], label]) => {
-			const normalizedStart = normalizeTimestamp(start, dateInMs)
-			const normalizedEnd = normalizeTimestamp(end, dateInMs)
+			const normalizedStart = start * 1e3
+			const normalizedEnd = end * 1e3
 
 			return {
 				timestamp: Math.round((normalizedStart + normalizedEnd) / 2),

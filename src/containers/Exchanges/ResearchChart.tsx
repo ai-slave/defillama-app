@@ -141,7 +141,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 						charts={chartModel.charts}
 						valueSymbol={chart.valueSymbol}
 						containerClassName={CHART_FILL}
-						hideDefaultLegend={false}
+						showLegend
 						exportButtons="hidden"
 						hallmarks={hallmarks}
 					/>

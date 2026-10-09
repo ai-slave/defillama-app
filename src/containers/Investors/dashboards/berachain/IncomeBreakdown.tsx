@@ -236,7 +236,7 @@ export default function IncomeBreakdown() {
 							charts={BERACHAIN_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_CHART_EXPORTS}
-							hideDefaultLegend={false}
+							showLegend
 							valueSymbol="$"
 						/>
 					</Suspense>
@@ -345,7 +345,7 @@ export default function IncomeBreakdown() {
 							charts={BEND_MONTHLY_CHARTS}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={BAR_CHART_EXPORTS}
-							hideDefaultLegend={false}
+							showLegend
 							valueSymbol="$"
 						/>
 					</Suspense>

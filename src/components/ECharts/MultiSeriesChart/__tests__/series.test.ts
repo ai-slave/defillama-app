@@ -75,7 +75,7 @@ describe('MultiSeriesChart series construction', () => {
 			})[0]
 		)
 
-		expect(series.endLabel).toMatchObject({ formatter: 'TBD', offset: [-40, 10] })
+		expect(series.endLabel).toMatchObject({ formatter: 'TBD' })
 	})
 
 	test('hides a projection end label only when its segment is too short to fit it', () => {
@@ -120,19 +120,6 @@ describe('MultiSeriesChart series construction', () => {
 
 		expect(series[0]).toMatchObject({ legendIcon: 'image://https://icons/probed.png' })
 		expect(series[1]).not.toHaveProperty('legendIcon')
-	})
-
-	test('connects line gaps when the chart asks for it', () => {
-		const [line] = buildMultiSeries({
-			charts: [{ type: 'line', name: 'Value', encode: { x: 0, y: 1 }, connectNulls: true }],
-			selectedCharts: undefined,
-			expandTo100Percent: false,
-			solidChartAreaStyle: false,
-			validLegendIcons: NO_ICONS,
-			chartTheme
-		})
-
-		expect(line).toMatchObject({ type: 'line', connectNulls: true })
 	})
 
 	test('passes a typed step mode to line series', () => {

@@ -188,7 +188,8 @@ test('Try again on an engine that failed to load keeps the error and its button 
 		retry.focus()
 		retry.click()
 	})
-	expect(accessibleName(retry)).toBe('Retrying…')
+	// React Query reports the refetch on its next tick, so the busy label follows the click by one update.
+	await waitForUi(() => expect(accessibleName(retry)).toBe('Retrying…'))
 	expect(document.activeElement).toBe(retry)
 	expect(failure()).toContainEqual(expect.stringContaining('The SQL engine failed to load.'))
 

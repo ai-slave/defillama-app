@@ -53,6 +53,7 @@ import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
+	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
@@ -622,7 +623,7 @@ export function StablecoinsByChain({
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
 									}
 									variant="rwa"
-									height="600px"
+									containerClassName={`${CHART_FILL} min-h-[600px]`}
 									onReady={handleChartReady}
 									valueLabel="Market Cap"
 								/>
@@ -633,7 +634,7 @@ export function StablecoinsByChain({
 							state={activeChartState}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							{...(chartOptions === undefined ? {} : { chartOptions })}
-							hideDefaultLegend={!showDefaultLegend}
+							showLegend={showDefaultLegend}
 							{...(renderedGroupBy ? { groupBy: renderedGroupBy } : {})}
 							onReady={handleChartReady}
 						/>
@@ -652,14 +653,14 @@ function MultiSeriesChartPanel({
 	state,
 	selectedCharts,
 	chartOptions,
-	hideDefaultLegend,
+	showLegend,
 	groupBy,
 	onReady
 }: {
 	state: MultiSeriesChartState
 	selectedCharts?: Set<string>
 	chartOptions?: IMultiSeriesChartProps['chartOptions']
-	hideDefaultLegend?: boolean
+	showLegend?: boolean
 	groupBy?: IMultiSeriesChartProps['groupBy']
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
@@ -691,7 +692,7 @@ function MultiSeriesChartPanel({
 				valueSymbol={state.data.valueSymbol}
 				showTotalInTooltip={state.data.showTotalInTooltip}
 				{...(chartOptions === undefined ? {} : { chartOptions })}
-				{...(hideDefaultLegend === undefined ? {} : { hideDefaultLegend })}
+				showLegend={showLegend}
 				{...(groupBy === undefined ? {} : { groupBy })}
 				onReady={onReady}
 			/>

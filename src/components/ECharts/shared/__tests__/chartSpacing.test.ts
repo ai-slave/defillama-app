@@ -1,6 +1,6 @@
 import * as echarts from 'echarts'
 import { describe, expect, test } from 'vitest'
-import { chartHorizontalScrollLegend, chartHorizontalScrollLegendGeometry } from '../chartSpacing'
+import { chartHorizontalScrollLegendGeometry } from '../chartSpacing'
 
 type Rect = { x: number; width: number }
 type Group = { x: number; getBoundingRect: () => Rect }
@@ -41,13 +41,6 @@ function getLegendBounds(names: Array<string>) {
 }
 
 describe('horizontal scroll legend geometry', () => {
-	test('preserves requested legend placement', () => {
-		expect(chartHorizontalScrollLegend({ right: 108, top: 12 })).toMatchObject({
-			right: 108,
-			top: 12
-		})
-	})
-
 	test('keeps a short legend right-aligned with 8px visible spacing and no pager', () => {
 		const bounds = getLegendBounds(['Inflows', 'Outflows', 'Onchain Mcap'])
 

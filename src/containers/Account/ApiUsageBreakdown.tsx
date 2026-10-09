@@ -229,7 +229,6 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						height="200px"
 						valueSymbol=""
 						hideDataZoom
-						hideDefaultLegend
 						exportButtons="hidden"
 						chartOptions={chartOptions}
 					/>

@@ -45,7 +45,6 @@ const VALUE_LABEL_RESERVE = 64
 function HBarChart({
 	categories,
 	values,
-	title: _title,
 	valueSymbol = '$',
 	height = '360px',
 	containerClassName,

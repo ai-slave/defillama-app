@@ -153,7 +153,7 @@ function RatesChart({
 				chartOptions={RATES_CHART_OPTIONS}
 				valueSymbol="%"
 				containerClassName={CHART_FILL}
-				hideDefaultLegend={false}
+				showLegend
 				exportButtons="hidden"
 				{...(onReady ? { onReady } : {})}
 			/>

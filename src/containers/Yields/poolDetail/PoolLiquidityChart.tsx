@@ -669,7 +669,6 @@ export function PoolLiquidityChart({
 							containerClassName={CHART_FILL}
 							stacked
 							stateTimeline={timeline}
-							hideDefaultLegend
 							exportButtons="hidden"
 							onReady={(inst) => {
 								chartRef.current = inst

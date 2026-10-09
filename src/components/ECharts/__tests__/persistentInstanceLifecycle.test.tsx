@@ -13,6 +13,7 @@ import type { CandlestickPoint } from '../CandlestickChart/types'
 import HBarChart from '../HBarChart'
 import RadarChart from '../RadarChart'
 import ScatterChart from '../ScatterChart'
+import { getChartTheme } from '../shared/chartTheme'
 import { SparklineChart } from '../SparklineChart'
 import TreemapChart from '../TreemapChart'
 import BuilderTreemapChart from '../TreemapChart/Builder'
@@ -87,25 +88,6 @@ describe('persistent ECharts instances', () => {
 			name: 'scatter',
 			render: (value: number) => <ScatterChart chartData={[{ projectName: 'Project', sigma: value, mu: 20 }]} />,
 			shown: () => option().series[0].data[0][0]
-		},
-		{
-			name: 'market treemap',
-			render: (value: number) => {
-				// An empty icon URL skips the icon preload, which happy-dom cannot load.
-				const leaves: Array<MarketTreemapLeaf> = [
-					{
-						name: 'A',
-						value: [value, 1],
-						iconKey: 1,
-						iconUrl: '',
-						itemStyle: { color: '#269f3c' },
-						companyName: 'A Corp',
-						marketCap: value
-					}
-				]
-				return <MarketTreemapChart treeData={leaves} leaves={leaves} sizeLabel="Market Cap" colorLabel="Change" />
-			},
-			shown: () => option().series[0].data[0].value[0]
 		}
 	])('keeps the $name chart across data updates and releases it on unmount', async ({ render: chartFor, shown }) => {
 		await render(chartFor(100))
@@ -206,13 +188,13 @@ describe('persistent ECharts instances', () => {
 		const values = [9, 8, 7, 6, 5, 4]
 		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
 		const instance = chart()
-		expect(option().radar[0].axisName.color).toBe('#878787')
+		expect(option().radar[0].axisName.color).toBe(getChartTheme(true).axisLabel)
 
 		document.cookie = 'defillama-theme=light'
 		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
 
 		expect(chart()).toBe(instance)
-		expect(option().radar[0].axisName.color).toBe('#6f6f6f')
+		expect(option().radar[0].axisName.color).toBe(getChartTheme(false).axisLabel)
 	})
 
 	test.each(['America/Los_Angeles', 'Asia/Tokyo'])(

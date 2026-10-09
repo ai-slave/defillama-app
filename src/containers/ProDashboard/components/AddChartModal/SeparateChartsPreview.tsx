@@ -52,7 +52,6 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 											charts={chartView.charts}
 											groupBy={DASHBOARD_CHART_GROUPING[grouping]}
 											hideDataZoom
-											hideDefaultLegend
 											exportButtons="hidden"
 											height="120px"
 											chartOptions={CHART_OPTIONS}
