@@ -1,4 +1,5 @@
 import type { Hack } from '~/containers/Hacks/model'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 
 export type HallmarkPoint = [number, string]
 export type HallmarkRange = [[number, number], string]
@@ -86,6 +87,15 @@ export function buildHallmarksWithGenuineSpikes({
 	return Array.from(hallmarkMap.entries()).sort((a, b) => a[0] - b[0])
 }
 
+// The label leads with what happened, which the event rail also reads to draw the marker red: a bare classification
+// such as "Access Control" names neither a hack nor a loss.
+function hackHallmarkLabel(hack: Hack) {
+	const isRugpull = hack.classification === 'Rugpull'
+	const cause = isRugpull ? null : hack.classification || hack.technique
+	const lost = formatUsd(hack.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	return [isRugpull ? 'Rug pull' : 'Hack', cause, lost && `${lost} lost`].filter(Boolean).join(' · ')
+}
+
 export function buildProtocolOverviewHallmarks({
 	hacks,
 	protocolHallmarks,
@@ -101,7 +111,7 @@ export function buildProtocolOverviewHallmarks({
 	const hallmarks: Array<HallmarkPoint> = []
 	for (const hack of hacks ?? []) {
 		if (hack.date == null) continue
-		hallmarks.push([hack.date, hack.classification || hack.technique || 'Exploit'])
+		hallmarks.push([hack.date, hackHallmarkLabel(hack)])
 	}
 
 	const pointHallmarks = buildHallmarksWithGenuineSpikes({ protocolHallmarks, dimensions }) ?? []

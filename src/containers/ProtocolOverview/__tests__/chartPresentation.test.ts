@@ -10,10 +10,7 @@ describe('active address series names', () => {
 			buildProtocolChartPresentation({
 				chartData: { 'Active Addresses': data, 'New Addresses': data },
 				chartColors: {},
-				groupBy,
-				rangeHallmarks: null,
-				isThemeDark: false,
-				themeText: '#000'
+				groupBy
 			}).charts.map((chart) => chart.name)
 		const chain = (groupBy: 'daily' | 'monthly') =>
 			buildChainChartPresentation({ 'Active Addresses': data, 'New Addresses': data }, groupBy, {}).charts.map(
@@ -30,15 +27,12 @@ describe('active address series names', () => {
 describe('buildProtocolChartPresentation', () => {
 	const present = (
 		chartData: Parameters<typeof buildProtocolChartPresentation>[0]['chartData'],
-		options: { groupBy?: 'daily' | 'cumulative'; rangeHallmarks?: Array<[[number, number], string]> } = {}
+		options: { groupBy?: 'daily' | 'cumulative' } = {}
 	) =>
 		buildProtocolChartPresentation({
 			chartData,
 			chartColors: {},
-			groupBy: options.groupBy ?? 'daily',
-			rangeHallmarks: options.rangeHallmarks ?? null,
-			isThemeDark: false,
-			themeText: '#000'
+			groupBy: options.groupBy ?? 'daily'
 		})
 
 	test('keeps each series on its own timestamps, null gaps included', () => {
@@ -70,17 +64,6 @@ describe('buildProtocolChartPresentation', () => {
 		expect(present({ TVL: flow, Fees: flow }, { groupBy: 'cumulative' }).charts.map((chart) => chart.type)).toEqual([
 			'line',
 			'line'
-		])
-	})
-
-	test('attaches range hallmarks to the first series, bar or line', () => {
-		const { charts } = present(
-			{ Fees: [[1000, 2]], TVL: [[1000, 10]] },
-			{ rangeHallmarks: [[[1000, 3000], 'Migration']] }
-		)
-		expect(charts.map((chart) => chart.markArea?.data ?? null)).toEqual([
-			[[{ name: 'Migration', xAxis: 1000 }, { xAxis: 3000 }]],
-			null
 		])
 	})
 

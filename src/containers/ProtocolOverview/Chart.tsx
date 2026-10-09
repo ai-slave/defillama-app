@@ -6,8 +6,6 @@ import type {
 	MultiSeriesChartOptions,
 	MultiSeriesYAxisOption
 } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { buildProtocolChartPresentation, shouldHideProtocolDataZoom } from './chartPresentation'
 import { buildProtocolYAxis } from './chartYAxis'
@@ -40,19 +38,15 @@ export default function ProtocolChart({
 	onReady
 }: IProtocolCoreChartProps) {
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
-	const chartTheme = useChartTheme(isThemeDark)
 	const effectiveHideDataZoom = shouldHideProtocolDataZoom(chartData, hideDataZoom)
 	const presentation = useMemo(
 		() =>
 			buildProtocolChartPresentation({
 				chartData,
 				chartColors,
-				groupBy: groupBy ?? 'daily',
-				rangeHallmarks,
-				isThemeDark,
-				themeText: chartTheme.text
+				groupBy: groupBy ?? 'daily'
 			}),
-		[chartData, chartColors, chartTheme.text, groupBy, isThemeDark, rangeHallmarks]
+		[chartData, chartColors, groupBy]
 	)
 	const finalChartOptions = useMemo(() => {
 		const normalizedUnlockTokenSymbol = unlockTokenSymbol ?? ''
@@ -66,7 +60,6 @@ export default function ProtocolChart({
 		})
 		return {
 			...chartOptions,
-			grid: mergeDeep({ top: rangeHallmarks?.length ? 18 : CHART_INSET }, chartOptions.grid),
 			yAxis: mergeYAxisOptions(domainAxes, chartOptions.yAxis),
 			tooltip: mergeDeep(
 				{
@@ -86,7 +79,6 @@ export default function ProtocolChart({
 		gasUsedValueSymbol,
 		presentation.allYAxis,
 		presentation.chartsInSeries,
-		rangeHallmarks,
 		tooltipGroupBy,
 		unlockTokenSymbol,
 		valueSymbol

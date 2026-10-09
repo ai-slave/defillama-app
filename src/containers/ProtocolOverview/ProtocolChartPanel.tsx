@@ -152,7 +152,8 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				{
 					key: 'events',
 					label: 'Events',
-					color: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? OTHERS_COLOR,
+					// Matches the rail's default grey marker; a series colour would point at a line the toggle doesn't draw.
+					color: OTHERS_COLOR,
 					active: toggledMetrics.events === 'true',
 					type: 'events'
 				}
@@ -258,7 +259,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 								<span
 									className={metricChipStyles}
 									style={{
-										borderColor: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? OTHERS_COLOR
+										borderColor: OTHERS_COLOR
 									}}
 								>
 									<span>Events</span>

@@ -63,8 +63,7 @@ import {
 	type EventHoverState,
 	getDatasetTimeBounds,
 	getMainGridBottom,
-	getSeriesTimeBounds,
-	mergeGraphicWithEventMarkLinePlaceholder
+	getSeriesTimeBounds
 } from './eventRail'
 import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes } from './logScale'
@@ -149,7 +148,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const hasCategoryLogos = !!(categoryLogos && categoryLogos.some(Boolean))
 	const eventHoverCleanupRef = useRef<(() => void) | null>(null)
 	const eventHoverStateRef = useRef<EventHoverState>({ hoveredEventDate: null })
-	const eventMarkLineGridRef = useRef<{ top: number; bottom: number } | null>(null)
 	const categoryLogosFrameRef = useRef<number | null>(null)
 	const categoryLogosLayoutRef = useRef<{
 		categoryValues: Array<string | number | null | undefined>
@@ -516,21 +514,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			position: [60, 0]
 		})
 	})
-	const getEventMarkLineShape = useStableCallback((eventDate: number) => {
-		const instance = chartRef.current
-		const grid = eventMarkLineGridRef.current
-		if (!instance || instance.isDisposed() || !grid) return null
-		const x = instance.convertToPixel({ xAxisIndex: 0 }, eventDate)
-		if (!Number.isFinite(x)) return null
-
-		return {
-			x1: x,
-			y1: grid.top,
-			x2: x,
-			y2: instance.getHeight() - grid.bottom
-		}
-	})
-
 	useEffect(() => {
 		const el = chartDomRef.current
 		if (!el) return
@@ -557,7 +540,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			setChartLogoMetadata(instance, undefined)
 			chartRef.current = null
 			categoryLogosLayoutRef.current = null
-			eventMarkLineGridRef.current = null
 			latestTooltipDataIndexRef.current = null
 			tooltipSizeCacheRef.current = null
 			instance.dispose()
@@ -730,10 +712,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			finalGrid.bottom = Number(finalGrid.bottom ?? 12) + CATEGORY_LOGO_SIZE + CATEGORY_LOGO_BOTTOM_GAP
 			finalGrid.outerBoundsContain = undefined
 		}
-		eventMarkLineGridRef.current = {
-			top: Number(finalGrid.top),
-			bottom: Number(finalGrid.bottom)
-		}
 
 		const timestampIndex = renderedDatasetDimensions.indexOf('timestamp')
 		const datasetTimeBounds = shouldShowStrip
@@ -781,7 +759,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						eventRailData,
 						eventStripYAxisIndex,
 						hoverState: eventHoverStateRef.current,
-						shouldHideDataZoom
+						shouldHideDataZoom,
+						isThemeDark
 					})
 				]
 			: shouldShowStateTimeline && stateTimeline
@@ -790,7 +769,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						createStateTimelineSeries({ timeline: stateTimeline, yAxisIndex: eventStripYAxisIndex, shouldHideDataZoom })
 					]
 				: series
-		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
 
 		const hasRenderableSeries = finalSeries.length > 0 && datasetLength > 0
 		const option: EChartsOption = {
@@ -803,7 +781,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		}
 		const renderedLegend = finalLegend ?? legend
 		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
-		if (finalGraphic !== undefined) option.graphic = finalGraphic
+		if (graphic !== undefined) option.graphic = graphic
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
 		// Time axes default to UTC so ticks agree with the UTC tooltip and zoom labels; only an explicit
 		// `false` opts a chart into local time.
@@ -884,15 +862,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		eventHoverCleanupRef.current = attachEventHoverHandlers({
 			instance,
 			eventRailData,
-			hoverState: eventHoverStateRef.current,
-			getEventMarkLineShape
+			hoverState: eventHoverStateRef.current
 		})
 
 		return () => {
 			eventHoverCleanupRef.current?.()
 			eventHoverCleanupRef.current = null
 		}
-	}, [eventRailData, getEventMarkLineShape])
+	}, [eventRailData])
 
 	return (
 		<ChartContainer

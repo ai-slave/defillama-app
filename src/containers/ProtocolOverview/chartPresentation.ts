@@ -1,4 +1,3 @@
-import type { LineSeriesOption } from 'echarts'
 import type {
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesChartSeriesConfig
@@ -27,29 +26,16 @@ export function shouldHideProtocolDataZoom(
 export function buildProtocolChartPresentation({
 	chartData,
 	chartColors,
-	groupBy,
-	rangeHallmarks,
-	isThemeDark,
-	themeText
+	groupBy
 }: {
 	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>
 	chartColors: Partial<Record<ProtocolChartsLabels, string>>
 	groupBy: ChartTimeGroupingWithCumulative
-	rangeHallmarks: Array<[[number, number], string]> | null
-	isThemeDark: boolean
-	themeText: string
 }) {
 	const axisIndexByType = new Map<ProtocolChartsLabels, number>()
 	const allYAxis: Array<[ProtocolChartsLabels, number | undefined]> = []
 	const chartsInSeries = new Set<ProtocolChartsLabels>()
 	const charts: Array<MultiSeriesChartSeriesConfig> = []
-	const markArea: LineSeriesOption['markArea'] | undefined = rangeHallmarks?.length
-		? {
-				itemStyle: { color: isThemeDark ? 'rgba(15, 52, 105, 0.4)' : 'rgba(70, 130, 180, 0.3)' },
-				label: { fontFamily: 'sans-serif', fontWeight: 600, color: themeText },
-				data: rangeHallmarks.map(([[start, end], event]) => [{ name: event, xAxis: start }, { xAxis: end }])
-			}
-		: undefined
 
 	for (const label of Object.keys(chartData)) {
 		if (!isProtocolChartLabel(label)) continue
@@ -72,8 +58,7 @@ export function buildProtocolChartPresentation({
 			data,
 			...(color ? { color } : {}),
 			yAxisIndex,
-			...(type === 'bar' ? { large: data.length > 0 } : {}),
-			...(charts.length === 0 && markArea ? { markArea } : {})
+			...(type === 'bar' ? { large: data.length > 0 } : {})
 		})
 	}
 

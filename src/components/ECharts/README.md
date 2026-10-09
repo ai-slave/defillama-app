@@ -24,6 +24,16 @@ design.md → Charts picks the renderer for a chart's shape and owns its look (s
 - A PNG export never adds a second text graphic layer over the tiles. Level settings can suppress series labels, so set export labels at every scope, and check that labels appear once in nested and zoomed exports.
 - The treemap series has its own animation default that overrides the global flag, so the export turns it off on the series.
 
+## Event rail
+
+`MultiSeriesChart` draws hallmarks on a rail under the plot (`MultiSeriesChart/eventRail.ts`).
+
+- A point event is a 16px circle: grey for a milestone, red with a "!" when its label names a hack, exploit, attack, rug pull or depeg. The rail reads the label, so a hallmark label leads with what happened ("Hack · Access Control · $8.2m lost"), never a bare classification.
+- Point events closer than a marker's width at the current zoom share one marker that shows their count. It is red when any member is, and its tooltip lists every member.
+- A range event is a band across its span: violet, or solid red with a "!" for a danger label. Hovering the band shades its span on the plot. The rail is the one place events draw, so a page never adds its own `markArea` or mark line for them.
+- Fills hold 3:1 on the plot surface and glyphs 4.5:1 on their fill, in both themes, so a marker never depends on its 1px border.
+- The chart's Events toggle chip uses `OTHERS_COLOR`, the grey of the default marker, never a series colour.
+
 ## Geometry exceptions
 
 The cartesian renderers take their inset, legend and dataZoom geometry from `shared/chartSpacing.ts`. These keep their own:
