@@ -1172,7 +1172,6 @@
       "name": "Mobile App",
       "route": "/app",
       "icon": "smartphone",
-      "isNew": true,
       "umamiEvent": "nav-mobile-app-click"
     },
     {

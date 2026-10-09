@@ -8,7 +8,6 @@ import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { PromoBadge } from '~/ui/PromoBadge'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -127,7 +126,6 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 						<h2 id="daily-brief-title" className="label-md text-primary">
 							Today in DeFi
 						</h2>
-						<PromoBadge icon="sparkles">New</PromoBadge>
 					</div>
 					<div className="flex items-center gap-3">
 						<RelativeTime value={brief.generatedAt} prefix="Updated" className="label-sm text-tertiary max-lg:hidden" />

@@ -586,10 +586,10 @@ export function ChipsGroup() {
 					<Tag>Liquid staking</Tag>
 				</Row>
 			</Example>
-			<Example name="PromoBadge" note="New, Try free, Free, Pro: one brand-tint badge.">
+			<Example name="PromoBadge" note="New, 7-day trial, Free, Pro: one brand-tint badge.">
 				<Row>
 					<PromoBadge>New</PromoBadge>
-					<PromoBadge icon="sparkles">Try free</PromoBadge>
+					<PromoBadge icon="sparkles">7-day trial</PromoBadge>
 				</Row>
 			</Example>
 			<Example name="CountBadge" note="How many values a picker holds or a dialog has applied.">

@@ -20,7 +20,7 @@ export function PremiumHeader() {
 					href="/subscription"
 					className={`hover-wash relative inline-flex ${promoBadgeStyles} ${showFreeTrial ? '' : 'invisible'}`.trim()}
 				>
-					Try free
+					7-day trial
 				</BasicLink>
 			</p>
 		</>
