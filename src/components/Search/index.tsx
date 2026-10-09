@@ -399,6 +399,8 @@ function SearchItem({
 				<Icon name="file-text" className="size-6" />
 			)}
 			<span>{route.name}</span>
+			{/* Protocol hits carry their governance token's symbol too; only token hits show it */}
+			{route.type === 'Token' && route.symbol ? <span className="text-tertiary">{route.symbol}</span> : null}
 			{route.subName ? (
 				<>
 					<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />

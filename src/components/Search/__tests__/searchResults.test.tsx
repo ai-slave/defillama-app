@@ -39,6 +39,19 @@ afterEach(async () => {
 	container.remove()
 })
 
+async function searchFor(query: string) {
+	await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true })))
+	const input = await waitForUi(() => {
+		const element = document.querySelector<HTMLInputElement>('input[aria-label="Search"]')
+		expect(element).not.toBeNull()
+		return element!
+	})
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, query)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
 test('a See more retry waits in its Try again, with the error on screen, until the next page loads', async () => {
 	let page2 = 0
 	const retry = Promise.withResolvers<Response>()
@@ -52,16 +65,7 @@ test('a See more retry waits in its Try again, with the error on screen, until t
 			return page2 === 1 ? new Response('down', { status: 400 }) : retry.promise
 		}
 	})
-	await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true })))
-	const input = await waitForUi(() => {
-		const element = document.querySelector<HTMLInputElement>('input[aria-label="Search"]')
-		expect(element).not.toBeNull()
-		return element!
-	})
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'protocol')
-		input.dispatchEvent(new Event('input', { bubbles: true }))
-	})
+	await searchFor('protocol')
 	const button = (text: string) => [...document.querySelectorAll('button')].find((b) => accessibleName(b) === text)
 	const seeMore = await waitForUi(() => {
 		expect(button('See more')).toBeDefined()
@@ -76,4 +80,24 @@ test('a See more retry waits in its Try again, with the error on screen, until t
 	await act(async () => retry.resolve(Response.json({ results: [{ hits: [hit(21)] }] })))
 	await waitForUi(() => expect(document.body.textContent).toContain('Protocol 21'))
 	expect(document.body.textContent).not.toContain('Couldn’t load search results.')
+})
+
+test('token results show their symbol and protocol results do not', async () => {
+	serve({
+		[SEARCH_API_URL]: {
+			results: [
+				{
+					hits: [
+						{ name: 'Hyperliquid', symbol: 'HYPE', route: '/token/HYPE', type: 'Token' },
+						{ name: 'Hyperliquid', symbol: 'HYPE', route: '/protocol/hyperliquid', type: 'Protocol' }
+					]
+				},
+				{ hits: [] }
+			]
+		}
+	})
+	await searchFor('hype')
+	const option = (href: string) => document.querySelector(`[role="option"][href="${href}"]`)
+	await waitForUi(() => expect(option('/token/HYPE')?.textContent).toContain('HYPE'))
+	expect(option('/protocol/hyperliquid')?.textContent).not.toContain('HYPE')
 })

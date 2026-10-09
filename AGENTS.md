@@ -27,7 +27,7 @@
 - `tsconfig.json` has `strict: false`, so a property missing from one member of a union still typechecks. After adding a field to a function with several `return {`, check every return.
 - A codemod that rewrites source parses it with the TypeScript AST and edits only the nodes it means to. Regex matching is for read-only audits: regex literals and apostrophes make a pattern span code.
 - The repo holds no plans, audits, progress notes or roadmaps. Docs state product and code rules; comments, commits and PR titles never cite plan or phase labels.
-- Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset. Check dark mode too when the change touches colors, tokens or surfaces. Tests do not show layout, wrapping or contrast.
+- Look at UI work in the browser only when the user asks for a browser check. Then check desktop width and the 375px mobile preset, plus dark mode when the change touches colors, tokens or surfaces. Otherwise rely on tests and typecheck, and say the browser check was skipped.
 
 ## Code
 
