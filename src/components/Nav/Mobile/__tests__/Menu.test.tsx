@@ -23,7 +23,6 @@ function PinnedMenu() {
 			userDashboards={[]}
 			dashboardsStatus={null}
 			footerLinks={[]}
-			oldMetricLinks={[]}
 			asPath="/"
 		/>
 	)

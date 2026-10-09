@@ -5,9 +5,7 @@
       "route": "/",
       "category": "Combined Metrics",
       "description": "Comprehensive overview of all metrics tracked on each chain, including TVL, Fees, Revenue, Volume, and protocols on each chain",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Overview"
+      "tab": "Protocols"
     },
     {
       "name": "Chains",
@@ -16,8 +14,6 @@
       "description": "Combined TVL, Fees, Volume and other metrics by chain",
       "totalTrackedKey": "tvl.chains",
       "tab": "Chains",
-      "oldCategory": "Market Overview",
-      "oldName": "Chains",
       "searchKeywords": [
         "chain",
         "chains"
@@ -28,9 +24,7 @@
       "route": "/categories",
       "category": "Combined Metrics",
       "description": "Combined TVL, Revenue and other metrics by category of all protocols that are tracked by DefiLlama",
-      "totalTrackedKey": "categories",
-      "oldCategory": "Market Overview",
-      "oldName": "Categories"
+      "totalTrackedKey": "categories"
     },
     {
       "name": "TVL by Protocol",
@@ -55,8 +49,6 @@
       "description": "Total Value Secured by an oracle, where oracle failure would lead to a loss equal to TVS",
       "totalTrackedKey": "oracles.protocols",
       "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Oracles",
       "searchKeywords": [
         "oracle",
         "oracles"
@@ -68,9 +60,7 @@
       "category": "Total Value Locked",
       "description": "Value of all tokens held on the chain",
       "totalTrackedKey": "bridgedTVL.chains",
-      "tab": "Chains",
-      "oldCategory": "Market Overview",
-      "oldName": "Bridged TVL"
+      "tab": "Chains"
     },
     {
       "name": "Active Loans by Protocol",
@@ -84,9 +74,7 @@
       "route": "/top-protocols",
       "category": "Total Value Locked",
       "description": "Overview of top protocols with the highest TVL by chain on each category",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Top Protocols"
+      "tab": "Protocols"
     },
     {
       "name": "Forks",
@@ -94,9 +82,7 @@
       "category": "Total Value Locked",
       "description": "Sum of TVL across all forks of a protocol",
       "totalTrackedKey": "forks.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Forks"
+      "tab": "Protocols"
     },
     {
       "name": "Pool2 TVL by Protocol",
@@ -124,8 +110,6 @@
       "category": "Yields",
       "description": "Pools by APY, TVL, and other metrics across all chains",
       "totalTrackedKey": "yields.pools",
-      "oldCategory": "Yields",
-      "oldName": "Overview",
       "searchKeywords": [
         "yield",
         "yields",
@@ -138,8 +122,6 @@
       "route": "/yields/loop",
       "category": "Yields",
       "description": "Pools by looping (leveraged lending) strategy APY",
-      "oldCategory": "Yields",
-      "oldName": "Leveraged Lending",
       "searchKeywords": [
         "loop",
         "looping",
@@ -175,9 +157,7 @@
       "category": "Fees & Revenue",
       "description": "Subset of fees that the protocol collects for itself, usually going to the protocol treasury, the team, or distributed among token holders. This doesn't include any fees distributed to liquidity providers",
       "totalTrackedKey": "revenue.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Revenue"
+      "tab": "Protocols"
     },
     {
       "name": "Fees by Protocol",
@@ -185,9 +165,7 @@
       "category": "Fees & Revenue",
       "description": "Total fees paid by users when using the protocol",
       "totalTrackedKey": "fees.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Fees"
+      "tab": "Protocols"
     },
     {
       "name": "Holders Revenue by Protocol",
@@ -195,9 +173,7 @@
       "category": "Fees & Revenue",
       "description": "Subset of revenue that is distributed to token holders by means of buyback and burn, burning fees or direct distribution to stakers",
       "totalTrackedKey": "holdersRevenue.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Holders Revenue"
+      "tab": "Protocols"
     },
     {
       "name": "Revenue by Chain",
@@ -205,9 +181,7 @@
       "category": "Fees & Revenue",
       "description": "Subset of fees that the chain collects for itself",
       "totalTrackedKey": "chainRevenue.chains",
-      "tab": "Chains",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Revenue (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "Fees by Chain",
@@ -215,9 +189,7 @@
       "category": "Fees & Revenue",
       "description": "Total fees paid by users when using the chain",
       "totalTrackedKey": "chainFees.chains",
-      "tab": "Chains",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Fees (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "Earnings by Protocol",
@@ -225,9 +197,7 @@
       "category": "Fees & Revenue",
       "description": "Net revenue retained by the protocol after subtracting token incentives distributed to users. Calculated as Revenue minus Incentives (emissions paid out through liquidity mining, farming programs, or similar rewards). Reflects the actual economic value accrued to the protocol itself",
       "totalTrackedKey": "revenue.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "Earnings"
+      "tab": "Protocols"
     },
     {
       "name": "App Revenue by Chain",
@@ -235,9 +205,7 @@
       "category": "Fees & Revenue",
       "description": "Sum of all revenue earned by the apps on the chain. Excludes stablecoins, liquid staking apps, and gas fees",
       "totalTrackedKey": "revenue.chains",
-      "tab": "Chains",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "App Revenue (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "App Fees by Chain",
@@ -245,9 +213,7 @@
       "category": "Fees & Revenue",
       "description": "Sum of all fees paid by users when using the apps on the chain. Excludes stablecoins, liquid staking apps, and gas fees",
       "totalTrackedKey": "fees.chains",
-      "tab": "Chains",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "App Fees (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "P/F by Protocol",
@@ -271,9 +237,7 @@
       "category": "Fees & Revenue",
       "description": "Sum of chain fees and MEV tips",
       "totalTrackedKey": "chainFees.chains",
-      "tab": "Chains",
-      "oldCategory": "Fees & Revenue",
-      "oldName": "REV (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "Perp Volume by Protocol",
@@ -285,9 +249,7 @@
         "derivatives",
         "futures"
       ],
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Perps"
+      "tab": "Protocols"
     },
     {
       "name": "DEX Volume by Protocol",
@@ -295,9 +257,7 @@
       "category": "Volume",
       "description": "Volume of all spot token swaps that go through a DEX",
       "totalTrackedKey": "dexs.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "DEXs"
+      "tab": "Protocols"
     },
     {
       "name": "Bridge Aggregator Volume by Protocol",
@@ -305,9 +265,7 @@
       "category": "Volume",
       "description": "Sum of the value of all assets that were bridged through a bridge aggregator",
       "totalTrackedKey": "bridgeAggregators.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Bridge Aggregators"
+      "tab": "Protocols"
     },
     {
       "name": "DEX Volume by Chain",
@@ -315,9 +273,7 @@
       "category": "Volume",
       "description": "Sum of all volume of spot token swaps that go through all DEXs on the chain",
       "totalTrackedKey": "dexs.chains",
-      "tab": "Chains",
-      "oldCategory": "Volume",
-      "oldName": "DEXs (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "DEX Aggregator Volume by Protocol",
@@ -325,9 +281,7 @@
       "category": "Volume",
       "description": "Volume of spot token swaps that go through a DEX aggregator",
       "totalTrackedKey": "dexAggregators.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "DEX Aggregators"
+      "tab": "Protocols"
     },
     {
       "name": "Perp Volume by Chain",
@@ -339,9 +293,7 @@
         "derivatives",
         "futures"
       ],
-      "tab": "Chains",
-      "oldCategory": "Volume",
-      "oldName": "Perps (Chains)"
+      "tab": "Chains"
     },
     {
       "name": "Open Interest by Protocol",
@@ -349,9 +301,7 @@
       "category": "Volume",
       "description": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
       "totalTrackedKey": "openInterest.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Open Interest"
+      "tab": "Protocols"
     },
     {
       "name": "Perp Aggregator Volume by Protocol",
@@ -359,9 +309,7 @@
       "category": "Volume",
       "description": "Notional volume of all trades in a perp aggregator, includes leverage",
       "totalTrackedKey": "perpAggregators.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Perps Aggregators"
+      "tab": "Protocols"
     },
     {
       "name": "Normalized Volume by Chain",
@@ -401,9 +349,7 @@
       "category": "Volume",
       "description": "Sum of value paid buying and selling options",
       "totalTrackedKey": "optionsPremiumVolume.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Options Premium Volume"
+      "tab": "Protocols"
     },
     {
       "name": "Options Notional Volume by Protocol",
@@ -411,9 +357,7 @@
       "category": "Volume",
       "description": "Sum of the notional value of all options that have been traded on options exchanges",
       "totalTrackedKey": "optionsNotionalVolume.protocols",
-      "tab": "Protocols",
-      "oldCategory": "Volume",
-      "oldName": "Options Notional Volume"
+      "tab": "Protocols"
     },
     {
       "name": "Stablecoins by Market Cap",
@@ -425,8 +369,6 @@
         "pegged"
       ],
       "tab": "Protocols",
-      "oldCategory": "Stablecoins",
-      "oldName": "Overview",
       "searchKeywords": [
         "stable",
         "stables",
@@ -445,8 +387,6 @@
         "pegged"
       ],
       "tab": "Chains",
-      "oldCategory": "Stablecoins",
-      "oldName": "Chains",
       "searchKeywords": [
         "stablecoin chains",
         "stablecoins by chain",
@@ -473,8 +413,7 @@
       "category": "Token",
       "description": "Tokenless protocols that may airdrop tokens to their users",
       "totalTrackedKey": "tokenlessProtocols",
-      "tab": "Protocols",
-      "oldName": "Airdrops"
+      "tab": "Protocols"
     },
     {
       "name": "Protocols by Market Cap",
@@ -527,7 +466,6 @@
       "category": "Exchanges",
       "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
       "totalTrackedKey": "cexs.protocols",
-      "oldName": "CEX Transparency",
       "searchKeywords": [
         "cexs",
         "cex reserves",
@@ -594,7 +532,6 @@
       "route": "/equities",
       "category": "Equities, ETFs & DATs",
       "description": "Live company rankings by market cap, price, volume, and price change",
-      "oldName": "Equities",
       "searchKeywords": [
         "equity",
         "equities"
@@ -617,7 +554,6 @@
       "route": "/digital-asset-treasuries",
       "category": "Equities, ETFs & DATs",
       "description": "Institutions that own cryptocurrencies as part of their corporate treasury",
-      "oldName": "DATs",
       "searchKeywords": [
         "dat",
         "dats",
@@ -633,7 +569,6 @@
       "route": "/etfs",
       "category": "Equities, ETFs & DATs",
       "description": "AUM, Flows, Volume metrics of all ETFs",
-      "oldName": "ETFs",
       "searchKeywords": [
         "etf",
         "etfs",
@@ -679,8 +614,7 @@
       "route": "/hacks",
       "category": "Hacks",
       "description": "Overview of all hacks that have happened in the ecosystem",
-      "totalTrackedKey": "hacks.total",
-      "oldName": "Hacks"
+      "totalTrackedKey": "hacks.total"
     },
     {
       "name": "Total Value Lost in Hacks by Protocol",
@@ -697,8 +631,6 @@
       "description": "Sum of the value of all assets that were bridged through the protocol",
       "totalTrackedKey": "bridges.protocols",
       "tab": "Protocols",
-      "oldCategory": "Bridges",
-      "oldName": "Overview",
       "searchKeywords": [
         "bridge",
         "bridges",
@@ -711,27 +643,21 @@
       "category": "Bridge",
       "description": "Sum of the value of all assets that were bridged through the protocol on each chain",
       "totalTrackedKey": "bridges.chains",
-      "tab": "Chains",
-      "oldCategory": "Bridges",
-      "oldName": "Chains"
+      "tab": "Chains"
     },
     {
       "name": "Raises: Overview",
       "route": "/raises",
       "category": "Raises",
       "description": "Total amount of capital raised by a project",
-      "totalTrackedKey": "raises.total",
-      "oldCategory": "Raises",
-      "oldName": "Overview"
+      "totalTrackedKey": "raises.total"
     },
     {
       "name": "Investors",
       "route": "/raises/investors",
       "category": "Raises",
       "description": "List of investors that have invested in a project",
-      "totalTrackedKey": "raises.investors",
-      "oldCategory": "Raises",
-      "oldName": "Investors"
+      "totalTrackedKey": "raises.investors"
     },
     {
       "name": "Unlocks: Overview",
@@ -742,9 +668,7 @@
       "keys": [
         "emissions"
       ],
-      "tab": "Protocols",
-      "oldCategory": "Unlocks",
-      "oldName": "Overview"
+      "tab": "Protocols"
     },
     {
       "name": "Unlocks: Calendar",
@@ -754,9 +678,7 @@
       "keys": [
         "emissions"
       ],
-      "tab": "Protocols",
-      "oldCategory": "Unlocks",
-      "oldName": "Calendar"
+      "tab": "Protocols"
     },
     {
       "name": "Treasuries",
@@ -764,8 +686,7 @@
       "category": "Treasury",
       "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
       "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols",
-      "oldName": "Treasuries"
+      "tab": "Protocols"
     },
     {
       "name": "Net Project Treasury",
@@ -787,23 +708,20 @@
       "route": "/recent",
       "category": "Others",
       "description": "List of recently listed protocols",
-      "tab": "Protocols",
-      "oldName": "Recently Listed"
+      "tab": "Protocols"
     },
     {
       "name": "Narrative Tracker",
       "route": "/narrative-tracker",
       "category": "Others",
-      "description": "MCap-Weighted category performance to track narrative changes in the ecosystem",
-      "oldName": "Narrative Tracker"
+      "description": "MCap-Weighted category performance to track narrative changes in the ecosystem"
     },
     {
       "name": "Staked ETH by Protocol",
       "route": "/lst",
       "category": "Others",
       "description": "Total value of ETH staked on LSTs",
-      "tab": "Protocols",
-      "oldName": "ETH Liquid Staking"
+      "tab": "Protocols"
     },
     {
       "name": "Expenses by Protocol",
@@ -825,8 +743,7 @@
       "route": "/token-rights",
       "category": "Others",
       "description": "Compare governance, economic, and ownership rights across DeFi protocols",
-      "tab": "Protocols",
-      "oldName": "Token Rights"
+      "tab": "Protocols"
     }
   ],
   "Tools": [
@@ -840,15 +757,13 @@
       "name": "Correlations Matrix by Coin",
       "route": "/correlation",
       "category": "Tools",
-      "description": "View correlation relationships between different cryptocurrencies to identify market trends and diversification opportunities",
-      "oldName": "Correlations Matrix"
+      "description": "View correlation relationships between different cryptocurrencies to identify market trends and diversification opportunities"
     },
     {
       "name": "DeFi Watchlist",
       "route": "/watchlist",
       "category": "Tools",
-      "description": "Watchlist of all protocols on DefiLlama",
-      "oldName": "Watchlist"
+      "description": "Watchlist of all protocols on DefiLlama"
     },
     {
       "name": "Crypto Cards",
@@ -870,24 +785,20 @@
       "name": "Token Liquidity",
       "route": "/liquidity",
       "category": "Tools",
-      "description": "Check how deep the liquidity is for a given token",
-      "oldName": "Token Liquidity"
+      "description": "Check how deep the liquidity is for a given token"
     },
     {
       "name": "Protocols Website Directory",
       "route": "/directory",
       "category": "Tools",
       "description": "Directory of all protocols websites on DefiLlama",
-      "tab": "Protocols",
-      "oldName": "Directory"
+      "tab": "Protocols"
     },
     {
       "name": "Yields: Watchlist",
       "route": "/yields/watchlist",
       "category": "Tools",
-      "description": "Watchlist of all pools that we track in our yields section",
-      "oldCategory": "Yields",
-      "oldName": "Watchlist"
+      "description": "Watchlist of all pools that we track in our yields section"
     },
     {
       "name": "Liquidations",
@@ -906,9 +817,7 @@
       "name": "Transactions by Bridge",
       "route": "/bridge-transactions",
       "category": "Tools",
-      "description": "Download transaction data across different time periods by bridge",
-      "oldCategory": "Bridges",
-      "oldName": "Transactions"
+      "description": "Download transaction data across different time periods by bridge"
     },
     {
       "name": "Rewards",
@@ -921,8 +830,7 @@
       "name": "Token Holder Profit and Loss",
       "route": "/token-pnl",
       "category": "Tools",
-      "description": "Calculate the percentage change in token price between two dates",
-      "oldName": "Token PnL"
+      "description": "Calculate the percentage change in token price between two dates"
     },
     {
       "name": "Report Error",
@@ -935,24 +843,21 @@
       "route": "/compare-chains?chains=OP+Mainnet&chains=Arbitrum",
       "category": "Tools",
       "description": "Compare metrics across different chains",
-      "tab": "Chains",
-      "oldName": "Compare Chains"
+      "tab": "Chains"
     },
     {
       "name": "Compare Protocols",
       "route": "/compare-protocols?protocol=Sky+Lending&protocol=Curve+DEX",
       "category": "Tools",
       "description": "Compare metrics across different protocols",
-      "tab": "Protocols",
-      "oldName": "Compare Protocols"
+      "tab": "Protocols"
     },
     {
       "name": "Token Usage by Protocol",
       "route": "/token-usage?token=ETH",
       "category": "Tools",
       "description": "View token usage across different protocols",
-      "tab": "Protocols",
-      "oldName": "Token Usage"
+      "tab": "Protocols"
     },
     {
       "name": "Llama News Round-Up",
@@ -1065,8 +970,7 @@
     {
       "name": "Exchanges",
       "route": "/exchanges",
-      "icon": "bar-chart-2",
-      "isNew": true
+      "icon": "bar-chart-2"
     },
     {
       "name": "MiCA",

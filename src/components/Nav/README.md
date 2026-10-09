@@ -15,6 +15,7 @@
 - Navigating to a grouped destination opens its group. A fresh load of a page outside the groups starts with every group closed.
 - A remount on the same pathname keeps a manual open or close choice; a completed navigation to another pathname drops it.
 - Native disclosure toggles (find-in-page, text highlighting) update the shared state, but a toggle event that already matches the controlled `open` prop is ignored.
+- Your Dashboards is a disclosure, open by default. Closing it is stored, so it stays closed across navigation, reloads and the phone menu.
 - Group rows keep the inherited font size and weight, primary text, 16px icons and a 12px icon gap, on desktop and mobile alike.
 - A child destination stays selected on its subpages. An overview matches exactly only when its siblings are its own subroutes, such as Equities rankings next to sectors.
 - The active destination carries `aria-current`.

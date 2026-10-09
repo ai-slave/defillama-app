@@ -13,9 +13,3 @@ export type TNavLink = {
 }
 
 export type TNavLinks = Array<{ category: string; pages: Array<TNavLink> }>
-
-export type TOldNavLink = {
-	name: string
-	route?: string
-	pages?: Array<{ name: string; route: string }>
-}

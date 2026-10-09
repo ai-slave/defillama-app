@@ -9,7 +9,7 @@ import { takeLostFocus } from '~/ui/focus'
 import { InlineStatus } from '~/ui/Status'
 import { DesktopNav } from './Desktop'
 import { MobileNav } from './Mobile'
-import type { TNavLink, TNavLinks, TOldNavLink } from './types'
+import type { TNavLink, TNavLinks } from './types'
 
 type DefillamaPage = {
 	name: string
@@ -17,8 +17,6 @@ type DefillamaPage = {
 	icon?: TNavLink['icon']
 	isNew?: boolean
 	umamiEvent?: string
-	oldCategory?: string
-	oldName?: string
 	requireLlama?: boolean
 }
 
@@ -52,19 +50,6 @@ for (const [category, categoryPages] of Object.entries(pages)) {
 		}
 	}
 }
-
-const oldMetricLinksByName: Record<string, TOldNavLink> = {}
-for (const curr of [...pages.Metrics, ...pages.Tools]) {
-	if (curr.oldCategory && curr.oldName) {
-		const groupedMetric = (oldMetricLinksByName[curr.oldCategory] ??= { name: curr.oldCategory, pages: [] })
-		groupedMetric.pages ??= []
-		groupedMetric.pages.push({ name: curr.oldName, route: curr.route })
-	}
-	if (curr.oldName && !curr.oldCategory) {
-		oldMetricLinksByName[curr.oldName] ??= { name: curr.oldName, route: curr.route }
-	}
-}
-const oldMetricLinks: Array<TOldNavLink> = Object.values(oldMetricLinksByName)
 
 function normalizeAiRoute(route: string, shouldSkipLanding: boolean): string {
 	return route === '/ai' && shouldSkipLanding ? '/ai/chat' : route
@@ -181,7 +166,6 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 				userDashboards={userDashboards}
 				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
-				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}
 			/>
 			<MobileNav
@@ -191,7 +175,6 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
 				tvlOptions={tvlOptions}
-				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}
 			/>
 		</>

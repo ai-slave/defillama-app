@@ -1,7 +1,9 @@
+import type * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { freeBadgeBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
+import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { PromoBadge } from '~/ui/PromoBadge'
@@ -33,6 +35,18 @@ function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: NavIco
 			<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
 		</summary>
 	)
+}
+
+const DASHBOARDS_COLLAPSED_KEY = 'nav-dashboards-collapsed'
+
+// Page layouts remount the nav on every navigation, so a collapsed Your Dashboards section is stored, shared by the
+// desktop sidebar and the phone menu. The server renders it open; a stored collapse closes it after hydration.
+export function useDashboardsDisclosure() {
+	const open = useStorageItem(DASHBOARDS_COLLAPSED_KEY, null) !== 'true'
+	// Also fires when the stored state changes `open`; setStorageItem skips that unchanged write.
+	const onToggle = (event: React.SyntheticEvent<HTMLDetailsElement>) =>
+		setStorageItem(DASHBOARDS_COLLAPSED_KEY, String(!event.currentTarget.open))
+	return { open, onToggle }
 }
 
 export function PrimaryNavGroup({
@@ -77,7 +91,7 @@ export function PrimaryNavGroup({
 						name={page.name}
 						route={page.route}
 						asPath={asPath}
-						isOld={page.route === route && pages.some((sibling) => sibling.route.startsWith(`${route}/`))}
+						exactMatch={page.route === route && pages.some((sibling) => sibling.route.startsWith(`${route}/`))}
 						hideIcon={alignLabels}
 					/>
 				))}
@@ -98,7 +112,7 @@ export function LinkToPage({
 	isNew,
 	asPath,
 	umamiEvent,
-	isOld,
+	exactMatch,
 	hideIcon
 }: {
 	route: string
@@ -108,13 +122,13 @@ export function LinkToPage({
 	isNew?: boolean
 	asPath: string
 	umamiEvent?: string
-	isOld?: boolean
+	exactMatch?: boolean
 	hideIcon?: boolean
 }) {
 	const isLlamaAI = name === 'LlamaAI'
 	const freeLabel = useLlamaAIFreeLabel(isLlamaAI)
 	const cleanAsPath = navPath(asPath)
-	const isActive = isOld ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
+	const isActive = exactMatch ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
 	const isExternal = route.startsWith('http')
 
 	return (

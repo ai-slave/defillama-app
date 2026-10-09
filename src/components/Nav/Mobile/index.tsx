@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { MobileSearch } from '~/components/Search'
-import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
+import type { TNavLink, TNavLinks } from '../types'
 import { Menu } from './Menu'
 import { Settings } from './Settings'
 
@@ -13,7 +13,6 @@ export function MobileNav({
 	dashboardsStatus,
 	footerLinks,
 	tvlOptions,
-	oldMetricLinks,
 	asPath
 }: {
 	mainLinks: TNavLinks
@@ -22,7 +21,6 @@ export function MobileNav({
 	dashboardsStatus: ReactNode
 	footerLinks: TNavLinks
 	tvlOptions?: Array<{ name: string; key: string }>
-	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
 }) {
 	const isResearch = asPath.startsWith('/research')
@@ -52,7 +50,6 @@ export function MobileNav({
 				userDashboards={userDashboards}
 				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
-				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}
 			/>
 		</nav>

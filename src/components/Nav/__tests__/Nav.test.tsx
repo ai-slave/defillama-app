@@ -83,3 +83,23 @@ test('a failed refresh keeps the saved dashboards listed above its error', async
 	)
 	expect(dashboardsSection()!.querySelector('a')?.getAttribute('href')).toBe('/pro/saved')
 })
+
+test('a closed Your Dashboards section stays closed when the nav remounts on the next page, and reopens the same way', async () => {
+	session.serve({ '/lite/dashboards': Response.json({ items: [{ id: 'one', name: 'Research', slug: 'research' }] }) })
+	const section = () => dashboardsSection() as HTMLDetailsElement
+	const toggleAndRemount = async () => {
+		await act(async () => section().querySelector('summary')!.click())
+		await act(async () => root.unmount())
+		root = createRoot(container)
+		await renderNav()
+	}
+	await renderNav()
+	await waitForUi(() => expect(section().querySelector('a')?.getAttribute('href')).toBe('/pro/research'))
+	expect(section().open).toBe(true)
+
+	await toggleAndRemount()
+	expect(section().open).toBe(false)
+
+	await toggleAndRemount()
+	expect(section().open).toBe(true)
+})

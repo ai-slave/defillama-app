@@ -10,8 +10,8 @@ import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
 import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
-import { LinkToPage, navSummaryStyles } from '../shared'
-import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
+import { LinkToPage, navSummaryStyles, useDashboardsDisclosure } from '../shared'
+import type { TNavLink, TNavLinks } from '../types'
 
 const ReorderablePinnedPages = lazy(() => import('./ReorderablePinnedPages'))
 
@@ -21,7 +21,6 @@ export function Menu({
 	userDashboards,
 	dashboardsStatus,
 	footerLinks,
-	oldMetricLinks,
 	asPath
 }: {
 	mainLinks: TNavLinks
@@ -30,10 +29,10 @@ export function Menu({
 	/** The dashboards list's load error, shown under the list. */
 	dashboardsStatus: React.ReactNode
 	footerLinks: TNavLinks
-	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
 }) {
 	const [show, setShow] = useState(false)
+	const dashboardsDisclosure = useDashboardsDisclosure()
 	// An explicit store: inside the Tooltip's provider the disclosure would otherwise open the tooltip's own store.
 	const dialog = Ariakit.useDialogStore({ open: show, setOpen: setShow })
 
@@ -84,54 +83,27 @@ export function Menu({
 						</div>
 					))}
 
-					<details className="group mb-3">
-						<summary className={`${navSummaryStyles} label-sm`}>
-							<span>Old Menu</span>
-							<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
-						</summary>
-						<div className="border-l border-subtle pl-2 group-open:border-l">
-							{oldMetricLinks.map(({ name, route, pages }: TOldNavLink) => (
-								<React.Fragment key={`mobile-nav-old-${name}-${route}`}>
-									{pages ? (
-										<details className="group/second">
-											<summary className={navSummaryStyles}>
-												<span>{name}</span>
-												<Icon
-													name="chevron-down"
-													className="size-4 shrink-0 text-tertiary group-open/second:rotate-180"
-												/>
-											</summary>
-											<div className="border-l border-subtle pl-2">
-												{pages.map(({ name: pageName, route: pageRoute }) => (
-													<LinkToPage
-														route={pageRoute}
-														name={pageName}
-														key={`mobile-nav-old-${pageName}-${pageRoute}`}
-														asPath={asPath}
-														isOld
-													/>
-												))}
-											</div>
-										</details>
-									) : route ? (
-										<LinkToPage route={route} name={name} key={`mobile-nav-old-${name}-${route}`} asPath={asPath} />
-									) : null}
-								</React.Fragment>
-							))}
-						</div>
-					</details>
-
 					{pinnedPages.length > 0 ? <PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
 					{userDashboards.length > 0 || dashboardsStatus ? (
-						<div className="group mb-3 flex flex-col first:mb-auto" data-nav-dashboards>
-							<p className="mb-1 label-sm text-secondary">Your Dashboards</p>
-							<hr className="border-subtle" />
-							{userDashboards.map(({ name, route, icon }) => (
-								<LinkToPage route={route} name={name} icon={icon} key={`mobile-nav-${name}-${route}`} asPath={asPath} />
-							))}
+						<details className="group mb-3" data-nav-dashboards {...dashboardsDisclosure}>
+							<summary className={`${navSummaryStyles} label-sm`}>
+								<span>Your Dashboards</span>
+								<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+							</summary>
+							<div className="flex flex-col">
+								{userDashboards.map(({ name, route, icon }) => (
+									<LinkToPage
+										route={route}
+										name={name}
+										icon={icon}
+										key={`mobile-nav-${name}-${route}`}
+										asPath={asPath}
+									/>
+								))}
+							</div>
 							{dashboardsStatus ? <div className="pt-2">{dashboardsStatus}</div> : null}
-						</div>
+						</details>
 					) : null}
 
 					{footerLinks.map(({ category, pages }) => (

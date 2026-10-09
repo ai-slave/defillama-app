@@ -29,7 +29,6 @@ const props = {
 	userDashboards: [],
 	dashboardsStatus: null,
 	footerLinks: [],
-	oldMetricLinks: [],
 	asPath: '/'
 }
 

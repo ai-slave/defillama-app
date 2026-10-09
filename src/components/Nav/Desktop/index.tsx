@@ -5,9 +5,9 @@ import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
 import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
-import { LinkToPage, navSummaryStyles, SidebarDivider } from '../shared'
+import { LinkToPage, navSummaryStyles, SidebarDivider, useDashboardsDisclosure } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
-import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
+import type { TNavLink, TNavLinks } from '../types'
 import { PinnedPages } from './PinnedPages'
 
 export function DesktopNav({
@@ -16,7 +16,6 @@ export function DesktopNav({
 	userDashboards,
 	dashboardsStatus,
 	footerLinks,
-	oldMetricLinks,
 	asPath
 }: {
 	mainLinks: TNavLinks
@@ -25,10 +24,10 @@ export function DesktopNav({
 	/** The dashboards list's load error, shown under the list. */
 	dashboardsStatus: React.ReactNode
 	footerLinks: TNavLinks
-	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
 }) {
 	const isResearch = asPath.startsWith('/research')
+	const dashboardsDisclosure = useDashboardsDisclosure()
 	return (
 		<span className="desktop-nav-shell col-span-1 max-lg:hidden">
 			<nav
@@ -77,57 +76,21 @@ export function DesktopNav({
 						</div>
 					))}
 
-					<details className="group">
-						<summary className={`${navSummaryStyles} label-sm`}>
-							<span>Old Menu</span>
-							<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
-						</summary>
-						<div className="border-l border-subtle pl-2">
-							{oldMetricLinks.map(({ name, route, pages }: TOldNavLink) => (
-								<React.Fragment key={`old-nav-desktop-${name}-${route ?? ''}`}>
-									{pages ? (
-										<details className="group/second">
-											<summary className={navSummaryStyles}>
-												<span>{name}</span>
-												<Icon
-													name="chevron-down"
-													className="size-4 shrink-0 text-tertiary group-open/second:rotate-180"
-												/>
-											</summary>
-											<div className="border-l border-subtle pl-2">
-												{pages.map(({ name: pageName, route: pageRoute }) => (
-													<LinkToPage
-														key={`old-desktop-nav-${pageName}-${pageRoute}`}
-														route={pageRoute}
-														name={pageName}
-														asPath={asPath}
-														isOld
-													/>
-												))}
-											</div>
-										</details>
-									) : route ? (
-										<LinkToPage key={`old-desktop-nav-${name}-${route}`} route={route} name={name} asPath={asPath} />
-									) : null}
-								</React.Fragment>
-							))}
-						</div>
-					</details>
-
 					{pinnedPages.length > 0 ? <PinnedPages pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
 					{userDashboards.length > 0 || dashboardsStatus ? (
-						<div className="group" data-nav-dashboards>
-							<p className="flex items-center justify-between gap-3 rounded-md pt-1.5 label-sm text-secondary">
-								Your Dashboards
-							</p>
+						<details className="group" data-nav-dashboards {...dashboardsDisclosure}>
+							<summary className={`${navSummaryStyles} label-sm`}>
+								<span>Your Dashboards</span>
+								<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+							</summary>
 							<div>
 								{userDashboards.map(({ name, route }) => (
 									<LinkToPage key={`desktop-nav-${name}-${route}`} route={route} name={name} asPath={asPath} />
 								))}
 							</div>
 							{dashboardsStatus ? <div className="py-1 pr-2">{dashboardsStatus}</div> : null}
-						</div>
+						</details>
 					) : null}
 
 					{footerLinks.map(({ category, pages }) => (
