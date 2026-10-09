@@ -178,7 +178,8 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 							ref={focusRegionOnLeave}
 							size="sm"
 							onClick={() => void refetch()}
-							pendingLabel={isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={isFetching}
 						>
 							Try again
 						</Button>
@@ -332,7 +333,8 @@ export function ReportHighlightControls({
 							size="sm"
 							disabled={!textDirty || pending || metadataMutation.isPending}
 							accessibleWhenDisabled
-							pendingLabel={metadataMutation.isPending && metadataMutation.variables.trim() ? 'Saving…' : null}
+							pendingLabel="Saving…"
+							pending={metadataMutation.isPending && metadataMutation.variables.trim() !== ''}
 							onClick={() => metadataMutation.mutate(highlightText)}
 						>
 							Save highlight text
@@ -344,7 +346,8 @@ export function ReportHighlightControls({
 								size="sm"
 								disabled={pending || metadataMutation.isPending}
 								accessibleWhenDisabled
-								pendingLabel={metadataMutation.isPending && !metadataMutation.variables.trim() ? 'Clearing…' : null}
+								pendingLabel="Clearing…"
+								pending={metadataMutation.isPending && !metadataMutation.variables.trim()}
 								onClick={() => {
 									setHighlightText('')
 									metadataMutation.mutate('')

@@ -31,7 +31,7 @@ import {
 import { BlockContent, toMentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import { chunkMentions } from '~/containers/Articles/landing/utils'
 import type { SocialMention, TrustedLogo } from '~/containers/Articles/types'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
@@ -339,7 +339,10 @@ export function TrustedByAdminView() {
 					<div className="flex flex-wrap items-end justify-between gap-3">
 						<h2 className="heading-xs text-primary">Slide preview</h2>
 						<Button variant="secondary" size="md" onClick={() => setShowFullPreview((prev) => !prev)}>
-							{showFullPreview ? 'Show quote cards only' : 'Load full preview with X posts'}
+							<StableLabel
+								labels={['Load full preview with X posts', 'Show quote cards only']}
+								current={showFullPreview ? 'Show quote cards only' : 'Load full preview with X posts'}
+							/>
 						</Button>
 					</div>
 					<div className="grid gap-3">

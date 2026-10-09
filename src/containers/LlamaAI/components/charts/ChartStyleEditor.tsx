@@ -13,6 +13,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
@@ -234,9 +235,13 @@ export function ChartStyleEditor({
 	// The draft as it opened: leaving with the style, view or series order changed asks first.
 	const draftSnapshot = JSON.stringify({ config: draftConfig(draft), view: draftView, order: seriesOrder })
 	const [openedSnapshot] = useState(draftSnapshot)
+	// The last failure, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [saveFailed, setSaveFailed] = useState(false)
 	const saveMutation = useMutation({
 		mutationFn: ({ config: saved, patch }: { config: ChartConfiguration; patch: ChartStylePatch }) =>
-			onSave(saved, patch)
+			onSave(saved, patch),
+		onError: () => setSaveFailed(true),
+		onSuccess: () => setSaveFailed(false)
 	})
 	const [pane, setPane] = useState<EditorPane>('style')
 	const isCombo = draft.type === 'combo'
@@ -335,7 +340,6 @@ export function ChartStyleEditor({
 		const savedConfig = draftConfig(draft)
 		saveMutation.mutate({ config: savedConfig, patch: toPatch(savedConfig, draftView, seriesOrder) })
 	}
-	const error = saveMutation.error?.message ?? null
 
 	const reset = () => {
 		const resetDraft = createDraft(original)
@@ -812,10 +816,8 @@ export function ChartStyleEditor({
 				</div>
 				<DialogFooter
 					leading={
-						error ? (
-							<span role="alert" className="label-sm text-error">
-								{error}
-							</span>
+						saveFailed ? (
+							<ErrorLine inset="none">Couldn&apos;t save the chart style. Save again to retry.</ErrorLine>
 						) : (
 							<Button
 								type="button"
@@ -831,7 +833,7 @@ export function ChartStyleEditor({
 					}
 					dismiss={<DialogCancelButton />}
 				>
-					<Button type="submit" variant="primary" size="md" pendingLabel={saveMutation.isPending ? 'Saving…' : null}>
+					<Button type="submit" variant="primary" size="md" pendingLabel="Saving…" pending={saveMutation.isPending}>
 						Save
 					</Button>
 				</DialogFooter>

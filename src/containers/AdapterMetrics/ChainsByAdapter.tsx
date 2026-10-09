@@ -104,7 +104,7 @@ export function ChainsByAdapter(props: IProps) {
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search..."
+							placeholder="Search…"
 							className={searchFieldInputPlacementStyles}
 						/>
 					</label>

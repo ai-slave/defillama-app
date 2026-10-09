@@ -133,7 +133,7 @@ export function buildBlockchainViewModel({ metadata, blockchain }: BlockchainAPI
 }
 
 export function useBlockchainData() {
-	const query = useQuery<BlockchainViewModel>({
+	return useQuery<BlockchainViewModel>({
 		queryKey: ['berachain-blockchain'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/berachain/blockchain')
@@ -144,7 +144,4 @@ export function useBlockchainData() {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-
-	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
-	return { data: query.data, isLoading: false }
 }

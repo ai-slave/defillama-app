@@ -87,7 +87,6 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 	const alert = document.querySelector('[role="alert"]')!
 	expect(alert.textContent).toContain("Couldn't refresh this query.")
 	expect(alert.textContent).not.toContain('SQL run failed')
-	expect(alert.getAttribute('title')).toBe('SQL run failed')
 	expect(document.body.textContent).toContain('No numeric columns in this result to chart.')
 
 	await act(async () =>

@@ -111,7 +111,7 @@ function buttonRow(variant: (typeof BUTTON_VARIANTS)[number], size: 'sm' | 'md' 
 			)}
 			{cell(
 				undefined,
-				<Button {...common} pendingLabel="Saving…">
+				<Button {...common} pendingLabel="Saving…" pending>
 					{label}
 				</Button>
 			)}
@@ -291,7 +291,6 @@ export function ActionsGroup() {
 										shape={shape}
 										icon="image-plus"
 										label="Upload logo"
-										pendingLabel={null}
 										className={shape === 'wide' ? 'w-48' : undefined}
 									/>
 								</Cell>
@@ -301,13 +300,13 @@ export function ActionsGroup() {
 								icon="image-plus"
 								label="Upload logo"
 								pendingLabel="Uploading…"
+								pending
 								className={shape === 'wide' ? 'w-48' : undefined}
 							/>
 							<UploadTile
 								shape={shape}
 								icon="image-plus"
 								label="Upload logo"
-								pendingLabel={null}
 								disabled
 								className={shape === 'wide' ? 'w-48' : undefined}
 							/>
@@ -321,14 +320,15 @@ export function ActionsGroup() {
 				note="The current image; hover, focus and a pending upload show the media scrim."
 			>
 				<Row>
-					<ImageReplaceTile shape="round" src="/assets/llama.png" pendingLabel={null} aria-label="Replace avatar" />
+					<ImageReplaceTile shape="round" src="/assets/llama.png" aria-label="Replace avatar" />
 					<Cell force="hover">
-						<ImageReplaceTile shape="round" src="/assets/llama.png" pendingLabel={null} aria-label="Replace avatar" />
+						<ImageReplaceTile shape="round" src="/assets/llama.png" aria-label="Replace avatar" />
 					</Cell>
 					<ImageReplaceTile
 						shape="round"
 						src="/assets/llama.png"
 						pendingLabel="Uploading…"
+						pending
 						aria-label="Replace avatar"
 					/>
 				</Row>
@@ -994,7 +994,6 @@ export function OverlaysGroup() {
 					title="Delete dashboard?"
 					description="This removes the dashboard for everyone on your team."
 					confirmLabel="Delete"
-					pendingLabel={null}
 					error={null}
 					tone="destructive"
 					onConfirm={() => setConfirm(false)}

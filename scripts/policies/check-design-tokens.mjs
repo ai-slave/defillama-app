@@ -17,6 +17,10 @@
 //
 // The check also fails when a count drops below its baseline: the gap would
 // let the next change add that many violations back without failing.
+//
+// A rule's `exceptions` names files where the pattern is a deliberate choice,
+// each with its reason; they are not counted, so a baseline above zero is
+// always debt. Add one only with a reason the shared part cannot meet.
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -730,8 +734,19 @@ const RULES = [
 		description:
 			'Ariakit.Menu/Popover/ComboboxPopover rendered directly — use MenuSurface, PopoverSurface or ComboboxSurface from src/ui, which wire the drawer wrapper, scrim and close button from one `variant`',
 		pattern: /<Ariakit\.(?:Menu|Popover|ComboboxPopover|SelectPopover)\b/g,
-		// src/ui owns the wrappers; NestedMenu and the legacy Select/Menu paths are the tracked exceptions.
-		uiOwned: true
+		// src/ui owns the wrappers; NestedMenu and the legacy Select/Menu paths live there.
+		uiOwned: true,
+		skipTests: true,
+		exceptions: {
+			'src/containers/Articles/editor/ArticleEditorControls.tsx':
+				'a table toolbar floating over the editor: it never takes focus and stays open while the reader types',
+			'src/containers/Articles/editor/SuggestionPopover.tsx':
+				"the editor's suggestion list, anchored to the caret, with focus left in the editor",
+			'src/containers/LlamaAI/components/TextSelectionPopup.tsx':
+				'actions anchored to a text selection, with focus left in the prose',
+			'src/containers/LlamaAI/components/OnboardingWalkthrough.tsx':
+				"the tour's pointer bubble: an arrowed card anchored to the spotlight, above the tour's own layer"
+		}
 	},
 	{
 		// `[^<]` reads past arrow functions (`=>`) in earlier props and stops at the first child element.
@@ -743,11 +758,22 @@ const RULES = [
 	{
 		id: 'raw-dialog-surface',
 		description:
-			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net); the tracked exceptions are the mobile nav sheet, the image lightbox, the onboarding tour, the chat history drawer and the mobile-app gate',
+			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net)',
 		pattern: /<Ariakit\.Dialog\b/g,
 		uiOwned: true,
 		// A test may host a component in a plain Ariakit dialog.
-		skipTests: true
+		skipTests: true,
+		exceptions: {
+			'src/components/Nav/Mobile/Menu.tsx':
+				'the phone nav drawer: it stays a side drawer on phones, where SideSheet becomes a bottom sheet, and keeps its scroll and open sections',
+			'src/containers/LlamaAI/components/ImagePreviewModal.tsx':
+				'a full-screen image lightbox with no header or footer',
+			'src/containers/LlamaAI/components/OnboardingWalkthrough.tsx':
+				"the tour's intro and closing cards, which sit above the tour's spotlight layer",
+			'src/containers/LlamaAI/index.tsx':
+				'the chat history drawer: non-modal, opening from the left inside the chat area',
+			'src/containers/MobileApp/LlamaAIMobileAppGate.tsx': 'a full-screen takeover that a click outside cannot dismiss'
+		}
 	},
 	{
 		id: 'arbitrary-dialog-width',
@@ -770,7 +796,13 @@ const RULES = [
 			'native input, textarea or select with its own border, fill or radius — use Input or Textarea from src/ui/Input.tsx (one outline, hover, radius, fill, focus, error and type), or Select for a pick',
 		match: matchHandBuiltField,
 		uiOwned: true,
-		skipTests: true
+		skipTests: true,
+		exceptions: {
+			'src/containers/Articles/editor/ArticleEditorCanvas.tsx':
+				"the link bubble's borderless URL box, inside the bubble's own frame (src/ui/Field.tsx, hideLabel)",
+			'src/containers/Downloads/sql/notebook/MarkdownCell.tsx':
+				"a notebook cell's source editor, which edits in place in the cell's own frame"
+		}
 	},
 	{
 		id: 'native-select',
@@ -903,6 +935,7 @@ const offenders = Object.fromEntries(
 	buckets.map((bucket) => [bucket, Object.fromEntries(RULES.map((r) => [r.id, new Map()]))])
 )
 
+const exceptionHits = new Set()
 for (const file of files) {
 	const content = fs.readFileSync(path.join(ROOT, file), 'utf8')
 	const bucket = isProductSurfaceFile(file) ? 'product' : 'core'
@@ -933,6 +966,11 @@ for (const file of files) {
 		)
 			continue
 		const matches = rule.match ? rule.match(source) : source.match(rule.pattern)
+		// A listed exception is a deliberate choice with its reason beside it, not debt: it is shown, not counted.
+		if (rule.exceptions?.[file]) {
+			if (matches) exceptionHits.add(`${rule.id} ${file}`)
+			continue
+		}
 		if (matches) {
 			counts[bucket][rule.id] += matches.length
 			offenders[bucket][rule.id].set(file, matches.length)
@@ -951,6 +989,19 @@ const baseline = 'core' in persistedBaseline ? persistedBaseline : { core: persi
 // Baselines written before the bucket rename ('excluded' → 'product'): read the old key.
 if (!baseline.product && baseline.excluded) baseline.product = baseline.excluded
 let failed = false
+
+// An exception whose file no longer matches would sit in the list unseen and excuse the next real violation there.
+console.log('\nlisted exceptions (not counted)')
+for (const rule of RULES) {
+	if (!rule.exceptions) continue
+	const listed = Object.keys(rule.exceptions)
+	const stale = listed.filter((file) => !exceptionHits.has(`${rule.id} ${file}`))
+	console.log(`${(stale.length > 0 ? 'FAIL' : 'ok').padEnd(9)} ${rule.id}: ${listed.length}`)
+	for (const file of stale) {
+		failed = true
+		console.log(`  stale: ${file} no longer matches; remove it from the rule's exceptions`)
+	}
+}
 
 for (const bucket of buckets) {
 	console.log(`\n${BUCKET_LABELS[bucket]}`)

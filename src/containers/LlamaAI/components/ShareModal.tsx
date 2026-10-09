@@ -199,7 +199,8 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 									type="button"
 									size="md"
 									onClick={() => nativeShare.mutate()}
-									pendingLabel={nativeShare.isPending ? 'Sharing…' : null}
+									pendingLabel="Sharing…"
+									pending={nativeShare.isPending}
 								>
 									Share…
 								</Button>
@@ -232,7 +233,8 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 						type="button"
 						size="md"
 						variant="primary"
-						pendingLabel={creation.isPending ? 'Creating…' : copy.isPending ? 'Copying…' : null}
+						pendingLabel={creation.isPending ? 'Creating…' : 'Copying…'}
+						pending={creation.isPending || copy.isPending}
 						onClick={() => copyLink(shareLink)}
 						disabled={!shareLink || copy.error?.message === CLIPBOARD_UNAVAILABLE}
 						accessibleWhenDisabled

@@ -51,7 +51,9 @@ export function SubmitButton({ editItem, state, onSubmit, submitError, pickList 
 				variant="primary"
 				size="md"
 				onClick={onSubmit}
-				pendingLabel={pickList?.status === 'loading' ? pickList.label : null}
+				// The picked list's own loading label ("Loading protocols…") only exists while it loads.
+				pendingLabel={pickList?.status === 'loading' ? pickList.label : undefined}
+				pending={pickList?.status === 'loading'}
 				disabled={gate !== null || pickList?.status === 'failed'}
 				accessibleWhenDisabled
 				aria-describedby={gate !== null ? reasonId : undefined}

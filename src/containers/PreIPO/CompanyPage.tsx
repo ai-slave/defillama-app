@@ -5,6 +5,7 @@ import { FundingRoundsTable } from '~/containers/PreIPO/FundingRoundsTable'
 import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/IntegrationTables'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { StaleText } from '~/ui/StaleText'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -30,28 +31,29 @@ export function PreIpoCompanyPage({
 		<div className="flex flex-col gap-2">
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm" gap="sm">
-					<div className="flex min-w-0 items-start gap-2">
-						<img
-							src={preIpoIconUrl(summary.id, 32)}
-							alt={`${summary.name} logo`}
-							width={24}
-							height={24}
-							className="size-6 shrink-0 rounded-full object-contain"
-						/>
-						<div className="min-w-0 flex-1">
-							<h1 className="flex min-h-8 min-w-0 items-center gap-2 heading-sm">
-								<span className="truncate">{summary.name}</span>
-								<span className="ml-auto shrink-0">
-									<WebsiteGlobeLink
-										url={summary.website}
-										name={summary.name}
-										event="pre-ipo-website-click"
-										eventData={{ company: summary.id }}
-									/>
-								</span>
-							</h1>
-							<p className="body-md text-secondary">{summary.sector}</p>
-						</div>
+					<div className="flex flex-col">
+						<EntityTitleRow
+							logo={
+								<img
+									src={preIpoIconUrl(summary.id, 32)}
+									alt={`${summary.name} logo`}
+									width={24}
+									height={24}
+									className="size-6 shrink-0 rounded-full object-contain"
+								/>
+							}
+							actions={
+								<WebsiteGlobeLink
+									url={summary.website}
+									name={summary.name}
+									event="pre-ipo-website-click"
+									eventData={{ company: summary.id }}
+								/>
+							}
+						>
+							{summary.name}
+						</EntityTitleRow>
+						<p className="body-md text-secondary">{summary.sector}</p>
 					</div>
 					<div className="flex flex-col">
 						<MetricRow

@@ -9,6 +9,7 @@ import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 const REASON_COPY: Record<QueueNotSentReason, string> = {
@@ -82,14 +83,15 @@ function QueueChipEditor({
 				className="w-full resize-none"
 				rows={2}
 			/>
-			{status?.error ? <p className="m-0 body-sm text-error">{status.error}</p> : null}
+			<RowError status={status} />
 			{paused && !status?.error ? <p className="m-0 body-sm text-tertiary">Queue paused while you edit</p> : null}
 			<div className="flex items-center gap-1.5">
 				<Button
 					type="submit"
 					accessibleWhenDisabled
 					disabled={busy}
-					pendingLabel={status?.action === 'saving_edit' ? 'Saving…' : null}
+					pendingLabel="Saving…"
+					pending={status?.action === 'saving_edit'}
 					variant="primary"
 					size="sm"
 				>
@@ -99,7 +101,8 @@ function QueueChipEditor({
 					type="button"
 					accessibleWhenDisabled
 					disabled={busy}
-					pendingLabel={status?.action === 'canceling_edit' ? 'Canceling…' : null}
+					pendingLabel="Canceling…"
+					pending={status?.action === 'canceling_edit'}
 					size="sm"
 					onClick={onCancel}
 				>
@@ -111,7 +114,7 @@ function QueueChipEditor({
 }
 
 function RowError({ status }: { status: QueueRowStatus | undefined }) {
-	return status?.error ? <p className="m-0 body-sm text-error">{status.error}</p> : null
+	return status?.error ? <ErrorLine inset="none">{status.error}</ErrorLine> : null
 }
 
 export function QueueChips({
@@ -177,7 +180,8 @@ export function QueueChips({
 								size="sm"
 								variant="primary"
 								disabled={queueAction === 'clearing' || quotaResetCopy !== null}
-								pendingLabel={queueAction === 'continuing' ? 'Continuing…' : null}
+								pendingLabel="Continuing…"
+								pending={queueAction === 'continuing'}
 								onClick={onContinue}
 							>
 								{quotaResetCopy ? `Continue in ${quotaResetCopy}` : 'Continue queue'}
@@ -187,7 +191,8 @@ export function QueueChips({
 							type="button"
 							size="sm"
 							disabled={queueAction === 'continuing'}
-							pendingLabel={queueAction === 'clearing' ? 'Clearing…' : null}
+							pendingLabel="Clearing…"
+							pending={queueAction === 'clearing'}
 							onClick={(event) => {
 								returnFocus.current = event.currentTarget
 								clearStore.show()
@@ -198,11 +203,7 @@ export function QueueChips({
 					</div>
 				</div>
 			) : null}
-			{queueActionError ? (
-				<p role="alert" className="m-0 body-sm text-error">
-					{queueActionError.message}
-				</p>
-			) : null}
+			{queueActionError ? <ErrorLine inset="none">{queueActionError.message}</ErrorLine> : null}
 			<span role="status" className="sr-only">
 				{queueAction === 'clearing' ? 'Clearing queued prompts' : ''}
 			</span>
@@ -213,8 +214,6 @@ export function QueueChips({
 				title="Clear all queued prompts?"
 				description="This removes every queued and waiting prompt from this conversation."
 				confirmLabel="Clear queue"
-				// The dialog closes on confirm: the queue row owns pending and error feedback, including a lost response.
-				pendingLabel={null}
 				error={null}
 				onConfirm={() => {
 					returnFocus.current = promptInputRef.current ?? returnFocus.current
@@ -360,7 +359,8 @@ export function QueueChips({
 												aria-describedby={`queue-row-${rowKey}`}
 												accessibleWhenDisabled
 												disabled={busy}
-												pendingLabel={status?.action === 'opening_edit' ? 'Opening editor…' : null}
+												pendingLabel="Opening editor…"
+												pending={status?.action === 'opening_edit'}
 												variant="ghost"
 												size="sm"
 												square
@@ -379,7 +379,8 @@ export function QueueChips({
 												aria-describedby={`queue-row-${rowKey}`}
 												accessibleWhenDisabled
 												disabled={busy}
-												pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
+												pendingLabel="Dismissing…"
+												pending={status?.action === 'dismissing'}
 												variant="ghost"
 												size="sm"
 												square
@@ -431,7 +432,8 @@ export function QueueChips({
 												data-primary={retryPrimary ? 'true' : undefined}
 												accessibleWhenDisabled
 												disabled={busy || !!status?.unsavedDraft}
-												pendingLabel={status?.action === 'retrying' ? 'Retrying…' : null}
+												pendingLabel="Retrying…"
+												pending={status?.action === 'retrying'}
 												variant={retryPrimary ? 'primary' : 'secondary'}
 												size="sm"
 												square
@@ -451,7 +453,8 @@ export function QueueChips({
 											aria-describedby={`queue-row-${rowKey}`}
 											accessibleWhenDisabled
 											disabled={busy}
-											pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
+											pendingLabel="Dismissing…"
+											pending={status?.action === 'dismissing'}
 											variant="ghost"
 											size="sm"
 											square

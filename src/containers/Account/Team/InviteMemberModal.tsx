@@ -71,7 +71,7 @@ export function InviteMemberModal({ onClose }: { onClose: () => void }) {
 					{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 				</DialogBody>
 				<DialogFooter dismiss={<DialogCancelButton />}>
-					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
+					<Button type="submit" variant="primary" size="md" pendingLabel="Sending…" pending={pending}>
 						Send invite
 					</Button>
 				</DialogFooter>

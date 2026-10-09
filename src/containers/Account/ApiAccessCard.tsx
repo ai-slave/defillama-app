@@ -1,6 +1,6 @@
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -71,7 +71,8 @@ export function ApiAccessCard({
 						onClick={() =>
 							generateNewKeyMutation.mutate(undefined, { onError: (error) => setGenerateError(error.message) })
 						}
-						pendingLabel={generateNewKeyMutation.isPending ? 'Generating…' : null}
+						pendingLabel="Generating…"
+						pending={generateNewKeyMutation.isPending}
 					>
 						<Icon name="key" height={14} width={14} />
 						Generate API key
@@ -103,12 +104,13 @@ export function ApiAccessCard({
 							aria-label={showKey ? 'Hide API key' : 'Show API key'}
 						>
 							<Icon name={showKey ? 'eye-off' : 'eye'} height={14} width={14} />
-							{showKey ? 'Hide' : 'Show'}
+							<StableLabel labels={['Show', 'Hide']} current={showKey ? 'Hide' : 'Show'} />
 						</Button>
 						<Button
 							size="sm"
 							onClick={() => copy.mutate()}
-							pendingLabel={copy.isPending ? 'Copying…' : null}
+							pendingLabel="Copying…"
+							pending={copy.isPending}
 							doneLabel="Copied"
 							done={copy.isSuccess && copy.data === apiKey}
 						>
@@ -118,7 +120,8 @@ export function ApiAccessCard({
 						<Button
 							size="sm"
 							onClick={() => setConfirmRegenerate(true)}
-							pendingLabel={generateNewKeyMutation.isPending ? 'Regenerating…' : null}
+							pendingLabel="Regenerating…"
+							pending={generateNewKeyMutation.isPending}
 						>
 							<Icon name="repeat" height={14} width={14} />
 							Regenerate

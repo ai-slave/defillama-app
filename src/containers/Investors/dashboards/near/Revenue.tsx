@@ -6,10 +6,11 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
+import { queryReadFailed } from '~/utils/query'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
 
@@ -87,7 +88,7 @@ const walletColumns = walletColumnHelper.columns([
 ])
 
 export default function Revenue() {
-	const { data, isLoading } = useRevenueData()
+	const { query, data } = useRevenueData()
 	const [globalTimeframe, setGlobalTimeframe] = useState<Timeframe>('all')
 	const [aggregation, setAggregation] = useState<Aggregation>('daily')
 	const [emissionsView, setEmissionsView] = useState<'percentage' | 'absolute'>('percentage')
@@ -136,9 +137,14 @@ export default function Revenue() {
 		[aggregation, data, globalTimeframe]
 	)
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data || !chartView || !emissionsDataset)
-		return <TabStatus variant="error">Couldn't load NEAR revenue.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load NEAR revenue.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

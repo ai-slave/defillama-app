@@ -20,6 +20,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDateTime, formatLocalTime } from '~/utils/dateFormat'
@@ -72,7 +73,9 @@ export function ResponseControls({
 	const openArticleExport = useArticleExport()
 	const detailsPopover = Ariakit.usePopoverStore({ placement: 'top' })
 	const [isDarkMode] = useDarkModeManager()
-	const [copyStatus, setCopyStatus] = useState<'idle' | 'pending' | 'copied' | 'error'>('idle')
+	// `retrying` is a copy that runs after a failure: the failure stays on screen until it succeeds.
+	const [copyStatus, setCopyStatus] = useState<'idle' | 'pending' | 'retrying' | 'copied' | 'error'>('idle')
+	const copying = copyStatus === 'pending' || copyStatus === 'retrying'
 	const [submittedRating, setSubmittedRating] = useState<Rating>(initialRating ?? null)
 	// The rating the open feedback dialog started from; it stays through the dialog's fade-out.
 	const [feedback, setFeedback] = useState<{ open: boolean; rating: Rating }>({ open: false, rating: null })
@@ -84,14 +87,13 @@ export function ResponseControls({
 		return () => clearTimeout(timer)
 	}, [copyStatus])
 
-	const copyLabel =
-		copyStatus === 'pending'
-			? 'Copying…'
-			: copyStatus === 'copied'
-				? 'Copied'
-				: copyStatus === 'error'
-					? 'Retry copy'
-					: 'Copy'
+	const copyLabel = copying
+		? 'Copying…'
+		: copyStatus === 'copied'
+			? 'Copied'
+			: copyStatus === 'error'
+				? 'Retry copy'
+				: 'Copy'
 
 	const isRatedAsGood = submittedRating === 'good'
 	const isRatedAsBad = submittedRating === 'bad'
@@ -103,8 +105,8 @@ export function ResponseControls({
 	}
 
 	const handleCopy = async () => {
-		if (!content || copyStatus === 'pending') return
-		setCopyStatus('pending')
+		if (!content || copying) return
+		setCopyStatus(copyStatus === 'error' ? 'retrying' : 'pending')
 		trackUmamiEvent('llamaai-copy-response')
 		const context = copyContext?.()
 		const source: CopyMessageSource = {
@@ -168,7 +170,8 @@ export function ResponseControls({
 									size="md"
 									square
 									aria-label={copyLabel}
-									pendingLabel={copyStatus === 'pending' ? copyLabel : null}
+									pendingLabel={copyLabel}
+									pending={copying}
 									onClick={() => {
 										void handleCopy()
 									}}
@@ -182,13 +185,11 @@ export function ResponseControls({
 							)}
 						</Tooltip>
 					) : null}
-					{copyStatus === 'error' ? (
-						<span role="alert" className="body-sm text-error">
-							Couldn&apos;t copy. Use Retry copy to try again.
-						</span>
+					{copyStatus === 'error' || copyStatus === 'retrying' ? (
+						<ErrorLine inset="none">Couldn&apos;t copy. Use Retry copy to try again.</ErrorLine>
 					) : null}
 					<span role="status" className="sr-only">
-						{copyStatus === 'pending' ? 'Copying response…' : copyStatus === 'copied' ? 'Response copied' : ''}
+						{copying ? 'Copying response…' : copyStatus === 'copied' ? 'Response copied' : ''}
 					</span>
 
 					{!readOnly ? (

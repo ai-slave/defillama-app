@@ -113,7 +113,7 @@ function TokenSearch({
 				{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
 				<SearchField
 					label="Search token"
-					placeholder="Search token..."
+					placeholder="Search token…"
 					value={search}
 					onChange={setSearch}
 					autoFocus={!isSmallScreen}
@@ -149,7 +149,8 @@ function TokenSearch({
 							<Button
 								type="button"
 								size="sm"
-								pendingLabel={tokenSearch.isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={tokenSearch.isFetching}
 								onClick={() => void tokenSearch.refetch()}
 							>
 								Try again

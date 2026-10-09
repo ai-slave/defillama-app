@@ -263,7 +263,8 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 						size="md"
 						// While pending the button stays focusable and shows its label instead.
 						disabled={!pending && !billingWait && (!canChangeTeamBilling || !hasChange)}
-						pendingLabel={pending ? 'Updating…' : billingWait}
+						pendingLabel={pending ? 'Updating…' : (billingWait ?? 'Updating…')}
+						pending={pending || billingWait !== null}
 					>
 						Update seats
 					</Button>
@@ -287,7 +288,8 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 				confirmLabel="Cancel subscription"
 				cancelLabel="Keep subscription"
 				confirmDisabled={!pending && billingLockReason !== null}
-				pendingLabel={pending ? 'Canceling subscription…' : null}
+				pendingLabel="Canceling subscription…"
+				pending={pending}
 				waitingLabel={billingWait}
 				// A lock blocks the confirm button, so it shows where a failure would, and wins over the failure that
 				// led to it: after a failed cancel whose team refresh also fails, retrying is no longer possible.

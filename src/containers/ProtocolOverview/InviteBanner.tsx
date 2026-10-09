@@ -202,7 +202,8 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							type="button"
 							size="md"
 							variant={result?.status === 'assigned' ? 'secondary' : 'primary'}
-							pendingLabel={claim.isPending ? 'Getting your code…' : null}
+							pendingLabel="Getting your code…"
+							pending={claim.isPending}
 							disabled={!token && !claim.isPending}
 							accessibleWhenDisabled
 							onClick={submit}

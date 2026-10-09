@@ -122,7 +122,8 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 					type="button"
 					size="sm"
 					onClick={() => void refetchDashboards()}
-					pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={isFetchingDashboards}
 				>
 					Try again
 				</Button>

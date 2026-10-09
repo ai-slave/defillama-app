@@ -289,7 +289,8 @@ export function NotebookView({
 						size="md"
 						onClick={runAll}
 						disabled={!canRun || !hasRunnableSql}
-						pendingLabel={runningAny ? 'Running…' : null}
+						pendingLabel="Running…"
+						pending={runningAny}
 					>
 						<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 							<path d="M8 5v14l11-7z" />
@@ -319,7 +320,8 @@ export function NotebookView({
 								size="sm"
 								onClick={runAll}
 								disabled={!canRun}
-								pendingLabel={runningAny ? 'Running…' : null}
+								pendingLabel="Running…"
+								pending={runningAny}
 							>
 								Re-run all
 							</Button>
@@ -414,10 +416,10 @@ function AddCellBar({
 		)
 	}
 	return (
-		<div className="group relative flex items-center justify-center py-1">
+		<div className="group/rail relative flex items-center justify-center py-1">
 			<span
 				aria-hidden
-				className="pointer-events-none absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-transparent transition-colors group-focus-within:bg-border-subtle group-hover:bg-border-subtle"
+				className="pointer-events-none absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-transparent transition-colors group-focus-within/rail:bg-border-subtle group-hover/rail:bg-border-subtle"
 			/>
 			<AddMenu onAdd={onAdd} variant="between" />
 		</div>
@@ -425,16 +427,27 @@ function AddCellBar({
 }
 
 function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; variant: 'between' | 'end' }) {
-	const triggerCls =
-		variant === 'between'
-			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-medium bg-page text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand-strong hover:text-link aria-expanded:opacity-100 aria-expanded:border-brand-strong aria-expanded:text-link'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-medium bg-surface px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand-muted hover:text-link'
 	return (
 		<Ariakit.MenuProvider>
-			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">
-				<Icon name="plus" className="size-3" />
-				{variant === 'end' ? 'Add cell' : null}
-			</Ariakit.MenuButton>
+			{variant === 'end' ? (
+				<Ariakit.MenuButton render={<Button size="sm" />}>
+					<Icon name="plus" className="size-3.5" />
+					Add cell
+				</Ariakit.MenuButton>
+			) : (
+				// Revealed with the divider line on hover or focus, and kept while its menu is open.
+				<Tooltip
+					content="Add cell"
+					render={
+						<Ariakit.MenuButton
+							aria-label="Add cell"
+							render={<Button variant="overlay" size="sm" square className="relative z-10 aria-expanded:opacity-100" />}
+						/>
+					}
+				>
+					<Icon name="plus" className="size-4" />
+				</Tooltip>
+			)}
 			<MenuSurface variant="actions" gutter={4}>
 				<AddMenuItem onClick={() => onAdd('sql')} label="SQL" hint="Query" tone="primary" />
 				<AddMenuItem onClick={() => onAdd('chart')} label="Chart" hint="Visualize" tone="gold" />

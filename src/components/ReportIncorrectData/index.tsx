@@ -233,7 +233,8 @@ function ReportSession({
 							name="submit-btn"
 							variant="primary"
 							size="md"
-							pendingLabel={pending ? 'Sending…' : null}
+							pendingLabel="Sending…"
+							pending={pending}
 						>
 							Send report
 						</Button>

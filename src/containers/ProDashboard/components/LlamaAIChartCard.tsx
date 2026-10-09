@@ -186,7 +186,8 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 						<Button
 							size="sm"
 							variant="ghost"
-							pendingLabel={data.refreshPending || refreshMutation.isPending ? 'Refreshing…' : null}
+							pendingLabel="Refreshing…"
+							pending={data.refreshPending || refreshMutation.isPending}
 							onClick={() => {
 								if (refreshConfirmation) {
 									// Each opening starts without the last attempt's error.
@@ -231,7 +232,8 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 					title="Refresh with premium data?"
 					description={refreshConfirmation}
 					confirmLabel="Refresh"
-					pendingLabel={refreshMutation.isPending ? 'Refreshing…' : null}
+					pendingLabel="Refreshing…"
+					pending={refreshMutation.isPending}
 					error={refreshMutation.isError ? "Couldn't queue the refresh. Try again." : null}
 					onConfirm={() => refreshMutation.mutate(undefined, { onSuccess: () => setConfirmingRefresh(false) })}
 				/>

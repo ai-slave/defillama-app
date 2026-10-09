@@ -13,6 +13,7 @@ import {
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { downloadCSV } from '~/utils/download'
 import { getChainDenominations } from '~/utils/metadata/chainDenominations'
@@ -123,22 +124,27 @@ export function Stats(props: IStatsProps) {
 		<SummaryCardGrid className="h-full">
 			<SummaryStatsCard {...summaryStatsCardProps}>
 				{props.metadata.name !== 'All' ? (
-					<h1 className="flex min-h-8 flex-nowrap items-center gap-2 *:last:ml-auto">
-						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
-						<span className="heading-xs">{props.metadata.name}</span>
+					<EntityTitleRow
+						logo={
+							<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
+						}
+						actions={
+							<>
+								{props.website ? (
+									<WebsiteGlobeLink
+										url={props.website}
+										name={props.metadata.name}
+										event="chain-website-click"
+										eventData={{ chain: props.metadata.name }}
+									/>
+								) : null}
+								<Bookmark size="md" readableName={props.metadata.name} isChain />
+							</>
+						}
+					>
+						{props.metadata.name}
 						{props.metadata.deprecated ? <DeprecatedEntityText /> : null}
-						<span className="ml-auto flex items-center justify-end gap-1">
-							{props.website ? (
-								<WebsiteGlobeLink
-									url={props.website}
-									name={props.metadata.name}
-									event="chain-website-click"
-									eventData={{ chain: props.metadata.name }}
-								/>
-							) : null}
-							<Bookmark size="md" readableName={props.metadata.name} isChain />
-						</span>
-					</h1>
+					</EntityTitleRow>
 				) : null}
 				{props.protocols.length > 0 && totalValueUSD != null ? (
 					<div className="flex flex-nowrap items-end justify-between gap-8">

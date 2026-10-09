@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import type { RWAOverviewDisplayRow } from './api.types'
 import type { RWAPerpsChartMetric } from './chartBreakdown'
 import type { RWAChartDataset, RWAChartRow } from './chartDataset'
@@ -114,20 +115,21 @@ export function useRwaPerpsHistoryDataset({
 	rows,
 	includeCex,
 	enabled
-}: RwaPerpsHistoryRequest): { dataset: RWAChartDataset | null; isLoading: boolean; error: string | null } {
+}: RwaPerpsHistoryRequest): { dataset: RWAChartDataset | null; isLoading: boolean; failedRead: QueryRetry | null } {
 	// The per-market route of the scope: contract-breakdown, or market-breakdown on an underlying.
-	const { data, isLoading, error } = useRwaPerpsChartQuery(
+	const query = useRwaPerpsChartQuery(
 		getRwaPerpsChartUrl({ source: { kind: 'contracts' }, metric, includeCex, scope }),
 		enabled
 	)
+	const data = query.data
 	const dataset = useMemo(
 		() => (enabled && data ? foldRwaPerpsMarketHistory(data, rows, groupBy, marketIds) : null),
 		[data, enabled, groupBy, marketIds, rows]
 	)
 	return {
 		dataset,
-		isLoading: enabled && isLoading,
-		error: enabled && error ? (error instanceof Error ? error.message : 'Failed to load perps chart data.') : null
+		isLoading: enabled && query.isLoading,
+		failedRead: enabled && queryReadFailed(query) ? query : null
 	}
 }
 

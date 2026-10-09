@@ -62,7 +62,8 @@ export function ArticleCoverImageEditor({
 								variant="onMedia"
 								size="md"
 								onClick={openCoverPicker}
-								pendingLabel={isUploadingCover ? 'Uploading…' : null}
+								pendingLabel="Uploading…"
+								pending={isUploadingCover}
 								className="pointer-events-auto"
 							>
 								Replace
@@ -140,7 +141,8 @@ export function ArticleCoverImageEditor({
 					icon="image-plus"
 					label="Add cover image"
 					hint="PNG, JPEG, WebP, or GIF · up to 8 MB"
-					pendingLabel={isUploadingCover ? 'Uploading…' : null}
+					pendingLabel="Uploading…"
+					pending={isUploadingCover}
 					onClick={openCoverPicker}
 				/>
 			)}

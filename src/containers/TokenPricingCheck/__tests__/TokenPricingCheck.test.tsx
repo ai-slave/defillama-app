@@ -43,7 +43,7 @@ test('waits for the chain list instead of asking for a chain the reader cannot p
 	http.serve({ 'https://coins.llama.fi/chains': () => chains.promise })
 	await render()
 
-	expect(submit().textContent).toContain('Loading chains…')
+	expect(submit().textContent).toContain('Loading…')
 	await act(async () => submit().click())
 	expect(fieldErrorTexts(container)).toEqual([])
 	expect(alertTexts(container)).toEqual([])

@@ -162,7 +162,8 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 							<Button
 								type="button"
 								size="sm"
-								pendingLabel={isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={isFetching}
 								onClick={() =>
 									void refetch().then((result) => {
 										// The retry button goes away with the error, so focus moves to the search that stays.

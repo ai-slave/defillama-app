@@ -82,7 +82,8 @@ export function OAuthWelcomeDialog({
 						variant="primary"
 						size="md"
 						className="w-full"
-						pendingLabel={isSaving ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={isSaving}
 					>
 						Continue
 					</Button>

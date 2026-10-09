@@ -42,7 +42,7 @@ test('a pending submit button keeps focus, shows its pending label and submits n
 					submit()
 				}}
 			>
-				<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Saving…' : null}>
+				<Button type="submit" variant="primary" size="md" pendingLabel="Saving…" pending={pending}>
 					Save
 				</Button>
 			</form>
@@ -353,7 +353,7 @@ test('without a guard, a guarded step runs at once', async () => {
 test('a pending button stays focusable even when its caller also disables it', async () => {
 	await act(async () =>
 		root.render(
-			<Button type="button" size="md" disabled pendingLabel="Saving…">
+			<Button type="button" size="md" disabled pendingLabel="Saving…" pending>
 				Save
 			</Button>
 		)
@@ -570,7 +570,6 @@ test.each([
 						title="Delete Beta?"
 						description="Beta goes away."
 						confirmLabel="Delete"
-						pendingLabel={null}
 						error={null}
 						onConfirm={() => {}}
 					/>
@@ -628,7 +627,6 @@ test.each([
 							title="Disconnect?"
 							description="Alerts stop."
 							confirmLabel="Disconnect"
-							pendingLabel={null}
 							error={null}
 							onConfirm={() => {
 								setLinked(false)

@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
@@ -84,8 +85,14 @@ export default function Tokenomics() {
 	const [burnView, setBurnView] = useState<BurnView>('daily')
 	const [protocolView, setProtocolView] = useState<'emitted' | 'burned'>('burned')
 
-	if (query.error) return <TabStatus variant="error">Couldn't load Flare tokenomics.</TabStatus>
-	if (!query.data) return <TabStatus variant="loading" />
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Flare tokenomics.
+			</PanelStatus>
+		)
+	if (!query.data) return <PanelLoadingStatus />
 
 	const { burn: b, emissions: e, inflation: inf, fire } = query.data
 	const bk = b.kpis

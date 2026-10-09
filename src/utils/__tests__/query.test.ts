@@ -1,6 +1,6 @@
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { queryReadFailed } from '../query'
+import { mergeFailedReads, queryReadFailed } from '../query'
 
 describe('queryReadFailed', () => {
 	afterEach(() => {
@@ -56,5 +56,20 @@ describe('queryReadFailed', () => {
 		expect([refreshed.data, queryReadFailed(refreshed)]).toEqual(['loaded', true])
 		unsubscribe()
 		client.clear()
+	})
+})
+
+describe('mergeFailedReads', () => {
+	test('reruns only the failed reads and waits while any of them runs', () => {
+		const first = { refetch: vi.fn(), isFetching: false }
+		const second = { refetch: vi.fn(), isFetching: true }
+		const merged = mergeFailedReads([first, null, second])
+		expect(merged?.isFetching).toBe(true)
+		merged?.refetch()
+		expect([first.refetch.mock.calls.length, second.refetch.mock.calls.length]).toEqual([1, 1])
+	})
+
+	test('is null when no read failed', () => {
+		expect(mergeFailedReads([null, null])).toBeNull()
 	})
 })

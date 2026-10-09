@@ -151,7 +151,8 @@ export function VerifyEmailDialog({
 								size="md"
 								className="w-full"
 								disabled={send.isPending}
-								pendingLabel={verify.isPending ? 'Verifying…' : null}
+								pendingLabel="Verifying…"
+								pending={verify.isPending}
 							>
 								Verify email
 							</Button>
@@ -165,7 +166,8 @@ export function VerifyEmailDialog({
 											<Button
 												type="button"
 												size="sm"
-												pendingLabel={send.isPending ? 'Sending code…' : null}
+												pendingLabel="Sending code…"
+												pending={send.isPending}
 												onClick={retryDelivery}
 											>
 												Try again
@@ -183,7 +185,8 @@ export function VerifyEmailDialog({
 										type="button"
 										variant="ghost"
 										size="sm"
-										pendingLabel={send.isPending ? 'Sending code…' : null}
+										pendingLabel="Sending code…"
+										pending={send.isPending}
 										disabled={pending || cooldownSeconds > 0}
 										accessibleWhenDisabled
 										onClick={resend}

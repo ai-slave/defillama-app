@@ -121,7 +121,7 @@ function Banks() {
 			>
 				<Card padding="none">
 					<TableToolbar>
-						<TableSearchInput columnId="1" placeholder="Search banks..." />
+						<TableSearchInput columnId="1" placeholder="Search banks…" />
 						<TableCsvExport filename="banks" />
 					</TableToolbar>
 					<VirtualSearchTableView />

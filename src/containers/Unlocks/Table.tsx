@@ -24,7 +24,7 @@ import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
@@ -298,12 +298,12 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 		<Card padding="none">
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects...</span>
+					<span className="sr-only">Search projects…</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects..."
+						placeholder="Search projects…"
 						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
@@ -320,7 +320,10 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 						width={16}
 						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
-					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
+					<StableLabel
+						labels={['Show Watchlist', 'Show All']}
+						current={showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
+					/>
 				</Button>
 
 				<FilterBetweenRange

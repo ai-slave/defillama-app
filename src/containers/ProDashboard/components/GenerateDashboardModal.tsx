@@ -387,7 +387,7 @@ function GenerateDashboardModalInner({
 					}
 					dismiss={<DialogCancelButton />}
 				>
-					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? `${pendingLabel}…` : null}>
+					<Button type="submit" variant="primary" size="md" pendingLabel={`${pendingLabel}…`} pending={pending}>
 						<Icon name="sparkles" height={16} width={16} />
 						{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit dashboard' : 'Generate dashboard'}
 					</Button>

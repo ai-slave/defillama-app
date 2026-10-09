@@ -291,7 +291,7 @@ export function AdvancedTvlChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart...</p> : null}
+				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart…</p> : null}
 			</div>
 
 			<div className="overflow-hidden rounded-lg border border-subtle">

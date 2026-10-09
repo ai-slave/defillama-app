@@ -115,7 +115,8 @@ export function ArticleClientField({
 							<Button
 								size="sm"
 								onClick={() => void sponsors.refetch()}
-								pendingLabel={sponsors.isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={sponsors.isFetching}
 							>
 								Try again
 							</Button>

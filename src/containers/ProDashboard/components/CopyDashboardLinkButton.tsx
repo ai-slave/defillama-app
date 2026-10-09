@@ -117,7 +117,8 @@ export function CopyDashboardLinkButton({
 								size="sm"
 								variant="primary"
 								onClick={() => void makePublic()}
-								pendingLabel={makingPublic ? 'Making public…' : null}
+								pendingLabel="Making public…"
+								pending={makingPublic}
 								data-umami-event="dashboard-make-public"
 							>
 								Make public

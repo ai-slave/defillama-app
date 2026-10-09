@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import { useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
-import { getErrorMessage } from '~/utils/error'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAChartMetricKey, RWAAssetChartTarget } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
@@ -455,15 +455,12 @@ export function useRwaChartDataset({
 	chartDataset: RWAPositionalChartDataset
 	assetRows: IRWAChartMetricRows | undefined
 	isChartLoading: boolean
-	chartError: string | null
+	/** The query when its read failed, for the chart's Try again. */
+	failedRead: QueryRetry | null
 } {
 	const hasSpotAssets = filteredAssets.some((asset) => asset.kind === 'spot')
 	const shouldFetchAssetRows = enabled && !useInitialDataset && hasSpotAssets
-	const {
-		data: assetRows,
-		isLoading,
-		error
-	} = useQuery({
+	const query = useQuery({
 		queryKey: getRwaAssetChartQueryKey(target, selectedMetric, includeStablecoins, includeGovernance, includeBridgeTvl),
 		queryFn: () =>
 			fetchRwaAssetChartData({
@@ -480,6 +477,7 @@ export function useRwaChartDataset({
 	})
 	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
+	const assetRows = query.data
 	const chartDataset = useMemo<RWAPositionalChartDataset>(
 		() =>
 			enabled
@@ -491,8 +489,8 @@ export function useRwaChartDataset({
 	return {
 		chartDataset,
 		assetRows,
-		isChartLoading: shouldFetchAssetRows && isLoading,
-		chartError: shouldFetchAssetRows && error ? getErrorMessage(error) : null
+		isChartLoading: shouldFetchAssetRows && query.isLoading,
+		failedRead: shouldFetchAssetRows && queryReadFailed(query) ? query : null
 	}
 }
 

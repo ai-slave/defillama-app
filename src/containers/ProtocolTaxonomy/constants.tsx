@@ -175,7 +175,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Cross-Chain Bridges',
 		seoLabel: 'Cross-Chain Bridges',
 		seoBaseTitle: 'Cross-Chain Bridges - TVL, Fees, & Revenue',
-		searchPlaceholder: 'Search cross-chain bridges...'
+		searchPlaceholder: 'Search cross-chain bridges…'
 	},
 	Staking: { description: 'Protocols that allow you to stake assets in exchange of a reward' },
 	Services: {
@@ -188,7 +188,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Yield Aggregators',
 		seoLabel: 'Yield Aggregators',
 		seoBaseTitle: 'Top DeFi Yield Aggregators - TVL, Fees, & Revenue',
-		searchPlaceholder: 'Search yield aggregators...'
+		searchPlaceholder: 'Search yield aggregators…'
 	},
 	Minting: { description: 'Protocols NFT minting Related (in work)' },
 	Assets: { description: '(will be removed)' },
@@ -238,7 +238,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		description: 'Protocols that mint its own stablecoin using collateralized lending',
 		headingLabel: 'CDPs',
 		seoLabel: 'CDPs',
-		searchPlaceholder: 'Search CDPs...'
+		searchPlaceholder: 'Search CDPs…'
 	},
 	Bridge: {
 		description: 'Protocols that bridge tokens from one network to another',
@@ -246,7 +246,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Bridges',
 		seoLabel: 'Bridges',
 		seoBaseTitle: 'Crypto Bridge Protocols - TVL, Volume, & Fees',
-		searchPlaceholder: 'Search bridges...'
+		searchPlaceholder: 'Search bridges…'
 	},
 	'Reserve Currency': {
 		description: 'Protocols that use a reserve of valuable assets to back its native token. Includes OHM forks'
@@ -282,7 +282,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		seoLabel: 'Launchpads',
 		seoBaseTitle: 'Crypto Launchpad Protocols - Revenue & TVL',
 		tableHeader: 'Launchpad Rankings',
-		searchPlaceholder: 'Search launchpads...',
+		searchPlaceholder: 'Search launchpads…',
 		defaultSort: 'revenue_7d'
 	},
 	Gaming: { description: 'Protocols that have gaming components' },
@@ -295,7 +295,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		seoBaseTitle: 'Top Crypto Prediction Markets - TVL, Volume, & Revenue',
 		seoTitleSuffix: 'Rankings',
 		tableHeader: 'Market Rankings',
-		searchPlaceholder: 'Search markets...',
+		searchPlaceholder: 'Search markets…',
 		columns: [
 			'name',
 			'tvl',
@@ -342,7 +342,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Farms',
 		seoLabel: 'Farms',
 		seoBaseTitle: 'DeFi Farms - TVL, Fees, & Revenue',
-		searchPlaceholder: 'Search farms...'
+		searchPlaceholder: 'Search farms…'
 	},
 	'Liquid Staking': {
 		description:
@@ -355,7 +355,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Oracles',
 		seoLabel: 'Oracles',
 		tableHeader: 'Oracle Rankings',
-		searchPlaceholder: 'Search oracles...'
+		searchPlaceholder: 'Search oracles…'
 	},
 	'Leveraged Farming': {
 		description: 'Protocols that allow you to leverage yield farm with borrowed money',
@@ -366,7 +366,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		defaultChart: 'optionsNotionalVolume',
 		headingLabel: 'Options Vaults',
 		seoLabel: 'Options Vaults',
-		searchPlaceholder: 'Search options vaults...'
+		searchPlaceholder: 'Search options vaults…'
 	},
 	'Uncollateralized Lending': {
 		description: 'Protocol that allows you to lend against known parties that can borrow without collaterall',
@@ -391,14 +391,14 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 			"Refers to platforms where users stake their assets using smart contracts on native blockchains to help secure the network and earn rewards but don't receive a receipt token to use in other Defi apps like with Liquid Staking projects",
 		headingLabel: 'Staking Pools',
 		seoLabel: 'Staking Pools',
-		searchPlaceholder: 'Search staking pools...'
+		searchPlaceholder: 'Search staking pools…'
 	},
 	'Partially Algorithmic Stablecoin': {
 		description:
 			'Coins pegged to USD through decentralized mechanisms, but uses an algorithmic mechanism to keep it stable',
 		headingLabel: 'Partially Algorithmic Stablecoins',
 		seoLabel: 'Partially Algorithmic Stablecoins',
-		searchPlaceholder: 'Search partially algorithmic stablecoins...'
+		searchPlaceholder: 'Search partially algorithmic stablecoins…'
 	},
 	SoFi: {
 		description: 'Social Finance Networks',
@@ -412,7 +412,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'DEX Aggregators',
 		seoLabel: 'DEX Aggregators',
 		seoBaseTitle: 'Crypto DEX Aggregator Protocols - Volume, TVL, & Fees',
-		searchPlaceholder: 'Search DEX aggregators...',
+		searchPlaceholder: 'Search DEX aggregators…',
 		metrics: { dexAggregatorsVolume: true },
 		columns: [
 			'name',
@@ -442,7 +442,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		description: 'Protocols where you have a form of digital storage to secure access to your crypto.',
 		metrics: { revenue: true },
 		tableHeader: 'Wallets TVL Rankings',
-		searchPlaceholder: 'Search wallets...',
+		searchPlaceholder: 'Search wallets…',
 		defaultSort: 'revenue_7d'
 	},
 	NftFi: { description: 'NFT leverage protocols' },
@@ -452,7 +452,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Telegram Bots',
 		seoLabel: 'Telegram Bots',
 		tableHeader: 'Telegram Bot Rankings',
-		searchPlaceholder: 'Search telegram bots...',
+		searchPlaceholder: 'Search telegram bots…',
 		defaultSort: 'revenue_7d'
 	},
 	Ponzi: {
@@ -476,7 +476,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'CDP Managers',
 		seoLabel: 'CDP Managers',
 		tableHeader: 'CDP Manager Rankings',
-		searchPlaceholder: 'Search CDP managers...'
+		searchPlaceholder: 'Search CDP managers…'
 	},
 	'Governance Incentives': {
 		description:
@@ -487,13 +487,13 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Security Extensions',
 		seoLabel: 'Security Extensions',
 		tableHeader: 'Security Extension Rankings',
-		searchPlaceholder: 'Search security extensions...'
+		searchPlaceholder: 'Search security extensions…'
 	},
 	'AI Agents': {
 		description:
 			'Smart programs that use AI to handle tasks and make crypto interactions easier for blockchain platforms',
 		tableHeader: 'AI Agents Rankings',
-		searchPlaceholder: 'Search AI Agents...'
+		searchPlaceholder: 'Search AI Agents…'
 	},
 	'Treasury Manager': {
 		description:
@@ -501,7 +501,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Treasury Managers',
 		seoLabel: 'Treasury Managers',
 		tableHeader: 'Treasury Manager Rankings',
-		searchPlaceholder: 'Search treasury managers...'
+		searchPlaceholder: 'Search treasury managers…'
 	},
 	'OTC Marketplace': {
 		description:
@@ -516,7 +516,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Token Lockers',
 		seoLabel: 'Token Lockers',
 		tableHeader: 'Token Locker Rankings',
-		searchPlaceholder: 'Search token lockers...'
+		searchPlaceholder: 'Search token lockers…'
 	},
 	'Bug Bounty': {
 		description: 'Protocols that incentivize security researchers to find and report vulnerabilities in smart contracts'
@@ -543,7 +543,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Stablecoin Issuers',
 		seoLabel: 'Stablecoin Issuers',
 		tableHeader: 'Stablecoin Issuer Rankings',
-		searchPlaceholder: 'Search stablecoin issuers...',
+		searchPlaceholder: 'Search stablecoin issuers…',
 		defaultSort: 'revenue_7d'
 	},
 	'Coins Tracker': {
@@ -552,7 +552,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Coin Trackers',
 		seoLabel: 'Coin Trackers',
 		tableHeader: 'Coin Tracker Rankings',
-		searchPlaceholder: 'Search coin trackers...'
+		searchPlaceholder: 'Search coin trackers…'
 	},
 	Domains: {
 		description: 'Decentralized naming services that map human-readable names to blockchain addresses',
@@ -571,7 +571,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Trading Apps',
 		seoLabel: 'Trading Apps',
 		tableHeader: 'Trading App Rankings',
-		searchPlaceholder: 'Search trading apps...',
+		searchPlaceholder: 'Search trading apps…',
 		defaultSort: 'revenue_7d'
 	},
 	Foundation: {
@@ -580,7 +580,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Foundations',
 		seoLabel: 'Foundations',
 		tableHeader: 'Foundation Rankings',
-		searchPlaceholder: 'Search foundations...'
+		searchPlaceholder: 'Search foundations…'
 	},
 	Liquidations: {
 		description: 'Protocols that enable the purchase of liquidated collateral from lending platforms or CDP protocols'
@@ -591,7 +591,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		defaultChart: 'bridgeAggregatorVolume',
 		headingLabel: 'Bridge Aggregators',
 		seoLabel: 'Bridge Aggregators',
-		searchPlaceholder: 'Search bridge aggregators...'
+		searchPlaceholder: 'Search bridge aggregators…'
 	},
 	'Restaked BTC': {
 		description:
@@ -603,7 +603,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Decentralized BTC Tokens',
 		seoLabel: 'Decentralized BTC Tokens',
 		tableHeader: 'Decentralized BTC Token Rankings',
-		searchPlaceholder: 'Search decentralized BTC tokens...'
+		searchPlaceholder: 'Search decentralized BTC tokens…'
 	},
 	'Anchor BTC': {
 		description:
@@ -611,14 +611,14 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Anchor BTC Tokens',
 		seoLabel: 'Anchor BTC Tokens',
 		tableHeader: 'Anchor BTC Token Rankings',
-		searchPlaceholder: 'Search anchor BTC tokens...'
+		searchPlaceholder: 'Search anchor BTC tokens…'
 	},
 	'Portfolio Tracker': {
 		description: 'Tools that monitor token balances and performance',
 		headingLabel: 'Portfolio Trackers',
 		seoLabel: 'Portfolio Trackers',
 		tableHeader: 'Portfolio Tracker Rankings',
-		searchPlaceholder: 'Search portfolio trackers...'
+		searchPlaceholder: 'Search portfolio trackers…'
 	},
 	'Liquidity Automation': {
 		description: 'Automatically manages and adjusts liquidity in DeFi protocols through smart contracts'
@@ -643,7 +643,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Meme Tokens',
 		seoLabel: 'Meme Tokens',
 		tableHeader: 'Meme Token Rankings',
-		searchPlaceholder: 'Search meme tokens...'
+		searchPlaceholder: 'Search meme tokens…'
 	},
 	'Private Investment Platform': {
 		description:
@@ -651,7 +651,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'Private Investment Platforms',
 		seoLabel: 'Private Investment Platforms',
 		tableHeader: 'Private Investment Platform Rankings',
-		searchPlaceholder: 'Search private investment platforms...'
+		searchPlaceholder: 'Search private investment platforms…'
 	},
 	'Risk Curators': {
 		description:
@@ -662,7 +662,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		headingLabel: 'DAO Service Providers',
 		seoLabel: 'DAO Service Providers',
 		tableHeader: 'DAO Service Provider Rankings',
-		searchPlaceholder: 'Search DAO service providers...'
+		searchPlaceholder: 'Search DAO service providers…'
 	},
 	'Staking Rental': { description: 'Protocols that facilitate the borrowing or renting of staking rights' },
 	'Canonical Bridge': {
@@ -670,7 +670,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		defaultChart: 'bridgeVolume',
 		headingLabel: 'Canonical Bridges',
 		seoLabel: 'Canonical Bridges',
-		searchPlaceholder: 'Search canonical bridges...'
+		searchPlaceholder: 'Search canonical bridges…'
 	},
 	Interface: {
 		description: 'Projects that provide a user interface to interact with external protocols',
@@ -708,7 +708,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 			'Protocols that maintain a USD peg through a dual-token system where one token serves as the stablecoin and the other absorbs volatility, using overcollateralized reserves and algorithmic mechanisms to adjust supply and maintain stability',
 		headingLabel: 'Dual-Token Stablecoins',
 		seoLabel: 'Dual-Token Stablecoins',
-		searchPlaceholder: 'Search dual-token stablecoins...'
+		searchPlaceholder: 'Search dual-token stablecoins…'
 	},
 	'Physical TCG': {
 		description: 'Protocols that allow you to trade physical trading cards',
@@ -756,7 +756,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		seoLabel: 'Crypto Card Issuers',
 		seoTitleSuffix: 'Rankings',
 		tableHeader: 'Issuer Rankings',
-		searchPlaceholder: 'Search Issuers...',
+		searchPlaceholder: 'Search Issuers…',
 		columns: [
 			'name',
 			'tvl',
@@ -850,7 +850,7 @@ export function getProtocolCategoryPresentation({
 	const defaultHeadingLabel = hasCustomPresentation ? label : `${label} Protocols`
 	const defaultTitleSuffix = 'Rankings'
 	const defaultTableHeader = effectiveCategory === 'RWA' ? 'Assets Rankings' : 'Protocols Rankings'
-	const defaultSearchPlaceholder = hasCustomPresentation ? `Search ${label}...` : 'Search Protocols...'
+	const defaultSearchPlaceholder = hasCustomPresentation ? `Search ${label}...` : 'Search Protocols…'
 	const normalizedChain = chain?.trim()
 	const chainTitleSuffix = normalizedChain && normalizedChain !== 'All' ? ` on ${normalizedChain}` : ''
 	const resolvedTitleSuffix = `${config?.seoTitleSuffix ?? defaultTitleSuffix}${chainTitleSuffix}`

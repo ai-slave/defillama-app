@@ -20,12 +20,26 @@ afterEach(async () => {
 test('a busy button is named by its pending label, not the idle label it keeps for width', async () => {
 	await act(async () =>
 		root.render(
-			<Button size="md" pendingLabel="Saving…">
+			<Button size="md" pendingLabel="Saving…" pending>
 				Save
 			</Button>
 		)
 	)
 	expect(accessibleName(container.querySelector('button')!)).toBe('Saving…')
+})
+
+test('a button at rest keeps its busy label out of its text and name while it reserves the width', async () => {
+	await act(async () =>
+		root.render(
+			<Button size="md" pendingLabel="Saving…" pending={false}>
+				Save
+			</Button>
+		)
+	)
+	const button = container.querySelector('button')!
+	expect(accessibleName(button)).toBe('Save')
+	expect(button.textContent).toBe('Save')
+	expect(button.querySelector('[data-label="Saving…"]')).not.toBeNull()
 })
 
 test('an aria-labelled icon button is named by its label', async () => {

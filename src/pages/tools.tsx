@@ -35,7 +35,7 @@ export default function Tools() {
 					<Input
 						id={searchInputId}
 						type="text"
-						placeholder="Search..."
+						placeholder="Search…"
 						className={searchFieldInputPlacementStyles}
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 					/>

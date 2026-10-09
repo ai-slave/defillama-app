@@ -83,7 +83,8 @@ export function ProjectSessionItem({
 						size="md"
 						variant="primary"
 						type="submit"
-						pendingLabel={updateTitle.isPending ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={updateTitle.isPending}
 						aria-label={updateTitle.isPending ? undefined : 'Save title'}
 					>
 						Save

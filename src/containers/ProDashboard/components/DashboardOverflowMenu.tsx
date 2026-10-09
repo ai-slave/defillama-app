@@ -188,7 +188,8 @@ export function DashboardOverflowMenu({
 							variant="secondary"
 							size="md"
 							className="md:hidden"
-							pendingLabel={selection.isPending ? 'Running…' : null}
+							pendingLabel="Running…"
+							pending={selection.isPending}
 						/>
 					}
 				>

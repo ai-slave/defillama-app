@@ -892,7 +892,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 							type="button"
 							size="sm"
 							onClick={createDraft}
-							pendingLabel={createArticleMutation.isPending ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={createArticleMutation.isPending}
 						>
 							Try again
 						</Button>

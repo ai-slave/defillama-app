@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { mergeFailedReads } from '~/utils/query'
 import { RWAEntityChartPanel, useRwaEntityChartSelection } from '../platformChart/EntityChartPanel'
 import type { RWAPlatformMeta } from '../PlatformPage/api.types'
 import { useRwaPerpsTotal } from './usePerpsTotal'
@@ -48,7 +49,12 @@ export function RWAVenueEntityChartPanel({
 			selected={selected}
 			chart={chart}
 			isLoading={openInterest.isLoading || volume.isLoading || markets.isLoading || totalOpenInterest.isLoading}
-			error={openInterest.error ?? volume.error ?? markets.error ?? totalOpenInterest.error}
+			failedRead={mergeFailedReads([
+				openInterest.failedRead,
+				volume.failedRead,
+				markets.failedRead,
+				totalOpenInterest.failedRead
+			])}
 			filename={`rwa-perps-venue-${venueSlug}-chart`}
 			title={venue}
 		/>

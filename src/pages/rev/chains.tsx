@@ -50,11 +50,7 @@ function REVByChain(props: IChainsByREVPageData) {
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Chain Rankings
 						</PanelTitle>
-						<TableSearchInput
-							columnId="name"
-							placeholder="Search chains..."
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder="Search chains…" className={searchFieldInlineWrapperStyles} />
 						<TableCsvExport filename="revenue-chains" />
 					</PanelHeader>
 					<VirtualSearchTableView rowSize={64} compact />

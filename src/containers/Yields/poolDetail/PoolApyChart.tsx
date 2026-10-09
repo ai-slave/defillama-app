@@ -16,7 +16,14 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -490,11 +497,9 @@ export function PoolApyChart({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : error ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-						Couldn't load {range} history.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
 				) : !hasData ? (
-					<ChartPanelBodyFallback role="status" className="body-sm text-secondary">
+					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
 						No data in this range for the selected series and window.
 					</ChartPanelBodyFallback>
 				) : (

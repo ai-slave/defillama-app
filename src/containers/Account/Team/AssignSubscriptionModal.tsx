@@ -105,7 +105,8 @@ export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignS
 						variant="primary"
 						size="md"
 						disabled={availableSubscriptions.length === 0}
-						pendingLabel={pending ? 'Assigning…' : null}
+						pendingLabel="Assigning…"
+						pending={pending}
 					>
 						Assign
 					</Button>

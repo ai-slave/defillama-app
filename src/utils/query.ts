@@ -12,3 +12,16 @@ export interface QueryRetry {
 export function queryReadFailed(query: Pick<QueryObserverResult, 'errorUpdatedAt' | 'dataUpdatedAt'>) {
 	return query.errorUpdatedAt > query.dataUpdatedAt
 }
+
+/** One Try again for a chart drawn from several reads: each entry is a read that failed, or null. It reruns the
+    failed ones and waits while any of them runs; null when none failed. */
+export function mergeFailedReads(reads: Array<QueryRetry | null>): QueryRetry | null {
+	const failed = reads.filter((read) => read != null)
+	if (failed.length === 0) return null
+	return {
+		refetch: () => {
+			for (const read of failed) void read.refetch()
+		},
+		isFetching: failed.some((read) => read.isFetching)
+	}
+}

@@ -2,9 +2,10 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { TabStatus } from '~/containers/Investors/TabStatus'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
@@ -128,7 +129,8 @@ const tokenColumns = tokenColumnHelper.columns([
 ])
 
 export default function Blockchain() {
-	const { data, isLoading } = useBlockchainData()
+	const query = useBlockchainData()
+	const data = query.data
 
 	const tokenTable = useTable({
 		features: displayTableFeatures,
@@ -140,8 +142,14 @@ export default function Blockchain() {
 		}
 	})
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load Berachain blockchain data.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Berachain blockchain data.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

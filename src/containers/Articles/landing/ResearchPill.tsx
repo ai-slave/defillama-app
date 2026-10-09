@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef, ElementType } from 'react'
+import { ReservedLabel } from '~/ui/Button'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 /* ----------------------------------------------------------------------------
@@ -22,9 +23,10 @@ import { LoadingSpinner } from '~/ui/Loaders'
    tones, the white wash on the outline); no lift, scale or glow. On the navy
    banner the focus ring is white, since a brand ring is invisible there.
 
-   A submit passes `pendingLabel` while its request runs: Button's pending
-   model (aria-busy, a spinner with the label, focus kept with
-   accessibleWhenDisabled, the wider of the idle and busy widths). The button
+   A submit passes `pendingLabel` always and sets `pending` while its request
+   runs: Button's pending model (aria-busy, a spinner with the label, focus
+   kept with accessibleWhenDisabled, the wider of the idle and busy widths,
+   at rest too). The button
    form always keeps focus when disabled, because the only one disables itself
    once its request succeeds. Links (`as`) have nothing to wait on.
 
@@ -52,8 +54,10 @@ type ResearchPillProps<T extends ElementType> = {
 	tone: keyof typeof TONE
 	size: keyof typeof SIZE
 	as?: T
-	/** Buttons only: set while the submit's request runs, null once it settles. */
-	pendingLabel?: string | null
+	/** Buttons only: the label shown while `pending`. */
+	pendingLabel?: string
+	/** Set while the submit's request runs. */
+	pending?: boolean
 	/** Layout placement only (w-full, shrink-0…). */
 	className?: string
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
@@ -62,7 +66,8 @@ export function ResearchPill<T extends ElementType = 'button'>({
 	tone,
 	size,
 	as,
-	pendingLabel = null,
+	pendingLabel,
+	pending = false,
 	className,
 	...props
 }: ResearchPillProps<T>) {
@@ -72,7 +77,6 @@ export function ResearchPill<T extends ElementType = 'button'>({
 		const Component = as as ElementType
 		return <Component className={classes} {...props} />
 	}
-	const pending = pendingLabel !== null
 	return (
 		<Ariakit.Button
 			{...props}
@@ -82,19 +86,21 @@ export function ResearchPill<T extends ElementType = 'button'>({
 			aria-busy={pending || undefined}
 		>
 			{/* Idle and busy content share one grid cell, so the pill keeps the wider of the two widths. */}
-			<span className="grid">
+			<span className="grid gap-inherit">
 				<span
 					aria-hidden={pending || undefined}
 					className={`col-start-1 row-start-1 flex items-center justify-center ${GAP[size]} ${pending ? 'invisible' : ''}`}
 				>
 					{props.children}
 				</span>
-				{pending ? (
-					<span className="col-start-1 row-start-1 flex items-center justify-center gap-1.5">
+				{pendingLabel === undefined ? null : pending ? (
+					<span className="col-start-1 row-start-1 flex items-center justify-center gap-inherit">
 						<LoadingSpinner size={14} />
 						{pendingLabel}
 					</span>
-				) : null}
+				) : (
+					<ReservedLabel label={pendingLabel} icon />
+				)}
 			</span>
 		</Ariakit.Button>
 	)

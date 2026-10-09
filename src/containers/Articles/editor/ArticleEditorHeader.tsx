@@ -273,7 +273,8 @@ export function ArticleEditorHeader({
 								<Button
 									variant="primary"
 									size="md"
-									pendingLabel={isPublishing ? 'Publishing…' : null}
+									pendingLabel="Publishing…"
+									pending={isPublishing}
 									onClick={handlePublish}
 								>
 									Publish update
@@ -348,7 +349,7 @@ export function ArticleEditorHeader({
 								<Icon name="trash" className="size-4" />
 							</Tooltip>
 						) : null}
-						<Button variant="primary" size="md" pendingLabel={isPublishing ? 'Publishing…' : null} onClick={onOpenMeta}>
+						<Button variant="primary" size="md" pendingLabel="Publishing…" pending={isPublishing} onClick={onOpenMeta}>
 							Publish
 							<span aria-hidden>→</span>
 						</Button>

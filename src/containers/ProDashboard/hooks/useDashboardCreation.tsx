@@ -66,7 +66,7 @@ export const useDashboardCreation = () => {
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 
 	const createMutation = useMutation({
-		onMutate: () => toast.loading('Creating dashboard and preparing to redirect...'),
+		onMutate: () => toast.loading('Creating dashboard and preparing to redirect…'),
 		onSettled: (_data, _error, _variables, loadingToast) => {
 			toast.dismiss(loadingToast)
 		},

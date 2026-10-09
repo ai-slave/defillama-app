@@ -119,7 +119,8 @@ function EndTrialDialog({
 							type="button"
 							variant="primary"
 							size="md"
-							pendingLabel={isLoading ? 'Processing…' : null}
+							pendingLabel="Processing…"
+							pending={isLoading}
 							disabled={isApplying}
 							onClick={() => endTrialMutation.mutate(undefined, { onError: (failure) => setError(failure.message) })}
 						>

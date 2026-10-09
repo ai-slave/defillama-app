@@ -298,7 +298,8 @@ export function KeyMetricsPngExportButton({
 					onClick={() => {
 						void handleExport()
 					}}
-					pendingLabel={isLoading ? 'Exporting…' : null}
+					pendingLabel="Exporting…"
+					pending={isLoading}
 					aria-label="Download Key Metrics as PNG"
 				/>
 			}

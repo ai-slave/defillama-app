@@ -47,7 +47,7 @@ function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticPro
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"
-							placeholder="Search protocols..."
+							placeholder="Search protocols…"
 							className={searchFieldInlineWrapperStyles}
 						/>
 						<TableCsvExport filename="net-project-treasury" />

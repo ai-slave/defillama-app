@@ -53,7 +53,8 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 							size="md"
 							variant={stopping ? 'outline' : 'primary'}
 							square
-							pendingLabel={stopping ? 'Stopping…' : null}
+							pendingLabel="Stopping…"
+							pending={stopping}
 							onClick={stopping ? undefined : mode.onStop}
 							data-umami-event="llamaai-stop-generation"
 						/>

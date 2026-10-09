@@ -12,7 +12,7 @@ import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -272,7 +272,10 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 						width={16}
 						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
-					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
+					<StableLabel
+						labels={['Show Watchlist', 'Show All']}
+						current={showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
+					/>
 				</Button>
 				<Button
 					type="button"
@@ -281,7 +284,10 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 					aria-pressed={showOnlyInsider}
 				>
 					<Icon name="key" height={16} width={16} style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
-					{showOnlyInsider ? 'Show All' : 'Show Insiders Only'}
+					<StableLabel
+						labels={['Show Insiders Only', 'Show All']}
+						current={showOnlyInsider ? 'Show All' : 'Show Insiders Only'}
+					/>
 				</Button>
 				{viewMode === 'Week' || viewMode === 'Month' ? (
 					<ChartExportButtons

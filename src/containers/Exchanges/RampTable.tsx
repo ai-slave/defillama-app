@@ -74,7 +74,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 							singleSelect
 							variant="filter"
 							size="md"
-							searchPlaceholder="Search currencies..."
+							searchPlaceholder="Search currencies…"
 						/>
 						<SegmentedControl<string>
 							value={String(size)}
@@ -94,7 +94,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 					</TableToolbarControlGroup>
 					<TableSearchInput
 						columnId="name"
-						placeholder="Search exchanges..."
+						placeholder="Search exchanges…"
 						className={searchFieldInlineWrapperStyles}
 					/>
 					<TableColumnSelect />

@@ -228,7 +228,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 								setSearchValue(event.currentTarget.value)
 								resetPage()
 							}}
-							placeholder="Search companies..."
+							placeholder="Search companies…"
 							className={searchFieldInputPlacementStyles}
 						/>
 					</label>

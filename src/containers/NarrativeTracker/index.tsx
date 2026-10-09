@@ -353,7 +353,7 @@ export function CategoryPerformanceContainer({
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">Categories</h2>
-						<TableSearchInput columnId="name" placeholder="Search..." className={searchFieldInlineWrapperStyles} />
+						<TableSearchInput columnId="name" placeholder="Search…" className={searchFieldInlineWrapperStyles} />
 						<TableCsvExport filename={isCoinPage ? 'narrative-tracker-coin' : 'narrative-tracker-category'} />
 					</TableToolbar>
 					<VirtualSearchTableView />

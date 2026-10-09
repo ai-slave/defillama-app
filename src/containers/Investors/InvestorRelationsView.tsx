@@ -3,13 +3,13 @@ import { Suspense, useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, resolveEmbeddedDashboardTabs } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import { isDashboardRegistered } from './registry'
-import { TabStatus } from './TabStatus'
 
 /**
  * Renders an Investor Relations dashboard module (loaded by `dashboardId` from the ungated registry)
@@ -73,14 +73,14 @@ export function InvestorRelationsView({
 	return (
 		<AppMetadataProvider>
 			<CustomServerDataContext.Provider value={customServerData ?? {}}>
-				<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4">
+				<div className="investors-dashboard investors-dashboard-embedded flex flex-1 flex-col gap-4">
 					{HeaderComponent ? (
 						<Suspense fallback={null}>
 							<HeaderComponent />
 						</Suspense>
 					) : null}
 					{moduleQuery.isError ? (
-						<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
+						<PanelStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</PanelStatus>
 					) : tabs == null ? (
 						<SkeletonTable />
 					) : isControlled ? (
@@ -109,7 +109,7 @@ export function InvestorRelationsView({
 									) : null
 								)}
 							</div>
-							<TabPanel value={resolvedTab} className="flex flex-col gap-4">
+							<TabPanel value={resolvedTab} className="flex flex-1 flex-col gap-4">
 								{content}
 							</TabPanel>
 						</Tabs>

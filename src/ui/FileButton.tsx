@@ -20,6 +20,7 @@ export function FileButton({
 	size,
 	variant,
 	pendingLabel,
+	pending,
 	disabled,
 	accessibleWhenDisabled,
 	ref,
@@ -34,7 +35,8 @@ export function FileButton({
 	onFiles: (files: Array<File>) => void
 	size: 'sm' | 'md'
 	variant?: 'secondary' | 'primary' | 'outline'
-	pendingLabel?: string | null
+	pendingLabel?: string
+	pending?: boolean
 	disabled?: boolean
 	accessibleWhenDisabled?: boolean
 	ref?: Ref<HTMLButtonElement>
@@ -63,6 +65,7 @@ export function FileButton({
 				size={size}
 				variant={variant}
 				pendingLabel={pendingLabel}
+				pending={pending}
 				disabled={disabled}
 				accessibleWhenDisabled={accessibleWhenDisabled}
 				ref={ref}

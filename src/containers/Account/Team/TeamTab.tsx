@@ -86,7 +86,8 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 					size="md"
 					className="mt-2"
 					onClick={() => void refetchTeam()}
-					pendingLabel={isTeamRetrying ? 'Checking membership…' : null}
+					pendingLabel="Checking membership…"
+					pending={isTeamRetrying}
 				>
 					Check membership
 				</Button>

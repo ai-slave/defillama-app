@@ -86,7 +86,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Total Value Lost in Hacks
 					</PanelTitle>
-					<TableSearchInput columnId="Name" placeholder="Search..." className={searchFieldInlineWrapperStyles} />
+					<TableSearchInput columnId="Name" placeholder="Search…" className={searchFieldInlineWrapperStyles} />
 					<TableColumnSelect />
 					<TableCsvExport filename="total-value-lost-in-hacks" />
 				</PanelHeader>

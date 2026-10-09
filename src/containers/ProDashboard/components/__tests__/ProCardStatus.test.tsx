@@ -96,22 +96,20 @@ test('the empty state has no button without an action', async () => {
 	expect(container.querySelector('button')).toBeNull()
 })
 
-test('a warning notice is a status, an error notice is an alert and keeps details out of the text', async () => {
+test('a warning notice is a status, an error notice is an alert', async () => {
 	const onClick = vi.fn()
 	await act(async () => root.render(<ProCardNotice tone="warning">2 series are unavailable.</ProCardNotice>))
 	expect(container.querySelector('[role="status"]')?.textContent).toContain('2 series are unavailable.')
 
 	await act(async () =>
 		root.render(
-			<ProCardNotice tone="error" title="Refresh failed with HTTP 500" action={{ label: 'Try again', onClick }}>
+			<ProCardNotice tone="error" action={{ label: 'Try again', onClick }}>
 				Couldn&apos;t refresh this query.
 			</ProCardNotice>
 		)
 	)
 	const alert = container.querySelector('[role="alert"]')
 	expect(alert?.textContent).toContain("Couldn't refresh this query.")
-	expect(alert?.textContent).not.toContain('HTTP 500')
-	expect(alert?.getAttribute('title')).toBe('Refresh failed with HTTP 500')
 	await act(async () => buttonLabelled('Try again').click())
 	expect(onClick).toHaveBeenCalledOnce()
 })

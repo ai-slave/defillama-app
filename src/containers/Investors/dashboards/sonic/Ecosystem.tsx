@@ -14,10 +14,11 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { Icon } from '~/ui/Icon'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
 import { formatSonicUsd } from './format'
@@ -288,10 +289,17 @@ function AssetBreakdownSection({
 }
 
 export default function Ecosystem() {
-	const { data, isLoading } = useEcosystemData()
+	const query = useEcosystemData()
+	const data = query.data
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load Sonic ecosystem data.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Sonic ecosystem data.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

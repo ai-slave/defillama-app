@@ -99,7 +99,8 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 									type="button"
 									variant="outline"
 									size="md"
-									pendingLabel={isFetching ? 'Refreshing…' : null}
+									pendingLabel="Refreshing…"
+									pending={isFetching}
 									onClick={() => void refetch()}
 								>
 									Refresh balance

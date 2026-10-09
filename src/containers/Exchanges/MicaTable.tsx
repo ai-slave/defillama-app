@@ -115,7 +115,7 @@ export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 					</div>
 					<TableSearchInput
 						columnId="name"
-						placeholder="Search exchanges..."
+						placeholder="Search exchanges…"
 						className={searchFieldInlineWrapperStyles}
 					/>
 					<TableColumnSelect />

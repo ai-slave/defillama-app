@@ -178,7 +178,6 @@ export function DeletePresetDialog({
 			title="Delete preset?"
 			description={`"${preset.name}" is removed from your saved presets. This can't be undone.`}
 			confirmLabel="Delete"
-			pendingLabel={null}
 			error={null}
 			onConfirm={() => {
 				returnFocusRef.current = tabs.item(tabs.getState().selectedId)?.element ?? null

@@ -4,6 +4,7 @@ import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { BtcExecutionTable } from './BtcExecutionTable'
 import { ChartRangeControl } from './ChartRangeControl'
@@ -162,17 +163,11 @@ function ResearchChartCard({
 
 	return (
 		<div ref={ref} className="flex flex-col">
-			{query.isError ? (
+			{queryReadFailed(query) || !query.data || !selectedView ? (
 				<ResearchChartStatus
 					presentation={getResearchPresentation(part, resolvedView)}
 					toolbar={toolbar}
-					status="error"
-				/>
-			) : !query.data || !selectedView ? (
-				<ResearchChartStatus
-					presentation={getResearchPresentation(part, resolvedView)}
-					toolbar={toolbar}
-					status="loading"
+					failedRead={queryReadFailed(query) ? query : null}
 				/>
 			) : (
 				<ResearchChart chart={selectedView.chart} toolbar={toolbar} />

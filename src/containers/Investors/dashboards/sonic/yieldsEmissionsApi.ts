@@ -88,10 +88,8 @@ export function useYieldsEmissionsData() {
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
+	const data = useMemo(() => {
+		if (!query.data) return null
 
 		const d = query.data
 
@@ -128,20 +126,19 @@ export function useYieldsEmissionsData() {
 			: null
 
 		return {
-			data: {
-				emissions: {
-					dataset: emissionsDataset,
-					charts: emissionsCharts,
-					title: d.emissions.emissionsChart.title,
-					metadata: d.emissions.metadata
-				},
-				yields: {
-					pools: d.yields.pools,
-					kpis: d.yields.kpis
-				},
-				burn
+			emissions: {
+				dataset: emissionsDataset,
+				charts: emissionsCharts,
+				title: d.emissions.emissionsChart.title,
+				metadata: d.emissions.metadata
 			},
-			isLoading: false
+			yields: {
+				pools: d.yields.pools,
+				kpis: d.yields.kpis
+			},
+			burn
 		}
-	}, [query.data, query.isLoading, query.isPending])
+	}, [query.data])
+
+	return { query, data }
 }

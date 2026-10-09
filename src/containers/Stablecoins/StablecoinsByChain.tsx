@@ -52,14 +52,16 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { stablecoinBrandColors } from './brandColors'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
@@ -96,6 +98,7 @@ const EMPTY_RUNTIME_SERIES = {
 const getStablecoinSnapshotName = (asset: FormattedStablecoinAsset) => asset.chartLabel
 
 type MultiSeriesChartState =
+	| { status: 'error'; retry: QueryRetry }
 	| { status: 'loading' }
 	| { status: 'unavailable' }
 	| { status: 'ready'; data: StablecoinChartSeriesPayload }
@@ -284,8 +287,6 @@ export function StablecoinsByChain({
 		shouldFetchOverviewChart &&
 		(overviewChartQuery.isLoading ||
 			(selectedChartData == null && (overviewChartQuery.isFetching || overviewChartQuery.data != null)))
-	const isSelectedChartUnavailable =
-		shouldFetchOverviewChart && !isSelectedChartLoading && (overviewChartQuery.error != null || !selectedChartData)
 	const chartSummary = summarySeriesChart
 		? (summaryChartQuery.data?.summary ?? null)
 		: hasActiveStablecoinUrlFilters
@@ -417,12 +418,15 @@ export function StablecoinsByChain({
 		(chartType === 'volume' && chartView !== 'total')
 	let activeChartState: MultiSeriesChartState
 	if (isVolumeChart) {
-		if (isVolumeChartLoading) activeChartState = { status: 'loading' }
-		else if (volumeChartQuery.error || !deferredVolumeChartData) activeChartState = { status: 'unavailable' }
+		if (queryReadFailed(volumeChartQuery)) activeChartState = { status: 'error', retry: volumeChartQuery }
+		else if (isVolumeChartLoading) activeChartState = { status: 'loading' }
+		else if (!deferredVolumeChartData) activeChartState = { status: 'unavailable' }
 		else activeChartState = { status: 'ready', data: deferredVolumeChartData }
+	} else if (shouldFetchOverviewChart && queryReadFailed(overviewChartQuery)) {
+		activeChartState = { status: 'error', retry: overviewChartQuery }
 	} else if (isSelectedChartLoading || (selectedChartData != null && deferredSelectedChartData == null)) {
 		activeChartState = { status: 'loading' }
-	} else if (isSelectedChartUnavailable || !deferredSelectedChartData) {
+	} else if (!deferredSelectedChartData) {
 		activeChartState = { status: 'unavailable' }
 	} else {
 		activeChartState = { status: 'ready', data: deferredSelectedChartData }
@@ -651,21 +655,17 @@ function MultiSeriesChartPanel({
 	groupBy?: IMultiSeriesChartProps['groupBy']
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
+	if (state.status === 'error') {
+		return <ChartPanelBodyError retry={state.retry}>Failed to load chart data.</ChartPanelBodyError>
+	}
 	if (state.status === 'loading') {
 		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-				Loading chart...
+			<ChartPanelBodyFallback role="status" aria-live="polite">
+				<LoadingIndicator />
 			</ChartPanelBodyFallback>
 		)
 	}
-	if (state.status === 'unavailable') {
-		return (
-			<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
-	}
-	if (state.data.charts.length === 0 || state.data.dataset.source.length === 0) {
+	if (state.status === 'unavailable' || state.data.charts.length === 0 || state.data.dataset.source.length === 0) {
 		return (
 			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 				Chart unavailable

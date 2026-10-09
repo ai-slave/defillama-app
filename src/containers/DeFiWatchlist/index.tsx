@@ -318,7 +318,8 @@ export function PortfolioNotifications({
 								<Button
 									type="button"
 									size="sm"
-									pendingLabel={isFetching ? 'Retrying…' : null}
+									pendingLabel="Retrying…"
+									pending={isFetching}
 									onClick={() => void refetch()}
 								>
 									Try again
@@ -406,7 +407,8 @@ export function PortfolioNotifications({
 									type="button"
 									onClick={() => setActive(!preferences.active)}
 									disabled={loaders.userLoading || isChangingPreferences}
-									pendingLabel={updateStatus.isPending ? (preferences.active ? 'Disabling...' : 'Enabling...') : null}
+									pendingLabel="Updating…"
+									pending={updateStatus.isPending}
 								>
 									<Icon name={preferences.active ? 'pause' : 'check-circle'} height={16} width={16} />
 									<span>{preferences.active ? 'Disable' : 'Enable'}</span>
@@ -582,7 +584,7 @@ function NotificationSettingsForm({
 				{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 			</DialogBody>
 			<DialogFooter dismiss={<DialogCancelButton />}>
-				<Button type="submit" variant="primary" size="md" pendingLabel={save.isPending ? 'Saving…' : null}>
+				<Button type="submit" variant="primary" size="md" pendingLabel="Saving…" pending={save.isPending}>
 					{savedSettings ? 'Update settings' : 'Enable notifications'}
 				</Button>
 			</DialogFooter>
@@ -754,7 +756,6 @@ function PortfolioSelection() {
 						title="Delete portfolio?"
 						description={`"${deleting.portfolio}" and everything saved in it are removed. This cannot be undone.`}
 						confirmLabel="Delete"
-						pendingLabel={null}
 						error={null}
 						onConfirm={() => {
 							setDeleting(null)

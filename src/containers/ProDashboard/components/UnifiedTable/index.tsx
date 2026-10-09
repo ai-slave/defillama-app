@@ -487,7 +487,6 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				title="Duplicate table"
 				description="Create a duplicate of this table in the dashboard?"
 				confirmLabel="Duplicate"
-				pendingLabel={null}
 				error={null}
 				tone="primary"
 				onConfirm={() => {

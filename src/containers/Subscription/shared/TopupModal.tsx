@@ -219,7 +219,7 @@ export function TopupForm({
 								<Icon name="credit-card" height={14} width={14} />
 								Pay with card
 							</Button>
-							<Button type="submit" value="llamapay" size="md" pendingLabel={isRedirecting ? 'Redirecting…' : null}>
+							<Button type="submit" value="llamapay" size="md" pendingLabel="Redirecting…" pending={isRedirecting}>
 								<Icon name="wallet" height={14} width={14} />
 								Pay with crypto
 							</Button>

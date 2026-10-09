@@ -187,7 +187,8 @@ function PastDueSubscriptionCard({
 						variant="primary"
 						size="md"
 						onClick={onUpdatePayment}
-						pendingLabel={isUpdateLoading ? 'Opening Stripe…' : null}
+						pendingLabel="Opening Stripe…"
+						pending={isUpdateLoading}
 					>
 						Update payment on Stripe
 						<Icon name="circle-external-link" className="size-3.5 shrink-0" />
@@ -304,7 +305,8 @@ export function SubscriptionSection() {
 				size="sm"
 				ref={focusRegionOnLeave}
 				onClick={() => void refetchPastDueSubscription()}
-				pendingLabel={isPastDueRetrying ? 'Retrying…' : null}
+				pendingLabel="Retrying…"
+				pending={isPastDueRetrying}
 			>
 				Try again
 			</Button>

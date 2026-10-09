@@ -8,10 +8,11 @@ import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/
 import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyError, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildTokensMovers,
@@ -186,13 +187,15 @@ export function TokensChartsSection({
 			</TableToolbar>
 			{filterPills}
 			{datasetQuery.data ? <TokensSourceAvailability sources={datasetQuery.data.unavailableSources} /> : null}
-			{data == null ? (
-				<ChartPanelBodyFallback
-					role={datasetQuery.isError ? 'alert' : 'status'}
-					className={datasetQuery.isError ? 'body-sm text-error' : undefined}
-					style={{ height: MAP_HEIGHT }}
-				>
-					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
+			{/* A retry from an error shows the previous filter's rows as placeholder data; the error stays until it loads.
+			    A failed refresh of rows already drawn keeps them. */}
+			{queryReadFailed(datasetQuery) && (data == null || datasetQuery.isPlaceholderData) ? (
+				<ChartPanelBodyError retry={datasetQuery} style={{ height: MAP_HEIGHT }}>
+					Failed to load chart data.
+				</ChartPanelBodyError>
+			) : data == null ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite" style={{ height: MAP_HEIGHT }}>
+					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			) : !hasRows ? (
 				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: MAP_HEIGHT }}>

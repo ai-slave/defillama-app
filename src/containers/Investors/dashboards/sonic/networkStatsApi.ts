@@ -47,81 +47,78 @@ export function useNetworkStatsData() {
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
+	const data = useMemo(() => {
+		if (!query.data) return null
 
 		const d = query.data
 		const burn = d.burnData
 
 		return {
-			data: {
-				network: {
-					blockNumber: d.blockNumber != null ? { value: d.blockNumber, formatted: formatNumber(d.blockNumber) } : null,
-					gasPrice:
-						d.gasPrice != null
-							? {
-									value: d.gasPrice.gwei,
-									formatted: `${formatNumber(d.gasPrice.gwei, { maximumFractionDigits: 0 })} Gwei`
-								}
-							: null,
-					price:
-						burn != null
-							? {
-									value: burn.price,
-									formatted: formatUsd(burn.price, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
-								}
-							: null,
-					totalSupply: burn != null ? { value: burn.totalSupply, formatted: formatSonicAmount(burn.totalSupply) } : null
-				},
-				tokenomics:
-					burn != null
+			network: {
+				blockNumber: d.blockNumber != null ? { value: d.blockNumber, formatted: formatNumber(d.blockNumber) } : null,
+				gasPrice:
+					d.gasPrice != null
 						? {
-								initialSupply: { value: burn.initialSupply, formatted: formatSonicAmount(burn.initialSupply) },
-								netIssuance: { value: burn.netIssuance, formatted: formatSonicAmount(burn.netIssuance) },
-								burnPerDay: {
-									value: burn.permanentBurnPerDay,
-									formatted: `${formatSonicAmount(burn.permanentBurnPerDay)} S`
-								},
-								burnPerYear: {
-									value: burn.permanentBurnPerYear,
-									formatted: `${formatSonicAmount(burn.permanentBurnPerYear)} S`
-								}
+								value: d.gasPrice.gwei,
+								formatted: `${formatNumber(d.gasPrice.gwei, { maximumFractionDigits: 0 })} Gwei`
 							}
 						: null,
-				fees:
+				price:
 					burn != null
 						? {
-								feesPerDay: { value: burn.feesPerDay, formatted: `${formatSonicAmount(burn.feesPerDay)} S` },
-								feeMPerDay: { value: burn.feeMPerDay, formatted: `${formatSonicAmount(burn.feeMPerDay)} S` },
-								validatorFeesPerDay: {
-									value: burn.validatorFeesPerDay,
-									formatted: `${formatSonicAmount(burn.validatorFeesPerDay)} S`
-								},
-								burnRate: {
-									value: burn.burnRatePercent,
-									formatted: `${formatPercent(burn.burnRatePercent, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-								}
+								value: burn.price,
+								formatted: formatUsd(burn.price, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
 							}
 						: null,
-				epoch:
-					burn != null
-						? {
-								current: { value: burn.currentEpoch, formatted: formatNumber(burn.currentEpoch) },
-								avgDuration: {
-									value: burn.avgEpochDuration,
-									formatted: `~${Math.round(burn.avgEpochDuration / 60)} min`
-								},
-								lastFee: {
-									value: burn.lastEpochFee,
-									formatted: `${formatNumber(burn.lastEpochFee, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} S`
-								}
-							}
-						: null,
-				uptimeUrl: d.uptimeUrl
+				totalSupply: burn != null ? { value: burn.totalSupply, formatted: formatSonicAmount(burn.totalSupply) } : null
 			},
-			isLoading: false
+			tokenomics:
+				burn != null
+					? {
+							initialSupply: { value: burn.initialSupply, formatted: formatSonicAmount(burn.initialSupply) },
+							netIssuance: { value: burn.netIssuance, formatted: formatSonicAmount(burn.netIssuance) },
+							burnPerDay: {
+								value: burn.permanentBurnPerDay,
+								formatted: `${formatSonicAmount(burn.permanentBurnPerDay)} S`
+							},
+							burnPerYear: {
+								value: burn.permanentBurnPerYear,
+								formatted: `${formatSonicAmount(burn.permanentBurnPerYear)} S`
+							}
+						}
+					: null,
+			fees:
+				burn != null
+					? {
+							feesPerDay: { value: burn.feesPerDay, formatted: `${formatSonicAmount(burn.feesPerDay)} S` },
+							feeMPerDay: { value: burn.feeMPerDay, formatted: `${formatSonicAmount(burn.feeMPerDay)} S` },
+							validatorFeesPerDay: {
+								value: burn.validatorFeesPerDay,
+								formatted: `${formatSonicAmount(burn.validatorFeesPerDay)} S`
+							},
+							burnRate: {
+								value: burn.burnRatePercent,
+								formatted: `${formatPercent(burn.burnRatePercent, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+							}
+						}
+					: null,
+			epoch:
+				burn != null
+					? {
+							current: { value: burn.currentEpoch, formatted: formatNumber(burn.currentEpoch) },
+							avgDuration: {
+								value: burn.avgEpochDuration,
+								formatted: `~${Math.round(burn.avgEpochDuration / 60)} min`
+							},
+							lastFee: {
+								value: burn.lastEpochFee,
+								formatted: `${formatNumber(burn.lastEpochFee, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} S`
+							}
+						}
+					: null,
+			uptimeUrl: d.uptimeUrl
 		}
-	}, [query.data, query.isLoading, query.isPending])
+	}, [query.data])
+
+	return { query, data }
 }

@@ -88,7 +88,8 @@ function CreateTeamForm({ onCreated, onCancel }: { onCreated: () => void; onCanc
 					variant="primary"
 					size="md"
 					className="flex-1"
-					pendingLabel={pending ? 'Creating…' : null}
+					pendingLabel="Creating…"
+					pending={pending}
 				>
 					Create
 				</Button>

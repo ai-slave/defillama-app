@@ -150,7 +150,8 @@ export function GoogleLinkForm({
 				size="md"
 				className="w-full"
 				disabled={resendGoogleLinkMutation.isPending}
-				pendingLabel={confirmGoogleLinkMutation.isPending ? 'Verifying…' : null}
+				pendingLabel="Verifying…"
+				pending={confirmGoogleLinkMutation.isPending}
 			>
 				Verify account
 			</Button>
@@ -160,7 +161,8 @@ export function GoogleLinkForm({
 				<Button
 					type="button"
 					variant="link"
-					pendingLabel={resendGoogleLinkMutation.isPending ? 'Sending code…' : null}
+					pendingLabel="Sending code…"
+					pending={resendGoogleLinkMutation.isPending}
 					disabled={!canResend || pending}
 					accessibleWhenDisabled
 					onClick={() => void handleResend()}

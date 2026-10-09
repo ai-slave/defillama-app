@@ -76,7 +76,7 @@ export function TokenDeferredPaginationControls({
 			{isLoading ? (
 				<div className="flex items-center gap-2 label-sm text-secondary">
 					<LoadingSpinner size={12} />
-					<span>Loading full table...</span>
+					<span>Loading full table…</span>
 				</div>
 			) : null}
 		</div>

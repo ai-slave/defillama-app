@@ -228,7 +228,8 @@ export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetch
 						// The retry leaves once the read succeeds; the region keeps focus.
 						ref={focusRegionOnLeave}
 						size="sm"
-						pendingLabel={isFetching ? 'Retrying…' : null}
+						pendingLabel="Retrying…"
+						pending={isFetching}
 						onClick={() => void refetch()}
 					>
 						Try again

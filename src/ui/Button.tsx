@@ -73,6 +73,9 @@ import { LoadingSpinner } from './Loaders'
    always and set `done` while it shows. Button draws a check and the label
    in the same grid cell as the idle content, both always laid out, so the
    button keeps one width in both states and its neighbours never move.
+   A button whose own label switches with a mode (Edit ↔ Done, Show ↔ Hide)
+   renders `<StableLabel labels={['Edit', 'Done']} current={…} />` as its
+   children, which lays every label out in one cell the same way.
    Never swap a Button's text by hand.
 
    Pressed: while held down, every variant goes one ramp step past its hover
@@ -101,18 +104,19 @@ import { LoadingSpinner } from './Loaders'
    this file, not a className override.
 
    Width: `min-w-fit` keeps the label from shrinking under the global
-   `* { min-width: 0 }`, and a pending button keeps the wider of its idle and
-   busy widths, so the row does not reflow while the action runs.
+   `* { min-width: 0 }`, and a button with a `pendingLabel` is always as wide
+   as the wider of its idle and busy labels, at rest too, so "Save" never
+   grows into "Saving…" and the row does not reflow when the action starts.
 
    The button is Ariakit's Button, so a disabled button keeps React Aria's
    model: `disabled` takes it out of the tab order, and two states keep it
    focusable (aria-disabled) while swallowing presses:
-   - `pendingLabel`: while an action runs, pass its label ("Saving…"). The
-     button shows a spinner and that label and is announced as busy, so it
-     keeps focus and a form cannot submit twice through Enter either. It keeps
-     full colour, unlike a disabled button, so it reads as working, even when
-     a disabled <fieldset> around it also disables it (the `not-aria-busy`
-     guards). Pass null once the action settles.
+   - `pendingLabel` with `pending`: pass the busy label always ("Saving…")
+     and set `pending` while the action runs. The button shows a spinner and
+     that label and is announced as busy, so it keeps focus and a form cannot
+     submit twice through Enter either. It keeps full colour, unlike a
+     disabled button, so it reads as working, even when a disabled
+     <fieldset> around it also disables it (the `not-aria-busy` guards).
    - `accessibleWhenDisabled`: a control that disables itself when pressed (a
      stepper at its limit, Resend during its cooldown, a pager at its end),
      or a disabled icon-only control, so its Tooltip still names it; the
@@ -261,9 +265,11 @@ function buttonStyles(look: ButtonLook): string {
 type ButtonProps<T extends ElementType> = ButtonLook & {
 	/** A link or other host keeps its own element and role; only the default button takes button behaviour. */
 	as?: T
-	/** Set while the button's action runs; the button shows a spinner and this label, keeps focus and ignores presses.
-	    Buttons only: a link (`as`) navigates and has nothing to wait on. */
-	pendingLabel?: string | null
+	/** The label shown with a spinner while `pending` ("Saving…"). Passed always, so the button reserves its width at
+	    rest. Buttons only: a link (`as`) navigates and has nothing to wait on. */
+	pendingLabel?: string
+	/** Set while the button's action runs: it shows `pendingLabel`, keeps focus and ignores presses. */
+	pending?: boolean
 	/** For a control that disables itself when pressed (a stepper at its limit, Resend during its cooldown): it keeps
 	    focus while disabled, so pressing it never drops focus to the page. Other disabled buttons leave the tab order. */
 	accessibleWhenDisabled?: boolean
@@ -285,7 +291,8 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 		variant: _variant,
 		size: _size,
 		square = false,
-		pendingLabel = null,
+		pendingLabel,
+		pending = false,
 		accessibleWhenDisabled = false,
 		'data-active': dataActive,
 		'aria-disabled': ariaDisabled,
@@ -308,22 +315,16 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 		doneLabel === undefined ? (
 			idleContent
 		) : (
-			// Both states stay laid out in one grid cell, so the button is always as wide as the wider one.
-			<span className="grid">
-				<span
-					aria-hidden={done || undefined}
-					className={`col-start-1 row-start-1 flex items-center justify-center gap-1 ${done ? 'invisible' : ''}`}
-				>
-					{idleContent}
-				</span>
-				<span
-					aria-hidden={!done || undefined}
-					className={`col-start-1 row-start-1 flex items-center justify-center gap-1 ${done ? '' : 'invisible'}`}
-				>
-					<Icon name="check" className="size-3.5" aria-hidden />
-					{doneLabel}
-				</span>
-			</span>
+			<SameCell
+				shown={done ? 1 : 0}
+				states={[
+					idleContent,
+					<>
+						<Icon name="check" className="size-3.5" aria-hidden />
+						{doneLabel}
+					</>
+				]}
+			/>
 		)
 	if (as) {
 		const Component = as as ElementType
@@ -333,8 +334,36 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 			</Component>
 		)
 	}
-	const pending = pendingLabel !== null
-	const children = pending ? <PendingContent square={square} label={pendingLabel} idle={content} /> : content
+	const children =
+		pendingLabel === undefined ? (
+			content
+		) : square ? (
+			// An icon-only button has no room for a label: the spinner replaces the icon, the label is announced.
+			pending ? (
+				<>
+					<LoadingSpinner size={14} />
+					<span className="sr-only">{pendingLabel}</span>
+				</>
+			) : (
+				content
+			)
+		) : pending ? (
+			<SameCell
+				shown={1}
+				states={[
+					content,
+					<>
+						<LoadingSpinner size={14} />
+						{pendingLabel}
+					</>
+				]}
+			/>
+		) : (
+			<span className="grid gap-inherit">
+				<span className="col-start-1 row-start-1 flex items-center justify-center gap-inherit">{content}</span>
+				<ReservedLabel label={pendingLabel} icon />
+			</span>
+		)
 	return (
 		<Ariakit.Button
 			className={classes}
@@ -357,26 +386,47 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 	)
 }
 
-function PendingContent({ square, label, idle }: { square: boolean; label: string; idle: ReactNode }) {
-	// An icon-only button has no room for a label: the spinner replaces the icon, the label is announced.
-	if (square)
-		return (
-			<>
-				<LoadingSpinner size={14} />
-				<span className="sr-only">{label}</span>
-			</>
-		)
-	// The idle content stays in the same grid cell, invisible and hidden from assistive tech, so the button keeps the
-	// wider of its two widths and the row around it does not reflow while the action runs.
+/** Every state stays laid out in one grid cell and only the shown one is visible and announced, so the button is
+    always as wide as its widest state and nothing beside it moves when the state changes. */
+function SameCell({ states, shown }: { states: ReadonlyArray<ReactNode>; shown: number }) {
 	return (
-		<span className="grid">
-			<span aria-hidden className="invisible col-start-1 row-start-1 flex items-center justify-center gap-1">
-				{idle}
-			</span>
-			<span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
-				<LoadingSpinner size={14} />
-				{label}
-			</span>
+		<span className="grid gap-inherit">
+			{states.map((state, index) => (
+				<span
+					// oxlint-disable-next-line react/no-array-index-key -- The states are a fixed list in a fixed order.
+					key={index}
+					aria-hidden={index === shown ? undefined : true}
+					className={`col-start-1 row-start-1 flex items-center justify-center gap-inherit ${index === shown ? '' : 'invisible'}`}
+				>
+					{state}
+				</span>
+			))}
+		</span>
+	)
+}
+
+/** Holds the width of a label that is not shown without putting its text in the page: an invisible pseudo-element
+    draws it, so it stays out of the text, the accessible name and find-in-page. `icon` adds the 14px icon slot
+    beside it (the busy spinner). */
+export function ReservedLabel({ label, icon = false }: { label: string; icon?: boolean }) {
+	return (
+		<span
+			aria-hidden
+			data-label={label}
+			className="invisible col-start-1 row-start-1 flex items-center justify-center gap-inherit before:content-[attr(data-label)]"
+		>
+			{icon ? <span className="size-3.5" /> : null}
+		</span>
+	)
+}
+
+/** A label that switches with a mode (Edit ↔ Done): the others are reserved in the same cell, so the button holds the
+    width of the longest. */
+export function StableLabel<L extends string>({ labels, current }: { labels: ReadonlyArray<L>; current: L }) {
+	return (
+		<span className="grid gap-inherit">
+			<span className="col-start-1 row-start-1 flex items-center justify-center">{current}</span>
+			{labels.map((label) => (label === current ? null : <ReservedLabel key={label} label={label} />))}
 		</span>
 	)
 }

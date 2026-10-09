@@ -102,7 +102,8 @@ function ReportError() {
 						type="submit"
 						variant="primary"
 						size="md"
-						pendingLabel={mutation.isPending ? 'Submitting…' : null}
+						pendingLabel="Submitting…"
+						pending={mutation.isPending}
 						className="mt-3 w-full"
 					>
 						Report

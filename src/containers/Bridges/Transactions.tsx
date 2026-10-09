@@ -667,7 +667,8 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 					type="submit"
 					variant="primary"
 					size="md"
-					pendingLabel={isPending ? 'Fetching…' : null}
+					pendingLabel="Fetching…"
+					pending={isPending}
 					className="md:col-start-4 md:row-start-2"
 				>
 					<Icon name="search" height={14} width={14} />

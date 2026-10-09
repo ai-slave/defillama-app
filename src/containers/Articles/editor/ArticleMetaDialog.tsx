@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Select } from '~/components/Select/Select'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
@@ -448,20 +448,18 @@ function MetaSheet({
 											Scheduled to go live {formatArticleDate(article.goLiveAt)}.
 										</p>
 									) : null}
-									<div className="-mx-3 grid">
-										<MetaSwitch
-											checked={scheduleMode}
-											onCheckedChange={(next) => {
-												setScheduleMode(next)
-												if (next && !scheduleAtLocal) {
-													const defaultAt = new Date(Date.now() + 3_600_000)
-													setScheduleAtLocal(toDateTimeLocal(defaultAt.toISOString()))
-												}
-											}}
-											label="Schedule publication"
-											description="Keeps the article as a draft until the chosen time. Times are shown in your local timezone."
-										/>
-									</div>
+									<MetaSwitch
+										checked={scheduleMode}
+										onCheckedChange={(next) => {
+											setScheduleMode(next)
+											if (next && !scheduleAtLocal) {
+												const defaultAt = new Date(Date.now() + 3_600_000)
+												setScheduleAtLocal(toDateTimeLocal(defaultAt.toISOString()))
+											}
+										}}
+										label="Schedule publication"
+										description="Keeps the article as a draft until the chosen time. Times are shown in your local timezone."
+									/>
 									{scheduleMode ? (
 										<Field label="Go live at" hint="Independent from display date." error={scheduleError}>
 											{(control) => (
@@ -498,14 +496,12 @@ function MetaSheet({
 									) : null}
 								</dl>
 							) : null}
-							<div className="-mx-3 grid">
-								<MetaSwitch
-									checked={article.brandByline === true}
-									onCheckedChange={(next) => updateArticle('brandByline', next)}
-									label="Publish as DefiLlama Research"
-									description="Replaces the per-user byline with the institutional name and emits Organization JSON-LD."
-								/>
-							</div>
+							<MetaSwitch
+								checked={article.brandByline === true}
+								onCheckedChange={(next) => updateArticle('brandByline', next)}
+								label="Publish as DefiLlama Research"
+								description="Replaces the per-user byline with the institutional name and emits Organization JSON-LD."
+							/>
 							{article.editorialTags && article.editorialTags.length > 0 ? (
 								<div className="flex flex-col gap-1.5">
 									<span className="label-sm text-secondary">Editorial</span>
@@ -665,7 +661,8 @@ function MetaSheet({
 								<Button
 									type="button"
 									size="sm"
-									pendingLabel={collaboratorsRetrying ? 'Retrying…' : null}
+									pendingLabel="Retrying…"
+									pending={collaboratorsRetrying}
 									onClick={() => void retryCollaborators()}
 								>
 									Try again
@@ -709,12 +706,13 @@ function MetaSheet({
 												size="sm"
 												variant="ghost"
 												aria-label={`${entry.hidden ? 'Show' : 'Hide'} ${entry.profile.displayName} in the byline`}
-												pendingLabel={collaboratorUpdatingId === entry.pbUserId ? 'Saving…' : null}
+												pendingLabel="Saving…"
+												pending={collaboratorUpdatingId === entry.pbUserId}
 												onClick={() =>
 													void runAuthorAction(handleToggleHidden(entry.pbUserId, !entry.hidden), showListError)
 												}
 											>
-												{entry.hidden ? 'Show' : 'Hide'}
+												<StableLabel labels={['Hide', 'Show']} current={entry.hidden ? 'Show' : 'Hide'} />
 											</Button>
 											<Button
 												type="button"
@@ -729,7 +727,8 @@ function MetaSheet({
 												size="sm"
 												variant="ghost"
 												aria-label={`Remove ${entry.profile.displayName}`}
-												pendingLabel={collaboratorRemovingId === entry.pbUserId ? 'Removing…' : null}
+												pendingLabel="Removing…"
+												pending={collaboratorRemovingId === entry.pbUserId}
 												onClick={(event) => void removeCollaborator(event.currentTarget, entry.pbUserId)}
 											>
 												Remove
@@ -769,7 +768,7 @@ function MetaSheet({
 											readOnly={collaboratorAdding}
 											className="min-w-0 flex-1"
 										/>
-										<Button type="submit" size="md" pendingLabel={collaboratorAdding ? 'Adding…' : null}>
+										<Button type="submit" size="md" pendingLabel="Adding…" pending={collaboratorAdding}>
 											Add
 										</Button>
 									</div>
@@ -879,7 +878,8 @@ function MetaSheet({
 							type="button"
 							size="md"
 							variant="primary"
-							pendingLabel={running === 'publish' ? 'Publishing…' : waitingForSave}
+							pendingLabel={waitingForSave ?? 'Publishing…'}
+							pending={running === 'publish' || waitingForSave !== null}
 							onClick={() => void runAction('publish', () => handlePublish())}
 						>
 							Publish update
@@ -889,7 +889,8 @@ function MetaSheet({
 							type="button"
 							size="md"
 							variant="primary"
-							pendingLabel={running === 'save' || isSaving ? 'Saving…' : null}
+							pendingLabel="Saving…"
+							pending={running === 'save' || isSaving}
 							onClick={saveChanges}
 						>
 							Save changes
@@ -903,7 +904,8 @@ function MetaSheet({
 								type="button"
 								size="md"
 								disabled={running === 'publish'}
-								pendingLabel={running === 'publishNow' ? 'Publishing…' : waitingForSave}
+								pendingLabel={waitingForSave ?? 'Publishing…'}
+								pending={running === 'publishNow' || waitingForSave !== null}
 								onClick={() => void runAction('publishNow', () => handlePublish({ goLiveAt: null }))}
 							>
 								Publish now
@@ -914,10 +916,11 @@ function MetaSheet({
 							size="md"
 							variant="primary"
 							disabled={running === 'publishNow'}
-							pendingLabel={running === 'publish' ? (scheduleMode ? 'Scheduling…' : 'Publishing…') : waitingForSave}
+							pendingLabel={waitingForSave ?? (scheduleMode ? 'Scheduling…' : 'Publishing…')}
+							pending={running === 'publish' || waitingForSave !== null}
 							onClick={publish}
 						>
-							{scheduleMode ? 'Schedule' : 'Publish now'}
+							<StableLabel labels={['Publish now', 'Schedule']} current={scheduleMode ? 'Schedule' : 'Publish now'} />
 						</Button>
 					</>
 				)}

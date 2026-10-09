@@ -7,8 +7,10 @@ import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { ErrorLine, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { PageAssetSearchHit } from '../pageAssetMarket'
@@ -105,13 +107,15 @@ export function ArticlePageAssetPicker({
 					sameWidth
 					className="max-h-[min(256px,var(--popover-available-height))]"
 				>
-					{isFetching && hits.length === 0 ? <p className="p-3 text-center body-sm text-tertiary">Searching…</p> : null}
+					{isFetching && hits.length === 0 ? (
+						<div role="status" className="flex justify-center px-3 py-6">
+							<LoadingIndicator label="Searching" />
+						</div>
+					) : null}
 					{!isFetching && isError ? (
-						<p className="p-3 text-center body-sm text-error">
-							Couldn&apos;t search tokens. Edit the search to try again.
-						</p>
+						<ErrorLine inset="menuRow">Couldn&apos;t search tokens. Edit the search to try again.</ErrorLine>
 					) : !isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (
-						<p className="p-3 text-center body-sm text-tertiary">No tokens found</p>
+						<NoResults>No tokens found</NoResults>
 					) : null}
 					{hits.map((hit) => (
 						<Ariakit.ComboboxItem

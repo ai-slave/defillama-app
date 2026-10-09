@@ -2,11 +2,18 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
+import type { QueryRetry } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
 import { ChartRangeControl } from './ChartRangeControl'
@@ -128,13 +135,14 @@ function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Array<Re
 }
 
 type DirectoryChartProps = { range: ExchangeResearchRange; country: string | null } & (
-	| { chart: ExchangeOverviewChartModel; status?: never }
-	| { chart: null; status: 'loading' | 'error' }
+	| { chart: ExchangeOverviewChartModel; failedRead?: never }
+	// The read that failed, for the chart's Try again; null while the chart loads.
+	| { chart: null; failedRead: QueryRetry | null }
 )
 
 // Liquidity and Volume are daily histories; Order book is the current book by
 // distance from mid. The captions below carry that difference so the labels stay short.
-export function DirectoryChart({ chart, range, status, country }: DirectoryChartProps) {
+export function DirectoryChart({ chart, range, failedRead, country }: DirectoryChartProps) {
 	const router = useRouter()
 	const tab = getDirectoryOverviewTab(router.query)
 	const ignoredFilters = getDirectoryChartIgnoredFilters(router.query, country)
@@ -216,14 +224,13 @@ export function DirectoryChart({ chart, range, status, country }: DirectoryChart
 						/>
 					</ChartPanelBody>
 				</React.Suspense>
+			) : failedRead ? (
+				<ChartPanelBodyError retry={failedRead} style={CHART_BODY_HEIGHT}>
+					Failed to load the exchange overview.
+				</ChartPanelBodyError>
 			) : (
-				<ChartPanelBodyFallback
-					style={CHART_BODY_HEIGHT}
-					role={status === 'error' ? 'alert' : 'status'}
-					aria-live={status === 'error' ? undefined : 'polite'}
-					className={status === 'error' ? 'body-sm text-error' : undefined}
-				>
-					{status === 'error' ? 'Failed to load the exchange overview.' : <LoadingIndicator />}
+				<ChartPanelBodyFallback style={CHART_BODY_HEIGHT} role="status" aria-live="polite">
+					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			)}
 			{/* The blurb and the last-updated stamp were dropped to keep the table above the fold. */}

@@ -2,7 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getAnchorRect } from '~/containers/LlamaAI/utils/entitySuggestions'
-import { popoverHovercardSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -39,10 +40,9 @@ export function EntityComboboxPopover({
 	if (!shouldShow) return null
 
 	return (
-		<Ariakit.ComboboxPopover
+		<ComboboxSurface
+			variant="search-results"
 			store={combobox}
-			unmountOnHide
-			portal
 			flip
 			fitViewport
 			getAnchorRect={() => {
@@ -50,7 +50,7 @@ export function EntityComboboxPopover({
 				if (!textarea) return null
 				return getAnchorRect(textarea)
 			}}
-			className={`${popoverHovercardSurfaceStyles} relative flex max-w-[280px] min-w-[100px] flex-col`}
+			className="max-w-[280px]"
 		>
 			{hasMatches && matches ? (
 				matches.map(({ id, name, logo, type }) => (
@@ -76,7 +76,7 @@ export function EntityComboboxPopover({
 					<LoadingIndicator />
 				</div>
 			)}
-		</Ariakit.ComboboxPopover>
+		</ComboboxSurface>
 	)
 }
 

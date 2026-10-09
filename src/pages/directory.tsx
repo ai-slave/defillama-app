@@ -194,7 +194,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Ariakit.Combobox
 							aria-label="Search protocols"
-							placeholder="Search protocols..."
+							placeholder="Search protocols…"
 							autoSelect
 							render={<Input className={searchFieldInputPlacementStyles} />}
 						/>

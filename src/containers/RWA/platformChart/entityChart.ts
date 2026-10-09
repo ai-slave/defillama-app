@@ -1,4 +1,5 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { QueryRetry } from '~/utils/query'
 import type { RWAFlowGrouping } from '../flows'
 
 /* The metric list of an entity chart (a platform or a venue as one series per metric), read from and written to the
@@ -29,7 +30,8 @@ export type RWAEntityChart = {
 export type RWAEntityChartData = {
 	chart: RWAEntityChart & { period: RWAFlowGrouping }
 	isLoading: boolean
-	error: string | null
+	/** The reads that failed, for the chart's Try again; null when none failed. */
+	failedRead: QueryRetry | null
 }
 
 export const RWA_ENTITY_CHART_METRICS_QUERY_KEY = 'metrics'

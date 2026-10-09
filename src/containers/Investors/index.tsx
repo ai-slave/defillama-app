@@ -6,6 +6,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
+import { PanelStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { getInvestorsProjects, type InvestorsSite } from './config'
@@ -15,7 +16,6 @@ import { CustomOnlyContent, InvestorsContent, TabLabel } from './DashboardTabsCo
 import { Logo } from './Logo'
 import { scrollToPageTop } from './scrollToPageTop'
 import { useInvestorsSite } from './SiteContext'
-import { TabStatus } from './TabStatus'
 
 type ShellProject = {
 	name: string
@@ -262,7 +262,7 @@ function InvestorsShell({
 								<HeaderComponent />
 							</Suspense>
 						)}
-						<TabPanel value={resolvedTab} className="flex flex-col gap-4">
+						<TabPanel value={resolvedTab} className="flex flex-1 flex-col gap-4">
 							{activeProjectConfig?.customOnly ? (
 								<CustomOnlyContent
 									tabs={tabs}
@@ -272,7 +272,7 @@ function InvestorsShell({
 									hideDuplicateButton
 								/>
 							) : activeModule?.isError ? (
-								<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
+								<PanelStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</PanelStatus>
 							) : activeModule?.isLoading ? null : (
 								<InvestorsContent
 									tabs={tabs}

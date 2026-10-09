@@ -202,7 +202,8 @@ export function ProjectsGrid() {
 					<Button
 						type="button"
 						size="md"
-						pendingLabel={projectList.isFetching ? 'Retrying…' : null}
+						pendingLabel="Retrying…"
+						pending={projectList.isFetching}
 						onClick={() => void projectList.refetch()}
 					>
 						Retry

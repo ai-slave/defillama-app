@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { Card } from '~/ui/Card'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useNetworkStatsData } from './networkStatsApi'
 
 interface BurnBlock {
@@ -171,11 +172,17 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 }
 
 export default function NetworkStats() {
-	const { data, isLoading } = useNetworkStatsData()
+	const { query, data } = useNetworkStatsData()
 	const stream = useBurnStream()
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load Sonic network stats.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Sonic network stats.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	const burnWindows = stream.burnWindows
 	const liveBlock = stream.blockNumber || data.network.blockNumber?.value

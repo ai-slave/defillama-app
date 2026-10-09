@@ -96,7 +96,7 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 						</Field>
 					</DialogBody>
 					<DialogFooter dismiss={<DialogCancelButton />}>
-						<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
+						<Button type="submit" variant="primary" size="md" pendingLabel="Sending…" pending={pending}>
 							Confirm email
 						</Button>
 					</DialogFooter>

@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
-import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { Select } from '~/components/Select/Select'
@@ -48,6 +48,8 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
+import { popoverRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
@@ -230,16 +232,8 @@ export function ColumnManager({
 
 	const { name: customName, expression: customExpression, format: customFormat, id: editingId } = draft
 
-	const [autocompleteState, setAutocompleteState] = useState<{
-		showAutocomplete: boolean
-		autocompleteIndex: number
-		autocompleteFilter: string
-	}>({
-		showAutocomplete: false,
-		autocompleteIndex: -1,
-		autocompleteFilter: ''
-	})
-	const { showAutocomplete, autocompleteIndex, autocompleteFilter } = autocompleteState
+	const [autocompleteState, setAutocompleteState] = useState({ showAutocomplete: false, autocompleteFilter: '' })
+	const { showAutocomplete, autocompleteFilter } = autocompleteState
 
 	const setSearch = (value: string) => {
 		setUIState((prev) => ({ ...prev, search: value }))
@@ -261,13 +255,6 @@ export function ColumnManager({
 
 	const setShowAutocomplete = (value: boolean) => {
 		setAutocompleteState((prev) => ({ ...prev, showAutocomplete: value }))
-	}
-
-	const setAutocompleteIndex = (value: number | ((prev: number) => number)) => {
-		setAutocompleteState((prev) => ({
-			...prev,
-			autocompleteIndex: typeof value === 'function' ? value(prev.autocompleteIndex) : value
-		}))
 	}
 
 	const setAutocompleteFilter = (value: string) => {
@@ -424,7 +411,7 @@ export function ColumnManager({
 		draft.aggregation ??
 		(customExpression && expressionValidation.isValid ? getDefaultAggregation(customExpression) : 'recalculate')
 
-	const insertSuggestion = (suggestion: AutocompleteSuggestion) => {
+	const insertSuggestion = (suggestion: string) => {
 		if (!expressionInputRef.current) return
 		const input = expressionInputRef.current
 		const start = input.selectionStart ?? 0
@@ -438,17 +425,16 @@ export function ColumnManager({
 			wordStart -= 1
 		}
 
-		const newValue = value.slice(0, wordStart) + suggestion.value + value.slice(end)
+		const newValue = value.slice(0, wordStart) + suggestion + value.slice(end)
 		setCustomExpression(newValue)
 
 		setTimeout(() => {
-			const newPosition = wordStart + suggestion.value.length
+			const newPosition = wordStart + suggestion.length
 			input.setSelectionRange(newPosition, newPosition)
 			input.focus()
 		}, 0)
 
 		setShowAutocomplete(false)
-		setAutocompleteIndex(-1)
 		setAutocompleteFilter('')
 	}
 
@@ -468,47 +454,44 @@ export function ColumnManager({
 		if (currentWord.length > 0) {
 			setAutocompleteFilter(currentWord)
 			setShowAutocomplete(true)
-			setAutocompleteIndex(-1)
 		} else {
 			setShowAutocomplete(false)
 			setAutocompleteFilter('')
 		}
 	}
 
+	// The combobox moves the highlighted suggestion with the arrows and inserts it on Enter; Tab inserts it too.
+	const autocompleteOpen = showAutocomplete && filteredSuggestions.length > 0
+	const autocomplete = Ariakit.useComboboxStore({
+		inputValue: customExpression,
+		open: autocompleteOpen,
+		setOpen(open) {
+			if (!open) setShowAutocomplete(false)
+		}
+	})
+
 	const handleExpressionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (!showAutocomplete || filteredSuggestions.length === 0) {
+		if (!autocompleteOpen) {
 			if (e.ctrlKey && e.code === 'Space') {
 				e.preventDefault()
 				setShowAutocomplete(true)
 				setAutocompleteFilter('')
-				setAutocompleteIndex(-1)
 			}
 			return
 		}
 		switch (e.key) {
-			case 'ArrowDown':
+			case 'Tab': {
+				const highlighted = autocomplete.item(autocomplete.getState().activeId)?.value
+				if (!highlighted) break
 				e.preventDefault()
-				setAutocompleteIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : 0))
+				insertSuggestion(highlighted)
 				break
-			case 'ArrowUp':
-				e.preventDefault()
-				setAutocompleteIndex((prev) => (prev > 0 ? prev - 1 : filteredSuggestions.length - 1))
-				break
-			case 'Enter':
-			case 'Tab':
-				if (autocompleteIndex >= 0) {
-					const suggestion = filteredSuggestions[autocompleteIndex]
-					if (!suggestion) break
-					e.preventDefault()
-					insertSuggestion(suggestion)
-				}
-				break
+			}
 			case 'Escape':
 				e.preventDefault()
 				// Dismiss the suggestions only; the enclosing Ariakit dialog stays open.
 				e.stopPropagation()
 				setShowAutocomplete(false)
-				setAutocompleteIndex(-1)
 				break
 		}
 	}
@@ -566,12 +549,6 @@ export function ColumnManager({
 		setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
 		setCustomColumnSubmitted(false)
 	}
-
-	useEffect(() => {
-		const handleClickOutside = () => setAutocompleteState((prev) => ({ ...prev, showAutocomplete: false }))
-		document.addEventListener('click', handleClickOutside)
-		return () => document.removeEventListener('click', handleClickOutside)
-	}, [])
 
 	const activeColumn = activeId ? getColumnMeta(String(activeId), customColumns) : null
 
@@ -786,40 +763,40 @@ export function ColumnManager({
 
 						<Field label="Expression" live error={shownExpressionError}>
 							{(control) => (
-								<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
-									<Input
-										{...control}
-										ref={expressionInputRef}
-										type="text"
-										required
-										value={customExpression}
-										onChange={handleExpressionChange}
-										onKeyDown={handleExpressionKeyDown}
-										onFocus={() => customExpression && setShowAutocomplete(true)}
-										placeholder="e.g., tvl / mcap, fees24h * 365"
-										variant="code"
-										className="w-full pr-8"
-									/>
-									{customExpression ? (
-										<div className="absolute top-1/2 right-2 -translate-y-1/2">
-											{expressionValidation.isValid ? (
-												<Icon name="check" height={12} width={12} className="text-success" />
-											) : (
-												<Icon name="x" height={12} width={12} className="text-error" />
-											)}
-										</div>
-									) : null}
-									{showAutocomplete && filteredSuggestions.length > 0 ? (
-										<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-overlay">
-											{filteredSuggestions.map((suggestion, index) => (
-												<button
+								<div className="relative">
+									<Ariakit.ComboboxProvider store={autocomplete}>
+										<Ariakit.Combobox
+											{...control}
+											ref={expressionInputRef}
+											type="text"
+											required
+											onChange={handleExpressionChange}
+											onKeyDown={handleExpressionKeyDown}
+											onFocus={() => customExpression && setShowAutocomplete(true)}
+											placeholder="e.g., tvl / mcap, fees24h * 365"
+											render={<Input variant="code" className="w-full pr-8" />}
+										/>
+										{customExpression ? (
+											<div className="absolute top-1/2 right-2 -translate-y-1/2">
+												{expressionValidation.isValid ? (
+													<Icon name="check" height={12} width={12} className="text-success" />
+												) : (
+													<Icon name="x" height={12} width={12} className="text-error" />
+												)}
+											</div>
+										) : null}
+										<ComboboxSurface
+											variant="search-results"
+											sameWidth
+											className="max-h-[min(160px,var(--popover-available-height))]"
+										>
+											{filteredSuggestions.map((suggestion) => (
+												<Ariakit.ComboboxItem
 													key={`${suggestion.type}-${suggestion.value}`}
-													type="button"
-													onClick={() => insertSuggestion(suggestion)}
-													onMouseEnter={() => setAutocompleteIndex(index)}
-													className={`flex cursor-pointer items-center gap-2 px-2 py-1 label-sm ${
-														index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-primary'
-													}`}
+													value={suggestion.value}
+													setValueOnClick={false}
+													onClick={() => insertSuggestion(suggestion.value)}
+													className={popoverRowStyles}
 												>
 													<span
 														className={`size-1.5 shrink-0 rounded-full ${
@@ -832,10 +809,10 @@ export function ColumnManager({
 													/>
 													<code className="shrink-0">{suggestion.display}</code>
 													<span className="ml-auto truncate text-tertiary">{suggestion.description}</span>
-												</button>
+												</Ariakit.ComboboxItem>
 											))}
-										</div>
-									) : null}
+										</ComboboxSurface>
+									</Ariakit.ComboboxProvider>
 								</div>
 							)}
 						</Field>

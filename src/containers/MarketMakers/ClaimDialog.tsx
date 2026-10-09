@@ -336,7 +336,8 @@ function ClaimForm({
 							disabled={awaitingCheck}
 							accessibleWhenDisabled
 							aria-describedby={awaitingCheck ? awaitingCheckId : undefined}
-							pendingLabel={submit.isPending ? 'Submitting…' : null}
+							pendingLabel="Submitting…"
+							pending={submit.isPending}
 						>
 							Submit claim request
 						</Button>

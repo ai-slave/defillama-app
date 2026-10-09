@@ -569,7 +569,8 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						<Button
 							variant="primary"
 							size="md"
-							pendingLabel={updateProfileMutation.isPending ? 'Saving…' : null}
+							pendingLabel="Saving…"
+							pending={updateProfileMutation.isPending}
 							type="submit"
 							disabled={!dirty}
 							accessibleWhenDisabled

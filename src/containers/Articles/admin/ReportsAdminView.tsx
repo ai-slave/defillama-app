@@ -136,7 +136,8 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 						size="sm"
 						disabled={!dirty || isMutating}
 						accessibleWhenDisabled
-						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={saveMutation.isPending}
 						onClick={() => saveMutation.mutate(state)}
 					>
 						Save
@@ -147,7 +148,8 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 							size="sm"
 							disabled={isMutating || (!dirty && !hasPending)}
 							accessibleWhenDisabled
-							pendingLabel={publishMutation.isPending ? 'Publishing…' : null}
+							pendingLabel="Publishing…"
+							pending={publishMutation.isPending}
 							onClick={() => publishMutation.mutate({ submitted: state, save: dirty })}
 						>
 							Save &amp; publish

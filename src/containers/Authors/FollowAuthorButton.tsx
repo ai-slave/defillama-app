@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { followAuthor } from './api'
 import type { AuthorPageResponse } from './types'
@@ -47,7 +47,9 @@ export function FollowAuthorButton({
 		<Button
 			variant={isFollowing ? 'secondary' : 'primary'}
 			size="md"
-			pendingLabel={mutation.isPending ? (isFollowing ? 'Unfollowing…' : 'Following…') : null}
+			// One busy label for both directions, so the button keeps its width after the toggle settles.
+			pendingLabel="Updating…"
+			pending={mutation.isPending}
 			onClick={() => {
 				if (!isAuthenticated) {
 					toast.error('Please sign in to follow authors')
@@ -57,7 +59,7 @@ export function FollowAuthorButton({
 			}}
 		>
 			<Icon name={isFollowing ? 'check' : 'plus'} className="size-3.5" />
-			{isFollowing ? 'Following' : 'Follow'}
+			<StableLabel labels={['Follow', 'Following']} current={isFollowing ? 'Following' : 'Follow'} />
 		</Button>
 	)
 }

@@ -27,7 +27,7 @@ import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -518,7 +518,7 @@ function SidebarPanel({
 									className="-mr-2 disabled:invisible"
 								>
 									<Icon name={selectMode ? 'x' : 'check'} height={14} width={14} />
-									{selectMode ? 'Cancel' : 'Select'}
+									<StableLabel labels={['Select', 'Cancel']} current={selectMode ? 'Cancel' : 'Select'} />
 								</Button>
 							) : null}
 						</div>

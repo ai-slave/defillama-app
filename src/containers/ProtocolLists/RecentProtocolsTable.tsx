@@ -105,7 +105,7 @@ export function RecentlyListedProtocolsTable({
 					<Input
 						value={nameSearch}
 						onChange={(e) => void pushShallowQuery(router, { search: e.currentTarget.value })}
-						placeholder="Search protocols..."
+						placeholder="Search protocols…"
 						className={searchFieldInputPlacementStyles}
 					/>
 				</label>

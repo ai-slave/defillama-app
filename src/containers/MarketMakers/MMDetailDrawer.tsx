@@ -272,7 +272,8 @@ function DrawerBody({
 					type="button"
 					size="sm"
 					onClick={retry}
-					pendingLabel={failedQueries.some((query) => query.isFetching) ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={failedQueries.some((query) => query.isFetching)}
 				>
 					Try again
 				</Button>

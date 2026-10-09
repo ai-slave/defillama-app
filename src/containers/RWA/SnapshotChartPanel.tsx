@@ -5,8 +5,9 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
+import type { QueryRetry } from '~/utils/query'
 import { limitRwaHorizontalBarData, type RwaNamedValue } from './chartDataset'
 import { RWA_MAX_CHART_SERIES } from './chartFold'
 import type { RWAChartView } from './chartState'
@@ -39,7 +40,8 @@ type RWASnapshotChartPanelProps = {
 	exportTitle: string
 	filename: string
 	isLoading: boolean
-	error: string | null
+	/** The read that failed, for the chart's Try again; null when the slices loaded or need no read. */
+	failedRead: QueryRetry | null
 	/** The metric switch, the view select and any period control, shared with the time series panel. */
 	toolbarStart: ReactNode
 	/** Controls only the treemap view offers, such as Nested by. */
@@ -64,7 +66,7 @@ export function RWASnapshotChartPanel({
 	exportTitle,
 	filename,
 	isLoading,
-	error,
+	failedRead,
 	toolbarStart,
 	treemapControls,
 	treemapLimit,
@@ -125,16 +127,14 @@ export function RWASnapshotChartPanel({
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
 			</ChartPanelToolbar>
-			{error ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-					{error}
-				</ChartPanelBodyFallback>
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
 			) : isLoading ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			) : deferredSlices.length === 0 ? (
-				<ChartPanelBodyFallback className="body-sm text-secondary">No data for this view.</ChartPanelBodyFallback>
+				<ChartPanelBodyFallback className="body-sm text-tertiary">No data for this view.</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={view === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}>
 					{view === 'pie' ? (

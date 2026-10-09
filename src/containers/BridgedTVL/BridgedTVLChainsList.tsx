@@ -54,7 +54,7 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 			<SearchTableProvider options={{ data, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
 					<TableToolbar>
-						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableSearchInput columnId="name" placeholder="Search chains…" />
 						<TableCsvExport filename="bridged-chains" />
 					</TableToolbar>
 					<VirtualSearchTableView />

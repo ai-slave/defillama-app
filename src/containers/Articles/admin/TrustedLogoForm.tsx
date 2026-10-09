@@ -105,7 +105,8 @@ export function TrustedLogoForm({ logoId }: Props) {
 				<Button
 					size="sm"
 					onClick={() => void logosQuery.refetch()}
-					pendingLabel={logosQuery.isFetching ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={logosQuery.isFetching}
 				>
 					Try again
 				</Button>
@@ -196,7 +197,8 @@ export function TrustedLogoForm({ logoId }: Props) {
 					<Button
 						variant="primary"
 						size="md"
-						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={saveMutation.isPending}
 						type="submit"
 						disabled={!dirty && !!logo}
 						accessibleWhenDisabled

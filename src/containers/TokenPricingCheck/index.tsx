@@ -176,11 +176,11 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 											setChain(values[0] ?? '')
 											resetResult()
 										}}
-										label={selectedChain?.name ?? (chainsQuery.isPending ? 'Loading chains...' : 'Select a chain')}
+										label={selectedChain?.name ?? (chainsQuery.isPending ? 'Loading chains…' : 'Select a chain')}
 										variant="input"
 										size="md"
 										singleSelect
-										searchPlaceholder="Search chains..."
+										searchPlaceholder="Search chains…"
 										popoverClassName="sm:w-(--popover-anchor-width) sm:min-w-0"
 										className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
 										triggerProps={{
@@ -232,9 +232,9 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 							size="md"
 							variant="primary"
 							// The chain list gates the form: the submit waits while it loads, and stays off beside the failure and its Retry.
-							pendingLabel={
-								result.status === 'loading' ? 'Checking…' : chainsQuery.isPending ? 'Loading chains…' : null
-							}
+							// Two short labels of near-equal width, so the button barely moves when the chain list arrives.
+							pendingLabel={chainsQuery.isPending ? 'Loading…' : 'Checking…'}
+							pending={result.status === 'loading' || chainsQuery.isPending}
 							disabled={chainsQuery.isError}
 							className="w-full md:col-start-3 md:row-start-2 md:w-auto"
 						>
@@ -253,7 +253,8 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 								<Button
 									type="button"
 									size="sm"
-									pendingLabel={chainsQuery.isFetching ? 'Retrying…' : null}
+									pendingLabel="Retrying…"
+									pending={chainsQuery.isFetching}
 									onClick={() => void chainsQuery.refetch()}
 								>
 									Try again

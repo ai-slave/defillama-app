@@ -300,7 +300,8 @@ function MyArticlesContent() {
 							ref={focusRegionOnLeave}
 							size="sm"
 							onClick={() => void refetch()}
-							pendingLabel={isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={isFetching}
 						>
 							Try again
 						</Button>

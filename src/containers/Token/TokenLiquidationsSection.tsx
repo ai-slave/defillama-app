@@ -205,7 +205,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 											columns: protocolColumns,
 											initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
 										}}
-										placeholder="Search protocols..."
+										placeholder="Search protocols…"
 										csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
 									/>
 								) : (
@@ -215,7 +215,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 											columns: chainColumns,
 											initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
 										}}
-										placeholder="Search chains..."
+										placeholder="Search chains…"
 										csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
 									/>
 								)}

@@ -167,7 +167,7 @@ function DeleteAccountOverview({
 				{cancel}
 				{check.kind === 'checking' ? (
 					// The eligibility check only gates Continue, so it waits in that button instead of replacing the dialog.
-					<Button type="button" variant="destructive" size="md" pendingLabel="Checking…">
+					<Button type="button" variant="destructive" size="md" pendingLabel="Checking…" pending>
 						Continue
 					</Button>
 				) : check.kind === 'failed' ? (
@@ -176,7 +176,8 @@ function DeleteAccountOverview({
 						variant="primary"
 						size="md"
 						onClick={check.onRetry}
-						pendingLabel={check.retrying ? 'Checking…' : null}
+						pendingLabel="Checking…"
+						pending={check.retrying}
 					>
 						Try again
 					</Button>
@@ -186,7 +187,8 @@ function DeleteAccountOverview({
 						variant="destructive"
 						size="md"
 						onClick={onContinue}
-						pendingLabel={isRequesting ? (confirmationType === 'otp' ? 'Sending code…' : 'Preparing…') : null}
+						pendingLabel={confirmationType === 'otp' ? 'Sending code…' : 'Preparing…'}
+						pending={isRequesting}
 					>
 						Continue
 					</Button>
@@ -296,7 +298,8 @@ function DeleteAccountConfirmationForm({
 					// Typing the phrase unlocks it, as its label says: friction on a destructive action, not validation. A resend
 					// in flight shows its own "Sending code…".
 					disabled={confirmation !== requiredConfirmation.text || isRequesting}
-					pendingLabel={isDeleting ? 'Deleting account…' : null}
+					pendingLabel="Deleting account…"
+					pending={isDeleting}
 				>
 					Delete account permanently
 				</Button>

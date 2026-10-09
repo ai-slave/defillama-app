@@ -11,7 +11,7 @@ const EMPTY_POINTS: Array<[number, number]> = []
  * way the platform chart reads its own, so a day without a value is unknown, not zero. Loaded only when enabled.
  */
 export function useRwaPerpsTotal(scope: RwaPerpsChartScope, metric: RWAPerpsChartMetric, enabled: boolean) {
-	const { chartDataset, isChartLoading, chartError } = useRwaPerpsChartDataset({
+	const { chartDataset, isChartLoading, failedRead } = useRwaPerpsChartDataset({
 		source: { kind: 'split', breakdown: 'assetClass' },
 		metric,
 		// A venue scope always counts CEX markets: the route rejects a CEX venue without the flag.
@@ -28,5 +28,5 @@ export function useRwaPerpsTotal(scope: RwaPerpsChartScope, metric: RWAPerpsChar
 		}
 		return out
 	}, [chartDataset, enabled, metric])
-	return { points, isLoading: isChartLoading, error: chartError }
+	return { points, isLoading: isChartLoading, failedRead }
 }

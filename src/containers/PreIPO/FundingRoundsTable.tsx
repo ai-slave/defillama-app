@@ -69,11 +69,7 @@ export function FundingRoundsTable({ companyName, raises }: { companyName: strin
 			<Card padding="none">
 				<TableToolbar>
 					<h2 className="mr-auto label-md">Funding Rounds</h2>
-					<TableSearchInput
-						columnId="series"
-						placeholder="Search rounds..."
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="series" placeholder="Search rounds…" className={searchFieldInlineWrapperStyles} />
 					<TableCsvExport filename={`${companyName}-funding-rounds`} />
 				</TableToolbar>
 				<SearchTableView />

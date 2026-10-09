@@ -55,7 +55,7 @@ function LoadError({ message, retrying, onRetry }: { message: string; retrying: 
 		<InlineStatus
 			variant="error"
 			action={
-				<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
+				<Button type="button" size="sm" onClick={onRetry} pendingLabel="Retrying…" pending={retrying}>
 					Try again
 				</Button>
 			}
@@ -392,7 +392,8 @@ function GitHubConnectForm({
 								size="md"
 								variant="ghost"
 								disabled={connect.isPending}
-								pendingLabel={install.isPending ? 'Opening GitHub…' : null}
+								pendingLabel="Opening GitHub…"
+								pending={install.isPending}
 								onClick={onStartInstall}
 							>
 								Manage installations
@@ -407,7 +408,8 @@ function GitHubConnectForm({
 							size="md"
 							variant="primary"
 							disabled={install.isPending}
-							pendingLabel={connect.isPending ? 'Connecting…' : null}
+							pendingLabel="Connecting…"
+							pending={connect.isPending}
 						>
 							Connect
 						</Button>
@@ -417,7 +419,8 @@ function GitHubConnectForm({
 							type="button"
 							size="md"
 							variant="primary"
-							pendingLabel={install.isPending ? 'Opening GitHub…' : null}
+							pendingLabel="Opening GitHub…"
+							pending={install.isPending}
 							onClick={onStartInstall}
 						>
 							<Icon name="github" height={14} width={14} />

@@ -22,7 +22,7 @@ Choose the renderer independently of how rows are fetched or paginated. Import e
 <SearchTableProvider options={{ data, columns, initialState: { sorting } }}>
 	<Card padding="none">
 		<TableToolbar>
-			<TableSearchInput columnId="name" placeholder="Search projects..." />
+			<TableSearchInput columnId="name" placeholder="Search projects…" />
 			<TableCsvExport filename="projects" />
 		</TableToolbar>
 		<VirtualSearchTableView />

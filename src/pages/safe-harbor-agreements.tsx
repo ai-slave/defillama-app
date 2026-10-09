@@ -104,7 +104,7 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"
-							placeholder="Search protocols..."
+							placeholder="Search protocols…"
 							className={searchFieldInlineWrapperStyles}
 						/>
 						<TableCsvExport filename="safe-harbor-agreements" />

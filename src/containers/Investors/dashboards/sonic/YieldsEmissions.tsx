@@ -4,9 +4,10 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { TabStatus } from '~/containers/Investors/TabStatus'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
@@ -69,7 +70,7 @@ const columns = columnHelper.columns([
 ])
 
 export default function YieldsEmissions() {
-	const { data, isLoading } = useYieldsEmissionsData()
+	const { query, data } = useYieldsEmissionsData()
 
 	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
@@ -81,8 +82,14 @@ export default function YieldsEmissions() {
 		}
 	})
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load Sonic yields and emissions.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Sonic yields and emissions.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

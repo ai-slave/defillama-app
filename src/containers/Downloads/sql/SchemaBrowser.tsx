@@ -546,7 +546,6 @@ function ColumnChips({
 	columns: Array<{ name: string; type?: string }>
 	onInsertColumn: ((name: string) => void) | null
 }) {
-	const chip = 'inline-flex min-h-6 items-center gap-1 rounded-md border border-medium px-1.5 mono-sm text-primary'
 	return (
 		<ul
 			aria-label={onInsertColumn ? 'Columns, select one to insert it in the editor' : 'Columns'}
@@ -556,21 +555,19 @@ function ColumnChips({
 				const content = (
 					<>
 						{c.type ? <TypeBadge kind={inferFineKindFromArrowType(c.type)} /> : null}
-						{c.name}
+						<span className="font-mono">{c.name}</span>
 					</>
 				)
 				return (
 					<li key={c.name}>
 						{onInsertColumn ? (
-							<button
-								type="button"
-								onClick={() => onInsertColumn(c.name)}
-								className={`touch-target hover-wash hover:border-brand ${chip}`}
-							>
+							<Button size="sm" onClick={() => onInsertColumn(c.name)}>
 								{content}
-							</button>
+							</Button>
 						) : (
-							<span className={chip}>{content}</span>
+							<span className="inline-flex min-h-6 items-center gap-1 rounded-md border border-medium px-1.5 mono-sm text-primary">
+								{content}
+							</span>
 						)}
 					</li>
 				)
@@ -607,7 +604,8 @@ function RowActions({
 				disabled={!isLoading && (!canLoad || alreadyLoaded)}
 				// Load turns into a disabled Loaded once its table lands, so it keeps focus.
 				accessibleWhenDisabled
-				pendingLabel={isLoading ? 'Loading…' : null}
+				pendingLabel="Loading…"
+				pending={isLoading}
 			>
 				{alreadyLoaded ? 'Loaded' : 'Load'}
 			</Button>

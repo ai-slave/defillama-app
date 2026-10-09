@@ -160,7 +160,8 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				description={`Stripe charges your saved card now: up to ${formatUsd(yearlyUnit * subscription.seats.seatCount)} for ${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'} at ${formatUsd(yearlyUnit)}/year, less credit for the unused part of this month. The plan then renews yearly from today.`}
 				confirmLabel="Upgrade to yearly"
 				confirmDisabled={!upgradeSeatsMutation.isPending && billingLockReason !== null}
-				pendingLabel={upgradeSeatsMutation.isPending ? 'Upgrading…' : null}
+				pendingLabel="Upgrading…"
+				pending={upgradeSeatsMutation.isPending}
 				waitingLabel={billingWait}
 				// A lock blocks the confirm button, so it shows where a failure would.
 				error={
@@ -257,7 +258,8 @@ export function TeamSeatsCard() {
 							type="button"
 							size="md"
 							onClick={() => void createPortalSession()}
-							pendingLabel={createPortalSessionMutation.isPending ? 'Opening…' : null}
+							pendingLabel="Opening…"
+							pending={createPortalSessionMutation.isPending}
 						>
 							<Icon name="external-link" height={14} width={14} />
 							Manage in Stripe

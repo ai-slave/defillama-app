@@ -337,7 +337,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 	}, [sectionCounts])
 
 	if (isLoading) {
-		return <AuthorPageState title="Loading..." />
+		return <AuthorPageState title="Loading…" />
 	}
 
 	if (!data && !error) {

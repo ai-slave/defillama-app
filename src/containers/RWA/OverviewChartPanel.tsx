@@ -5,10 +5,11 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { mergeFailedReads } from '~/utils/query'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from './api.types'
 import { getRwaChartTotalLabel } from './chartAggregation'
@@ -145,7 +146,7 @@ export function RWAOverviewChartPanel({
 		splitPoints: flowSplitPoints,
 		assetRows: flowAssetRows,
 		isLoading: isFlowLoading,
-		error: flowError
+		failedRead: flowFailedRead
 	} = useRWAFlowSeries({
 		scope: flowScope,
 		...(flowSplitBy ? { splitBy: flowSplitBy } : {}),
@@ -184,7 +185,7 @@ export function RWAOverviewChartPanel({
 	const {
 		chartDataset: assetChartDataset,
 		isChartLoading: isAssetChartLoading,
-		chartError: assetChartError
+		failedRead: assetChartFailedRead
 	} = useRwaChartDataset({
 		selectedMetric: chartTypeKey,
 		initialDataset: getInitialMetricDataset(chartTypeKey),
@@ -200,7 +201,7 @@ export function RWAOverviewChartPanel({
 	const {
 		chartDataset: chainChartDataset,
 		isChartLoading: isChainChartLoading,
-		chartError: chainChartError
+		failedRead: chainChartFailedRead
 	} = useRwaChainChartDataset({
 		metric: chartTypeKey,
 		assets: aggregateAssets,
@@ -216,12 +217,12 @@ export function RWAOverviewChartPanel({
 			: chainChartDataset
 		: assetChartDataset
 	const isChartLoading = isAssetChartLoading || isChainChartLoading
-	const chartError = assetChartError ?? chainChartError
+	const chartFailedRead = mergeFailedReads([assetChartFailedRead, chainChartFailedRead])
 	const {
 		chartDataset: flowOnChainMcapDataset,
 		assetRows: flowOnChainMcapAssetRows,
 		isChartLoading: isFlowMcapLoading,
-		chartError: flowMcapError
+		failedRead: flowMcapFailedRead
 	} = useRwaChartDataset({
 		selectedMetric: 'onChainMcap',
 		initialDataset: getInitialMetricDataset('onChainMcap'),
@@ -234,6 +235,8 @@ export function RWAOverviewChartPanel({
 			isFlowMetric && !isGroupedFlowChart && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
 		useInitialDataset: getInitialMetricDataset('onChainMcap') != null && !activeFilters && !isFlowVsPrice
 	})
+	// Only Flow vs Price cannot draw without the on-chain mcap, so only there does its failure fail the chart.
+	const flowChartFailedRead = mergeFailedReads([flowFailedRead, isFlowVsPrice ? flowMcapFailedRead : null])
 	const { chartDataset: flowActiveMcapDataset } = useRwaChartDataset({
 		selectedMetric: 'activeMcap',
 		initialDataset: getInitialMetricDataset('activeMcap'),
@@ -523,17 +526,11 @@ export function RWAOverviewChartPanel({
 						/>
 					) : null}
 					{isFlowMetric ? (
-						isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
+						flowChartFailedRead ? (
+							<ChartPanelBodyError retry={flowChartFailedRead}>Failed to load flow data.</ChartPanelBodyError>
+						) : isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
 							<ChartPanelBodyFallback role="status" aria-live="polite">
 								<LoadingIndicator />
-							</ChartPanelBodyFallback>
-						) : flowError || (isFlowVsPrice && flowMcapError) ? (
-							<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-								{flowError instanceof Error
-									? flowError.message
-									: isFlowVsPrice && flowMcapError
-										? flowMcapError
-										: 'Failed to load flow data.'}
 							</ChartPanelBodyFallback>
 						) : groupedFlowChart ? (
 							<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -560,14 +557,10 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyFallback className="body-sm text-secondary">
-								No flow data available.
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyFallback className="body-sm text-tertiary">No flow data available.</ChartPanelBodyFallback>
 						)
-					) : chartError ? (
-						<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-							{chartError}
-						</ChartPanelBodyFallback>
+					) : chartFailedRead ? (
+						<ChartPanelBodyError retry={chartFailedRead}>Failed to load chart data.</ChartPanelBodyError>
 					) : isChartLoading ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite">
 							<LoadingIndicator />

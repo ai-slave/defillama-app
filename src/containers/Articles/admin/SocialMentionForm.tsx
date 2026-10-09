@@ -126,7 +126,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 				<Button
 					size="sm"
 					onClick={() => void mentionsQuery.refetch()}
-					pendingLabel={mentionsQuery.isFetching ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={mentionsQuery.isFetching}
 				>
 					Try again
 				</Button>
@@ -279,7 +280,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 					<Button
 						variant="primary"
 						size="md"
-						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={saveMutation.isPending}
 						type="submit"
 						disabled={!dirty && !!mention}
 						accessibleWhenDisabled

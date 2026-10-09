@@ -2,12 +2,13 @@ import { lazy, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { assignColors } from './api'
 import {
 	AREA_EXPORT,
@@ -584,10 +585,17 @@ function TreasurySection({ data }: { data: FinData }) {
 }
 
 export default function Financials() {
-	const { data, isLoading } = useFinancialsData()
+	const query = useFinancialsData()
+	const data = query.data
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load Spark financials.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Spark financials.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

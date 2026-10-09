@@ -146,7 +146,7 @@ export function BtcExecutionTable({ rows }: { rows: Array<BtcExecutionRowModel> 
 		<SearchTableProvider<BtcExecutionRowModel> options={{ data: rows, columns }}>
 			<Card padding="none">
 				<TableToolbar>
-					<TableSearchInput columnId="name" placeholder="Search exchanges..." />
+					<TableSearchInput columnId="name" placeholder="Search exchanges…" />
 					<TableCsvExport filename="btc-execution" />
 				</TableToolbar>
 				{/* Auto sizing needs every row mounted; this list is short. */}

@@ -10,11 +10,12 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
+import { LoadingIndicator } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -26,6 +27,7 @@ import {
 	PRICE_CHART_TIMEFRAMES,
 	type PriceChartTimeframe
 } from '~/utils/priceChartTimeframes'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EquitiesDimensionMetric, EquitiesDimensionPeriod, IEquitiesSummaryResponse } from './api.types'
 import {
@@ -400,8 +402,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 						</ChartPanelToolbar>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							{priceHistory.isPending ? (
-								<ChartPanelBodyFallback role="status" aria-label="Loading price history" />
+							{/* A failed refresh of a chart already drawn keeps the chart. */}
+							{queryReadFailed(priceHistory) && !activePriceHistoryChart ? (
+								<ChartPanelBodyError retry={priceHistory}>Failed to load price history.</ChartPanelBodyError>
+							) : priceHistory.isPending ? (
+								<ChartPanelBodyFallback role="status" aria-label="Loading price history">
+									<LoadingIndicator />
+								</ChartPanelBodyFallback>
 							) : activePriceHistoryChart ? (
 								<MultiSeriesChart
 									dataset={activePriceHistoryChart.dataset}
@@ -413,10 +420,8 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									onReady={handlePriceChartReady}
 								/>
 							) : (
-								<ChartPanelBodyFallback className="text-secondary" role="status">
-									{priceHistory.isError
-										? 'Failed to load price history.'
-										: 'No price history available for this timeframe.'}
+								<ChartPanelBodyFallback className="body-sm text-tertiary" role="status">
+									No price history available for this timeframe.
 								</ChartPanelBodyFallback>
 							)}
 						</Suspense>

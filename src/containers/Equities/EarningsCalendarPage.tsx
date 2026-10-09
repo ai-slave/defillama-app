@@ -9,6 +9,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -17,6 +18,7 @@ import { InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { isTrueQueryParam, pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { EquitiesPageHeader, StaleDataNotice } from './AggregateShared'
 import {
@@ -357,7 +359,8 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 	const [searchResult, setSearchResult] = useState<EarningsCalendarSearchResult | null>(null)
 
 	if (!query.data && !bootstrap) {
-		if (query.isPending) return <PanelLoadingStatus label="Loading earnings calendar" />
+		// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
+		if (query.isPending && !queryReadFailed(query)) return <PanelLoadingStatus label="Loading earnings calendar" />
 		return (
 			<PanelStatus variant="error">
 				<span className="flex flex-col items-center gap-3">
@@ -407,7 +410,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				description={`When ${formatNumber(summary.uniqueCompanyCount) ?? '0'} US companies report. Past dates come from SEC filings; upcoming dates are projections, never announced times.`}
 			/>
 			<StaleDataNotice stale={view.stale} updatedAt={view.updatedAt} />
-			{!query.data && query.isError ? (
+			{!query.data && queryReadFailed(query) ? (
 				<InlineStatus
 					variant="error"
 					action={<RetryButton size="sm" refetch={query.refetch} fetching={query.isFetching} />}
@@ -554,10 +557,13 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 function RetryButton({ size, refetch, fetching }: { size: 'sm' | 'md'; refetch: () => void; fetching: boolean }) {
 	return (
 		<Button
+			// The error leaves once the read succeeds; the region keeps focus.
+			ref={focusRegionOnLeave}
 			type="button"
 			variant="secondary"
 			size={size}
-			pendingLabel={fetching ? 'Retrying…' : null}
+			pendingLabel="Retrying…"
+			pending={fetching}
 			onClick={() => refetch()}
 		>
 			Try again

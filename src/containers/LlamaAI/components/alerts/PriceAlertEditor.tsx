@@ -74,7 +74,7 @@ export function PriceAlertEditor({
 				<Button type="button" size="md" disabled={isSaving} onClick={onCancel}>
 					Cancel
 				</Button>
-				<Button type="submit" variant="primary" size="md" pendingLabel={isSaving ? 'Saving…' : null}>
+				<Button type="submit" variant="primary" size="md" pendingLabel="Saving…" pending={isSaving}>
 					Save
 				</Button>
 			</div>

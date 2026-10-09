@@ -18,7 +18,7 @@ export function RetryNotice({
 			<InlineStatus
 				variant="error"
 				action={
-					<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
+					<Button type="button" size="sm" onClick={onRetry} pendingLabel="Retrying…" pending={retrying}>
 						Try again
 					</Button>
 				}

@@ -98,7 +98,7 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 						>
 							{isTrial ? 'Keep trial' : 'Keep subscription'}
 						</Ariakit.DialogDismiss>
-						<Button type="submit" variant="destructive" size="md" pendingLabel={isLoading ? 'Cancelling…' : null}>
+						<Button type="submit" variant="destructive" size="md" pendingLabel="Cancelling…" pending={isLoading}>
 							Confirm cancellation
 						</Button>
 					</DialogFooter>

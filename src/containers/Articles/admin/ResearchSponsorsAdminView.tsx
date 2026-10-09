@@ -20,7 +20,7 @@ import type {
 	ResearchSponsorPayload
 } from '~/containers/Articles/types'
 import { ARTICLE_CLIENT_RELATION_LABELS, ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
@@ -134,7 +134,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 							setEditing((value) => !value)
 						}}
 					>
-						{editing ? 'Cancel edit' : 'Change page'}
+						<StableLabel labels={['Change page', 'Cancel edit']} current={editing ? 'Cancel edit' : 'Change page'} />
 					</Button>
 					<Button size="sm" variant="destructive" type="button" onClick={() => setConfirmDelete(true)}>
 						Remove
@@ -213,7 +213,8 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								size="sm"
 								variant="ghost"
 								type="button"
-								pendingLabel={unlinkMutation.isPending && unlinkMutation.variables === report.id ? 'Unlinking…' : null}
+								pendingLabel="Unlinking…"
+								pending={unlinkMutation.isPending && unlinkMutation.variables === report.id}
 								onClick={() => unlinkMutation.mutate(report.id)}
 								ref={passUnlinkFocus}
 							>
@@ -290,7 +291,8 @@ export function ResearchSponsorsAdminView() {
 						variant="primary"
 						type="submit"
 						className="justify-self-start"
-						pendingLabel={createMutation.isPending ? 'Adding…' : null}
+						pendingLabel="Adding…"
+						pending={createMutation.isPending}
 					>
 						Add client
 					</Button>
@@ -307,7 +309,8 @@ export function ResearchSponsorsAdminView() {
 							ref={focusRegionOnLeave}
 							size="sm"
 							onClick={() => void refetch()}
-							pendingLabel={isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={isFetching}
 						>
 							Try again
 						</Button>
@@ -379,7 +382,8 @@ function SponsorPageEditor({
 				variant="primary"
 				type="submit"
 				className="justify-self-start"
-				pendingLabel={update.isPending ? 'Saving…' : null}
+				pendingLabel="Saving…"
+				pending={update.isPending}
 			>
 				Save page
 			</Button>

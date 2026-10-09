@@ -12,6 +12,7 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
 vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({ ChartPngExportButton: () => null }))
 
+import { pickOption } from '~/utils/testing/pickOption'
 import { ChartRenderer } from '../ChartRenderer'
 
 function revenueChart(id: string, datasetName?: string): ChartConfiguration {
@@ -99,25 +100,6 @@ async function clickButton(text: string) {
 	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 }
 
-async function pointerClick(element: HTMLElement) {
-	await act(async () => {
-		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
-		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
-		element.click()
-	})
-}
-
-/** Opens a Select and picks the option with this name. */
-async function pick(trigger: HTMLElement, name: string) {
-	await pointerClick(trigger)
-	const option = await waitForUi(() => {
-		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
-		expect(found).toBeDefined()
-		return found!
-	})
-	await pointerClick(option)
-}
-
 test('each tab draws its own persisted dataset', async () => {
 	await render(
 		<ChartRenderer
@@ -136,7 +118,7 @@ test('each tab draws its own persisted dataset', async () => {
 test('previewing an area series redraws only the preview, as a line', async () => {
 	await render(<ChartRenderer charts={[revenueChart('revenue')]} chartData={rows} onLocalStyleSave={() => undefined} />)
 	await clickButton('Edit chart style')
-	await pick(document.querySelector<HTMLElement>('[aria-label="Series 2 type"]')!, 'area')
+	await pickOption(document.querySelector<HTMLElement>('[aria-label="Series 2 type"]')!, 'area')
 
 	await settle(() =>
 		expect(drawnOptions().map(seriesTypes)).toEqual([

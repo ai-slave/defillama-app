@@ -16,6 +16,7 @@ vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => <div data-testid="cartesian" /> }))
 vi.mock('~/components/ECharts/CandlestickChart', () => ({ default: () => <div data-testid="candlestick" /> }))
 
+import { pickOption } from '~/utils/testing/pickOption'
 import { ChartRenderer } from '../ChartRenderer'
 
 function makeChart(id: string): ChartConfiguration {
@@ -181,25 +182,6 @@ async function setInputValue(input: HTMLInputElement, value: string) {
 	})
 }
 
-async function pointerClick(element: HTMLElement) {
-	await act(async () => {
-		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
-		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
-		element.click()
-	})
-}
-
-/** Opens a Select and picks the option with this name. */
-async function pick(trigger: HTMLElement, name: string) {
-	await pointerClick(trigger)
-	const option = await waitForUi(() => {
-		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
-		expect(found).toBeDefined()
-		return found!
-	})
-	await pointerClick(option)
-}
-
 function aggregationPicker() {
 	return document.querySelector<HTMLElement>('[aria-label="Series 1 aggregation"]')
 }
@@ -315,7 +297,7 @@ describe('ChartRenderer', () => {
 		const picker = aggregationPicker()
 		if (!picker) throw new Error('Expected aggregation picker for promoted dates')
 		expect(picker.textContent).toContain('Choose aggregation')
-		await pick(picker, 'Sum per period')
+		await pickOption(picker, 'Sum per period')
 		expect(aggregationPicker()?.textContent).toContain('Sum per period')
 		await clickButton(document, 'Save')
 

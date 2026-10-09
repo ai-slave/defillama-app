@@ -69,7 +69,8 @@ export function Account() {
 							<Button
 								size="sm"
 								ref={focusAccountOnLeave}
-								pendingLabel={isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={isFetching}
 								onClick={() => void refetch()}
 							>
 								Try again

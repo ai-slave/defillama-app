@@ -85,7 +85,7 @@ describe('useRWAFlowSeries', () => {
 		expect(requestedUrls()).toEqual([
 			'/api/public/rwa/flows/overview?splitBy=assetGroup&includeStablecoin=false&includeGovernance=true'
 		])
-		expect(result).toEqual({ splitPoints: SPLIT_ROWS, assetRows: undefined, isLoading: false, error: null })
+		expect(result).toEqual({ splitPoints: SPLIT_ROWS, assetRows: undefined, isLoading: false, failedRead: null })
 	})
 
 	test('reads the split the Group by asks for', async () => {
@@ -111,7 +111,7 @@ describe('useRWAFlowSeries', () => {
 		})
 
 		expect(requestedUrls()).toEqual(['/api/public/rwa/flows/asset-breakdown/platform/Ondo'])
-		expect(result).toEqual({ splitPoints: undefined, assetRows: ASSET_ROWS, isLoading: false, error: null })
+		expect(result).toEqual({ splitPoints: undefined, assetRows: ASSET_ROWS, isLoading: false, failedRead: null })
 	})
 
 	test('requests nothing when the flows chart is not shown', async () => {

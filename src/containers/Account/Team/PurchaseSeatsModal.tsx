@@ -365,7 +365,8 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 							size="md"
 							// While pending the button stays focusable and shows its label instead.
 							disabled={!pending && !billingWait && (!canChangeTeamBilling || holdsForPendingCheckout)}
-							pendingLabel={pending ? 'Processing…' : billingWait}
+							pendingLabel={pending ? 'Processing…' : (billingWait ?? 'Processing…')}
+							pending={pending || billingWait !== null}
 						>
 							Purchase seats
 						</Button>

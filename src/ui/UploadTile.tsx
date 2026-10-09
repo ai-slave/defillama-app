@@ -11,7 +11,7 @@ import { LoadingSpinner } from './Loaders'
    UploadTile: dashed border-medium on bg-page, text-tertiary icon and label;
    hover and focus darken the border to border-strong and the text to
    primary (a neutral control never hovers blue); the pressed wash while held.
-   While a file uploads, pass `pendingLabel` ("Uploading…"): the icon becomes
+   While a file uploads, set `pending` with its `pendingLabel` ("Uploading…"): the icon becomes
    a spinner, the label reads the pending label, and the tile is announced as
    busy and ignores presses without losing focus. Disabled takes the disabled
    border and text.
@@ -38,8 +38,10 @@ type Shape = keyof typeof SHAPE
 
 type TileProps = {
 	shape: Shape
-	/** Set while the upload runs; null once it settles. */
-	pendingLabel: string | null
+	/** The label shown while `pending` ("Uploading…"). */
+	pendingLabel?: string
+	/** Set while the upload runs. */
+	pending?: boolean
 	/** Layout placement only. */
 	className?: string
 } & Omit<ComponentPropsWithRef<typeof Ariakit.Button>, 'className' | 'children'>
@@ -50,11 +52,11 @@ export function UploadTile({
 	label,
 	hint,
 	pendingLabel,
+	pending = false,
 	disabled,
 	className,
 	...props
 }: TileProps & { icon: IIcon['name']; label: string; hint?: string }) {
-	const pending = pendingLabel !== null
 	return (
 		<Ariakit.Button
 			type="button"
@@ -75,11 +77,11 @@ export function ImageReplaceTile({
 	shape,
 	src,
 	pendingLabel,
+	pending = false,
 	disabled,
 	className,
 	...props
 }: TileProps & { src: string }) {
-	const pending = pendingLabel !== null
 	return (
 		<Ariakit.Button
 			type="button"

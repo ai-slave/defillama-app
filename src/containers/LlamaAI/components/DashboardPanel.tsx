@@ -166,7 +166,8 @@ function DashboardPanelInner({
 								size="md"
 								variant="primary"
 								onClick={handleCreateDashboard}
-								pendingLabel={isPending ? 'Creating…' : null}
+								pendingLabel="Creating…"
+								pending={isPending}
 							>
 								Create dashboard
 							</Button>
@@ -251,7 +252,8 @@ function DashboardPanelInner({
 					title="Create a dashboard with premium data?"
 					description={`Daily refreshes will bill your account up to ${formatUsd(artifactSave.estimatedMaxCostUsd, USD_3DP)} per refresh window.`}
 					confirmLabel="Create dashboard"
-					pendingLabel={isPending ? 'Creating…' : null}
+					pendingLabel="Creating…"
+					pending={isPending}
 					error={creation.error ? CREATE_FAILED : null}
 					onConfirm={() => creation.mutate()}
 					portal

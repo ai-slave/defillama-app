@@ -120,7 +120,7 @@ export const CAPABILITIES: Array<Capability> = [
 		description: 'Paste any wallet or ENS and instantly see holdings, DeFi positions, and full transaction history.',
 		prompts: [
 			'Full portfolio breakdown for vitalik.eth — tokens, DeFi positions, and NFTs',
-			'Decode this transaction and explain what happened step by step: 0x...',
+			'Decode this transaction and explain what happened step by step: 0x…',
 			'Show all DeFi positions for this wallet across every chain — lending, staking, LPs',
 			'What tokens did this wallet receive or send in the last 30 days?',
 			'Show me all DeFi positions for vitalik.eth — lending, staking, and LP positions',

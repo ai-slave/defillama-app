@@ -199,7 +199,7 @@ export function PerpetualMarketsTable({
 					<h2 className="mr-auto label-md">Perpetual Markets</h2>
 					<TableSearchInput
 						columnId="exchangeName"
-						placeholder="Search exchanges..."
+						placeholder="Search exchanges…"
 						className={searchFieldInlineWrapperStyles}
 					/>
 					<TableCsvExport filename={`${companyName}-perpetual-markets`} />
@@ -227,7 +227,7 @@ export function TokenIssuersTable({
 					<h2 className="mr-auto label-md">Token Issuers</h2>
 					<TableSearchInput
 						columnId="issuerName"
-						placeholder="Search issuers..."
+						placeholder="Search issuers…"
 						className={searchFieldInlineWrapperStyles}
 					/>
 					<TableCsvExport filename={`${companyName}-token-issuers`} />

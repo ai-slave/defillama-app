@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { Card } from '~/ui/Card'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson, type ApiUnixMillisecondsString } from '../../api.types'
 
 export interface ParagraphPost {
@@ -108,7 +109,7 @@ function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 }
 
 export default function PressReleases() {
-	const { data, error } = useQuery({
+	const query = useQuery({
 		queryKey: ['spark-reports'],
 		queryFn: async () => {
 			const response = await fetch('/api/public/spark/reports')
@@ -120,12 +121,18 @@ export default function PressReleases() {
 		refetchOnWindowFocus: false
 	})
 
-	if (error) return <TabStatus variant="error">Couldn't load Spark reports and press releases.</TabStatus>
-	if (!data) return <TabStatus variant="loading" />
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load Spark reports and press releases.
+			</PanelStatus>
+		)
+	if (!query.data) return <PanelLoadingStatus />
 
-	const { financialReports, pressReleases } = data
+	const { financialReports, pressReleases } = query.data
 	if (financialReports.length === 0 && pressReleases.length === 0) {
-		return <TabStatus variant="empty">No reports or press releases available</TabStatus>
+		return <PanelStatus variant="empty">No reports or press releases available</PanelStatus>
 	}
 
 	return (
@@ -154,13 +161,15 @@ export default function PressReleases() {
 					</div>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{financialReports.map((post) => (
-							<a
+							<Card
+								as="a"
+								tone="brand"
+								padding="none"
 								key={post.id}
 								href={`https://paragraph.com/@spark-11/${post.slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								// A featured report keeps its brand fill, which Card cannot draw.
-								className="group flex flex-col overflow-hidden rounded-lg border border-brand-muted bg-linear-to-br from-brand-faint to-transparent"
+								className="hover-wash-card group flex flex-col overflow-hidden"
 							>
 								{/* Image */}
 								{post.imageUrl && (
@@ -186,7 +195,7 @@ export default function PressReleases() {
 										</svg>
 									</div>
 								</div>
-							</a>
+							</Card>
 						))}
 					</div>
 				</div>

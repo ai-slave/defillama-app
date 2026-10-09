@@ -545,7 +545,7 @@ export function LSTOverview({
 						<h2 className="mr-auto label-md">Liquid Staking Protocols</h2>
 						<TableSearchInput
 							columnId="name"
-							placeholder="Search protocols..."
+							placeholder="Search protocols…"
 							className={searchFieldInlineWrapperStyles}
 						/>
 						<TableCsvExport filename="liquid-staking" />

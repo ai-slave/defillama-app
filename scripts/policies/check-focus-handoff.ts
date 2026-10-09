@@ -210,7 +210,7 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'submit outside the locked fieldset',
 			source:
-				'export const F = () => <form><fieldset disabled={isPending}><Input /></fieldset><Button type="submit" size="md" pendingLabel={isPending ? "Saving…" : null}>Save</Button></form>',
+				'export const F = () => <form><fieldset disabled={isPending}><Input /></fieldset><Button type="submit" size="md" pendingLabel="Saving…" pending={isPending}>Save</Button></form>',
 			violation: false
 		},
 		{
@@ -236,7 +236,7 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'button with a pending label',
 			source:
-				'export const F = () => <Button size="md" disabled={isSaving} pendingLabel={isSaving ? "Saving…" : null}>Save</Button>',
+				'export const F = () => <Button size="md" disabled={isSaving} pendingLabel="Saving…" pending={isSaving}>Save</Button>',
 			violation: false
 		},
 		{

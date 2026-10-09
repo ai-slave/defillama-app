@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+import type { QueryRetry } from '~/utils/query'
+import { Button } from './Button'
+import { focusRegionOnLeave } from './focus'
 import { Icon } from './Icon'
 import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
@@ -12,6 +15,7 @@ import { Panel } from './Panel'
    | Inside a rendered Panel or Card body      | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
    | Inside a ChartPanelBody                   | ChartPanelBodyFallback (./ChartPanel.tsx)   |
    | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
+   | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
    | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
    | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
    | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
@@ -29,7 +33,8 @@ import { Panel } from './Panel'
    - A request's error renders where its data would be, as one of these
      states, never as a toast from an effect watching `.error`. Read it with
      `queryReadFailed` from src/utils/query.ts and check it before loading;
-     see docs/focus-and-errors.md for retries.
+     PanelStatus and ChartPanelBodyError take the query as `retry` and draw
+     its Try again. See docs/focus-and-errors.md for retries.
 ---------------------------------------------------------------------------- */
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
@@ -46,16 +51,19 @@ const STATUS_TEXT = {
 type PanelStatusProps = {
 	children: ReactNode
 	variant: TextStatusVariant
+	/** The query whose failure this is: its Try again waits while the read runs again, and hands focus to the page
+	    content when what loads replaces the panel. */
+	retry?: QueryRetry
 	className?: string
 }
 
-export function PanelStatus({ children, variant, className }: PanelStatusProps) {
+export function PanelStatus({ children, variant, retry, className }: PanelStatusProps) {
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
 		<Panel
 			padding="sm"
-			className={`flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+			className={`flex-1 items-center justify-center gap-2 initial:min-h-[360px] ${className ?? ''}`.trim()}
 		>
 			<p
 				role={role}
@@ -64,6 +72,17 @@ export function PanelStatus({ children, variant, className }: PanelStatusProps) 
 			>
 				{children}
 			</p>
+			{retry ? (
+				<Button
+					ref={focusRegionOnLeave}
+					size="sm"
+					onClick={() => void retry.refetch()}
+					pendingLabel="Retrying…"
+					pending={retry.isFetching}
+				>
+					Try again
+				</Button>
+			) : null}
 		</Panel>
 	)
 }
@@ -130,6 +149,22 @@ export function InlineStatus({
 				{action}
 			</div>
 		</div>
+	)
+}
+
+const ERROR_LINE_INSET = { none: '', menuRow: 'px-3 py-2' } as const
+
+/** A request error where InlineStatus's box has no room: a menu, a toolbar, a chip row, a dialog footer beside its
+    buttons. The red icon marks it as an error, as in InlineStatus, and the message stays primary text. `menuRow` gives
+    it a popover row's padding (./Popover.ts), so it lines up with the rows above it. */
+export function ErrorLine({ children, inset }: { children: ReactNode; inset: keyof typeof ERROR_LINE_INSET }) {
+	return (
+		<p role="alert" className={`flex gap-1.5 body-sm text-primary ${ERROR_LINE_INSET[inset]}`.trim()}>
+			<span className="flex h-lh shrink-0 items-center">
+				<Icon name="circle-x" className="size-3.5 text-error" aria-hidden />
+			</span>
+			<span className="min-w-0">{children}</span>
+		</p>
 	)
 }
 

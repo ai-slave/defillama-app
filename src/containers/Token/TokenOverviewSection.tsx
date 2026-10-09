@@ -19,6 +19,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
@@ -196,24 +197,31 @@ export function TokenPageHero({
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="flex flex-wrap items-center gap-2 heading-xs">
-				{logo ? (
-					<TokenLogo src={logo} fallbackSrc={tokenIconUrl(overview.name)} size={24} alt={`Logo of ${overview.name}`} />
-				) : (
-					<TokenLogo name={overview.name} kind="token" size={24} alt={`Logo of ${overview.name}`} />
-				)}
-				<Heading className="flex min-h-8 flex-wrap items-center gap-2 heading-xs">
-					<span>{overview.name}</span>
-					{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
-				</Heading>
-				<span className="ml-auto flex items-center justify-end gap-1">
+			<EntityTitleRow
+				as={Heading}
+				logo={
+					logo ? (
+						<TokenLogo
+							src={logo}
+							fallbackSrc={tokenIconUrl(overview.name)}
+							size={24}
+							alt={`Logo of ${overview.name}`}
+						/>
+					) : (
+						<TokenLogo name={overview.name} kind="token" size={24} alt={`Logo of ${overview.name}`} />
+					)
+				}
+				actions={
 					<TokenPriceAlertButton
 						overview={overview}
 						geckoId={geckoId}
 						currentPrice={overview.marketData.currentPrice}
 					/>
-				</span>
-			</div>
+				}
+			>
+				{overview.name}
+				{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
+			</EntityTitleRow>
 			{hasPriceBreakdown ? (
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">

@@ -5,6 +5,7 @@ import { Card } from '~/ui/Card'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
 import { fetchExchangeRegionalMetadata } from './master.api'
 import { MetadataGroups } from './MetadataGroups'
@@ -45,9 +46,9 @@ export function resolveProfileCountryView(
 	country: string | null,
 	query: {
 		data?: ExchangeRegionalMetadataModel | undefined
-		isLoading: boolean
-		isError: boolean
 		isFetching: boolean
+		errorUpdatedAt: number
+		dataUpdatedAt: number
 		refetch: () => unknown
 	}
 ): ProfileCountryView {
@@ -64,7 +65,8 @@ export function resolveProfileCountryView(
 				return { status: 'unavailable', country, regional: query.data }
 		}
 	}
-	if (query.isError) return { status: 'error', country, retry: () => void query.refetch(), retrying: query.isFetching }
+	if (queryReadFailed(query))
+		return { status: 'error', country, retry: () => void query.refetch(), retrying: query.isFetching }
 	return { status: 'loading', country }
 }
 
@@ -141,7 +143,8 @@ export function ProfileCountryCard({
 							ref={focusRegionOnLeave}
 							size="sm"
 							onClick={view.retry}
-							pendingLabel={view.retrying ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={view.retrying}
 						>
 							Try again
 						</Button>

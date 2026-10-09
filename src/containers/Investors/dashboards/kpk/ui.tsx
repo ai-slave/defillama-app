@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -298,15 +299,9 @@ export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 	return (
 		<div className="flex flex-wrap gap-2">
 			{refs.map((ref) => (
-				<a
-					key={ref.url + ref.label}
-					href={ref.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="rounded-md border border-medium px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand hover:text-primary"
-				>
-					{ref.label} ↗
-				</a>
+				<ExternalLinkButton key={ref.url + ref.label} href={ref.url}>
+					{ref.label}
+				</ExternalLinkButton>
 			))}
 		</div>
 	)

@@ -229,7 +229,8 @@ function SearchError({ retrying, onRetry }: { retrying: boolean; onRetry: () => 
 						ref={takeLostFocus}
 						type="button"
 						size="sm"
-						pendingLabel={retrying ? 'Retrying…' : null}
+						pendingLabel="Retrying…"
+						pending={retrying}
 						onClick={onRetry}
 					>
 						Try again

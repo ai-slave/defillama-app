@@ -132,7 +132,7 @@ function radio(group: string, value: string) {
 		`[role="radiogroup"][aria-label="${group}"] input[value="${value}"]`
 	)!
 }
-const search = () => container.querySelector<HTMLInputElement>('[placeholder="Search exchanges..."]')
+const search = () => container.querySelector<HTMLInputElement>('[placeholder="Search exchanges…"]')
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
 		element.focus()

@@ -273,7 +273,7 @@ export function buildFinancialsViewModel(response: FinancialsAPIResponse): Finan
 }
 
 export function useFinancialsData() {
-	const query = useQuery<FinancialsViewModel>({
+	return useQuery<FinancialsViewModel>({
 		queryKey: ['spark-financials'],
 		queryFn: async () => {
 			const res = await fetch(API_URL)
@@ -284,9 +284,6 @@ export function useFinancialsData() {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-
-	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
-	return { data: query.data, isLoading: false }
 }
 
 export type {

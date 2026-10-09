@@ -319,7 +319,8 @@ export function YieldsChartTab({
 						<Button
 							type="button"
 							size="sm"
-							pendingLabel={yieldsQuery.isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={yieldsQuery.isFetching}
 							onClick={() => void yieldsQuery.refetch()}
 						>
 							Try again
@@ -692,7 +693,8 @@ export function YieldsChartTab({
 												action={
 													<Button
 														size="sm"
-														pendingLabel={previewHistory.isFetching ? 'Retrying…' : null}
+														pendingLabel="Retrying…"
+														pending={previewHistory.isFetching}
 														onClick={() => void previewHistory.refetch()}
 													>
 														Try again

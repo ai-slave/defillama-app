@@ -8,7 +8,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -65,7 +65,7 @@ export function RWAEntityChartPanel<K extends string>({
 	selected,
 	chart,
 	isLoading,
-	error,
+	failedRead,
 	filename,
 	title
 }: RWAEntityChartPanelProps<K>) {
@@ -150,13 +150,11 @@ export function RWAEntityChartPanel<K extends string>({
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
 			</ChartPanelToolbar>
-			{isLoading && deferredChart.series.every((series) => (series.data?.length ?? 0) === 0) ? (
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+			) : isLoading && deferredChart.series.every((series) => (series.data?.length ?? 0) === 0) ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />
-				</ChartPanelBodyFallback>
-			) : error ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-					{error}
 				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>

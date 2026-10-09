@@ -422,7 +422,7 @@ function SearchResults({
 				<InlineStatus
 					variant="error"
 					action={
-						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={onRetry}>
+						<Button type="button" size="sm" pendingLabel="Retrying…" pending={retrying} onClick={onRetry}>
 							Try again
 						</Button>
 					}

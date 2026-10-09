@@ -69,7 +69,8 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 													<Button
 														type="button"
 														size="sm"
-														pendingLabel={item.isFetching ? 'Retrying…' : null}
+														pendingLabel="Retrying…"
+														pending={item.isFetching}
 														onClick={item.refetch}
 													>
 														Try again

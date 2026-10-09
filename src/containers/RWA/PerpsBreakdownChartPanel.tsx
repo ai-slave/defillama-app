@@ -5,7 +5,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -119,7 +119,8 @@ export function RWAPerpsBreakdownChartPanel({
 		enabled: needsHistory && plan.kind === 'fold'
 	})
 	const isLoading = split.isChartLoading || fold.isLoading
-	const error = split.chartError ?? fold.error
+	// The plan reads one of the two, so at most one has a failed read.
+	const failedRead = split.failedRead ?? fold.failedRead
 
 	// The React Compiler memoizes this; a manual useMemo could not be preserved over the router reads.
 	const chart = (() => {
@@ -211,7 +212,7 @@ export function RWAPerpsBreakdownChartPanel({
 				exportTitle={`${title} ${snapshotLabel}`}
 				filename={filename}
 				isLoading={isLoading}
-				error={error}
+				failedRead={failedRead}
 				toolbarStart={
 					<>
 						{metricSwitch}
@@ -243,10 +244,8 @@ export function RWAPerpsBreakdownChartPanel({
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={`${title} ${metricLabel}`} />
 			</ChartPanelToolbar>
-			{error ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-					{error}
-				</ChartPanelBodyFallback>
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
 			) : isLoading ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />

@@ -74,7 +74,8 @@ export function TeamInfoCard() {
 								type="submit"
 								variant="primary"
 								size="md"
-								pendingLabel={updateTeamMutation.isPending ? 'Saving…' : null}
+								pendingLabel="Saving…"
+								pending={updateTeamMutation.isPending}
 							>
 								Save
 							</Button>

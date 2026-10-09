@@ -590,7 +590,7 @@ export function PairTable({
 	initialVisibleColumns,
 	sorting,
 	columnToSearch = 'pair',
-	placeholder = 'Search pairs...',
+	placeholder = 'Search pairs…',
 	header = 'Markets',
 	leadingControls = null,
 	children

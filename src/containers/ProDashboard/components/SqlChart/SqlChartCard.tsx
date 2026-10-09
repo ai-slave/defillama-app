@@ -111,7 +111,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					controls={
 						canRefresh ? (
 							<>
-								<Button size="sm" variant="ghost" onClick={refresh} pendingLabel={isRefreshing ? 'Refreshing…' : null}>
+								<Button size="sm" variant="ghost" onClick={refresh} pendingLabel="Refreshing…" pending={isRefreshing}>
 									Refresh
 								</Button>
 								<Tooltip content={REFRESH_HINT} className="flex items-center">
@@ -139,7 +139,6 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					{error ? (
 						<ProCardNotice
 							tone="error"
-							title={error}
 							{...(canRefresh ? { retry: { refetch: refresh, isFetching: isRefreshing } } : {})}
 						>
 							Couldn&apos;t refresh this query.

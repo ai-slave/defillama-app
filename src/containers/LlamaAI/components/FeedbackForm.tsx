@@ -145,7 +145,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 					{failed ? <InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus> : null}
 				</DialogBody>
 				<DialogFooter dismiss={<DialogCancelButton />}>
-					<Button type="submit" size="md" variant="primary" pendingLabel={pending ? 'Submitting…' : null}>
+					<Button type="submit" size="md" variant="primary" pendingLabel="Submitting…" pending={pending}>
 						Submit
 					</Button>
 				</DialogFooter>

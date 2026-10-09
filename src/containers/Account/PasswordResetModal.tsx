@@ -125,7 +125,8 @@ function PasswordResetDialog({ isOpen, onClose, email, sentAtSeconds, onSent }: 
 						type="button"
 						variant="primary"
 						size="md"
-						pendingLabel={isPending ? 'Sending…' : null}
+						pendingLabel="Sending…"
+						pending={isPending}
 						disabled={!turnstileToken || waitSeconds > 0}
 						accessibleWhenDisabled
 						onClick={handleSend}

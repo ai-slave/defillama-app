@@ -136,11 +136,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 				<Card padding="none">
 					<TableToolbar>
 						<h2 className="mr-auto label-md">Exchange Traded Funds</h2>
-						<TableSearchInput
-							columnId="ticker"
-							placeholder="Search ETF..."
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="ticker" placeholder="Search ETF…" className={searchFieldInlineWrapperStyles} />
 						<TableCsvExport filename="etf-overview" />
 					</TableToolbar>
 					<VirtualSearchTableView />

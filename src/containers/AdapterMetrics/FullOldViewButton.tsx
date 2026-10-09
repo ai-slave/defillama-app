@@ -42,7 +42,7 @@ export function FullOldViewButton() {
 	return (
 		<>
 			<span className="flex items-center gap-1">
-				<Button type="button" size="md" onClick={handleClick} pendingLabel={isLoading ? 'Creating dashboard…' : null}>
+				<Button type="button" size="md" onClick={handleClick} pendingLabel="Creating dashboard…" pending={isLoading}>
 					<Icon name="plus" height={16} width={16} />
 					<span>Open in Dashboard</span>
 				</Button>

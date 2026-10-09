@@ -406,7 +406,7 @@ export function TokenBorrowSection({
 											sortingState={sortingByTab[activeTab]}
 											onSortingChange={handleSortingChange}
 											interactionDisabled={showBackgroundLoading}
-											loadingLabel="Loading full dataset..."
+											loadingLabel="Loading full dataset…"
 											appearance="embedded"
 										/>
 									</React.Suspense>

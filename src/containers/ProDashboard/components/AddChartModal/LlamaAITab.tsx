@@ -81,7 +81,8 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 				The saved charts could not load.
 				<Button
 					size="sm"
-					pendingLabel={savedCharts.isFetching ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={savedCharts.isFetching}
 					onClick={() => void savedCharts.refetch()}
 				>
 					Try again

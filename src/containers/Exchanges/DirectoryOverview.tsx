@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
+import { queryReadFailed } from '~/utils/query'
 import { DirectoryChart } from './DirectoryChart'
 import type { ExchangeDirectoryModel, ExchangeOverviewChartModel } from './models'
 import { getResearchRange, type ExchangeResearchRange } from './queryState'
@@ -32,7 +33,12 @@ export function DirectoryOverview({ directory, loadOverview, country }: Director
 			{query.data ? (
 				<DirectoryChart chart={query.data} range={range} country={country} />
 			) : (
-				<DirectoryChart chart={null} range={range} status={query.isError ? 'error' : 'loading'} country={country} />
+				<DirectoryChart
+					chart={null}
+					range={range}
+					failedRead={queryReadFailed(query) ? query : null}
+					country={country}
+				/>
 			)}
 		</div>
 	)

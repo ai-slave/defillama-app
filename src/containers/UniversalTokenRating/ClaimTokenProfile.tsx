@@ -324,7 +324,8 @@ function AttachDocuments({
 				icon="link"
 				label="Attach documents"
 				hint={ATTACH_HINT}
-				pendingLabel={status.state === 'uploading' ? 'Uploading…' : null}
+				pendingLabel="Uploading…"
+				pending={status.state === 'uploading'}
 				disabled={receipts.length >= 10}
 				onClick={() => inputRef.current!.click()}
 			/>
@@ -838,7 +839,8 @@ export function ClaimTokenProfile({
 						variant="primary"
 						size="md"
 						className="w-full justify-center"
-						pendingLabel={submit.isPending ? 'Submitting…' : null}
+						pendingLabel="Submitting…"
+						pending={submit.isPending}
 						accessibleWhenDisabled
 						disabled={submitBlocker !== null}
 						aria-describedby={submitBlocker ? submitBlockerId : undefined}

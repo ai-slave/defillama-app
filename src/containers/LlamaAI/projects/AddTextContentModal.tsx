@@ -124,7 +124,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 					) : null}
 				</DialogBody>
 				<DialogFooter dismiss={<DialogCancelButton />}>
-					<Button type="submit" size="md" variant="primary" pendingLabel={add.isPending ? 'Saving…' : null}>
+					<Button type="submit" size="md" variant="primary" pendingLabel="Saving…" pending={add.isPending}>
 						Save
 					</Button>
 				</DialogFooter>

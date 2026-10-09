@@ -24,7 +24,7 @@ describe('sankey node labels', () => {
 
 	test('adds a truncated description line on desktop only', () => {
 		expect(formatSankeyNodeLabel('Middle', 10, metadata, formatValue, true)).toBe(
-			'{name|Middle: $1500}\n{desc|Protocol revenue kept after paying every supply...}'
+			'{name|Middle: $1500}\n{desc|Protocol revenue kept after paying every supply-s…}'
 		)
 		expect(formatSankeyNodeLabel('Middle', 10, metadata, formatValue, false)).toBe('Middle: $1500')
 	})

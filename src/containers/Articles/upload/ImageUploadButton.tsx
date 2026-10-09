@@ -67,7 +67,8 @@ export function ImageUploadButton({
 						<ImageReplaceTile
 							shape="round"
 							src={currentUrl}
-							pendingLabel={isUploading ? 'Uploading…' : null}
+							pendingLabel="Uploading…"
+							pending={isUploading}
 							onClick={open}
 							aria-label={`Replace ${name}`}
 						/>
@@ -76,7 +77,8 @@ export function ImageUploadButton({
 							shape="round"
 							icon="image-plus"
 							label="Upload"
-							pendingLabel={isUploading ? 'Uploading…' : null}
+							pendingLabel="Uploading…"
+							pending={isUploading}
 							onClick={open}
 						/>
 					)}
@@ -87,7 +89,8 @@ export function ImageUploadButton({
 								type="button"
 								size="sm"
 								onClick={open}
-								pendingLabel={isUploading ? 'Uploading…' : null}
+								pendingLabel="Uploading…"
+								pending={isUploading}
 								aria-label={currentUrl ? `Replace ${name}` : undefined}
 							>
 								{currentUrl ? 'Replace' : `Upload ${name}`}
@@ -115,7 +118,8 @@ export function ImageUploadButton({
 							<ImageReplaceTile
 								shape="wide"
 								src={currentUrl}
-								pendingLabel={isUploading ? 'Uploading…' : null}
+								pendingLabel="Uploading…"
+								pending={isUploading}
 								onClick={open}
 								aria-label={`Replace ${name}`}
 							/>
@@ -124,7 +128,8 @@ export function ImageUploadButton({
 									type="button"
 									size="sm"
 									onClick={open}
-									pendingLabel={isUploading ? 'Uploading…' : null}
+									pendingLabel="Uploading…"
+									pending={isUploading}
 									aria-label={`Replace ${name}`}
 								>
 									Replace
@@ -147,7 +152,8 @@ export function ImageUploadButton({
 							shape="wide"
 							icon="image-plus"
 							label={`Upload ${name}`}
-							pendingLabel={isUploading ? 'Uploading…' : null}
+							pendingLabel="Uploading…"
+							pending={isUploading}
 							onClick={open}
 						/>
 					)}

@@ -105,7 +105,8 @@ export function IntegrationRow({
 								type="button"
 								size="md"
 								variant="primary"
-								pendingLabel={link.isStarting ? 'Opening…' : null}
+								pendingLabel="Opening…"
+								pending={link.isStarting}
 								onClick={() => link.connect()}
 							>
 								Switch account
@@ -121,9 +122,8 @@ export function IntegrationRow({
 						type="button"
 						size="md"
 						variant="primary"
-						pendingLabel={
-							link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : null
-						}
+						pendingLabel={link.state.status === 'loading' ? 'Loading…' : 'Opening…'}
+						pending={link.state.status === 'starting' || link.state.status === 'loading'}
 						onClick={() => link.connect()}
 					>
 						Connect
@@ -196,7 +196,8 @@ export function IntegrationRow({
 									type="submit"
 									size="md"
 									variant="primary"
-									pendingLabel={confirming === 'code' ? 'Confirming…' : null}
+									pendingLabel="Confirming…"
+									pending={confirming === 'code'}
 								>
 									Confirm
 								</Button>
@@ -219,7 +220,8 @@ export function IntegrationRow({
 							type="button"
 							size="md"
 							variant="primary"
-							pendingLabel={confirming === 'switch' ? 'Switching…' : null}
+							pendingLabel="Switching…"
+							pending={confirming === 'switch'}
 							onClick={() => {
 								void link.confirmSwitch().then((consumed) => {
 									if (consumed) onInitialStateConsumed?.()
@@ -263,7 +265,8 @@ export function IntegrationRow({
 				title="Disconnect Telegram?"
 				description={`LlamaAI stops chatting with ${disconnectHandle ?? 'your account'} and sending alerts there.`}
 				confirmLabel="Disconnect"
-				pendingLabel={link.isDisconnecting ? 'Disconnecting…' : null}
+				pendingLabel="Disconnecting…"
+				pending={link.isDisconnecting}
 				error={link.disconnectFailed ? "Couldn't disconnect Telegram. Try again." : null}
 				onConfirm={link.disconnect}
 			/>

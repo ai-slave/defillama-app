@@ -3,7 +3,6 @@ import {
 	ComboboxItem,
 	ComboboxList,
 	ComboboxProvider,
-	Popover,
 	useComboboxStore,
 	usePopoverStore,
 	useStoreState
@@ -11,13 +10,20 @@ import {
 import { matchSorter } from 'match-sorter'
 import type { Ref } from 'react'
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
-import { useMedia } from '~/hooks/useMedia'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { ListRow } from '~/ui/ListRow'
 import { NoResults } from '~/ui/NoResults'
+import {
+	popoverMeasuredRowStyles,
+	popoverRowStyles,
+	popoverScrollAreaStyles,
+	popoverSingleSelectCheckStyles
+} from '~/ui/Popover'
+import { PopoverHeader } from '~/ui/PopoverHeader'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
@@ -87,7 +93,15 @@ const WINDOW_LABELS = Object.fromEntries(WINDOW_OPTIONS.map((option) => [option.
 	string
 >
 
-type ActiveToken = 'aggregator' | 'metric' | 'subject' | 'window' | null
+type MetricToken = 'aggregator' | 'metric' | 'subject' | 'window'
+
+// From `sm` the popover sits beside its token at these widths; on phones it is a full-width drawer.
+const TOKEN_POPOVERS: Record<MetricToken, { heading: string; width: string }> = {
+	aggregator: { heading: 'Aggregation', width: 'w-[260px]' },
+	metric: { heading: 'Metric', width: 'w-80' },
+	subject: { heading: 'Subject', width: 'w-[360px]' },
+	window: { heading: 'Time window', width: 'w-[260px]' }
+}
 
 interface MetricSentenceBuilderProps {
 	aggregator: MetricAggregator
@@ -109,24 +123,6 @@ interface MetricSentenceBuilderProps {
 	onChartTypeChange: (value: MetricChartType) => void
 	/** What Add still needs (a metric or a subject), shown under the sentence once Add was pressed. */
 	error: string | null
-}
-
-const getTokenWidth = (token: Exclude<ActiveToken, null>, isMobile: boolean): number => {
-	if (isMobile) {
-		// Use window.innerWidth for dynamic sizing when popover opens (one-time read, not subscribed)
-		const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 320
-		return Math.min(viewportWidth - 32, token === 'subject' ? 340 : 280)
-	}
-	switch (token) {
-		case 'aggregator':
-			return 260
-		case 'metric':
-			return 320
-		case 'subject':
-			return 360
-		case 'window':
-			return 260
-	}
 }
 
 interface TokenButtonProps {
@@ -189,18 +185,18 @@ export function MetricSentenceBuilder({
 	// A missing metric is the metric token's error; otherwise the subject is what is missing.
 	const metricErrorId = error && !metricType ? errorId : undefined
 	const subjectErrorId = error && metricType ? errorId : undefined
-	const [activeToken, setActiveToken] = useState<ActiveToken>(null)
+	// The token the popover was last opened from. It stays set through the close, so the closing popover keeps
+	// its content; whether it is open is the popover's own state.
+	const [activeToken, setActiveToken] = useState<MetricToken | null>(null)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [subjectTab, setSubjectTab] = useState<'chain' | 'protocol'>('chain')
 	const subjectParameter = useModalFieldBinding('subject', subjectTab)
-	const isMobile = useMedia('(max-width: 639px)')
 	const popover = usePopoverStore({
-		placement: isMobile ? 'bottom' : 'right-start',
+		placement: 'right-start',
 		// Every close runs the same teardown, including the ones that never reach closePopover: an
 		// outside click or Escape. Nothing is left over for the next open to reset.
 		setOpen(open) {
 			if (open) return
-			setActiveToken(null)
 			setSearchTerm('')
 			setSubjectTab(metricSubjectType)
 			subjectCombobox.setInputValue('')
@@ -208,13 +204,14 @@ export function MetricSentenceBuilder({
 		}
 	})
 	const subjectCombobox = useComboboxStore({ resetValueOnHide: true })
-	const anchorRefs = useRef<Record<Exclude<ActiveToken, null>, HTMLButtonElement | null>>({
+	const popoverOpen = useStoreState(popover, 'open')
+	const openToken = popoverOpen ? activeToken : null
+	const anchorRefs = useRef<Record<MetricToken, HTMLButtonElement | null>>({
 		aggregator: null,
 		metric: null,
 		subject: null,
 		window: null
 	})
-	const [popoverWidth, setPopoverWidth] = useState(260)
 	const subjectSearchValue = useStoreState(subjectCombobox, 'inputValue') ?? ''
 	const deferredSubjectSearchValue = useDeferredValue(subjectSearchValue)
 	const chainListRef = useRef<HTMLDivElement | null>(null)
@@ -347,18 +344,18 @@ export function MetricSentenceBuilder({
 		return matchSorter(protocolOptionsByMetric, deferredSubjectSearchValue, { keys: ['label'] })
 	}, [protocolOptionsByMetric, deferredSubjectSearchValue])
 
+	// Rows are measured: a phone row is 44px tall, and a child protocol's row holds two lines.
 	const chainVirtualizer = useVirtualItems({
 		count: subjectTab === 'chain' ? filteredChainOptions.length : 0,
 		getScrollElement: () => chainListRef.current,
-		estimateSize: () => 38,
+		estimateSize: () => 37,
 		overscan: 8
 	})
 
 	const protocolVirtualizer = useVirtualItems({
 		count: subjectTab === 'protocol' ? filteredProtocolOptions.length : 0,
 		getScrollElement: () => protocolListRef.current,
-		// A child protocol's row holds two lines (48px); the slots are fixed, so every row takes that height.
-		estimateSize: () => 48,
+		estimateSize: (index) => (filteredProtocolOptions[index]!.isChild ? 56 : 37),
 		overscan: 8
 	})
 
@@ -386,8 +383,8 @@ export function MetricSentenceBuilder({
 		})
 	}, [baseMetricTypes, searchTerm])
 
-	const handleTokenClick = (token: Exclude<ActiveToken, null>) => {
-		if (activeToken === token) {
+	const handleTokenClick = (token: MetricToken) => {
+		if (openToken === token) {
 			closePopover()
 			return
 		}
@@ -408,7 +405,6 @@ export function MetricSentenceBuilder({
 		// Switching tokens without closing keeps the popover open, so the previous token's search has to
 		// be cleared here too.
 		setSearchTerm('')
-		setPopoverWidth(getTokenWidth(token, isMobile))
 		setActiveToken(token)
 		popover.setAnchorElement(anchor)
 		popover.setOpen(true)
@@ -450,78 +446,68 @@ export function MetricSentenceBuilder({
 		switch (activeToken) {
 			case 'aggregator':
 				return (
-					<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1.5" data-metric-token="true">
-						{AGGREGATOR_OPTIONS.map((option) => (
-							<ListRow
-								key={option.value}
-								selected={option.value === aggregator}
-								onClick={() => handleSelectAggregator(option.value)}
-								className="flex-col items-start gap-0"
-							>
-								<span className="label-md">{option.label}</span>
-								<span className="body-sm text-tertiary">{option.description}</span>
-							</ListRow>
-						))}
-					</div>
+					<DescribedOptionRows options={AGGREGATOR_OPTIONS} selected={aggregator} onSelect={handleSelectAggregator} />
 				)
 			case 'window':
-				return (
-					<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1.5" data-metric-token="true">
-						{WINDOW_OPTIONS.map((option) => (
-							<ListRow
-								key={option.value}
-								selected={option.value === metricWindow}
-								onClick={() => handleSelectWindow(option.value)}
-								className="flex-col items-start gap-0"
-							>
-								<span className="label-md">{option.label}</span>
-								<span className="body-sm text-tertiary">{option.description}</span>
-							</ListRow>
-						))}
-					</div>
-				)
+				return <DescribedOptionRows options={WINDOW_OPTIONS} selected={metricWindow} onSelect={handleSelectWindow} />
 			case 'metric':
 				return (
-					<div className="max-h-[320px] w-full overflow-y-auto overscroll-contain" data-metric-token="true">
-						<div className="sticky top-0 border-b border-subtle bg-surface p-1.5">
-							<div className="relative">
-								<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
-								<Input
-									value={searchTerm}
-									onChange={(event) => setSearchTerm(event.target.value)}
-									aria-label="Search metrics"
-									placeholder="Search metrics…"
-									className={searchFieldInputPlacementStyles}
-								/>
-							</div>
-						</div>
-						<div className="p-1.5">
+					<>
+						<PopoverHeader
+							search={
+								<div className="relative">
+									<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+									<Input
+										value={searchTerm}
+										onChange={(event) => setSearchTerm(event.target.value)}
+										aria-label="Search metrics"
+										placeholder="Search metrics…"
+										className={searchFieldInputPlacementStyles}
+									/>
+								</div>
+							}
+						/>
+						<div className={popoverScrollAreaStyles}>
 							{baseMetricTypes.length === 0 ? <NoResults>No metrics available.</NoResults> : null}
 							{baseMetricTypes.length > 0 && filteredMetrics.length === 0 ? (
 								<NoResults>No metrics match that search.</NoResults>
 							) : null}
-							{filteredMetrics.map((value) => {
-								const label = getProDashboardChartTypeConfig(value)?.title || value
-								const isActive = value === metricType
-								return (
-									<ListRow key={value} selected={isActive} onClick={() => handleSelectMetric(value)}>
-										<span className="mr-auto">{label}</span>
-										<Icon name="check" className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`} />
-									</ListRow>
-								)
-							})}
+							{filteredMetrics.map((value) => (
+								<button
+									key={value}
+									type="button"
+									className={`${popoverRowStyles} w-full text-left`}
+									onClick={() => handleSelectMetric(value)}
+								>
+									<span className="truncate">{getProDashboardChartTypeConfig(value)?.title || value}</span>
+									<span aria-hidden className={popoverSingleSelectCheckStyles(value === metricType)}>
+										<SelectCheckIcon />
+									</span>
+								</button>
+							))}
 						</div>
-					</div>
+					</>
 				)
 			case 'subject':
 				return (
 					<ComboboxProvider store={subjectCombobox}>
-						<div className="w-full space-y-2.5 p-2.5 sm:space-y-3 sm:p-3" data-metric-token="true">
-							<div className="space-y-1.5">
-								<div className="label-sm text-secondary">Select subject</div>
+						<PopoverHeader
+							search={
+								<div className="relative">
+									<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+									<Combobox
+										autoFocus
+										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
+										render={<Input className={searchFieldInputPlacementStyles} />}
+										aria-label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
+									/>
+								</div>
+							}
+						>
+							<div className="px-3 pb-2">
 								<SegmentedControl
-									variant="field"
-									size="md"
+									variant="default"
+									size="sm"
 									label="Subject type"
 									options={SUBJECT_OPTIONS}
 									value={subjectTab}
@@ -531,165 +517,140 @@ export function MetricSentenceBuilder({
 									}}
 								/>
 							</div>
-
-							<div className="space-y-2">
-								{subjectParameter.options.length > 0 ? (
-									<div className="flex flex-col gap-1">
-										{subjectParameter.options.map((option) => {
-											const variable = subjectParameter.resolveSelection(option.value)
-											if (!variable) return null
-											const bound = subjectParameter.boundVariable?.id === variable.id
+						</PopoverHeader>
+						{subjectParameter.options.length > 0 ? (
+							<div className="flex shrink-0 flex-col border-b border-subtle">
+								{subjectParameter.options.map((option) => {
+									const variable = subjectParameter.resolveSelection(option.value)
+									if (!variable) return null
+									const bound = subjectParameter.boundVariable?.id === variable.id
+									return (
+										<button
+											key={option.value}
+											type="button"
+											aria-pressed={bound}
+											onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
+											data-umami-event="dashboard-parameter-bind-metric-subject"
+											className={`${popoverRowStyles} w-full text-left`}
+										>
+											<span className="min-w-0 flex-1 truncate">{variable.label}</span>
+											<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
+											<span aria-hidden className={popoverSingleSelectCheckStyles(bound)}>
+												<SelectCheckIcon />
+											</span>
+										</button>
+									)
+								})}
+							</div>
+						) : null}
+						{subjectTab === 'chain' ? (
+							filteredChainOptions.length > 0 ? (
+								<ComboboxList ref={chainListRef} className={popoverScrollAreaStyles}>
+									<div className="relative w-full" style={{ height: chainVirtualizer.totalSize }}>
+										{chainVirtualizer.items.map((virtualRow) => {
+											const option = filteredChainOptions[virtualRow.index]!
+											const iconUrl = option.value === 'All' ? null : getItemIconUrl('chain', null, option.value)
 											return (
-												<Button
+												<div
 													key={option.value}
-													variant="toggle"
-													size="md"
-													data-active={bound}
-													aria-pressed={bound}
-													onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
-													data-umami-event="dashboard-parameter-bind-metric-subject"
-													className="w-full justify-between"
+													ref={chainVirtualizer.measureElement}
+													data-index={virtualRow.index}
+													className="absolute inset-x-0 top-0"
+													style={{ transform: `translateY(${virtualRow.start}px)` }}
 												>
-													<span className="truncate">{variable.label}</span>
-													<span className="shrink-0 body-sm text-tertiary">{option.description}</span>
-												</Button>
+													<ComboboxItem
+														value={option.value}
+														setValueOnClick={false}
+														onClick={() => {
+															handleChainSelect(option)
+															closePopover()
+														}}
+														className={popoverMeasuredRowStyles}
+													>
+														<span className="flex min-w-0 items-center gap-2">
+															{iconUrl ? (
+																<img
+																	src={iconUrl}
+																	alt=""
+																	width={20}
+																	height={20}
+																	className="size-5 shrink-0 rounded-full object-cover"
+																/>
+															) : null}
+															<span className="truncate">{option.label}</span>
+														</span>
+														<span aria-hidden className={popoverSingleSelectCheckStyles(metricChain === option.value)}>
+															<SelectCheckIcon />
+														</span>
+													</ComboboxItem>
+												</div>
 											)
 										})}
 									</div>
-								) : null}
-								<div className="rounded-lg border border-dashed border-medium bg-surface p-2.5">
-									<div className="relative mb-1.5">
-										<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
-										<Combobox
-											autoFocus
-											placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
-											render={<Input className={searchFieldInputPlacementStyles} />}
-											aria-label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
-										/>
-									</div>
-									{subjectTab === 'chain' ? (
-										filteredChainOptions.length > 0 ? (
-											<ComboboxList ref={chainListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
-												<div style={{ height: chainVirtualizer.totalSize, position: 'relative' }}>
-													{chainVirtualizer.items.map((virtualRow) => {
-														const option = filteredChainOptions[virtualRow.index]
-														if (!option) return null
-														const isActive = metricChain === option.value
-														const iconUrl = option.value === 'All' ? null : getItemIconUrl('chain', null, option.value)
-														return (
-															<ListRow
-																as={ComboboxItem}
-																selected={isActive}
-																key={option.value}
-																value={option.value}
-																setValueOnClick={false}
-																onClick={() => {
-																	handleChainSelect(option)
-																	closePopover()
-																}}
-																className="justify-between"
-																style={{
-																	position: 'absolute',
-																	top: 0,
-																	left: 0,
-																	width: '100%',
-																	transform: `translateY(${virtualRow.start}px)`
-																}}
-															>
-																<div className="flex min-w-0 items-center gap-2">
-																	{iconUrl ? (
-																		<img
-																			src={iconUrl}
-																			alt={option.label}
-																			width={20}
-																			height={20}
-																			className="size-5 rounded-full object-cover"
-																		/>
-																	) : null}
-																	<span className="truncate">{option.label}</span>
-																</div>
-																<Icon
-																	name="check"
-																	className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`}
-																/>
-															</ListRow>
-														)
-													})}
-												</div>
-											</ComboboxList>
-										) : (
-											<NoResults>No chains found.</NoResults>
-										)
-									) : filteredProtocolOptions.length > 0 ? (
-										<ComboboxList ref={protocolListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
-											<div style={{ height: protocolVirtualizer.totalSize, position: 'relative' }}>
-												{protocolVirtualizer.items.map((virtualRow) => {
-													const option = filteredProtocolOptions[virtualRow.index]
-													if (!option) return null
-													const isActive = metricProtocol === option.value
-													const iconUrl = getItemIconUrl('protocol', option, option.value)
-													return (
-														<ListRow
-															as={ComboboxItem}
-															selected={isActive}
-															key={option.value}
-															value={option.value}
-															setValueOnClick={false}
-															onClick={() => {
-																handleProtocolSelect(option)
-																closePopover()
-															}}
-															className="justify-between"
-															style={{
-																position: 'absolute',
-																top: 0,
-																left: 0,
-																width: '100%',
-																transform: `translateY(${virtualRow.start}px)`
-															}}
-														>
-															<div className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
-																{iconUrl ? (
-																	<img
-																		src={option.logo || iconUrl}
-																		alt={option.label}
-																		width={20}
-																		height={20}
-																		className={`size-5 rounded-full object-cover ${option.isChild ? 'opacity-80' : ''}`}
-																	/>
-																) : null}
-																<div className="flex min-w-0 flex-col">
-																	<span className={`truncate ${option.isChild ? 'text-secondary' : 'text-primary'}`}>
-																		{option.label}
-																	</span>
-																	{option.isChild ? (
-																		<span className="body-sm text-tertiary">Child protocol</span>
-																	) : null}
-																</div>
-															</div>
-															<Icon
-																name="check"
-																className={`size-4 shrink-0 text-link ${isActive ? '' : 'invisible'}`}
+								</ComboboxList>
+							) : (
+								<NoResults>No chains found.</NoResults>
+							)
+						) : filteredProtocolOptions.length > 0 ? (
+							<ComboboxList ref={protocolListRef} className={popoverScrollAreaStyles}>
+								<div className="relative w-full" style={{ height: protocolVirtualizer.totalSize }}>
+									{protocolVirtualizer.items.map((virtualRow) => {
+										const option = filteredProtocolOptions[virtualRow.index]!
+										const iconUrl = getItemIconUrl('protocol', option, option.value)
+										return (
+											<div
+												key={option.value}
+												ref={protocolVirtualizer.measureElement}
+												data-index={virtualRow.index}
+												className="absolute inset-x-0 top-0"
+												style={{ transform: `translateY(${virtualRow.start}px)` }}
+											>
+												<ComboboxItem
+													value={option.value}
+													setValueOnClick={false}
+													onClick={() => {
+														handleProtocolSelect(option)
+														closePopover()
+													}}
+													className={popoverMeasuredRowStyles}
+												>
+													<span className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
+														{iconUrl ? (
+															<img
+																src={option.logo || iconUrl}
+																alt=""
+																width={20}
+																height={20}
+																className={`size-5 shrink-0 rounded-full object-cover ${option.isChild ? 'opacity-80' : ''}`}
 															/>
-														</ListRow>
-													)
-												})}
+														) : null}
+														<span className="flex min-w-0 flex-col">
+															<span className={`truncate ${option.isChild ? 'text-secondary' : 'text-primary'}`}>
+																{option.label}
+															</span>
+															{option.isChild ? <span className="body-sm text-tertiary">Child protocol</span> : null}
+														</span>
+													</span>
+													<span aria-hidden className={popoverSingleSelectCheckStyles(metricProtocol === option.value)}>
+														<SelectCheckIcon />
+													</span>
+												</ComboboxItem>
 											</div>
-										</ComboboxList>
-									) : (
-										<NoResults>No protocols found.</NoResults>
-									)}
+										)
+									})}
 								</div>
-							</div>
-						</div>
+							</ComboboxList>
+						) : (
+							<NoResults>No protocols found.</NoResults>
+						)}
 					</ComboboxProvider>
 				)
-			default:
+			case null:
 				return null
 		}
 	})()
 
-	const handleTokenPress = (token: Exclude<ActiveToken, null>) => () => {
+	const handleTokenPress = (token: MetricToken) => () => {
 		handleTokenClick(token)
 	}
 
@@ -710,7 +671,7 @@ export function MetricSentenceBuilder({
 					<TokenButton
 						label={aggregatorLabel}
 						onClick={handleTokenPress('aggregator')}
-						active={activeToken === 'aggregator'}
+						active={openToken === 'aggregator'}
 						ref={(node) => {
 							anchorRefs.current.aggregator = node
 						}}
@@ -718,7 +679,7 @@ export function MetricSentenceBuilder({
 					<TokenButton
 						label={metricLabel || 'metric'}
 						onClick={handleTokenPress('metric')}
-						active={activeToken === 'metric'}
+						active={openToken === 'metric'}
 						errorId={metricErrorId}
 						ref={(node) => {
 							anchorRefs.current.metric = node
@@ -728,7 +689,7 @@ export function MetricSentenceBuilder({
 					<TokenButton
 						label={subjectLabel}
 						onClick={handleTokenPress('subject')}
-						active={activeToken === 'subject'}
+						active={openToken === 'subject'}
 						errorId={subjectErrorId}
 						ref={(node) => {
 							anchorRefs.current.subject = node
@@ -738,7 +699,7 @@ export function MetricSentenceBuilder({
 					<TokenButton
 						label={windowLabel}
 						onClick={handleTokenPress('window')}
-						active={activeToken === 'window'}
+						active={openToken === 'window'}
 						ref={(node) => {
 							anchorRefs.current.window = node
 						}}
@@ -761,20 +722,50 @@ export function MetricSentenceBuilder({
 					{error}
 				</p>
 			) : null}
-			<Popover
-				store={popover}
-				modal={false}
-				data-metric-token="true"
-				className="z-50 rounded-lg border border-subtle bg-overlay shadow-overlay"
-				style={{
-					width: popoverWidth,
-					maxWidth: 'calc(100vw - 16px)',
-					maxHeight: 'calc(100vh - 32px)',
-					overflow: 'hidden auto'
-				}}
-			>
-				{popoverContent}
-			</Popover>
+			{activeToken ? (
+				<PopoverSurface
+					store={popover}
+					modal={false}
+					variant="list"
+					heading={TOKEN_POPOVERS[activeToken].heading}
+					className={TOKEN_POPOVERS[activeToken].width}
+				>
+					{popoverContent}
+				</PopoverSurface>
+			) : null}
 		</div>
+	)
+}
+
+/** A pick list whose rows carry a label and a one-line description; the picked row shows the check. The rows skip
+    `content-visibility` (popoverMeasuredRowStyles): its placeholder is a one-line row's height. */
+function DescribedOptionRows<T extends string>({
+	options,
+	selected,
+	onSelect
+}: {
+	options: Array<{ value: T; label: string; description: string }>
+	selected: T
+	onSelect: (value: T) => void
+}) {
+	return (
+		<>
+			{options.map((option) => (
+				<button
+					key={option.value}
+					type="button"
+					className={`${popoverMeasuredRowStyles} w-full text-left`}
+					onClick={() => onSelect(option.value)}
+				>
+					<span className="flex min-w-0 flex-col">
+						<span className="label-md">{option.label}</span>
+						<span className="body-sm text-tertiary">{option.description}</span>
+					</span>
+					<span aria-hidden className={popoverSingleSelectCheckStyles(option.value === selected)}>
+						<SelectCheckIcon />
+					</span>
+				</button>
+			))}
+		</>
 	)
 }

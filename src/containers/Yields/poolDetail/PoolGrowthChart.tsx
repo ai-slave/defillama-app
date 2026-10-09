@@ -13,7 +13,7 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
@@ -707,9 +707,7 @@ export function PoolGrowthChart({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : error ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-						Couldn&apos;t load {range} history.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
 				) : !anchoredOn ? (
 					<ChartPanelBodyFallback className="body-sm text-tertiary">
 						No measured redemptions in this range.

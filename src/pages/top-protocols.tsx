@@ -198,7 +198,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							placeholder="Search chains..."
+							placeholder="Search chains…"
 							className={searchFieldInputPlacementStyles}
 						/>
 					</label>

@@ -7,6 +7,7 @@ import { chartDatasets } from '~/containers/Downloads/chart-datasets'
 import { defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { readAppStorage, useSavedDownloads, writeAppStorage } from '~/contexts/LocalStorage'
 import type { FieldControlProps } from '~/ui/Field'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
@@ -162,11 +163,37 @@ test('an engine that failed to load says so, and reopening the editor loads it a
 	engine.send.mockResolvedValueOnce(valueTable(3))
 	await mount()
 	const failure = () => [...document.querySelectorAll('[role="alert"]')].map((node) => node.textContent)
-	expect(failure()).toContain('SQL engine failed to load: WebAssembly blocked.')
+	expect(failure()).toContainEqual(expect.stringContaining('The SQL engine failed to load.'))
 
 	await click('Cancel')
 	await click('Reopen')
 	expect(failure()).toEqual([])
+	await click('Save changes')
+	expect(onEdit.mock.calls[0][1]).toMatchObject({ snapshot: { rows: [[3]] } })
+})
+
+test('Try again on an engine that failed to load keeps the error and its button until the engine loads', async () => {
+	const loaded = Promise.withResolvers<{
+		db: object
+		conn: { send: typeof engine.send; cancelSent: typeof engine.cancelSent }
+	}>()
+	engine.load.mockRejectedValueOnce(new Error('WebAssembly blocked')).mockReturnValueOnce(loaded.promise)
+	engine.send.mockResolvedValueOnce(valueTable(3))
+	await mount()
+	const failure = () => [...document.querySelectorAll('[role="alert"]')].map((node) => node.textContent)
+	const retry = [...document.querySelectorAll('button')].find((node) => accessibleName(node) === 'Try again')!
+	expect(failure()).toContainEqual(expect.stringContaining('The SQL engine failed to load.'))
+
+	await act(async () => {
+		retry.focus()
+		retry.click()
+	})
+	expect(accessibleName(retry)).toBe('Retrying…')
+	expect(document.activeElement).toBe(retry)
+	expect(failure()).toContainEqual(expect.stringContaining('The SQL engine failed to load.'))
+
+	await act(async () => loaded.resolve({ db: {}, conn: { send: engine.send, cancelSent: engine.cancelSent } }))
+	await waitForUi(() => expect(failure()).toEqual([]))
 	await click('Save changes')
 	expect(onEdit.mock.calls[0][1]).toMatchObject({ snapshot: { rows: [[3]] } })
 })

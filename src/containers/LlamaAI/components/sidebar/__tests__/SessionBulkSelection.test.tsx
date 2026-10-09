@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AgenticSidebar } from '../AgenticSidebar'
@@ -118,7 +119,7 @@ test('shows an enabled balance below chat history and opens Balance settings', a
 })
 function button(name: string) {
 	const scope = name === 'Cancel' ? (document.querySelector('[role=alertdialog]:not([hidden])') ?? document) : document
-	const element = [...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === name)
+	const element = [...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)
 	expect(element).toBeDefined()
 	return element!
 }

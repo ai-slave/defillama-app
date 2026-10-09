@@ -329,7 +329,7 @@ export function LiquidationsProtocolsTable({ rows }: { rows: Array<OverviewProto
 			<LiquidationsTableContent
 				toolbar={
 					<TableToolbar>
-						<TableSearchInput columnId="name" placeholder="Search protocols..." />
+						<TableSearchInput columnId="name" placeholder="Search protocols…" />
 						<TableCsvExport filename="liquidations-v2-100k-protocols" />
 					</TableToolbar>
 				}
@@ -351,7 +351,7 @@ export function LiquidationsOverviewChainsTable({ rows }: { rows: Array<Overview
 			<LiquidationsTableContent
 				toolbar={
 					<TableToolbar>
-						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableSearchInput columnId="name" placeholder="Search chains…" />
 						<TableCsvExport filename="liquidations-v2-100k-chains" />
 					</TableToolbar>
 				}
@@ -373,7 +373,7 @@ export function LiquidationsProtocolChainsTable({ rows }: { rows: Array<Protocol
 			<LiquidationsTableContent
 				toolbar={
 					<TableToolbar>
-						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableSearchInput columnId="name" placeholder="Search chains…" />
 						<TableCsvExport filename="liquidations-v2-100k-protocol-chains" />
 					</TableToolbar>
 				}

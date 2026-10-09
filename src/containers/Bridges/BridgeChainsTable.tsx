@@ -196,12 +196,12 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 			<PanelHeader>
 				<PanelTitle as="h1">Chains</PanelTitle>
 				<label className={searchFieldInlineWrapperStyles}>
-					<span className="sr-only">Search...</span>
+					<span className="sr-only">Search…</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search..."
+						placeholder="Search…"
 						className={searchFieldInputPlacementStyles}
 					/>
 				</label>

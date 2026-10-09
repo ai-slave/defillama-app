@@ -238,7 +238,7 @@ function CoinPicker({
 				) : (
 					<>
 						<Icon name="search" height={16} width={16} className="shrink-0 text-tertiary" />
-						<span className="text-tertiary">Search coins...</span>
+						<span className="text-tertiary">Search coins…</span>
 					</>
 				)}
 			</Ariakit.DialogDisclosure>

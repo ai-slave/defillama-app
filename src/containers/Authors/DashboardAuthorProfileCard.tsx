@@ -387,7 +387,8 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					// Nothing to save until a field changes; the line beside it says so.
 					disabled={!isDirty}
 					accessibleWhenDisabled
-					pendingLabel={updateMutation.isPending ? 'Saving…' : null}
+					pendingLabel="Saving…"
+					pending={updateMutation.isPending}
 				>
 					Save profile
 				</Button>

@@ -1,5 +1,6 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { mergeFailedReads, queryReadFailed, type QueryRetry } from '~/utils/query'
 import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAAssetChartTarget, RWAChartMetricKey } from './api.types'
 import { foldRwaChainSeries, rankRwaChains, type RWAChainHistory } from './chainFold'
 import type { RWAPositionalChartDataset } from './chartDataset'
@@ -27,20 +28,28 @@ export type ChainQueries = {
 	/** Every history has loaded or failed. */
 	settled: boolean
 	isLoading: boolean
+	/** One Try again over the histories whose read failed; null when none failed. */
+	failedRead: QueryRetry | null
 	failed: number
-	firstError: unknown
 }
 
-/** A stable reference so React Query reuses the combined result while the histories do not change. */
+/** A stable reference so React Query reuses the combined result while the histories do not change. A failed history
+    counts as failed while its retry runs, so the chart keeps its error and Try again until a history loads. */
 export function combineChainQueries(
-	results: Array<Pick<UseQueryResult<IRWAChartMetricRows>, 'data' | 'error' | 'isLoading'>>
+	results: Array<
+		Pick<
+			UseQueryResult<IRWAChartMetricRows>,
+			'data' | 'isLoading' | 'isFetching' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'refetch'
+		>
+	>
 ): ChainQueries {
+	const failed = results.filter(queryReadFailed)
 	return {
 		rows: results.map((result) => result.data),
-		settled: results.every((result) => result.data !== undefined || result.error != null),
+		settled: results.every((result) => result.data !== undefined || queryReadFailed(result)),
 		isLoading: results.some((result) => result.isLoading),
-		failed: results.filter((result) => result.error != null).length,
-		firstError: results.find((result) => result.error != null)?.error ?? null
+		failedRead: mergeFailedReads(failed),
+		failed: failed.length
 	}
 }
 
@@ -60,7 +69,7 @@ export function useRwaChainChartDataset({
 }: RwaChainChartDatasetRequest): {
 	chartDataset: RWAPositionalChartDataset
 	isChartLoading: boolean
-	chartError: string | null
+	failedRead: QueryRetry | null
 } {
 	const chains = useMemo(() => (enabled ? rankRwaChains(assets, metric) : []), [assets, enabled, metric])
 	const queries = useQueries({
@@ -100,19 +109,18 @@ export function buildRwaChainChartDataset({
 }): {
 	chartDataset: RWAPositionalChartDataset
 	isChartLoading: boolean
-	chartError: string | null
+	failedRead: QueryRetry | null
 } {
-	const { rows, settled, isLoading, failed, firstError } = queries
+	const { rows, settled, isLoading, failed, failedRead } = queries
 	const isChartLoading = enabled && isLoading
-	if (!enabled || !settled) return { chartDataset: EMPTY_DATASET, isChartLoading, chartError: null }
+	if (!enabled || !settled) return { chartDataset: EMPTY_DATASET, isChartLoading, failedRead: null }
 	if (chains.length > 0 && failed === chains.length) {
-		const chartError = firstError instanceof Error ? firstError.message : 'Failed to load chain data.'
-		return { chartDataset: EMPTY_DATASET, isChartLoading, chartError }
+		return { chartDataset: EMPTY_DATASET, isChartLoading, failedRead }
 	}
 	const histories: Array<RWAChainHistory> = []
 	for (const [index, chain] of chains.entries()) {
 		const chainRows = rows[index]
 		if (chainRows !== undefined) histories.push({ chain, rows: chainRows })
 	}
-	return { chartDataset: foldRwaChainSeries({ chains: histories, assets, total }), isChartLoading, chartError: null }
+	return { chartDataset: foldRwaChainSeries({ chains: histories, assets, total }), isChartLoading, failedRead: null }
 }

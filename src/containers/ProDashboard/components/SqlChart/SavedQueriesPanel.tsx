@@ -5,6 +5,7 @@ import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -156,7 +157,8 @@ function InlineRenameInput({
 	const [value, setValue] = useState(initial)
 
 	return (
-		<input
+		<Input
+			variant="inline"
 			ref={focusAndSelect}
 			aria-label="Saved query name"
 			value={value}
@@ -173,7 +175,6 @@ function InlineRenameInput({
 			}}
 			onBlur={() => onCommit(value)}
 			onClick={(e) => e.stopPropagation()}
-			className="min-w-0 rounded-sm bg-page px-1 py-px label-sm text-primary ring-1 ring-brand outline-hidden"
 		/>
 	)
 }

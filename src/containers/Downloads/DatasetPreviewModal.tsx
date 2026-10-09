@@ -607,7 +607,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 								<InlineStatus
 									variant="error"
 									action={
-										<Button size="sm" pendingLabel={isFetching ? 'Retrying…' : null} onClick={() => void refetch()}>
+										<Button size="sm" pendingLabel="Retrying…" pending={isFetching} onClick={() => void refetch()}>
 											Try again
 										</Button>
 									}

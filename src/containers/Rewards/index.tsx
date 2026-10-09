@@ -151,7 +151,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 							type="search"
 							value={search}
 							onChange={(event) => changeSearch(event.currentTarget.value)}
-							placeholder="Search protocols or programs..."
+							placeholder="Search protocols or programs…"
 							className={searchFieldInputPlacementStyles}
 						/>
 					</label>

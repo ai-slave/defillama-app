@@ -486,12 +486,7 @@ function TokensSharedControls({
 
 	return (
 		<>
-			<UrlSearchInput
-				search={search}
-				updateSearch={updateSearch}
-				label="Search tokens"
-				placeholder="Search tokens..."
-			/>
+			<UrlSearchInput search={search} updateSearch={updateSearch} label="Search tokens" placeholder="Search tokens…" />
 			<SelectWithCombobox
 				allValues={chainSelectOptions}
 				includeQueryKey="chains"
@@ -501,7 +496,7 @@ function TokensSharedControls({
 				labelType="smol"
 				variant="filter"
 				size="md"
-				searchPlaceholder="Search chains..."
+				searchPlaceholder="Search chains…"
 				pushQueryUpdates={onChainQueryChange}
 			/>
 			{hasChainFilter ? (
@@ -522,7 +517,7 @@ function TokensSharedControls({
 				variant="filter"
 				size="md"
 				visibleOptionLimit={null}
-				searchPlaceholder="Search categories..."
+				searchPlaceholder="Search categories…"
 			/>
 			<TokensFiltersDialog filters={filters} onFiltersChange={onFiltersChange} />
 		</>

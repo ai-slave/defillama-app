@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { lazy, Suspense, useState } from 'react'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -168,7 +168,7 @@ function PinnedPagesSection({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 				<span>Pinned Pages</span>
 				{pinnedPages.length > 1 ? (
 					<Button variant="ghost" size="sm" onClick={() => setIsReordering((v) => !v)}>
-						{isReordering ? 'Done' : 'Reorder'}
+						<StableLabel labels={['Reorder', 'Done']} current={isReordering ? 'Done' : 'Reorder'} />
 					</Button>
 				) : null}
 			</div>

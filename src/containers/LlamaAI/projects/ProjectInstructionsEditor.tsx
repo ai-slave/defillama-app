@@ -103,7 +103,8 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 								// The retry leaves once the save succeeds; the section keeps focus.
 								ref={focusRegionOnLeave}
 								onClick={() => saveDraft(draft.value.trim() || null)}
-								pendingLabel={update.isPending ? 'Saving…' : null}
+								pendingLabel="Saving…"
+								pending={update.isPending}
 							>
 								Try again
 							</Button>

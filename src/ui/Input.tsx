@@ -1,4 +1,4 @@
-import type { ComponentPropsWithRef, ReactNode } from 'react'
+import { type ComponentPropsWithRef, type ReactNode, useId } from 'react'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
@@ -37,6 +37,10 @@ import { tw } from './tw'
    value, with the recipe's hover, focus and error, because a wrapper's own
    :focus never fires. Variants are props, never recipe strings glued to a
    raw element, so a caller's class can never fight the recipe's.
+
+   Every field renders with an id, its own when the caller (Field, an
+   Ariakit host) passes one, else a generated one, so the browser never
+   reports a field it cannot tell apart from the others.
 
    Search fields: SearchField (./SearchField.tsx) for a search with a clear
    button. A hand-built one renders `<Input className={searchFieldInputPlacementStyles}>`
@@ -96,16 +100,21 @@ export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 botto
 
 export const searchFieldInputPlacementStyles = tw`w-full pl-8`
 
+/* A rename in place (a query tab, a saved row): the field takes the label's own type and stands where the label was,
+   24px inside a 32px row, with a brand ring marking it as editing. A rename with room for a full field (a sidebar row
+   at 36px or more) stays the text variant. */
+const inlineInputStyles = tw`min-w-0 rounded-sm bg-page px-1 py-px text-primary ring-1 ring-brand outline-hidden [font:inherit]`
 const INPUT_VARIANTS = {
 	text: inputStyles,
 	code: codeInputStyles,
-	oneTimeCode: oneTimeCodeInputStyles
+	oneTimeCode: oneTimeCodeInputStyles,
+	inline: inlineInputStyles
 } as const
 
 type InputProps = (
 	| {
 			/** text (default); code for addresses, hex colors and formulas (mono at the same sizes); oneTimeCode for a
-			    verification code (centred, spaced digits). */
+			    verification code (centred, spaced digits); inline for a rename in place inside a tab or a dense row. */
 			variant?: keyof typeof INPUT_VARIANTS
 			prefix?: never
 			suffix?: never
@@ -122,9 +131,12 @@ type InputProps = (
 	className?: string
 } & Omit<ComponentPropsWithRef<'input'>, 'className' | 'prefix'>
 
-export function Input({ variant = 'text', prefix, suffix, className, ...props }: InputProps) {
+export function Input({ variant = 'text', prefix, suffix, className, id, ...props }: InputProps) {
+	// Every field gets an id, so the browser can tell fields apart for autofill. Field and Ariakit hosts pass their own.
+	// An id rather than a generated `name`, which would add a key to a form's submitted data.
+	const fallbackId = useId()
 	if (prefix == null && suffix == null)
-		return <input className={`${INPUT_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
+		return <input id={id ?? fallbackId} className={`${INPUT_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
 	// A div, not a label: the Field's own label names the input, and a second wrapping label would add the prefix to
 	// that name. A press on the fixed text moves focus into the input, as a label would, with the caret on the side
 	// that was pressed (Radix Themes' text field does the same); a link or button inside the text keeps its press.
@@ -149,7 +161,7 @@ export function Input({ variant = 'text', prefix, suffix, className, ...props }:
 					{prefix}
 				</span>
 			) : null}
-			<input className={fieldFrameInputStyles} {...props} />
+			<input id={id ?? fallbackId} className={fieldFrameInputStyles} {...props} />
 			{suffix != null ? (
 				<span data-slot="suffix" className="shrink-0 text-tertiary">
 					{suffix}
@@ -172,6 +184,9 @@ type TextareaProps = {
 } & Omit<ComponentPropsWithRef<'textarea'>, 'className'>
 
 /** Every multiline field. Callers own rows, resizing and height limits. */
-export function Textarea({ variant = 'prose', className, ...props }: TextareaProps) {
-	return <textarea className={`${TEXTAREA_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
+export function Textarea({ variant = 'prose', className, id, ...props }: TextareaProps) {
+	const fallbackId = useId()
+	return (
+		<textarea id={id ?? fallbackId} className={`${TEXTAREA_VARIANTS[variant]} ${className ?? ''}`.trim()} {...props} />
+	)
 }

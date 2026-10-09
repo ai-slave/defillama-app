@@ -615,7 +615,9 @@ function CreateAlertModalForm({
 					size="md"
 					disabled={slackGate === 'channelsFailed'}
 					accessibleWhenDisabled
-					pendingLabel={isPending ? 'Creating…' : slackGate === 'channelsFailed' ? null : slackGate}
+					// The Slack channel list gates the submit: it waits with the list's own label while that loads.
+					pendingLabel={isPending || slackGate === null || slackGate === 'channelsFailed' ? 'Creating…' : slackGate}
+					pending={isPending || (slackGate !== null && slackGate !== 'channelsFailed')}
 				>
 					Create alert
 				</Button>

@@ -1,5 +1,6 @@
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { ErrorLine } from '~/ui/Status'
 import { useProDashboardSave } from '../ProDashboardAPIContext'
 
 export function AutosaveStatus() {
@@ -15,7 +16,8 @@ export function AutosaveStatus() {
 					size="sm"
 					variant={canRetry ? 'secondary' : 'ghost'}
 					onClick={retry}
-					pendingLabel={pending ? 'Saving changes…' : null}
+					pendingLabel="Saving changes…"
+					pending={pending}
 					accessibleWhenDisabled
 					disabled={!canRetry && !pending}
 				>
@@ -27,9 +29,7 @@ export function AutosaveStatus() {
 				{pending ? 'Saving changes' : state?.status === 'success' ? 'Changes saved' : ''}
 			</span>
 			{!pending && state?.status === 'error' ? (
-				<p role="alert" className="text-error">
-					Changes couldn’t be saved. Keep this page open and retry.
-				</p>
+				<ErrorLine inset="none">Changes couldn’t be saved. Keep this page open and retry.</ErrorLine>
 			) : null}
 			{!pending && state?.data?.artifactActivationPending ? (
 				<p role="alert">Dashboard saved, but chart refresh setup is pending.</p>

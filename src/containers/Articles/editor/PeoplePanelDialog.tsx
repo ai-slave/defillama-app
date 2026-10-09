@@ -159,7 +159,8 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						type="submit"
 						size="md"
 						variant="primary"
-						pendingLabel={hasPendingUploads ? 'Uploading images…' : null}
+						pendingLabel="Uploading images…"
+						pending={hasPendingUploads}
 					>
 						{initialConfig ? 'Update panel' : 'Insert panel'}
 					</Button>
@@ -234,7 +235,8 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 					<ImageReplaceTile
 						shape="round"
 						src={item.src}
-						pendingLabel={isUploading ? 'Uploading…' : null}
+						pendingLabel="Uploading…"
+						pending={isUploading}
 						disabled={!articleId}
 						aria-invalid={imageError ? true : undefined}
 						aria-describedby={imageError ? `${fieldId}-image-error` : undefined}
@@ -246,7 +248,8 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 						shape="round"
 						icon="image-plus"
 						label="Upload"
-						pendingLabel={isUploading ? 'Uploading…' : null}
+						pendingLabel="Uploading…"
+						pending={isUploading}
 						disabled={!articleId}
 						aria-invalid={imageError ? true : undefined}
 						aria-describedby={imageError ? `${fieldId}-image-error` : undefined}

@@ -255,7 +255,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 										sortingState={tableSorting}
 										onSortingChange={handleSortingChange}
 										interactionDisabled={showBackgroundLoading}
-										loadingLabel="Loading full dataset..."
+										loadingLabel="Loading full dataset…"
 										appearance="embedded"
 										defaultColumns={defaultColumns}
 									/>

@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { ErrorLine } from '~/ui/Status'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 
@@ -15,31 +16,37 @@ export function EditDoneButton({
 	editing,
 	href,
 	onDone,
-	donePendingLabel
+	refreshingSql
 }: {
 	editing: boolean
 	href: string
 	onDone: () => void
-	donePendingLabel: string | null
+	/** Done waits while the dashboard's SQL cards refresh. */
+	refreshingSql: boolean
 }) {
 	const router = useRouter()
-	const navigation = useMutation({ mutationFn: () => router.push(href, undefined, { shallow: true }) })
+	// Not the mutation's own error, which clears as soon as a retry starts: the line stays until the editor opens.
+	const [navigationFailed, setNavigationFailed] = useState(false)
+	const navigation = useMutation({
+		mutationFn: () => router.push(href, undefined, { shallow: true }),
+		onError: () => setNavigationFailed(true),
+		onSuccess: () => setNavigationFailed(false)
+	})
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
 			<Button
 				type="button"
 				variant="primary"
 				size="md"
-				pendingLabel={editing ? donePendingLabel : navigation.isPending ? 'Opening editor…' : null}
+				pendingLabel={editing ? 'Refreshing SQL…' : 'Opening editor…'}
+				pending={editing ? refreshingSql : navigation.isPending}
 				onClick={editing ? onDone : () => navigation.mutate()}
 			>
 				<Icon name={editing ? 'check' : 'pencil'} height={14} width={14} />
-				{editing ? 'Done' : 'Edit'}
+				<StableLabel labels={['Edit', 'Done']} current={editing ? 'Done' : 'Edit'} />
 			</Button>
-			{!editing && navigation.isError ? (
-				<p role="alert" className="body-md text-error">
-					Could not open the editor. Please try again.
-				</p>
+			{!editing && navigationFailed ? (
+				<ErrorLine inset="none">Couldn&apos;t open the editor. Press Edit to try again.</ErrorLine>
 			) : null}
 		</div>
 	)
@@ -54,11 +61,15 @@ export function CopyDashboardButton({
 }) {
 	const router = useRouter()
 	const buttonRef = useRef<HTMLButtonElement>(null)
+	// Not the mutation's own error, which clears as soon as a retry starts.
+	const [copyError, setCopyError] = useState<string | null>(null)
 	const copy = useMutation({
 		mutationFn: onCopy,
 		onError: (error) => {
+			setCopyError(error.message)
 			if (!buttonRef.current?.isConnected) toast.error(error.message)
-		}
+		},
+		onSuccess: () => setCopyError(null)
 	})
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
@@ -69,7 +80,8 @@ export function CopyDashboardButton({
 				variant="primary"
 				size="md"
 				ref={buttonRef}
-				pendingLabel={copy.isPending ? 'Copying…' : null}
+				pendingLabel="Copying…"
+				pending={copy.isPending}
 				accessibleWhenDisabled
 				disabled={copy.isSuccess}
 				onClick={() => {
@@ -95,10 +107,10 @@ export function CopyDashboardButton({
 					Open copy
 				</BasicLink>
 			) : null}
-			{copy.error ? (
-				<p role="alert" className="max-w-xs body-md text-error">
-					{copy.error.message}
-				</p>
+			{copyError ? (
+				<div className="max-w-xs">
+					<ErrorLine inset="none">{copyError}</ErrorLine>
+				</div>
 			) : null}
 		</div>
 	)
@@ -109,11 +121,15 @@ const focusPageOnLeave = passFocusOnLeave(() => pageContent())
 
 export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void> }) {
 	const buttonRef = useRef<HTMLButtonElement>(null)
+	// Not the mutation's own error, which clears as soon as a retry starts.
+	const [undoError, setUndoError] = useState<string | null>(null)
 	const undo = useMutation({
 		mutationFn: onUndo,
 		onError: (error) => {
+			setUndoError(error.message)
 			if (!buttonRef.current?.isConnected) toast.error(error.message)
-		}
+		},
+		onSuccess: () => setUndoError(null)
 	})
 	return (
 		<div ref={focusPageOnLeave} className="flex min-w-0 flex-col gap-1">
@@ -121,7 +137,8 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 				type="button"
 				variant="secondary"
 				size="md"
-				pendingLabel={undo.isPending ? 'Undoing…' : null}
+				pendingLabel="Undoing…"
+				pending={undo.isPending}
 				ref={buttonRef}
 				onClick={() => undo.mutate()}
 			>
@@ -131,10 +148,10 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 			<span role="status" className="sr-only">
 				{undo.isPending ? 'Undoing AI changes' : ''}
 			</span>
-			{undo.error ? (
-				<p role="alert" className="max-w-xs body-md text-error">
-					{undo.error.message}
-				</p>
+			{undoError ? (
+				<div className="max-w-xs">
+					<ErrorLine inset="none">{undoError}</ErrorLine>
+				</div>
 			) : null}
 		</div>
 	)

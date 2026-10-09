@@ -23,13 +23,19 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
-import { getErrorMessage } from '~/utils/error'
+import { queryReadFailed } from '~/utils/query'
 import { aggregateGroupedChainRows, getTopLevelGroupedChains } from './grouping'
 import { ChainsByCategoryTable } from './Table'
 import { applyChainsTvlSettings, getChainMcapTvlRatio } from './tvl'
@@ -111,8 +117,8 @@ export function ChainsByCategory({
 		totalTvlByDate: chartData.totalTvlByDate,
 		enabledTvlSettings
 	})
-	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
-	const showSharedChartState = (shouldFetchChartData && chartDataQuery.isLoading) || chartErrorMessage != null
+	const chartReadFailed = queryReadFailed(chartDataQuery)
+	const showSharedChartState = chartReadFailed || (shouldFetchChartData && chartDataQuery.isLoading)
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: chainSeries,
@@ -163,13 +169,8 @@ export function ChainsByCategory({
 			{showSharedChartState ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 					<ChartPanel className="relative isolate col-span-full">
-						{chartErrorMessage ? (
-							<ChartPanelExportShellFallback
-								role="alert"
-								className="flex items-center justify-center text-center body-sm text-error"
-							>
-								Failed to load chart data: {chartErrorMessage}
-							</ChartPanelExportShellFallback>
+						{chartReadFailed ? (
+							<ChartPanelBodyError retry={chartDataQuery}>Failed to load chart data.</ChartPanelBodyError>
 						) : (
 							<ChartPanelExportShellFallback
 								role="status"

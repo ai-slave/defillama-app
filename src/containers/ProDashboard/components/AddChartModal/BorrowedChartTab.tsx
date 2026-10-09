@@ -249,7 +249,7 @@ export function BorrowedChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart...</p> : null}
+				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart…</p> : null}
 
 				{hasProtocolSelection && !isLoading && !hasData ? (
 					<p className="body-sm text-tertiary">No data available for this chart type.</p>

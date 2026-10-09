@@ -959,26 +959,30 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				<section className="relative z-10 -mt-12 px-4 pb-10 md:-mt-16 md:px-8 md:pb-14">
 					<div className="mx-auto flex max-w-3xl flex-col gap-4">
 						<MobileAppCard />
-						{/* Card's surface fill cannot carry the MCP violet, so this upsell keeps its own fill and border on Card's
-						    shape: 8px, the card wash on hover, no lift. */}
-						<BasicLink
-							href="/mcp"
-							onClick={() => trackUmamiEvent('llamaai-mcp-upsell-click')}
-							className="hover-wash-card group flex flex-col gap-4 rounded-lg border border-ai-violet-muted bg-ai-violet-faint p-4 sm:flex-row sm:items-center sm:justify-between"
-						>
-							<div>
-								<h3 className="font-semibold text-primary">
-									Building with AI agents? <span className="text-ai-violet">Try our MCP Server</span>
-								</h3>
-								<p className="mt-1 max-w-lg body-md text-secondary">
-									Connect Claude, Cursor, OpenClaw, or any MCP-compatible agent directly to DefiLlama's data. 23 tools
-									for TVL, yields, prices, protocol metrics, and more.
-								</p>
-							</div>
-							<span className="flex min-h-8 shrink-0 items-center self-start rounded-lg border border-ai-violet-muted px-3 py-1.5 label-sm text-ai-violet group-hover:bg-ai-violet-tint group-focus-visible:bg-ai-violet-tint sm:self-center">
-								Explore MCP
-							</span>
-						</BasicLink>
+						{/* The scope re-points the brand tint to LlamaAI's violet (src/styles/themes/llamaai.css). */}
+						<div className="ai-violet-accent contents">
+							<Card
+								as={BasicLink}
+								tone="brand"
+								padding="md"
+								href="/mcp"
+								onClick={() => trackUmamiEvent('llamaai-mcp-upsell-click')}
+								className="hover-wash-card group flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+							>
+								<div>
+									<h3 className="font-semibold text-primary">
+										Building with AI agents? <span className="text-ai-violet">Try our MCP Server</span>
+									</h3>
+									<p className="mt-1 max-w-lg body-md text-secondary">
+										Connect Claude, Cursor, OpenClaw, or any MCP-compatible agent directly to DefiLlama's data. 23 tools
+										for TVL, yields, prices, protocol metrics, and more.
+									</p>
+								</div>
+								<span className="flex min-h-8 shrink-0 items-center self-start rounded-lg border border-ai-violet-muted px-3 py-1.5 label-sm text-ai-violet group-hover:bg-ai-violet-tint group-focus-visible:bg-ai-violet-tint sm:self-center">
+									Explore MCP
+								</span>
+							</Card>
+						</div>
 					</div>
 				</section>
 

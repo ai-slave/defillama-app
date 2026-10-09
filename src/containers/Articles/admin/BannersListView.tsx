@@ -9,7 +9,7 @@ import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/cont
 import { bannerAudienceLabel } from '~/containers/Articles/bannerCountryGroups'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 
@@ -190,16 +190,11 @@ export function BannersListView() {
 									variant="secondary"
 									size="sm"
 									onClick={() => toggleMutation.mutate({ id: banner.id, enabled: !banner.enabled })}
-									pendingLabel={
-										toggleMutation.isPending && toggleMutation.variables.id === banner.id
-											? banner.enabled
-												? 'Disabling…'
-												: 'Enabling…'
-											: null
-									}
+									pendingLabel="Updating…"
+									pending={toggleMutation.isPending && toggleMutation.variables.id === banner.id}
 									disabled={toggleMutation.isPending}
 								>
-									{banner.enabled ? 'Disable' : 'Enable'}
+									<StableLabel labels={['Enable', 'Disable']} current={banner.enabled ? 'Disable' : 'Enable'} />
 								</Button>
 								<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/banners/${banner.id}`}>
 									Edit

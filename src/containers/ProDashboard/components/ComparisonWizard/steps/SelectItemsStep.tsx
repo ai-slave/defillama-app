@@ -312,7 +312,8 @@ export function SelectItemsStep() {
 											<Button
 												type="button"
 												size="sm"
-												pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
+												pendingLabel="Retrying…"
+												pending={protocolCatalog.retrying}
 												onClick={protocolCatalog.retry}
 											>
 												Try again

@@ -606,7 +606,8 @@ function AuthScreen({
 						size="md"
 						className="w-full"
 						disabled={isPending || !turnstileToken}
-						pendingLabel={signupMutation.isPending ? 'Creating account…' : null}
+						pendingLabel="Creating account…"
+						pending={signupMutation.isPending}
 					>
 						Create account
 					</Button>
@@ -676,7 +677,8 @@ function AuthScreen({
 						size="md"
 						className="w-full"
 						disabled={isPending || !turnstileToken}
-						pendingLabel={loginMutation.isPending ? 'Signing in…' : null}
+						pendingLabel="Signing in…"
+						pending={loginMutation.isPending}
 					>
 						Sign in
 					</Button>
@@ -850,7 +852,8 @@ function ForgotPasswordScreen({
 						size="md"
 						className="w-full"
 						disabled={reset.isPending || !turnstileToken}
-						pendingLabel={reset.isPending ? 'Sending reset link…' : null}
+						pendingLabel="Sending reset link…"
+						pending={reset.isPending}
 					>
 						Send reset link
 					</Button>

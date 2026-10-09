@@ -4,10 +4,17 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
 import { ChartRangeControl } from './ChartRangeControl'
@@ -151,13 +158,13 @@ export function VenueChart({
 					updatedAt={null}
 					showGlobalDataNotice={showGlobalDataNotice}
 				>
-					<ChartPanelBodyFallback
-						role={query.isError ? 'alert' : 'status'}
-						aria-live={query.isError ? undefined : 'polite'}
-						className={query.isError ? 'body-sm text-error' : undefined}
-					>
-						{query.isError ? 'Failed to load venue history.' : <LoadingIndicator />}
-					</ChartPanelBodyFallback>
+					{queryReadFailed(query) ? (
+						<ChartPanelBodyError retry={query}>Failed to load venue history.</ChartPanelBodyError>
+					) : (
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					)}
 				</VenueChartFrame>
 			)}
 		</div>

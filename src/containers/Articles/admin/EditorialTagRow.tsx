@@ -58,7 +58,8 @@ export function EditorialTagRow({
 				variant="secondary"
 				size="sm"
 				onClick={onRemove}
-				pendingLabel={removing ? 'Removing…' : null}
+				pendingLabel="Removing…"
+				pending={removing}
 				disabled={pending}
 				accessibleWhenDisabled
 				className={`justify-self-end${leading ? ' sm:col-start-3' : ''}`}

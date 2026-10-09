@@ -92,14 +92,15 @@ describe('profile country view states', () => {
 	const query = (
 		patch: {
 			data?: ExchangeRegionalMetadataModel
-			isLoading?: boolean
-			isError?: boolean
+			failed?: boolean
+			isFetching?: boolean
 		} = {}
 	) => ({
 		data: patch.data,
-		isLoading: patch.isLoading ?? false,
-		isError: patch.isError ?? false,
-		isFetching: false,
+		isFetching: patch.isFetching ?? false,
+		// A failed read is one whose last error is newer than its last data, as queryReadFailed reads it.
+		errorUpdatedAt: patch.failed ? 2 : 0,
+		dataUpdatedAt: patch.data ? 1 : 0,
 		refetch: vi.fn()
 	})
 	const regional = (availability: ExchangeRegionStatus): ExchangeRegionalMetadataModel => {
@@ -118,13 +119,18 @@ describe('profile country view states', () => {
 
 	test('represents global, loading, and error without regional metadata', () => {
 		expect(resolveProfileCountryView(null, query())).toEqual({ status: 'global' })
-		expect(resolveProfileCountryView('DE', query({ isLoading: true }))).toEqual({
+		expect(resolveProfileCountryView('DE', query({ isFetching: true }))).toEqual({
 			status: 'loading',
 			country: 'DE'
 		})
-		expect(resolveProfileCountryView('DE', query({ isError: true }))).toMatchObject({
+		expect(resolveProfileCountryView('DE', query({ failed: true }))).toMatchObject({
 			status: 'error',
 			country: 'DE'
+		})
+		// Try again keeps the error and its button on screen while the read runs again.
+		expect(resolveProfileCountryView('DE', query({ failed: true, isFetching: true }))).toMatchObject({
+			status: 'error',
+			retrying: true
 		})
 	})
 

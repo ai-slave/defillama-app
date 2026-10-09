@@ -12,10 +12,11 @@ import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelCon
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { queryReadFailed } from '~/utils/query'
 import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { formatSonicCount } from './format'
@@ -243,7 +244,8 @@ const columns = columnHelper.columns([
 ])
 
 export default function FeeM() {
-	const { data, isLoading } = useFeeMData()
+	const query = useFeeMData()
+	const data = query.data
 
 	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
@@ -255,8 +257,14 @@ export default function FeeM() {
 		}
 	})
 
-	if (isLoading) return <TabStatus variant="loading" />
-	if (!data) return <TabStatus variant="error">Couldn't load FeeM data.</TabStatus>
+	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
+	if (queryReadFailed(query) && !query.data)
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load FeeM data.
+			</PanelStatus>
+		)
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">

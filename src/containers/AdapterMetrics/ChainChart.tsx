@@ -18,12 +18,12 @@ import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { getAdapterDashboardType } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
-import { getErrorMessage } from '~/utils/error'
 import { chainIconUrl } from '~/utils/icons'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { fetchAdapterChainChartDataByProtocolBreakdown, fetchChainsByAdapterPageChartData } from './api'
 import { buildAdapterByChainCombinedChartPresentation, type CombinedChartPresentation } from './combinedChart'
@@ -75,10 +75,11 @@ const CHART_VIEW_MODE_OPTIONS = [
 	{ key: 'Breakdown', name: 'Breakdown' }
 ] as const
 const EMPTY_DATASET: MultiSeriesTimeSeriesDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_PROTOCOL_DIMENSIONS: Array<string> = []
 const EMPTY_COMBINED_CHART_PRESENTATION: CombinedChartPresentation = { dataset: EMPTY_DATASET, charts: [] }
 type BreakdownChartDataState =
 	| { kind: 'loading' }
-	| { kind: 'error'; message: string }
+	| { kind: 'error'; retry: QueryRetry }
 	| {
 			kind: 'ready'
 			chartData: MultiSeriesTimeSeriesDataset
@@ -631,9 +632,9 @@ export function AdapterByChainChart({
 				</ScopeNote>
 			) : null}
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
-				<ChartPanelBodyFallback className="body-sm text-error" role="alert">
-					{breakdownChartDataState.message}
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyError retry={breakdownChartDataState.retry}>
+					Couldn&apos;t load the protocol breakdown.
+				</ChartPanelBodyError>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />
@@ -724,7 +725,7 @@ function useAdapterByChainBreakdownChartData({
 		[tableProtocols]
 	)
 
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: ['adapter-breakdown-chart', adapterType, chain, safeDataType, breakdownNormalization.signature],
 		queryFn: async () => {
 			const chart = await fetchAdapterChainChartDataByProtocolBreakdown({
@@ -748,25 +749,24 @@ function useAdapterByChainBreakdownChartData({
 		enabled
 	})
 
-	return React.useMemo(() => {
-		if (!enabled) {
-			return { kind: 'ready', chartData: EMPTY_DATASET, protocolDimensions: [] }
-		}
+	// No memo: the error state carries the query itself, whose isFetching drives the retry button.
+	if (!enabled) {
+		return { kind: 'ready', chartData: EMPTY_DATASET, protocolDimensions: EMPTY_PROTOCOL_DIMENSIONS }
+	}
 
-		if (isLoading) {
-			return { kind: 'loading' }
-		}
+	if (queryReadFailed(query)) {
+		return { kind: 'error', retry: query }
+	}
 
-		if (error) {
-			return { kind: 'error', message: getErrorMessage(error) }
-		}
+	if (query.isLoading) {
+		return { kind: 'loading' }
+	}
 
-		return {
-			kind: 'ready',
-			chartData: data?.chartData ?? EMPTY_DATASET,
-			protocolDimensions: data?.protocolDimensions ?? []
-		}
-	}, [data, enabled, error, isLoading])
+	return {
+		kind: 'ready',
+		chartData: query.data?.chartData ?? EMPTY_DATASET,
+		protocolDimensions: query.data?.protocolDimensions ?? EMPTY_PROTOCOL_DIMENSIONS
+	}
 }
 
 export function ChainsByAdapterChart({
@@ -802,11 +802,7 @@ export function ChainsByAdapterChart({
 		[allChains, router.query]
 	)
 	const shouldFetchBaseChartData = chartData.source.length === 0 && dataType != null
-	const {
-		data: baseChartData,
-		error: baseChartError,
-		isLoading: isBaseChartLoading
-	} = useQuery({
+	const baseChartQuery = useQuery({
 		queryKey: ['page-data', 'dimension-adapters', 'chains-chart', adapterType, dataType],
 		queryFn: dataType === null ? skipToken : () => fetchChainsByAdapterPageChartData({ adapterType, dataType }),
 		staleTime: 60 * 60 * 1000,
@@ -814,7 +810,7 @@ export function ChainsByAdapterChart({
 		retry: 0,
 		enabled: shouldFetchBaseChartData
 	})
-	const currentChartData = baseChartData ?? chartData
+	const currentChartData = baseChartQuery.data ?? chartData
 
 	const chartKind = chartState.chartKind
 	const chartGroupBy = chartState.groupBy
@@ -942,7 +938,6 @@ export function ChainsByAdapterChart({
 				return assertNever(deferredChartPresentation)
 		}
 	}, [deferredChartPresentation])
-	const baseChartErrorMessage = baseChartError ? getErrorMessage(baseChartError) : null
 	const canExportChart =
 		(deferredChartPresentation.kind !== 'treemap' && deferredChartPresentation.kind !== 'hbar') ||
 		deferredChartPresentation.data.length > 0
@@ -1031,7 +1026,9 @@ export function ChainsByAdapterChart({
 					/>
 				}
 			>
-				{isBaseChartLoading ? (
+				{queryReadFailed(baseChartQuery) ? (
+					<ChartPanelBodyError retry={baseChartQuery}>Failed to load chart data.</ChartPanelBodyError>
+				) : baseChartQuery.isLoading ? (
 					<div
 						role="status"
 						aria-live="polite"
@@ -1040,14 +1037,6 @@ export function ChainsByAdapterChart({
 					>
 						<LoadingIndicator />
 						<span className="sr-only">Loading chart data</span>
-					</div>
-				) : baseChartErrorMessage ? (
-					<div
-						role="alert"
-						className="flex items-center justify-center p-4 text-center body-sm text-error"
-						style={{ height: chartHeight }}
-					>
-						Failed to load chart data: {baseChartErrorMessage}
 					</div>
 				) : deferredChartPresentation.kind === 'treemap' ? (
 					<BuilderTreemapChart data={deferredChartPresentation.data} height={chartHeight} onReady={handleChartReady} />

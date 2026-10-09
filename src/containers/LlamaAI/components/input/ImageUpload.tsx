@@ -9,6 +9,7 @@ import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -172,11 +173,14 @@ export function TextChip({
 	disabled?: boolean
 }) {
 	const statusId = useId()
-	const [openStatus, setOpenStatus] = useState<'idle' | 'pending' | 'error'>('idle')
+	// `retrying` is an open that runs after a failure: the failure stays on screen until it succeeds.
+	const [openStatus, setOpenStatus] = useState<'idle' | 'pending' | 'retrying' | 'error'>('idle')
+	const opening = openStatus === 'pending' || openStatus === 'retrying'
+	const failed = openStatus === 'error' || openStatus === 'retrying'
 	const handleOpen = async () => {
 		if (!onOpen) return
-		if (openStatus === 'pending') return
-		setOpenStatus('pending')
+		if (opening) return
+		setOpenStatus(openStatus === 'error' ? 'retrying' : 'pending')
 		try {
 			await onOpen()
 			setOpenStatus('idle')
@@ -197,9 +201,9 @@ export function TextChip({
 				type={onOpen ? 'button' : undefined}
 				onClick={onOpen ? handleOpen : undefined}
 				aria-label={onOpen ? (isPasted ? 'Open pasted content' : `Open ${name}`) : undefined}
-				aria-disabled={openStatus === 'pending'}
-				aria-busy={openStatus === 'pending'}
-				aria-describedby={openStatus === 'error' ? statusId : undefined}
+				aria-disabled={opening}
+				aria-busy={opening}
+				aria-describedby={failed ? statusId : undefined}
 				className={`flex min-h-14 w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left ${onOpen ? 'cursor-pointer hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-progress' : ''}`}
 			>
 				<Icon name="file-text" height={16} width={16} className="shrink-0 text-secondary" />
@@ -217,7 +221,7 @@ export function TextChip({
 								<span className="body-sm text-secondary">{size}</span>
 							</>
 						) : null}
-						{openStatus === 'pending' ? (
+						{opening ? (
 							<span role="status" aria-label="Opening attachment">
 								<LoadingSpinner size={14} />
 							</span>
@@ -225,10 +229,10 @@ export function TextChip({
 					</div>
 				</div>
 			</Header>
-			{openStatus === 'error' ? (
-				<p id={statusId} role="alert" className="mt-1 body-sm text-error">
-					Couldn&apos;t open file. Select it to try again.
-				</p>
+			{failed ? (
+				<div id={statusId} className="px-2.5 pb-2">
+					<ErrorLine inset="none">Couldn&apos;t open file. Select it to try again.</ErrorLine>
+				</div>
 			) : null}
 			{upload && onRetry ? <UploadStatus name={name} upload={upload} onRetry={onRetry} disabled={disabled} /> : null}
 			{onRemove ? (

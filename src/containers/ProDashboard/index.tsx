@@ -223,7 +223,8 @@ function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) 
 					square={action.square ?? false}
 					aria-label={action.label}
 					aria-disabled={action.disabled || undefined}
-					pendingLabel={action.busy ? action.label : null}
+					pendingLabel={action.label}
+					pending={action.busy}
 					onClick={() => {
 						if (!action.disabled) void action.onSelect()
 					}}
@@ -674,7 +675,7 @@ function ProDashboardContent() {
 									editing={mode === 'edit'}
 									href={dashboardModeHref('edit')}
 									onDone={finishEditing}
-									donePendingLabel={sqlRefreshActive ? 'Refreshing SQL…' : null}
+									refreshingSql={sqlRefreshActive}
 								/>
 							) : null}
 							{isReadOnly && currentDashboard?.user !== user?.id ? (

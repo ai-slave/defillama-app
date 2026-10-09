@@ -18,7 +18,13 @@ import {
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -290,9 +296,7 @@ function ReferenceRatesSummary({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : chartStatus === 'error' ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-						Couldn't load {range} history.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyError>Couldn&apos;t load {range} history.</ChartPanelBodyError>
 				) : (
 					<RatesChart
 						points={points}

@@ -102,7 +102,8 @@ export function SubscribeAPICard({
 									size="lg"
 									className="w-full"
 									onClick={handleUpgradeToYearly}
-									pendingLabel={loading === 'stripe' ? 'Processing…' : null}
+									pendingLabel="Processing…"
+									pending={loading === 'stripe'}
 								>
 									Upgrade to yearly
 								</Button>

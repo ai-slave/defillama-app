@@ -31,7 +31,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { InlineStatus } from '~/ui/Status'
+import { ErrorLine, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { getErrorMessage } from '~/utils/error'
@@ -71,6 +71,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const terminalSymbol = useTerminalEnabled() ? session.terminalSymbol : null
 
 	const [isEditing, setIsEditing] = useState(false)
+	// The last failures, kept while a retry runs: a mutation clears its own error when the retry starts.
+	const [renameError, setRenameError] = useState<string | null>(null)
+	const [menuError, setMenuError] = useState<string | null>(null)
 	const formRef = useRef<HTMLFormElement>(null)
 	const renameRef = useRef<HTMLButtonElement>(null)
 	// The rename form leaves with focus; the Rename button that opened it takes it back.
@@ -95,9 +98,14 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					)
 				})
 			]),
-		onSuccess: () => trackUmamiEvent('llamaai-session-share'),
+		onSuccess: () => {
+			setMenuError(null)
+			trackUmamiEvent('llamaai-session-share')
+		},
 		onError: (error) => {
-			if (error !== PUBLISH_FAILED && !menuContentRef.current?.isConnected) toast.error('Failed to copy link')
+			if (error === PUBLISH_FAILED) return
+			setMenuError("Couldn't copy the link. Try again.")
+			if (!menuContentRef.current?.isConnected) toast.error('Failed to copy link')
 		}
 	})
 	// Fast consecutive copies can batch away the pending render; each attempt needs a fresh timer.
@@ -123,18 +131,15 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			return response.json()
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] }),
-		onError: () => {
+		// Making the conversation private reports its failure in its own confirm dialog.
+		onError: (_error, makePublic) => {
+			if (makePublic) setMenuError("Couldn't make this conversation public. Try again.")
 			if (!session.isPublic && !menuContentRef.current?.isConnected) toast.error('Failed to make session public')
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		}
 	})
 
-	const menu = Ariakit.useMenuStore({
-		setOpen: () => {
-			if (copyLink.isError) copyLink.reset()
-			if (visibility.isError) visibility.reset()
-		}
-	})
+	const menu = Ariakit.useMenuStore({ setOpen: () => setMenuError(null) })
 
 	const updateTitle = useUpdateSessionTitle()
 	// The parent also clears queue and prompt-failure state; each row owns its pending feedback.
@@ -206,6 +211,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			await updateTitle.mutateAsync({ sessionId: session.sessionId, title, projectId: session.projectId })
 			closeRename()
 		} catch (error) {
+			setRenameError(getErrorMessage(error))
 			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
 		}
 	}
@@ -233,7 +239,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					defaultValue={session.title}
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
-					aria-invalid={updateTitle.error ? true : undefined}
+					aria-invalid={renameError ? true : undefined}
 					className="min-w-0 flex-1 truncate"
 					// Read-only, not disabled, while saving: a disabled field drops focus to the page, and the rename could no
 					// longer hand it back to its button.
@@ -246,7 +252,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						variant="primary"
 						type="submit"
 						aria-label={updateTitle.isPending ? 'Saving session title' : 'Save session title'}
-						pendingLabel={updateTitle.isPending ? 'Saving…' : null}
+						pendingLabel="Saving…"
+						pending={updateTitle.isPending}
 					>
 						Save
 					</Button>
@@ -267,9 +274,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						<Icon name="x" height={16} width={16} className="shrink-0" />
 					</Tooltip>
 				</div>
-				{updateTitle.error ? (
+				{renameError ? (
 					<div className="w-full p-1.5">
-						<InlineStatus variant="error">{updateTitle.error.message} Edit the title or save again.</InlineStatus>
+						<InlineStatus variant="error">{renameError} Edit the title or save again.</InlineStatus>
 					</div>
 				) : null}
 			</form>
@@ -335,7 +342,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							ref={renameRef}
 							aria-label={`Rename ${session.title}`}
 							onClick={() => {
-								updateTitle.reset()
+								setRenameError(null)
 								setIsEditing(true)
 							}}
 							disabled={updateTitle.isPending || deletion.isPending || isRestoring}
@@ -415,10 +422,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							</MenuItem>
 							{session.isPublic ? (
 								<MenuItem
-									onClick={() => {
-										visibility.reset()
-										setConfirmPrivate(true)
-									}}
+									onClick={() => setConfirmPrivate(true)}
 									hideOnClick={false}
 									accessibleWhenDisabled
 									disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
@@ -444,16 +448,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								Delete session
 							</MenuItem>
 						</Ariakit.MenuList>
-						{copyLink.error && copyLink.error !== PUBLISH_FAILED ? (
-							<p role="alert" className="px-3 py-2 body-sm text-error">
-								Could not copy the link. Please try again.
-							</p>
-						) : null}
-						{visibility.error && !confirmPrivate ? (
-							<p role="alert" className="px-3 py-2 body-sm text-error">
-								Failed to update visibility. Please try again.
-							</p>
-						) : null}
+						{menuError ? <ErrorLine inset="menuRow">{menuError}</ErrorLine> : null}
 					</MenuSurface>
 				</Ariakit.MenuProvider>
 			</div>

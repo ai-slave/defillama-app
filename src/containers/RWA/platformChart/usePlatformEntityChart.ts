@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { mergeFailedReads } from '~/utils/query'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from '../api.types'
 import { getRwaChartTotalLabel } from '../chartAggregation'
 import { aggregateRWAFlowRows, type RWAFlowGrouping } from '../flows'
@@ -119,11 +120,7 @@ export function usePlatformEntityChart({
 		(onChain.isChartLoading && (selected.includes('onChainMcap') || selected.includes('activeShare'))) ||
 		(defi.isChartLoading && (selected.includes('defiActiveTvl') || selected.includes('utilization'))) ||
 		(wantsFlows && flowSeries.isLoading)
-	const error =
-		perAsset.chartError ??
-		onChain.chartError ??
-		defi.chartError ??
-		(flowSeries.error ? 'Failed to load flow data.' : null)
+	const failedRead = mergeFailedReads([perAsset.failedRead, onChain.failedRead, defi.failedRead, flowSeries.failedRead])
 
-	return { chart, isLoading, error }
+	return { chart, isLoading, failedRead }
 }

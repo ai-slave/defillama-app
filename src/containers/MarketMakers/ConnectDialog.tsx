@@ -24,7 +24,7 @@ import { Input } from '~/ui/Input'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine, InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { emailError } from '~/utils/email'
 import { useSubmitLead } from './client'
@@ -103,9 +103,7 @@ function TokenCombobox({
 						<LoadingIndicator label="Searching" />
 					</div>
 				) : results.isError ? (
-					<p role="alert" className="px-3 py-6 text-center body-sm text-error">
-						Couldn&apos;t search tokens.
-					</p>
+					<ErrorLine inset="menuRow">Couldn&apos;t search tokens. Edit the search to try again.</ErrorLine>
 				) : tokens.length === 0 ? (
 					<p role="status" className="px-3 py-6 text-center body-sm text-tertiary">
 						No tokens found
@@ -417,7 +415,7 @@ function ConnectForm({
 						{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 					</DialogBody>
 					<DialogFooter dismiss={<DialogCancelButton />}>
-						<Button type="submit" variant="primary" size="md" pendingLabel={submit.isPending ? 'Submitting…' : null}>
+						<Button type="submit" variant="primary" size="md" pendingLabel="Submitting…" pending={submit.isPending}>
 							Submit request
 						</Button>
 					</DialogFooter>

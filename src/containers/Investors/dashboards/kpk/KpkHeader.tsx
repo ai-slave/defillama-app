@@ -1,3 +1,4 @@
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { formatDate } from '~/utils/dateFormat'
 import { useTab, type KpkLinkKey, type KpkMetadata } from './api'
 
@@ -27,15 +28,9 @@ export default function KpkHeader() {
 						const url = data?.links?.[key]
 						if (!url) return null
 						return (
-							<a
-								key={key}
-								href={url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="rounded-full border border-medium px-2.5 py-1 label-sm text-secondary transition-colors hover:border-brand hover:text-primary"
-							>
+							<ExternalLinkButton key={key} href={url}>
 								{LINK_LABELS[key]}
-							</a>
+							</ExternalLinkButton>
 						)
 					})}
 				</nav>

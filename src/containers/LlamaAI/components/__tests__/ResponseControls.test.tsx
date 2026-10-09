@@ -66,14 +66,23 @@ test('the copied confirmation returns to the copy label after two seconds', asyn
 	expect(copyButton().getAttribute('aria-label')).toBe('Copy')
 })
 
-test('clipboard failure is visible and the same control retries successfully', async () => {
+test('a clipboard failure stays visible while the same control retries, until the retry succeeds', async () => {
 	writeText.mockRejectedValue(new Error('Clipboard denied'))
 	await act(async () => copyButton().click())
 	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
 	expect(copyButton().hasAttribute('aria-disabled')).toBe(false)
 	expect(copyButton().getAttribute('aria-label')).toBe('Retry copy')
-	writeText.mockResolvedValue(undefined)
+	let finish!: () => void
+	writeText.mockImplementation(
+		() =>
+			new Promise<void>((resolve) => {
+				finish = resolve
+			})
+	)
 	await act(async () => copyButton().click())
+	expect(copyButton().getAttribute('aria-label')).toBe('Copying…')
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
+	await act(async () => finish())
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(copyButton().getAttribute('aria-label')).toBe('Copied')
 })

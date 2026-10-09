@@ -281,7 +281,7 @@ export default function NewslettersPage() {
 									)}
 								</Field>
 
-								<Button type="submit" variant="primary" size="lg" pendingLabel={isPending ? 'Subscribing…' : null}>
+								<Button type="submit" variant="primary" size="lg" pendingLabel="Subscribing…" pending={isPending}>
 									{buttonText}
 								</Button>
 

@@ -266,7 +266,7 @@ export function ProfileTokenTable({
 					{leadingControls ? <div className="mr-auto flex items-center overflow-x-auto">{leadingControls}</div> : null}
 					<TableSearchInput
 						columnId="token"
-						placeholder="Search tokens..."
+						placeholder="Search tokens…"
 						className={leadingControls ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}
 					/>
 					<TableColumnSelect />

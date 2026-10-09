@@ -479,6 +479,7 @@ export default function MCPContainer() {
 				<Card
 					as="a"
 					href="/ai"
+					tone="warning"
 					padding="md"
 					onClick={() => trackUmamiEvent('mcp-llamaai-upsell-click')}
 					className="hover-wash-card mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"

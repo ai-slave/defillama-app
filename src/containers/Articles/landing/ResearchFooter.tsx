@@ -250,7 +250,8 @@ function FooterMediaKit() {
 						type="submit"
 						tone="brand"
 						size="md"
-						pendingLabel={isPending ? 'Sending…' : null}
+						pendingLabel="Sending…"
+						pending={isPending}
 						disabled={isSent}
 						className="shrink-0"
 					>

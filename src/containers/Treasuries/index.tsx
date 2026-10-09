@@ -40,11 +40,7 @@ export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Treasuries
 					</PanelTitle>
-					<TableSearchInput
-						columnId="name"
-						placeholder="Search projects..."
-						className={searchFieldInlineWrapperStyles}
-					/>
+					<TableSearchInput columnId="name" placeholder="Search projects…" className={searchFieldInlineWrapperStyles} />
 					<TableCsvExport filename={entity ? 'entities' : 'treasuries'} />
 				</PanelHeader>
 				<VirtualSearchTableView />

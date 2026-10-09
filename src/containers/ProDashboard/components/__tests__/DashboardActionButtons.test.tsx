@@ -136,7 +136,7 @@ test.each([
 test('opening the editor blocks repeated navigation and exposes a retry after failure', async () => {
 	const route = Promise.withResolvers<boolean>()
 	push.mockReturnValueOnce(route.promise).mockResolvedValueOnce(true)
-	await render(<EditDoneButton editing={false} href="/pro/example/edit" onDone={vi.fn()} donePendingLabel={null} />)
+	await render(<EditDoneButton editing={false} href="/pro/example/edit" onDone={vi.fn()} refreshingSql={false} />)
 	button('Edit').focus()
 	await click('Edit')
 	await waitForUi(() => expect(button('Opening editor…')?.getAttribute('aria-disabled')).toBe('true'))
@@ -145,7 +145,7 @@ test('opening the editor blocks repeated navigation and exposes a retry after fa
 	expect(push).toHaveBeenCalledExactlyOnceWith('/pro/example/edit', undefined, { shallow: true })
 	await act(async () => route.reject(new Error('Offline')))
 	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Could not open the editor')
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't open the editor")
 	)
 	await click('Edit')
 	await waitForUi(() => expect(push).toHaveBeenCalledTimes(2))

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { RWAPositionalChartDataset } from '../chartDataset'
 import { spotAsset } from '../table/__tests__/fixtures'
 import { buildRwaChainChartDataset, combineChainQueries } from '../useChainChartDataset'
@@ -7,9 +7,24 @@ const total: RWAPositionalChartDataset = { dimensions: ['timestamp', 'Total Acti
 const chains = ['Ethereum', 'Solana']
 const EMPTY = { source: [], dimensions: ['timestamp'] }
 
-const loaded = (value: number) => ({ data: [{ timestamp: 1, 'ondo/usdy': value }], error: null, isLoading: false })
-const loading = { data: undefined, error: null, isLoading: true }
-const failed = (message: string) => ({ data: undefined, error: new Error(message), isLoading: false })
+const settledQuery = { isLoading: false, isFetching: false, refetch: vi.fn() }
+const loaded = (value: number) => ({
+	...settledQuery,
+	data: [{ timestamp: 1, 'ondo/usdy': value }],
+	errorUpdatedAt: 0,
+	dataUpdatedAt: 1
+})
+const loading = {
+	...settledQuery,
+	data: undefined,
+	errorUpdatedAt: 0,
+	dataUpdatedAt: 0,
+	isLoading: true,
+	isFetching: true
+}
+const failed = () => ({ ...settledQuery, refetch: vi.fn(), data: undefined, errorUpdatedAt: 1, dataUpdatedAt: 0 })
+// A retry from an error moves the query back to pending: isLoading again, while the attempt times keep the failure.
+const retrying = () => ({ ...failed(), isLoading: true, isFetching: true })
 
 function chainChart(results: Parameters<typeof combineChainQueries>[0], enabled = true) {
 	return buildRwaChainChartDataset({
@@ -29,7 +44,7 @@ describe('buildRwaChainChartDataset', () => {
 				source: [[1, 800_000, 600_000, 200_000]]
 			},
 			isChartLoading: false,
-			chartError: null
+			failedRead: null
 		})
 	})
 
@@ -37,34 +52,48 @@ describe('buildRwaChainChartDataset', () => {
 		expect(chainChart([loaded(600_000), loading])).toEqual({
 			chartDataset: EMPTY,
 			isChartLoading: true,
-			chartError: null
+			failedRead: null
 		})
 	})
 
 	test('drops a failed chain into Others', () => {
-		expect(chainChart([loaded(600_000), failed('no solana')])).toEqual({
+		expect(chainChart([loaded(600_000), failed()])).toEqual({
 			chartDataset: {
 				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Others'],
 				source: [[1, 800_000, 600_000, 200_000]]
 			},
 			isChartLoading: false,
-			chartError: null
+			failedRead: null
 		})
 	})
 
-	test('errors only when every chain failed', () => {
-		expect(chainChart([failed('no ethereum'), failed('no solana')])).toEqual({
-			chartDataset: EMPTY,
-			isChartLoading: false,
-			chartError: 'no ethereum'
-		})
+	test('errors only when every chain failed, and its Try again reruns each chain', () => {
+		const ethereum = failed()
+		const solana = failed()
+		const chart = chainChart([ethereum, solana])
+		expect([chart.chartDataset, chart.isChartLoading, chart.failedRead?.isFetching]).toEqual([EMPTY, false, false])
+		chart.failedRead?.refetch()
+		expect([ethereum.refetch.mock.calls.length, solana.refetch.mock.calls.length]).toEqual([1, 1])
+	})
+
+	test('keeps the error while a retry runs', () => {
+		const chart = chainChart([retrying(), retrying()])
+		expect([chart.chartDataset, chart.failedRead?.isFetching]).toEqual([EMPTY, true])
+	})
+
+	test('folds the loaded chains while a retried chain still runs', () => {
+		const chart = chainChart([loaded(600_000), retrying()])
+		expect([chart.chartDataset.dimensions, chart.failedRead]).toEqual([
+			['timestamp', 'Total Active AUM', 'Ethereum', 'Others'],
+			null
+		])
 	})
 
 	test('returns an empty dataset while disabled', () => {
 		expect(chainChart([loaded(600_000), loaded(200_000)], false)).toEqual({
 			chartDataset: EMPTY,
 			isChartLoading: false,
-			chartError: null
+			failedRead: null
 		})
 	})
 })

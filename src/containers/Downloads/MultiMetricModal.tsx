@@ -868,7 +868,7 @@ function CenteredError({ error, retrying, onRetry }: { error: unknown; retrying:
 			<InlineStatus
 				variant="error"
 				action={
-					<Button size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={onRetry}>
+					<Button size="sm" pendingLabel="Retrying…" pending={retrying} onClick={onRetry}>
 						Try again
 					</Button>
 				}

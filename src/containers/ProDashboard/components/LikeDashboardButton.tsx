@@ -30,7 +30,8 @@ export function LikeDashboardButton({
 					variant="ghost"
 					onClick={() => toggleLike()}
 					disabled={!isAuthenticated}
-					pendingLabel={isLiking ? 'Saving…' : null}
+					pendingLabel="Saving…"
+					pending={isLiking}
 				/>
 			}
 		>

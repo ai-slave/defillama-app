@@ -629,7 +629,8 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 						title="Delete alert?"
 						description={`“${alert.title}” stops running and its deliveries end. This can’t be undone.`}
 						confirmLabel="Delete"
-						pendingLabel={deleteAlertMutation.isPending ? 'Deleting…' : null}
+						pendingLabel="Deleting…"
+						pending={deleteAlertMutation.isPending}
 						error={deleteFailed ? "Couldn't delete the alert. Try again." : null}
 						onConfirm={() => {
 							// A deleted row takes this confirmation and its trigger with it. The confirmation closes first, onto a
@@ -957,7 +958,13 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 					size="md"
 					disabled={slackGate === 'channelsFailed'}
 					accessibleWhenDisabled
-					pendingLabel={updateAlertMutation.isPending ? 'Saving…' : slackGate === 'channelsFailed' ? null : slackGate}
+					// The Slack channel list gates the submit: it waits with the list's own label while that loads.
+					pendingLabel={
+						updateAlertMutation.isPending || slackGate === null || slackGate === 'channelsFailed'
+							? 'Saving…'
+							: slackGate
+					}
+					pending={updateAlertMutation.isPending || (slackGate !== null && slackGate !== 'channelsFailed')}
 				>
 					Save
 				</Button>

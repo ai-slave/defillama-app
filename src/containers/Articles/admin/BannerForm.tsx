@@ -726,7 +726,8 @@ export function BannerForm({ banner }: Props) {
 						<Button
 							variant="primary"
 							size="md"
-							pendingLabel={saveMutation.isPending ? 'Saving…' : null}
+							pendingLabel="Saving…"
+							pending={saveMutation.isPending}
 							type="submit"
 							disabled={!dirty && !!banner}
 							accessibleWhenDisabled

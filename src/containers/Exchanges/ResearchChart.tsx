@@ -2,9 +2,16 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ASSET_BRAND_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import type { QueryRetry } from '~/utils/query'
 import { researchHallmarks } from './chartHallmarks'
 import type { ExchangeResearchChartModel } from './models'
 import type { ResearchPresentation } from './researchPresentation'
@@ -146,21 +153,22 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 export function ResearchChartStatus({
 	presentation,
 	toolbar,
-	status
+	failedRead
 }: {
 	presentation: ResearchPresentation
 	toolbar?: React.ReactNode
-	status: 'loading' | 'error'
+	/** The read that failed, for the chart's Try again; null while the chart loads. */
+	failedRead: QueryRetry | null
 }) {
 	return (
 		<ResearchChartFrame title={presentation.title} description={presentation.description} toolbar={toolbar}>
-			<ChartPanelBodyFallback
-				role={status === 'error' ? 'alert' : 'status'}
-				aria-live={status === 'error' ? undefined : 'polite'}
-				className={status === 'error' ? 'body-sm text-error' : undefined}
-			>
-				{status === 'error' ? 'Failed to load this chart.' : <LoadingIndicator />}
-			</ChartPanelBodyFallback>
+			{failedRead ? (
+				<ChartPanelBodyError retry={failedRead}>Failed to load this chart.</ChartPanelBodyError>
+			) : (
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator />
+				</ChartPanelBodyFallback>
+			)}
 		</ResearchChartFrame>
 	)
 }

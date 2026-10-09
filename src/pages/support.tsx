@@ -198,7 +198,8 @@ function Support() {
 								type="submit"
 								variant="primary"
 								size="md"
-								pendingLabel={isPending ? 'Submitting…' : null}
+								pendingLabel="Submitting…"
+								pending={isPending}
 								className="mt-3 w-full"
 							>
 								Submit

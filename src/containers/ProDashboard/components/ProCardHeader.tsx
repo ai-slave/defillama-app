@@ -6,9 +6,6 @@ import { Tooltip } from '~/ui/Tooltip'
 import { useDashboardCardContext } from './DashboardCardContext'
 import { ProCardEditControls, type ProCardOverflowMenuProps, ProCardOverflowMenu } from './ProCardActions'
 
-const DRAG_HANDLE_CLASS =
-	'-ml-1 mt-0.5 flex shrink-0 cursor-grab items-center text-tertiary opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 hover:text-primary active:cursor-grabbing md:pointer-coarse:opacity-100'
-
 export interface ProCardHeaderProps {
 	title?: ReactNode
 	subtitle?: ReactNode
@@ -34,7 +31,7 @@ export function ProCardHeader({
 	const Title = titleAs
 	return (
 		<div className="flex flex-wrap items-start gap-2 px-3 pt-3 pb-1">
-			<SortableDragHandle label="Drag to reorder this card" className={DRAG_HANDLE_CLASS} />
+			<SortableDragHandle label="Drag to reorder this card" className="mt-0.5 -ml-1 shrink-0" />
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				{title || icon || badge ? (
 					<div className="flex min-w-0 items-center gap-1.5">

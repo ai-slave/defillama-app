@@ -77,11 +77,7 @@ export function CardsTable({ rows, reference }: { rows: Array<CardTierRow>; refe
 								size="md"
 							/>
 						</div>
-						<TableSearchInput
-							columnId="name"
-							placeholder="Search cards..."
-							className={searchFieldInlineWrapperStyles}
-						/>
+						<TableSearchInput columnId="name" placeholder="Search cards…" className={searchFieldInlineWrapperStyles} />
 						<TableColumnSelect />
 						<TableCsvExport filename="crypto-cards" includeHiddenColumns />
 					</TableToolbar>

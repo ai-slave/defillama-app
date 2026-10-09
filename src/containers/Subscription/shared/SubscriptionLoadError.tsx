@@ -21,7 +21,8 @@ export function SubscriptionLoadError({
 					type="button"
 					size="sm"
 					onClick={onRetry}
-					pendingLabel={isRetrying ? 'Retrying…' : null}
+					pendingLabel="Retrying…"
+					pending={isRetrying}
 				>
 					Try again
 				</Button>

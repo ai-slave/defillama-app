@@ -185,7 +185,8 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						variant="primary"
 						size="md"
 						data-umami-event="dashboard-create"
-						pendingLabel={pending ? 'Creating…' : null}
+						pendingLabel="Creating…"
+						pending={pending}
 					>
 						Create dashboard
 					</Button>
@@ -350,7 +351,7 @@ function DashboardTemplates({
 				<InlineStatus
 					variant="error"
 					action={
-						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retry}>
+						<Button type="button" size="sm" pendingLabel="Retrying…" pending={retrying} onClick={retry}>
 							Try again
 						</Button>
 					}

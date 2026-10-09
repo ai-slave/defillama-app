@@ -88,7 +88,7 @@ export function RWAOverviewBreakdownPanel({
 			exportTitle={exportTitle}
 			filename={filename}
 			isLoading={false}
-			error={null}
+			failedRead={null}
 			toolbarStart={toolbarStart}
 			treemapLimit={TREEMAP_LIMITS[axis]}
 			nestedTreemap={nestedTreemap}

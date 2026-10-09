@@ -67,7 +67,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
 				<MenuSurface variant="panel" heading={heading} unmountOnHide={false} gutter={6}>
-					<PopoverHeader search={<Ariakit.Combobox placeholder="Search..." render={<Input className="w-full" />} />} />
+					<PopoverHeader search={<Ariakit.Combobox placeholder="Search…" render={<Input className="w-full" />} />} />
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
 							{matches.slice(0, viewableMatches).map((value) => (

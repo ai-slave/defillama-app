@@ -262,10 +262,15 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 		}
 		case 'max_depth':
 			return { ...state, maxDepth: event.value }
+		// A failure stays on screen while the next attempt runs, so its Retry keeps focus and shows its pending label;
+		// the attempt's own outcome replaces or removes it.
 		case 'action':
 			return {
 				...state,
-				rowStatus: { ...state.rowStatus, [event.id]: { action: event.action, error: null } }
+				rowStatus: {
+					...state.rowStatus,
+					[event.id]: { action: event.action, error: state.rowStatus[event.id]?.error ?? null }
+				}
 			}
 		case 'action_done': {
 			const { [event.id]: _removed, ...rowStatus } = state.rowStatus
@@ -287,7 +292,7 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 		case 'own_edit':
 			return { ...state, ownedEditId: event.id }
 		case 'queue_action':
-			return { ...state, queueAction: event.action, queueActionError: null }
+			return { ...state, queueAction: event.action }
 		case 'queue_action_done':
 			return { ...state, queueAction: null, queueActionError: null }
 		case 'queue_action_failed':

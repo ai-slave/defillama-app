@@ -100,7 +100,8 @@ export function SubscriptionCard({
 							variant="primary"
 							size="md"
 							onClick={onTopup}
-							pendingLabel={isTopupLoading ? 'Opening LlamaPay…' : null}
+							pendingLabel="Opening LlamaPay…"
+							pending={isTopupLoading}
 						>
 							Top up
 							<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
@@ -109,7 +110,8 @@ export function SubscriptionCard({
 					<Button
 						size="md"
 						onClick={onManage}
-						pendingLabel={isManageLoading ? `Opening ${provider === 'stripe' ? 'Stripe' : 'LlamaPay'}…` : null}
+						pendingLabel={`Opening ${provider === 'stripe' ? 'Stripe' : 'LlamaPay'}…`}
+						pending={isManageLoading}
 					>
 						{manageLabel}
 						<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />

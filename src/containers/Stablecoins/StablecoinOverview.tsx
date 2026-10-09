@@ -44,14 +44,17 @@ import { calcCirculating, groupBridgeData } from '~/containers/Stablecoins/hooks
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
+import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
 import {
@@ -305,7 +308,6 @@ export function PeggedAssetInfo({
 		!usesDefaultChartData &&
 		selectedChartData == null &&
 		(chartSeriesQuery.isLoading || chartSeriesQuery.isFetching || chartSeriesQuery.data != null)
-	const isSelectedChartError = !isSelectedChartLoading && !usesDefaultChartData && chartSeriesQuery.error != null
 	const isVolumeChartLoading =
 		selectedVolumeChartData == null &&
 		(volumeChartQuery.isLoading || volumeChartQuery.isFetching || volumeChartQuery.data != null)
@@ -379,8 +381,19 @@ export function PeggedAssetInfo({
 			<SummaryCardGrid>
 				{/* Stats card — variant 3 stat stack; body is intentionally not StatItem */}
 				<SummaryStatsCard>
-					<h1 className="flex min-h-8 flex-wrap items-center gap-2 heading-sm">
-						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
+					<EntityTitleRow
+						logo={<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />}
+						actions={
+							url ? (
+								<WebsiteGlobeLink
+									url={url}
+									name={name}
+									event="stablecoin-website-click"
+									eventData={{ stablecoin: name }}
+								/>
+							) : null
+						}
+					>
 						{showStablecoinMenu ? (
 							<span className="flex min-w-0 flex-col gap-0.5">
 								<span className="label-xs text-tertiary">Stablecoin</span>
@@ -402,21 +415,11 @@ export function PeggedAssetInfo({
 								/>
 							</span>
 						) : (
-							<span className="font-bold">{name}</span>
+							name
 						)}
 						{!showStablecoinMenu && symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
 						{lifecycleStatus ? <DeprecatedProtocolMarker size={18} content={lifecycleStatus} /> : null}
-						{url ? (
-							<span className="ml-auto flex items-center justify-end gap-1">
-								<WebsiteGlobeLink
-									url={url}
-									name={name}
-									event="stablecoin-website-click"
-									eventData={{ stablecoin: name }}
-								/>
-							</span>
-						) : null}
-					</h1>
+					</EntityTitleRow>
 
 					<p className="flex flex-col">
 						<span className="label-md text-secondary">Market Cap</span>
@@ -534,7 +537,7 @@ export function PeggedAssetInfo({
 						<SelectedAssetChart
 							data={selectedVolumeChartData}
 							isLoading={isVolumeChartLoading}
-							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
+							failedRead={queryReadFailed(volumeChartQuery) ? volumeChartQuery : null}
 							hideDefaultLegend={chartView !== 'byChain'}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={deferredVolumeChart.groupBy}
@@ -544,7 +547,7 @@ export function PeggedAssetInfo({
 						<SelectedAssetChart
 							data={selectedChartData}
 							isLoading={isSelectedChartLoading}
-							isError={isSelectedChartError}
+							failedRead={!usesDefaultChartData && queryReadFailed(chartSeriesQuery) ? chartSeriesQuery : null}
 							hideDefaultLegend={!showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
@@ -633,7 +636,7 @@ export function PeggedAssetInfo({
 function SelectedAssetChart({
 	data,
 	isLoading,
-	isError,
+	failedRead,
 	hideDefaultLegend,
 	selectedCharts,
 	groupBy,
@@ -641,27 +644,23 @@ function SelectedAssetChart({
 }: {
 	data: StablecoinChartSeriesPayload | null
 	isLoading: boolean
-	isError: boolean
+	failedRead: QueryRetry | null
 	hideDefaultLegend: boolean
 	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
+	if (failedRead) {
+		return <ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+	}
 	if (isLoading) {
 		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full body-sm text-tertiary">
-				Loading chart...
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full">
+				<LoadingIndicator />
 			</ChartPanelBodyFallback>
 		)
 	}
-	if (isError || !data) {
-		return (
-			<ChartPanelBodyFallback role="alert" className="w-full body-sm text-error">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
-	}
-	if (data.charts.length === 0 || data.dataset.source.length === 0) {
+	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
 			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full body-sm text-tertiary">
 				Chart unavailable

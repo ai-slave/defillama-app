@@ -653,7 +653,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 												type="button"
 												size="md"
 												onClick={() => void revisionsQuery.fetchNextPage()}
-												pendingLabel={revisionsQuery.isFetchingNextPage ? 'Loading…' : null}
+												pendingLabel="Loading…"
+												pending={revisionsQuery.isFetchingNextPage}
 											>
 												Load older revisions
 											</Button>
@@ -730,7 +731,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 				title="Restore as pending?"
 				description="This snapshot loads into the editor as a pending edit."
 				confirmLabel="Restore"
-				pendingLabel={isRestoring ? 'Restoring…' : null}
+				pendingLabel="Restoring…"
+				pending={isRestoring}
 				error={restoreError}
 				onConfirm={handleRestore}
 			/>
@@ -756,7 +758,7 @@ function LoadError({ message, retrying, onRetry }: { message: string; retrying: 
 			<InlineStatus
 				variant="error"
 				action={
-					<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
+					<Button type="button" size="sm" onClick={onRetry} pendingLabel="Retrying…" pending={retrying}>
 						Try again
 					</Button>
 				}

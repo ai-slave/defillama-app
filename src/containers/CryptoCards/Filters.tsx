@@ -53,7 +53,7 @@ function AvailabilityFilter({ nestedMenu, rows }: { nestedMenu: boolean; rows: A
 			nestedMenu={nestedMenu}
 			variant="filter"
 			size="md"
-			searchPlaceholder="Search countries..."
+			searchPlaceholder="Search countries…"
 			headerRow={
 				<Checkbox
 					variant="filter-borderless"
@@ -184,7 +184,7 @@ function CardsFiltersDropdowns({ nestedMenu, rows }: { nestedMenu?: boolean; row
 				queryKey={CARDS_FILTER_QUERY_KEYS.chain}
 				excludeQueryKey={CARDS_FILTER_QUERY_KEYS.excludeChain}
 				options={chainOptions}
-				searchPlaceholder="Search chains..."
+				searchPlaceholder="Search chains…"
 			/>
 			<OnlyWithCheckbox nestedMenu={!!nestedMenu} queryKey={CARDS_FILTER_QUERY_KEYS.physical} checked={physicalOnly}>
 				Physical card

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { pickOption } from '~/utils/testing/pickOption'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartStyleEditor } from '../ChartStyleEditor'
 
@@ -49,24 +50,6 @@ const view = { logScale: false, stacked: false, showLabels: false, percentage: f
 const resetView = { logScale: false, stacked: true, showLabels: false, percentage: false }
 const PREVIEW_DELAY = 350
 const noop = () => {}
-async function pointerClick(element: HTMLElement) {
-	await act(async () => {
-		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
-		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
-		element.click()
-	})
-}
-/** Opens a Select and picks the option with this name. */
-async function pick(trigger: HTMLElement, name: string) {
-	await pointerClick(trigger)
-	const option = await waitForUi(() => {
-		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
-		expect(found).toBeDefined()
-		return found!
-	})
-	await pointerClick(option)
-}
-
 // The pane's fields carry a screen-reader-only label (Field hideLabel).
 function labelled(name: string) {
 	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === name)
@@ -252,7 +235,7 @@ describe('ChartStyleEditor', () => {
 			'End-of-period value'
 		])
 
-		await pick(pickers()[0], 'Sum per period')
+		await pickOption(pickers()[0], 'Sum per period')
 		expect(pickers().map((picker) => picker.textContent)).toEqual([
 			'Sum per period',
 			'Sum per period',
@@ -353,7 +336,7 @@ describe('ChartStyleEditor', () => {
 			await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
 			const picker = document.querySelector<HTMLButtonElement>('button[aria-label="Series 1 aggregation"]')
 			if (!picker) throw new Error('Expected aggregation picker')
-			await pick(picker, 'Sum per period')
+			await pickOption(picker, 'Sum per period')
 			expect(onPreview.mock.lastCall?.[0].series[0].metricClass).toBe('flow')
 
 			await clickButton('Reset')
@@ -602,5 +585,23 @@ describe('ChartStyleEditor', () => {
 		await clickButton('Cancel')
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 		expect(onCancel).toHaveBeenCalledOnce()
+	})
+
+	test('a failed save stays beside the footer buttons until the next save succeeds', async () => {
+		const retry = Promise.withResolvers<undefined>()
+		const onSave = vi
+			.fn<(config: ChartConfiguration, patch: ChartStylePatch) => Promise<undefined>>()
+			.mockRejectedValueOnce(new Error('update-chart-style failed (503)'))
+			.mockReturnValueOnce(retry.promise)
+		await act(async () => render(<EditorHarness onSave={onSave} />))
+		const alert = () => document.querySelector('footer [role="alert"]')?.textContent
+		await clickButton('Save')
+		await waitForUi(() => expect(alert()).toBe("Couldn't save the chart style. Save again to retry."))
+
+		await clickButton('Save')
+		expect(onSave).toHaveBeenCalledTimes(2)
+		expect(alert()).toBe("Couldn't save the chart style. Save again to retry.")
+		await act(async () => retry.resolve(undefined))
+		await waitForUi(() => expect(alert()).toBeUndefined())
 	})
 })

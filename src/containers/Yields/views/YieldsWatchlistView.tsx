@@ -91,7 +91,8 @@ export function YieldsWatchlistContainer() {
 						<p>Couldn&apos;t load your saved pools. They are still saved.</p>
 						<Button
 							size="md"
-							pendingLabel={rowsQuery.isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={rowsQuery.isFetching}
 							onClick={() => void rowsQuery.refetch()}
 						>
 							Try again

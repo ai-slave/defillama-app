@@ -15,7 +15,7 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
@@ -23,8 +23,8 @@ import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
-import { getErrorMessage } from '~/utils/error'
 import { formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { getCategoryRoute } from './categoryRoutes'
 import {
 	applyProtocolsCategoriesTvlSettings,
@@ -205,7 +205,6 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 			}),
 		[categories, deferredFinalCharts, selectedCharts]
 	)
-	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
 
 	const finalCategoriesList = React.useMemo(() => {
 		return applyProtocolsCategoriesTvlSettings({ tableData, enabledTvls })
@@ -234,13 +233,11 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						csvSource={selectedPresentation.csvSource}
 					/>
 				</ChartPanelToolbar>
-				{shouldFetchChartData && chartDataQuery.isLoading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-tertiary">
+				{queryReadFailed(chartDataQuery) ? (
+					<ChartPanelBodyError retry={chartDataQuery}>Failed to load chart data.</ChartPanelBodyError>
+				) : shouldFetchChartData && chartDataQuery.isLoading ? (
+					<ChartPanelBodyFallback role="status" aria-live="polite">
 						<LoadingIndicator />
-					</ChartPanelBodyFallback>
-				) : chartErrorMessage ? (
-					<ChartPanelBodyFallback role="alert" className="p-4 text-center body-sm text-error">
-						Failed to load chart data: {chartErrorMessage}
 					</ChartPanelBodyFallback>
 				) : (
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -269,7 +266,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				>
 					<Card padding="none">
 						<TableToolbar>
-							<TableSearchInput columnId="name" placeholder="Search category..." />
+							<TableSearchInput columnId="name" placeholder="Search category…" />
 							<TableCsvExport filename="protocol-categories" />
 						</TableToolbar>
 						<VirtualSearchTableView />

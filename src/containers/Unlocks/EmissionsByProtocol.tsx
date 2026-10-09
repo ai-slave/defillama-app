@@ -23,6 +23,7 @@ import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange, roundNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartRow } from './api.types'
 import { processGroupedChartData, sortStacksByVolatility } from './emissionsChartData'
@@ -1118,15 +1119,12 @@ export function UnlocksCharts({
 	hideTokenStats?: boolean
 }) {
 	const shouldFetch = !initialData
-	const {
-		data = null,
-		isLoading,
-		error,
-		isFetching,
-		refetch
-	} = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
+	const emissionsQuery = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
+	const data = emissionsQuery.data ?? null
+	// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
+	const readFailed = queryReadFailed(emissionsQuery)
 
-	if (shouldFetch && isLoading) {
+	if (shouldFetch && emissionsQuery.isLoading && !readFailed) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center">
 				<LoadingIndicator />
@@ -1141,20 +1139,21 @@ export function UnlocksCharts({
 				<InlineStatus
 					variant="error"
 					action={
-						error ? (
+						readFailed ? (
 							<Button
 								// The retry leaves once the read succeeds; the region keeps focus.
 								ref={focusRegionOnLeave}
 								size="sm"
-								onClick={() => void refetch()}
-								pendingLabel={isFetching ? 'Retrying…' : null}
+								onClick={() => void emissionsQuery.refetch()}
+								pendingLabel="Retrying…"
+								pending={emissionsQuery.isFetching}
 							>
 								Try again
 							</Button>
 						) : undefined
 					}
 				>
-					{error instanceof Error ? error.message : 'Failed to fetch'}
+					{readFailed ? "Couldn't load the emissions data." : 'No emissions data for this protocol.'}
 				</InlineStatus>
 			</div>
 		)

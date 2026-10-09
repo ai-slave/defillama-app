@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import type { IRWAAssetsOverview } from './api.types'
 import { getRwaPerpsChartServerKey, type RWAPerpsChartMetric, type RWAPerpsChartSource } from './chartBreakdown'
 import { toRwaMultiSeriesChartDataset, type RWAChartDataset, type RWAPositionalChartDataset } from './chartDataset'
@@ -77,17 +78,19 @@ export function useRwaPerpsChartQuery(url: string, enabled: boolean) {
 export function useRwaPerpsChartDataset({ source, metric, includeCex, scope, enabled }: RwaPerpsChartDatasetRequest): {
 	chartDataset: RWAPositionalChartDataset
 	isChartLoading: boolean
-	chartError: string | null
+	/** The query when its read failed, for the chart's Try again. */
+	failedRead: QueryRetry | null
 } {
 	const url = getRwaPerpsChartUrl({ source, metric, includeCex, scope })
-	const { data, isLoading, error } = useRwaPerpsChartQuery(url, enabled)
+	const query = useRwaPerpsChartQuery(url, enabled)
+	const data = query.data
 	const chartDataset = useMemo(
 		() => (enabled && data ? toRwaMultiSeriesChartDataset(data) : EMPTY_DATASET),
 		[data, enabled]
 	)
 	return {
 		chartDataset,
-		isChartLoading: enabled && isLoading,
-		chartError: enabled && error ? (error instanceof Error ? error.message : 'Failed to load perps chart data.') : null
+		isChartLoading: enabled && query.isLoading,
+		failedRead: enabled && queryReadFailed(query) ? query : null
 	}
 }

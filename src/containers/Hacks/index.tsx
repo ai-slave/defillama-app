@@ -74,13 +74,13 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 		<Panel padding="none">
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects...</span>
+					<span className="sr-only">Search projects…</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
 						ref={searchInputRef}
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects..."
+						placeholder="Search projects…"
 						className={searchFieldInputPlacementStyles}
 					/>
 				</label>

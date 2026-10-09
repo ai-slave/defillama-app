@@ -192,7 +192,7 @@ export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
 export type EcosystemViewModel = ReturnType<typeof buildEcosystemViewModel>
 
 export function useEcosystemData() {
-	const query = useQuery<EcosystemViewModel>({
+	return useQuery<EcosystemViewModel>({
 		queryKey: ['sonic-ecosystem'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/ecosystem')
@@ -203,7 +203,4 @@ export function useEcosystemData() {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-
-	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
-	return { data: query.data, isLoading: false }
 }

@@ -1,5 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
 import { useMemo, type ReactNode } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
@@ -11,6 +11,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
 import { avatarColorStyle } from './avatarColor'
 import { FollowAuthorButton } from './FollowAuthorButton'
@@ -145,41 +146,32 @@ export function socialEntries(author: PublicDashboardAuthor): Array<[string, str
 function NavLink({
 	params,
 	nav,
-	className,
-	ariaCurrent,
-	ariaDisabled,
+	disabled,
 	children
 }: {
 	params: NavParams
 	nav: AuthorProfileNav
-	className: string
-	ariaCurrent?: 'page'
-	ariaDisabled?: boolean
+	disabled: boolean
 	children: ReactNode
 }) {
 	if (nav.navigate) {
 		return (
-			<Ariakit.Button
-				type="button"
-				onClick={() => nav.navigate!(params)}
-				aria-current={ariaCurrent}
-				disabled={ariaDisabled}
-				accessibleWhenDisabled
-				className={className}
-			>
+			<Button size="md" onClick={() => nav.navigate!(params)} disabled={disabled} accessibleWhenDisabled>
 				{children}
-			</Ariakit.Button>
+			</Button>
 		)
 	}
 	return (
-		<BasicLink
+		<Button
+			as={BasicLink}
+			size="md"
 			href={nav.hrefFor ? nav.hrefFor(params) : '#'}
-			aria-current={ariaCurrent}
-			aria-disabled={ariaDisabled}
-			className={className}
+			aria-disabled={disabled}
+			// A link has no disabled state: at the end of the list it stays in place, dimmed, and ignores presses.
+			className={disabled ? 'pointer-events-none' : undefined}
 		>
 			{children}
-		</BasicLink>
+		</Button>
 	)
 }
 
@@ -424,25 +416,20 @@ function AuthorHero({
 }
 
 function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProfileNav }) {
+	const router = useRouter()
 	return (
-		<nav
-			className="flex items-center gap-1 rounded-md border border-medium bg-surface p-0.5"
-			aria-label="Sort dashboards"
-		>
-			{SORT_OPTIONS.map((option) => (
-				<NavLink
-					key={option.value}
-					params={{ sort: option.value }}
-					nav={nav}
-					ariaCurrent={sort === option.value ? 'page' : undefined}
-					className={`rounded-sm px-2.5 py-1.5 label-sm transition-colors ${
-						sort === option.value ? 'bg-brand-muted text-link' : 'text-secondary hover:text-primary'
-					}`}
-				>
-					{option.label}
-				</NavLink>
-			))}
-		</nav>
+		<SegmentedControl
+			label="Sort dashboards"
+			variant="default"
+			size="md"
+			options={SORT_OPTIONS}
+			value={sort}
+			onValueChange={(value) => {
+				if (nav.navigate) nav.navigate({ sort: value })
+				// The picked option keeps focus, so the page stays where it is.
+				else void router.push(nav.hrefFor!({ sort: value }), undefined, { scroll: false })
+			}}
+		/>
 	)
 }
 
@@ -486,31 +473,13 @@ function Pagination({
 	const next = Math.min(totalPages, page + 1)
 	return (
 		<nav className="flex items-center justify-between gap-3 border-t border-medium pt-5" aria-label="Dashboard pages">
-			<NavLink
-				params={{ page: prev, sort }}
-				nav={nav}
-				ariaDisabled={page <= 1}
-				className={`rounded-md border px-3 py-2 body-md ${
-					page <= 1
-						? 'pointer-events-none border-disabled text-disabled'
-						: 'border-medium text-primary hover:bg-hover-row'
-				}`}
-			>
+			<NavLink params={{ page: prev, sort }} nav={nav} disabled={page <= 1}>
 				Previous
 			</NavLink>
 			<span className="body-md text-tertiary">
 				Page {page} of {totalPages}
 			</span>
-			<NavLink
-				params={{ page: page >= totalPages ? page : next, sort }}
-				nav={nav}
-				ariaDisabled={page >= totalPages}
-				className={`rounded-md border px-3 py-2 body-md ${
-					page >= totalPages
-						? 'pointer-events-none border-disabled text-disabled'
-						: 'border-medium text-primary hover:bg-hover-row'
-				}`}
-			>
+			<NavLink params={{ page: page >= totalPages ? page : next, sort }} nav={nav} disabled={page >= totalPages}>
 				Next
 			</NavLink>
 		</nav>

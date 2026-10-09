@@ -1,4 +1,7 @@
-import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, CSSProperties, ReactNode } from 'react'
+import type { QueryRetry } from '~/utils/query'
+import { Button } from './Button'
+import { focusRegionOnLeave } from './focus'
 import { Panel } from './Panel'
 
 /* ----------------------------------------------------------------------------
@@ -26,6 +29,12 @@ import { Panel } from './Panel'
    ChartPanelBodyFallback (360px); a lazy chart that renders its own title
    and export toolbar uses ChartPanelExportShellFallback (400px). Keep an
    external ChartPanelToolbar outside Suspense, so only the body waits.
+
+   A failed read renders ChartPanelBodyError where the chart would be: the
+   red message and, when the chart's data comes from a query in the browser,
+   that query's Try again (`retry`). Check `queryReadFailed` before loading,
+   so the error and its button stay on screen while the retry runs. Data the
+   server rendered has nothing to retry and passes no `retry`.
 ---------------------------------------------------------------------------- */
 
 export function ChartPanel({ className, ...props }: ComponentProps<'div'>) {
@@ -62,6 +71,38 @@ export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef
 export function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return (
 		<div className={`m-auto flex min-h-[360px] items-center justify-center ${className ?? ''}`.trim()} {...props} />
+	)
+}
+
+/** A chart's failed read, in the body's place. Its Try again waits while the query refetches; when the chart replaces
+    it, focus moves to the page content rather than dropping to the document. `style` takes the loading state's height
+    where the chart sets its own, so the page does not jump when the error replaces it. */
+export function ChartPanelBodyError({
+	children,
+	retry,
+	style
+}: {
+	children: ReactNode
+	retry?: QueryRetry
+	style?: CSSProperties
+}) {
+	return (
+		<ChartPanelBodyFallback className="flex-col gap-2 p-4 text-center" style={style}>
+			<p role="alert" className="body-sm text-error">
+				{children}
+			</p>
+			{retry ? (
+				<Button
+					ref={focusRegionOnLeave}
+					size="sm"
+					onClick={() => void retry.refetch()}
+					pendingLabel="Retrying…"
+					pending={retry.isFetching}
+				>
+					Try again
+				</Button>
+			) : null}
+		</ChartPanelBodyFallback>
 	)
 }
 

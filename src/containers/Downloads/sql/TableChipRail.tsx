@@ -102,33 +102,26 @@ function TableChip({
 	onRemove: () => void
 }) {
 	return (
-		<div
-			className={`group flex items-stretch overflow-hidden rounded-md border transition-colors ${
-				open ? 'border-brand-strong bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
-			}`}
-		>
-			<button
-				type="button"
-				onClick={onToggle}
-				aria-expanded={open}
-				className="flex items-center gap-1.5 px-2.5 py-1 label-sm text-primary"
-			>
+		<div className="group flex items-center">
+			<Button variant="toggle" size="sm" data-active={open} aria-expanded={open} onClick={onToggle}>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-tertiary transition-transform ${open ? 'rotate-90 text-link' : ''}`}
+					className={`size-3.5 shrink-0 text-tertiary transition-transform ${open ? 'rotate-90' : ''}`}
 				/>
 				<span className="max-w-[180px] truncate font-mono">{table.name}</span>
 				<span className="text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
-			</button>
+			</Button>
 			<Tooltip
 				content="Remove"
 				render={
-					<button
+					<Button
 						ref={focusNeighbourChipOnLeave}
-						type="button"
+						variant="ghost"
+						size="sm"
+						square
 						onClick={onRemove}
 						aria-label={`Remove ${table.name}`}
-						className="flex w-6 items-center justify-center border-l border-subtle text-tertiary opacity-0 transition-all group-hover:opacity-100 hover:bg-hover-row hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
+						className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
 					/>
 				}
 			>

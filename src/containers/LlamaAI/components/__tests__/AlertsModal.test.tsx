@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { pickOption } from '~/utils/testing/pickOption'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ALERTS_QUERY_KEY } from '../alerts/queryKeys'
@@ -282,23 +283,6 @@ async function press(button: HTMLElement) {
 		button.click()
 	})
 }
-async function pointerClick(element: HTMLElement) {
-	await act(async () => {
-		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
-		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
-		element.click()
-	})
-}
-/** Opens a Select and picks the option with this name. */
-async function pick(trigger: HTMLElement, name: string) {
-	await pointerClick(trigger)
-	const option = await waitForUi(() => {
-		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === name)
-		expect(found).toBeDefined()
-		return found!
-	})
-	await pointerClick(option)
-}
 // The dialog's first control, where its net puts focus that has nowhere better to go.
 const closeButton = () => buttonNamed(document, 'Close dialog')
 
@@ -545,7 +529,7 @@ test('a schedule edit survives opening a run from history and coming back, and c
 	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
 	await press(buttonNamed(document, 'Edit Weekly yields'))
 	const frequency = () => document.querySelector<HTMLButtonElement>('[aria-label="Frequency"]')!
-	await pick(frequency(), 'Weekly')
+	await pickOption(frequency(), 'Weekly')
 	await press(buttonNamed(document, 'View history of Weekly yields'))
 	await waitForUi(() => expect(document.getElementById('alert-run-run')).not.toBeNull())
 	await press(document.getElementById('alert-run-run')!)

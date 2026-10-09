@@ -98,7 +98,8 @@ export function ReferralCard() {
 							size="sm"
 							ref={focusRegionOnLeave}
 							onClick={() => void refetchStats()}
-							pendingLabel={isStatsFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={isStatsFetching}
 						>
 							Try again
 						</Button>

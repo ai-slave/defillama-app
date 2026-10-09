@@ -210,7 +210,8 @@ export function ProjectFilesPanel({
 						icon="file-plus"
 						label="Drop files here or choose files"
 						hint="Markdown, text, code, JSON, CSV. Up to 100 MB per file."
-						pendingLabel={isUploading ? 'Uploading…' : null}
+						pendingLabel="Uploading…"
+						pending={isUploading}
 						onClick={onPick}
 						disabled={isInitialLoading || filesFailed}
 						aria-hidden={isInitialLoading || filesFailed || undefined}

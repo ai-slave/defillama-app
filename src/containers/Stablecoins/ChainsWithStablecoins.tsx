@@ -40,11 +40,13 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
 import {
@@ -408,7 +410,7 @@ export function ChainsWithStablecoins({
 						<SelectedChainsChart
 							data={deferredVolumeChartData}
 							isLoading={isVolumeChartLoading}
-							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
+							failedRead={queryReadFailed(volumeChartQuery) ? volumeChartQuery : null}
 							hideDefaultLegend={!showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							groupBy={deferredVolumeChart.groupBy}
@@ -418,7 +420,7 @@ export function ChainsWithStablecoins({
 						<SelectedChainsChart
 							data={deferredSelectedChartData}
 							isLoading={isSelectedChartLoading}
-							isError={!isSelectedChartLoading && chartSeriesQuery.error != null}
+							failedRead={queryReadFailed(chartSeriesQuery) ? chartSeriesQuery : null}
 							hideDefaultLegend={!showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							onReady={handleChartReady}
@@ -435,7 +437,7 @@ export function ChainsWithStablecoins({
 function SelectedChainsChart({
 	data,
 	isLoading,
-	isError,
+	failedRead,
 	hideDefaultLegend,
 	selectedCharts,
 	groupBy,
@@ -443,27 +445,23 @@ function SelectedChainsChart({
 }: {
 	data: StablecoinChartSeriesPayload | null
 	isLoading: boolean
-	isError: boolean
+	failedRead: QueryRetry | null
 	hideDefaultLegend: boolean
 	selectedCharts?: Set<string>
 	groupBy?: LowercaseDwmcGrouping
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
+	if (failedRead) {
+		return <ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+	}
 	if (isLoading) {
 		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-				Loading chart...
+			<ChartPanelBodyFallback role="status" aria-live="polite">
+				<LoadingIndicator />
 			</ChartPanelBodyFallback>
 		)
 	}
-	if (isError || !data) {
-		return (
-			<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
-	}
-	if (data.charts.length === 0 || data.dataset.source.length === 0) {
+	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
 			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 				Chart unavailable

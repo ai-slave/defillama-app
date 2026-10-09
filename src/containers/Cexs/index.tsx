@@ -149,7 +149,7 @@ export function Cexs({ cexs }: { cexs: Array<ICex> }) {
 		>
 			<Card padding="none">
 				<TableToolbar>
-					<TableSearchInput columnId="name" placeholder="Search exchange..." />
+					<TableSearchInput columnId="name" placeholder="Search exchange…" />
 					<DateFilter
 						startDate={startDate}
 						endDate={endDate}

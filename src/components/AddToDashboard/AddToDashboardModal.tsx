@@ -436,7 +436,8 @@ function AddToDashboardDialog({
 										type="button"
 										size="sm"
 										onClick={() => void refetchDashboards()}
-										pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
+										pendingLabel="Retrying…"
+										pending={isFetchingDashboards}
 									>
 										Try again
 									</Button>
@@ -509,7 +510,8 @@ function AddToDashboardDialog({
 						type="submit"
 						variant="primary"
 						size="md"
-						pendingLabel={isSubmitting ? (repairTarget ? 'Replacing…' : 'Adding…') : null}
+						pendingLabel={repairTarget ? 'Replacing…' : 'Adding…'}
+						pending={isSubmitting}
 					>
 						<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
 						{repairTarget ? 'Replace chart' : 'Add to dashboard'}
@@ -527,7 +529,8 @@ function AddToDashboardDialog({
 					description={`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(costConfirmation.activation.plan.estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window.`}
 					confirmLabel="Enable daily refresh"
 					cancelLabel="Skip"
-					pendingLabel={confirmedActivation.isPending ? 'Enabling…' : null}
+					pendingLabel="Enabling…"
+					pending={confirmedActivation.isPending}
 					error={
 						confirmedActivation.isError
 							? "Couldn't enable daily refresh. Try again, or skip to keep the current snapshot."

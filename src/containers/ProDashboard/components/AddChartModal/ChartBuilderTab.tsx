@@ -806,7 +806,8 @@ export function ChartBuilderTab({
 								action={
 									<Button
 										size="sm"
-										pendingLabel={preview.isFetching ? 'Retrying…' : null}
+										pendingLabel="Retrying…"
+										pending={preview.isFetching}
 										onClick={() => void preview.refetch()}
 									>
 										Try again

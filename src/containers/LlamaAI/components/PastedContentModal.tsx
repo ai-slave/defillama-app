@@ -102,12 +102,7 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 				) : null}
 			</DialogBody>
 			<DialogFooter>
-				<Button
-					type="button"
-					size="md"
-					onClick={handleCopy}
-					pendingLabel={copyStatus === 'pending' ? 'Copying…' : null}
-				>
+				<Button type="button" size="md" onClick={handleCopy} pendingLabel="Copying…" pending={copyStatus === 'pending'}>
 					<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} height={14} width={14} />
 					{copyLabel}
 				</Button>

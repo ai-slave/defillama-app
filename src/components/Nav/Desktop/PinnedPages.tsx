@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Button } from '~/ui/Button'
+import { Button, StableLabel } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -32,7 +32,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 						className={isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'}
 						onClick={() => setIsReordering((value) => !value)}
 					>
-						{isReordering ? 'Done' : 'Reorder'}
+						<StableLabel labels={['Reorder', 'Done']} current={isReordering ? 'Done' : 'Reorder'} />
 					</Button>
 				) : null}
 			</div>

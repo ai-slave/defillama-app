@@ -328,7 +328,6 @@ export function DialogDiscardGuard({
 				description={description}
 				confirmLabel={confirmLabel}
 				cancelLabel={cancelLabel}
-				pendingLabel={null}
 				error={null}
 				onConfirm={() => {
 					const proceed = pendingLeave!

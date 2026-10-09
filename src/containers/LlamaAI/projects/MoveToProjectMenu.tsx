@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { NestedDrawerHeader } from '~/ui/PopoverSurface'
+import { ErrorLine, LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { useMoveSessionToProject, useProjectList } from './hooks'
 
 interface MoveToProjectMenuItemProps {
@@ -17,6 +19,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 	const menu = Ariakit.useMenuStore()
 	const projects = useProjectList()
 	const move = useMoveSessionToProject()
+	const failed = queryReadFailed(projects)
 
 	const onMove = (projectId: string | null) => {
 		if (projectId === currentProjectId) return
@@ -40,29 +43,24 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 					closeLabel="Close session menus"
 					onClose={menu.hideAll}
 				/>
-				{projects.isFetching ? (
-					<div role="status" className="flex items-center justify-center gap-2 px-3 py-2 body-sm">
-						<LoadingSpinner size={12} />
-						Loading projects
+				{failed ? (
+					<ErrorLine inset="menuRow">Couldn&apos;t load your projects.</ErrorLine>
+				) : projects.isFetching ? (
+					<div role="status" className="flex justify-center px-3 py-2">
+						<LoadingIndicator label="Loading projects" />
 					</div>
-				) : projects.isError ? (
-					<p role="alert" className="px-3 py-2 body-sm text-error">
-						Failed to load projects
-					</p>
 				) : !projects.data?.length ? (
-					<p role="status" className="px-3 py-2 body-sm text-tertiary">
-						No projects yet
-					</p>
+					<NoResults>No projects yet</NoResults>
 				) : null}
 				<Ariakit.MenuList store={menu} aria-label="Project destinations">
-					{projects.isError ? (
+					{failed ? (
 						<MenuItem
 							hideOnClick={false}
 							disabled={projects.isFetching}
 							accessibleWhenDisabled
 							onClick={() => void projects.refetch()}
 						>
-							Retry
+							{projects.isFetching ? 'Retrying…' : 'Try again'}
 						</MenuItem>
 					) : projects.data ? (
 						<>

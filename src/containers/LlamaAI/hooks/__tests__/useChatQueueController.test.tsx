@@ -413,6 +413,55 @@ describe('useChatQueueController', () => {
 		})
 	})
 
+	test('keeps a failed Clear on screen while its retry runs', async () => {
+		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_failed' as const }
+		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
+		await act(async () => {
+			const clearing = controller.clearQueue()
+			calls.find((call) => call.method === 'DELETE')!.fail(502, { error: 'Connection closed' })
+			await clearing
+		})
+
+		let retrying!: Promise<void>
+		await act(async () => {
+			retrying = controller.clearQueue()
+		})
+		expect(controller.queueAction).toBe('clearing')
+		expect(controller.queueActionError).toEqual({
+			action: 'clearing',
+			message: 'Could not clear the queue. Try again.'
+		})
+
+		await act(async () => {
+			calls.filter((call) => call.method === 'DELETE')[1]!.respond({ snapshot: snapshot(2, []) })
+			await retrying
+		})
+		expect(controller.queueActionError).toBeNull()
+	})
+
+	test("keeps a row's failure on screen while its retry runs", async () => {
+		await act(async () => controller.applySnapshot(snapshot(1, [pending('q1')])))
+		await act(async () => {
+			const failing = controller.retry('q1')
+			calls[0]!.fail(502, { error: 'Connection closed' })
+			await failing
+		})
+		const failure = controller.rowStatus.q1!.error
+		expect(failure).not.toBeNull()
+
+		let retrying!: Promise<unknown>
+		await act(async () => {
+			retrying = controller.retry('q1')
+		})
+		expect(controller.rowStatus.q1).toMatchObject({ action: 'retrying', error: failure })
+
+		await act(async () => {
+			calls[1]!.respond({ snapshot: snapshot(2, [pending('q1')]) })
+			await retrying
+		})
+		expect(controller.rowStatus.q1).toBeUndefined()
+	})
+
 	test('uses the atomic retry command and applies its snapshot', async () => {
 		const retried = pending('q1')
 		autoRespond = () => ({ snapshot: snapshot(2, [retried]) })

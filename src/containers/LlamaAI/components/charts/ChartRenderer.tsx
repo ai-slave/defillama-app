@@ -738,7 +738,8 @@ function ActiveSingleChart({
 									size="md"
 									square
 									onClick={() => void handleSaveToLibrary()}
-									pendingLabel={savingToLibrary ? 'Saving…' : null}
+									pendingLabel="Saving…"
+									pending={savingToLibrary}
 									aria-label="Save chart (frozen data)"
 								/>
 							}

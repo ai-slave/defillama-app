@@ -40,7 +40,7 @@ export function SelectMetricsStep() {
 				<InlineStatus
 					variant="error"
 					action={
-						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retryMetadata}>
+						<Button type="button" size="sm" pendingLabel="Retrying…" pending={retrying} onClick={retryMetadata}>
 							Try again
 						</Button>
 					}

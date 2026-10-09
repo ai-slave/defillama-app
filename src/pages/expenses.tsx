@@ -62,7 +62,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"
-							placeholder="Search protocol..."
+							placeholder="Search protocol…"
 							className={searchFieldInlineWrapperStyles}
 						/>
 						<TableCsvExport filename="protocol-expenses" />

@@ -227,6 +227,12 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 }
 
 /* ------------------------------ Core Utilities ------------------------------ */
+/* A wrapper inside a control takes the control's own gap, so a button's label and icon keep the spacing its size
+   sets (Button's reserved-width cells). */
+@utility gap-inherit {
+	gap: inherit;
+}
+
 @utility scrollbar-none {
 	&::-webkit-scrollbar {
 		display: none;

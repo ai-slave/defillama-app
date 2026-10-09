@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 import type {
 	IRWAFlowAssetBreakdownRow,
 	IRWAFlowPointWithMcap,
@@ -99,7 +100,8 @@ export type RWAFlowSeriesResult = {
 	/** A scoped page: one row per day with a value per asset, folded by `aggregateRWAFlowRows`. */
 	assetRows: Array<IRWAFlowAssetBreakdownRow> | undefined
 	isLoading: boolean
-	error: unknown
+	/** The query when its read failed, for the chart's Try again. */
+	failedRead: QueryRetry | null
 }
 
 /**
@@ -117,7 +119,17 @@ export function useRWAFlowSeries({
 	const split = useRWAFlowOverviewSplitWithFilters(splitBy, includeStablecoin, includeGovernance, enabled && isOverview)
 	const breakdown = useRWAFlowAssetBreakdown(isOverview ? null : scope, enabled && !isOverview)
 	if (isOverview) {
-		return { splitPoints: split.data, assetRows: undefined, isLoading: split.isLoading, error: split.error }
+		return {
+			splitPoints: split.data,
+			assetRows: undefined,
+			isLoading: split.isLoading,
+			failedRead: enabled && queryReadFailed(split) ? split : null
+		}
 	}
-	return { splitPoints: undefined, assetRows: breakdown.data, isLoading: breakdown.isLoading, error: breakdown.error }
+	return {
+		splitPoints: undefined,
+		assetRows: breakdown.data,
+		isLoading: breakdown.isLoading,
+		failedRead: enabled && queryReadFailed(breakdown) ? breakdown : null
+	}
 }

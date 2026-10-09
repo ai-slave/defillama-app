@@ -208,7 +208,6 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 
 	const resultRowCount = result?.rows.length ?? null
 	const engineLoading = duckdb.status === 'loading'
-	const engineError = duckdb.status === 'error'
 	const controls = sqlChartModalControls(state, {
 		sql,
 		engine: duckdb.status,
@@ -427,10 +426,22 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 							</div>
 						) : null}
 
-						{/* The engine loads again the next time a SQL surface opens, so this error has no retry of its own. */}
-						{engineError ? (
-							<InlineStatus variant="error">
-								SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
+						{duckdb.status === 'error' ? (
+							<InlineStatus
+								variant="error"
+								action={
+									<Button
+										type="button"
+										size="sm"
+										onClick={() => void duckdb.retry.refetch()}
+										pendingLabel="Retrying…"
+										pending={duckdb.retry.isFetching}
+									>
+										Try again
+									</Button>
+								}
+							>
+								The SQL engine failed to load.
 							</InlineStatus>
 						) : null}
 

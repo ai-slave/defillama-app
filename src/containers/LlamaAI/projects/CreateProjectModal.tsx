@@ -147,7 +147,8 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 						size="md"
 						variant="primary"
 						disabled={atCap}
-						pendingLabel={pending ? (isRename ? 'Saving…' : 'Creating…') : null}
+						pendingLabel={isRename ? 'Saving…' : 'Creating…'}
+						pending={pending}
 					>
 						{isRename ? 'Save' : 'Create project'}
 					</Button>

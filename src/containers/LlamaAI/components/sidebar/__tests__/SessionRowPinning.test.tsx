@@ -348,7 +348,7 @@ test('making a private chat public copies its new link, and a failure stays in t
 	expect(namedButton('Make private')).toBeUndefined()
 	await act(async () => namedButton('Make public and copy link').click())
 	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't make this conversation public")
 	)
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	expect(copy).not.toHaveBeenCalled()
@@ -384,13 +384,14 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	const trigger = await openShareMenu(true)
 	await act(async () => namedButton('Copy link').click())
 	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy the link")
 	)
 	expect(toastError).not.toHaveBeenCalled()
 	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
-	await reopenMenu(trigger)
-	expect(document.querySelector('[role="alert"]')).toBeNull()
+	// The retry keeps the failure on screen while it runs.
 	await act(async () => namedButton('Copy link').click())
+	await waitForUi(() => expect(namedButton('Copying…')).toBeDefined())
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy the link")
 	await act(async () =>
 		document
 			.querySelector('[role="menu"]')!
@@ -400,6 +401,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	await act(async () => request.reject(new Error('Clipboard blocked')))
 	await waitForUi(() => expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
 	await act(async () => trigger.click())
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Copy link').click())
 	await waitForUi(() => expect(namedButton('Link copied')).toBeDefined())
 	expect(copy).toHaveBeenLastCalledWith(`${window.location.origin}/ai/chat/shared/test-share`)
@@ -478,9 +480,7 @@ test.each(['copy', 'visibility'] as const)(
 		})
 		await waitForUi(() =>
 			expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-				action === 'copy'
-					? 'Could not copy the link. Please try again.'
-					: 'Failed to update visibility. Please try again.'
+				action === 'copy' ? "Couldn't copy the link. Try again." : "Couldn't make this conversation public. Try again."
 			)
 		)
 	}

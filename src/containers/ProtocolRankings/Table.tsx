@@ -539,7 +539,7 @@ function ChainProtocolsTableInner({
 						// Each edit starts a fresh search, which opens its own parents even when the text repeats an earlier one.
 						setSearchExpandedPick(null)
 					}}
-					placeholder="Search protocols..."
+					placeholder="Search protocols…"
 					autoComplete="off"
 					className={searchFieldInputPlacementStyles}
 				/>
@@ -707,7 +707,6 @@ function ChainProtocolsTableInner({
 					title="Delete custom column?"
 					description={`"${deletingColumn.name}" and its formula are removed. This cannot be undone.`}
 					confirmLabel="Delete"
-					pendingLabel={null}
 					error={null}
 					onConfirm={() => {
 						deleteFinalFocusRef.current = addColumnButtonRef.current

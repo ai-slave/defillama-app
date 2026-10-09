@@ -8,6 +8,7 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -149,25 +150,29 @@ function ProtocolHeader({
 
 	return (
 		<>
-			<Tag className="flex min-h-8 flex-wrap items-center gap-2 heading-sm">
-				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<span>{props.name}</span>
+			<EntityTitleRow
+				as={Tag}
+				logo={<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />}
+				actions={
+					<>
+						{props.website ? (
+							<WebsiteGlobeLink
+								url={props.website}
+								name={props.name}
+								event="protocol-website-click"
+								eventData={{ protocol: props.name, referral: String(!!props.isWebsiteReferral) }}
+							/>
+						) : null}
+						<Bookmark size="md" readableName={props.name} />
+					</>
+				}
+			>
+				{props.name}
 				{props.token?.symbol && props.token.symbol !== '-' ? (
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
 				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
-				<span className="ml-auto flex items-center justify-end gap-1">
-					{props.website ? (
-						<WebsiteGlobeLink
-							url={props.website}
-							name={props.name}
-							event="protocol-website-click"
-							eventData={{ protocol: props.name, referral: String(!!props.isWebsiteReferral) }}
-						/>
-					) : null}
-					<Bookmark size="md" readableName={props.name} />
-				</span>
-			</Tag>
+			</EntityTitleRow>
 			{props.exchangeProfileRoute ? (
 				// Sits directly under the title, like the token page's issuer line: this protocol
 				// is a tracked venue, and its markets, liquidity and execution live on that page.

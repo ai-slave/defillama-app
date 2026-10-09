@@ -127,7 +127,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 				<MultiSelectCombobox
 					heading="Protocols"
 					data={protocolsList}
-					placeholder="Select Protocols..."
+					placeholder="Select Protocols…"
 					selectedValues={selectedProtocols}
 					setSelectedValues={(values) => {
 						void pushShallowQuery(router, { protocol: values.length > 0 ? values : undefined })

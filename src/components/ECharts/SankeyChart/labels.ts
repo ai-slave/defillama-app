@@ -60,7 +60,7 @@ export function formatSankeyNodeLabel(
 	const valueWithPercent = formatSankeyNodeValue(name, value, metadata, formatValue)
 	const description = metadata.descriptions[name]
 	if (description && showDescription) {
-		const truncatedDesc = description.length > 50 ? `${description.slice(0, 47)}...` : description
+		const truncatedDesc = description.length > 50 ? `${description.slice(0, 49)}…` : description
 		return `{name|${name}: ${valueWithPercent}}\n{desc|${truncatedDesc}}`
 	}
 	return `${name}: ${valueWithPercent}`

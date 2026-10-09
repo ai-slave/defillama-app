@@ -69,7 +69,8 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 							ref={focusRegionOnLeave}
 							type="button"
 							size="md"
-							pendingLabel={isResending ? 'Sending…' : null}
+							pendingLabel="Sending…"
+							pending={isResending}
 							disabled={onCooldown}
 							accessibleWhenDisabled
 							onClick={handleResend}

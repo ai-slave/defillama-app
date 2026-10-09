@@ -29,6 +29,7 @@ import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ComparisonPanel } from './ComparisonPanel'
 import { DailyPnLGrid } from './DailyPnLGrid'
@@ -77,7 +78,6 @@ type TokenPnlContentProps = {
 	isLoading: boolean
 	isFetching: boolean
 	isError: boolean
-	error: unknown
 	onRetry: () => void | Promise<unknown>
 	pnlData: TokenPnlResult | null | undefined
 	quantity: number
@@ -96,7 +96,6 @@ function TokenPnlContent({
 	isLoading,
 	isFetching,
 	isError,
-	error,
 	onRetry,
 	pnlData,
 	quantity,
@@ -120,14 +119,15 @@ function TokenPnlContent({
 							// The retry leaves once the read succeeds; the region keeps focus.
 							ref={focusRegionOnLeave}
 							size="sm"
-							pendingLabel={isFetching ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={isFetching}
 							onClick={() => void onRetry()}
 						>
 							Try again
 						</Button>
 					}
 				>
-					Failed to load data. {error instanceof Error ? error.message : 'Something went wrong fetching price data.'}
+					Couldn&apos;t load the price data.
 				</InlineStatus>
 			</Panel>
 		)
@@ -333,8 +333,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const {
 		data: pnlData,
 		isLoading,
-		isError,
-		error,
+		errorUpdatedAt,
+		dataUpdatedAt,
 		refetch,
 		isFetching
 	} = useQuery({
@@ -524,8 +524,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 					routerReady={router.isReady}
 					isLoading={isLoading}
 					isFetching={isFetching}
-					isError={isError}
-					error={error}
+					isError={queryReadFailed({ errorUpdatedAt, dataUpdatedAt })}
 					onRetry={() => refetch()}
 					pnlData={pnlData}
 					quantity={quantity}

@@ -141,7 +141,7 @@ export function ExchangeCountrySelect({
 				singleSelect
 				variant="filter"
 				size="md"
-				searchPlaceholder="Search countries..."
+				searchPlaceholder="Search countries…"
 				triggerProps={{ disabled: catalog === null }}
 			/>
 			{catalogFailed ? (

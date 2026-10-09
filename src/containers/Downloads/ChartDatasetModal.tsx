@@ -1122,7 +1122,8 @@ export function ChartDatasetModal({
 										action={
 											<Button
 												size="sm"
-												pendingLabel={(isCategoryMode ? breakdownQuery : activeQuery!).isFetching ? 'Retrying…' : null}
+												pendingLabel="Retrying…"
+												pending={(isCategoryMode ? breakdownQuery : activeQuery!).isFetching}
 												onClick={() => void (isCategoryMode ? breakdownQuery : activeQuery!).refetch()}
 											>
 												Try again

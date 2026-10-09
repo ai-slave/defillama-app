@@ -70,7 +70,7 @@ test('Disable shows a failure, releases the control, and succeeds on retry', asy
 	await waitFor(() => expect(button('Disable')?.disabled).toBe(false))
 
 	await act(async () => button('Disable')!.click())
-	await waitFor(() => expect(button('Disabling...')?.getAttribute('aria-busy')).toBe('true'))
+	await waitFor(() => expect(button('Updating…')?.getAttribute('aria-busy')).toBe('true'))
 
 	await act(async () => writes[0]!.resolve(new Response('Temporary failure', { status: 503 })))
 	await waitFor(() => expect(document.body.textContent).toContain('Temporary failure'))

@@ -45,7 +45,6 @@ export function DeletePortfolioButton({
 				title="Delete portfolio?"
 				description={`"${confirm.portfolio}" and everything saved in it are removed. This cannot be undone.`}
 				confirmLabel="Delete"
-				pendingLabel={null}
 				error={null}
 				onConfirm={() => {
 					onDelete(confirm.portfolio)

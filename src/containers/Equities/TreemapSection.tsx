@@ -7,10 +7,11 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyError, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { useEquitiesTreemapDataset } from './queries.client'
 import { buildEquitiesTreemapQueryString } from './tableQuery'
@@ -213,13 +214,15 @@ export function EquitiesTreemapSection({
 				</TableToolbarControlGroup>
 			</TableToolbar>
 			{filterPills}
-			{data == null ? (
-				<ChartPanelBodyFallback
-					role={datasetQuery.isError ? 'alert' : 'status'}
-					className={datasetQuery.isError ? 'body-sm text-error' : undefined}
-					style={{ height: CHART_HEIGHT }}
-				>
-					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
+			{/* A retry from an error shows the previous filter's rows as placeholder data; the error stays until it loads.
+			    A failed refresh of rows already drawn keeps them. */}
+			{queryReadFailed(datasetQuery) && (data == null || datasetQuery.isPlaceholderData) ? (
+				<ChartPanelBodyError retry={datasetQuery} style={{ height: CHART_HEIGHT }}>
+					Failed to load chart data.
+				</ChartPanelBodyError>
+			) : data == null ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite" style={{ height: CHART_HEIGHT }}>
+					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			) : rankedRows.length === 0 ? (
 				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: CHART_HEIGHT }}>

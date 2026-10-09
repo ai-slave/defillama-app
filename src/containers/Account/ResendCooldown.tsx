@@ -28,7 +28,8 @@ export function ResendCooldown({ sentAtSeconds, onResend, disabled, pending }: R
 					type="button"
 					variant="ghost"
 					size="sm"
-					pendingLabel={pending ? 'Sending code…' : null}
+					pendingLabel="Sending code…"
+					pending={pending}
 					disabled={disabled || secondsLeft > 0}
 					accessibleWhenDisabled
 					onClick={onResend}

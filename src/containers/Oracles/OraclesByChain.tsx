@@ -216,7 +216,7 @@ export function OraclesByChain({
 							</PanelTitle>
 							<TableSearchInput
 								columnId="name"
-								placeholder="Search oracles..."
+								placeholder="Search oracles…"
 								className={searchFieldInlineWrapperStyles}
 							/>
 							<TableCsvExport filename="oracle-rankings" />

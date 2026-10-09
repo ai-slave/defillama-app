@@ -64,7 +64,7 @@ export function WizardNavigation({ currentStep, onBack, creating, metricsLoad }:
 			}
 		>
 			{currentStep === 'preview' ? (
-				<Button type="submit" variant="primary" size="md" pendingLabel={creating ? 'Creating…' : null}>
+				<Button type="submit" variant="primary" size="md" pendingLabel="Creating…" pending={creating}>
 					<Icon name="plus" height={14} width={14} />
 					Create dashboard
 				</Button>
@@ -73,7 +73,8 @@ export function WizardNavigation({ currentStep, onBack, creating, metricsLoad }:
 					type="submit"
 					variant="primary"
 					size="md"
-					pendingLabel={metricsLoad === 'loading' ? 'Checking metrics…' : null}
+					pendingLabel="Checking metrics…"
+					pending={metricsLoad === 'loading'}
 					disabled={metricsLoad === 'failed'}
 					accessibleWhenDisabled
 				>

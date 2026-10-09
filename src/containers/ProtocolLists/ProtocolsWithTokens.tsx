@@ -47,7 +47,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 			>
 				<Card padding="none">
 					<TableToolbar>
-						<TableSearchInput columnId="name" placeholder="Search protocols..." />
+						<TableSearchInput columnId="name" placeholder="Search protocols…" />
 						{props.categories.length > 0 ? (
 							<SelectWithCombobox
 								allValues={props.categories}

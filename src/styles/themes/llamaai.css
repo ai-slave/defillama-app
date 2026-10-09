@@ -131,3 +131,9 @@ html.dark,
 .ai-slack-accent {
 	--bg-brand: var(--ai-slack);
 }
+
+/* LlamaAI's violet on a shared part: inside it, a brand-tone Card takes the violet fill and border. */
+.ai-violet-accent {
+	--bg-brand-faint: var(--violet-2);
+	--border-brand-muted: var(--violet-7);
+}

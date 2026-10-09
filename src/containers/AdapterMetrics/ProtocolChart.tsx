@@ -21,11 +21,17 @@ import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
+import { queryReadFailed } from '~/utils/query'
 import type { IAdapterBreakdownChartData } from './api.types'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
@@ -171,7 +177,7 @@ export function DimensionProtocolChartByType({
 	hallmarks?: Array<[number, string]>
 	title: string
 }) {
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: ['dimension-adapter-chart-breakdown', protocolName, adapterType, dataType ?? null, chartType],
 		queryFn: () =>
 			fetchJson<Array<[number, Record<string, number>]>>(
@@ -187,7 +193,11 @@ export function DimensionProtocolChartByType({
 		retry: 0
 	})
 
-	if (isLoading) {
+	if (queryReadFailed(query)) {
+		return <ChartPanelBodyError retry={query}>Couldn&apos;t load the {title} chart.</ChartPanelBodyError>
+	}
+
+	if (query.isLoading) {
 		return (
 			<ChartPanelExportShellFallback
 				role="status"
@@ -200,21 +210,9 @@ export function DimensionProtocolChartByType({
 		)
 	}
 
-	if (error) {
-		return (
-			<ChartPanelExportShellFallback role="alert" className="col-span-2 flex flex-col items-center justify-center">
-				<div className="flex flex-col gap-2 p-2">
-					<p className="body-sm break-all text-error">
-						{error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)}
-					</p>
-				</div>
-			</ChartPanelExportShellFallback>
-		)
-	}
-
 	return (
 		<ChartByType
-			data={data ?? []}
+			data={query.data ?? []}
 			breakdownNames={breakdownNames}
 			title={title}
 			chartType={chartType}

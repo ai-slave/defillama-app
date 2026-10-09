@@ -212,7 +212,8 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 								type="submit"
 								variant="primary"
 								size="md"
-								pendingLabel={isPending ? 'Subscribing…' : null}
+								pendingLabel="Subscribing…"
+								pending={isPending}
 								className="@sm:col-start-2 @sm:row-start-3 @2xl:col-start-3 @2xl:row-start-2"
 							>
 								Subscribe
@@ -275,7 +276,8 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						type="submit"
 						variant="primary"
 						size="md"
-						pendingLabel={isPending ? 'Subscribing…' : null}
+						pendingLabel="Subscribing…"
+						pending={isPending}
 						className="w-fit"
 					>
 						Subscribe

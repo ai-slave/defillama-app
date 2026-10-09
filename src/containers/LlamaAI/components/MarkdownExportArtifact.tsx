@@ -107,7 +107,8 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 							// The retry leaves once the download succeeds; the message region keeps focus.
 							ref={focusRegionOnLeave}
 							onClick={download}
-							pendingLabel={downloadMarkdownMutation.isPending ? 'Retrying…' : null}
+							pendingLabel="Retrying…"
+							pending={downloadMarkdownMutation.isPending}
 						>
 							Try again
 						</Button>

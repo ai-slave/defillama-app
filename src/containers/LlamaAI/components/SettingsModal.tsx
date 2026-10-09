@@ -580,7 +580,6 @@ export const SettingsModal = memo(function SettingsModal({
 													title="Clear your instructions?"
 													description="LlamaAI stops following your saved custom instructions in every chat."
 													confirmLabel="Clear"
-													pendingLabel={null}
 													error={null}
 													onConfirm={() => {
 														setConfirmingClear(false)
@@ -598,7 +597,8 @@ export const SettingsModal = memo(function SettingsModal({
 														<Button
 															type="button"
 															size="sm"
-															pendingLabel={savingInstructions ? 'Saving…' : null}
+															pendingLabel="Saving…"
+															pending={savingInstructions}
 															onClick={handleSaveInstructions}
 														>
 															Save
@@ -968,11 +968,10 @@ export const SettingsModal = memo(function SettingsModal({
 																					// Focusable while another skill archives: the archived row hands focus to it.
 																					disabled={agentHome.archiveSkillMutation.isPending}
 																					accessibleWhenDisabled
-																					pendingLabel={
+																					pendingLabel="Archiving…"
+																					pending={
 																						agentHome.archiveSkillMutation.isPending &&
 																						agentHome.archiveSkillMutation.variables === skill.name
-																							? 'Archiving…'
-																							: null
 																					}
 																					className="shrink-0"
 																				>
@@ -1003,11 +1002,10 @@ export const SettingsModal = memo(function SettingsModal({
 																		// Focusable while another skill restores: the restored row hands focus to it.
 																		disabled={agentHome.restoreSkillMutation.isPending}
 																		accessibleWhenDisabled
-																		pendingLabel={
+																		pendingLabel="Restoring…"
+																		pending={
 																			agentHome.restoreSkillMutation.isPending &&
 																			agentHome.restoreSkillMutation.variables === skill.name
-																				? 'Restoring…'
-																				: null
 																		}
 																		className="shrink-0"
 																	>
@@ -1029,7 +1027,8 @@ export const SettingsModal = memo(function SettingsModal({
 										title={memoryRemovalCopy.title}
 										description={memoryRemovalCopy.description}
 										confirmLabel={memoryRemovalCopy.confirmLabel}
-										pendingLabel={memoryRemovalMutation.isPending ? memoryRemovalCopy.pendingLabel : null}
+										pendingLabel={memoryRemovalCopy.pendingLabel}
+										pending={memoryRemovalMutation.isPending}
 										error={memoryRemovalMutation.error ? memoryRemovalCopy.error : null}
 										onConfirm={confirmMemoryRemoval}
 									/>

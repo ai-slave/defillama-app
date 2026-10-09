@@ -38,7 +38,7 @@ export const SearchResults = memo(function SearchResults({
 			<InlineStatus
 				variant="error"
 				action={
-					<Button type="button" size="sm" pendingLabel={isSearching ? 'Retrying…' : null} onClick={onRetry}>
+					<Button type="button" size="sm" pendingLabel="Retrying…" pending={isSearching} onClick={onRetry}>
 						Try again
 					</Button>
 				}

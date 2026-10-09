@@ -161,7 +161,8 @@ export function ProjectLanding({
 								ref={focusRegionOnLeave}
 								variant="secondary"
 								size="sm"
-								pendingLabel={project.isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={project.isFetching}
 								onClick={() => void project.refetch()}
 							>
 								Try again
@@ -395,7 +396,8 @@ export function ProjectLanding({
 											isStreaming
 										}
 										accessibleWhenDisabled
-										pendingLabel={send === 'sending' ? 'Sending…' : null}
+										pendingLabel="Sending…"
+										pending={send === 'sending'}
 										aria-label="Send message"
 									>
 										<Icon name="arrow-up" height={16} width={16} />
@@ -419,7 +421,8 @@ export function ProjectLanding({
 													ref={focusRegionOnLeave}
 													variant="secondary"
 													size="sm"
-													pendingLabel={projectSessions.isFetching ? 'Retrying…' : null}
+													pendingLabel="Retrying…"
+													pending={projectSessions.isFetching}
 													onClick={() => void projectSessions.refetch()}
 												>
 													Try again

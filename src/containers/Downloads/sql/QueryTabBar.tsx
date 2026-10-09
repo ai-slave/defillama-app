@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tab, tabIds } from '~/ui/Tabs'
@@ -414,7 +415,8 @@ function RenameInput({
 	// Enter/Escape may also cause blur when focus returns to the tab.
 	const finished = useRef(false)
 	return (
-		<input
+		<Input
+			variant="inline"
 			ref={focusAndSelect}
 			aria-label={`Rename ${initial}`}
 			value={value}
@@ -435,7 +437,7 @@ function RenameInput({
 					onCommit(value, false)
 				}
 			}}
-			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px label-md text-primary ring-1 ring-brand outline-hidden"
+			className="absolute inset-y-1 right-12 left-2"
 		/>
 	)
 }

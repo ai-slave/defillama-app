@@ -8,9 +8,10 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, InlineStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -889,6 +890,25 @@ function SqlWorkspaceInner({
 				loadingStage={activeTab.loadingStage}
 				error={!!activeTab.runError || (activeTab.cells?.some((c) => !!c.runError) ?? false)}
 			/>
+			{duckdb.status === 'error' ? (
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							// The notice leaves once the engine loads; the region keeps focus.
+							ref={focusRegionOnLeave}
+							size="sm"
+							onClick={() => void duckdb.retry.refetch()}
+							pendingLabel="Retrying…"
+							pending={duckdb.retry.isFetching}
+						>
+							Try again
+						</Button>
+					}
+				>
+					The SQL engine failed to load, so queries can&apos;t run.
+				</InlineStatus>
+			) : null}
 
 			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS}>
 				<ViewTabs

@@ -15,7 +15,13 @@ import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelExportShellFallback,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
@@ -36,6 +42,7 @@ import {
 	USD_LOWERCASE_MILLIONS_OPTIONS,
 	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
 } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
 import { definitions } from './definitions'
@@ -397,7 +404,8 @@ export function RWAAssetPage({
 	const { chartInstance: nativeYieldChartInstance, handleChartReady: onNativeYieldChartReady } = useGetChartInstance()
 	const { chartInstance: assetChartInstance, handleChartReady: onAssetChartReady } = useGetChartInstance()
 	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
-	const { data: assetFlows, isLoading: isLoadingFlows, error: flowError } = useRWAAssetFlows(asset.id, isFlowChart)
+	const assetFlowsQuery = useRWAAssetFlows(asset.id, isFlowChart)
+	const assetFlows = assetFlowsQuery.data
 	const [flowZoom, setFlowZoom] = useState<RWAFlowZoom | null>(null)
 
 	const nativeYieldExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-native-yield`
@@ -556,13 +564,11 @@ export function RWAAssetPage({
 							<RWAFlowVsPriceStrip summary={flowVsPriceSummary} />
 						) : null}
 						{isFlowChart ? (
-							isLoadingFlows ? (
+							queryReadFailed(assetFlowsQuery) ? (
+								<ChartPanelBodyError retry={assetFlowsQuery}>Failed to load flow data.</ChartPanelBodyError>
+							) : assetFlowsQuery.isLoading ? (
 								<ChartPanelBodyFallback role="status" aria-live="polite">
 									<LoadingIndicator />
-								</ChartPanelBodyFallback>
-							) : flowError ? (
-								<ChartPanelBodyFallback role="alert" className="body-sm text-error">
-									{flowError instanceof Error ? flowError.message : 'Failed to load flow data.'}
 								</ChartPanelBodyFallback>
 							) : flowChart ? (
 								<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -573,7 +579,7 @@ export function RWAAssetPage({
 									/>
 								</Suspense>
 							) : (
-								<ChartPanelBodyFallback className="body-sm text-secondary">
+								<ChartPanelBodyFallback className="body-sm text-tertiary">
 									No flow data available.
 								</ChartPanelBodyFallback>
 							)
@@ -588,7 +594,7 @@ export function RWAAssetPage({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyFallback className="body-sm text-secondary">
+							<ChartPanelBodyFallback className="body-sm text-tertiary">
 								No market data available.
 							</ChartPanelBodyFallback>
 						)}

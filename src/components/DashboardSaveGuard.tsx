@@ -99,7 +99,6 @@ function FailedDashboardDraft({ request, userId }: { request: DashboardUpdate; u
 				}
 				confirmLabel="Discard draft"
 				cancelLabel="Keep draft"
-				pendingLabel={null}
 				error={null}
 				// A discard removes the notice and its trigger, so focus goes on past the notices.
 				autoFocusOnHide={(element) => {

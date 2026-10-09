@@ -238,7 +238,8 @@ export function ExchangeTokenFinder({
 									ref={focusRegionOnLeave}
 									size="sm"
 									onClick={() => void listingsQuery.refetch()}
-									pendingLabel={listingsQuery.isFetching ? 'Retrying…' : null}
+									pendingLabel="Retrying…"
+									pending={listingsQuery.isFetching}
 								>
 									Try again
 								</Button>

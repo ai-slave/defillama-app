@@ -91,7 +91,7 @@ describe('standalone IR shell', () => {
 		await render('investors')
 		expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-orientation')).toBe('vertical')
 		expect(selectedTab()).toBe('Financials')
-		expect(panelText()).toBe("Couldn't load Spark financials.")
+		expect(panelText()).toBe("Couldn't load Spark financials.Try again")
 
 		await click('Distribution Rewards')
 		expect(selectedTab()).toBe('Distribution Rewards')
@@ -117,7 +117,7 @@ describe('standalone IR shell', () => {
 		expect(spark().getAttribute('aria-expanded')).toBe('false')
 		expect(container.querySelector('[role="tab"]')).toBeNull()
 		// Collapsing the list keeps the open tab on screen.
-		expect(panelText()).toBe("Couldn't load Spark financials.")
+		expect(panelText()).toBe("Couldn't load Spark financials.Try again")
 
 		await click('Spark')
 		expect(selectedTab()).toBe('Financials')

@@ -259,7 +259,8 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 								variant="primary"
 								size="md"
 								onClick={retry}
-								pendingLabel={session.isPending ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={session.isPending}
 							>
 								Try again
 							</Button>
@@ -438,7 +439,7 @@ function UpgradeFormFields({
 				{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 			</DialogBody>
 			<DialogFooter>
-				<Button type="submit" variant="primary" size="md" pendingLabel={paying ? 'Processing…' : null}>
+				<Button type="submit" variant="primary" size="md" pendingLabel="Processing…" pending={paying}>
 					{awaitingVerification ? 'Complete verification' : 'Complete upgrade'}
 				</Button>
 			</DialogFooter>

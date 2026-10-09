@@ -1,5 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
+import { Switch } from '~/ui/Switch'
 
 export function MetaSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
@@ -11,6 +11,8 @@ export function MetaSection({ title, children }: { title: string; children: Reac
 	)
 }
 
+/** A settings row: its label and description on the left, the shared Switch on the right, named by the label and
+    described by the description. */
 export function MetaSwitch({
 	checked,
 	onCheckedChange,
@@ -20,44 +22,27 @@ export function MetaSwitch({
 	checked: boolean
 	onCheckedChange: (next: boolean) => void
 	label: string
-	description?: string
+	description: string
 }) {
-	const id = useId()
+	const descriptionId = useId()
 	return (
-		<label className="group flex cursor-pointer items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-hover-row">
+		<div className="flex items-start justify-between gap-4">
 			<span className="grid min-w-0 gap-0.5">
-				<span id={`${id}-label`} className="label-md text-primary">
-					{label}
+				<span className="label-md text-primary">{label}</span>
+				<span id={descriptionId} className="body-sm text-tertiary">
+					{description}
 				</span>
-				{description ? (
-					<span id={`${id}-description`} className="body-sm text-tertiary">
-						{description}
-					</span>
-				) : null}
 			</span>
-			<Ariakit.Checkbox
+			<Switch
+				label={label}
+				hideLabel
+				value={label}
 				checked={checked}
 				onChange={(event) => onCheckedChange(event.currentTarget.checked)}
-				role="switch"
-				aria-checked={checked}
-				aria-labelledby={`${id}-label`}
-				aria-describedby={description ? `${id}-description` : undefined}
-				className="peer sr-only"
+				describedBy={descriptionId}
+				className="shrink-0"
 			/>
-			<span
-				aria-hidden="true"
-				// The shared Switch's track and knob (src/ui/Switch.tsx); this row keeps its own label and description.
-				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${
-					checked
-						? 'bg-brand peer-focus-visible:focus-ring-on-brand'
-						: 'bg-surface-elevated-2 peer-focus-visible:focus-ring'
-				}`}
-			>
-				<span
-					className={`block size-4 rounded-full bg-white shadow-raised motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''}`}
-				/>
-			</span>
-		</label>
+		</div>
 	)
 }
 

@@ -120,7 +120,8 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 					type="button"
 					variant="ghost"
 					onClick={handleSkip}
-					pendingLabel={skipping ? 'Skipping…' : null}
+					pendingLabel="Skipping…"
+					pending={skipping}
 					disabled={saving}
 				>
 					Skip
@@ -131,7 +132,8 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 						size="md"
 						type="submit"
 						variant="primary"
-						pendingLabel={saving ? 'Submitting…' : null}
+						pendingLabel="Submitting…"
+						pending={saving}
 						disabled={skipping}
 					>
 						<Icon name="sparkles" height={14} width={14} />

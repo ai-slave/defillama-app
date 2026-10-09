@@ -17,16 +17,18 @@ function ConnectButton({
 	ref,
 	onClick,
 	pendingLabel,
+	pending,
 	label
 }: {
 	ref?: Ref<HTMLButtonElement>
 	onClick: () => void
-	pendingLabel: string | null
+	pendingLabel: string
+	pending: boolean
 	label: string
 }) {
 	return (
 		<span className="ai-slack-accent contents">
-			<Button ref={ref} variant="primary" size="md" onClick={onClick} pendingLabel={pendingLabel}>
+			<Button ref={ref} variant="primary" size="md" onClick={onClick} pendingLabel={pendingLabel} pending={pending}>
 				<SlackLogo />
 				{label}
 			</Button>
@@ -131,9 +133,8 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						// Cancelling a pending link removes the block that held focus.
 						ref={takeLostFocus}
 						onClick={() => link.connect()}
-						pendingLabel={
-							link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : null
-						}
+						pendingLabel={link.state.status === 'loading' ? 'Loading…' : 'Opening…'}
+						pending={link.state.status === 'starting' || link.state.status === 'loading'}
 						label="Add to Slack"
 					/>
 				)}
@@ -150,13 +151,15 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 							variant="primary"
 							size="md"
 							onClick={() => link.connect()}
-							pendingLabel={link.isStarting ? 'Opening…' : null}
+							pendingLabel="Opening…"
+							pending={link.isStarting}
 						>
 							Start over
 						</Button>
 						<Button
 							size="md"
-							pendingLabel={link.isCancelingPending ? 'Canceling…' : null}
+							pendingLabel="Canceling…"
+							pending={link.isCancelingPending}
 							onClick={() => link.cancelPending()}
 						>
 							Cancel
@@ -181,7 +184,8 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 					<div className="flex justify-end">
 						<ConnectButton
 							onClick={() => link.connect()}
-							pendingLabel={link.isStarting ? 'Opening…' : null}
+							pendingLabel="Opening…"
+							pending={link.isStarting}
 							label="Add another workspace"
 						/>
 					</div>
@@ -208,7 +212,8 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 				title="Disconnect Slack workspace?"
 				description={`${disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts targeting this workspace will be paused.`}
 				confirmLabel="Disconnect"
-				pendingLabel={link.isDisconnecting ? 'Disconnecting…' : null}
+				pendingLabel="Disconnecting…"
+				pending={link.isDisconnecting}
 				error={link.disconnectFailed ? "Couldn't disconnect this workspace. Try again." : null}
 				onConfirm={() => {
 					if (disconnectTarget) link.disconnect(disconnectTarget.team_id)

@@ -299,7 +299,8 @@ function PricingCardCta({
 				size="lg"
 				className="w-full"
 				onClick={() => onUpgradeTier?.(card.key)}
-				pendingLabel={loading === 'stripe' ? 'Processing…' : null}
+				pendingLabel="Processing…"
+				pending={loading === 'stripe'}
 			>
 				Upgrade to {card.title} with Card
 			</Button>
@@ -331,7 +332,8 @@ function PricingCardCta({
 							size="lg"
 							className="flex-1"
 							onClick={() => onPrimaryCtaClick?.(card.key)}
-							pendingLabel={loading === 'stripe' ? 'Processing…' : null}
+							pendingLabel="Processing…"
+							pending={loading === 'stripe'}
 							{...checkoutEvent('stripe')}
 						>
 							{card.primaryCta}
@@ -351,7 +353,8 @@ function PricingCardCta({
 							size="lg"
 							className="w-full"
 							onClick={() => onSecondaryCtaClick?.(card.key)}
-							pendingLabel={loading === 'llamapay' ? 'Processing…' : null}
+							pendingLabel="Processing…"
+							pending={loading === 'llamapay'}
 							{...checkoutEvent('llamapay')}
 						>
 							{card.secondaryCta}
@@ -366,7 +369,8 @@ function PricingCardCta({
 							size="lg"
 							className="w-full"
 							onClick={() => onSecondaryCtaClick?.(card.key)}
-							pendingLabel={loading === 'llamapay' ? 'Processing…' : null}
+							pendingLabel="Processing…"
+							pending={loading === 'llamapay'}
 							{...checkoutEvent('llamapay')}
 						>
 							{card.secondaryCta}
@@ -377,7 +381,8 @@ function PricingCardCta({
 						size="lg"
 						className="w-full"
 						onClick={() => onPrimaryCtaClick?.(card.key)}
-						pendingLabel={loading === 'stripe' ? 'Processing…' : null}
+						pendingLabel="Processing…"
+						pending={loading === 'stripe'}
 						{...checkoutEvent('stripe')}
 					>
 						{card.primaryCta}

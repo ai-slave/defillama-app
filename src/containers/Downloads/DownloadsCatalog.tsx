@@ -312,12 +312,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</div>
 					) : activeTab === 'time-series' ? (
 						<div className="flex flex-col gap-8">
-							<button
-								type="button"
+							<Card
+								as="button"
+								tone="brand"
+								padding="md"
 								onClick={() => {
 									setOpened(isTrial ? { kind: 'trialLimit' } : { kind: 'multiMetric' })
 								}}
-								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-lg border border-brand-muted bg-linear-to-br from-brand-faint to-transparent p-4 text-left"
+								className="hover-wash-card group flex items-start justify-between gap-4 text-left"
 							>
 								<div className="flex items-start gap-3">
 									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint-strong">
@@ -336,7 +338,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										<Icon name="arrow-up-right" className="size-3.5" />
 									</span>
 								</span>
-							</button>
+							</Card>
 
 							{filteredChartsByCategory.map(({ category, items }) => (
 								<section key={`chart-${category}`} className="flex flex-col gap-3">

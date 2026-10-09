@@ -183,10 +183,8 @@ export function useRevenueData() {
 		refetchOnWindowFocus: false
 	})
 
-	return useMemo(() => {
-		if (!query.data) {
-			return { data: null, isLoading: query.isLoading || query.isPending }
-		}
+	const data = useMemo(() => {
+		if (!query.data) return null
 
 		const { metadata, fees, revenue, emissions } = query.data
 
@@ -230,91 +228,90 @@ export function useRevenueData() {
 		})
 
 		return {
-			data: {
-				kpis: {
-					fees: {
-						allTime: {
-							value: fees.kpis.allTimeFees?.value || 0,
-							formatted: fees.kpis.allTimeFees?.formatted || formatNear(0)
-						},
-						ytd: {
-							value: fees.kpis.ytdFees?.value || 0,
-							formatted: fees.kpis.ytdFees?.formatted || formatNear(0)
-						},
-						d30: {
-							value: fees.kpis.thirtyDayFees?.value || 0,
-							formatted: fees.kpis.thirtyDayFees?.formatted || formatNear(0)
-						},
-						d7: {
-							value: fees7d,
-							formatted: formatNear(fees7d)
-						},
-						y1: {
-							value: fees1y,
-							formatted: formatNear(fees1y)
-						}
+			kpis: {
+				fees: {
+					allTime: {
+						value: fees.kpis.allTimeFees?.value || 0,
+						formatted: fees.kpis.allTimeFees?.formatted || formatNear(0)
 					},
-					revenue: {
-						allTime: {
-							value: revenue.kpis.allTimeRevenue?.value || 0,
-							formatted: revenue.kpis.allTimeRevenue?.formatted || formatNear(0)
-						},
-						ytd: {
-							value: revenue.kpis.ytdRevenue?.value || 0,
-							formatted: revenue.kpis.ytdRevenue?.formatted || formatNear(0)
-						},
-						d30: {
-							value: revenue.kpis.thirtyDayRevenue?.value || 0,
-							formatted: revenue.kpis.thirtyDayRevenue?.formatted || formatNear(0)
-						},
-						d7: {
-							value: revenue7d,
-							formatted: formatNear(revenue7d)
-						},
-						y1: {
-							value: revenue.kpis.twelveMonthRevenue?.value || revenue1y,
-							formatted: revenue.kpis.twelveMonthRevenue?.formatted || formatNear(revenue1y)
-						}
+					ytd: {
+						value: fees.kpis.ytdFees?.value || 0,
+						formatted: fees.kpis.ytdFees?.formatted || formatNear(0)
+					},
+					d30: {
+						value: fees.kpis.thirtyDayFees?.value || 0,
+						formatted: fees.kpis.thirtyDayFees?.formatted || formatNear(0)
+					},
+					d7: {
+						value: fees7d,
+						formatted: formatNear(fees7d)
+					},
+					y1: {
+						value: fees1y,
+						formatted: formatNear(fees1y)
 					}
 				},
-				feesChartData: {
-					dates: feeChartDates,
-					cumulative: cumulativeFees,
-					protocolFees: protocolFeesSeries,
-					intentFees: intentFeesSeries
-				},
-				revenueChartData: {
-					dates: chartDates,
-					cumulative: cumulativeRevenue,
-					burn: protocolRevenueSeries,
-					intents: intentRevenueSeries
-				},
-				emissionsChartData: {
-					dates: emissionsDates,
-					cumulativeRevenue,
-					cumulativeEmissions,
-					percentage: percentageFromCumulative
-				},
-				walletBreakdown,
-				metadata,
-				rawData: {
-					feesDates: feeChartDates,
-					totalFeesSeries,
-					protocolFeesSeries,
-					intentFeesSeries,
-					cumulativeFees,
-					revenueDates: chartDates,
-					burnRevenueSeries: protocolRevenueSeries,
-					intentsRevenueSeries: intentRevenueSeries,
-					cumulativeRevenue,
-					cumulativeBurnRevenue: cumulativeProtocolRevenue,
-					cumulativeIntentsRevenue,
-					emissionsDates,
-					cumulativeEmissions,
-					percentageFromCumulative
+				revenue: {
+					allTime: {
+						value: revenue.kpis.allTimeRevenue?.value || 0,
+						formatted: revenue.kpis.allTimeRevenue?.formatted || formatNear(0)
+					},
+					ytd: {
+						value: revenue.kpis.ytdRevenue?.value || 0,
+						formatted: revenue.kpis.ytdRevenue?.formatted || formatNear(0)
+					},
+					d30: {
+						value: revenue.kpis.thirtyDayRevenue?.value || 0,
+						formatted: revenue.kpis.thirtyDayRevenue?.formatted || formatNear(0)
+					},
+					d7: {
+						value: revenue7d,
+						formatted: formatNear(revenue7d)
+					},
+					y1: {
+						value: revenue.kpis.twelveMonthRevenue?.value || revenue1y,
+						formatted: revenue.kpis.twelveMonthRevenue?.formatted || formatNear(revenue1y)
+					}
 				}
 			},
-			isLoading: false
+			feesChartData: {
+				dates: feeChartDates,
+				cumulative: cumulativeFees,
+				protocolFees: protocolFeesSeries,
+				intentFees: intentFeesSeries
+			},
+			revenueChartData: {
+				dates: chartDates,
+				cumulative: cumulativeRevenue,
+				burn: protocolRevenueSeries,
+				intents: intentRevenueSeries
+			},
+			emissionsChartData: {
+				dates: emissionsDates,
+				cumulativeRevenue,
+				cumulativeEmissions,
+				percentage: percentageFromCumulative
+			},
+			walletBreakdown,
+			metadata,
+			rawData: {
+				feesDates: feeChartDates,
+				totalFeesSeries,
+				protocolFeesSeries,
+				intentFeesSeries,
+				cumulativeFees,
+				revenueDates: chartDates,
+				burnRevenueSeries: protocolRevenueSeries,
+				intentsRevenueSeries: intentRevenueSeries,
+				cumulativeRevenue,
+				cumulativeBurnRevenue: cumulativeProtocolRevenue,
+				cumulativeIntentsRevenue,
+				emissionsDates,
+				cumulativeEmissions,
+				percentageFromCumulative
+			}
 		}
-	}, [query.data, query.isLoading, query.isPending])
+	}, [query.data])
+
+	return { query, data }
 }

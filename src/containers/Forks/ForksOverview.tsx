@@ -270,7 +270,7 @@ export function ForksOverview({
 							</PanelTitle>
 							<TableSearchInput
 								columnId="name"
-								placeholder="Search protocols..."
+								placeholder="Search protocols…"
 								className={searchFieldInlineWrapperStyles}
 							/>
 							<TableCsvExport filename="forks-overview" />

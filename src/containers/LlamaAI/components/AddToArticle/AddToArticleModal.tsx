@@ -316,7 +316,8 @@ function AddToArticleForm({
 												ref={passFocusOnLeave(() => searchRef.current)}
 												type="button"
 												size="sm"
-												pendingLabel={drafts.isFetching ? 'Retrying…' : null}
+												pendingLabel="Retrying…"
+												pending={drafts.isFetching}
 												onClick={() => void drafts.refetch()}
 											>
 												Try again
@@ -440,7 +441,8 @@ function AddToArticleForm({
 						type="submit"
 						variant="primary"
 						size="md"
-						pendingLabel={isSubmitting ? (isCreatingNew ? 'Creating…' : 'Adding…') : null}
+						pendingLabel={isCreatingNew ? 'Creating…' : 'Adding…'}
+						pending={isSubmitting}
 					>
 						{isCreatingNew ? 'Create draft' : 'Add to article'}
 					</Button>

@@ -66,7 +66,8 @@ export function PaymentButton({
 					size="lg"
 					className="w-full"
 					onClick={handleClick}
-					pendingLabel={pending ? 'Opening checkout…' : null}
+					pendingLabel="Opening checkout…"
+					pending={pending}
 					data-umami-event={isAuthenticated ? `subscribe-${paymentMethod}-${type ?? ''}` : undefined}
 				>
 					<Icon name={icon} className="size-3.5" />

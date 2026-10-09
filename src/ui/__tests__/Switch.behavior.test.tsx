@@ -72,7 +72,7 @@ test('article switch has a concise label and separate description; label activat
 	}
 	await act(async () => root.render(<Field />))
 	const input = container.querySelector<HTMLInputElement>('[role="switch"]')!
-	expect(document.getElementById(input.getAttribute('aria-labelledby')!)?.textContent).toBe('Show on homepage')
+	expect(input.getAttribute('aria-label')).toBe('Show on homepage')
 	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe(
 		'The article appears in featured research.'
 	)

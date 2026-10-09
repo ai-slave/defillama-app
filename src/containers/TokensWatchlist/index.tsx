@@ -187,7 +187,8 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							<Button
 								size="md"
 								className="mt-2"
-								pendingLabel={isFetching ? 'Retrying…' : null}
+								pendingLabel="Retrying…"
+								pending={isFetching}
 								onClick={() => void refetch()}
 							>
 								Retry

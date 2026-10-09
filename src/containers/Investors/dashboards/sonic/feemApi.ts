@@ -86,7 +86,7 @@ export function buildFeeMViewModel({ feem }: FeeMAPIResponse) {
 export type FeeMViewModel = ReturnType<typeof buildFeeMViewModel>
 
 export function useFeeMData() {
-	const query = useQuery<FeeMViewModel>({
+	return useQuery<FeeMViewModel>({
 		queryKey: ['sonic-feem'],
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/feem')
@@ -97,7 +97,4 @@ export function useFeeMData() {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-
-	if (!query.data) return { data: null, isLoading: query.isLoading || query.isPending }
-	return { data: query.data, isLoading: false }
 }

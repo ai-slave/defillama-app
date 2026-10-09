@@ -255,7 +255,8 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							type="submit"
 							variant="primary"
 							size="md"
-							pendingLabel={requestOtpMutation.isPending ? 'Sending…' : null}
+							pendingLabel="Sending…"
+							pending={requestOtpMutation.isPending}
 						>
 							Send verification code
 						</Button>
@@ -390,7 +391,8 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							size="md"
 							// A resend in flight also holds the switch; its own control shows "Sending code…".
 							disabled={requestOtpMutation.isPending}
-							pendingLabel={confirmMutation.isPending ? 'Adding…' : null}
+							pendingLabel="Adding…"
+							pending={confirmMutation.isPending}
 						>
 							Add email
 						</Button>

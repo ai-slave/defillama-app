@@ -173,7 +173,8 @@ export function WalletSignInForm({ store, onAuthenticated }: WalletSignInProps) 
 								type="button"
 								size="sm"
 								disabled={signInMutation.isPending}
-								pendingLabel={disconnectMutation.isPending ? 'Disconnecting…' : null}
+								pendingLabel="Disconnecting…"
+								pending={disconnectMutation.isPending}
 								onClick={() => void changeWallet()}
 							>
 								Disconnect
@@ -194,14 +195,13 @@ export function WalletSignInForm({ store, onAuthenticated }: WalletSignInProps) 
 						disabled={connectMutation.isPending || disconnectMutation.isPending}
 						aria-describedby={error ? errorId : undefined}
 						pendingLabel={
-							signInMutation.isPending
-								? stage === 'preparing'
-									? 'Preparing sign-in…'
-									: stage === 'signing'
-										? `Waiting for ${connection.connector?.name ?? 'your wallet'}…`
-										: 'Signing in…'
-								: null
+							stage === 'preparing'
+								? 'Preparing sign-in…'
+								: stage === 'signing'
+									? `Waiting for ${connection.connector?.name ?? 'your wallet'}…`
+									: 'Signing in…'
 						}
+						pending={signInMutation.isPending}
 						onClick={() => void submit()}
 					>
 						Sign in

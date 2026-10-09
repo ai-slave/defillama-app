@@ -61,12 +61,12 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 		<Panel padding="none">
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects...</span>
+					<span className="sr-only">Search projects…</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects..."
+						placeholder="Search projects…"
 						className={searchFieldInputPlacementStyles}
 					/>
 				</label>

@@ -614,7 +614,8 @@ function MessageBubbleContent({
 							variant="primary"
 							onClick={handleSaveEdit}
 							disabled={!draftText.trim() || draftText.trim() === message.content?.trim()}
-							pendingLabel={isSaving ? 'Saving…' : null}
+							pendingLabel="Saving…"
+							pending={isSaving}
 						>
 							Save
 						</Button>

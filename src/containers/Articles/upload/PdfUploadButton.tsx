@@ -73,7 +73,8 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 							size="sm"
 							disabled={!articleId}
 							onClick={open}
-							pendingLabel={isUploading ? 'Uploading…' : null}
+							pendingLabel="Uploading…"
+							pending={isUploading}
 						>
 							Replace PDF
 						</Button>
@@ -94,7 +95,8 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					shape="wide"
 					icon="file-text"
 					label="Upload PDF"
-					pendingLabel={isUploading ? 'Uploading…' : null}
+					pendingLabel="Uploading…"
+					pending={isUploading}
 					disabled={!articleId}
 					onClick={open}
 				/>

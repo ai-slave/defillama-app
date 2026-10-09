@@ -519,7 +519,9 @@ export function AlertArtifact({
 						// A failed channel list holds Save; its notice and Try again sit in the delivery field.
 						disabled={!messageId || slackGate === 'channelsFailed'}
 						accessibleWhenDisabled={slackGate === 'channelsFailed'}
-						pendingLabel={isSaving ? 'Saving…' : slackGate === 'channelsFailed' ? null : slackGate}
+						// The Slack channel list gates the submit: it waits with the list's own label while that loads.
+						pendingLabel={isSaving || slackGate === null || slackGate === 'channelsFailed' ? 'Saving…' : slackGate}
+						pending={isSaving || (slackGate !== null && slackGate !== 'channelsFailed')}
 						className="w-full"
 					>
 						<Icon name="calendar-plus" className="size-3.5" />

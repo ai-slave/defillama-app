@@ -22,7 +22,10 @@ export function ConfirmActionDialog<TData, TVariables>({
 	onSuccess?: () => void
 	/** A toast once the action succeeds, also when the dialog left the page before the request settled. */
 	successMessage?: string
-} & Omit<ComponentProps<typeof ConfirmDialog>, 'open' | 'store' | 'onClose' | 'pendingLabel' | 'error' | 'onConfirm'>) {
+} & Omit<
+	ComponentProps<typeof ConfirmDialog>,
+	'open' | 'store' | 'onClose' | 'pendingLabel' | 'pending' | 'error' | 'onConfirm'
+>) {
 	const dialogRef = useRef<HTMLDivElement>(null)
 	// Not the mutation's own error: that one clears when a retry starts, and it outlives this opening.
 	const [shownError, setShownError] = useState<string | null>(null)
@@ -32,7 +35,8 @@ export function ConfirmActionDialog<TData, TVariables>({
 			ref={dialogRef}
 			open
 			onClose={onClose}
-			pendingLabel={mutation.isPending ? pendingLabel : null}
+			pendingLabel={pendingLabel}
+			pending={mutation.isPending}
 			error={shownError}
 			onConfirm={() => {
 				void mutation.mutateAsync(variables).then(

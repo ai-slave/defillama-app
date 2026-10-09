@@ -171,7 +171,7 @@ function DashboardSettingsModalInner({
 						) : null}
 					</DialogBody>
 					<DialogFooter dismiss={<DialogCancelButton />}>
-						<Button type="submit" variant="primary" size="md" pendingLabel={save.isPending ? 'Saving…' : null}>
+						<Button type="submit" variant="primary" size="md" pendingLabel="Saving…" pending={save.isPending}>
 							Save changes
 						</Button>
 					</DialogFooter>

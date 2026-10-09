@@ -599,7 +599,6 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				title="Duplicate chart"
 				description="Create a duplicate of this chart in the dashboard?"
 				confirmLabel="Duplicate"
-				pendingLabel={null}
 				error={null}
 				tone="primary"
 				onConfirm={() => {
