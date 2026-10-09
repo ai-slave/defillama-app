@@ -2,6 +2,7 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider, type DashboardTestState } from '~/utils/testing/dashboardContext'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -166,7 +167,7 @@ test('offers a card permalink and an embed snippet for cards on a public dashboa
 	expect(textarea?.value).toContain('theme=light')
 	await act(async () =>
 		Array.from(document.body.querySelectorAll<HTMLButtonElement>('button'))
-			.find((node) => node.textContent?.trim() === 'Copy code')!
+			.find((node) => accessibleName(node) === 'Copy code')!
 			.click()
 	)
 	expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining('theme=light'))

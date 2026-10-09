@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { FileDropProvider } from '../../components/FileDrop'
@@ -121,12 +122,6 @@ async function selectRepo() {
 	await waitForUi(() => expect(field('Branch')?.value).toBe('main'))
 }
 
-// The error a control's Field shows under it (src/ui/Field.tsx), or null.
-const errorOf = (control: Element) =>
-	control.getAttribute('aria-invalid') === 'true'
-		? (document.getElementById(control.getAttribute('aria-describedby')!.split(' ').at(-1)!)?.textContent ?? null)
-		: null
-
 test('GitHub connection locks the dialog until the request settles', async () => {
 	const request = Promise.withResolvers<{}>()
 	api.connect.mockReturnValueOnce(request.promise)
@@ -181,11 +176,11 @@ test('Connect with nothing chosen names the missing field', async () => {
 	await mount('github')
 	await waitForUi(() => expect(document.querySelector('input[role="combobox"]')).not.toBeNull())
 	await click('Connect')
-	expect(errorOf(field('Repository'))).toBe('Choose a repository.')
+	expect(fieldErrorOf(field('Repository'))).toBe('Choose a repository.')
 	expect(document.activeElement).toBe(field('Repository'))
 	expect(api.connect).not.toHaveBeenCalled()
 	await selectRepo()
-	expect(errorOf(field('Repository'))).toBeNull()
+	expect(fieldErrorOf(field('Repository'))).toBeNull()
 })
 
 test('GitHub failure stays inline, keeps selection, and can retry', async () => {
@@ -238,11 +233,11 @@ test('text import locks the dialog while it saves and names an empty field', asy
 	await mount('text')
 	await fill(document.querySelector('input')!, 'notes.md')
 	await click('Save')
-	expect(errorOf(document.querySelector('textarea')!)).toBe('Enter the text to add.')
+	expect(fieldErrorOf(document.querySelector('textarea')!)).toBe('Enter the text to add.')
 	expect(document.activeElement).toBe(document.querySelector('textarea'))
 	expect(api.add).not.toHaveBeenCalled()
 	await fill(document.querySelector('textarea')!, 'Note')
-	expect(errorOf(document.querySelector('textarea')!)).toBeNull()
+	expect(fieldErrorOf(document.querySelector('textarea')!)).toBeNull()
 	await click('Save')
 	await waitForUi(() => expect(button('Saving…').getAttribute('aria-busy')).toBe('true'))
 	expect(button('Cancel').getAttribute('aria-disabled')).toBe('true')

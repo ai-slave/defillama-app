@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import { Dialog, DialogHeader } from '~/ui/Dialog'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { TopupForm, TopupModal } from '../TopupModal'
@@ -142,19 +143,16 @@ test.each([
 ])('$pay with $invalid says why under the amount and $valid recovers', async ({ invalid, valid, pay }) => {
 	await mount()
 	const input = document.querySelector('input')!
-	const amountError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
 	await enterAmount(invalid)
 	expect(input.hasAttribute('aria-invalid')).toBe(false)
 	expect(button(pay).getAttribute('aria-disabled')).toBeNull()
 	await click(pay)
-	expect(input.getAttribute('aria-invalid')).toBe('true')
-	expect(amountError()).toBe('Enter an amount between $1 and $500.')
+	expect(fieldErrorOf(input)).toBe('Enter an amount between $1 and $500.')
 	expect(document.activeElement).toBe(input)
 	await enterAmount('')
-	expect(amountError()).toBe('Enter an amount.')
+	expect(fieldErrorOf(input)).toBe('Enter an amount.')
 	await enterAmount(valid)
 	expect(input.hasAttribute('aria-invalid')).toBe(false)
-	expect(input.hasAttribute('aria-describedby')).toBe(false)
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Top up balance')
 	expect(cardCheckout.load).not.toHaveBeenCalled()
 	expect(topups()).toEqual([])

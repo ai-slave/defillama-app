@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { NewPortfolioDialog } from '../NewPortfolioDialog'
 
@@ -30,6 +31,6 @@ test('a refused name moves focus to the field that reads its error', async () =>
 	})
 
 	expect(document.activeElement).toBe(input)
-	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe('Enter a name.')
+	expect(fieldErrorOf(input)).toBe('Enter a name.')
 	expect(onCreate).not.toHaveBeenCalled()
 })

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
+import { ASSET_BRAND_COLORS } from '~/constants/colors'
 import { buildETFChartSpec, buildETFFlowChartData } from '../chartData'
 import type { IProcessedFlows } from '../types'
 
@@ -64,14 +65,14 @@ describe('buildETFFlowChartData', () => {
 				name: 'Ethereum',
 				encode: { x: 0, y: 1 },
 				stack: 'Ethereum',
-				color: '#627eea'
+				color: ASSET_BRAND_COLORS.Ethereum[1]
 			},
 			{
 				type: 'bar',
 				name: 'Solana',
 				encode: { x: 0, y: 2 },
 				stack: 'Solana',
-				color: '#9945FF'
+				color: ASSET_BRAND_COLORS.Solana[1]
 			}
 		])
 	})
@@ -87,13 +88,13 @@ describe('buildETFFlowChartData', () => {
 		})
 	})
 
-	test('darkens Bitcoin orange for the light theme, where the brand hex is under 3:1', () => {
+	test('picks the light or dark brand colour by theme', () => {
 		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
 		expect(buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Bitcoin'], isDark: false }).charts[0]?.color).toBe(
-			'#d27a02'
+			ASSET_BRAND_COLORS.Bitcoin[0]
 		)
 		expect(buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Bitcoin'], isDark: true }).charts[0]?.color).toBe(
-			'#f7931a'
+			ASSET_BRAND_COLORS.Bitcoin[1]
 		)
 	})
 })

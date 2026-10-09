@@ -11,7 +11,7 @@ import { rememberSignIn } from '~/auth/lastSignIn'
 import { AUTH_SERVER, POCKETBASE_URL } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -474,6 +474,37 @@ test('the Google link code field stays focusable while its code is checked', asy
 	expect(code.readOnly).toBe(true)
 	expect(code.disabled).toBe(false)
 	expect(document.activeElement).toBe(code)
+})
+
+const linkConfirm = () => requests.find((request) => request.url.endsWith('/auth/social-link/confirm'))!
+
+test('a Google link code the server refuses says so under the field, takes focus and clears on the next edit', async () => {
+	await openGoogleLink()
+	await type('code', '123456')
+	await submitForm()
+	await settle()
+	linkConfirm().resolve(Response.json({ error: 'The verification challenge is invalid or expired' }, { status: 400 }))
+	await waitForUi(async () => {
+		await settle()
+		expect(fieldErrorOf(input('code'))).toBe('This code is wrong or has expired.')
+	})
+	expect(document.activeElement).toBe(input('code'))
+	expect(alertTexts(container)).toEqual([])
+	await type('code', '654321')
+	expect(fieldErrorOf(input('code'))).toBeNull()
+})
+
+test('a Google link server failure shows as a request error and leaves the code unmarked', async () => {
+	await openGoogleLink()
+	await type('code', '123456')
+	await submitForm()
+	await settle()
+	linkConfirm().resolve(Response.json({ error: 'Failed to confirm verification code' }, { status: 500 }))
+	await waitForUi(async () => {
+		await settle()
+		expect(alertTexts(container)).toEqual(['Failed to confirm verification code'])
+	})
+	expect(fieldErrorOf(input('code'))).toBeNull()
 })
 
 test('the Google link Resend keeps focus through the wait its sent code starts', async () => {

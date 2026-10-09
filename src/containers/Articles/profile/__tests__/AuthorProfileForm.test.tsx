@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ArticleAuthorProfile } from '../../types'
@@ -133,13 +134,11 @@ test('a cleared display name waits for Save, then says so under the field and se
 	expect(name.getAttribute('aria-invalid')).toBeNull()
 	await type(field('Public URL'), 'Sam Lee')
 	// A handle that cannot work says so while typing.
-	expect(
-		document.getElementById(field('Public URL').getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent
-	).toBe('Enter a valid handle: lowercase letters, numbers and dashes.')
+	expect(fieldErrorOf(field('Public URL'))).toBe('Enter a valid handle: lowercase letters, numbers and dashes.')
 	await type(field('Public URL'), 'sam')
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 	expect(document.activeElement).toBe(name)
-	expect(document.getElementById(name.getAttribute('aria-describedby')!)!.textContent).toBe('Enter a display name.')
+	expect(fieldErrorOf(name)).toBe('Enter a display name.')
 	expect(session.requests.some((request) => request.init?.method === 'PATCH')).toBe(false)
 	await type(name, 'Sam')
 	expect(name.getAttribute('aria-invalid')).toBeNull()

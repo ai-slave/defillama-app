@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { ASSET_BRAND_COLORS } from '~/constants/colors'
 import { DirectoryHeader } from '../DirectoryHeader'
 import { micaDepthDetail, supportsMicaProduct } from '../MicaCells'
 import { prepareMicaVenues } from '../MicaTable'
@@ -186,10 +187,10 @@ describe('surface model selection', () => {
 		expect(researchSeriesColor('unnamed-venue', 0, true)).not.toBe(researchSeriesColor('another-venue', 1, true))
 	})
 
-	test('darkens a brand colour under 3:1 on the light theme and keeps one that passes', () => {
-		expect(researchSeriesColor('binance', 0, false)).toBe('#b6880f')
-		expect(researchSeriesColor('binance', 0, true)).toBe('#f3ba2f')
-		expect(researchSeriesColor('coinbase', 0, false)).toBe(researchSeriesColor('coinbase', 0, true))
+	// BRAND_COLORS is private to ResearchChart; btc reads the shared asset pair, whose light and dark slots differ.
+	test('picks the light or dark brand colour by theme', () => {
+		expect(researchSeriesColor('btc', 0, false)).toBe(ASSET_BRAND_COLORS.Bitcoin[0])
+		expect(researchSeriesColor('btc', 0, true)).toBe(ASSET_BRAND_COLORS.Bitcoin[1])
 	})
 
 	test('keeps observed one-sided zero depth visible in MiCA details', () => {

@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ArticleChartConfig } from '../../types'
@@ -125,9 +126,7 @@ test('entity filters clear search while preserving chart settings and selected s
 	await press(radio('Entity type', 'Protocols'), 'Home')
 	await click(insert())
 	expect(onInsert).not.toHaveBeenCalled()
-	expect(document.getElementById(search.getAttribute('aria-describedby')!)!.textContent).toBe(
-		'Choose at least one series.'
-	)
+	expect(fieldErrorOf(search)).toBe('Choose at least one series.')
 	expect(document.activeElement).toBe(search)
 	await click(entity('Aave'))
 	expect(search.getAttribute('aria-invalid')).toBeNull()

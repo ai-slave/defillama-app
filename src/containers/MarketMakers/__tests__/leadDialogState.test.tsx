@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ClaimDialog } from '../ClaimDialog'
@@ -260,10 +261,7 @@ describe('lead forms keep what was typed', () => {
 		await click(buttonByText('Submit claim request')!)
 
 		expect(document.activeElement).toBe(alignment)
-		expect(alignment.getAttribute('aria-invalid')).toBe('true')
-		expect(document.getElementById(alignment.getAttribute('aria-describedby')!)?.textContent).toBe(
-			'Agree to both statements to submit the claim.'
-		)
+		expect(fieldErrorOf(alignment)).toBe('Agree to both statements to submit the claim.')
 	})
 
 	test('a failed claim keeps its error on screen while the retry runs', async () => {
@@ -305,8 +303,8 @@ test('an empty connect request says what is missing and focuses the interest pic
 		'Enter your full name.',
 		'Enter an email address.'
 	])
-	expect(document.activeElement?.textContent).toBe('Select an option')
-	expect(document.activeElement?.getAttribute('aria-invalid')).toBe('true')
+	expect(accessibleName(document.activeElement!)).toBe('What are you interested in?')
+	expect(fieldErrorOf(document.activeElement!)).toBe('Choose what you are interested in.')
 	expect(http.urls().some((url) => url.includes('/lead/connect'))).toBe(false)
 })
 
@@ -331,6 +329,6 @@ describe('lead dialogs open on their first field', () => {
 
 	test('the connect form focuses the interest picker', async () => {
 		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
-		await waitForUi(() => expect(document.activeElement?.textContent).toBe('Select an option'))
+		await waitForUi(() => expect(accessibleName(document.activeElement!)).toBe('What are you interested in?'))
 	})
 })

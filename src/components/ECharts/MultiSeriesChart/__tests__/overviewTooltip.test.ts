@@ -1,6 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import { createOverviewTooltipFormatter } from '../overviewTooltip'
 
+/** The tooltip as a reader sees it: the text of each list row, top to bottom. */
+function rows(output: string) {
+	return [...output.matchAll(/<li[^>]*>(.*?)<\/li>/g)].map((match) =>
+		match[1]!
+			.replace(/<[^>]*>/g, '')
+			.replaceAll('&nbsp;', ' ')
+			.replace(/\s+/g, ' ')
+	)
+}
+
 describe('overview tooltip', () => {
 	test('preserves series order, renders known zeroes, and uses gas and unlock units', () => {
 		const output = createOverviewTooltipFormatter({
@@ -38,10 +48,7 @@ describe('overview tooltip', () => {
 			}
 		])
 
-		expect(output.indexOf('TVL')).toBeLessThan(output.indexOf('Gas Used'))
-		expect(output).toContain('Gap&nbsp;&nbsp;$0')
-		expect(output).toContain('GAS')
-		expect(output).toContain('TOKEN')
+		expect(rows(output)).toEqual(['aTVL $10', 'bGap $0', 'cGas Used 5 GAS', 'dUnlocks 7 TOKEN'])
 	})
 
 	test('keeps the Mcap to TVL derived row', () => {
@@ -64,8 +71,7 @@ describe('overview tooltip', () => {
 				pointed: true
 			}
 		])
-		expect(output.indexOf('Mcap&nbsp;&nbsp;$25')).toBeLessThan(output.indexOf('TVL&nbsp;&nbsp;$10'))
-		expect(output.indexOf('TVL&nbsp;&nbsp;$10')).toBeLessThan(output.indexOf('Mcap/TVL&nbsp;&nbsp;2.50'))
+		expect(rows(output)).toEqual(['Mcap $25', 'TVL $10', 'Mcap/TVL 2.50'])
 	})
 
 	test('renders a zero Mcap ratio when TVL is positive', () => {

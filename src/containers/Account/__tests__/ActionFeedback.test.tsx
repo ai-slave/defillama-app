@@ -7,6 +7,7 @@ import { FEATURES_SERVER } from '~/constants'
 import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchSponsorsAdminView'
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -420,8 +421,6 @@ test('Add client with no page picked marks the page search invalid, describes it
 	const label = [...document.querySelectorAll('label')].find((el) => el.textContent === 'DefiLlama page')!
 	const search = document.getElementById(label.htmlFor)!
 	expect(search.getAttribute('aria-invalid')).toBe('true')
-	expect(document.getElementById(search.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Choose a DefiLlama page.'
-	)
+	expect(fieldErrorOf(search)).toBe('Choose a DefiLlama page.')
 	expect(document.activeElement).toBe(search)
 })

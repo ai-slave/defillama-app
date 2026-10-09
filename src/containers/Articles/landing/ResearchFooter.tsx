@@ -193,7 +193,7 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 
 function FooterMediaKit() {
 	const mutation = useMediaKitEmail()
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	const [email, setEmail] = useState('')
 	const [submitted, setSubmitted] = useState(false)
 	const [isSent, setIsSent] = useState(false)

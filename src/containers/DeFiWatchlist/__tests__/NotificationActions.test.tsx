@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PortfolioNotifications } from '../index'
@@ -185,16 +186,15 @@ test('saving with no metric picked says so under the metrics and focuses the fir
 	const picked = boxes().find((box) => box.checked)!
 	await act(async () => picked.click())
 	const group = picked.closest('[role="group"]')!
-	const groupError = () => document.getElementById(group.getAttribute('aria-describedby') ?? '')?.textContent
-	expect(groupError()).toBeUndefined()
+	expect(fieldErrorOf(group)).toBeNull()
 
 	const save = [...dialog().querySelectorAll<HTMLButtonElement>('button[type="submit"]')].find((el) =>
 		el.closest('form')
 	)!
 	await act(async () => save.click())
-	expect(groupError()).toBe('Choose at least one protocol or chain metric.')
+	expect(fieldErrorOf(group)).toBe('Choose at least one protocol or chain metric.')
 	expect(document.activeElement).toBe(boxes()[0])
 	expect(writes).toHaveLength(0)
 	await act(async () => picked.click())
-	expect(groupError()).toBeUndefined()
+	expect(fieldErrorOf(group)).toBeNull()
 })

@@ -3,6 +3,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { DateInput } from '../DateInput'
 
 let container: HTMLDivElement
@@ -45,20 +46,18 @@ async function pick(value: string) {
 }
 
 const blur = () => act(async () => field().blur())
-const error = () => document.getElementById(field().getAttribute('aria-describedby') ?? '')?.textContent ?? null
 
 test('a date the page rejects says why under the field, then gives way to the committed date on blur', async () => {
 	await act(async () => root.render(<EndDate start="2026-09-10" />))
 
 	await pick('2026-09-01')
 	expect(field().value).toBe('2026-09-01')
-	expect(field().getAttribute('aria-invalid')).toBe('true')
-	expect(error()).toBe('Choose an end date on or after the start date.')
+	expect(fieldErrorOf(field())).toBe('Choose an end date on or after the start date.')
 
 	await blur()
 	expect(field().value).toBe('2026-09-20')
 	expect(field().getAttribute('aria-invalid')).toBe(null)
-	expect(error()).toBe(null)
+	expect(container.textContent).not.toContain('Choose an end date')
 })
 
 test('a date the page accepts stays in the field after it loses focus', async () => {

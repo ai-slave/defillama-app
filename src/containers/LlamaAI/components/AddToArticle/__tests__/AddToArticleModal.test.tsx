@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -120,15 +121,15 @@ test('adding without a target says what is missing under the field it names and 
 	await expectText('Weekly recap')
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Choose a draft')
 	await click('Add to article')
-	await expectText('Choose a draft or create a new article.')
+	expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual([
+		'Choose a draft or create a new article.'
+	])
 	expect(document.activeElement).toBe(document.querySelector('input[aria-label="Search drafts"]'))
 	await click('Create new article')
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Choose a draft')
 	const title = document.querySelector<HTMLInputElement>('input[name="newArticleTitle"]')!
 	await click('Create draft')
-	expect(document.getElementById(title.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Enter a title for the new article.'
-	)
+	expect(fieldErrorOf(title)).toBe('Enter a title for the new article.')
 	expect(document.activeElement).toBe(title)
 })
 

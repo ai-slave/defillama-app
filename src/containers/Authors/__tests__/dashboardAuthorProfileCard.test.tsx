@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -106,10 +107,8 @@ describe('the dashboard author profile card', () => {
 		await act(async () => save.focus())
 		await act(async () => save.click())
 
-		const errorOf = (input: HTMLInputElement) =>
-			document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
-		expect(errorOf(displayName)).toBe('Enter a display name.')
-		expect(errorOf(handle)).toBe('Enter a handle that ends with a letter or number.')
+		expect(fieldErrorOf(displayName)).toBe('Enter a display name.')
+		expect(fieldErrorOf(handle)).toBe('Enter a handle that ends with a letter or number.')
 		expect(document.activeElement).toBe(displayName)
 		expect(saves()).toHaveLength(0)
 		await type(displayName, 'Ada')

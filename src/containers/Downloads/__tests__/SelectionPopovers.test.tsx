@@ -3,7 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DateRangePicker } from '../DateRangePicker'
 import { RowLimitPicker } from '../RowLimitPicker'
@@ -69,14 +69,12 @@ test('unapplied dates keep All selected; Apply checks the range, and Apply and C
 	await click(trigger)
 	const reopened = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
 	expect(reopened[0].value).toBe('2026-01-01')
-	const errorOf = (el: HTMLInputElement) =>
-		document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
 	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
-	expect(errorOf(reopened[1])).toBe('Choose a To date.')
+	expect(fieldErrorOf(reopened[1])).toBe('Choose a To date.')
 	expect(document.activeElement).toBe(reopened[1])
 	await input(reopened[1], '2025-12-31')
-	expect(errorOf(reopened[1])).toBe('Choose a date on or after the From date.')
+	expect(fieldErrorOf(reopened[1])).toBe('Choose a date on or after the From date.')
 	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
 	await input(reopened[1], '2026-01-02')
@@ -102,18 +100,16 @@ test('Apply refuses typed days outside the dataset and takes its first and last 
 	)
 	await click(button('Date range: All'))
 	const [from, to] = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
-	const errorOf = (el: HTMLInputElement) =>
-		document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
 	await input(from, '2026-02-01')
 	await input(to, '2026-02-02')
 	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
-	expect(errorOf(from)).toBe('Choose a date on or before Jan 31, 2026.')
-	expect(errorOf(to)).toBe('Choose a date on or before Jan 31, 2026.')
+	expect(fieldErrorOf(from)).toBe('Choose a date on or before Jan 31, 2026.')
+	expect(fieldErrorOf(to)).toBe('Choose a date on or before Jan 31, 2026.')
 	expect(document.activeElement).toBe(from)
 	await input(from, '2025-12-31')
 	await input(to, '2026-01-31')
-	expect(errorOf(from)).toBe('Choose a date on or after Jan 1, 2026.')
+	expect(fieldErrorOf(from)).toBe('Choose a date on or after Jan 1, 2026.')
 	expect(to.getAttribute('aria-invalid')).toBeNull()
 	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
@@ -145,17 +141,14 @@ test('Apply says what is wrong with the row limit under it; correcting applies i
 	const trigger = button('Row limit: All')
 	await click(trigger)
 	const field = document.querySelector<HTMLInputElement>('[aria-label="Custom row limit"]')!
-	const error = () => document.getElementById(field.getAttribute('aria-describedby') ?? '')?.textContent
 	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
-	expect(error()).toBe('Enter a row limit.')
+	expect(fieldErrorOf(field)).toBe('Enter a row limit.')
 	expect(document.activeElement).toBe(field)
 	await input(field, '0')
-	expect(error()).toBe('Enter a row limit of 1 or more.')
-	expect(field.getAttribute('aria-invalid')).toBe('true')
+	expect(fieldErrorOf(field)).toBe('Enter a row limit of 1 or more.')
 	await input(field, '250')
 	expect(field.getAttribute('aria-invalid')).toBeNull()
-	expect(error()).toBeUndefined()
 	await click(button('Apply'))
 	expect(changed).toHaveBeenCalledExactlyOnceWith(250)
 	await waitForUi(() => expect(document.activeElement).toBe(trigger))

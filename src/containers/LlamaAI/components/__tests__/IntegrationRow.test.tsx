@@ -7,6 +7,7 @@ import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
 import { getTelegramStatusQueryKey } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -46,12 +47,6 @@ const button = (name: string, within: ParentNode = document) =>
 const confirmation = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
 const unlinkRequests = () =>
 	session.requests.filter((request) => request.url.href === TELEGRAM_LINK && request.init?.method === 'DELETE').length
-
-// The error a control's Field shows under it (src/ui/Field.tsx), or null.
-const errorOf = (control: Element) =>
-	control.getAttribute('aria-invalid') === 'true'
-		? (document.getElementById(control.getAttribute('aria-describedby')!.split(' ').at(-1)!)?.textContent ?? null)
-		: null
 
 test('Disconnect asks first, keeps its progress and error in the confirmation, and closes once unlinked', async () => {
 	const firstUnlink = Promise.withResolvers<Response>()
@@ -200,16 +195,16 @@ test('a short code says so under the field; a wrong code says so until the code 
 	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
 	await typeCode('123')
 	await press(button('Confirm')!)
-	expect(errorOf(code)).toBe('Enter the 6-digit code from Telegram.')
+	expect(fieldErrorOf(code)).toBe('Enter the 6-digit code from Telegram.')
 	expect(document.activeElement).toBe(code)
 	await typeCode('123456')
-	expect(errorOf(code)).toBeNull()
+	expect(fieldErrorOf(code)).toBeNull()
 	await press(button('Confirm')!)
-	await waitForUi(() => expect(errorOf(code)).toBe("That code didn't work. Check it in Telegram and try again."))
+	await waitForUi(() => expect(fieldErrorOf(code)).toBe("That code didn't work. Check it in Telegram and try again."))
 	// The refusal moves focus to the code, so a screen reader reads the field with its error.
 	expect(document.activeElement).toBe(code)
 	await typeCode('654321')
-	expect(errorOf(code)).toBeNull()
+	expect(fieldErrorOf(code)).toBeNull()
 })
 
 test('a server failure on confirm says the request failed, not that the code is wrong, and Confirm retries', async () => {
@@ -225,7 +220,6 @@ test('a server failure on confirm says the request failed, not that the code is 
 	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't confirm the code. Try again.")
 	)
-	expect(errorOf(code)).toBeNull()
 	expect(code.getAttribute('aria-invalid')).toBeNull()
 	await press(button('Confirm')!)
 	await waitForUi(() => expect(container.textContent).toContain('Linked as @llama'))

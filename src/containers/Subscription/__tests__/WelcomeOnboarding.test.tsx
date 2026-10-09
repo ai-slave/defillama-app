@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { readAppStorage } from '~/contexts/LocalStorage'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 const session = installSubscriberSession('welcome-user')
@@ -100,10 +101,7 @@ test('exploring routes home; Get started with nothing chosen says so and stays',
 	expect(continueButton().disabled).toBe(false)
 	await act(async () => continueButton().click())
 	expect(push).not.toHaveBeenCalled()
-	const group = container.querySelector('[role="group"]')!
-	expect(document.getElementById(group.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Choose at least one option.'
-	)
+	expect(fieldErrorOf(container.querySelector('[role="group"]')!)).toBe('Choose at least one option.')
 	expect(document.activeElement).toBe(choice('LlamaAI'))
 	await space(choice('Just exploring'))
 	await act(async () => continueButton().click())

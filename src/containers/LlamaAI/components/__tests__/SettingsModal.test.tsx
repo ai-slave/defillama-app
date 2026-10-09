@@ -13,6 +13,7 @@ import type {
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -716,9 +717,7 @@ describe('SettingsModal instructions', () => {
 			input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
 		})
 		expect(input.value).toBe('-1')
-		expect(document.getElementById(input.getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent).toBe(
-			'Enter an amount of $0 or more.'
-		)
+		expect(fieldErrorOf(input)).toBe('Enter an amount of $0 or more.')
 		expect(saveSettings).not.toHaveBeenCalled()
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '1')

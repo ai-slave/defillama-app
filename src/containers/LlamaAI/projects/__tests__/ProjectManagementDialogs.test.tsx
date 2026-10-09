@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { CreateProjectModal } from '../CreateProjectModal'
@@ -125,12 +126,6 @@ async function fill(input: HTMLInputElement | HTMLTextAreaElement, value: string
 	})
 }
 
-// The error a control's Field shows under it (src/ui/Field.tsx), or null.
-const errorOf = (control: Element) =>
-	control.getAttribute('aria-invalid') === 'true'
-		? (document.getElementById(control.getAttribute('aria-describedby')!.split(' ').at(-1)!)?.textContent ?? null)
-		: null
-
 test('rename errors preserve both drafts, pending blocks duplicate submission, and a retry keeps the error until it saves', async () => {
 	let reject!: (error: Error) => void
 	const retry = Promise.withResolvers<{ project: Project }>()
@@ -194,11 +189,11 @@ test('creating with a blank name names the field instead of sending', async () =
 	const input = document.querySelector<HTMLInputElement>('input')!
 	await fill(input, '   ')
 	await click('Create project')
-	expect(errorOf(input)).toBe('Enter a name for the project.')
+	expect(fieldErrorOf(input)).toBe('Enter a name for the project.')
 	expect(document.activeElement).toBe(input)
 	expect(api.request).not.toHaveBeenCalled()
 	await fill(input, 'Research')
-	expect(errorOf(input)).toBeNull()
+	expect(fieldErrorOf(input)).toBeNull()
 })
 
 test('at the plan cap, creating says why it is unavailable instead of sending', async () => {

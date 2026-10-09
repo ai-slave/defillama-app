@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, childColors } from '~/constants/colors'
 import {
 	buildTokenUsageTreemapTreeData,
 	filterTokenUsageTreemapTreeData,
@@ -28,7 +28,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		expect(tree[0]).toMatchObject({
 			path: 'LINK usage/DeFi',
 			value: [100, 66.67, 66.67],
-			itemStyle: { color: CHART_COLORS[0] }
+			itemStyle: { color: chartColor(0) }
 		})
 		expect(tree[0].children).toEqual([
 			{
@@ -36,17 +36,17 @@ describe('buildTokenUsageTreemapTreeData', () => {
 				path: 'LINK usage/DeFi/Alpha',
 				selectorKey: '["DeFi","Alpha"]',
 				value: [75, 75, 50],
-				itemStyle: { color: CHART_COLORS[0] }
+				itemStyle: { color: chartColor(0) }
 			},
 			{
 				name: 'Beta',
 				path: 'LINK usage/DeFi/Beta',
 				selectorKey: '["DeFi","Beta"]',
 				value: [25, 25, 16.67],
-				itemStyle: { color: '#578ce1' }
+				itemStyle: { color: childColors(chartColor(0), 2)[1] }
 			}
 		])
-		expect(tree[1].children?.[0].itemStyle?.color).toBe(CHART_COLORS[1])
+		expect(tree[1].children?.[0].itemStyle?.color).toBe(chartColor(1))
 	})
 
 	test('returns no nodes when the typed rows have no positive usage', () => {

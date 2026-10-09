@@ -8,6 +8,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { SwitchToEmailModal } from '../SwitchToEmailModal'
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
@@ -248,11 +249,7 @@ test('mismatched passwords are reported under the confirmation field without sen
 	})
 	await act(async () => submitForm(confirm))
 
-	expect(document.getElementById(confirm.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Passwords do not match.'
-	)
-	expect(confirm.getAttribute('aria-invalid')).toBe('true')
-	expect(password.hasAttribute('aria-invalid')).toBe(false)
+	expect([password, confirm].map(fieldErrorOf)).toEqual([null, 'Passwords do not match.'])
 	expect(confirmCalls).toHaveLength(0)
 })
 
@@ -265,12 +262,10 @@ test('a short code and password are reported under their fields, focusing the fi
 		setInput(password, 'short')
 		setInput(confirm, 'short')
 	})
-	const errorOf = (input: HTMLInputElement) =>
-		document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent ?? null
-	expect([code, password, confirm].map(errorOf)).toEqual([null, null, null])
+	expect([code, password, confirm].map(fieldErrorOf)).toEqual([null, null, null])
 	await act(async () => submitForm(code))
 
-	expect([code, password, confirm].map(errorOf)).toEqual([
+	expect([code, password, confirm].map(fieldErrorOf)).toEqual([
 		'Enter a valid 6-digit code.',
 		'Enter a password of at least 8 characters.',
 		null
@@ -321,8 +316,7 @@ test('a rejected code is reported under the code field only', async () => {
 	await settle()
 
 	const [code, password, confirm] = confirmFields()
-	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe('Invalid or expired OTP')
-	expect([code, password, confirm].map((input) => input.getAttribute('aria-invalid'))).toEqual(['true', null, null])
+	expect([code, password, confirm].map(fieldErrorOf)).toEqual(['Invalid or expired OTP', null, null])
 })
 
 test('the email step opens on its email field', async () => {

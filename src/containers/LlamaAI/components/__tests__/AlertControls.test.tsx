@@ -3,7 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
@@ -283,7 +283,7 @@ test('price editor saves the keyboard-selected operator and says what is wrong w
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 	expect(onSave).not.toHaveBeenCalled()
 	expect(document.activeElement).toBe(price)
-	expect(document.getElementById(price.getAttribute('aria-describedby')!)!.textContent).toBe('Enter a price.')
+	expect(fieldErrorOf(price)).toBe('Enter a price.')
 	await input('[aria-label="Price"]', '200')
 	expect(price.getAttribute('aria-invalid')).toBeNull()
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
@@ -422,14 +422,18 @@ test('switching the alert type after a failed submit opens the other type quiet;
 	await mountModal()
 	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
 	const prompt = () => document.querySelector('textarea')!
+	const dialog = document.querySelector('[role="dialog"]')!
 	await act(async () => submit().click())
-	expect(prompt().getAttribute('aria-invalid')).toBe('true')
+	expect(fieldErrorOf(prompt())).toBe('Enter what the report should cover.')
 	await press(radio('Alert type', 'Scheduled report'), 'ArrowRight')
 	const price = document.querySelector<HTMLInputElement>('[aria-label="Price"]')!
 	expect(price.getAttribute('aria-invalid')).toBeNull()
-	expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual([])
+	expect(fieldErrorTexts(dialog)).toEqual([])
 	await act(async () => submit().click())
-	expect(document.querySelector('[role="dialog"] [aria-invalid="true"]')).not.toBeNull()
+	const token = dialog.querySelector<HTMLButtonElement>('button[role="combobox"]')!
+	expect(fieldErrorTexts(dialog)).toEqual(['Choose a token.', 'Enter a price.'])
+	expect(fieldErrorOf(token)).toBe('Choose a token.')
+	expect(document.activeElement).toBe(token)
 	await press(radio('Alert type', 'Price alert'), 'Home')
 	expect(prompt().getAttribute('aria-invalid')).toBeNull()
 	expect(alertCreations()).toEqual([])

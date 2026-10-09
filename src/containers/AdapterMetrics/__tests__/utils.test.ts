@@ -4,7 +4,7 @@ import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
 } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS, CHART_SERIES_LIMIT, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_SERIES_LIMIT, chartColor, chartColors, OTHERS_COLOR } from '~/constants/colors'
 import type { IProtocol } from '../types'
 import {
 	buildAdapterByChainBreakdownPresentation,
@@ -435,21 +435,22 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	})
 
 	test('uses dataset order to break tied top-N rankings regardless of selector order', () => {
-		const chains = Array.from({ length: 12 }, (_, index) => `Chain ${index + 1}`)
+		const chains = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `Chain ${index + 1}`)
+		const [tied, last] = [chains[CHART_SERIES_LIMIT], chains[CHART_SERIES_LIMIT + 1]]
 		const chartData = toDataset({
 			dimensions: ['timestamp', ...chains],
 			source: [
 				{
 					timestamp: toMs(2024, 1, 1),
-					...Object.fromEntries(chains.slice(0, 10).map((name) => [name, -100])),
-					'Chain 11': 0,
-					'Chain 12': 200
+					...Object.fromEntries(chains.slice(0, CHART_SERIES_LIMIT).map((name) => [name, -100])),
+					[tied]: 0,
+					[last]: 200
 				},
 				{
 					timestamp: toMs(2024, 1, 2),
-					...Object.fromEntries(chains.slice(0, 10).map((name) => [name, 200])),
-					'Chain 11': 100,
-					'Chain 12': -100
+					...Object.fromEntries(chains.slice(0, CHART_SERIES_LIMIT).map((name) => [name, 200])),
+					[tied]: 100,
+					[last]: -100
 				}
 			]
 		})
@@ -467,7 +468,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(full.kind).toBe('dominance')
 		expect(narrowed.kind).toBe('dominance')
 		if (full.kind !== 'dominance' || narrowed.kind !== 'dominance') return
-		expect(datasetValue(full.dataset, 1, 'Chain 5')).toBe(10)
+		expect(datasetValue(full.dataset, 1, 'Chain 5')).toBe(100 / CHART_SERIES_LIMIT)
 		expect(datasetValue(narrowed.dataset, 1, 'Chain 5')).toBe(100)
 	})
 
@@ -493,7 +494,8 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	})
 
 	test('gives selected overflow chains the palette colours their canonical peers leave free', () => {
-		const chains = Array.from({ length: 12 }, (_, index) => `Chain ${index + 1}`)
+		const chains = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `Chain ${index + 1}`)
+		const lastChain = chains[chains.length - 1]
 		const chartData = toDataset({
 			dimensions: ['timestamp', ...chains],
 			source: [
@@ -507,14 +509,14 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		const full = buildChainsByAdapterChartPresentation({ chartData, selectedChains: chains, state })
 		const overflow = buildChainsByAdapterChartPresentation({
 			chartData,
-			selectedChains: ['Chain 1', 'Chain 12'],
+			selectedChains: ['Chain 1', lastChain],
 			state
 		})
 		assert(full.kind === 'dominance' && overflow.kind === 'dominance')
-		expect(full.charts.map(({ color }) => color)).toEqual([...CHART_COLORS, OTHERS_COLOR])
+		expect(full.charts.map(({ color }) => color)).toEqual([...chartColors(CHART_SERIES_LIMIT), OTHERS_COLOR])
 		expect(Object.fromEntries(overflow.charts.map(({ name, color }) => [name, color]))).toEqual({
-			'Chain 1': CHART_COLORS[0],
-			'Chain 12': CHART_COLORS[1]
+			'Chain 1': chartColor(0),
+			[lastChain]: chartColor(1)
 		})
 	})
 

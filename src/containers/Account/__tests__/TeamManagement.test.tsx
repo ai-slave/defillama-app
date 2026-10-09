@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeEach, expect, onTestFinished, test, vi } fro
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
@@ -277,14 +277,13 @@ test('invite validates the address, preserves a failed draft and retries through
 	await mount(<Harness kind="invite" />)
 	expect(namedDialog('Invite member')).toBeTruthy()
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
-	const fieldError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
 	await waitForUi(() => expect(document.activeElement).toBe(input))
 	await act(async () => button('Send invite').focus())
 	await click('Send invite')
-	expect(fieldError()).toBe('Enter an email address.')
+	expect(fieldErrorOf(input)).toBe('Enter an email address.')
 	expect(document.activeElement).toBe(input)
 	await change(input, 'not-an-email')
-	expect(fieldError()).toBe('Enter a valid email address.')
+	expect(fieldErrorOf(input)).toBe('Enter a valid email address.')
 	await click('Send invite')
 	expect(posts()).toHaveLength(0)
 	await change(input, 'colleague@example.com')

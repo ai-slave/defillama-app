@@ -179,7 +179,7 @@ function InlineTableSection({
 	errors: Record<string, string> | null
 	onChange: (rows: Array<ClaimDraftRow>) => void
 }) {
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	const error = errors ? firstSectionError(errors, section.id) : null
 	const addRef = useRef<HTMLButtonElement>(null)
 	// A deleted row's button hands focus to the next row's delete button, the one above, or Add more.
@@ -465,7 +465,7 @@ export function ClaimTokenProfile({
 	const [uploadStatuses, setUploadStatuses] = useState<Record<UtrClaimDocumentKey, UploadStatus>>(createUploadStatuses)
 	const [submitted, setSubmitted] = useState(false)
 	const [scoringCriteriaOpen, setScoringCriteriaOpen] = useState(false)
-	const consentsErrorId = useId()
+	const consentsErrorId = `${useId()}-error`
 	const submitBlockerId = useId()
 	const submit = useMutation({ mutationFn: submitUtrClaim })
 	// The last failed submit, kept on screen while a retry runs: the mutation clears its error when the retry starts.

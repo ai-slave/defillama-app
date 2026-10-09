@@ -2,6 +2,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, onTestFinished, test } from 'vitest'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -104,19 +105,17 @@ test('a failed email request can retry unchanged, keeping its error under the fi
 	emailReplies.push(offline, () => retry.promise)
 	await mount(<EmailHarness />)
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
-	const fieldError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
 	await change(input, 'first@example.com')
 	await click('Confirm email')
 	const failure = 'Could not send the confirmation email. Check the address and try again.'
-	await waitForUi(() => expect(fieldError()).toBe(failure))
-	expect(input.getAttribute('aria-invalid')).toBe('true')
+	await waitForUi(() => expect(fieldErrorOf(input)).toBe(failure))
 	expect(document.activeElement).toBe(input)
 	expect(button('Confirm email').disabled).toBe(false)
 	await click('Confirm email')
 	await waitForUi(() =>
 		expect(document.querySelector('[role=dialog] button[aria-busy=true]')?.textContent).toContain('Sending…')
 	)
-	expect(fieldError()).toBe(failure)
+	expect(fieldErrorOf(input)).toBe(failure)
 	await act(async () => retry.resolve(emailSent()))
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
 	expect(emailRequests()).toHaveLength(2)

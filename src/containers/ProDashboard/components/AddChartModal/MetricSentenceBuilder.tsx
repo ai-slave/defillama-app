@@ -185,7 +185,7 @@ export function MetricSentenceBuilder({
 	onChartTypeChange,
 	error
 }: MetricSentenceBuilderProps) {
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	// A missing metric is the metric token's error; otherwise the subject is what is missing.
 	const metricErrorId = error && !metricType ? errorId : undefined
 	const subjectErrorId = error && metricType ? errorId : undefined

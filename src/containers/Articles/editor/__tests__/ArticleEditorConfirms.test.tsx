@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -328,10 +329,6 @@ async function type(input: HTMLInputElement, value: string) {
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }
-const errorOf = (field: HTMLElement) =>
-	field.getAttribute('aria-invalid') === 'true'
-		? document.getElementById(field.getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent
-		: null
 
 test('publishing without a topic marks Topics, focuses it, and the mark clears once a topic is typed', async () => {
 	article = { ...article, tags: [] }
@@ -339,12 +336,12 @@ test('publishing without a topic marks Topics, focuses it, and the mark clears o
 	await click(button('Publish'))
 	const review = openDialog('Review & publish')
 	const topics = review.querySelector<HTMLInputElement>('input[placeholder="stablecoins, lending, ethereum"]')!
-	expect(errorOf(topics)).toBeNull()
+	expect(fieldErrorOf(topics)).toBeNull()
 	await press(button('Publish now', review))
 	await waitForUi(() => expect(document.activeElement).toBe(topics))
-	expect(errorOf(topics)).toBe('Enter at least one topic.')
+	expect(fieldErrorOf(topics)).toBe('Enter at least one topic.')
 	await type(topics, 'lending')
-	expect(errorOf(topics)).toBeNull()
+	expect(fieldErrorOf(topics)).toBeNull()
 })
 
 test('adding a co-author checks the address under its field and sends nothing until it looks valid', async () => {
@@ -354,10 +351,10 @@ test('adding a co-author checks the address under its field and sends nothing un
 	await waitForUi(() => expect(button('Remove Sam')).toBeTruthy())
 	const email = review.querySelector<HTMLInputElement>('input[type="email"]')!
 	await press(button('Add', review))
-	expect(errorOf(email)).toBe('Enter an email address.')
+	expect(fieldErrorOf(email)).toBe('Enter an email address.')
 	expect(document.activeElement).toBe(email)
 	await type(email, 'sam@example')
-	expect(errorOf(email)).toBe('Enter a valid email address.')
+	expect(fieldErrorOf(email)).toBe('Enter a valid email address.')
 	expect(
 		session.requests.some(
 			(request) => request.url.pathname.endsWith('/collaborators') && request.init?.method === 'POST'
@@ -383,8 +380,8 @@ test('an address the server refuses says so under the email field, takes focus, 
 	const email = review.querySelector<HTMLInputElement>('input[type="email"]')!
 	await type(email, 'nobody@example.com')
 	await press(button('Add', review))
-	await waitForUi(() => expect(errorOf(email)).toBe('No account uses that email.'))
+	await waitForUi(() => expect(fieldErrorOf(email)).toBe('No account uses that email.'))
 	expect(document.activeElement).toBe(email)
 	await type(email, 'somebody@example.com')
-	expect(errorOf(email)).toBeNull()
+	expect(fieldErrorOf(email)).toBeNull()
 })

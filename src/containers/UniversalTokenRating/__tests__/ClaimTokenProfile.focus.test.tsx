@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
@@ -88,7 +89,8 @@ async function attach(input: HTMLInputElement, names: Array<string>) {
 	await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })))
 }
 const attachTile = () => container.querySelector<HTMLButtonElement>('#attach-alignment')!
-const attachInput = () => container.querySelector<HTMLInputElement>('#attach-alignment + input[type="file"]')!
+// The hidden file input has no name of its own; it belongs to the tile that opens it.
+const attachInput = () => attachTile().parentElement!.querySelector<HTMLInputElement>('input[type="file"]')!
 
 test('deleting a disclosure row hands focus to the next row, and the last one to Add more', async () => {
 	const addMore = [...container.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
@@ -150,12 +152,9 @@ test('a missing required field takes focus, is marked invalid and reads its erro
 	expect(document.activeElement).toBe(firstName)
 	expect(firstName.required).toBe(true)
 	expect(firstName.getAttribute('aria-invalid')).toBe('true')
-	expect(document.getElementById(firstName.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Enter your first name.'
-	)
+	expect(fieldErrorOf(firstName)).toBe('Enter your first name.')
 	await type('First name', 'Ada')
 	expect(firstName.hasAttribute('aria-invalid')).toBe(false)
-	expect(firstName.hasAttribute('aria-describedby')).toBe(false)
 	expect(http.requests.filter((request) => request.url.pathname === '/api/public/utr/claim')).toHaveLength(0)
 })
 
@@ -175,7 +174,7 @@ test('an invalid disclosure cell takes focus once the reader fields are complete
 
 	expect(document.activeElement).toBe(role)
 	expect(role.getAttribute('aria-invalid')).toBe('true')
-	expect(document.getElementById(role.getAttribute('aria-describedby')!)?.textContent).toBe('Enter the role.')
+	expect(fieldErrorOf(role)).toBe('Enter the role.')
 })
 
 test('a failed submit stays on screen while its retry runs', async () => {

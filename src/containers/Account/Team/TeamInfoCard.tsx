@@ -9,7 +9,7 @@ import { useTeam } from './useTeam'
 export function TeamInfoCard() {
 	const { team, isAdmin, updateTeamMutation } = useTeam()
 	const [isEditing, setIsEditing] = useState(false)
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	const renameRef = useRef<HTMLButtonElement>(null)
 	// Not the mutation's own error: that one clears as soon as a retry starts. Success closes the editor.
 	const [error, setError] = useState<string | null>(null)

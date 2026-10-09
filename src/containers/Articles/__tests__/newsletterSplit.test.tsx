@@ -14,7 +14,7 @@ import { ResearchNewsletters } from '~/containers/Articles/landing/ResearchNewsl
 import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import NewslettersPage from '~/pages/newsletters'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
@@ -99,10 +99,7 @@ describe('newsletter and media-kit split', () => {
 
 			expect(fieldErrorTexts(container)).toEqual(['Choose at least one publication.', 'Enter an email address.'])
 			expect(document.activeElement).toBe(cards[0])
-			const group = container.querySelector('[role="group"]')!
-			expect(document.getElementById(group.getAttribute('aria-describedby')!)?.textContent).toBe(
-				'Choose at least one publication.'
-			)
+			expect(fieldErrorOf(container.querySelector('[role="group"]')!)).toBe('Choose at least one publication.')
 			await act(async () => cards[1].click())
 			expect(fieldErrorTexts(container)).toEqual(['Enter an email address.'])
 			expect(http.requests.filter((request) => request.url.pathname === '/newsletter/subscribe')).toHaveLength(0)

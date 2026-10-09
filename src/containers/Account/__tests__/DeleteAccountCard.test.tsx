@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -142,9 +143,7 @@ test('a short deletion code is reported under the code field without a deletion 
 		setInput(CONFIRMATION_INPUT, 'DELETE')
 	})
 	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
-	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Enter a valid 6-digit code.'
-	)
+	expect(fieldErrorOf(code)).toBe('Enter a valid 6-digit code.')
 	expect(document.activeElement).toBe(code)
 	await act(async () => setInput(CODE_INPUT, '123456'))
 	expect(code.hasAttribute('aria-invalid')).toBe(false)
@@ -164,9 +163,7 @@ test('a refused deletion code is reported under the code field until the code is
 	})
 	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
 	await waitFor(() => expect(document.activeElement).toBe(code))
-	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'This code is wrong or has expired.'
-	)
+	expect(fieldErrorOf(code)).toBe('This code is wrong or has expired.')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => setInput(CODE_INPUT, '654321'))
 	expect(code.hasAttribute('aria-invalid')).toBe(false)

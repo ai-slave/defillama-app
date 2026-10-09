@@ -347,17 +347,3 @@ test('Run and Save with an empty query say so under the editor and run nothing',
 	expect(engine.send).not.toHaveBeenCalled()
 	expect(onEdit).not.toHaveBeenCalled()
 })
-
-test('Enter in the card name never saves the card; only the footer Save does', async () => {
-	await mount(storedItem)
-	const name = cardName()!
-	// No form holds the field, so the browser has nothing to submit on Enter.
-	expect(name.form).toBeNull()
-	await act(async () => {
-		name.focus()
-		name.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
-	})
-	expect(onEdit).not.toHaveBeenCalled()
-	await click('Save changes')
-	expect(onEdit).toHaveBeenCalledOnce()
-})

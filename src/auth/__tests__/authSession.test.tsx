@@ -11,7 +11,7 @@ import { AUTH_SERVER } from '~/constants'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { alertTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -380,7 +380,6 @@ test('the verification sheet says a short or refused code under the field, and t
 	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
 	await settle()
 	const codeInput = () => document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
-	const codeError = () => document.getElementById(codeInput().getAttribute('aria-describedby') ?? '')?.textContent
 	const typeCode = (value: string) =>
 		act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput(), value)
@@ -391,8 +390,7 @@ test('the verification sheet says a short or refused code under the field, and t
 	await typeCode('123')
 	expect(button('Verify email').getAttribute('aria-disabled')).toBeNull()
 	await submit()
-	expect(codeError()).toBe('Enter the 6-digit code.')
-	expect(codeInput().getAttribute('aria-invalid')).toBe('true')
+	expect(fieldErrorOf(codeInput())).toBe('Enter the 6-digit code.')
 	expect(document.activeElement).toBe(codeInput())
 	expect(otpCalls).toHaveLength(1)
 
@@ -405,9 +403,8 @@ test('the verification sheet says a short or refused code under the field, and t
 	otpCalls[1].resolve(jsonResponse({ error: 'Invalid code' }, 400))
 	await waitForUi(async () => {
 		await settle()
-		expect(codeError()).toBe('This code is wrong or has expired.')
+		expect(fieldErrorOf(codeInput())).toBe('This code is wrong or has expired.')
 	})
-	expect(codeInput().getAttribute('aria-invalid')).toBe('true')
 	expect(document.activeElement).toBe(codeInput())
 	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
 	await typeCode('654321')
@@ -723,14 +720,12 @@ test('onboarding Continue without the terms says so under the checkbox, focuses 
 	const terms = document.querySelector<HTMLInputElement>('input[type="checkbox"]')!
 	expect(button('Continue').getAttribute('aria-disabled')).toBeNull()
 	await act(async () => button('Continue').click())
-	expect(document.getElementById(terms.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Accept the Terms of Service and Privacy Policy to continue.'
-	)
+	expect(fieldErrorOf(terms)).toBe('Accept the Terms of Service and Privacy Policy to continue.')
 	expect(document.activeElement).toBe(terms)
 	await settle()
 	expect(http.urls()).not.toContain(PROMOTIONAL_EMAILS)
 	await act(async () => terms.click())
-	expect(terms.hasAttribute('aria-describedby')).toBe(false)
+	expect(fieldErrorOf(terms)).toBeNull()
 })
 
 test('blocks onboarding Continue if a replacement token arrives before its record', async () => {

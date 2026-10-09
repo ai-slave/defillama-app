@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { CHART_COLORS, chartColor } from '~/constants/colors'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { ChartConfig } from '../../types'
-import { getChartEntityKey, getDashboardEntityColors, getMultiChartSeriesColors } from '../colorManager'
+import { getDashboardEntityColors, getMultiChartSeriesColors } from '../colorManager'
 
 const chain = (id: string, name: string, type: 'tvl' | 'fees' = 'tvl'): ChartConfig => ({
 	id,
@@ -34,8 +34,10 @@ describe('getDashboardEntityColors', () => {
 	})
 
 	test('keeps a protocol and a chain of the same name apart', () => {
-		const colors = getDashboardEntityColors([chain('a', 'Sonic'), protocol('b', 'Sonic')])
-		expect(colors[getChartEntityKey(chain('x', 'Sonic'))]).not.toBe(colors[getChartEntityKey(protocol('y', 'Sonic'))])
+		expect(getDashboardEntityColors([chain('a', 'Sonic'), protocol('b', 'Sonic')])).toEqual({
+			'chain:Sonic': chartColor(0),
+			'protocol:Sonic': chartColor(1)
+		})
 	})
 
 	test('repeats the palette past its length', () => {

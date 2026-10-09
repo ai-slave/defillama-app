@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { buildAdvancedTvlPresentation, orderAdvancedTvlChains } from '../advancedTvlPresentation'
 
 const chainsDataset: TimestampDataset = {
@@ -25,6 +26,24 @@ describe('advanced TVL presentation', () => {
 		expect(presentation.charts.map(({ name, encode }) => ({ name, encode }))).toEqual([
 			{ name: 'Base', encode: { x: 0, y: 2 } },
 			{ name: 'Ethereum', encode: { x: 0, y: 1 } }
+		])
+	})
+
+	test('keeps the largest Others last and grey, ranking the chains before it', () => {
+		const presentation = buildAdvancedTvlPresentation({
+			chartType: 'chainsTvl',
+			chainsDataset: {
+				dimensions: ['timestamp', 'Ethereum', 'Others', 'Base'],
+				source: [[1000, 20, 100, 30]]
+			},
+			chainNames: ['Ethereum', 'Others', 'Base'],
+			tokenNames: []
+		})
+
+		expect(presentation.charts.map(({ name, color }) => ({ name, color }))).toEqual([
+			{ name: 'Base', color: chartColor(0) },
+			{ name: 'Ethereum', color: chartColor(1) },
+			{ name: 'Others', color: OTHERS_COLOR }
 		])
 	})
 

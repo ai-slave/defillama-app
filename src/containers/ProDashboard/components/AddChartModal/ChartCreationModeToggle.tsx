@@ -21,7 +21,7 @@ export function ChartCreationModeToggle({
 	onChartCreationModeChange,
 	error
 }: ChartCreationModeToggleProps) {
-	const errorId = useId()
+	const errorId = `${useId()}-error`
 	return (
 		<div data-invalid={error ? '' : undefined} className="flex shrink-0 flex-col gap-1">
 			<div className="flex flex-wrap items-center gap-2">

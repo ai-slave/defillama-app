@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartStyleEditor } from '../ChartStyleEditor'
 
@@ -300,9 +301,7 @@ describe('ChartStyleEditor', () => {
 			vi.advanceTimersByTime(PREVIEW_DELAY)
 		})
 
-		expect(document.getElementById(secondName.getAttribute('aria-describedby')!)?.textContent).toBe(
-			'Enter a name no other series uses.'
-		)
+		expect(fieldErrorOf(secondName)).toBe('Enter a name no other series uses.')
 		expect(onPreview).not.toHaveBeenCalled()
 		expect(document.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
 
@@ -561,19 +560,19 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async () => undefined)
 		await act(async () => render(<EditorHarness onSave={onSave} previewPane={<div>Chart preview</div>} />))
 		await typeTitle('')
-		const previewRadio = [...document.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
-			(radio) => radio.closest('label')?.textContent === 'Preview'
-		)!
-		await act(async () => previewRadio.click())
-		const stylePane = document.querySelector('fieldset')!
-		expect(stylePane.classList.contains('hidden')).toBe(true)
+		const pane = (name: string) =>
+			[...document.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+				(radio) => radio.closest('label')?.textContent === name
+			)!
+		await act(async () => pane('Preview').click())
+		expect(pane('Style').checked).toBe(false)
 
 		await clickButton('Save')
 
-		expect(stylePane.classList.contains('hidden')).toBe(false)
+		expect(pane('Style').checked).toBe(true)
 		const title = labelled('Chart title')!
 		expect(document.activeElement).toBe(title)
-		expect(document.getElementById(title.getAttribute('aria-describedby')!)?.textContent).toBe('Enter a chart title.')
+		expect(fieldErrorOf(title)).toBe('Enter a chart title.')
 		expect(onSave).not.toHaveBeenCalled()
 	})
 

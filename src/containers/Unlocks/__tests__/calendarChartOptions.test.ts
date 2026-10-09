@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { prepareMultiSeriesDataset } from '~/components/ECharts/MultiSeriesChart/datasetAdapter'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { buildUnlocksMultiSeriesChartForDateRange } from '../buildUnlocksMultiSeriesChart'
 import { calendarChartOptions } from '../calendarChartOptions'
 import type { CalendarUnlockEvent, UnlocksData } from '../calendarTypes'
@@ -48,17 +49,17 @@ function hoverDay(chart: ReturnType<typeof buildChart>, dayIndex: number, pointe
 	return calendarChartOptions.tooltip.formatter(params)
 }
 
-function tooltipDate(html: string) {
-	return html.match(/<div class="font-semibold mb-1">([^<]*)<\/div>/)?.[1]
-}
-
-function rowValue(html: string, name: string) {
-	const match = html.match(new RegExp(`<span> ${name}</span>\\s*<span[^>]*>([^<]+)</span>`))
-	return match?.[1]
-}
-
-function totalValue(html: string) {
-	return html.match(/<strong>Total<\/strong><\/span>\s*<span[^>]*>([^<]+)<\/span>/)?.[1]
+/** The tooltip as a reader sees it, one text line per row: the date, the "Name $value" rows, then the total. */
+function tooltipRows(html: string) {
+	return html
+		.split('</div>')
+		.map((row) =>
+			row
+				.replace(/<[^>]*>/g, '')
+				.replace(/\s+/g, ' ')
+				.trim()
+		)
+		.filter(Boolean)
 }
 
 describe('calendar chart tooltip', () => {
@@ -73,11 +74,7 @@ describe('calendar chart tooltip', () => {
 			},
 			['2026-09-23', '2026-09-24']
 		)
-		const html = hoverDay(chart, 1)
-
-		expect(rowValue(html, 'Alpha')).toBe('$177.37m')
-		expect(rowValue(html, 'Beta')).toBe('$5m')
-		expect(totalValue(html)).toBe('$182.37m')
+		expect(tooltipRows(hoverDay(chart, 1)).slice(1)).toEqual(['Alpha $177.37m', 'Beta $5m', 'Total $182.37m'])
 	})
 
 	test('leads with the pointed protocol without changing the total', () => {
@@ -90,27 +87,25 @@ describe('calendar chart tooltip', () => {
 			},
 			['2026-09-24']
 		)
-		const html = hoverDay(chart, 0, 'Beta')
-
-		expect(html.indexOf('<span> Beta</span>')).toBeGreaterThan(-1)
-		expect(html.indexOf('<span> Beta</span>')).toBeLessThan(html.indexOf('<span> Alpha</span>'))
-		expect(rowValue(html, 'Beta')).toBe('$5m')
-		expect(totalValue(html)).toBe('$182.37m')
+		expect(tooltipRows(hoverDay(chart, 0, 'Beta')).slice(1)).toEqual(['Beta $5m', 'Alpha $177.37m', 'Total $182.37m'])
 	})
 
-	test('keeps values aligned when more than 10 protocols collapse into Others', () => {
-		// 12 protocols on one day: P1 = $12m down to P12 = $1m. The 10 largest stay named and
-		// P11 + P12 ($2m + $1m) collapse into Others, which remaps every dataset column.
-		const events = Array.from({ length: 12 }, (_, index) => unlockEvent(`P${index + 1}`, (12 - index) * 1_000_000))
-		const html = hoverDay(buildChart({ '2026-09-24': { totalValue: 78_000_000, events } }, ['2026-09-24']), 0)
+	test('keeps values aligned when protocols past the series limit collapse into Others', () => {
+		// Two protocols past the limit, valued down to $1m: the last two ($2m + $1m) collapse into
+		// Others, which remaps every dataset column.
+		const count = CHART_SERIES_LIMIT + 2
+		const millions = Array.from({ length: count }, (_, index) => count - index)
+		const events = millions.map((value, index) => unlockEvent(`P${index + 1}`, value * 1_000_000))
+		const total = (count * (count + 1)) / 2
+		const rows = tooltipRows(
+			hoverDay(buildChart({ '2026-09-24': { totalValue: total * 1_000_000, events } }, ['2026-09-24']), 0)
+		).slice(1)
+		const named = millions.slice(0, CHART_SERIES_LIMIT).map((value, index) => `P${index + 1} $${value}m`)
 
-		expect(rowValue(html, 'P1')).toBe('$12m')
-		expect(rowValue(html, 'P2')).toBe('$11m')
-		expect(rowValue(html, 'P10')).toBe('$3m')
-		expect(rowValue(html, 'Others')).toBe('$3m')
-		expect(rowValue(html, 'P11')).toBeUndefined()
-		// 1 + 2 + … + 12 = 78
-		expect(totalValue(html)).toBe('$78m')
+		// The last named protocol and Others are both $3m, a tie in the value sort, so compare the rows as a set.
+		expect(rows.slice(0, -1)).toHaveLength(CHART_SERIES_LIMIT + 1)
+		expect(rows.slice(0, -1)).toEqual(expect.arrayContaining([...named, 'Others $3m']))
+		expect(rows.at(-1)).toBe(`Total $${total}m`)
 	})
 })
 
@@ -138,7 +133,7 @@ describe('calendar chart dates', () => {
 			const chart = buildChart(unlocksData, dates)
 			process.env.TZ = viewedIn
 
-			expect(dates.map((_, index) => tooltipDate(hoverDay(chart, index)))).toEqual(expectedLabels)
+			expect(dates.map((_, index) => tooltipRows(hoverDay(chart, index))[0])).toEqual(expectedLabels)
 		}
 	)
 })

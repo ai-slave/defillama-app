@@ -1,6 +1,19 @@
 import { describe, expect, test } from 'vitest'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 
+/** The tooltip as a reader sees it, one text line per row: the date, the total, then the series rows. */
+function rowsOf(html: string) {
+	return html
+		.split('</div>')
+		.map((row) =>
+			row
+				.replace(/<[^>]*>|&nbsp;/g, ' ')
+				.replace(/\s+/g, ' ')
+				.trim()
+		)
+		.filter(Boolean)
+}
+
 describe('Pro chart builder tooltip', () => {
 	test('renders the total first and explicit Others last', () => {
 		const formatter = createChartBuilderTooltipFormatter({ displayAs: 'timeSeries' })
@@ -29,10 +42,7 @@ describe('Pro chart builder tooltip', () => {
 			}
 		])
 
-		expect(output.indexOf('Total')).toBeLessThan(output.indexOf('Large'))
-		expect(output.indexOf('Large')).toBeLessThan(output.indexOf('Small'))
-		expect(output.indexOf('Others')).toBeGreaterThan(output.indexOf('Small'))
-		expect(output).toContain('$100')
+		expect(rowsOf(output).slice(1)).toEqual(['Total $100', 'L Large $70', 'S Small $20', 'O Others (8 protocols) $10'])
 	})
 
 	test('omits a redundant total for one series and retains all values for a large tooltip', () => {
@@ -58,9 +68,7 @@ describe('Pro chart builder tooltip', () => {
 			}))
 		)
 
-		expect(output.indexOf('Total')).toBeLessThan(output.indexOf('Series 1<'))
-		expect(output.indexOf('Series 1<')).toBeLessThan(output.indexOf('Series 10'))
-		expect(output.indexOf('Series 1<')).toBeLessThan(output.indexOf('display:grid'))
-		expect(output).toContain('$55')
+		// Unpointed, Series 10 is the largest and would follow the total.
+		expect(rowsOf(output).slice(1, 4)).toEqual(['Total $55', 'Series 1 $1', 'Series 10 $10'])
 	})
 })

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { RawBridgeInfo, RawBridgeTransactionsPage } from '../api.types'
@@ -28,6 +29,12 @@ afterEach(async () => {
 	container.remove()
 	client.clear()
 })
+
+const typeDate = (input: HTMLInputElement, value: string) =>
+	act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
 
 const button = (text: string) =>
 	[...document.querySelectorAll<HTMLButtonElement>('button')].find(
@@ -123,24 +130,49 @@ test('Fetch says what is missing under its field, focuses it, and puts an invert
 			</QueryClientProvider>
 		)
 	)
-	const errorOf = (el: Element) => document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
 	const trigger = button('Select a bridge')
 	const fetchButton = button('Fetch Transactions')
 	expect(fetchButton.getAttribute('aria-disabled')).toBeNull()
 	await act(async () => fetchButton.click())
-	expect(errorOf(trigger)).toBe('Choose a bridge.')
+	expect(fieldErrorOf(trigger)).toBe('Choose a bridge.')
 	expect(document.activeElement).toBe(trigger)
 
 	await pickPortal()
 	expect(trigger.getAttribute('aria-invalid')).toBeNull()
 	const [start, end] = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(end, '2000-01-01')
-		end.dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	expect(errorOf(end)).toBe('Choose an end date on or after the start date.')
+	await typeDate(end, '2000-01-01')
+	expect(fieldErrorOf(end)).toBe('Choose an end date on or after the start date.')
 	expect(start.getAttribute('aria-invalid')).toBeNull()
 	await act(async () => fetchButton.click())
 	expect(document.activeElement).toBe(end)
 	expect(fetchRequests()).toHaveLength(0)
+})
+
+test('the end date may be the UTC today while the reader is still on the day before', async () => {
+	// 02:56 UTC on Oct 2 is the evening of Oct 1 in Los Angeles; date-only values are UTC days.
+	const originalTimeZone = process.env.TZ
+	process.env.TZ = 'America/Los_Angeles'
+	vi.useFakeTimers({ toFake: ['Date'], now: Date.parse('2026-10-02T02:56:00Z') })
+	try {
+		http.serve({
+			'https://defillama-datasets.llama.fi/blockExplorers.json': [],
+			'/api/public/bridges/transactions/7': { hasMore: false, rows: [] }
+		})
+		const fetchButton = await pickPortal()
+		const end = document.querySelector<HTMLInputElement>('input[name="endDate"]')!
+		await typeDate(end, '2026-10-03')
+		await act(async () => fetchButton.click())
+		expect(fieldErrorOf(end)).toBe('Choose an end date no later than today.')
+
+		await typeDate(end, '2026-10-02')
+		expect(fieldErrorOf(end)).toBeNull()
+		await act(async () => fetchButton.click())
+		await waitForUi(() =>
+			expect(http.requests.map((request) => request.url.pathname)).toContain('/api/public/bridges/transactions/7')
+		)
+	} finally {
+		vi.useRealTimers()
+		if (originalTimeZone === undefined) delete process.env.TZ
+		else process.env.TZ = originalTimeZone
+	}
 })

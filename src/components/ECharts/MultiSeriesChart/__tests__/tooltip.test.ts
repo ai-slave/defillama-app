@@ -252,7 +252,9 @@ describe('MultiSeriesChart tooltip', () => {
 		test('keeps value order when no band is pointed', () => {
 			const tooltip = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '%' })(stack)
 
+			expect(tooltip.indexOf('Chain A')).toBeGreaterThan(-1)
 			expect(tooltip.indexOf('Chain A')).toBeLessThan(tooltip.indexOf('Chain B'))
+			expect(tooltip.indexOf('Chain C')).toBeGreaterThan(-1)
 			expect(tooltip.indexOf('Chain C')).toBeLessThan(tooltip.indexOf('Chain D'))
 		})
 
@@ -296,6 +298,7 @@ describe('MultiSeriesChart tooltip', () => {
 				)
 			)
 
+			expect(tooltip.indexOf('Pool A')).toBeGreaterThan(-1)
 			expect(tooltip.indexOf('Pool A')).toBeLessThan(tooltip.indexOf('Pool E'))
 			expect(tooltip).toContain('Others&nbsp;&nbsp;$9')
 		})
@@ -311,6 +314,7 @@ describe('MultiSeriesChart tooltip', () => {
 				)
 			)
 
+			expect(tooltip.indexOf('Revenue')).toBeGreaterThan(-1)
 			expect(tooltip.indexOf('Revenue')).toBeLessThan(tooltip.indexOf('Fees'))
 		})
 	})

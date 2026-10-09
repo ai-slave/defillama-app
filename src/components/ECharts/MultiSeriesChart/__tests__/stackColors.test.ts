@@ -25,7 +25,7 @@ const everyTopSeries: Record<number, number> = {}
 for (let index = 0; index < CHART_SERIES_LIMIT; index++) everyTopSeries[index] = 10
 
 describe('stack colours past the palette', () => {
-	test('keep the top ten and keep series that fill the chart together apart', () => {
+	test('keep the top palette series and keep series that fill the chart together apart', () => {
 		// Early on, Series 1 and the two series past the limit fill the chart; later only the top ten.
 		const early = { 1: 30, [CHART_SERIES_LIMIT]: 30, [CHART_SERIES_LIMIT + 1]: 30 }
 		const colors = assignStackColors({ charts, stack, source: [...rows(10, early), ...rows(10, everyTopSeries)] })
@@ -33,9 +33,8 @@ describe('stack colours past the palette', () => {
 		expect(colors?.has('Series 0')).toBe(false)
 		// Never drawn beside Series 0, so it may share its colour.
 		expect(colors?.get(`Series ${CHART_SERIES_LIMIT}`)).toBe(chartColor(0))
-		// Drawn beside the series above and Series 1, so it takes neither colour.
-		expect(colors?.get(`Series ${CHART_SERIES_LIMIT + 1}`)).not.toBe(chartColor(0))
-		expect(colors?.get(`Series ${CHART_SERIES_LIMIT + 1}`)).not.toBe(chartColor(1))
+		// Drawn beside the series above and Series 1, so it takes neither colour: the first free one.
+		expect(colors?.get(`Series ${CHART_SERIES_LIMIT + 1}`)).toBe(chartColor(2))
 	})
 
 	test('move a series off the colour of a top series it is drawn beside', () => {
@@ -43,10 +42,11 @@ describe('stack colours past the palette', () => {
 		const source = [...rows(10, { 0: 50, [CHART_SERIES_LIMIT]: 50 }), ...rows(10, everyTopSeries)]
 		const colors = assignStackColors({ charts, stack, source })
 
-		expect(colors?.get(`Series ${CHART_SERIES_LIMIT}`)).not.toBe(chartColor(0))
+		// Every other colour overlaps nothing and is used once, so the tie goes to the first of them.
+		expect(colors?.get(`Series ${CHART_SERIES_LIMIT}`)).toBe(chartColor(1))
 	})
 
-	test('leave a stack of ten palette series alone, whatever brand colours it adds', () => {
+	test('leave a stack of palette series alone, whatever brand colours it adds', () => {
 		const branded = charts.map((chart, index) => (index >= CHART_SERIES_LIMIT ? { ...chart, color: '#123456' } : chart))
 		const source = rows(10, { 0: 50, [CHART_SERIES_LIMIT]: 50 })
 

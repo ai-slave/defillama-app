@@ -8,9 +8,7 @@ export function fieldErrorTexts(root: ParentNode = document): Array<string> {
 	// One error can describe several controls (two consent boxes under one message); it is one error to the reader.
 	const ids = new Set<string>()
 	for (const element of root.querySelectorAll('[aria-invalid="true"], [role="group"][data-invalid]')) {
-		for (const id of element.getAttribute('aria-describedby')?.split(' ') ?? []) {
-			if (id.endsWith('-error')) ids.add(id)
-		}
+		for (const id of errorIds(element)) ids.add(id)
 	}
 	const texts: Array<string> = []
 	for (const id of ids) {
@@ -18,6 +16,22 @@ export function fieldErrorTexts(root: ParentNode = document): Array<string> {
 		if (text) texts.push(text)
 	}
 	return texts
+}
+
+/**
+ * The error one control shows, or null when it is not marked invalid: for a test that needs to know which field
+ * carries the error. Read it here, never through `getElementById(aria-describedby)`, which breaks once the field also
+ * has a hint (Field describes the control by both ids).
+ */
+export function fieldErrorOf(control: Element): string | null {
+	const invalid = control.getAttribute('aria-invalid') === 'true' || control.hasAttribute('data-invalid')
+	if (!invalid) return null
+	const id = errorIds(control)[0]
+	return id ? (document.getElementById(id)?.textContent ?? null) : null
+}
+
+function errorIds(element: Element): Array<string> {
+	return (element.getAttribute('aria-describedby')?.split(' ') ?? []).filter((id) => id.endsWith('-error'))
 }
 
 /** The request failures shown under `root`: the text of every `role="alert"` (InlineStatus, PanelStatus and the
