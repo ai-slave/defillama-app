@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { type CSSProperties, lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
@@ -15,13 +15,7 @@ import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import {
-	ChartPanel,
-	ChartPanelBodyError,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
@@ -584,7 +578,7 @@ export function RWAAssetPage({
 								</ChartPanelBodyFallback>
 							)
 						) : assetChartDataset ? (
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart
 									charts={timeSeriesCharts}
 									dataset={assetChartDataset}
@@ -959,7 +953,10 @@ export function RWAAssetPage({
 				>
 					{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
 						<ChartPanel className="overflow-hidden">
-							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
+							<div
+								className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--series) to-transparent"
+								style={{ '--series': NATIVE_YIELD_CHARTS[0].color } as CSSProperties}
+							/>
 							<ChartPanelToolbar className="items-start">
 								{/* A headline stat like the summary cards': a secondary label over the mono-xl value. */}
 								{asset.nativeYieldCurrent != null ? (
@@ -967,11 +964,7 @@ export function RWAAssetPage({
 										label="Native Yield"
 										labelAs="h2"
 										className="mr-auto"
-										value={
-											<span className="text-[#cc3e82]">
-												{formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
-											</span>
-										}
+										value={formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 									/>
 								) : (
 									<h2 className="mr-auto text-secondary">Native Yield</h2>
@@ -1046,7 +1039,7 @@ const NATIVE_YIELD_CHARTS = [
 		type: 'line' as const,
 		name: 'Native Yield',
 		encode: { x: 'timestamp', y: 'Native Yield' },
-		color: '#cc3e82',
+		color: CHART_COLORS[6],
 		valueSymbol: '%'
 	}
 ]

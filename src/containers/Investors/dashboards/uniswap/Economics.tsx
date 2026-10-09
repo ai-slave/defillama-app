@@ -8,6 +8,7 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
 import type { UniswapUnlocks } from './serverData'
@@ -24,7 +25,6 @@ import {
 	BarListCard,
 	ChartCard,
 	KpiGrid,
-	PageLoader,
 	PROTOCOL,
 	QUERY_OPTS,
 	SectionHeader,
@@ -365,7 +365,7 @@ export default function Economics() {
 		}
 	}, [data, fees.data, holders.data])
 
-	if (!data || fees.isPending || holders.isPending) return <PageLoader />
+	if (!data || fees.isPending || holders.isPending) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-10">

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -51,15 +52,17 @@ export default function Network() {
 					title={c.transactions.title ?? 'Daily Transactions'}
 					subtitle="Transactions settled on Flare each day."
 				>
-					<MultiSeriesChart
-						dataset={c.transactions.dataset}
-						charts={c.transactions.charts}
-						valueSymbol=""
-						title=""
-						height="320px"
-						exportButtons={CSV_ONLY_EXPORT}
-						chartOptions={c.transactions.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '360px' }} />}>
+						<MultiSeriesChart
+							dataset={c.transactions.dataset}
+							charts={c.transactions.charts}
+							valueSymbol=""
+							title=""
+							height="320px"
+							exportButtons={CSV_ONLY_EXPORT}
+							chartOptions={c.transactions.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -68,15 +71,17 @@ export default function Network() {
 					title={c.activeAccounts.title ?? 'Daily Active Accounts'}
 					subtitle="Unique accounts active on Flare each day."
 				>
-					<MultiSeriesChart
-						dataset={c.activeAccounts.dataset}
-						charts={c.activeAccounts.charts}
-						valueSymbol=""
-						title=""
-						height="320px"
-						exportButtons={CSV_ONLY_EXPORT}
-						chartOptions={c.activeAccounts.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '360px' }} />}>
+						<MultiSeriesChart
+							dataset={c.activeAccounts.dataset}
+							charts={c.activeAccounts.charts}
+							valueSymbol=""
+							title=""
+							height="320px"
+							exportButtons={CSV_ONLY_EXPORT}
+							chartOptions={c.activeAccounts.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 		</div>

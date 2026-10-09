@@ -17,6 +17,7 @@ import {
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import {
 	ChartPanel,
@@ -176,12 +177,12 @@ function BenchmarkMetric({
 	label,
 	value,
 	delta,
-	markerClassName
+	markerColor
 }: {
 	label: string
 	value: number | null
 	delta: number | null
-	markerClassName: string
+	markerColor: string
 }) {
 	const flat = delta != null && Math.abs(delta) <= 0.005
 	const deltaText =
@@ -200,7 +201,7 @@ function BenchmarkMetric({
 	return (
 		<div className="flex items-center gap-1.5 whitespace-nowrap">
 			<dt className="flex items-center gap-1 body-sm text-secondary">
-				<span className={`size-1.5 rounded-full ${markerClassName}`} aria-hidden />
+				<span className="size-1.5 rounded-full" style={{ backgroundColor: markerColor }} aria-hidden />
 				{label}
 			</dt>
 			<dd className="-translate-y-px mono-md-bold text-primary">
@@ -264,19 +265,19 @@ function ReferenceRatesSummary({
 						label="Supply APY"
 						value={rates.supply.apy}
 						delta={delta?.supply ?? null}
-						markerClassName="bg-(--apy-mid)"
+						markerColor="var(--apy-mid)"
 					/>
 					<BenchmarkMetric
 						label="Borrow APY"
 						value={rates.borrow.apy}
 						delta={delta?.borrow ?? null}
-						markerClassName="bg-(--apy-very)"
+						markerColor="var(--apy-very)"
 					/>
 					<BenchmarkMetric
 						label="Spread"
 						value={rates.spread.apy}
 						delta={delta?.spread ?? null}
-						markerClassName="bg-tertiary"
+						markerColor={OTHERS_COLOR}
 					/>
 				</dl>
 			</TableToolbar>

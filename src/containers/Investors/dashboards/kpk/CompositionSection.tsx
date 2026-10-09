@@ -1,7 +1,9 @@
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkChartColors, kpkCompositionChartOptions } from './chartDefaults'
@@ -164,24 +166,24 @@ export function CompositionSection({
 				<Card>
 					{model ? (
 						<>
-							<MultiSeriesChart
-								dataset={model.dataset}
-								charts={model.charts}
-								chartOptions={chartOptions}
-								valueSymbol="$"
-								title=""
-								height="360px"
-								solidChartAreaStyle
-							/>
+							<Suspense fallback={<ChartPanelExportShellFallback />}>
+								<MultiSeriesChart
+									dataset={model.dataset}
+									charts={model.charts}
+									chartOptions={chartOptions}
+									valueSymbol="$"
+									title=""
+									height="360px"
+									solidChartAreaStyle
+								/>
+							</Suspense>
 							{/* A hole the line joins across, named under the chart rather than left to
 							    read as a measurement. */}
 							{note && <p className="mt-2 body-sm text-tertiary">{note}</p>}
 							{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
 						</>
 					) : (
-						<div className="flex h-[360px] items-center justify-center">
-							<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-						</div>
+						<SurfaceBodyLoadingStatus />
 					)}
 				</Card>
 				<Card>

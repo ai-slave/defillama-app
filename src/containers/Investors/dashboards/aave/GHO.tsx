@@ -1,9 +1,11 @@
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useTable } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -18,7 +20,6 @@ import {
 	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
 	InvestorsTable,
-	PageLoader,
 	SectionHeader
 } from './shared'
 
@@ -180,7 +181,7 @@ export default function GHO() {
 		}
 	}, [reserve, aggregated])
 
-	if (reserveLoading || marketsLoading) return <PageLoader />
+	if (reserveLoading || marketsLoading) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -217,15 +218,17 @@ export default function GHO() {
 					<CardSkeleton title="" />
 				) : borrowApyDataset.source.length > 0 ? (
 					<div className="rounded-lg border border-subtle bg-surface p-5">
-						<MultiSeriesChart
-							dataset={borrowApyDataset}
-							charts={BORROW_APY_CHART}
-							valueSymbol="%"
-							title=""
-							height="400px"
-							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-							exportButtons={AAVE_AREA_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={borrowApyDataset}
+								charts={BORROW_APY_CHART}
+								valueSymbol="%"
+								title=""
+								height="400px"
+								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+								exportButtons={AAVE_AREA_EXPORT}
+							/>
+						</Suspense>
 					</div>
 				) : (
 					<CardSkeleton title="" />

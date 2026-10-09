@@ -430,7 +430,7 @@ export const datTransactionColumns = columnHelper.columns([
 			if (!url) return null
 			return (
 				<a
-					className="flex items-center justify-center gap-4 rounded-md bg-brand-muted p-1.5 hover:bg-(--interim-brand-tint-hover)"
+					className="flex items-center justify-center gap-4 rounded-md bg-brand-tint p-1.5 hover:bg-brand-tint-strong active:bg-brand-tint-pressed"
 					href={url}
 					target="_blank"
 					rel="noopener noreferrer"

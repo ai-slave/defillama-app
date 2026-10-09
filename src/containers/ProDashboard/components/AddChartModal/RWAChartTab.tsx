@@ -25,6 +25,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
+const TREEMAP_PREVIEW_HEIGHT = '320px'
 
 const EMPTY_RWA_SNAPSHOT_ITEMS: Array<{ name: string; value: number }> = []
 const EMPTY_RWA_BAR_DATA = { categories: [], values: [] }
@@ -333,7 +334,11 @@ function OverviewPreview({
 	}
 
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback />}>
+		<Suspense
+			fallback={
+				<ChartPanelBodyFallback style={chartView === 'treemap' ? { minHeight: TREEMAP_PREVIEW_HEIGHT } : undefined} />
+			}
+		>
 			{chartView === 'timeSeries' && timeSeriesDataset ? (
 				<MultiSeriesChart
 					dataset={timeSeriesDataset}
@@ -346,7 +351,12 @@ function OverviewPreview({
 			) : chartView === 'hbar' && barData.categories.length > 0 ? (
 				<HBarChart categories={barData.categories} values={barData.values} valueSymbol="$" />
 			) : chartView === 'treemap' && treemapData.length > 0 ? (
-				<TreemapChart treeData={treemapData} variant="rwa" height="320px" valueLabel={getChartMetricLabel(metric)} />
+				<TreemapChart
+					treeData={treemapData}
+					variant="rwa"
+					height={TREEMAP_PREVIEW_HEIGHT}
+					valueLabel={getChartMetricLabel(metric)}
+				/>
 			) : (
 				<SurfaceBodyStatus variant="empty">No data available</SurfaceBodyStatus>
 			)}

@@ -1,6 +1,7 @@
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatRatio } from '~/utils/numberFormat'
@@ -182,16 +183,18 @@ export default function Incentives() {
 					onValueChange={setPoolTab}
 				/>
 				{poolModel?.dataset.source.length ? (
-					<MultiSeriesChart
-						key={poolTab}
-						dataset={poolModel.dataset}
-						charts={poolModel.charts}
-						chartOptions={POOL_CHART_OPTIONS}
-						valueSymbol="$"
-						height="360px"
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
+						<MultiSeriesChart
+							key={poolTab}
+							dataset={poolModel.dataset}
+							charts={poolModel.charts}
+							chartOptions={POOL_CHART_OPTIONS}
+							valueSymbol="$"
+							height="360px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				) : (
 					<div className="px-2 py-6 body-sm text-secondary">No weekly pool data</div>
 				)}

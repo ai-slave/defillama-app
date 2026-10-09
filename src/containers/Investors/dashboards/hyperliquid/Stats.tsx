@@ -9,7 +9,7 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import { lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import type { IScatterChartProps, ScatterChartPoint } from '~/components/ECharts/ScatterChart/types'
@@ -17,6 +17,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -207,17 +208,20 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	if (data.length === 0) return null
 
 	const sorted = data.toSorted((a, b) => b.value - a.value)
+	const height = `${Math.max(300, data.length * 28)}px`
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">Funding Rates (Annualized) — Top 20 by OI</h3>
-			<HBarChart
-				categories={sorted.map((d) => d.name)}
-				values={sorted.map((d) => d.value)}
-				colors={sorted.map((d) => (d.value >= 0 ? FUNDING_UP_COLOR : FUNDING_DOWN_COLOR))}
-				valueSymbol="%"
-				height={`${Math.max(300, data.length * 28)}px`}
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: height }} />}>
+				<HBarChart
+					categories={sorted.map((d) => d.name)}
+					values={sorted.map((d) => d.value)}
+					colors={sorted.map((d) => (d.value >= 0 ? FUNDING_UP_COLOR : FUNDING_DOWN_COLOR))}
+					valueSymbol="%"
+					height={height}
+				/>
+			</Suspense>
 		</div>
 	)
 }
@@ -451,7 +455,9 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">Open Interest Distribution</h3>
-			<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
+			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
+			</Suspense>
 		</div>
 	)
 }
@@ -475,17 +481,19 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">Volume vs Open Interest (bubble size = funding magnitude)</h3>
-			<ScatterChart
-				chartData={points}
-				xAxisLabel="24h Volume ($)"
-				yAxisLabel="Open Interest ($)"
-				valueSymbol="$"
-				logScale
-				height="450px"
-				tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
-					`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
-				}
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '450px' }} />}>
+				<ScatterChart
+					chartData={points}
+					xAxisLabel="24h Volume ($)"
+					yAxisLabel="Open Interest ($)"
+					valueSymbol="$"
+					logScale
+					height="450px"
+					tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
+						`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
+					}
+				/>
+			</Suspense>
 		</div>
 	)
 }

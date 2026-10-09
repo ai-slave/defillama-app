@@ -1,7 +1,8 @@
+import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, groupTopN, SeriesTrendChart } from './TrendChart'
-import { BarListCard, ChartCard, MiniTable, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, ChartCard, MiniTable, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
 const PERCENT_OPTIONS = {
 	input: 'percent',
@@ -67,7 +68,7 @@ interface IntegrationsData {
 
 export default function Integrations() {
 	const { data } = useUniswapData<IntegrationsData>('integrations')
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	// The 30d table lists every labeled integrator; the weekly chart stays readable at top 12.
 	const orderFlowSeries = groupTopN(chartToTrendSeries(data.orderFlowByEntity), 12)

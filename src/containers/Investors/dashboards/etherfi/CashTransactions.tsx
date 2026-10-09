@@ -1,7 +1,8 @@
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useEtherfiCashTransactions } from './cashApi'
@@ -131,16 +132,18 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions by Class" />
 			) : (
 				<ChartCard title="Weekly Transactions by Class">
-					<MultiSeriesChart
-						dataset={transactionsByClassDataset}
-						charts={classCharts}
-						valueSymbol=""
-						title=""
-						height="400px"
-						hideDefaultLegend={classCharts.length < 2}
-						chartOptions={SCROLL_LEGEND}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={transactionsByClassDataset}
+							charts={classCharts}
+							valueSymbol=""
+							title=""
+							height="400px"
+							hideDefaultLegend={classCharts.length < 2}
+							chartOptions={SCROLL_LEGEND}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -148,16 +151,18 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Users by Class" />
 			) : (
 				<ChartCard title="Weekly Users by Class">
-					<MultiSeriesChart
-						dataset={usersByClassDataset}
-						charts={classCharts}
-						valueSymbol=""
-						title=""
-						height="400px"
-						hideDefaultLegend={classCharts.length < 2}
-						chartOptions={SCROLL_LEGEND}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={usersByClassDataset}
+							charts={classCharts}
+							valueSymbol=""
+							title=""
+							height="400px"
+							hideDefaultLegend={classCharts.length < 2}
+							chartOptions={SCROLL_LEGEND}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -165,15 +170,17 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Transactions" />
 			) : (
 				<ChartCard title="Weekly Transactions">
-					<MultiSeriesChart
-						dataset={weeklyTxnsDataset}
-						charts={WEEKLY_TXNS_CHART}
-						valueSymbol=""
-						title=""
-						height="400px"
-						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={weeklyTxnsDataset}
+							charts={WEEKLY_TXNS_CHART}
+							valueSymbol=""
+							title=""
+							height="400px"
+							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -181,15 +188,17 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Active Users" />
 			) : (
 				<ChartCard title="Weekly Active Users">
-					<MultiSeriesChart
-						dataset={weeklyUsersDataset}
-						charts={WEEKLY_USERS_CHART}
-						valueSymbol=""
-						title=""
-						height="400px"
-						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={weeklyUsersDataset}
+							charts={WEEKLY_USERS_CHART}
+							valueSymbol=""
+							title=""
+							height="400px"
+							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -197,15 +206,17 @@ export default function CashTransactions() {
 				<CardSkeleton title="Weekly Average Txns per User" />
 			) : (
 				<ChartCard title="Weekly Average Txns per User">
-					<MultiSeriesChart
-						dataset={weeklyAvgDataset}
-						charts={WEEKLY_AVG_CHART}
-						valueSymbol=""
-						title=""
-						height="400px"
-						chartOptions={UNITLESS_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={weeklyAvgDataset}
+							charts={WEEKLY_AVG_CHART}
+							valueSymbol=""
+							title=""
+							height="400px"
+							chartOptions={UNITLESS_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 		</div>

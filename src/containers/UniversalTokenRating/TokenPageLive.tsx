@@ -1,7 +1,13 @@
 import { useState, type ReactNode } from 'react'
+import CandlestickChart from '~/components/ECharts/CandlestickChart'
+import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
+import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { TokenLogo } from '~/components/TokenLogo'
-import { CHART_COLORS, oldBlue } from '~/constants/colors'
+import { chartColor, UTR_METRIC_COLORS } from '~/constants/colors'
 import { AccentBadge, SecondaryBadge, StatusBadge } from '~/containers/MarketMakers/badges'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -10,7 +16,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
-import { UTR_PERCENT_OPTIONS } from './constants'
+import { UTR_PERCENT_OPTIONS, UTR_TIME_DATASET } from './constants'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
 import { disclosedVestingDurationMonths } from './disclosedVesting'
 import { DisclosedVestingChart, formatDisclosedMonths } from './DisclosureDetails'
@@ -19,17 +25,8 @@ import { MarketMakerPerformance } from './MarketMakerPerformance'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { PreTgePerformance } from './PreTgePerformance'
 import {
-	buildCandleOption,
-	buildDualAxisOption,
-	buildSeriesOption,
-	ChartCaption,
-	ChartLegend,
-	SimpleChart,
-	useSimpleChartTheme,
-	type SimpleSeries
-} from './SimpleChart'
-import {
 	CardDivider,
+	ChartCaption,
 	ClaimProfileBanner,
 	GradeFooter,
 	GradeFooterStacked,
@@ -80,12 +77,8 @@ const EXCHANGE_ICON_OVERRIDES: Record<string, string> = {
 	okex: 'okx'
 }
 
-const MARKET_CAP_COLOR = oldBlue
-const VOLUME_COLOR = '#BB8C23'
-const DEPTH_COLOR = '#9C27B0'
-const DEPTH_MC_COLOR = '#4CAF50'
-const VOLUME_STACK_COLORS = ['#DB9700', '#BB8C23'] as const
-const DEPTH_STACK_COLORS = ['#40C4FF', oldBlue] as const
+const PERCENT_TIME_OPTIONS = createTimeSeriesChartOptions('%')
+const VOLUME_TIME_OPTIONS: MultiSeriesChartOptions = { yAxis: { splitNumber: 2 } }
 
 const DISCLOSURE_CATEGORY_ORDER = ['core_contributors', 'legal_financial', 'tokenomics_d', 'service_providers']
 
@@ -350,9 +343,10 @@ export function TokenPageLive({
 	defillamaDescription?: string | null
 	disclosures?: UtrDisclosures | null
 }) {
-	const chartTheme = useSimpleChartTheme()
-	const axisColor = chartTheme.axisLabel
 	const [criteriaDrawer, setCriteriaDrawer] = useState<CriteriaDrawerState | null>(null)
+	const [isDark] = useDarkModeManager()
+	// The page's metric colours keep one meaning across its charts; each is a [light, dark] pair.
+	const metricColor = (pair: readonly [light: string, dark: string]) => pair[isDark ? 1 : 0]
 	const [aboutOpen, setAboutOpen] = useState(false)
 
 	const docsFor = (axis: 'disclosure' | 'performance', categoryKey: string) =>
@@ -464,29 +458,29 @@ export function TokenPageLive({
 			title: 'Total Volume (CEX vs DEX)',
 			chart: charts.cexVsDexVolume,
 			names: ['CEX Volume', 'DEX Volume'] as const,
-			kind: 'cexdex' as const,
-			colors: VOLUME_STACK_COLORS
+			colors: UTR_METRIC_COLORS.volumeStack,
+			kind: 'cexdex' as const
 		},
 		{
 			title: 'Total +/- 2% Depth (CEX vs DEX)',
 			chart: charts.cexVsDexDepth,
 			names: ['CEX Depth', 'DEX Depth'] as const,
-			kind: 'cexdex' as const,
-			colors: DEPTH_STACK_COLORS
+			colors: UTR_METRIC_COLORS.depthStack,
+			kind: 'cexdex' as const
 		},
 		{
 			title: 'Total Volume (Spot vs Perps)',
 			chart: charts.spotVsPerpsVolume,
 			names: ['Spot Volume', 'Perps Volume'] as const,
-			kind: 'spotperp' as const,
-			colors: VOLUME_STACK_COLORS
+			colors: UTR_METRIC_COLORS.volumeStack,
+			kind: 'spotperp' as const
 		},
 		{
 			title: 'Total +/- 2% Depth (Spot vs Perps)',
 			chart: charts.spotVsPerpsDepth,
 			names: ['Spot Depth', 'Perps Depth'] as const,
-			kind: 'spotperp' as const,
-			colors: DEPTH_STACK_COLORS
+			colors: UTR_METRIC_COLORS.depthStack,
+			kind: 'spotperp' as const
 		}
 	]
 	const visibleFootprintCharts = footprintCharts.filter((entry) => {
@@ -700,43 +694,46 @@ export function TokenPageLive({
 											<>
 												<div className="flex h-[320px] flex-col gap-3">
 													<ChartCaption>Market Cap (USD)</ChartCaption>
-													<SimpleChart
-														className="min-h-0 w-full flex-1"
-														option={buildSeriesOption(
-															[
-																{
-																	name: 'Market Cap (USD)',
-																	type: 'area',
-																	color: MARKET_CAP_COLOR,
-																	data: marketQuality.series.map((point) => [
-																		toTime(point.date),
-																		point.marketCapUsd ?? 0
-																	])
-																}
-															],
-															axisColor
-														)}
+													<MultiSeriesChart
+														dataset={UTR_TIME_DATASET}
+														charts={[
+															{
+																type: 'line',
+																name: 'Market Cap (USD)',
+																encode: { x: 0, y: 1 },
+																color: metricColor(UTR_METRIC_COLORS.marketCap),
+																data: marketQuality.series.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.marketCapUsd ?? 0
+																])
+															}
+														]}
+														valueSymbol="$"
+														containerClassName="min-h-0 w-full flex-1"
+														hideDataZoom
+														exportButtons="hidden"
 													/>
 													<CardDivider />
 													<ChartCaption>Trade Volume (USD)</ChartCaption>
-													<SimpleChart
-														className="min-h-0 w-full flex-1"
-														option={buildSeriesOption(
-															[
-																{
-																	name: 'Trade Volume (USD)',
-																	type: 'bar',
-																	color: VOLUME_COLOR,
-																	data: marketQuality.series.map((point) => [
-																		toTime(point.date),
-																		point.tradeVolumeUsd ?? 0
-																	])
-																}
-															],
-															axisColor,
-															'usd',
-															2
-														)}
+													<MultiSeriesChart
+														dataset={UTR_TIME_DATASET}
+														charts={[
+															{
+																type: 'bar',
+																name: 'Trade Volume (USD)',
+																encode: { x: 0, y: 1 },
+																color: metricColor(UTR_METRIC_COLORS.volume),
+																data: marketQuality.series.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.tradeVolumeUsd ?? 0
+																])
+															}
+														]}
+														valueSymbol="$"
+														chartOptions={VOLUME_TIME_OPTIONS}
+														containerClassName="min-h-0 w-full flex-1"
+														hideDataZoom
+														exportButtons="hidden"
 													/>
 												</div>
 												<CardDivider />
@@ -768,29 +765,39 @@ export function TokenPageLive({
 											<>
 												<div className="flex h-[320px] flex-col gap-3">
 													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
-													<SimpleChart
-														className="min-h-0 w-full flex-1"
-														option={buildDualAxisOption(
+													<MultiSeriesChart
+														dataset={UTR_TIME_DATASET}
+														charts={[
 															{
+																type: 'line',
 																name: 'Depth (+/- 2%)',
-																type: 'line',
-																color: DEPTH_COLOR,
-																data: marketQuality.series.map((point) => [toTime(point.date), point.depthUsd ?? 0])
+																encode: { x: 0, y: 1 },
+																color: metricColor(UTR_METRIC_COLORS.depth),
+																yAxisIndex: 0,
+																hideAreaStyle: true,
+																data: marketQuality.series.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.depthUsd ?? 0
+																])
 															},
 															{
-																name: 'Market Cap',
 																type: 'line',
-																color: DEPTH_MC_COLOR,
-																data: marketQuality.series.map((point) => [toTime(point.date), point.marketCapUsd ?? 0])
-															},
-															axisColor
-														)}
-													/>
-													<ChartLegend
-														items={[
-															{ label: 'Depth (+/- 2%)', color: DEPTH_COLOR },
-															{ label: 'Market Cap', color: DEPTH_MC_COLOR }
+																name: 'Market Cap',
+																encode: { x: 0, y: 1 },
+																color: metricColor(UTR_METRIC_COLORS.depthMarketCap),
+																yAxisIndex: 1,
+																hideAreaStyle: true,
+																data: marketQuality.series.map((point): [number, number] => [
+																	toTime(point.date),
+																	point.marketCapUsd ?? 0
+																])
+															}
 														]}
+														valueSymbol="$"
+														containerClassName="min-h-0 w-full flex-1"
+														hideDefaultLegend={false}
+														hideDataZoom
+														exportButtons="hidden"
 													/>
 												</div>
 												<CardDivider />
@@ -821,23 +828,25 @@ export function TokenPageLive({
 										{spread?.exchanges.length ? (
 											<>
 												<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
-												<SimpleChart
-													option={buildSeriesOption(
-														spread.exchanges.map((exchange, index) => ({
-															name: exchangeLabel(exchange.exchangeId),
-															type: 'line' as const,
-															color: CHART_COLORS[index % CHART_COLORS.length],
-															data: exchange.points.map((point) => [toTime(point.date), point.spreadPct ?? 0])
-														})),
-														axisColor,
-														'pct'
-													)}
-												/>
-												<ChartLegend
-													items={spread.exchanges.map((exchange, index) => ({
-														label: exchangeLabel(exchange.exchangeId),
-														color: CHART_COLORS[index % CHART_COLORS.length]
+												<MultiSeriesChart
+													dataset={UTR_TIME_DATASET}
+													charts={spread.exchanges.map((exchange, index) => ({
+														type: 'line' as const,
+														name: exchangeLabel(exchange.exchangeId),
+														encode: { x: 0, y: 1 },
+														color: chartColor(index),
+														hideAreaStyle: true,
+														data: exchange.points.map((point): [number, number] => [
+															toTime(point.date),
+															point.spreadPct ?? 0
+														])
 													}))}
+													valueSymbol="%"
+													chartOptions={PERCENT_TIME_OPTIONS}
+													height="240px"
+													hideDefaultLegend={false}
+													hideDataZoom
+													exportButtons="hidden"
 												/>
 												<CardDivider />
 											</>
@@ -878,17 +887,15 @@ export function TokenPageLive({
 										{priceChart?.candles.length ? (
 											<>
 												<ChartCaption>Price (USD)</ChartCaption>
-												<SimpleChart
-													option={buildCandleOption(
-														priceChart.candles.map((candle) => ({
-															time: toTime(candle.date),
-															open: candle.openUsd,
-															close: candle.closeUsd,
-															low: candle.lowUsd,
-															high: candle.highUsd
-														})),
-														chartTheme
-													)}
+												<CandlestickChart
+													data={priceChart.candles.map((candle): CandlestickPoint => [
+														toTime(candle.date),
+														candle.openUsd,
+														candle.closeUsd,
+														candle.lowUsd,
+														candle.highUsd
+													])}
+													height="240px"
 												/>
 												<CardDivider />
 											</>
@@ -946,24 +953,25 @@ export function TokenPageLive({
 											<>
 												<div className="flex flex-1 flex-col gap-3">
 													<ChartCaption>Funding Rate (%)</ChartCaption>
-													<SimpleChart
-														className="h-[120px] w-full"
-														option={buildSeriesOption(
-															funding.exchanges.map((exchange, index) => ({
-																name: exchangeLabel(exchange.exchangeId),
-																type: 'line' as const,
-																color: CHART_COLORS[index % CHART_COLORS.length],
-																data: exchange.points.map((point) => [toTime(point.date), point.fundingPct ?? 0])
-															})),
-															axisColor,
-															'pct'
-														)}
-													/>
-													<ChartLegend
-														items={funding.exchanges.map((exchange, index) => ({
-															label: exchangeLabel(exchange.exchangeId),
-															color: CHART_COLORS[index % CHART_COLORS.length]
+													<MultiSeriesChart
+														dataset={UTR_TIME_DATASET}
+														charts={funding.exchanges.map((exchange, index) => ({
+															type: 'line' as const,
+															name: exchangeLabel(exchange.exchangeId),
+															encode: { x: 0, y: 1 },
+															color: chartColor(index),
+															hideAreaStyle: true,
+															data: exchange.points.map((point): [number, number] => [
+																toTime(point.date),
+																point.fundingPct ?? 0
+															])
 														}))}
+														valueSymbol="%"
+														chartOptions={PERCENT_TIME_OPTIONS}
+														height="200px"
+														hideDefaultLegend={false}
+														hideDataZoom
+														exportButtons="hidden"
 													/>
 												</div>
 												<CardDivider />
@@ -1077,32 +1085,33 @@ export function TokenPageLive({
 												<ChartCaption>
 													{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
 												</ChartCaption>
-												<SimpleChart
-													option={buildSeriesOption(
-														(entry.kind === 'cexdex'
-															? [
-																	{ name: entry.names[0], key: 'cexUsd' as const },
-																	{ name: entry.names[1], key: 'dexUsd' as const }
-																]
-															: [
-																	{ name: entry.names[0], key: 'spotUsd' as const },
-																	{ name: entry.names[1], key: 'perpsUsd' as const }
-																]
-														).map((series, index) => ({
-															name: series.name,
-															type: 'bar' as const,
-															stack: 'total',
-															color: entry.colors[index],
-															data: entry.chart!.points.map(
-																(point) =>
-																	[
-																		toTime(point.date),
-																		(point as Record<string, any>)[series.key] ?? 0
-																	] as SimpleSeries['data'][number]
-															)
-														})),
-														axisColor
-													)}
+												<MultiSeriesChart
+													dataset={UTR_TIME_DATASET}
+													charts={(entry.kind === 'cexdex'
+														? [
+																{ name: entry.names[0], key: 'cexUsd' as const },
+																{ name: entry.names[1], key: 'dexUsd' as const }
+															]
+														: [
+																{ name: entry.names[0], key: 'spotUsd' as const },
+																{ name: entry.names[1], key: 'perpsUsd' as const }
+															]
+													).map((series, index) => ({
+														type: 'bar' as const,
+														name: series.name,
+														encode: { x: 0, y: 1 },
+														stack: 'total',
+														color: metricColor(entry.colors[index]),
+														data: entry.chart!.points.map((point): [number, number] => [
+															toTime(point.date),
+															(point as Record<string, any>)[series.key] ?? 0
+														])
+													}))}
+													valueSymbol="$"
+													height="240px"
+													hideDefaultLegend={false}
+													hideDataZoom
+													exportButtons="hidden"
 												/>
 											</>
 										) : null}

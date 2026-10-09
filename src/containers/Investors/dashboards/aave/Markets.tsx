@@ -1,9 +1,11 @@
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useTable } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -19,7 +21,6 @@ import {
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
 	ChartCard,
 	InvestorsTable,
-	PageLoader,
 	SectionHeader
 } from './shared'
 
@@ -261,7 +262,7 @@ export default function Markets() {
 		return { source, dimensions: ['Name', 'Utilization'] }
 	}, [reserves])
 
-	if (isLoading) return <PageLoader />
+	if (isLoading) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -281,28 +282,32 @@ export default function Markets() {
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				<ChartCard title="Market Size by Chain">
-					<MultiSeriesChart
-						dataset={marketSizeDataset}
-						charts={MARKET_SIZE_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
-						exportButtons={AAVE_BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={marketSizeDataset}
+							charts={MARKET_SIZE_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
+							exportButtons={AAVE_BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 
 				{utilizationDataset.source.length > 0 && (
 					<ChartCard title="Utilization by Top Assets">
-						<MultiSeriesChart
-							dataset={utilizationDataset}
-							charts={UTILIZATION_CHART}
-							valueSymbol="%"
-							title=""
-							height="400px"
-							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
-							exportButtons={AAVE_BAR_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={utilizationDataset}
+								charts={UTILIZATION_CHART}
+								valueSymbol="%"
+								title=""
+								height="400px"
+								chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
+								exportButtons={AAVE_BAR_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>

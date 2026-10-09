@@ -8,12 +8,13 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -217,13 +218,15 @@ function AssetBreakdownSection({
 			<h3 className="mb-4 label-md text-secondary">{title}</h3>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
-					<PieChart
-						chartData={categories}
-						stackColors={pieColors}
-						radius={['40%', '70%']}
-						height="320px"
-						valueSymbol="$"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+						<PieChart
+							chartData={categories}
+							stackColors={pieColors}
+							radius={['40%', '70%']}
+							height="320px"
+							valueSymbol="$"
+						/>
+					</Suspense>
 				</div>
 				<div>
 					<div className="max-h-[400px] overflow-y-auto">
@@ -308,13 +311,15 @@ export default function Ecosystem() {
 				<SectionHeader>Total Value Locked</SectionHeader>
 				<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartCard title={data.tvl.title}>
-					<MultiSeriesChart
-						dataset={data.tvl.dataset}
-						charts={data.tvl.charts}
-						valueSymbol="$"
-						height="400px"
-						chartOptions={data.tvl.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.tvl.dataset}
+							charts={data.tvl.charts}
+							valueSymbol="$"
+							height="400px"
+							chartOptions={data.tvl.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 
@@ -328,16 +333,18 @@ export default function Ecosystem() {
 					<StatTile label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.fees.title}>
-					<MultiSeriesChart
-						dataset={data.fees.dataset}
-						charts={data.fees.charts}
-						valueSymbol="$"
-						height="400px"
-						hideDefaultLegend={data.fees.charts.length < 2}
-						stacked
-						chartOptions={data.fees.chartOptions}
-						exportButtons={CSV_ONLY_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.fees.dataset}
+							charts={data.fees.charts}
+							valueSymbol="$"
+							height="400px"
+							hideDefaultLegend={data.fees.charts.length < 2}
+							stacked
+							chartOptions={data.fees.chartOptions}
+							exportButtons={CSV_ONLY_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 				<SectionHeader>Top Protocols by Fees</SectionHeader>
 				<ProtocolTable data={data.fees.topProtocols} valueLabel="Fees" />
@@ -365,16 +372,18 @@ export default function Ecosystem() {
 					<StatTile label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartCard title={data.dexVolume.title}>
-					<MultiSeriesChart
-						dataset={data.dexVolume.dataset}
-						charts={data.dexVolume.charts}
-						valueSymbol="$"
-						height="400px"
-						hideDefaultLegend={data.dexVolume.charts.length < 2}
-						stacked
-						chartOptions={data.dexVolume.chartOptions}
-						exportButtons={CSV_ONLY_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.dexVolume.dataset}
+							charts={data.dexVolume.charts}
+							valueSymbol="$"
+							height="400px"
+							hideDefaultLegend={data.dexVolume.charts.length < 2}
+							stacked
+							chartOptions={data.dexVolume.chartOptions}
+							exportButtons={CSV_ONLY_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 				<SectionHeader>Top DEXes by Volume</SectionHeader>
 				<ProtocolTable data={data.dexVolume.topDexes} valueLabel="Volume" />
@@ -389,15 +398,17 @@ export default function Ecosystem() {
 					<StatTile label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
 				<ChartCard title={data.stablecoins.title}>
-					<MultiSeriesChart
-						dataset={data.stablecoins.dataset}
-						charts={data.stablecoins.charts}
-						valueSymbol="$"
-						stacked
-						solidChartAreaStyle
-						height="400px"
-						chartOptions={data.stablecoins.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.stablecoins.dataset}
+							charts={data.stablecoins.charts}
+							valueSymbol="$"
+							stacked
+							solidChartAreaStyle
+							height="400px"
+							chartOptions={data.stablecoins.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 
@@ -407,13 +418,15 @@ export default function Ecosystem() {
 					<h3 className="mb-4 label-md text-secondary">Stablecoin Supply Breakdown</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<PieChart
-								chartData={data.stablecoins.breakdown}
-								stackColors={data.stablecoins.pieColors}
-								radius={['40%', '70%']}
-								height="320px"
-								valueSymbol="$"
-							/>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+								<PieChart
+									chartData={data.stablecoins.breakdown}
+									stackColors={data.stablecoins.pieColors}
+									radius={['40%', '70%']}
+									height="320px"
+									valueSymbol="$"
+								/>
+							</Suspense>
 						</div>
 						<div>
 							<div className="max-h-[400px] overflow-y-auto">

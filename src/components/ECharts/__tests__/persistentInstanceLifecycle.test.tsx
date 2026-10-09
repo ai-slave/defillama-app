@@ -5,12 +5,13 @@ import * as echarts from 'echarts/core'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { RadarChart } from '~/containers/MarketMakers/RadarChart'
+import { RADAR_INDICATORS } from '~/containers/MarketMakers/radar'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { BarSparkline } from '../BarSparkline'
 import CandlestickChart from '../CandlestickChart'
 import type { CandlestickPoint } from '../CandlestickChart/types'
 import HBarChart from '../HBarChart'
+import RadarChart from '../RadarChart'
 import ScatterChart from '../ScatterChart'
 import { SparklineChart } from '../SparklineChart'
 import TreemapChart from '../TreemapChart'
@@ -76,6 +77,11 @@ describe('persistent ECharts instances', () => {
 			name: 'horizontal bar',
 			render: (value: number) => <HBarChart categories={['A']} values={[value]} />,
 			shown: () => option().series[0].data[0].value
+		},
+		{
+			name: 'radar',
+			render: (value: number) => <RadarChart indicators={[{ name: 'Score', max: 300 }]} values={[value]} />,
+			shown: () => option().series[0].data[0].value[0]
 		},
 		{
 			name: 'scatter',
@@ -197,20 +203,13 @@ describe('persistent ECharts instances', () => {
 	})
 
 	test('recolors the radar axis on a theme change without rebuilding the chart', async () => {
-		const scores = {
-			composite: 9,
-			tradingKpis: 8,
-			trustIntegration: 7,
-			coverageCapabilities: 6,
-			uptime: 5,
-			integrationLevel: 4
-		}
-		await render(<RadarChart scores={scores} />)
+		const values = [9, 8, 7, 6, 5, 4]
+		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
 		const instance = chart()
 		expect(option().radar[0].axisName.color).toBe('#878787')
 
 		document.cookie = 'defillama-theme=light'
-		await render(<RadarChart scores={scores} />)
+		await render(<RadarChart indicators={RADAR_INDICATORS} values={values} />)
 
 		expect(chart()).toBe(instance)
 		expect(option().radar[0].axisName.color).toBe('#6f6f6f')

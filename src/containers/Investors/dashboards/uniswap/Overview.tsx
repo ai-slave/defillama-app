@@ -5,12 +5,12 @@ import {
 	fetchAdapterProtocolChartDataByBreakdownType
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { PanelLoadingStatus } from '~/ui/Status'
 import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
 import { breakdownToSeries, groupTopN, SeriesTrendChart, TOP_CHAINS, trimLeadingZeros } from './TrendChart'
 import {
 	countKpi,
 	KpiGrid,
-	PageLoader,
 	PROTOCOL,
 	QUERY_OPTS,
 	SectionHeader,
@@ -131,7 +131,7 @@ export default function Overview() {
 		}
 	}, [data, dex.data, fees.data, holders.data])
 
-	if (!data || dex.isPending || fees.isPending || holders.isPending) return <PageLoader />
+	if (!data || dex.isPending || fees.isPending || holders.isPending) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-10">

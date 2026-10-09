@@ -4,10 +4,10 @@ import { LoadingDots } from '~/ui/Loaders'
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (
 		<div className="isolate flex flex-1 flex-col items-center justify-center gap-6 rounded-md border border-subtle bg-surface p-1">
-			<div className="relative size-24">
+			<div className="relative size-24" aria-hidden>
 				<div className="absolute inset-0 rounded-full border border-pro-ai opacity-10" />
 
-				<div className="absolute inset-0 animate-spin rounded-full [animation-duration:3s]">
+				<div className="absolute inset-0 rounded-full [animation-duration:3s] motion-safe:animate-spin">
 					<div
 						className="-z-10 size-full rounded-full border-2 border-transparent border-t-pro-ai border-r-pro-ai opacity-30"
 						style={{
@@ -16,16 +16,16 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 					/>
 				</div>
 
-				<div className="absolute inset-3 animate-spin rounded-full [animation-direction:reverse] [animation-duration:2s]">
+				<div className="absolute inset-3 rounded-full [animation-direction:reverse] [animation-duration:2s] motion-safe:animate-spin">
 					<div className="size-full rounded-full border-2 border-transparent border-b-pro-ai border-l-pro-ai" />
 				</div>
 
-				<div className="absolute inset-6 animate-pulse rounded-full bg-pro-ai opacity-10" />
+				<div className="absolute inset-6 rounded-full bg-pro-ai opacity-10 motion-safe:animate-pulse" />
 
-				<div className="absolute inset-0 animate-spin [animation-duration:4s]">
+				<div className="absolute inset-0 [animation-duration:4s] motion-safe:animate-spin">
 					<div className="absolute top-0 left-1/2 -ml-1 size-2 rounded-full bg-pro-ai" />
 				</div>
-				<div className="absolute inset-0 animate-spin [animation-direction:reverse] [animation-duration:3s]">
+				<div className="absolute inset-0 [animation-direction:reverse] [animation-duration:3s] motion-safe:animate-spin">
 					<div className="absolute bottom-0 left-1/2 -ml-0.75 size-1.5 rounded-full bg-pro-ai opacity-60" />
 				</div>
 
@@ -33,13 +33,13 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 					<div className="relative">
 						<Image
 							src="/assets/llama.webp"
-							alt="Loading"
+							alt=""
 							width={64}
 							height={64}
 							className="z-10 size-16 object-contain [animation-duration:1.5s]"
 						/>
 						<div
-							className="absolute inset-0 -z-10 animate-ping rounded-full opacity-30 [animation-duration:2s]"
+							className="absolute inset-0 -z-10 rounded-full opacity-30 [animation-duration:2s] motion-safe:animate-ping"
 							style={{
 								background: 'radial-gradient(circle, var(--violet-9), transparent)'
 							}}
@@ -50,7 +50,7 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 
 			<div className="flex flex-col items-center gap-1 text-center">
 				{heading ? <h1 className="heading-xs text-primary">{heading}</h1> : null}
-				<p className="flex items-center gap-1 text-secondary">
+				<p role="status" aria-live="polite" className="flex items-center gap-1 text-secondary">
 					Loading
 					<LoadingDots />
 				</p>

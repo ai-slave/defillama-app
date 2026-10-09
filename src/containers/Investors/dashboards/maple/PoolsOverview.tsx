@@ -1,9 +1,10 @@
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatCompactNumber,
@@ -179,14 +180,16 @@ export default function PoolsOverview() {
 					<CardSkeleton title="TVL by Pool" />
 				) : (
 					<ChartCard title="TVL by Pool">
-						<MultiSeriesChart
-							dataset={data.tvl}
-							charts={TVL_CHART}
-							valueSymbol="$"
-							height="400px"
-							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={data.tvl}
+								charts={TVL_CHART}
+								valueSymbol="$"
+								height="400px"
+								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 
@@ -194,14 +197,16 @@ export default function PoolsOverview() {
 					<CardSkeleton title="Pool Utilization" />
 				) : data.utilization.source.length > 0 ? (
 					<ChartCard title="Pool Utilization">
-						<MultiSeriesChart
-							dataset={data.utilization}
-							charts={UTILIZATION_CHART}
-							valueSymbol="%"
-							height="400px"
-							chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={data.utilization}
+								charts={UTILIZATION_CHART}
+								valueSymbol="%"
+								height="400px"
+								chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
+								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				) : null}
 			</div>
@@ -210,14 +215,16 @@ export default function PoolsOverview() {
 				<CardSkeleton title="Spot APY by Pool" />
 			) : data.apy.source.length > 0 ? (
 				<ChartCard title="Spot APY by Pool">
-					<MultiSeriesChart
-						dataset={data.apy}
-						charts={APY_CHART}
-						valueSymbol="%"
-						height="400px"
-						chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
-						exportButtons={MAPLE_CSV_ONLY_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.apy}
+							charts={APY_CHART}
+							valueSymbol="%"
+							height="400px"
+							chartOptions={MAPLE_PERCENT_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			) : null}
 

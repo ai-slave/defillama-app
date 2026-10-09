@@ -2,7 +2,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { Leaderboard } from '../Leaderboard'
 import { pageForUtrAsset, type UtrFocusRequest } from '../navigation'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
@@ -54,7 +55,11 @@ const row: UtrLeaderboardRow = {
 
 let root: Root | undefined
 let container: HTMLDivElement | undefined
+// The leaderboard draws the performance matrix, a real ECharts scatter that needs a canvas.
+beforeEach(() => installChartCanvas())
+
 afterEach(async () => {
+	vi.restoreAllMocks()
 	await act(async () => root?.unmount())
 	root = undefined
 	container?.remove()

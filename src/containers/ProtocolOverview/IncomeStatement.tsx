@@ -1,6 +1,7 @@
-import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
+import { type CSSProperties, lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { sankeyMobileMinHeight } from '~/components/ECharts/SankeyChart/height'
 import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
@@ -15,6 +16,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -481,6 +483,7 @@ export function IncomeStatement({
 			sankeyPeriodLabel: sankeyPeriodOptions.find((o) => o.key === validSankeyPeriod)?.label ?? 'Select Period'
 		}
 	}, [sankeyPeriodOptions, validSankeyPeriod])
+	const sankeyHeight = `${Math.max(450, sankeyData.nodes.length * 50)}px`
 
 	const hasAnyBreakdownRows = Boolean(
 		grossProtocolRevenueByLabels.length > 0 ||
@@ -752,13 +755,7 @@ export function IncomeStatement({
 			{showSankey ? (
 				<div className={`border-subtle ${showTable ? 'border-t pt-4' : ''}`}>
 					{sankeyData.nodes.length > 0 ? (
-						<Suspense
-							fallback={
-								<div className="flex min-h-[450px] items-center justify-center body-sm text-tertiary">
-									Loading chart...
-								</div>
-							}
-						>
+						<>
 							<div className="mb-2 flex flex-wrap items-center gap-2 px-2">
 								{showTitles ? <h3 className="mr-auto heading-xs">Income Flow Visualization</h3> : null}
 								<TagGroup
@@ -793,13 +790,31 @@ export function IncomeStatement({
 									iconUrl={tokenIconUrl(name)}
 								/>
 							</div>
-							<SankeyChart
-								nodes={sankeyData.nodes}
-								links={sankeyData.links}
-								height={`${Math.max(450, sankeyData.nodes.length * 50)}px`}
-								onReady={handleSankeyChartReady}
-							/>
-						</Suspense>
+							<Suspense
+								fallback={
+									// The same heights the chart takes: its own on desktop, its stacked column on a phone.
+									<div
+										role="status"
+										className="flex min-h-(--sankey-height) items-center justify-center max-[37.5rem]:min-h-(--sankey-mobile-height)"
+										style={
+											{
+												'--sankey-height': sankeyHeight,
+												'--sankey-mobile-height': sankeyMobileMinHeight(sankeyData.nodes.length)
+											} as CSSProperties
+										}
+									>
+										<LoadingIndicator />
+									</div>
+								}
+							>
+								<SankeyChart
+									nodes={sankeyData.nodes}
+									links={sankeyData.links}
+									height={sankeyHeight}
+									onReady={handleSankeyChartReady}
+								/>
+							</Suspense>
+						</>
 					) : (
 						<div className="flex h-[200px] items-center justify-center body-sm text-tertiary">
 							No data available for the selected period
@@ -910,7 +925,7 @@ function IncomeStatementByLabel({
 											dataType={dataType}
 										/>
 									}
-									className={`justify-start underline decoration-dotted ${isEarnings ? (currentValue >= 0 ? 'decoration-data-up/60' : 'decoration-data-down/60') : 'decoration-current'}`}
+									className={`justify-start underline decoration-dotted ${isEarnings ? (currentValue >= 0 ? 'decoration-(--border-data-up-muted)' : 'decoration-(--border-data-down-muted)') : 'decoration-current'}`}
 								>
 									{formatUsd(currentValue, { compact: true })}
 								</Tooltip>

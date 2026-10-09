@@ -4,6 +4,7 @@ import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChar
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
@@ -25,9 +26,7 @@ export function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 		</div>
 	)
 }

@@ -47,6 +47,7 @@ const TREEMAP_OPTIONS = [
 ] as const
 
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
+const PERFORMANCE_CHART_HEIGHT = '420px'
 
 function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregateHolding; compact?: boolean }) {
 	const href = `/equities/${buildEquityTickerCountrySlug(holding.ticker, 'US')}`
@@ -155,6 +156,13 @@ const sectorColumns = sectorColumnHelper.columns([
 	})
 ])
 
+// `ranking` completes "Ranked by …" under the heading.
+const CARD_SORT_OPTIONS: Array<{ value: SectorCardSort; label: string; ranking: string }> = [
+	{ value: 'marketCap', label: 'Market cap', ranking: 'market cap' },
+	{ value: 'priceChangePercentage1d', label: '1D change', ranking: '1D change' },
+	{ value: 'dollarVolume24h', label: 'Volume', ranking: '24h volume' },
+	{ value: 'trailingPE', label: 'P/E', ranking: 'P/E' }
+]
 export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesSectorsData> }) {
 	if (state.status === 'error') {
 		return (
@@ -294,13 +302,13 @@ function SectorsReadyPage({
 					/>
 				</PanelHeader>
 				{performanceRows.length > 0 ? (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: PERFORMANCE_CHART_HEIGHT }} />}>
 						<HBarChart
 							categories={performanceRows.map(({ row }) => row.sector)}
 							values={performanceRows.map(({ value }) => value)}
 							color={chartColor(0)}
 							valueSymbol="%"
-							height="420px"
+							height={PERFORMANCE_CHART_HEIGHT}
 							showValueLabels
 						/>
 					</Suspense>
@@ -326,17 +334,14 @@ function SectorsReadyPage({
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div>
 						<h2 className="heading-sm">Sector cards</h2>
-						<p className="body-sm text-tertiary">Sorted client-side over the current aggregate rows</p>
+						<p className="body-sm text-tertiary">
+							Ranked by {CARD_SORT_OPTIONS.find((option) => option.value === cardSort)!.ranking}
+						</p>
 					</div>
 					<SegmentedControl<SectorCardSort>
 						value={cardSort}
 						onValueChange={setCardSort}
-						options={[
-							{ value: 'marketCap', label: 'Market cap' },
-							{ value: 'priceChangePercentage1d', label: '1D change' },
-							{ value: 'dollarVolume24h', label: 'Volume' },
-							{ value: 'trailingPE', label: 'P/E' }
-						]}
+						options={CARD_SORT_OPTIONS}
 						label="Sort sector cards"
 						variant="default"
 						size="md"

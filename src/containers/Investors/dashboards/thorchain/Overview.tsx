@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart, FeeRevenueChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
@@ -11,7 +12,6 @@ import {
 	DonutCard,
 	Kpi,
 	KpiGrid,
-	PageLoader,
 	PlaceholderCard,
 	SectionHeader,
 	TimeAreaCard,
@@ -77,7 +77,7 @@ export default function Overview() {
 		}
 		return { ...c, title: 'Swap Volume', series: [{ name: 'Volume', type: 'bar', data: total }] }
 	}, [vol])
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-10">

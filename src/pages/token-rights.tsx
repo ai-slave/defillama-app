@@ -744,11 +744,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 			{rights.map((active, index) => (
 				<span key={labels[index]} className="flex items-center gap-2">
 					<span
-						className={
-							active
-								? 'size-2 rounded-full bg-success shadow-sub-live'
-								: 'size-2 rounded-full border border-success-muted'
-						}
+						className={active ? 'size-2 rounded-full bg-success' : 'size-2 rounded-full border border-success-muted'}
 					/>
 					<span>
 						{labels[index]}: {active ? 'Active' : 'Inactive'}
@@ -773,11 +769,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 			{rights.map((active, index) => (
 				<span
 					key={labels[index]}
-					className={
-						active
-							? 'size-3 rounded-full bg-success shadow-sub-live'
-							: 'size-3 rounded-full border-2 border-success-muted'
-					}
+					className={active ? 'size-3 rounded-full bg-success' : 'size-3 rounded-full border-2 border-success-muted'}
 				/>
 			))}
 		</Hovercard>
@@ -867,7 +859,7 @@ function TokenRightsLegend() {
 		<div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-subtle px-3 py-2.5 body-sm text-secondary">
 			<span className="mr-1 label-sm text-tertiary uppercase">Legend</span>
 			<span className="inline-flex items-center gap-2">
-				<span className="size-3 rounded-full bg-success shadow-sub-live" />
+				<span className="size-3 rounded-full bg-success" />
 				Active
 			</span>
 			<span className="inline-flex items-center gap-2">

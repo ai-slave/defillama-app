@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
@@ -8,9 +11,8 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { UTR_PERCENT_OPTIONS } from './constants'
+import { UTR_PERCENT_OPTIONS, UTR_TIME_DATASET } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
-import { buildSeriesOption, ChartLegend, SimpleChart, type SimpleSeries, useSimpleChartTheme } from './SimpleChart'
 import { GradeFooterColumns } from './TokenPage'
 import type {
 	UtrCriterionBreakdown,
@@ -166,13 +168,16 @@ function selectBreakdownMetric(
 	return breakdown?.volume?.[volumeSide] ?? null
 }
 
-function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit): Array<SimpleSeries> {
-	const providerSeries: Array<SimpleSeries> = metric.series.map((entry, index) => ({
-		name: entry.name,
+const PERCENT_TIME_OPTIONS = createTimeSeriesChartOptions('%')
+
+function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit): Array<MultiSeriesChartSeriesConfig> {
+	const providerSeries = metric.series.map((entry, index): MultiSeriesChartSeriesConfig => ({
 		type: 'bar',
+		name: entry.name,
+		encode: { x: 0, y: 1 },
 		stack: 'providers',
 		color: chartColor(index),
-		data: entry.dailyBreakdown.map((point) => [
+		data: entry.dailyBreakdown.map((point): [number, number] => [
 			Date.parse(point.date),
 			unit === 'percent' ? (point.percentage ?? 0) : (point.value ?? 0)
 		])
@@ -180,11 +185,12 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 	return [
 		...providerSeries,
 		{
-			name: 'All Others',
 			type: 'bar',
+			name: 'All Others',
+			encode: { x: 0, y: 1 },
 			stack: 'providers',
 			color: OTHERS_COLOR,
-			data: metric.dailyBreakdown.map((point) => [
+			data: metric.dailyBreakdown.map((point): [number, number] => [
 				Date.parse(point.date),
 				unit === 'percent' ? (point.allOthersPercentage ?? 0) : (point.allOthers ?? 0)
 			])
@@ -193,7 +199,6 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 }
 
 function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerformanceBreakdown }) {
-	const axisColor = useSimpleChartTheme().axisLabel
 	const [mode, setMode] = useState<BreakdownMode>('depth')
 	const [depthSide, setDepthSide] = useState<DepthSide>('bidAsk')
 	const [depthBand, setDepthBand] = useState<DepthBand>('depth200')
@@ -319,13 +324,16 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 							</div>
 						</div>
 						{display === 'chart' ? (
-							<>
-								<SimpleChart
-									className="h-[280px] w-full"
-									option={buildSeriesOption(series, axisColor, unit === 'percent' ? 'pct' : 'usd')}
-								/>
-								<ChartLegend items={series.map((entry) => ({ label: entry.name, color: entry.color }))} />
-							</>
+							<MultiSeriesChart
+								dataset={UTR_TIME_DATASET}
+								charts={series}
+								valueSymbol={unit === 'percent' ? '%' : '$'}
+								chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
+								height="320px"
+								hideDefaultLegend={false}
+								hideDataZoom
+								exportButtons="hidden"
+							/>
 						) : (
 							<div className="max-h-[320px] overflow-auto rounded-lg border border-subtle">
 								<table className="w-full body-sm">

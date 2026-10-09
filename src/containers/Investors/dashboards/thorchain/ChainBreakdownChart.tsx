@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
@@ -8,6 +8,7 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import { ChartCard, DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
@@ -153,16 +154,18 @@ function TrendCard({
 			) : chartSeries.length === 0 ? (
 				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">No data</div>
 			) : (
-				<MultiSeriesChart
-					dataset={model.dataset}
-					charts={model.charts}
-					valueSymbol={valueSymbol}
-					groupBy={groupBy}
-					height="360px"
-					chartOptions={chartOptions}
-					hideDefaultLegend={false}
-					exportButtons="hidden"
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
+					<MultiSeriesChart
+						dataset={model.dataset}
+						charts={model.charts}
+						valueSymbol={valueSymbol}
+						groupBy={groupBy}
+						height="360px"
+						chartOptions={chartOptions}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
+				</Suspense>
 			)}
 		</ChartCard>
 	)
@@ -298,16 +301,18 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 	if (!model) return null
 	return (
 		<ChartCard title={model.title} {...(model.subtitle !== undefined ? { subtitle: model.subtitle } : {})}>
-			<MultiSeriesChart
-				dataset={model.dataset}
-				charts={model.charts}
-				valueSymbol="$"
-				groupBy="daily"
-				height="360px"
-				chartOptions={CHART_OPTIONS}
-				hideDefaultLegend={false}
-				exportButtons="hidden"
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<MultiSeriesChart
+					dataset={model.dataset}
+					charts={model.charts}
+					valueSymbol="$"
+					groupBy="daily"
+					height="360px"
+					chartOptions={CHART_OPTIONS}
+					hideDefaultLegend={false}
+					exportButtons="hidden"
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }

@@ -121,6 +121,10 @@
 	/* A switch knob: white on both the brand and the neutral track, in both modes. */
 	--bg-knob: #ffffff;
 
+	/* A neutral status dot and its quieter muted twin (vault risk rows, the article saving dot); muted stays visible. */
+	--bg-status-dot: #484848;
+	--bg-status-dot-muted: var(--neutral-11);
+
 	/* Disabled controls: one neutral look for every variant. */
 	--bg-disabled: var(--neutral-3);
 	--border-disabled: var(--neutral-5);
@@ -202,6 +206,7 @@ html.dark,
 	--bg-screen-dim: #090b0cb3; /* stronger in dark, where shadows are invisible */
 
 	--bg-skeleton: var(--neutral-5);
+	--bg-status-dot: #c6c6c6;
 
 	/* Dark surfaces carry elevation with their lighter fill; every shadow deepens so it still shows on a near-black
 	   page. The overlay fill is one step above a card, so its shadow is what separates a menu from a busy chart. */
@@ -414,6 +419,12 @@ html.dark,
 }
 @utility bg-knob {
 	background-color: var(--bg-knob);
+}
+@utility bg-status-dot {
+	background-color: var(--bg-status-dot);
+}
+@utility bg-status-dot-muted {
+	background-color: var(--bg-status-dot-muted);
 }
 @utility bg-on-brand-control {
 	background-color: var(--bg-on-brand-control);

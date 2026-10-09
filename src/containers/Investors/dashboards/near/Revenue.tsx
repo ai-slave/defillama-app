@@ -1,11 +1,12 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -262,16 +263,18 @@ export default function Revenue() {
 					title="All fees earned by NEAR Protocol and Products"
 					subtitle={`Converted from USD to NEAR at daily prices. Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
 				>
-					<MultiSeriesChart
-						dataset={chartView.feesModel.dataset}
-						charts={chartView.feesModel.charts}
-						groupBy={aggregation}
-						valueSymbol=" NEAR"
-						height="400px"
-						showTotalInTooltip
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={chartView.feesModel.dataset}
+							charts={chartView.feesModel.charts}
+							groupBy={aggregation}
+							valueSymbol=" NEAR"
+							height="400px"
+							showTotalInTooltip
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 
@@ -281,16 +284,18 @@ export default function Revenue() {
 					title="NEAR received by protocol"
 					subtitle={`Intents fee wallets (fefundsadmin + 1csfundsadmin) plus protocol transaction fees (70% burned). Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
 				>
-					<MultiSeriesChart
-						dataset={chartView.revenueModel.dataset}
-						charts={chartView.revenueModel.charts}
-						groupBy={aggregation}
-						valueSymbol=" NEAR"
-						height="400px"
-						showTotalInTooltip
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={chartView.revenueModel.dataset}
+							charts={chartView.revenueModel.charts}
+							groupBy={aggregation}
+							valueSymbol=" NEAR"
+							height="400px"
+							showTotalInTooltip
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 
@@ -318,23 +323,27 @@ export default function Revenue() {
 					}
 				>
 					{emissionsView === 'percentage' ? (
-						<MultiSeriesChart
-							dataset={emissionsDataset}
-							charts={EMISSIONS_PERCENTAGE_CHART}
-							valueSymbol="%"
-							chartOptions={EMISSIONS_PERCENTAGE_CHART_OPTIONS}
-							height="400px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={emissionsDataset}
+								charts={EMISSIONS_PERCENTAGE_CHART}
+								valueSymbol="%"
+								chartOptions={EMISSIONS_PERCENTAGE_CHART_OPTIONS}
+								height="400px"
+							/>
+						</Suspense>
 					) : (
-						<MultiSeriesChart
-							dataset={emissionsDataset}
-							charts={EMISSIONS_ABSOLUTE_CHARTS}
-							valueSymbol=" NEAR"
-							chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
-							height="400px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+							<MultiSeriesChart
+								dataset={emissionsDataset}
+								charts={EMISSIONS_ABSOLUTE_CHARTS}
+								valueSymbol=" NEAR"
+								chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
+								height="400px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					)}
 				</ChartCard>
 			</div>

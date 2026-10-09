@@ -83,6 +83,58 @@
 		--data-announcement-ring: rgb(255 255 255 / 40%);
 		--data-announcement-link: rgb(255 255 255 / 15%);
 		--data-announcement-link-hover: rgb(255 255 255 / 25%);
+
+		/* Partner dashboard banners on chain and protocol pages (ChainOverview/Announcement.tsx,
+		   ProtocolOverview/layoutSeo.ts) take the partner's hue. Their shadows have no dark fork. */
+		--near-announcement-border: #111827;
+		--near-announcement-bg: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.98),
+			rgba(232, 255, 244, 0.98) 42%,
+			rgba(216, 243, 235, 0.95) 100%
+		);
+		--near-announcement-text: #111827;
+		--near-announcement-shadow: 0 8px 20px rgba(0, 236, 151, 0.13);
+		--near-announcement-badge-border: rgb(0 0 0 / 10%);
+		--near-announcement-badge-bg: rgb(255 255 255 / 80%);
+		--near-announcement-badge-text: #111827;
+
+		--sonic-announcement-border: #7aa8ff;
+		--sonic-announcement-bg: linear-gradient(
+			90deg,
+			rgba(234, 242, 255, 0.98),
+			rgba(213, 229, 255, 0.98) 38%,
+			rgba(219, 225, 255, 0.95) 100%
+		);
+		--sonic-announcement-text: #0c3d7a;
+		--sonic-announcement-shadow: 0 8px 20px rgba(43, 108, 255, 0.14);
+		--sonic-announcement-badge-text: #124c8d;
+
+		--odyssey-announcement-border: #8ecae6;
+		--odyssey-announcement-bg: linear-gradient(
+			90deg,
+			rgba(236, 249, 255, 0.98),
+			rgba(228, 245, 242, 0.98) 42%,
+			rgba(236, 242, 255, 0.95) 100%
+		);
+		--odyssey-announcement-text: #0f4f66;
+		--odyssey-announcement-shadow: 0 8px 20px rgba(42, 157, 143, 0.12);
+		--odyssey-announcement-badge-text: #12617a;
+
+		--spark-announcement-border: #ffb27a;
+		--spark-announcement-bg: linear-gradient(
+			90deg,
+			rgba(255, 244, 234, 0.98),
+			rgba(255, 232, 213, 0.98) 38%,
+			rgba(255, 219, 225, 0.95) 100%
+		);
+		--spark-announcement-text: #7a3d0c;
+		--spark-announcement-shadow: 0 8px 20px rgba(255, 142, 43, 0.14);
+		--spark-announcement-badge-text: #8d4c12;
+
+		/* The frosted badge chip the Sonic, Odyssey and Spark banners share. */
+		--announcement-chip-border: rgb(255 255 255 / 70%);
+		--announcement-chip-bg: rgb(255 255 255 / 70%);
 	}
 	html.dark {
 		--llamaai-announcement-border: rgb(253 224 169 / 30%);
@@ -140,6 +192,51 @@
 		--data-announcement-ring: rgb(255 255 255 / 30%);
 		--data-announcement-link: rgb(255 255 255 / 10%);
 		--data-announcement-link-hover: rgb(255 255 255 / 20%);
+
+		--near-announcement-border: #38f5a6;
+		--near-announcement-bg: linear-gradient(
+			90deg,
+			rgba(13, 18, 17, 0.96),
+			rgba(17, 44, 33, 0.94) 55%,
+			rgba(10, 61, 50, 0.94) 100%
+		);
+		--near-announcement-text: #d9fff0;
+		--near-announcement-badge-border: color-mix(in srgb, #38f5a6 30%, transparent);
+		--near-announcement-badge-bg: rgb(255 255 255 / 12%);
+		--near-announcement-badge-text: #b6ffd8;
+
+		--sonic-announcement-border: #1e528f;
+		--sonic-announcement-bg: linear-gradient(
+			90deg,
+			rgba(27, 43, 66, 0.96),
+			rgba(33, 55, 81, 0.94) 55%,
+			rgba(26, 40, 94, 0.94) 100%
+		);
+		--sonic-announcement-text: #d5e3ff;
+		--sonic-announcement-badge-text: #aac7ff;
+
+		--odyssey-announcement-border: #2f6f83;
+		--odyssey-announcement-bg: linear-gradient(
+			90deg,
+			rgba(20, 48, 58, 0.96),
+			rgba(24, 57, 52, 0.94) 55%,
+			rgba(28, 46, 72, 0.94) 100%
+		);
+		--odyssey-announcement-text: #d9f4ff;
+		--odyssey-announcement-badge-text: #b7edff;
+
+		--spark-announcement-border: #8f4e1e;
+		--spark-announcement-bg: linear-gradient(
+			90deg,
+			rgba(66, 43, 27, 0.96),
+			rgba(81, 35, 33, 0.94) 55%,
+			rgba(94, 26, 40, 0.94) 100%
+		);
+		--spark-announcement-text: #ffe8d5;
+		--spark-announcement-badge-text: #ffd2aa;
+
+		--announcement-chip-border: rgb(255 255 255 / 10%);
+		--announcement-chip-bg: rgb(255 255 255 / 12%);
 	}
 }
 
@@ -187,6 +284,31 @@
 	--color-data-announcement-ring: var(--data-announcement-ring);
 	--color-data-announcement-link: var(--data-announcement-link);
 	--color-data-announcement-link-hover: var(--data-announcement-link-hover);
+
+	--shadow-near-announcement: var(--near-announcement-shadow);
+	--color-near-announcement-border: var(--near-announcement-border);
+	--color-near-announcement-text: var(--near-announcement-text);
+	--color-near-announcement-badge-border: var(--near-announcement-badge-border);
+	--color-near-announcement-badge-bg: var(--near-announcement-badge-bg);
+	--color-near-announcement-badge-text: var(--near-announcement-badge-text);
+
+	--shadow-sonic-announcement: var(--sonic-announcement-shadow);
+	--color-sonic-announcement-border: var(--sonic-announcement-border);
+	--color-sonic-announcement-text: var(--sonic-announcement-text);
+	--color-sonic-announcement-badge-text: var(--sonic-announcement-badge-text);
+
+	--shadow-odyssey-announcement: var(--odyssey-announcement-shadow);
+	--color-odyssey-announcement-border: var(--odyssey-announcement-border);
+	--color-odyssey-announcement-text: var(--odyssey-announcement-text);
+	--color-odyssey-announcement-badge-text: var(--odyssey-announcement-badge-text);
+
+	--shadow-spark-announcement: var(--spark-announcement-shadow);
+	--color-spark-announcement-border: var(--spark-announcement-border);
+	--color-spark-announcement-text: var(--spark-announcement-text);
+	--color-spark-announcement-badge-text: var(--spark-announcement-badge-text);
+
+	--color-announcement-chip-border: var(--announcement-chip-border);
+	--color-announcement-chip-bg: var(--announcement-chip-bg);
 }
 
 /* Each banner's call-to-action pill (announcementCtaStyles in src/components/Announcement.tsx) reads these four

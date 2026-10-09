@@ -65,6 +65,8 @@ const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart'))
+// Every chat chart renders at this height unless its caller sizes it, so the loading placeholder reserves the same
+const CHAT_CHART_HEIGHT = 360
 
 interface ChartRendererProps {
 	charts: Array<ChartConfiguration>
@@ -205,33 +207,32 @@ function renderChartContent(
 	renderPlan: ChartRenderPlan,
 	chartKey: string,
 	onChartReady: (instance: echarts.ECharts | null) => void,
-	height?: number
+	height = CHAT_CHART_HEIGHT
 ) {
-	const heightProp = height === undefined ? {} : { height: `${height}px` }
-	const fallback = (defaultClassName: string) =>
-		height === undefined ? <div className={defaultClassName} /> : <div style={{ height }} />
+	const heightProp = { height: `${height}px` }
+	const fallback = <div style={{ height }} />
 	switch (renderPlan.rendererKind) {
 		case 'cartesian':
 			return (
-				<Suspense fallback={fallback('h-[338px]')}>
+				<Suspense fallback={fallback}>
 					<MultiSeriesChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'hbar':
 			return (
-				<Suspense fallback={fallback('h-[338px]')}>
+				<Suspense fallback={fallback}>
 					<HBarChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'pie':
 			return (
-				<Suspense fallback={fallback('h-[338px]')}>
+				<Suspense fallback={fallback}>
 					<PieChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'scatter':
 			return (
-				<Suspense fallback={fallback('h-[360px]')}>
+				<Suspense fallback={fallback}>
 					<ScatterChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)

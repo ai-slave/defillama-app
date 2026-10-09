@@ -1,6 +1,7 @@
+import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart, DualAxisChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
-import { Kpi, KpiGrid, PageLoader, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
+import { Kpi, KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
 
 interface TokenData {
 	rune: { kpis: Record<string, KpiT | undefined> }
@@ -38,7 +39,7 @@ export default function Token() {
 	// (e.g. Jul–Oct 2021 read ~$4.7 vs the real ~$7.7) so it's never used for price.
 	// The line shares one date axis with the Midgard swap-volume bars: no mismatch.
 	const { data } = useThorchainData<TokenData>('token')
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	const runePriceChart = data.runePriceChart
 	const priceVolumeChart = data.priceVolumeChart

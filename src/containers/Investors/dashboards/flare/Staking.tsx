@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -78,14 +79,16 @@ export default function Staking() {
 							</span>
 						))}
 					</div>
-					<MultiSeriesChart
-						dataset={chart.dataset}
-						charts={chart.charts}
-						valueSymbol=""
-						title=""
-						height="360px"
-						chartOptions={chart.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<MultiSeriesChart
+							dataset={chart.dataset}
+							charts={chart.charts}
+							valueSymbol=""
+							title=""
+							height="360px"
+							chartOptions={chart.chartOptions}
+						/>
+					</Suspense>
 					{chart.subtitle && <p className="mt-2 body-sm text-secondary">{chart.subtitle}</p>}
 				</ChartCard>
 			)}
@@ -96,14 +99,16 @@ export default function Staking() {
 					subtitle={pctChart.subtitle}
 					titleTooltip={pctChart.titleTooltip}
 				>
-					<MultiSeriesChart
-						dataset={pctChart.dataset}
-						charts={pctChart.charts}
-						valueSymbol="%"
-						title=""
-						height="300px"
-						chartOptions={pctChart.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+						<MultiSeriesChart
+							dataset={pctChart.dataset}
+							charts={pctChart.charts}
+							valueSymbol="%"
+							title=""
+							height="300px"
+							chartOptions={pctChart.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 		</div>

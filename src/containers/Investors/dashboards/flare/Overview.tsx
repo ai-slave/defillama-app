@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -41,15 +42,17 @@ export default function Overview() {
 				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
 			</div>
 			<ChartCard title={tvl.title} subtitle={tvl.subtitle} titleTooltip={tvl.titleTooltip}>
-				<MultiSeriesChart
-					dataset={tvl.dataset}
-					charts={tvl.charts}
-					valueSymbol="$"
-					title=""
-					hideDefaultLegend={false}
-					height="360px"
-					chartOptions={tvl.chartOptions}
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<MultiSeriesChart
+						dataset={tvl.dataset}
+						charts={tvl.charts}
+						valueSymbol="$"
+						title=""
+						hideDefaultLegend={false}
+						height="360px"
+						chartOptions={tvl.chartOptions}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			{protocolRankings.length > 0 && (
@@ -125,15 +128,17 @@ export default function Overview() {
 			</div>
 
 			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged.">
-				<MultiSeriesChart
-					dataset={stables.dataset}
-					charts={stables.charts}
-					valueSymbol="$"
-					title=""
-					solidChartAreaStyle
-					height="360px"
-					chartOptions={stables.chartOptions}
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<MultiSeriesChart
+						dataset={stables.dataset}
+						charts={stables.charts}
+						valueSymbol="$"
+						title=""
+						solidChartAreaStyle
+						height="360px"
+						chartOptions={stables.chartOptions}
+					/>
+				</Suspense>
 			</ChartCard>
 		</div>
 	)

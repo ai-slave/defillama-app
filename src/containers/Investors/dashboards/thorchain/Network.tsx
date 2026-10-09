@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import type { Chart, Kpi } from './transform'
-import { KpiGrid, PageLoader, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
+import { KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
 
 type PolView = 'rune' | 'usd'
 
@@ -36,7 +37,7 @@ export default function Network() {
 	// `liquidity` lives on this payload too but renders on Overview, not here.
 	const { data } = useThorchainData<NetworkData>('network')
 	const [polView, setPolView] = useState<PolView>('rune')
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	const { kpis, bond } = data
 	const polChart = data.polCharts?.[polView]

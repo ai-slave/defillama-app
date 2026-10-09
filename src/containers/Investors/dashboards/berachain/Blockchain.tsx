@@ -1,7 +1,8 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -163,27 +164,31 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Transactions">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.transactions}
-					charts={TRANSACTIONS_CHART}
-					chartOptions={DEFAULT_CHART_OPTIONS}
-					exportButtons={BAR_CHART_EXPORTS}
-					valueSymbol=""
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.transactions}
+						charts={TRANSACTIONS_CHART}
+						chartOptions={DEFAULT_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						valueSymbol=""
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard title="Active & New Addresses">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.addresses}
-					charts={ADDRESSES_CHARTS}
-					chartOptions={DEFAULT_CHART_OPTIONS}
-					exportButtons={AREA_CHART_EXPORTS}
-					valueSymbol=""
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.addresses}
+						charts={ADDRESSES_CHARTS}
+						chartOptions={DEFAULT_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
+						valueSymbol=""
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			{/* Gas & Fee Economics */}
@@ -196,55 +201,63 @@ export default function Blockchain() {
 			</div>
 
 			<ChartCard title="Daily Gas Fees (USD)">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.gasFees}
-					charts={GAS_FEES_CHART}
-					chartOptions={DOLLAR_CHART_OPTIONS}
-					exportButtons={BAR_CHART_EXPORTS}
-					valueSymbol="$"
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.gasFees}
+						charts={GAS_FEES_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						valueSymbol="$"
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard title="Block Utilization (%)">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.blockUtilization}
-					charts={UTILIZATION_CHART}
-					chartOptions={PERCENT_CHART_OPTIONS}
-					exportButtons={AREA_CHART_EXPORTS}
-					valueSymbol="%"
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.blockUtilization}
+						charts={UTILIZATION_CHART}
+						chartOptions={PERCENT_CHART_OPTIONS}
+						exportButtons={AREA_CHART_EXPORTS}
+						valueSymbol="%"
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			{/* Contract Deployments */}
 			<SectionHeader title="Contract Deployments" />
 			<ChartCard title="New Contracts Deployed (Monthly)">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.contractDeployments}
-					charts={CONTRACTS_CHART}
-					chartOptions={DEFAULT_CHART_OPTIONS}
-					exportButtons={BAR_CHART_EXPORTS}
-					valueSymbol=""
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.contractDeployments}
+						charts={CONTRACTS_CHART}
+						chartOptions={DEFAULT_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						valueSymbol=""
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			{/* Token Transfers */}
 			<SectionHeader title="Token Transfers" />
 			<ChartCard title="Daily Token Transfer Volume (USD)">
-				<MultiSeriesChart
-					dataset={data.chartDatasets.tokenTransfers}
-					charts={TRANSFERS_CHART}
-					chartOptions={DOLLAR_CHART_OPTIONS}
-					exportButtons={BAR_CHART_EXPORTS}
-					valueSymbol="$"
-					title=""
-					height="400px"
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={data.chartDatasets.tokenTransfers}
+						charts={TRANSFERS_CHART}
+						chartOptions={DOLLAR_CHART_OPTIONS}
+						exportButtons={BAR_CHART_EXPORTS}
+						valueSymbol="$"
+						title=""
+						height="400px"
+					/>
+				</Suspense>
 			</ChartCard>
 
 			{data.topTokens.length > 0 && (

@@ -1,6 +1,7 @@
-import { lazy, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import {
@@ -201,15 +202,17 @@ export default function Tvl() {
 					title="Ecosystem TVL"
 					subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history"
 				>
-					<MultiSeriesChart
-						dataset={ecoModel.dataset}
-						charts={ecoModel.charts}
-						valueSymbol="$"
-						height="400px"
-						chartOptions={ecoZoom}
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={ecoModel.dataset}
+							charts={ecoModel.charts}
+							valueSymbol="$"
+							height="400px"
+							chartOptions={ecoZoom}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -218,15 +221,17 @@ export default function Tvl() {
 				<ChartSkeleton title="TVL vs ETH" />
 			) : (
 				<ChartCard title="Ecosystem TVL vs ETH/USD" subtitle="Correlation overlay">
-					<MultiSeriesChart
-						dataset={ethOverlay.dataset}
-						charts={ethOverlay.charts}
-						valueSymbol="$"
-						height="350px"
-						chartOptions={ethZoom}
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+						<MultiSeriesChart
+							dataset={ethOverlay.dataset}
+							charts={ethOverlay.charts}
+							valueSymbol="$"
+							height="350px"
+							chartOptions={ethZoom}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -235,15 +240,17 @@ export default function Tvl() {
 				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
 						<ChartCard key={protocol.protocol} title={protocol.protocol} subtitle="Stacked by chain">
-							<MultiSeriesChart
-								dataset={model.dataset}
-								charts={model.charts}
-								valueSymbol="$"
-								height="280px"
-								chartOptions={zoom}
-								hideDefaultLegend={false}
-								exportButtons="hidden"
-							/>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+								<MultiSeriesChart
+									dataset={model.dataset}
+									charts={model.charts}
+									valueSymbol="$"
+									height="280px"
+									chartOptions={zoom}
+									hideDefaultLegend={false}
+									exportButtons="hidden"
+								/>
+							</Suspense>
 						</ChartCard>
 					)
 				})}
@@ -349,14 +356,16 @@ export default function Tvl() {
 									title={market.name || market.marketId}
 									subtitle={`${market.chain}${market.source ? ` · ${market.source}` : ''}`}
 								>
-									<MultiSeriesChart
-										dataset={model.dataset}
-										charts={model.charts}
-										valueSymbol="$"
-										height="300px"
-										hideDefaultLegend={false}
-										exportButtons="hidden"
-									/>
+									<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+										<MultiSeriesChart
+											dataset={model.dataset}
+											charts={model.charts}
+											valueSymbol="$"
+											height="300px"
+											hideDefaultLegend={false}
+											exportButtons="hidden"
+										/>
+									</Suspense>
 								</ChartCard>
 							)
 						})}

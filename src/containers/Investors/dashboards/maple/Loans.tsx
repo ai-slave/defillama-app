@@ -1,9 +1,10 @@
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -183,14 +184,16 @@ export default function Loans() {
 				<CardSkeleton title="Principal by Pool" />
 			) : data.principalByPool.source.length > 0 ? (
 				<ChartCard title="Principal by Pool">
-					<MultiSeriesChart
-						dataset={data.principalByPool}
-						charts={PRINCIPAL_BY_POOL_CHART}
-						valueSymbol="$"
-						height="400px"
-						chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-						exportButtons={MAPLE_CSV_ONLY_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.principalByPool}
+							charts={PRINCIPAL_BY_POOL_CHART}
+							valueSymbol="$"
+							height="400px"
+							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+							exportButtons={MAPLE_CSV_ONLY_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			) : null}
 
@@ -199,14 +202,16 @@ export default function Loans() {
 					<CardSkeleton title="Interest Rate Distribution" />
 				) : data.rateDistribution.source.length > 0 ? (
 					<ChartCard title="Interest Rate Distribution">
-						<MultiSeriesChart
-							dataset={data.rateDistribution}
-							charts={RATE_DISTRIBUTION_CHART}
-							valueSymbol="$"
-							height="400px"
-							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={data.rateDistribution}
+								charts={RATE_DISTRIBUTION_CHART}
+								valueSymbol="$"
+								height="400px"
+								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				) : null}
 
@@ -214,14 +219,16 @@ export default function Loans() {
 					<CardSkeleton title="Loan Age Distribution" />
 				) : data.ageDistribution.source.length > 0 ? (
 					<ChartCard title="Loan Age Distribution">
-						<MultiSeriesChart
-							dataset={data.ageDistribution}
-							charts={AGE_DISTRIBUTION_CHART}
-							valueSymbol="$"
-							height="400px"
-							chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
-							exportButtons={MAPLE_CSV_ONLY_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={data.ageDistribution}
+								charts={AGE_DISTRIBUTION_CHART}
+								valueSymbol="$"
+								height="400px"
+								chartOptions={MAPLE_USD_CATEGORY_CHART_OPTIONS}
+								exportButtons={MAPLE_CSV_ONLY_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				) : null}
 			</div>

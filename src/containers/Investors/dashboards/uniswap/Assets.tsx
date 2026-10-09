@@ -1,16 +1,8 @@
+import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, SeriesTrendChart } from './TrendChart'
-import {
-	ChartCard,
-	KpiGrid,
-	MiniTable,
-	PageLoader,
-	SectionHeader,
-	TimeAreaCard,
-	useUniswapData,
-	useUniswapDefs
-} from './ui'
+import { ChartCard, KpiGrid, MiniTable, SectionHeader, TimeAreaCard, useUniswapData, useUniswapDefs } from './ui'
 
 interface AuctionRow {
 	token: string
@@ -95,7 +87,7 @@ const capitalizeChains = (chains: string) => chains.split(', ').map(capitalize).
 export default function Assets() {
 	const { data } = useUniswapData<AssetsData>('assets')
 	const defs = useUniswapDefs()
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	// The proceeds payload ships Daily + Cumulative series; the chart's own view toggle
 	// covers cumulative, so only the daily series feeds it.

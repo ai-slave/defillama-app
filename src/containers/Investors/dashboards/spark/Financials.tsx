@@ -1,8 +1,9 @@
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -132,13 +133,15 @@ function AllocatedAssetsSection({
 				{view === 'breakdown' ? (
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<PieChart
-								chartData={currentEntries}
-								stackColors={pieColors}
-								radius={['40%', '70%']}
-								height="320px"
-								valueSymbol="$"
-							/>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+								<PieChart
+									chartData={currentEntries}
+									stackColors={pieColors}
+									radius={['40%', '70%']}
+									height="320px"
+									valueSymbol="$"
+								/>
+							</Suspense>
 						</div>
 						<div>
 							<div className="max-h-[400px] overflow-y-auto">
@@ -199,17 +202,19 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<MultiSeriesChart
-						dataset={hist.dataset}
-						charts={hist.charts}
-						valueSymbol="$"
-						title=""
-						stacked
-						solidChartAreaStyle
-						height="400px"
-						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-						exportButtons={AREA_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={hist.dataset}
+							charts={hist.charts}
+							valueSymbol="$"
+							title=""
+							stacked
+							solidChartAreaStyle
+							height="400px"
+							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+							exportButtons={AREA_EXPORT}
+						/>
+					</Suspense>
 				)}
 			</div>
 		</div>
@@ -235,17 +240,19 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.monthlyGross.dataset}
-						charts={data.monthlyGross.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						hideDefaultLegend={data.monthlyGross.charts.length < 2}
-						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={gross.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.monthlyGross.dataset}
+							charts={data.monthlyGross.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							hideDefaultLegend={data.monthlyGross.charts.length < 2}
+							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={gross.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 				<ChartCard
 					title={data.monthlyNet.title}
@@ -258,17 +265,19 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.monthlyNet.dataset}
-						charts={data.monthlyNet.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						hideDefaultLegend={data.monthlyNet.charts.length < 2}
-						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={net.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.monthlyNet.dataset}
+							charts={data.monthlyNet.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							hideDefaultLegend={data.monthlyNet.charts.length < 2}
+							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={net.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 		</div>
@@ -294,16 +303,18 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.supplyTotal.dataset}
-						charts={data.supplyTotal.charts}
-						valueSymbol=""
-						title=""
-						height="400px"
-						chartOptions={UNITLESS_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={total.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.supplyTotal.dataset}
+							charts={data.supplyTotal.charts}
+							valueSymbol=""
+							title=""
+							height="400px"
+							chartOptions={UNITLESS_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={total.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 				<ChartCard
 					title={data.supplyByChain.title}
@@ -316,18 +327,20 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.supplyByChain.dataset}
-						charts={data.supplyByChain.charts}
-						valueSymbol=""
-						title=""
-						stacked
-						solidChartAreaStyle
-						height="400px"
-						chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={byChain.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.supplyByChain.dataset}
+							charts={data.supplyByChain.charts}
+							valueSymbol=""
+							title=""
+							stacked
+							solidChartAreaStyle
+							height="400px"
+							chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={byChain.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 		</div>
@@ -353,18 +366,20 @@ function TvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.tvl.dataset}
-					charts={data.tvl.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={tvl.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.tvl.dataset}
+						charts={data.tvl.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={tvl.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 		</div>
 	)
@@ -388,16 +403,18 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.deposits.dataset}
-						charts={data.deposits.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={deposits.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.deposits.dataset}
+							charts={data.deposits.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={deposits.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 				<ChartCard
 					title={data.borrows.title}
@@ -410,16 +427,18 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.borrows.dataset}
-						charts={data.borrows.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={HIDDEN_EXPORT}
-						onReady={borrows.handleChartReady}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.borrows.dataset}
+							charts={data.borrows.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={HIDDEN_EXPORT}
+							onReady={borrows.handleChartReady}
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 		</div>
@@ -442,18 +461,20 @@ function SllTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.sllTvl.dataset}
-					charts={data.sllTvl.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={sllTvl.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.sllTvl.dataset}
+						charts={data.sllTvl.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={sllTvl.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 		</div>
 	)
@@ -475,18 +496,20 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.savingsTvl.dataset}
-					charts={data.savingsTvl.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={savingsTvl.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.savingsTvl.dataset}
+						charts={data.savingsTvl.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={savingsTvl.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 		</div>
 	)
@@ -548,15 +571,17 @@ function TreasurySection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.treasuryModel.dataset}
-						charts={data.treasuryModel.charts}
-						valueSymbol="$"
-						height="400px"
-						onReady={treasury.handleChartReady}
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.treasuryModel.dataset}
+							charts={data.treasuryModel.charts}
+							valueSymbol="$"
+							height="400px"
+							onReady={treasury.handleChartReady}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 				<ChartCard
 					title="SPK Buybacks"
@@ -569,15 +594,17 @@ function TreasurySection({ data }: { data: FinData }) {
 						/>
 					}
 				>
-					<MultiSeriesChart
-						dataset={data.buybacksModel.dataset}
-						charts={data.buybacksModel.charts}
-						valueSymbol=""
-						height="400px"
-						onReady={buybacks.handleChartReady}
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.buybacksModel.dataset}
+							charts={data.buybacksModel.charts}
+							valueSymbol=""
+							height="400px"
+							onReady={buybacks.handleChartReady}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 		</div>
@@ -613,13 +640,15 @@ export default function Financials() {
 					<h3 className="mb-3 label-md text-secondary">{data.projectedBreakdown.title}</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[300px]">
-							<PieChart
-								chartData={data.projectedBreakdown.series}
-								stackColors={data.breakdownColors}
-								radius={['40%', '70%']}
-								height="300px"
-								valueSymbol="$"
-							/>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+								<PieChart
+									chartData={data.projectedBreakdown.series}
+									stackColors={data.breakdownColors}
+									radius={['40%', '70%']}
+									height="300px"
+									valueSymbol="$"
+								/>
+							</Suspense>
 						</div>
 						<div>
 							<table className="w-full">

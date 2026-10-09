@@ -25,10 +25,27 @@ const paletteBlock = paletteSource.slice(
 	paletteSource.indexOf('export const CHART_COLORS'),
 	paletteSource.indexOf('const toLinear')
 )
+const sectorBlock = paletteSource.slice(paletteSource.indexOf('export const SECTOR_COLORS'))
 const CHART_SERIES_COLORS = [
 	paletteSource.match(/export const oldBlue = '(#[0-9a-fA-F]{6})'/)[1],
-	...[...paletteBlock.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1])
+	...[...paletteBlock.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1]),
+	// The eleventh sector colour beside the palette.
+	...[...sectorBlock.slice(0, sectorBlock.indexOf('\n}')).matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1])
 ]
+// Meaning colours kept as [light, dark] pairs (asset brands, the token rating page's metrics): each value is checked
+// on the mode it is drawn in.
+const MODE_PAIRS = ['ASSET_BRAND_COLORS', 'UTR_METRIC_COLORS'].flatMap((name) => {
+	const start = paletteSource.indexOf(`export const ${name}`)
+	const block = paletteSource.slice(start, paletteSource.indexOf('} as const', start))
+	return [...block.matchAll(/\[\s*(?:'(#[0-9a-fA-F]{6})'|oldBlue),\s*(?:'(#[0-9a-fA-F]{6})'|oldBlue)\s*\]/g)].map(
+		(m) => ({
+			name,
+			light: m[1] ?? CHART_SERIES_COLORS[0],
+			dark: m[2] ?? CHART_SERIES_COLORS[0]
+		})
+	)
+})
+
 const TEXT = [
 	'text-primary',
 	'text-secondary',
@@ -123,6 +140,14 @@ for (const mode of ['light', 'dark']) {
 		for (const surface of ['bg-page', 'bg-surface']) {
 			const ratio = contrast(series, color(surface))
 			if (ratio < 3) failures.push(`${mode}: chart color ${series} on --${surface} is ${ratio.toFixed(2)}:1`)
+		}
+	}
+
+	for (const pair of MODE_PAIRS) {
+		const series = mode === 'dark' ? pair.dark : pair.light
+		for (const surface of ['bg-page', 'bg-surface']) {
+			const ratio = contrast(series, color(surface))
+			if (ratio < 3) failures.push(`${mode}: ${pair.name} ${series} on --${surface} is ${ratio.toFixed(2)}:1`)
 		}
 	}
 

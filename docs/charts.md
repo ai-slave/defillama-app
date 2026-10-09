@@ -40,6 +40,7 @@ Draw every chart with the shared renderer for its shape; `MultiSeriesChart` hand
 - A shared color cannot name its series, so `MultiSeriesChart` flags the series under the pointer (`EChartsTooltipItem.pointed`) for whichever formatter the chart uses: the stack band holding the pointer, or, on a chart of several unstacked lines, the line within 12px of it. Every tooltip formatter on a stacked or multi-line chart lists that series first in `TOOLTIP_POINTED_ROW_STYLE` (a page formatter reads it with `getPointedSeriesName`), even when its value would fall past a cap or into "+N more", and keeps it out of any folded remainder. An Others band keeps its own row, and totals never change. Hover never dims the other series: dimming left bars muted after fast pointer movement and made dense stacks hard to scan.
 - A treemap's children are `childColors(parent, n)`; a treemap does not fold, because every tile carries its label.
 - Up/down, supply/borrow, risk tiers and brand colors that come with the data keep their meaning-based colors.
+- A product page whose metrics keep one color across all its charts (the token rating page: market cap blue, volume gold, depth purple) names them once in `src/constants/colors.ts` as `[light, dark]` pairs, like `ASSET_BRAND_COLORS`, and passes them as per-series colors to the shared charts. A pair under 3:1 on a chart background moves its lightness (OKLCH, same hue) just far enough in that mode; `check-color-contrast` checks every pair.
 
 ## Share views
 

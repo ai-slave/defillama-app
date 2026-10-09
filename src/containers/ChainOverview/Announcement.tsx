@@ -19,11 +19,11 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 			<Announcement
 				announcementId="near-investor-relations"
 				version="2026-05-26-2"
-				className="border border-[#111827] bg-[linear-gradient(90deg,rgba(255,255,255,0.98),rgba(232,255,244,0.98)_42%,rgba(216,243,235,0.95)_100%)] text-[#111827] shadow-[0_8px_20px_rgba(0,236,151,0.13)] dark:border-[#38f5a6] dark:bg-[linear-gradient(90deg,rgba(13,18,17,0.96),rgba(17,44,33,0.94)_55%,rgba(10,61,50,0.94)_100%)] dark:text-[#d9fff0]"
+				className="border border-near-announcement-border bg-(image:--near-announcement-bg) text-near-announcement-text shadow-near-announcement"
 				contentClassName="text-center"
 			>
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-0.5 title-sm text-[#111827] dark:border-[#38f5a6]/30 dark:bg-white/12 dark:text-[#b6ffd8]">
+					<span className="inline-flex items-center gap-1.5 rounded-full border border-near-announcement-badge-border bg-near-announcement-badge-bg px-2 py-0.5 title-sm text-near-announcement-badge-text">
 						<TokenLogo src={NEAR_CHAIN_ICON} size={14} alt="Logo of NEAR" />
 						NEAR IR
 					</span>
@@ -48,11 +48,11 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 			<Announcement
 				announcementId="sonic-investor-relations"
 				version="2026-04-23"
-				className="border border-[#7aa8ff] bg-[linear-gradient(90deg,rgba(234,242,255,0.98),rgba(213,229,255,0.98)_38%,rgba(219,225,255,0.95)_100%)] text-[#0c3d7a] shadow-[0_8px_20px_rgba(43,108,255,0.14)] dark:border-[#1e528f] dark:bg-[linear-gradient(90deg,rgba(27,43,66,0.96),rgba(33,55,81,0.94)_55%,rgba(26,40,94,0.94)_100%)] dark:text-[#d5e3ff]"
+				className="border border-sonic-announcement-border bg-(image:--sonic-announcement-bg) text-sonic-announcement-text shadow-sonic-announcement"
 				contentClassName="text-center"
 			>
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2 py-0.5 title-sm text-[#124c8d] dark:border-white/10 dark:bg-white/12 dark:text-[#aac7ff]">
+					<span className="inline-flex items-center gap-1.5 rounded-full border border-announcement-chip-border bg-announcement-chip-bg px-2 py-0.5 title-sm text-sonic-announcement-badge-text">
 						<TokenLogo name="Sonic" kind="chain" size={14} alt="Logo of Sonic" />
 						Sonic IR
 					</span>

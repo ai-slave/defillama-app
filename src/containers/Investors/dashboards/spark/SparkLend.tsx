@@ -1,10 +1,12 @@
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { createPaginatedRowModel, rowPaginationFeature, tableFeatures, useTable } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -74,9 +76,7 @@ function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 		</div>
 	)
 }
@@ -231,15 +231,17 @@ export default function SparkLend() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<MultiSeriesChart
-						dataset={tvlDataset}
-						charts={TVL_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={tvlDataset}
+							charts={TVL_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -247,17 +249,19 @@ export default function SparkLend() {
 				<CardSkeleton title="TVL by Chain" />
 			) : tvlByChain.charts.length > 0 ? (
 				<ChartCard title="TVL by Chain">
-					<MultiSeriesChart
-						dataset={tvlByChain.dataset}
-						charts={tvlByChain.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						stacked
-						solidChartAreaStyle
-						chartOptions={DOLLAR_STACKED_CHART_OPTIONS}
-						exportButtons={AREA_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={tvlByChain.dataset}
+							charts={tvlByChain.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							stacked
+							solidChartAreaStyle
+							chartOptions={DOLLAR_STACKED_CHART_OPTIONS}
+							exportButtons={AREA_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			) : null}
 
@@ -265,15 +269,17 @@ export default function SparkLend() {
 				<CardSkeleton title="Total Borrowed" />
 			) : (
 				<ChartCard title="Total Borrowed">
-					<MultiSeriesChart
-						dataset={borrowedDataset}
-						charts={BORROWED_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={borrowedDataset}
+							charts={BORROWED_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -281,15 +287,17 @@ export default function SparkLend() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<MultiSeriesChart
-						dataset={feesDataset}
-						charts={FEES_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={feesDataset}
+							charts={FEES_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -297,16 +305,18 @@ export default function SparkLend() {
 				<CardSkeleton title="Fees by Chain" />
 			) : feesByChain.charts.length > 0 ? (
 				<ChartCard title="Fees by Chain">
-					<MultiSeriesChart
-						dataset={feesByChain.dataset}
-						charts={feesByChain.charts}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						hideDefaultLegend={feesByChain.charts.length < 2}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={feesByChain.dataset}
+							charts={feesByChain.charts}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							hideDefaultLegend={feesByChain.charts.length < 2}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			) : null}
 
@@ -314,15 +324,17 @@ export default function SparkLend() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<MultiSeriesChart
-						dataset={revenueDataset}
-						charts={REVENUE_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={revenueDataset}
+							charts={REVENUE_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -330,15 +342,17 @@ export default function SparkLend() {
 				<CardSkeleton title="Supply Side Revenue" />
 			) : (
 				<ChartCard title="Supply Side Revenue">
-					<MultiSeriesChart
-						dataset={supplySideRevenueDataset}
-						charts={SUPPLY_SIDE_REVENUE_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={supplySideRevenueDataset}
+							charts={SUPPLY_SIDE_REVENUE_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -346,15 +360,17 @@ export default function SparkLend() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<MultiSeriesChart
-						dataset={inflowsDataset}
-						charts={INFLOWS_CHARTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={inflowsDataset}
+							charts={INFLOWS_CHARTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 

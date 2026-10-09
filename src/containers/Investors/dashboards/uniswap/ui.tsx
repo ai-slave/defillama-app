@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Fragment, lazy, useMemo } from 'react'
+import { Fragment, lazy, Suspense, useMemo } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -17,6 +17,7 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -272,14 +273,6 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-tertiary uppercase">{children}</h2>
 }
 
-export function PageLoader() {
-	return (
-		<div className="flex min-h-[60vh] items-center justify-center">
-			<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-		</div>
-	)
-}
-
 // Card chrome with an "awaiting data" body + the awaited API field, so the target
 // layout is visible before the backend ships the data.
 export function PlaceholderCard({
@@ -432,14 +425,16 @@ export function BarListCard({
 }) {
 	return (
 		<ChartCard title={title} subtitle={subtitle}>
-			<HBarChart
-				categories={items.map((item) => item.name)}
-				values={items.map((item) => item.value)}
-				colors={items.map((item, index) => seriesColor(item.name, index))}
-				valueSymbol={valueSymbol}
-				height="360px"
-				showValueLabels={showValues}
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<HBarChart
+					categories={items.map((item) => item.name)}
+					values={items.map((item) => item.value)}
+					colors={items.map((item, index) => seriesColor(item.name, index))}
+					valueSymbol={valueSymbol}
+					height="360px"
+					showValueLabels={showValues}
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }
@@ -532,17 +527,19 @@ export function TimeAreaCard({
 			value={value}
 			control={control}
 		>
-			<MultiSeriesChart
-				dataset={dataset}
-				charts={charts}
-				valueSymbol={resolvedValueSymbol}
-				title=""
-				height="360px"
-				hideDefaultLegend={!multipleSeries}
-				groupBy={groupBy}
-				exportButtons="hidden"
-				chartOptions={chartOptions}
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<MultiSeriesChart
+					dataset={dataset}
+					charts={charts}
+					valueSymbol={resolvedValueSymbol}
+					title=""
+					height="360px"
+					hideDefaultLegend={!multipleSeries}
+					groupBy={groupBy}
+					exportButtons="hidden"
+					chartOptions={chartOptions}
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }

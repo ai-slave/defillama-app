@@ -70,13 +70,13 @@ function LiveChatCard({ userHash, email }: { userHash: string | null; email: str
 				type="button"
 				onClick={openLiveChat}
 				disabled={!userHash || loading}
-				className="hover-wash-card flex cursor-pointer flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
+				className="group hover-wash-card flex cursor-pointer flex-col gap-1 text-center disabled:cursor-not-allowed"
 			>
-				<span className="flex items-center justify-center gap-2 font-semibold">
+				<span className="flex items-center justify-center gap-2 font-semibold group-disabled:text-disabled">
 					{loading ? (
 						<>
 							<LoadingSpinner size={16} />
-							Opening Chat...
+							Opening Chat…
 						</>
 					) : (
 						'Live Chat'

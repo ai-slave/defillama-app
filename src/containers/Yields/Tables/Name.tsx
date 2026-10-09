@@ -124,7 +124,7 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 				raiseValuationUsd != null ? (
 					<span className="flex flex-col gap-1">
 						<span className="font-medium">Potential Airdrop</span>
-						<span className="border-t border-current/20 pt-1">
+						<span className="border-t border-subtle pt-1">
 							Last Valuation:{' '}
 							{formatUsd(raiseValuationUsd, {
 								compact: true,

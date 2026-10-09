@@ -1,11 +1,13 @@
-import { lazy, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
@@ -180,9 +182,7 @@ function ChartSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<div className="flex h-[350px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[350px]" />
 		</div>
 	)
 }
@@ -289,15 +289,17 @@ export default function Ecosystem() {
 				<ChartSkeleton title="NEAR Intents Daily Volume" />
 			) : (
 				<ChartCard title="NEAR Intents Daily Volume">
-					<MultiSeriesChart
-						dataset={intentModels.volume.dataset}
-						charts={intentModels.volume.charts}
-						valueSymbol="$"
-						height="400px"
-						showTotalInTooltip
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={intentModels.volume.dataset}
+							charts={intentModels.volume.charts}
+							valueSymbol="$"
+							height="400px"
+							showTotalInTooltip
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -306,30 +308,34 @@ export default function Ecosystem() {
 					<ChartSkeleton title="NEAR Intents Fees" />
 				) : (
 					<ChartCard title="NEAR Intents Fees">
-						<MultiSeriesChart
-							dataset={intentModels.fees.dataset}
-							charts={intentModels.fees.charts}
-							valueSymbol="$"
-							height="350px"
-							showTotalInTooltip
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+							<MultiSeriesChart
+								dataset={intentModels.fees.dataset}
+								charts={intentModels.fees.charts}
+								valueSymbol="$"
+								height="350px"
+								showTotalInTooltip
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || !intentModels.activity ? (
 					<ChartSkeleton title="NEAR Intents Swap Activity" />
 				) : (
 					<ChartCard title="NEAR Intents Swap Activity">
-						<MultiSeriesChart
-							dataset={intentModels.activity.dataset}
-							charts={intentModels.activity.charts}
-							valueSymbol=""
-							height="350px"
-							showTotalInTooltip
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+							<MultiSeriesChart
+								dataset={intentModels.activity.dataset}
+								charts={intentModels.activity.charts}
+								valueSymbol=""
+								height="350px"
+								showTotalInTooltip
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -339,34 +345,38 @@ export default function Ecosystem() {
 					<ChartSkeleton title="Volume by Token (All-Time, Top 10)" />
 				) : (
 					<ChartCard title="Volume by Token (All-Time, Top 10)">
-						<PieChart
-							chartData={tokenPie}
-							valueSymbol="$"
-							height="380px"
-							showLegend
-							legendPosition={{
-								orient: 'vertical',
-								left: 'right',
-								top: 'middle'
-							}}
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '380px' }} />}>
+							<PieChart
+								chartData={tokenPie}
+								valueSymbol="$"
+								height="380px"
+								showLegend
+								legendPosition={{
+									orient: 'vertical',
+									left: 'right',
+									top: 'middle'
+								}}
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || !blockchainPie ? (
 					<ChartSkeleton title="Volume by Blockchain (All-Time)" />
 				) : (
 					<ChartCard title="Volume by Blockchain (All-Time)">
-						<PieChart
-							chartData={blockchainPie}
-							valueSymbol="$"
-							height="380px"
-							showLegend
-							legendPosition={{
-								orient: 'vertical',
-								left: 'right',
-								top: 'middle'
-							}}
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '380px' }} />}>
+							<PieChart
+								chartData={blockchainPie}
+								valueSymbol="$"
+								height="380px"
+								showLegend
+								legendPosition={{
+									orient: 'vertical',
+									left: 'right',
+									top: 'middle'
+								}}
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -375,13 +385,15 @@ export default function Ecosystem() {
 				<ChartSkeleton title="Fees by Referral Channel" />
 			) : (
 				<ChartCard title="Fees by Referral Channel">
-					<HBarChart
-						categories={channelBars.categories}
-						values={channelBars.values}
-						valueSymbol="$"
-						height="400px"
-						colors={channelBars.categories.map((_, i) => BREAKDOWN_PALETTE[i % BREAKDOWN_PALETTE.length])}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<HBarChart
+							categories={channelBars.categories}
+							values={channelBars.values}
+							valueSymbol="$"
+							height="400px"
+							colors={channelBars.categories.map((_, i) => BREAKDOWN_PALETTE[i % BREAKDOWN_PALETTE.length])}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -425,52 +437,60 @@ export default function Ecosystem() {
 					<ChartSkeleton title="Daily Transactions" />
 				) : (
 					<ChartCard title="Daily Transactions">
-						<MultiSeriesChart
-							dataset={areaDatasets.transactions}
-							charts={DAILY_TRANSACTIONS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="300px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								dataset={areaDatasets.transactions}
+								charts={DAILY_TRANSACTIONS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								height="300px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || !areaDatasets.activeAccounts ? (
 					<ChartSkeleton title="Daily Active Accounts" />
 				) : (
 					<ChartCard title="Daily Active Accounts">
-						<MultiSeriesChart
-							dataset={areaDatasets.activeAccounts}
-							charts={ACTIVE_ACCOUNTS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="300px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								dataset={areaDatasets.activeAccounts}
+								charts={ACTIVE_ACCOUNTS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								height="300px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || !areaDatasets.newAccounts ? (
 					<ChartSkeleton title="New Accounts Created" />
 				) : (
 					<ChartCard title="New Accounts Created">
-						<MultiSeriesChart
-							dataset={areaDatasets.newAccounts}
-							charts={NEW_ACCOUNTS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="300px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								dataset={areaDatasets.newAccounts}
+								charts={NEW_ACCOUNTS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								height="300px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || !areaDatasets.gasFees ? (
 					<ChartSkeleton title="Daily Gas Fees (NEAR)" />
 				) : (
 					<ChartCard title="Daily Gas Fees (NEAR)">
-						<MultiSeriesChart
-							dataset={areaDatasets.gasFees}
-							charts={GAS_FEES_CHART}
-							valueSymbol=" NEAR"
-							chartOptions={NEAR_SINGLE_SERIES_CHART_OPTIONS}
-							height="300px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								dataset={areaDatasets.gasFees}
+								charts={GAS_FEES_CHART}
+								valueSymbol=" NEAR"
+								chartOptions={NEAR_SINGLE_SERIES_CHART_OPTIONS}
+								height="300px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -501,13 +521,15 @@ export default function Ecosystem() {
 				<ChartSkeleton title="NEAR Price (USD)" />
 			) : (
 				<ChartCard title="NEAR Price (USD)">
-					<MultiSeriesChart
-						dataset={areaDatasets.nearPrice}
-						charts={NEAR_PRICE_CHART}
-						valueSymbol="$"
-						chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-						height="350px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '390px' }} />}>
+						<MultiSeriesChart
+							dataset={areaDatasets.nearPrice}
+							charts={NEAR_PRICE_CHART}
+							valueSymbol="$"
+							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+							height="350px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -515,14 +537,16 @@ export default function Ecosystem() {
 				<ChartSkeleton title="Token Supply" />
 			) : (
 				<ChartCard title="Token Supply">
-					<MultiSeriesChart
-						dataset={supplyModel.dataset}
-						charts={supplyModel.charts}
-						valueSymbol=" NEAR"
-						height="350px"
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '350px' }} />}>
+						<MultiSeriesChart
+							dataset={supplyModel.dataset}
+							charts={supplyModel.charts}
+							valueSymbol=" NEAR"
+							height="350px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 

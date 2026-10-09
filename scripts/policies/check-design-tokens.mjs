@@ -58,6 +58,8 @@ const PRODUCT_SURFACE_PREFIXES = [
 ]
 
 const PRODUCT_SURFACE_FILES = new Set([
+	// Research's own search over its articles, opened from the Research landing and the phone nav.
+	'src/components/ResearchSearchDialog.tsx',
 	'src/pages/account.tsx',
 	'src/pages/downloads.tsx',
 	'src/pages/newsletters.tsx',
@@ -558,12 +560,59 @@ function matchHandBuiltField(content) {
 // with a text tier at an opacity. A pulsing status dot in a hued color is not a placeholder and does not count.
 const NEUTRAL_PULSE_FILL =
 	/(?<![\w-])bg-(?:primary|secondary|tertiary|surface-elevated-[12]|border-(?:subtle|medium|strong)|hover-row)(?![\w-])/
+// The class strings a literal carries: a template's static text and each quoted branch inside its `${…}` on their own,
+// so a pulse in one branch never pairs with a fill in another.
+function classStrings(literal) {
+	if (!literal.startsWith('`')) return [literal]
+	const branches = [...literal.matchAll(/\$\{([^}]*)\}/g)].flatMap(([, expression]) =>
+		[...expression.matchAll(/(['"])(?:(?!\1)[^\\\n]|\\.)*\1/g)].map(([quoted]) => quoted)
+	)
+	const staticText = literal.replace(/\$\{[^}]*\}/g, ' ')
+	return [staticText, ...branches.map((branch) => `${staticText} ${branch}`)]
+}
+
 function matchHandRolledSkeleton(content) {
 	const found = []
 	for (const [literal] of content.matchAll(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g)) {
-		if (/\banimate-pulse\b/.test(literal) && NEUTRAL_PULSE_FILL.test(literal)) found.push(literal.slice(0, 80))
+		// A placeholder block has a size; a pulsing status dot without one in the same string is a state, not a skeleton.
+		for (const classes of classStrings(literal)) {
+			if (
+				/\banimate-pulse\b/.test(classes) &&
+				NEUTRAL_PULSE_FILL.test(classes) &&
+				/(?<![\w-])(?:h|w|size)-/.test(classes)
+			)
+				found.push(classes.slice(0, 80))
+		}
 	}
 	return found.length > 0 ? found : null
+}
+
+// A hex fill counts as dark when white text on it passes 4.5:1 (relative luminance below 0.18); a bright dot does not.
+function isDarkHex(hex) {
+	const channel = (index) => {
+		const value = parseInt(hex.slice(index, index + 2), 16) / 255
+		return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+	}
+	return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4) < 0.18
+}
+
+const FIXED_DARK_FILL =
+	/(?<![\w-]|dark:)(?:(?!dark:)[\w\-[\]=]+:)?bg-(?:sub-dark-[\w-]+|sub-surface-dark[\w-]*|ai-ink(?:-raised)?|ai-black|research-black|black|\[#([0-9a-fA-F]{6})\])(?:\/\d+)?(?![\w-])/g
+function matchFixedDarkFill(content) {
+	const found = []
+	for (const [literal] of content.matchAll(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g)) {
+		// A fill with its own bare opacity-NN is a scrim over imagery, not a surface that text sits on; a state variant such as
+		// disabled:opacity-50 still counts.
+		if (/(?<![\w:-])opacity-\d+/.test(literal)) continue
+		for (const [match, hex] of literal.matchAll(FIXED_DARK_FILL)) if (!hex || isDarkHex(hex)) found.push(match)
+	}
+	return found.length > 0 ? found : null
+}
+
+// Matches inside comments (a JSDoc @example) are documentation, not code.
+function withoutComments(content) {
+	// A comment starts a line or follows whitespace; `image/*` in a string or a `//` inside a URL is not one.
+	return content.replace(/(^|\s)\/\*[\s\S]*?\*\//g, '$1').replace(/(^|\s)\/\/.*$/gm, '$1')
 }
 
 function matchChartToolbarAutoMargin(content) {
@@ -583,6 +632,12 @@ function matchChartToolbarAutoMargin(content) {
 const RULES = [
 	{
 		id: 'hex-in-classname',
+		exceptions: {
+			'src/containers/MCP/index.tsx':
+				"the terminal mock's window-control dots: macOS's close, minimise and zoom colours, the same in both modes",
+			'src/containers/MarketMakers/DocsFigures.tsx':
+				"the docs figures' frames: backdrops matched to their photographic background images, and a rule around a screenshot on its fixed light canvas, the same in both modes"
+		},
 		description: 'hardcoded hex color in a utility class (use a token: bg-surface, text-data-up, …)',
 		pattern: /(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret)-\[#[0-9a-fA-F]/g
 	},
@@ -626,6 +681,14 @@ const RULES = [
 	},
 	{
 		id: 'builtin-palette-color',
+		exceptions: {
+			'src/containers/Exchanges/ComplianceCells.tsx':
+				'the five KYC requirement chips each take a category hue (sky, violet, amber, teal, indigo); the ramps hold only blue, emerald, crimson, amber and violet, and three of those carry status meaning',
+			'src/containers/Investors/dashboards/berachain/BerachainHeader.tsx':
+				"the Launch App pill's black label on Berachain's orange brand fill, which stays the same in both modes; a text token turns white in dark mode",
+			'src/containers/Investors/dashboards/thorchain/ThorchainHeader.tsx':
+				"the Launch App pill's black label on THORChain's cyan-green brand gradient, which stays the same in both modes; a text token turns white in dark mode"
+		},
 		description:
 			'stock Tailwind palette color (red-500, black/[0.06], white, …) — use a semantic token or a product-theme token',
 		pattern:
@@ -639,6 +702,10 @@ const RULES = [
 	},
 	{
 		id: 'opacity-color-modifier',
+		exceptions: {
+			'src/containers/Exchanges/ComplianceCells.tsx':
+				"the KYC requirement chips' tint and outline are steps of their category hue; sky, teal and indigo have no ramp"
+		},
 		description:
 			'a /NN opacity modifier on a color utility; use the ramp step or token for that role (tints, borders and text tiers in design.md → Color ramps)',
 		pattern:
@@ -647,6 +714,20 @@ const RULES = [
 	},
 	{
 		id: 'disabled-opacity',
+		exceptions: {
+			'src/ui/UploadTile.tsx':
+				'ImageReplaceTile disables a tile showing the current image; a disabled token cannot dim imagery',
+			'src/containers/Articles/editor/ArticleChartPicker.tsx':
+				'an entity row with its logo; a disabled token cannot dim the logo',
+			'src/containers/LlamaAI/components/GoldCta.tsx':
+				"the gold gradient CTA's auth-loading placeholder; the disabled fill would swap the gold for grey and flash on every load of /ai",
+			'src/containers/ProDashboard/components/ComparisonWizard/steps/SelectItemsStep.tsx':
+				'an item row with its token logo; a disabled token cannot dim the logo',
+			'src/containers/LlamaAI/components/charts/ChartStyleEditor.tsx':
+				'the colour swatches dim with the locked form during a save; a disabled token cannot dim the colour they show',
+			'src/containers/ProDashboard/components/CreateDashboardPicker.tsx':
+				'option cards whose brand icon tiles carry their own colour, dimmed as one while a dashboard is created'
+		},
 		description:
 			'a disabled state drawn with opacity; controls take text-disabled, border-disabled and bg-disabled (design.md → Color ramps). Only a composite whose children carry their own colors or imagery keeps opacity',
 		pattern:
@@ -662,14 +743,21 @@ const RULES = [
 	},
 	{
 		id: 'fixed-dark-fill',
+		exceptions: {
+			'src/containers/MarketMakers/DocsFigures.tsx':
+				"the docs figures' backdrops, matched to their photographic background images; they hold only screenshots, never theme-aware text"
+		},
 		description:
 			'a dark fill that ignores the theme (a fixed product dark token, LlamaAI ink, stock black or a dark hex). An always-dark surface sets `theme-dark` on its root so the text, borders and controls inside it take their dark values in light mode too (design.md → Always-dark surfaces); after checking that, update the baseline',
-		pattern:
-			/(?<![\w-]|dark:)(?:(?!dark:)[\w\-[\]=]+:)?bg-(?:sub-dark-[\w-]+|sub-surface-dark[\w-]*|ai-ink(?:-raised)?|ai-black|research-black|black|\[#[0-2][0-9a-fA-F]{5}\])(?:\/\d+)?(?![\w-])/g,
+		match: matchFixedDarkFill,
 		skipTests: true
 	},
 	{
 		id: 'arbitrary-color-function',
+		exceptions: {
+			'src/containers/MarketMakers/colors.ts':
+				"the breakdown table's heat scale: one hue at nine alphas over the card, spelled out as static classes so Tailwind emits them"
+		},
 		description: 'arbitrary rgb()/hsl()/oklch() color in a utility class (same contract as hex-in-classname)',
 		pattern:
 			/(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret|divide|placeholder)-\[(?:(?:rgba?|hsla?|oklch|oklab|color-mix)\(|color:)/g
@@ -688,9 +776,9 @@ const RULES = [
 	{
 		id: 'product-utility-leak',
 		description:
-			'product-theme utility class (pro-*/sub-*/sl-*/ai-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',
+			'product-theme utility class (pro-*/sub-*/sl-*/ai-*/utr-*/research-*/callout-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',
 		pattern:
-			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai|utr)-[a-z0-9-]+|pro-info-card)(?![\w-])/g,
+			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai|utr|research|callout)-[a-z0-9-]+|pro-info-card)(?![\w-])/g,
 		productLeak: true
 	},
 	{
@@ -719,6 +807,15 @@ const RULES = [
 	},
 	{
 		id: 'implicit-border-color',
+		exceptions: {
+			'src/ui/MetricChip.tsx': "the chip's outline is its series colour, which every caller sets inline",
+			'src/containers/LlamaAI/components/messages/CitationPill.tsx':
+				'a shared citation box constant; both of its uses add the border colour',
+			'src/containers/Subscription/components.tsx':
+				"a one-side border fragment joined into ComparisonCell's class string, which sets border-subtle",
+			'src/containers/Subscription/sections/SubscriptionComparisonSection.tsx':
+				'a one-side border fragment passed to ComparisonCell, which sets border-subtle'
+		},
 		description:
 			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …; a divide-y takes divide-(--border-subtle), since divide-subtle sets no color)',
 		match: matchImplicitBorderColor
@@ -827,6 +924,10 @@ const RULES = [
 	},
 	{
 		id: 'hand-rolled-spinner',
+		exceptions: {
+			'src/containers/ProDashboard/components/ProDashboardLoader.tsx':
+				"the Pro route loader's branded llama, a deliberate brand moment on a full-page load; its rings stop under reduced motion"
+		},
 		description:
 			'hand-rolled animate-spin spinner — use LoadingSpinner from src/ui/Loaders in buttons and inline controls, or LoadingIndicator from src/ui/Status for in-panel loading',
 		pattern: /\banimate-spin\b/g,
@@ -837,7 +938,8 @@ const RULES = [
 		id: 'ascii-ellipsis',
 		description:
 			'three ASCII dots ending UI copy ("Saving...") — type the ellipsis character "…" in labels, placeholders and status text',
-		pattern: /[A-Za-z]\.\.\.(?=['"`<{}])/g
+		// JSX text can end the copy on its own line, before the closing tag.
+		pattern: /[A-Za-z]\.\.\.(?=['"`<{}]|[ \t]*\n)/g
 	},
 	{
 		id: 'raw-scope-note',
@@ -868,10 +970,30 @@ const RULES = [
 		match: matchChartToolbarAutoMargin
 	},
 	{
+		id: 'lazy-chart-without-boundary',
+		description:
+			'a shared chart loaded with lazy() and no Suspense in the same file: the nearest boundary is a page- or tab-level one, so the whole region renders blank until the chart code arrives, then jumps. Wrap the chart in Suspense with a ChartPanelBodyFallback (or ChartPanelExportShellFallback) of its height (src/ui/ChartPanel.tsx); next/dynamic takes a sized `loading`',
+		match: (content) => {
+			const lazyCharts = content.match(/\blazy\(\s*\(\)\s*=>\s*import\(\s*['"]~\/components\/ECharts\//g)
+			const dynamicCharts = content.match(/\bdynamic\(\s*\(\)\s*=>\s*import\(\s*['"]~\/components\/ECharts\//g)
+			const found = []
+			if (lazyCharts && !/\bSuspense\b/.test(content)) found.push(...lazyCharts)
+			if (dynamicCharts && !/\bloading\s*:/.test(content)) found.push(...dynamicCharts)
+			return found.length > 0 ? found : null
+		},
+		skipTests: true
+	},
+	{
 		id: 'raw-echarts-init',
+		exceptions: {
+			'src/containers/Unlocks/TreemapChart/index.tsx':
+				'the unlocks year → month → token drill-down with token icons and a step-back trail; the shared treemaps hold one level and hide the native trail',
+			'src/containers/ProDashboard/server/ogImage/renderChartSvg.ts':
+				"the share image's sparkline, rendered on the server to an SVG string; the shared renderers are client components that need a DOM node"
+		},
 		description:
 			'echarts.init outside the shared renderers — draw the chart with the src/components/ECharts component for its shape (design.md → Charts); MultiSeriesChart covers time and category axes',
-		pattern: /\becharts(?:Core)?\.init\(/g,
+		match: (content) => withoutComments(content).match(/\becharts(?:Core)?\.init\(/g),
 		// The shared renderers and the PNG exporter own chart instances.
 		ownedBy: ['src/components/ECharts/', 'src/components/ChartExport/'],
 		skipTests: true

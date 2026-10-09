@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildMatrixOption } from '../PerformanceMatrix'
+import { buildMatrixPoints, formatMatrixTooltip } from '../PerformanceMatrix'
 import { areMatrixIconsReady } from '../performanceMatrixIcons'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
 
@@ -51,28 +51,23 @@ function row(grade?: string | null): UtrLeaderboardRow {
 	}
 }
 
-describe('buildMatrixOption', () => {
+describe('performance matrix', () => {
 	test('colors points and tooltip bars from runtime grade thresholds', () => {
-		const option = buildMatrixOption([{ ...row(null), claimed: false }], undefined, {}, false, grading) as any
+		const unclaimed = { ...row(null), claimed: false }
 
-		expect(option.animation).toBe(false)
-		expect(option.series[0].data[0].itemStyle.color).toBe('#11935f')
-		const tooltip = option.tooltip.formatter({ dataIndex: 0 })
+		expect(buildMatrixPoints([unclaimed], {}, grading)[0]!.itemStyle!.color).toBe('#11935f')
+		const tooltip = formatMatrixTooltip(unclaimed, grading)
 		expect(tooltip).toContain('#11935f')
 		expect(tooltip).toContain('#b23a38')
 		expect(tooltip).toContain('/universal-token-rating/claim?token=example')
 	})
 
 	test('uses an explicit API grade before deriving from the score', () => {
-		const option = buildMatrixOption([row('B')], undefined, {}, false, grading) as any
-
-		expect(option.series[0].data[0].itemStyle.color).toBe('#b96d39')
+		expect(buildMatrixPoints([row('B')], {}, grading)[0]!.itemStyle!.color).toBe('#b96d39')
 	})
 
 	test('uses neutral colors when scoring configuration and explicit grades are unavailable', () => {
-		const option = buildMatrixOption([row(null)], undefined, {}, false, null) as any
-
-		expect(option.series[0].data[0].itemStyle.color).toBe('#8a8a8a')
+		expect(buildMatrixPoints([row(null)], {}, null)[0]!.itemStyle!.color).toBe('#8a8a8a')
 	})
 
 	test('waits for every available token icon before the first chart render', () => {
@@ -84,14 +79,8 @@ describe('buildMatrixOption', () => {
 	})
 
 	test('renders a resolved icon instead of the temporary circle fallback', () => {
-		const option = buildMatrixOption(
-			[row(null)],
-			undefined,
-			{ example: 'data:image/png;base64,rounded' },
-			false,
-			grading
-		) as any
+		const points = buildMatrixPoints([row(null)], { example: 'data:image/png;base64,rounded' }, grading)
 
-		expect(option.series[0].data[0].symbol).toBe('image://data:image/png;base64,rounded')
+		expect(points[0]!.symbol).toBe('image://data:image/png;base64,rounded')
 	})
 })

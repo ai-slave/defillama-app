@@ -14,6 +14,7 @@ const router = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
+import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { UniversalTokenRating } from '..'
 
 // The first 100 ranks are L1 tokens and the rest DeFi, so a sector filter moves a DeFi token to another page.
@@ -67,6 +68,8 @@ router.push.mockImplementation(
 )
 
 beforeEach(() => {
+	// The leaderboard draws the performance matrix, a real ECharts scatter that needs a canvas.
+	installChartCanvas()
 	client = new QueryClient()
 	scrolledTo = []
 	// happy-dom has no layout, so scrolling only records which row was brought into view.
@@ -79,6 +82,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
+	vi.restoreAllMocks()
 	await act(async () => root.unmount())
 	container.remove()
 	client.clear()

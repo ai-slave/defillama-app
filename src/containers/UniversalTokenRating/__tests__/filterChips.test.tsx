@@ -13,6 +13,7 @@ const router = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
+import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { UniversalTokenRating } from '..'
 
 const sectors = ['L1', 'DeFi', 'Gaming']
@@ -55,6 +56,8 @@ router.push.mockImplementation(async ({ query }: { query: Record<string, string 
 })
 
 beforeEach(() => {
+	// The leaderboard draws the performance matrix, a real ECharts scatter that needs a canvas.
+	installChartCanvas()
 	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
@@ -62,6 +65,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
+	vi.restoreAllMocks()
 	await act(async () => root.unmount())
 	container.remove()
 	client.clear()

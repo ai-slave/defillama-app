@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -69,34 +70,38 @@ export default function FAssets() {
 					subtitle={charts.locked.subtitle}
 					titleTooltip={charts.locked.titleTooltip}
 				>
-					<MultiSeriesChart
-						dataset={charts.locked.dataset}
-						charts={charts.locked.charts}
-						valueSymbol=""
-						title=""
-						height="360px"
-						chartOptions={charts.locked.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<MultiSeriesChart
+							dataset={charts.locked.dataset}
+							charts={charts.locked.charts}
+							valueSymbol=""
+							title=""
+							height="360px"
+							chartOptions={charts.locked.chartOptions}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
 			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 				{charts.dist && (
 					<ChartCard title={charts.dist.title} subtitle={charts.dist.subtitle} titleTooltip={charts.dist.titleTooltip}>
-						<PieChart
-							chartData={charts.dist.data}
-							stackColors={charts.dist.colors}
-							radius={['45%', '72%']}
-							showLegend
-							legendPosition={{
-								orient: 'vertical',
-								left: 'right',
-								top: 'middle'
-							}}
-							valueSymbol="$"
-							title=""
-							height="360px"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
+							<PieChart
+								chartData={charts.dist.data}
+								stackColors={charts.dist.colors}
+								radius={['45%', '72%']}
+								showLegend
+								legendPosition={{
+									orient: 'vertical',
+									left: 'right',
+									top: 'middle'
+								}}
+								valueSymbol="$"
+								title=""
+								height="360px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 
@@ -106,20 +111,22 @@ export default function FAssets() {
 						subtitle={charts.allNetworksDist.subtitle}
 						titleTooltip={charts.allNetworksDist.titleTooltip}
 					>
-						<PieChart
-							chartData={charts.allNetworksDist.data}
-							stackColors={charts.allNetworksDist.colors}
-							radius={['45%', '72%']}
-							showLegend
-							legendPosition={{
-								orient: 'vertical',
-								left: 'right',
-								top: 'middle'
-							}}
-							valueSymbol="$"
-							title=""
-							height="360px"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
+							<PieChart
+								chartData={charts.allNetworksDist.data}
+								stackColors={charts.allNetworksDist.colors}
+								radius={['45%', '72%']}
+								showLegend
+								legendPosition={{
+									orient: 'vertical',
+									left: 'right',
+									top: 'middle'
+								}}
+								valueSymbol="$"
+								title=""
+								height="360px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>

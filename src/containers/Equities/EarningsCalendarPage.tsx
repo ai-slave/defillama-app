@@ -110,7 +110,7 @@ function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: st
 			: row.report_time === 'amc'
 				? 'After close'
 				: row.report_time === 'dmt'
-					? 'During market hours'
+					? 'Market hours'
 					: null
 	return (
 		<Card padding="sm" className="flex flex-col gap-1.5">
@@ -130,14 +130,18 @@ function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: st
 					<p className="truncate body-sm text-secondary">{cleanEarningsCompanyName(row.name)}</p>
 				</div>
 			</div>
+			{/* One fact per line, each kept to one line, so every card in a day column has the same height: the
+			    quarter and report time, then the status with its filing or its timing window. */}
+			<p className="truncate body-sm text-tertiary">
+				{row.fiscal_period} FY{String(row.fiscal_year).slice(-2)}
+				{session ? ` · ${session}` : ''}
+			</p>
 			<div className="flex min-w-0 items-center justify-between gap-2">
-				<span className="body-sm text-tertiary">
-					{row.fiscal_period} FY{String(row.fiscal_year).slice(-2)} ·{' '}
-					<span className={status === 'pastDue' ? 'text-warning' : undefined}>{STATUS_LABELS[status]}</span>
+				<span className={`body-sm whitespace-nowrap ${status === 'pastDue' ? 'text-warning' : 'text-secondary'}`}>
+					{STATUS_LABELS[status]}
 				</span>
 				{status === 'reported' ? (
 					<span className="flex items-center gap-2 label-sm text-secondary">
-						{session ? <span>{session}</span> : null}
 						{filingUrl ? (
 							<a
 								href={filingUrl}
@@ -165,9 +169,10 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 		dimensions: ['Period', 'Reports'],
 		source: labels.map((label, index) => [label, index === 0 ? summary.pastCount : months[index - 1]!.count])
 	}
+	const height = '220px'
 
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback />}>
+		<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: height }} />}>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
@@ -179,7 +184,7 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 				valueSymbol=""
 				exportButtons="hidden"
 				hideDataZoom
-				height="220px"
+				height={height}
 			/>
 		</Suspense>
 	)
@@ -311,16 +316,16 @@ function EarningsDayPanel({
 	return (
 		<Panel padding="none" className="min-w-0">
 			<PanelHeader>
-				<div className="mr-auto">
+				{/* Three fixed rows, so the five day headers keep one height and their cards start level: a status
+				    line beside the count wrapped the count below the date on busy days. */}
+				<div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-end gap-x-2">
 					<p className="label-sm text-secondary">
 						{WEEKDAY_LABELS[day.weekday]}
 						{isBusiest ? ' · Busiest' : ''}
 					</p>
+					<p className="col-start-2 row-span-2 row-start-1 mono-xl">{day.rows.length}</p>
 					<PanelTitle as="h3">{formatDate(day.date) ?? day.date}</PanelTitle>
-				</div>
-				<div className="text-right">
-					<p className="mono-xl">{day.rows.length}</p>
-					<p className="body-sm text-tertiary">{getDayStatusLabel(day.rows, todayET)}</p>
+					<p className="col-span-2 body-sm text-tertiary">{getDayStatusLabel(day.rows, todayET)}</p>
 				</div>
 			</PanelHeader>
 			<div className="flex flex-col gap-2 p-2">

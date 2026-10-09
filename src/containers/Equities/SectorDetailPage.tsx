@@ -47,6 +47,8 @@ const CONSTITUENT_TABLE_SORT: SortingState = [{ id: 'marketCap', desc: true }]
 const CONSTITUENT_PAGE_SIZES = [25, 50, 100] as const
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
+const CONCENTRATION_PIE_HEIGHT = '220px'
+const VALUATION_CHART_HEIGHT = '300px'
 
 const constituentColumns = constituentColumnHelper.columns([
 	constituentColumnHelper.accessor('name', {
@@ -374,13 +376,13 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					</PanelHeader>
 					<div className="grid gap-4 p-4 md:grid-cols-[220px_1fr]">
 						<div className="relative h-[220px]">
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: CONCENTRATION_PIE_HEIGHT }} />}>
 								<PieChart
 									chartData={concentrationData}
 									stackColors={{ 'Top 10': chartColor(0), 'Other companies': OTHERS_COLOR }}
 									valueSymbol="%"
 									radius={['55%', '78%']}
-									height="220px"
+									height={CONCENTRATION_PIE_HEIGHT}
 									showLegend={false}
 									exportButtons="hidden"
 								/>
@@ -448,7 +450,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 						</div>
 					</PanelHeader>
 					<div className="flex flex-col gap-3 p-4">
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: VALUATION_CHART_HEIGHT }} />}>
 							<HBarChart
 								categories={valuationComparisonRows.map(([label]) => label)}
 								values={[]}
@@ -465,7 +467,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 									}
 								]}
 								valueSymbol=""
-								height="300px"
+								height={VALUATION_CHART_HEIGHT}
 							/>
 						</Suspense>
 						<div className="grid gap-2 sm:grid-cols-2">

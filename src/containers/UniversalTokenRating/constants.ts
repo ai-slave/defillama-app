@@ -1,3 +1,5 @@
+import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+
 export const UTR_SECTORS = ['DeFi', 'Gaming', 'Infrastructure', 'AI', 'RWA', 'Memecoins', 'Layer 1', 'Layer 2'] as const
 
 export const FDV_RANGES = [
@@ -20,3 +22,6 @@ export const UTR_PERCENT_OPTIONS = {
 	smallValueDisplay: 'rounded',
 	useGrouping: false
 } as const
+
+/** UTR time charts pass each series its own points, so their dataset only names the time axis. */
+export const UTR_TIME_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }

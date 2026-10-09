@@ -6,7 +6,8 @@ export type CandlestickPoint = [
 	close: number,
 	low: number,
 	high: number,
-	volume: number
+	/** Left off by every point of a chart that has no volume, which then draws no volume panel. */
+	volume?: number
 ]
 
 export interface ICandlestickChartProps {

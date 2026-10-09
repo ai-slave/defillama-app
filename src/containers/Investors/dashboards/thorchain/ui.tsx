@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -7,6 +7,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
@@ -258,14 +259,6 @@ export function PlaceholderCard({
 	)
 }
 
-export function PageLoader() {
-	return (
-		<div className="flex min-h-[60vh] items-center justify-center">
-			<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-		</div>
-	)
-}
-
 export function ChartCard({
 	title,
 	subtitle,
@@ -340,14 +333,16 @@ export function TimeAreaCard({
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<MultiSeriesChart
-				dataset={dataset}
-				charts={charts}
-				valueSymbol={resolvedValueSymbol}
-				title=""
-				height="360px"
-				chartOptions={chartOptions}
-			/>
+			<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<MultiSeriesChart
+					dataset={dataset}
+					charts={charts}
+					valueSymbol={resolvedValueSymbol}
+					title=""
+					height="360px"
+					chartOptions={chartOptions}
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }
@@ -392,17 +387,19 @@ export function TimeBarCard({
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
-			<MultiSeriesChart
-				dataset={dataset}
-				charts={charts}
-				valueSymbol={resolvedValueSymbol}
-				title=""
-				height="360px"
-				hideDefaultLegend={charts.length < 2}
-				exportButtons={CSV_ONLY_EXPORT}
-				chartOptions={chartOptions}
-				{...(groupBy ? { groupBy } : {})}
-			/>
+			<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<MultiSeriesChart
+					dataset={dataset}
+					charts={charts}
+					valueSymbol={resolvedValueSymbol}
+					title=""
+					height="360px"
+					hideDefaultLegend={charts.length < 2}
+					exportButtons={CSV_ONLY_EXPORT}
+					chartOptions={chartOptions}
+					{...(groupBy ? { groupBy } : {})}
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }
@@ -419,13 +416,15 @@ export function CategoryBarCard({
 }) {
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle}>
-			<HBarChart
-				categories={chart.dates}
-				values={chart.series[0]?.data ?? []}
-				color={THOR_TEAL}
-				valueSymbol={valueSymbol ?? (unitSymbol(chart.unit) || '$')}
-				height="360px"
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<HBarChart
+					categories={chart.dates}
+					values={chart.series[0]?.data ?? []}
+					color={THOR_TEAL}
+					valueSymbol={valueSymbol ?? (unitSymbol(chart.unit) || '$')}
+					height="360px"
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }
@@ -444,19 +443,21 @@ export function DonutCard({
 	const isSmall = useMedia('(max-width: 640px)')
 	return (
 		<ChartCard title={dist.title ?? ''} subtitle={subtitle}>
-			<PieChart
-				chartData={dist.data}
-				stackColors={colorMap(dist.data.map((d) => d.name))}
-				valueSymbol={valueSymbol}
-				radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}
-				height="360px"
-				showLegend
-				legendPosition={
-					isSmall
-						? { orient: 'horizontal', left: 'center', bottom: 0 }
-						: { orient: 'vertical', left: 'right', top: 'middle' }
-				}
-			/>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
+				<PieChart
+					chartData={dist.data}
+					stackColors={colorMap(dist.data.map((d) => d.name))}
+					valueSymbol={valueSymbol}
+					radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}
+					height="360px"
+					showLegend
+					legendPosition={
+						isSmall
+							? { orient: 'horizontal', left: 'center', bottom: 0 }
+							: { orient: 'vertical', left: 'right', top: 'middle' }
+					}
+				/>
+			</Suspense>
 		</ChartCard>
 	)
 }

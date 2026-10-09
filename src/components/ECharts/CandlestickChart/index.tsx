@@ -81,13 +81,16 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 
 	const overlays = useMemo(() => indicators.filter((i) => i.category === 'overlay'), [indicators])
 	const panels = useMemo(() => indicators.filter((i) => i.category === 'panel'), [indicators])
+	const hasVolume = data[0]?.[5] !== undefined
+	// Indicator panels take the grids after the price grid and the volume grid when there is one.
+	const firstPanelGrid = hasVolume ? 2 : 1
 
 	const chartHeight = 480 + panels.length * PANEL_HEIGHT
 
 	const defaultChartSettings = useMemo<EChartsOption>(() => {
 		const panelCount = panels.length
 		const volumeBottom = CHART_ZOOM_RESERVE + panelCount * PANEL_HEIGHT
-		const priceBottom = volumeBottom + VOLUME_HEIGHT + 20
+		const priceBottom = hasVolume ? volumeBottom + VOLUME_HEIGHT + 20 : volumeBottom
 		const showLegend = overlays.length > 0 || panels.length > 0
 
 		const grids: Array<GridComponentOption> = [
@@ -96,12 +99,6 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				bottom: priceBottom,
 				top: showLegend ? CHART_LEGEND_RESERVE : CHART_INSET,
 				right: CHART_INSET
-			},
-			{
-				height: VOLUME_HEIGHT,
-				left: 48,
-				right: CHART_INSET,
-				bottom: volumeBottom
 			}
 		]
 
@@ -117,20 +114,6 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				min: 'dataMin',
 				max: 'dataMax',
 				axisLabel: { color: chartTheme.axisLabel }
-			},
-			{
-				type: 'time',
-				gridIndex: 1,
-				boundaryGap: [0, 0],
-				axisLine: {
-					onZero: false,
-					lineStyle: { color: chartTheme.text, opacity: 0.2 }
-				},
-				axisTick: { show: false },
-				splitLine: { show: false },
-				axisLabel: { show: false },
-				min: 'dataMin',
-				max: 'dataMax'
 			}
 		]
 
@@ -147,8 +130,31 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				},
 				axisLine: { lineStyle: { color: chartTheme.text, opacity: 0.1 } },
 				splitLine: { lineStyle: { color: chartTheme.gridline } }
-			},
-			{
+			}
+		]
+
+		if (hasVolume) {
+			grids.push({
+				height: VOLUME_HEIGHT,
+				left: 48,
+				right: CHART_INSET,
+				bottom: volumeBottom
+			})
+			xAxes.push({
+				type: 'time',
+				gridIndex: 1,
+				boundaryGap: [0, 0],
+				axisLine: {
+					onZero: false,
+					lineStyle: { color: chartTheme.text, opacity: 0.2 }
+				},
+				axisTick: { show: false },
+				splitLine: { show: false },
+				axisLabel: { show: false },
+				min: 'dataMin',
+				max: 'dataMax'
+			})
+			yAxes.push({
 				scale: true,
 				gridIndex: 1,
 				splitNumber: 2,
@@ -156,12 +162,12 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				axisLine: { show: false },
 				axisTick: { show: false },
 				splitLine: { show: false }
-			}
-		]
+			})
+		}
 
 		for (let idx = 0; idx < panels.length; idx++) {
 			const panel = panels[idx]!
-			const gridIdx = idx + 2
+			const gridIdx = idx + firstPanelGrid
 			const bottom = CHART_ZOOM_RESERVE + (panelCount - idx - 1) * PANEL_HEIGHT
 
 			grids.push({
@@ -278,7 +284,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				}
 			]
 		}
-	}, [isSmall, isThemeDark, chartTheme, panels, overlays])
+	}, [isSmall, isThemeDark, chartTheme, panels, overlays, hasVolume, firstPanelGrid])
 
 	const series = useMemo(() => {
 		const result: Array<CandlestickSeriesOption | BarSeriesOption | LineSeriesOption> = [
@@ -292,8 +298,10 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					borderColor0: chartTheme.down
 				},
 				encode: { x: 0, y: [1, 2, 3, 4] }
-			},
-			{
+			}
+		]
+		if (hasVolume) {
+			result.push({
 				name: 'Volume',
 				type: 'bar',
 				large: true,
@@ -301,8 +309,8 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 				yAxisIndex: 1,
 				encode: { x: 0, y: 5 },
 				itemStyle: { color: oldBlue }
-			}
-		]
+			})
+		}
 
 		for (let idx = 0; idx < overlays.length; idx++) {
 			const ind = overlays[idx]!
@@ -343,7 +351,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 
 		for (let idx = 0; idx < panels.length; idx++) {
 			const panel = panels[idx]!
-			const gridIdx = idx + 2
+			const gridIdx = idx + firstPanelGrid
 			const color = panel.color || INDICATOR_COLORS[(overlays.length + idx) % INDICATOR_COLORS.length]!
 
 			if (panel.values && panel.name.toLowerCase().includes('macd')) {
@@ -411,7 +419,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		}
 
 		return result
-	}, [chartTheme, overlays, panels])
+	}, [chartTheme, overlays, panels, hasVolume, firstPanelGrid])
 
 	useEffect(() => {
 		const el = containerRef.current

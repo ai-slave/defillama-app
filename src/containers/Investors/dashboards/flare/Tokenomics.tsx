@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -119,15 +120,17 @@ export default function Tokenomics() {
 					</div>
 					{inf.pctChart && (
 						<ChartCard title={inf.pctChart.title ?? 'Annualized Inflation Rate'} subtitle={inf.pctChart.subtitle}>
-							<MultiSeriesChart
-								dataset={inf.pctChart.dataset}
-								charts={inf.pctChart.charts}
-								valueSymbol="%"
-								title=""
-								height="360px"
-								exportButtons={CSV_ONLY_EXPORT}
-								chartOptions={inf.pctChart.chartOptions}
-							/>
+							<Suspense fallback={<ChartPanelExportShellFallback />}>
+								<MultiSeriesChart
+									dataset={inf.pctChart.dataset}
+									charts={inf.pctChart.charts}
+									valueSymbol="%"
+									title=""
+									height="360px"
+									exportButtons={CSV_ONLY_EXPORT}
+									chartOptions={inf.pctChart.chartOptions}
+								/>
+							</Suspense>
 						</ChartCard>
 					)}
 					<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -136,15 +139,17 @@ export default function Tokenomics() {
 								title={inf.circulatingChart.title ?? 'Circulating Supply (Monthly)'}
 								subtitle={inf.circulatingChart.subtitle}
 							>
-								<MultiSeriesChart
-									dataset={inf.circulatingChart.dataset}
-									charts={inf.circulatingChart.charts}
-									valueSymbol=""
-									title=""
-									height="360px"
-									exportButtons={CSV_ONLY_EXPORT}
-									chartOptions={inf.circulatingChart.chartOptions}
-								/>
+								<Suspense fallback={<ChartPanelExportShellFallback />}>
+									<MultiSeriesChart
+										dataset={inf.circulatingChart.dataset}
+										charts={inf.circulatingChart.charts}
+										valueSymbol=""
+										title=""
+										height="360px"
+										exportButtons={CSV_ONLY_EXPORT}
+										chartOptions={inf.circulatingChart.chartOptions}
+									/>
+								</Suspense>
 							</ChartCard>
 						)}
 						{protocolChart && (
@@ -168,15 +173,17 @@ export default function Tokenomics() {
 										onValueChange={setProtocolView}
 									/>
 								</div>
-								<MultiSeriesChart
-									dataset={protocolChart.dataset}
-									charts={protocolChart.charts}
-									valueSymbol=""
-									title=""
-									height="360px"
-									exportButtons={CSV_ONLY_EXPORT}
-									chartOptions={protocolChart.chartOptions}
-								/>
+								<Suspense fallback={<ChartPanelExportShellFallback />}>
+									<MultiSeriesChart
+										dataset={protocolChart.dataset}
+										charts={protocolChart.charts}
+										valueSymbol=""
+										title=""
+										height="360px"
+										exportButtons={CSV_ONLY_EXPORT}
+										chartOptions={protocolChart.chartOptions}
+									/>
+								</Suspense>
 							</div>
 						)}
 					</div>
@@ -213,24 +220,28 @@ export default function Tokenomics() {
 					/>
 				</div>
 				{burnView === 'daily' ? (
-					<MultiSeriesChart
-						dataset={b.dailyDataset}
-						charts={b.charts.daily}
-						valueSymbol=""
-						title=""
-						height="360px"
-						exportButtons={CSV_ONLY_EXPORT}
-						chartOptions={b.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<MultiSeriesChart
+							dataset={b.dailyDataset}
+							charts={b.charts.daily}
+							valueSymbol=""
+							title=""
+							height="360px"
+							exportButtons={CSV_ONLY_EXPORT}
+							chartOptions={b.chartOptions}
+						/>
+					</Suspense>
 				) : (
-					<MultiSeriesChart
-						dataset={b.cumulativeDataset}
-						charts={b.charts.cumulative}
-						valueSymbol=""
-						title=""
-						height="360px"
-						chartOptions={b.chartOptions}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<MultiSeriesChart
+							dataset={b.cumulativeDataset}
+							charts={b.charts.cumulative}
+							valueSymbol=""
+							title=""
+							height="360px"
+							chartOptions={b.chartOptions}
+						/>
+					</Suspense>
 				)}
 			</div>
 
@@ -244,15 +255,17 @@ export default function Tokenomics() {
 				<StatTile label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
 			<ChartCard title={e.emissionsTitle}>
-				<MultiSeriesChart
-					dataset={e.perEpochDataset}
-					charts={e.charts.perEpoch}
-					valueSymbol=""
-					title=""
-					height="360px"
-					exportButtons={CSV_ONLY_EXPORT}
-					chartOptions={e.perEpochChartOptions}
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<MultiSeriesChart
+						dataset={e.perEpochDataset}
+						charts={e.charts.perEpoch}
+						valueSymbol=""
+						title=""
+						height="360px"
+						exportButtons={CSV_ONLY_EXPORT}
+						chartOptions={e.perEpochChartOptions}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
@@ -279,16 +292,18 @@ export default function Tokenomics() {
 				/>
 			</div>
 			<ChartCard title={e.burnVsEmitTitle}>
-				<MultiSeriesChart
-					dataset={e.burnVsEmitDataset}
-					charts={e.charts.burnVsEmit}
-					valueSymbol=""
-					title=""
-					height="400px"
-					hideDefaultLegend={false}
-					exportButtons={CSV_ONLY_EXPORT}
-					chartOptions={e.burnVsEmitChartOptions}
-				/>
+				<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+					<MultiSeriesChart
+						dataset={e.burnVsEmitDataset}
+						charts={e.charts.burnVsEmit}
+						valueSymbol=""
+						title=""
+						height="400px"
+						hideDefaultLegend={false}
+						exportButtons={CSV_ONLY_EXPORT}
+						chartOptions={e.burnVsEmitChartOptions}
+					/>
+				</Suspense>
 			</ChartCard>
 			{e.burnVsEmitSubtitle && <p className="body-sm text-secondary">{e.burnVsEmitSubtitle}</p>}
 
@@ -329,16 +344,18 @@ export default function Tokenomics() {
 								Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}
 							</span>
 						</div>
-						<MultiSeriesChart
-							dataset={fire.dataset}
-							charts={fire.charts}
-							valueSymbol="$"
-							title=""
-							height="360px"
-							hideDefaultLegend={false}
-							exportButtons={CSV_ONLY_EXPORT}
-							chartOptions={fire.chartOptions}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<MultiSeriesChart
+								dataset={fire.dataset}
+								charts={fire.charts}
+								valueSymbol="$"
+								title=""
+								height="360px"
+								hideDefaultLegend={false}
+								exportButtons={CSV_ONLY_EXPORT}
+								chartOptions={fire.chartOptions}
+							/>
+						</Suspense>
 					</div>
 					{fire.wallets.length > 0 && (
 						<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">

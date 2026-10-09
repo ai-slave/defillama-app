@@ -3,7 +3,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -14,6 +14,7 @@ import { formatCompactNumber, formatNumber, formatPercent, formatPercentChange, 
 import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
+const TREEMAP_HEIGHT = '420px'
 
 export function formatMetric(
 	value: number | null | undefined,
@@ -136,13 +137,17 @@ export function AggregateTreemap({
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				<Suspense fallback={<ChartPanelBodyFallback>Loading chart…</ChartPanelBodyFallback>}>
+				<Suspense
+					fallback={
+						<ChartPanelBodyFallback style={{ minHeight: TREEMAP_HEIGHT }}>Loading chart…</ChartPanelBodyFallback>
+					}
+				>
 					<TreemapChart
 						treeData={nodes}
 						variant="rwa"
 						colorMode="categorical"
 						valueLabel={valueLabel}
-						height="420px"
+						height={TREEMAP_HEIGHT}
 						onReady={handleChartReady}
 						showRootLabel={false}
 					/>
@@ -153,21 +158,7 @@ export function AggregateTreemap({
 }
 
 export function sectorColor(sectorSlug: string): string {
-	if (sectorSlug === 'unknown') return OTHERS_COLOR
-	const index = [
-		'technology',
-		'financial-services',
-		'consumer-cyclical',
-		'healthcare',
-		'communication-services',
-		'industrials',
-		'consumer-defensive',
-		'energy',
-		'basic-materials',
-		'utilities',
-		'real-estate'
-	].indexOf(sectorSlug)
-	return chartColor(Math.max(index, 0))
+	return SECTOR_COLORS[sectorSlug] ?? OTHERS_COLOR
 }
 
 export function ReturnMatrix({

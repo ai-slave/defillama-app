@@ -1,19 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import type { EChartsOption } from 'echarts'
-import { TreemapChart as EChartsTreemap } from 'echarts/charts'
-import { GraphicComponent, TooltipComponent } from 'echarts/components'
-import * as echarts from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { lazy, useEffect, useMemo, useRef } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
-import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
+import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { useChartResize } from '~/hooks/useChartResize'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
@@ -22,9 +14,8 @@ import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { formatSonicCount } from './format'
 import { SonicIcon } from './SonicIcon'
 
-echarts.use([TreemapLabelContrast, EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
@@ -39,123 +30,24 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
 }
 
-function getTreemapValue(value: unknown): number {
-	const rawValue = Array.isArray(value) ? value[0] : value
-	return typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : 0
-}
-
-const TREEMAP_COLORS = [
-	'#4691ce',
-	'#4cae4f',
-	'#e3570a',
-	'#fac461',
-	'#7f6562',
-	'#3b5d88',
-	'#cf6a87',
-	'#63cdda',
-	'#f78fb3',
-	'#778beb',
-	'#e77f67',
-	'#786fa6',
-	'#f5cd79',
-	'#ea8685',
-	'#596275',
-	'#574b90',
-	'#f19066',
-	'#3dc1d3',
-	'#e15f41',
-	'#c44569',
-	'#546de5',
-	'#574b90',
-	'#f78fb3',
-	'#3dc1d3',
-	'#e66767',
-	'#303952',
-	'#574b90',
-	'#fc5c65',
-	'#45aaf2',
-	'#26de81'
-]
-
 function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry> }) {
-	const containerRef = useRef<HTMLDivElement>(null)
-	const chartRef = useRef<echarts.ECharts | null>(null)
-	const [isDark] = useDarkModeManager()
-	useChartResize(chartRef, containerRef)
-
-	const treeData = useMemo(() => {
-		const data: Array<{ name: string; value: number; itemStyle: { color: string } }> = []
-		for (const item of leaderboard) {
-			if (!(item.collectedRewards > 0)) continue
-			data.push({
-				name: item.name || 'Sonic',
-				value: item.collectedRewards,
-				itemStyle: { color: TREEMAP_COLORS[data.length % TREEMAP_COLORS.length] }
-			})
-		}
-		return data
-	}, [leaderboard])
-
-	useEffect(() => {
-		const el = containerRef.current
-		if (!el) return
-		const instance = echarts.init(el, null, { renderer: 'canvas' })
-		chartRef.current = instance
-
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [])
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		const option: EChartsOption = {
-			tooltip: {
-				formatter(rawInfo: unknown) {
-					const info = normalizeTooltipItems(rawInfo)[0]
-					return `<b>${escapeHtml(info?.name ?? '')}</b><br/>Collected: ${formatSonicCount(getTreemapValue(info?.value))} S`
-				}
-			},
-			series: [
-				{
-					type: 'treemap',
-					top: 4,
-					left: 4,
-					right: 4,
-					bottom: 4,
-					roam: false,
-					nodeClick: false,
-					breadcrumb: { show: false },
-					label: {
-						show: true,
-						position: 'insideTopLeft',
-						formatter(params) {
-							return `{name|${params.name}}\n{val|${formatSonicCount(getTreemapValue(params.value))} S}`
-						},
-						rich: {
-							name: { fontSize: 13, fontWeight: 600, lineHeight: 20 },
-							val: { fontSize: 11, lineHeight: 18 }
-						}
-					},
-					itemStyle: {
-						borderColor: isDark ? '#1a1a2e' : '#fff',
-						borderWidth: 2,
-						gapWidth: 1
-					},
-					emphasis: {
-						itemStyle: { borderColor: isDark ? '#444' : '#ccc' }
-					},
-					data: treeData
-				}
-			]
-		}
-		instance.setOption(option, { notMerge: true })
-	}, [treeData, isDark])
-
-	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
+	const treeData: Array<TreemapNode> = []
+	for (const item of leaderboard) {
+		if (!(item.collectedRewards > 0)) continue
+		treeData.push({ name: item.name || 'Sonic', value: [item.collectedRewards, null, null] })
+	}
+	return (
+		<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+			<TreemapChart
+				treeData={treeData}
+				variant="flat"
+				colorMode="categorical"
+				valueLabel="Collected"
+				valueSymbol="S"
+				height="400px"
+			/>
+		</Suspense>
+	)
 }
 
 const columnHelper = createColumnHelper<typeof paginatedTableFeatures, FeeMLeaderboardEntry>()
@@ -308,15 +200,17 @@ export default function FeeM() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Daily Activity</SectionHeader>
 				<ChartCard title={data.dailyStatsTitle}>
-					<MultiSeriesChart
-						dataset={data.dailyStatsModel.dataset}
-						charts={data.dailyStatsModel.charts}
-						valueSymbol=""
-						height="400px"
-						chartOptions={lastNDaysZoom(data.dailyStatsLength)}
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+						<MultiSeriesChart
+							dataset={data.dailyStatsModel.dataset}
+							charts={data.dailyStatsModel.charts}
+							valueSymbol=""
+							height="400px"
+							chartOptions={lastNDaysZoom(data.dailyStatsLength)}
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 

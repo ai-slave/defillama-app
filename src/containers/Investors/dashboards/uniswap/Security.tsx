@@ -1,4 +1,4 @@
-import { Fragment, lazy, useMemo } from 'react'
+import { Fragment, lazy, Suspense, useMemo } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
@@ -8,10 +8,12 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import { BarListCard, ChartCard, KpiGrid, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, ChartCard, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -105,16 +107,18 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 	}, [chart])
 
 	return (
-		<MultiSeriesChart
-			dataset={dataset}
-			charts={charts}
-			valueSymbol="$"
-			title=""
-			height="360px"
-			hideDefaultLegend={false}
-			exportButtons="hidden"
-			chartOptions={chartOptions}
-		/>
+		<Suspense fallback={<ChartPanelBodyFallback />}>
+			<MultiSeriesChart
+				dataset={dataset}
+				charts={charts}
+				valueSymbol="$"
+				title=""
+				height="360px"
+				hideDefaultLegend={false}
+				exportButtons="hidden"
+				chartOptions={chartOptions}
+			/>
+		</Suspense>
 	)
 }
 
@@ -193,7 +197,7 @@ const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | u
 // firm, scanned live from the public Uniswap GitHub repos).
 export default function Security() {
 	const { data } = useUniswapData<SecurityData>('security')
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	const kpis: Record<string, KpiT | undefined> = {
 		...data.kpis,

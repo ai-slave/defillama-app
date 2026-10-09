@@ -55,6 +55,7 @@ Class composition:
 | `bg-disabled`                                                  | A disabled filled control or field                                                                                                                                                             |
 | `bg-skeleton`                                                  | A loading placeholder (`Skeleton`); 1.35:1 against a card in both modes                                                                                                                        |
 | `bg-knob`                                                      | A switch knob, white on either track in both modes                                                                                                                                             |
+| `bg-status-dot` / `-muted`                                     | A neutral status dot and its quieter twin; never a text tier as a fill                                                                                                                         |
 | `bg-page-glass` / `bg-surface-glass`                           | A frosted sticky bar over scrolling content, with `backdrop-blur`                                                                                                                              |
 | `bg-veil`                                                      | A veil over content that is loading                                                                                                                                                            |
 | `bg-on-brand-control` / `-hover`                               | A control sitting on the brand-blue header                                                                                                                                                     |
@@ -413,6 +414,7 @@ Every chart draws through the renderer for its shape in [`src/components/ECharts
 | A trend line inside a row or card       | `SparklineChart`                                       |
 | Signed bars inside a row or card        | `BarSparkline`                                         |
 | Inflow against outflow per category     | `NetflowChart`                                         |
+| Scores on several axes of one scale     | `RadarChart`                                           |
 
 - Renderers own the instance, resize, theme, tooltip surface, grid geometry and export, so a page never calls `echarts.init` (`raw-echarts-init`). When no renderer fits, extend the closest one.
 - Categorical series colors come from the one palette in [`src/constants/colors.ts`](src/constants/colors.ts): `chartColor(rank)` / `chartColors(n)`, brand blue first, each color at 3:1 or more on every chart background in both modes. Series take colors by rank in the chart; a Pro dashboard gives each entity one color across its cards, in order of first appearance. Never add a hex list, a color generator or a name hash.

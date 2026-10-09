@@ -1,9 +1,10 @@
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
 	BUCKET_DAYS,
@@ -226,16 +227,18 @@ export function SeriesTrendChart({
 			) : chartSeries.length === 0 ? (
 				<div className="flex h-[360px] items-center justify-center body-sm text-tertiary">No data</div>
 			) : (
-				<MultiSeriesChart
-					dataset={model.dataset}
-					charts={model.charts}
-					valueSymbol={valueSymbol}
-					groupBy={groupBy}
-					height="360px"
-					chartOptions={chartOptions}
-					hideDefaultLegend={false}
-					exportButtons="hidden"
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
+					<MultiSeriesChart
+						dataset={model.dataset}
+						charts={model.charts}
+						valueSymbol={valueSymbol}
+						groupBy={groupBy}
+						height="360px"
+						chartOptions={chartOptions}
+						hideDefaultLegend={false}
+						exportButtons="hidden"
+					/>
+				</Suspense>
 			)}
 		</ChartCard>
 	)

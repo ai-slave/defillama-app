@@ -393,9 +393,9 @@ function DashboardTemplates({
 									variables: generated.variables
 								})
 							}}
-							className="hover-wash-card flex flex-col gap-0.5 text-left aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60"
+							className="group hover-wash-card flex flex-col gap-0.5 text-left aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed"
 						>
-							<span className="flex items-center gap-2 label-md text-primary">
+							<span className="flex items-center gap-2 label-md text-primary group-aria-disabled:group-not-aria-busy:text-disabled">
 								{template.name}
 								{creating || loading ? <LoadingSpinner size={14} /> : null}
 							</span>

@@ -79,7 +79,7 @@ const columns = columnHelper.columns([
 					href={getValue()}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-muted p-1.5 hover:bg-(--interim-brand-tint-hover)"
+					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-tint p-1.5 hover:bg-brand-tint-strong active:bg-brand-tint-pressed"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
 					<span className="sr-only">open in new tab</span>

@@ -19,6 +19,7 @@ import type {
 } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
 export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
@@ -101,14 +102,6 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 	)
 }
 
-export function PageLoader() {
-	return (
-		<div className="flex min-h-[60vh] items-center justify-center">
-			<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-		</div>
-	)
-}
-
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
@@ -122,9 +115,7 @@ export function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
 			<h3 className="mb-4 title-sm tracking-wider text-tertiary uppercase">{title}</h3>
-			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 		</div>
 	)
 }

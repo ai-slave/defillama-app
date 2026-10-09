@@ -11,7 +11,8 @@ export type TreemapNode = {
 	children?: Array<TreemapNode>
 }
 
-export type TreemapVariant = 'narrative' | 'rwa'
+/** 'flat': one level of tiles, each labelled with its name and `valueSymbol` value; no drill or roam. */
+export type TreemapVariant = 'narrative' | 'rwa' | 'flat'
 
 export interface TreemapChartProps {
 	treeData: Array<TreemapNode>

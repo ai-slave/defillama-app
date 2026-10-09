@@ -1,10 +1,12 @@
-import { lazy, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
@@ -125,9 +127,7 @@ function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 		</div>
 	)
 }
@@ -225,16 +225,18 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue (all sources)" />
 			) : (
 				<ChartCard title="Cumulative Revenue (all sources)">
-					<MultiSeriesChart
-						dataset={totalRevenue.cumulative}
-						charts={TOTAL_REVENUE_CHARTS}
-						chartOptions={STACKED_DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						solidChartAreaStyle
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={totalRevenue.cumulative}
+							charts={TOTAL_REVENUE_CHARTS}
+							chartOptions={STACKED_DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							solidChartAreaStyle
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -242,16 +244,18 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Breakdown" />
 			) : (
 				<ChartCard title="Monthly Breakdown">
-					<MultiSeriesChart
-						{...berachain.monthly}
-						charts={BERACHAIN_MONTHLY_CHARTS}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
-						hideDefaultLegend={false}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							{...berachain.monthly}
+							charts={BERACHAIN_MONTHLY_CHARTS}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_CHART_EXPORTS}
+							hideDefaultLegend={false}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -259,15 +263,17 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Chain Fees" />
 			) : (
 				<ChartCard title="Cumulative Chain Fees">
-					<MultiSeriesChart
-						dataset={berachain.chainFeesCumulative}
-						charts={CHAIN_FEES_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={berachain.chainFeesCumulative}
+							charts={CHAIN_FEES_CHART}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -291,15 +297,17 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Revenue" />
 			) : (
 				<ChartCard title="Monthly Revenue">
-					<MultiSeriesChart
-						{...bex.monthly}
-						charts={BEX_MONTHLY_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							{...bex.monthly}
+							charts={BEX_MONTHLY_CHART}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -307,15 +315,17 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue" />
 			) : (
 				<ChartCard title="Cumulative Revenue">
-					<MultiSeriesChart
-						dataset={bex.cumulative}
-						charts={BEX_CUMULATIVE_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={bex.cumulative}
+							charts={BEX_CUMULATIVE_CHART}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -339,16 +349,18 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Monthly Breakdown" />
 			) : (
 				<ChartCard title="Monthly Breakdown">
-					<MultiSeriesChart
-						{...bend.monthly}
-						charts={BEND_MONTHLY_CHARTS}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={BAR_CHART_EXPORTS}
-						hideDefaultLegend={false}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							{...bend.monthly}
+							charts={BEND_MONTHLY_CHARTS}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={BAR_CHART_EXPORTS}
+							hideDefaultLegend={false}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -356,15 +368,17 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Fees" />
 			) : (
 				<ChartCard title="Cumulative Fees">
-					<MultiSeriesChart
-						dataset={bend.feesCumulative}
-						charts={BEND_FEES_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={bend.feesCumulative}
+							charts={BEND_FEES_CHART}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -372,15 +386,17 @@ export default function IncomeBreakdown() {
 				<CardSkeleton title="Cumulative Revenue" />
 			) : (
 				<ChartCard title="Cumulative Revenue">
-					<MultiSeriesChart
-						dataset={bend.revenueCumulative}
-						charts={BEND_REVENUE_CHART}
-						chartOptions={DOLLAR_CHART_OPTIONS}
-						exportButtons={AREA_CHART_EXPORTS}
-						valueSymbol="$"
-						title=""
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={bend.revenueCumulative}
+							charts={BEND_REVENUE_CHART}
+							chartOptions={DOLLAR_CHART_OPTIONS}
+							exportButtons={AREA_CHART_EXPORTS}
+							valueSymbol="$"
+							title=""
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 		</div>

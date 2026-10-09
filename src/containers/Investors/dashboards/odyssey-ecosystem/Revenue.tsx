@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -266,14 +267,16 @@ export default function Revenue() {
 				<ChartSkeleton title="Daily Revenue" />
 			) : (
 				<ChartCard title="Daily Claimed Revenue" subtitle="Stacked by protocol">
-					<MultiSeriesChart
-						dataset={dailyModel.dataset}
-						charts={dailyModel.charts}
-						valueSymbol="$"
-						height="320px"
-						hideDefaultLegend={false}
-						exportButtons="hidden"
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+						<MultiSeriesChart
+							dataset={dailyModel.dataset}
+							charts={dailyModel.charts}
+							valueSymbol="$"
+							height="320px"
+							hideDefaultLegend={false}
+							exportButtons="hidden"
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 			{isLoading || (!holderModel && !holdersByMonthModel) ? (
@@ -295,29 +298,33 @@ export default function Revenue() {
 					</div>
 					{holderMode === 'monthly' ? (
 						holdersByMonthModel ? (
-							<MultiSeriesChart
-								key="hb-monthly"
-								dataset={holdersByMonthModel.dataset}
-								charts={holdersByMonthModel.charts}
-								valueSymbol="$"
-								groupBy="monthly"
-								height="300px"
-								hideDefaultLegend={false}
-								exportButtons="hidden"
-							/>
+							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+								<MultiSeriesChart
+									key="hb-monthly"
+									dataset={holdersByMonthModel.dataset}
+									charts={holdersByMonthModel.charts}
+									valueSymbol="$"
+									groupBy="monthly"
+									height="300px"
+									hideDefaultLegend={false}
+									exportButtons="hidden"
+								/>
+							</Suspense>
 						) : (
 							<div className="px-2 py-6 body-sm text-secondary">No monthly holder data</div>
 						)
 					) : holderModel ? (
-						<MultiSeriesChart
-							key="hb-daily"
-							dataset={holderModel.dataset}
-							charts={holderModel.charts}
-							valueSymbol="$"
-							height="300px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+							<MultiSeriesChart
+								key="hb-daily"
+								dataset={holderModel.dataset}
+								charts={holderModel.charts}
+								valueSymbol="$"
+								height="300px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					) : (
 						<div className="px-2 py-6 body-sm text-secondary">No daily holder data</div>
 					)}
@@ -368,14 +375,16 @@ export default function Revenue() {
 					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
 				</div>
 				{up.pie && (
-					<PieChart
-						chartData={up.pie}
-						valueSymbol="$"
-						height="320px"
-						showLegend
-						legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
-						stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, chartColor(i)]))}
-					/>
+					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+						<PieChart
+							chartData={up.pie}
+							valueSymbol="$"
+							height="320px"
+							showLegend
+							legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
+							stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, chartColor(i)]))}
+						/>
+					</Suspense>
 				)}
 			</div>
 

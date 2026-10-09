@@ -1,7 +1,8 @@
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
@@ -280,26 +281,30 @@ export default function Growth() {
 					<ChartSkeleton title="Active Accounts" />
 				) : (
 					<ChartCard title="Active Accounts" subtitle="Owner-deduped across chains">
-						<MultiSeriesChart
-							dataset={looprTotalDatasets.activeAccounts}
-							charts={ACTIVE_ACCOUNTS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={looprTotalDatasets.activeAccounts}
+								charts={ACTIVE_ACCOUNTS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								height="280px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
 					<ChartSkeleton title="Active Positions" />
 				) : (
 					<ChartCard title="Active Positions" subtitle="Combined open positions">
-						<MultiSeriesChart
-							dataset={looprTotalDatasets.activePositions}
-							charts={ACTIVE_POSITIONS_CHART}
-							valueSymbol=""
-							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={looprTotalDatasets.activePositions}
+								charts={ACTIVE_POSITIONS_CHART}
+								valueSymbol=""
+								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+								height="280px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -307,22 +312,26 @@ export default function Growth() {
 			<SectionHeader>Loopr · Cumulative Onboarding</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title="Cumulative Accounts" subtitle="Owner-deduped across chains">
-					<MultiSeriesChart
-						dataset={looprTotalDatasets.cumulativeAccounts}
-						charts={CUMULATIVE_ACCOUNTS_CHART}
-						valueSymbol=""
-						chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-						height="280px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+						<MultiSeriesChart
+							dataset={looprTotalDatasets.cumulativeAccounts}
+							charts={CUMULATIVE_ACCOUNTS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
+					</Suspense>
 				</ChartCard>
 				<ChartCard title="Cumulative Positions" subtitle="Across all chains">
-					<MultiSeriesChart
-						dataset={looprTotalDatasets.cumulativePositions}
-						charts={CUMULATIVE_POSITIONS_CHART}
-						valueSymbol=""
-						chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-						height="280px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+						<MultiSeriesChart
+							dataset={looprTotalDatasets.cumulativePositions}
+							charts={CUMULATIVE_POSITIONS_CHART}
+							valueSymbol=""
+							chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
+							height="280px"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 
@@ -330,26 +339,30 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
 					<ChartCard title="Active Users by Chain">
-						<MultiSeriesChart
-							dataset={perChainModels.activeUsers.dataset}
-							charts={perChainModels.activeUsers.charts}
-							valueSymbol=""
-							height="280px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+							<MultiSeriesChart
+								dataset={perChainModels.activeUsers.dataset}
+								charts={perChainModels.activeUsers.charts}
+								valueSymbol=""
+								height="280px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{perChainModels?.activePositions && (
 					<ChartCard title="Active Positions by Chain">
-						<MultiSeriesChart
-							dataset={perChainModels.activePositions.dataset}
-							charts={perChainModels.activePositions.charts}
-							valueSymbol=""
-							height="280px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '280px' }} />}>
+							<MultiSeriesChart
+								dataset={perChainModels.activePositions.dataset}
+								charts={perChainModels.activePositions.charts}
+								valueSymbol=""
+								height="280px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -358,14 +371,16 @@ export default function Growth() {
 				<>
 					<SectionHeader>Loopr · Deposits by Chain</SectionHeader>
 					<ChartCard title="Total deposits over time" subtitle="USD deposits per chain">
-						<MultiSeriesChart
-							dataset={depositsModel.dataset}
-							charts={depositsModel.charts}
-							valueSymbol="$"
-							height="320px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={depositsModel.dataset}
+								charts={depositsModel.charts}
+								valueSymbol="$"
+								height="320px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				</>
 			)}
@@ -412,24 +427,28 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<ChartCard title="MET Price" subtitle="Metronome governance token">
-						<MultiSeriesChart
-							dataset={tokenPriceDatasets.met}
-							charts={MET_PRICE_CHART}
-							valueSymbol="$"
-							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={tokenPriceDatasets.met}
+								charts={MET_PRICE_CHART}
+								valueSymbol="$"
+								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+								height="280px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 				{tokenPriceDatasets.vsp.source.length > 0 && (
 					<ChartCard title="VSP Price" subtitle="Vesper governance token">
-						<MultiSeriesChart
-							dataset={tokenPriceDatasets.vsp}
-							charts={VSP_PRICE_CHART}
-							valueSymbol="$"
-							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-							height="280px"
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={tokenPriceDatasets.vsp}
+								charts={VSP_PRICE_CHART}
+								valueSymbol="$"
+								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
+								height="280px"
+							/>
+						</Suspense>
 					</ChartCard>
 				)}
 			</div>
@@ -441,14 +460,16 @@ export default function Growth() {
 						title="Cumulative % change since baseline"
 						subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window"
 					>
-						<MultiSeriesChart
-							dataset={marketComboModel.dataset}
-							charts={marketComboModel.charts}
-							valueSymbol="%"
-							height="320px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+							<MultiSeriesChart
+								dataset={marketComboModel.dataset}
+								charts={marketComboModel.charts}
+								valueSymbol="%"
+								height="320px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				</>
 			)}
@@ -457,14 +478,16 @@ export default function Growth() {
 				<>
 					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
 					<ChartCard title="Featured Morpho market" subtitle="Daily supply / borrow / utilization">
-						<MultiSeriesChart
-							dataset={morphoMarketModel.dataset}
-							charts={morphoMarketModel.charts}
-							valueSymbol="$"
-							height="340px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								dataset={morphoMarketModel.dataset}
+								charts={morphoMarketModel.charts}
+								valueSymbol="$"
+								height="340px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				</>
 			)}
@@ -480,14 +503,16 @@ export default function Growth() {
 									title={market.title || market.label}
 									subtitle="Daily supply / borrow / utilization"
 								>
-									<MultiSeriesChart
-										dataset={model.dataset}
-										charts={model.charts}
-										valueSymbol="$"
-										height="300px"
-										hideDefaultLegend={false}
-										exportButtons="hidden"
-									/>
+									<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '300px' }} />}>
+										<MultiSeriesChart
+											dataset={model.dataset}
+											charts={model.charts}
+											valueSymbol="$"
+											height="300px"
+											hideDefaultLegend={false}
+											exportButtons="hidden"
+										/>
+									</Suspense>
 								</ChartCard>
 							)
 						})}
@@ -511,15 +536,17 @@ export default function Growth() {
 							value={spendVenue}
 							onValueChange={setSpendVenue}
 						/>
-						<MultiSeriesChart
-							key={spendVenue}
-							dataset={spendVsTvl.model.dataset}
-							charts={spendVsTvl.model.charts}
-							valueSymbol="$"
-							height="340px"
-							hideDefaultLegend={false}
-							exportButtons="hidden"
-						/>
+						<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '340px' }} />}>
+							<MultiSeriesChart
+								key={spendVenue}
+								dataset={spendVsTvl.model.dataset}
+								charts={spendVsTvl.model.charts}
+								valueSymbol="$"
+								height="340px"
+								hideDefaultLegend={false}
+								exportButtons="hidden"
+							/>
+						</Suspense>
 					</ChartCard>
 				</>
 			)}

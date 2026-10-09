@@ -17,6 +17,7 @@ import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { formatChartValue } from '../shared/formatters'
+import { sankeyMobileMinHeight } from './height'
 import {
 	buildSankeyNodeMetadata,
 	createMobileLabelLayout,
@@ -312,7 +313,7 @@ function SankeyChart({
 		<ChartContainer
 			chartRef={containerRef}
 			chartClassName=""
-			chartStyle={{ height, minHeight: useMobileLayout ? `${Math.max(450, nodes.length * 64)}px` : undefined }}
+			chartStyle={{ height, minHeight: useMobileLayout ? sankeyMobileMinHeight(nodes.length) : undefined }}
 			header={
 				title || enableImageExport ? (
 					<ChartHeader

@@ -90,6 +90,8 @@ function ScatterChart({
 	showLabels = false,
 	entityType = 'protocol',
 	logScale = false,
+	domain,
+	pinnableTooltip = false,
 	onReady
 }: IScatterChartProps) {
 	const [isDark] = useDarkModeManager()
@@ -97,6 +99,7 @@ function ScatterChart({
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const persistentLifecycle = usePersistentEChartsLifecycle()
+	const pinnedPointRef = useRef<{ seriesIndex: number; dataIndex: number } | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -130,6 +133,67 @@ function ScatterChart({
 			instance.dispose()
 		}
 	}, [persistentLifecycle])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!pinnableTooltip || !instance) return
+		const showPinned = () => {
+			const pinned = pinnedPointRef.current
+			if (pinned && !instance.isDisposed()) instance.dispatchAction({ type: 'showTip', ...pinned })
+		}
+		// Hovering another point, crossing empty plot space on the way to the tooltip's links, or leaving the chart hides
+		// the tooltip, so the pinned one comes back after it.
+		const restorePinned = () => {
+			if (pinnedPointRef.current) requestAnimationFrame(showPinned)
+		}
+		const restoreOverEmptySpace = (event: { target?: unknown }) => {
+			if (!event.target) restorePinned()
+		}
+		// A click on empty plot space unpins, like a click outside the chart.
+		const unpinOnEmptyClick = (event: { target?: unknown }) => {
+			if (!event.target && pinnedPointRef.current) unpin()
+		}
+		const unpin = () => {
+			pinnedPointRef.current = null
+			instance.dispatchAction({ type: 'hideTip' })
+		}
+		const handleClick = (params: { componentType?: string; seriesIndex?: number; dataIndex?: number }) => {
+			if (params.componentType !== 'series' || params.seriesIndex == null || params.dataIndex == null) return
+			const pinned = pinnedPointRef.current
+			if (pinned?.seriesIndex === params.seriesIndex && pinned.dataIndex === params.dataIndex) {
+				unpin()
+				return
+			}
+			pinnedPointRef.current = { seriesIndex: params.seriesIndex, dataIndex: params.dataIndex }
+			showPinned()
+		}
+		const handlePointerDown = (event: PointerEvent) => {
+			if (pinnedPointRef.current && !containerRef.current?.contains(event.target as Node)) unpin()
+		}
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && pinnedPointRef.current) unpin()
+		}
+		const renderer = instance.getZr()
+		instance.on('click', handleClick)
+		instance.on('mouseover', restorePinned)
+		renderer.on('globalout', restorePinned)
+		renderer.on('mousemove', restoreOverEmptySpace)
+		renderer.on('click', unpinOnEmptyClick)
+		document.addEventListener('pointerdown', handlePointerDown)
+		window.addEventListener('keydown', handleKeyDown)
+		return () => {
+			pinnedPointRef.current = null
+			document.removeEventListener('pointerdown', handlePointerDown)
+			window.removeEventListener('keydown', handleKeyDown)
+			if (instance.isDisposed()) return
+			instance.off('click', handleClick)
+			instance.off('mouseover', restorePinned)
+			renderer.off('globalout', restorePinned)
+			renderer.off('mousemove', restoreOverEmptySpace)
+			renderer.off('click', unpinOnEmptyClick)
+		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- persistentLifecycle is the trigger: the instance these listeners attach to is recreated with it.
+	}, [pinnableTooltip, persistentLifecycle])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -298,6 +362,10 @@ function ScatterChart({
 		const effectiveTooltipFormatter =
 			tooltipFormatter || (isYieldData ? yieldTooltipFormatter : genericTooltipFormatter)
 
+		const valueAxisRange = domain
+			? { type: 'value' as const, min: domain[0], max: domain[1] }
+			: { type: logScale ? ('log' as const) : ('value' as const), scale: true }
+
 		const option: EChartsOption = {
 			grid: {
 				top: showCategoricalLegend ? 40 : CHART_INSET,
@@ -312,6 +380,8 @@ function ScatterChart({
 				backgroundColor: 'transparent',
 				borderWidth: 0,
 				confine: true,
+				// ECharts already triggers on mousemove and click; a pinned tooltip needs to take the pointer for its links.
+				...(pinnableTooltip ? { enterable: true } : {}),
 				formatter: (params: unknown) => effectiveTooltipFormatter(normalizeScatterTooltipParams(params)),
 				axisPointer: {
 					show: true,
@@ -322,16 +392,9 @@ function ScatterChart({
 					}
 				}
 			},
-			toolbox: {
-				feature: {
-					dataZoom: {},
-					restore: {}
-				}
-			},
 			xAxis: [
 				{
-					type: logScale ? 'log' : 'value',
-					scale: true,
+					...valueAxisRange,
 					name: xAxisLabel || '',
 					nameLocation: 'middle',
 					nameGap: 28,
@@ -355,8 +418,7 @@ function ScatterChart({
 			],
 			yAxis: [
 				{
-					type: logScale ? 'log' : 'value',
-					scale: true,
+					...valueAxisRange,
 					name: yAxisLabel || '',
 					nameLocation: 'middle',
 					nameGap: 36,
@@ -378,14 +440,13 @@ function ScatterChart({
 					}
 				}
 			],
-			dataZoom: [
-				{
-					type: 'inside',
-					start: 0,
-					end: 100,
-					filterMode: 'none'
-				}
-			],
+			// A fixed domain is a map with fixed bounds, so it neither zooms nor shows the zoom toolbox.
+			...(domain
+				? {}
+				: {
+						toolbox: { feature: { dataZoom: {}, restore: {} } },
+						dataZoom: [{ type: 'inside', start: 0, end: 100, filterMode: 'none' }]
+					}),
 			labelLayout: { hideOverlap: true },
 			series
 		}
@@ -416,6 +477,14 @@ function ScatterChart({
 		}
 
 		instance.setOption(option, { notMerge: true })
+		// Replacing the option hides the tooltip; a pinned point that is still drawn keeps its tooltip open.
+		const pinned = pinnedPointRef.current
+		const pinnedSeriesData = pinned ? series[pinned.seriesIndex]?.data : undefined
+		if (pinned && Array.isArray(pinnedSeriesData) && pinned.dataIndex < pinnedSeriesData.length) {
+			instance.dispatchAction({ type: 'showTip', ...pinned })
+		} else {
+			pinnedPointRef.current = null
+		}
 	}, [
 		chartData,
 		chartTheme,
@@ -427,14 +496,12 @@ function ScatterChart({
 		showLabels,
 		entityType,
 		logScale,
+		domain,
+		pinnableTooltip,
 		loadedIcons
 	])
 
-	return (
-		<div>
-			<div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
-		</div>
-	)
+	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 }
 
 export default withEChartsRenderVisibility(ScatterChart)

@@ -59,18 +59,22 @@ export function ChartPanelToolbar({ leading, className, children, ...props }: Ch
 	)
 }
 
-/* Panels in a row stretch to the tallest one, so the body grows with them and its 360px is a
-   FLOOR, not a fixed height: a fixed body left dead space under the chart in every panel the grid
-   stretched. Pass CHART_FILL to the chart itself so it fills the body it sits in. */
+/* Panels in a row stretch to the tallest one, so the body grows with them and its 360px is a FLOOR, not a fixed
+   height: a fixed body left dead space under the chart in every panel the grid stretched. Pass CHART_FILL to the chart
+   itself so it fills the body it sits in. The floor is an `initial:` default, as in Status.tsx, so a deliberately tall
+   chart (a 600px treemap) raises it with its own min-h-* class on the body and on its fallback. */
 export const CHART_FILL = 'flex-1 min-h-[360px]'
 
 export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
-	return <div className={`relative flex min-h-[360px] flex-1 flex-col ${className ?? ''}`.trim()} {...props} />
+	return <div className={`relative flex flex-1 flex-col initial:min-h-[360px] ${className ?? ''}`.trim()} {...props} />
 }
 
 export function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return (
-		<div className={`m-auto flex min-h-[360px] items-center justify-center ${className ?? ''}`.trim()} {...props} />
+		<div
+			className={`m-auto flex items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+			{...props}
+		/>
 	)
 }
 
@@ -107,5 +111,5 @@ export function ChartPanelBodyError({
 }
 
 export function ChartPanelExportShellFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
-	return <div className={`min-h-[400px] ${className ?? ''}`.trim()} {...props} />
+	return <div className={`initial:min-h-[400px] ${className ?? ''}`.trim()} {...props} />
 }

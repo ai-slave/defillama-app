@@ -1,7 +1,9 @@
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
 
@@ -36,9 +38,7 @@ function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
-			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
-			</div>
+			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 		</div>
 	)
 }
@@ -79,17 +79,19 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.actualRevenue.dataset}
-					charts={data.actualRevenue.charts}
-					valueSymbol="$"
-					title=""
-					height="400px"
-					hideDefaultLegend={data.actualRevenue.charts.length < 2}
-					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={actualRev.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.actualRevenue.dataset}
+						charts={data.actualRevenue.charts}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						hideDefaultLegend={data.actualRevenue.charts.length < 2}
+						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={actualRev.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard
@@ -103,18 +105,20 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.revenueProjection.dataset}
-					charts={data.revenueProjection.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={revProjection.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.revenueProjection.dataset}
+						charts={data.revenueProjection.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={revProjection.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard
@@ -128,18 +132,20 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.susdsTvl.dataset}
-					charts={data.susdsTvl.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={susdsTvl.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.susdsTvl.dataset}
+						charts={data.susdsTvl.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={susdsTvl.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard
@@ -153,17 +159,19 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.xrSusds.dataset}
-					charts={data.xrSusds.charts}
-					valueSymbol="$"
-					title=""
-					height="400px"
-					hideDefaultLegend={data.xrSusds.charts.length < 2}
-					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={xrSusds.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.xrSusds.dataset}
+						charts={data.xrSusds.charts}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						hideDefaultLegend={data.xrSusds.charts.length < 2}
+						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={xrSusds.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard
@@ -177,17 +185,19 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.xrSusdc.dataset}
-					charts={data.xrSusdc.charts}
-					valueSymbol="$"
-					title=""
-					height="400px"
-					hideDefaultLegend={data.xrSusdc.charts.length < 2}
-					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={xrSusdc.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.xrSusdc.dataset}
+						charts={data.xrSusdc.charts}
+						valueSymbol="$"
+						title=""
+						height="400px"
+						hideDefaultLegend={data.xrSusdc.charts.length < 2}
+						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={xrSusdc.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 
 			<ChartCard
@@ -201,18 +211,20 @@ export default function DistributionRewards() {
 					/>
 				}
 			>
-				<MultiSeriesChart
-					dataset={data.stakedUsdsTvl.dataset}
-					charts={data.stakedUsdsTvl.charts}
-					valueSymbol="$"
-					title=""
-					stacked
-					solidChartAreaStyle
-					height="400px"
-					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
-					exportButtons={HIDDEN_EXPORT}
-					onReady={stakedUsds.handleChartReady}
-				/>
+				<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '400px' }} />}>
+					<MultiSeriesChart
+						dataset={data.stakedUsdsTvl.dataset}
+						charts={data.stakedUsdsTvl.charts}
+						valueSymbol="$"
+						title=""
+						stacked
+						solidChartAreaStyle
+						height="400px"
+						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
+						exportButtons={HIDDEN_EXPORT}
+						onReady={stakedUsds.handleChartReady}
+					/>
+				</Suspense>
 			</ChartCard>
 		</div>
 	)

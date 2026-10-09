@@ -133,3 +133,40 @@ export const ASSET_BRAND_COLORS = {
 	Solana: ['#9945FF', '#9945FF'],
 	Hyperliquid: ['#0ea091', '#50d2c1']
 } as const satisfies Record<string, readonly [light: string, dark: string]>
+
+/** The token rating page's metric colours, as [light, dark]: each one names a metric on every chart of the page
+   (market cap blue, volume gold, depth purple, the depth chart's market cap green, and the two bands of the volume and
+   depth stacks). Like the brand colours, a value under 3:1 on a chart background in one mode moves its lightness (OKLCH, same
+   hue) just far enough there. */
+export const UTR_METRIC_COLORS = {
+	marketCap: [oldBlue, oldBlue],
+	volume: ['#b58619', '#bb8c23'],
+	depth: ['#9c27b0', '#a02cb4'],
+	depthMarketCap: ['#3da142', '#4caf50'],
+	/** Two-band stacks (CEX vs DEX, spot vs perps), first band then second. */
+	volumeStack: [
+		['#bd8200', '#db9700'],
+		['#b58619', '#bb8c23']
+	],
+	depthStack: [
+		['#0998cc', '#40c4ff'],
+		[oldBlue, oldBlue]
+	]
+} as const
+
+/** The equity sectors' colours, one per sector everywhere on the Equities pages (cards, treemap, rotation matrix). The
+   palette holds ten colours and there are eleven sectors, so the eleventh takes sky: as far from its nearest palette
+   colour (teal) as the palette's own closest pair, and 3:1 on both chart backgrounds. */
+export const SECTOR_COLORS: Record<string, string> = {
+	technology: CHART_COLORS[0],
+	'financial-services': CHART_COLORS[1],
+	'consumer-cyclical': CHART_COLORS[2],
+	healthcare: CHART_COLORS[3],
+	'communication-services': CHART_COLORS[4],
+	industrials: CHART_COLORS[5],
+	'consumer-defensive': CHART_COLORS[6],
+	energy: CHART_COLORS[7],
+	'basic-materials': CHART_COLORS[8],
+	utilities: CHART_COLORS[9],
+	'real-estate': '#1a8fc4'
+}

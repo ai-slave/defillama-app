@@ -23,10 +23,10 @@ import {
 import { ConnectDialog } from './ConnectDialog'
 import { countryFromCode } from './country'
 import { roundPercentile } from './format'
-import type { RadarScores } from './RadarChart'
+import { RADAR_INDICATORS, type RadarScores, radarValues } from './radar'
 import { forgdCtaPrimaryButtonStyles, forgdCtaSecondaryButtonStyles } from './styles'
 
-const RadarChart = dynamic(() => import('./RadarChart').then((mod) => mod.RadarChart), {
+const RadarChart = dynamic(() => import('~/components/ECharts/RadarChart'), {
 	ssr: false,
 	loading: () => <div className="h-[280px] w-full" />
 })
@@ -324,7 +324,7 @@ function DrawerBody({
 					<h3 className="heading-xs">Leaderboards performance</h3>
 					<AccentBadge className="h-6">{badge}</AccentBadge>
 				</div>
-				<RadarChart scores={scores} />
+				<RadarChart indicators={RADAR_INDICATORS} values={radarValues(scores)} />
 				<div className={`flex flex-col p-3 ${CARD_BORDER}`}>
 					{SCORE_ROWS.map((row) => (
 						<div key={row.key} className="flex h-8 items-center justify-between">

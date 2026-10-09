@@ -205,6 +205,10 @@ export function CardDivider() {
 	return <div className="-mx-4 border-t border-subtle" />
 }
 
+export function ChartCaption({ children }: { children: ReactNode }) {
+	return <p className="-mb-2 text-center label-sm text-secondary">{children}</p>
+}
+
 export function KvTable({ rows }: { rows: Array<[ReactNode, ReactNode]> }) {
 	return (
 		<div className="flex flex-col rounded-lg border border-subtle">

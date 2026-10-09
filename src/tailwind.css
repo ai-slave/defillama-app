@@ -456,19 +456,15 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	/*
 	  App tokens OUTSIDE the design system. The design system is
 	  src/styles/semantics.css; product palettes live in src/styles/themes/.
-	  --interim-* marks a stopgap value with no semantic token (counted as
-	  `interim-token` by the design-token policy check; don't add more); the
-	  rest are domain tokens owned by the code that reads them.
+	  Each is a domain token owned by the code that reads it; a stopgap
+	  --interim-* value is counted as `interim-token` by the design-token
+	  policy check, so don't add one.
 	  --announcement-bg has no global default: the Announcement component
 	  sets it inline per variant.
 	*/
 	:root {
 		/* dlnews partner logo mark (consumed inside public/assets/dlnews*.svg) */
 		--dlnews-logo: oklch(0.241 0.056 240.6);
-
-		/* One alpha step above bg-brand-muted for hover states; no semantic
-		   brand-tint hover token exists */
-		--interim-brand-tint-hover: #1f67d233;
 
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */
 		--apy-mid: var(--text-data-up);
@@ -496,10 +492,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	}
 
 	html.dark {
-		/* Dark needs a touch more tint to separate from the surface it sits on. */
-
 		--dlnews-logo: oklch(1 0 0);
-		--interim-brand-tint-hover: #1f67d24d;
 	}
 
 	body {

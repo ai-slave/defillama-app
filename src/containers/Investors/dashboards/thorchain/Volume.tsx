@@ -1,17 +1,9 @@
 import { useState } from 'react'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
-import {
-	Kpi,
-	KpiGrid,
-	PageLoader,
-	PlaceholderCard,
-	SectionHeader,
-	TimeAreaCard,
-	TimeBarCard,
-	useThorchainData
-} from './ui'
+import { Kpi, KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, TimeBarCard, useThorchainData } from './ui'
 
 // Each granularity is its OWN distinct-count dataset from raynalytics — the toggle
 // switches datasets, it never aggregates (summing daily uniques would double-count
@@ -56,7 +48,7 @@ const TYPE_KPIS: Array<[string, string]> = [
 export default function Volume() {
 	const { data } = useThorchainData<VolumeData>('volume')
 	const [walletView, setWalletView] = useState<WalletView>('daily')
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	const walletChart = data.uniqueWalletsCharts?.[walletView]
 	const walletToggle = (

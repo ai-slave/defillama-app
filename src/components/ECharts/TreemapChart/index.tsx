@@ -11,6 +11,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
+import { escapeHtml } from '../shared/escapeHtml'
 import { formatChartValue } from '../shared/formatters'
 import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
@@ -72,6 +73,7 @@ function TreemapChart({
 }: TreemapChartProps) {
 	const isNarrativeVariant = variant === 'narrative'
 	const isRwaVariant = variant === 'rwa'
+	const isFlatVariant = variant === 'flat'
 	const isCategoricalColor = colorMode === 'categorical'
 
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
@@ -137,6 +139,9 @@ function TreemapChart({
 					if (variant === 'narrative') {
 						return formatNarrativeTreemapTooltip(Array.isArray(info.treePathInfo) ? info.treePathInfo : [], info.value)
 					}
+					if (isFlatVariant) {
+						return `<strong>${escapeHtml(String(info.name ?? ''))}</strong><br>${escapeHtml(valueLabel)}: ${formatTreemapMetricValue(info.value[0])}`
+					}
 
 					return formatRwaTreemapTooltip({
 						info,
@@ -154,30 +159,9 @@ function TreemapChart({
 					left: 0,
 					right: 0,
 					bottom: 0,
-					...(isNarrativeVariant
-						? {
-								roam: false,
-								nodeClick: false,
-								breadcrumb: { show: false }
-							}
-						: isRwaVariant
-							? {
-									roam: true,
-									nodeClick: 'zoomToNode',
-									breadcrumb: { show: false }
-								}
-							: {
-									breadcrumb: {
-										itemStyle: {
-											color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.4)',
-											textStyle: {
-												fontFamily: 'sans-serif',
-												fontWeight: 400,
-												color: chartTheme.text
-											}
-										}
-									}
-								}),
+					roam: isRwaVariant,
+					nodeClick: isRwaVariant ? 'zoomToNode' : false,
+					breadcrumb: { show: false },
 					...(isRwaVariant
 						? {
 								// Keep RWA node color stable on hover; tooltip still works.
@@ -185,10 +169,13 @@ function TreemapChart({
 							}
 						: {}),
 					label: {
-						position: 'insideTopRight',
+						position: isFlatVariant ? 'insideTopLeft' : 'insideTopRight',
 						formatter: (rawParams: unknown) => {
 							if (!isTreemapFormatterParams(rawParams)) return ''
 							const params = rawParams
+							if (isFlatVariant) {
+								return `{flatName|${String(params.name ?? '')}}\n{flatValue|${formatTreemapMetricValue(params.value[0])}}`
+							}
 							const data = params.data
 							if (!isTreemapNode(data)) return ''
 							const path = data.path ?? ''
@@ -227,6 +214,15 @@ function TreemapChart({
 							rwaMetric: {
 								fontSize: 12,
 								lineHeight: 18
+							},
+							flatName: {
+								fontSize: 13,
+								fontWeight: 600,
+								lineHeight: 20
+							},
+							flatValue: {
+								fontSize: 11,
+								lineHeight: 18
 							}
 						}
 					},
@@ -238,75 +234,87 @@ function TreemapChart({
 					itemStyle: {
 						borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#fff'
 					},
-					levels: [
-						{
-							itemStyle: {
-								borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#777',
-								borderWidth: 0,
-								gapWidth: 1,
-								...(isRwaVariant ? { color: isDark ? '#374151' : '#e5e7eb' } : {})
-							},
-							upperLabel:
-								isRwaVariant && showRootLabel
-									? {
-											show: true,
-											height: 22,
-											padding: [0, 4],
-											formatter: '{b}'
-										}
-									: {
-											show: false
-										}
-						},
-						{
-							...(isCategoricalColor && !isRwaVariant ? { color: CHART_COLORS, colorMappingBy: 'index' } : {}),
-							itemStyle: isRwaVariant
-								? {
-										borderColor: isDark ? '#2d3139' : '#d1d5db',
-										borderWidth: 2,
-										gapWidth: 1
-									}
-								: {
-										borderColor: '#555',
-										borderWidth: 5,
-										gapWidth: 1
-									},
-							...(isRwaVariant
-								? {
-										upperLabel: {
-											show: true,
-											height: 22,
-											padding: [0, 2],
-											formatter: '{b}',
-											...(isDark
-												? {
-														backgroundColor: 'rgba(55,65,81,0.88)'
-													}
-												: { backgroundColor: 'rgba(229,231,235,0.92)' })
-										}
-									}
-								: {}),
-							emphasis: {
-								itemStyle: {
-									borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#ddd'
+					levels: isFlatVariant
+						? [
+								{
+									...(isCategoricalColor ? { color: CHART_COLORS, colorMappingBy: 'index' } : {}),
+									itemStyle: { borderWidth: 0, gapWidth: 1 },
+									upperLabel: { show: false }
+								},
+								{
+									itemStyle: { borderColor: chartTheme.exportBg, borderWidth: 2, gapWidth: 1 },
+									emphasis: { itemStyle: { borderColor: chartTheme.ink(0.2) } }
 								}
-							}
-						},
-						{
-							...(isCategoricalColor && !isRwaVariant ? { colorSaturation: [0.55, 0.9] } : {}),
-							itemStyle: isRwaVariant
-								? {
-										borderWidth: 1,
-										gapWidth: 0,
-										borderColor: isDark ? '#2d3139' : '#d1d5db'
-									}
-								: {
-										borderWidth: 5,
+							]
+						: [
+								{
+									itemStyle: {
+										borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#777',
+										borderWidth: 0,
 										gapWidth: 1,
-										borderColorSaturation: 0.6
+										...(isRwaVariant ? { color: isDark ? '#374151' : '#e5e7eb' } : {})
+									},
+									upperLabel:
+										isRwaVariant && showRootLabel
+											? {
+													show: true,
+													height: 22,
+													padding: [0, 4],
+													formatter: '{b}'
+												}
+											: {
+													show: false
+												}
+								},
+								{
+									...(isCategoricalColor && !isRwaVariant ? { color: CHART_COLORS, colorMappingBy: 'index' } : {}),
+									itemStyle: isRwaVariant
+										? {
+												borderColor: isDark ? '#2d3139' : '#d1d5db',
+												borderWidth: 2,
+												gapWidth: 1
+											}
+										: {
+												borderColor: '#555',
+												borderWidth: 5,
+												gapWidth: 1
+											},
+									...(isRwaVariant
+										? {
+												upperLabel: {
+													show: true,
+													height: 22,
+													padding: [0, 2],
+													formatter: '{b}',
+													...(isDark
+														? {
+																backgroundColor: 'rgba(55,65,81,0.88)'
+															}
+														: { backgroundColor: 'rgba(229,231,235,0.92)' })
+												}
+											}
+										: {}),
+									emphasis: {
+										itemStyle: {
+											borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#ddd'
+										}
 									}
-						}
-					],
+								},
+								{
+									...(isCategoricalColor && !isRwaVariant ? { colorSaturation: [0.55, 0.9] } : {}),
+									itemStyle: isRwaVariant
+										? {
+												borderWidth: 1,
+												gapWidth: 0,
+												borderColor: isDark ? '#2d3139' : '#d1d5db'
+											}
+										: {
+												borderWidth: 5,
+												gapWidth: 1,
+												borderColorSaturation: 0.6
+											}
+								}
+							],
 					data: treeData
 				}
 			]
@@ -319,6 +327,7 @@ function TreemapChart({
 		formatTreemapMetricValue,
 		isCategoricalColor,
 		isDark,
+		isFlatVariant,
 		isNarrativeVariant,
 		isRwaVariant,
 		rwaRootLabel,

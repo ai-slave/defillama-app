@@ -1,10 +1,12 @@
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useTable } from '@tanstack/react-table'
-import { lazy, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
 	formatPercent,
@@ -22,7 +24,6 @@ import {
 	CardSkeleton,
 	ChartCard,
 	InvestorsTable,
-	PageLoader,
 	SectionHeader
 } from './shared'
 
@@ -240,7 +241,7 @@ export default function Rates() {
 		}
 	}, [primaryReserve, assetReserves])
 
-	if (marketsLoading) return <PageLoader />
+	if (marketsLoading) return <PanelLoadingStatus />
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -283,15 +284,17 @@ export default function Rates() {
 					<CardSkeleton title="Supply APY History" />
 				) : supplyDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}>
-						<MultiSeriesChart
-							dataset={supplyDataset}
-							charts={SUPPLY_APY_CHART}
-							valueSymbol="%"
-							title=""
-							height="400px"
-							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-							exportButtons={AAVE_AREA_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={supplyDataset}
+								charts={SUPPLY_APY_CHART}
+								valueSymbol="%"
+								title=""
+								height="400px"
+								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+								exportButtons={AAVE_AREA_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				) : null}
 
@@ -299,15 +302,17 @@ export default function Rates() {
 					<CardSkeleton title="Borrow APY History" />
 				) : borrowDataset.source.length > 0 ? (
 					<ChartCard title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}>
-						<MultiSeriesChart
-							dataset={borrowDataset}
-							charts={BORROW_APY_CHART}
-							valueSymbol="%"
-							title=""
-							height="400px"
-							chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
-							exportButtons={AAVE_AREA_EXPORT}
-						/>
+						<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+							<MultiSeriesChart
+								dataset={borrowDataset}
+								charts={BORROW_APY_CHART}
+								valueSymbol="%"
+								title=""
+								height="400px"
+								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
+								exportButtons={AAVE_AREA_EXPORT}
+							/>
+						</Suspense>
 					</ChartCard>
 				) : null}
 			</div>
@@ -335,16 +340,18 @@ export default function Rates() {
 							</span>
 						)}
 					</div>
-					<MultiSeriesChart
-						dataset={rateCurveDataset}
-						charts={RATE_CURVE_CHARTS}
-						valueSymbol="%"
-						title=""
-						height="400px"
-						hideDefaultLegend={false}
-						chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
-						exportButtons={AAVE_BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={rateCurveDataset}
+							charts={RATE_CURVE_CHARTS}
+							valueSymbol="%"
+							title=""
+							height="400px"
+							hideDefaultLegend={false}
+							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
+							exportButtons={AAVE_BAR_EXPORT}
+						/>
+					</Suspense>
 				</div>
 			) : null}
 

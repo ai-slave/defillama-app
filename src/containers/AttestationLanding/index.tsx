@@ -824,7 +824,7 @@ function PersonaDossier() {
 							key={key}
 							id={`${id}-${key}`}
 							type="button"
-							className="px-5 py-4 text-left transition-colors hover:bg-hover-row aria-selected:bg-brand-faint aria-selected:shadow-[inset_0_-2px_0_var(--bg-brand)] sm:px-6"
+							className="relative px-5 py-4 text-left transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-brand after:opacity-0 not-aria-selected:hover:bg-hover-row aria-selected:bg-brand-faint aria-selected:after:opacity-100 sm:px-6"
 						>
 							<span className="block label-lg text-primary">{personas[key].tab}</span>
 							<span className="mt-0.5 block body-sm text-tertiary">{personas[key].sub}</span>

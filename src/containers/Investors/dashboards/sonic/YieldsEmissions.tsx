@@ -1,9 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
@@ -97,15 +98,17 @@ export default function YieldsEmissions() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>S Token Emissions</SectionHeader>
 				<ChartCard title={data.emissions.title}>
-					<MultiSeriesChart
-						dataset={data.emissions.dataset}
-						charts={data.emissions.charts}
-						valueSymbol=""
-						stacked
-						solidChartAreaStyle
-						chartOptions={STACKED_UNITLESS_TIME_CHART_OPTIONS}
-						height="400px"
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={data.emissions.dataset}
+							charts={data.emissions.charts}
+							valueSymbol=""
+							stacked
+							solidChartAreaStyle
+							chartOptions={STACKED_UNITLESS_TIME_CHART_OPTIONS}
+							height="400px"
+						/>
+					</Suspense>
 				</ChartCard>
 			</div>
 

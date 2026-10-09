@@ -1,12 +1,14 @@
-import type { EChartsOption } from 'echarts'
 import type { ReactNode } from 'react'
+import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
-import { disclosedVestingDurationMonths, disclosedVestingSchedule, uniqueGroupLabels } from './disclosedVesting'
-import { ChartCaption, ChartLegend, SimpleChart, useSimpleChartTheme } from './SimpleChart'
+import { disclosedVestingDurationMonths, disclosedVestingSchedule } from './disclosedVesting'
+import { ChartCaption } from './TokenPage'
 import type { UtrDisclosedAllocation, UtrDisclosedTokenomicsGroup, UtrDisclosures } from './types'
 
 const HTTP_URL = /^https?:\/\//i
@@ -108,73 +110,29 @@ function NotDisclosed() {
 	)
 }
 
-function vestingChartOption(groups: Array<UtrDisclosedTokenomicsGroup>, axisColor?: string): EChartsOption {
+const VESTING_CHART_OPTIONS = createCategoryChartOptions('%')
+
+export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup> }) {
 	const { months, series } = disclosedVestingSchedule(groups)
-	return {
-		grid: { left: 48, right: 16, top: 8, bottom: 28 },
-		tooltip: {
-			trigger: 'axis',
-			valueFormatter: (value) => (typeof value === 'number' ? formatDisclosedPct(value) : String(value ?? ''))
-		},
-		xAxis: {
-			type: 'category',
-			data: months.map(String),
-			axisLabel: axisColor ? { color: axisColor } : undefined
-		},
-		yAxis: {
-			type: 'value',
-			axisLabel: {
-				color: axisColor,
-				formatter: (value: number) => formatPercent(value, { input: 'percent', maximumSignificantDigits: 3 }) ?? ''
-			},
-			splitLine: { lineStyle: { opacity: 0.15 } }
-		},
-		series: series.map((entry, index) => ({
-			name: entry.name,
-			type: 'bar',
-			stack: 'vesting',
-			barCategoryGap: '20%',
-			itemStyle: { color: tokenomicsGroupColor(index) },
-			data: entry.data
-		}))
-	}
-}
-
-function distributionChartOption(groups: Array<UtrDisclosedTokenomicsGroup>): EChartsOption {
-	return {
-		tooltip: {
-			trigger: 'item',
-			valueFormatter: (value) => (typeof value === 'number' ? formatDisclosedPct(value) : String(value ?? ''))
-		},
-		series: [
-			{
-				type: 'pie',
-				radius: ['55%', '85%'],
-				label: { show: false },
-				data: groups.map((group, index) => ({
-					name: group.groupName,
-					value: group.allocationPct,
-					itemStyle: { color: tokenomicsGroupColor(index) }
-				}))
-			}
-		]
-	}
-}
-
-export function DisclosedVestingChart({
-	groups,
-	className = 'h-[220px] w-full'
-}: {
-	groups: Array<UtrDisclosedTokenomicsGroup>
-	className?: string
-}) {
-	const axisColor = useSimpleChartTheme().axisLabel
+	const source = months.map((month, row) => [String(month), ...series.map((entry) => entry.data[row])])
 	return (
 		<div className="flex flex-col gap-2">
 			<ChartCaption>Disclosed Maximum Token Supply (%) | Months Since TGE</ChartCaption>
-			<SimpleChart option={vestingChartOption(groups, axisColor)} className={className} />
-			<ChartLegend
-				items={uniqueGroupLabels(groups).map((label, index) => ({ label, color: tokenomicsGroupColor(index) }))}
+			<MultiSeriesChart
+				dataset={{ source, dimensions: ['month', ...series.map((entry) => entry.name)] }}
+				charts={series.map((entry, index) => ({
+					type: 'bar' as const,
+					name: entry.name,
+					encode: { x: 0, y: index + 1 },
+					stack: 'vesting',
+					color: tokenomicsGroupColor(index)
+				}))}
+				valueSymbol="%"
+				chartOptions={VESTING_CHART_OPTIONS}
+				height="260px"
+				hideDefaultLegend={false}
+				hideDataZoom
+				exportButtons="hidden"
 			/>
 		</div>
 	)
@@ -236,7 +194,15 @@ function DistributionSchedule({ groups }: { groups: Array<UtrDisclosedTokenomics
 		<>
 			<h4 className="label-lg">Distribution Schedule</h4>
 			<div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-				<SimpleChart option={distributionChartOption(groups)} className="h-[200px] w-full shrink-0 lg:w-[200px]" />
+				<div className="w-full shrink-0 lg:w-[200px]">
+					<PieChart
+						chartData={groups.map((group) => ({ name: group.groupName, value: group.allocationPct }))}
+						valueSymbol="%"
+						radius={['55%', '85%']}
+						customLabel={{ show: false }}
+						height="200px"
+					/>
+				</div>
 				<div className="min-w-0 flex-1">
 					<DisclosureTable
 						columns={['Group Name', 'Allocation (% Total Supply)', 'Group Category']}

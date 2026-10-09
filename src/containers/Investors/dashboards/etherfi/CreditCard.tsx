@@ -1,6 +1,7 @@
-import { lazy, useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { useEtherfiCashFeesCharts, useEtherfiCashMetrics, useEtherfiCashTvlChart } from './api'
@@ -102,15 +103,17 @@ export default function CreditCard() {
 				<CardSkeleton title="TVL" />
 			) : (
 				<ChartCard title="TVL">
-					<MultiSeriesChart
-						dataset={tvlDataset}
-						charts={TVL_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-						exportButtons={AREA_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={tvlDataset}
+							charts={TVL_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+							exportButtons={AREA_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -118,15 +121,17 @@ export default function CreditCard() {
 				<CardSkeleton title="Fees" />
 			) : (
 				<ChartCard title="Fees">
-					<MultiSeriesChart
-						dataset={feesDataset}
-						charts={FEES_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={feesDataset}
+							charts={FEES_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -134,29 +139,33 @@ export default function CreditCard() {
 				<CardSkeleton title="Revenue" />
 			) : (
 				<ChartCard title="Revenue">
-					<MultiSeriesChart
-						dataset={revenueDataset}
-						charts={REVENUE_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={revenueDataset}
+							charts={REVENUE_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
 			{!feesLoading && hasHoldersRevenue && (
 				<ChartCard title="Holders Revenue">
-					<MultiSeriesChart
-						dataset={holdersRevenueDataset}
-						charts={HOLDERS_REVENUE_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={holdersRevenueDataset}
+							charts={HOLDERS_REVENUE_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 
@@ -164,15 +173,17 @@ export default function CreditCard() {
 				<CardSkeleton title="USD Inflows" />
 			) : (
 				<ChartCard title="USD Inflows">
-					<MultiSeriesChart
-						dataset={inflowsDataset}
-						charts={INFLOWS_CHART}
-						valueSymbol="$"
-						title=""
-						height="400px"
-						chartOptions={DOLLAR_TIME_CHART_OPTIONS}
-						exportButtons={BAR_EXPORT}
-					/>
+					<Suspense fallback={<ChartPanelExportShellFallback style={{ minHeight: '440px' }} />}>
+						<MultiSeriesChart
+							dataset={inflowsDataset}
+							charts={INFLOWS_CHART}
+							valueSymbol="$"
+							title=""
+							height="400px"
+							chartOptions={DOLLAR_TIME_CHART_OPTIONS}
+							exportButtons={BAR_EXPORT}
+						/>
+					</Suspense>
 				</ChartCard>
 			)}
 		</div>

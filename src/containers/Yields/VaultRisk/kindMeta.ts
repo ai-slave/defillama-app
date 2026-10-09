@@ -90,12 +90,12 @@ const TONE_CLASSES: Record<Tone, ToneClasses> = {
 	neutral: {
 		text: 'text-primary',
 		chip: 'bg-surface text-primary border border-medium',
-		bar: 'bg-secondary'
+		bar: 'bg-status-dot'
 	},
 	muted: {
 		text: 'text-secondary',
 		chip: 'bg-surface text-secondary border border-medium',
-		bar: 'bg-tertiary'
+		bar: 'bg-status-dot-muted'
 	}
 }
 

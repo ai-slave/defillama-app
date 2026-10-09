@@ -5,6 +5,7 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { readInvestorApiJson } from '../../api.types'
 import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
 import {
@@ -23,7 +24,6 @@ import {
 	Kpi,
 	KpiBand,
 	networkFeeQuery,
-	PageLoader,
 	PlaceholderCard,
 	SectionHeader,
 	useAdapterSeries,
@@ -132,7 +132,7 @@ export default function Financials() {
 		'total-protocol-revenue',
 		withNetworkFee(ADAPTER_DATA_TYPES.DAILY_PROTOCOL_REVENUE)
 	)
-	if (!data) return <PageLoader />
+	if (!data) return <PanelLoadingStatus />
 
 	const { distribution, affiliate } = data
 

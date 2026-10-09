@@ -39,7 +39,7 @@ const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorVie
 ]
 
 const PILL_DOT: Record<SavePillState, string> = {
-	saving: 'bg-secondary animate-pulse',
+	saving: 'bg-status-dot animate-pulse',
 	saved: 'bg-success',
 	unsaved: 'bg-warning',
 	error: 'bg-error',
@@ -109,7 +109,7 @@ export function ArticleEditorHeader({
 	}
 	return (
 		<header
-			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
+			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-42 xl:px-4 ${
 				isPublished ? 'border-success-muted' : 'border-medium'
 			}`}
 		>
