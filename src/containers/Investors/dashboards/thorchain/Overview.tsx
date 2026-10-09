@@ -171,7 +171,7 @@ function LiquiditySection({
 
 			{/* One pool/token view: every THORChain pool IS a single token, so the old
 			    "Token Breakdown" donut and "Token Values" table duplicated these two. */}
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+			<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
 				<CategoryBarCard chart={liquidity.poolDepthChart} />
 				<div className="rounded-lg border border-subtle bg-surface p-4">
 					<h3 className="mb-3 title-md text-primary">{liquidity.pools.title ?? 'Pools by Depth'}</h3>

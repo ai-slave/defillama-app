@@ -426,7 +426,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				</InlineStatus>
 			) : null}
 
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-[2fr_1fr]">
+			<div className="grid grid-cols-1 items-start gap-2 xl:grid-cols-[2fr_1fr]">
 				<Panel padding="none">
 					<PanelHeader>
 						<div className="mr-auto">

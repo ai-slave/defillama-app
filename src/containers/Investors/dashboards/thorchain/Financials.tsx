@@ -225,7 +225,7 @@ export default function Financials() {
 						chart={affiliate.dailyChart}
 						subtitle="Affiliate fees paid to integrating wallets and interfaces."
 					/>
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+					<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
 						<div className="rounded-lg border border-subtle bg-surface p-4">
 							<h3 className="mb-3 title-md text-primary">{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />

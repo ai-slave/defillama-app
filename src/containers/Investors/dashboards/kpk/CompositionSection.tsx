@@ -162,7 +162,7 @@ export function CompositionSection({
 			    Splits at the mockup's own 900px-ish breakpoint rather than waiting for xl. One
 			    table width on every tab, sized to the longest names (the overview's lines), so
 			    the chart and table line up as you switch tabs. */}
-			<div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+			<div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
 				<ChartPanel className="min-w-0">
 					{model ? (
 						<>

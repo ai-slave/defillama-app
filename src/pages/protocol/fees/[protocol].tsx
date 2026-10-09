@@ -30,8 +30,8 @@ import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/ty
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import type { HallmarkPoint } from '~/utils/hallmarks'
@@ -276,8 +276,8 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Panel padding="md" className="col-span-1 gap-6 xl:min-h-[360px]">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="md" className="xl:min-h-[360px]">
 					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
@@ -291,8 +291,8 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 						}
 					/>
-				</Panel>
-				<ChartPanel className="col-span-1 xl:col-[2/-1]">
+				</SummaryStatsCard>
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						{props.defaultCharts.length > 1 ? (
@@ -330,7 +330,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<div className="grid grid-cols-2 gap-2">
 				{getProtocolFeeBreakdownPanels(props).map((panel) => (
 					<ChartPanel key={panel.title} className="col-span-full xl:col-span-1 xl:only:col-span-full">
