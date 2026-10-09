@@ -38,8 +38,12 @@ import { formatPercentChange } from '~/utils/numberFormat'
 ---------------------------------------------------------------------------- */
 
 export function SummaryCardGrid({ className, children }: { className?: string; children: ReactNode }) {
+	// The chart keeps its own height and the summary card stretches to the row (SummaryStatsCard's self-stretch). A
+	// chart that filled a long card's height grew with every metric row and showed nothing more.
 	return (
-		<div className={`relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3 ${className ?? ''}`.trim()}>{children}</div>
+		<div className={`relative isolate grid grid-cols-2 items-start gap-2 xl:grid-cols-3 ${className ?? ''}`.trim()}>
+			{children}
+		</div>
 	)
 }
 
@@ -60,7 +64,7 @@ export function SummaryStatsCard({
 	return (
 		<Card
 			padding={padding}
-			className={`col-span-2 flex w-full flex-col ${gap === 'sm' ? 'gap-3' : 'gap-6'} xl:col-span-1 ${className ?? ''}`.trim()}
+			className={`col-span-2 flex w-full flex-col self-stretch ${gap === 'sm' ? 'gap-3' : 'gap-6'} xl:col-span-1 ${className ?? ''}`.trim()}
 		>
 			{children}
 		</Card>
