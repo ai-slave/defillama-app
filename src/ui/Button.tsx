@@ -54,6 +54,11 @@ import { LoadingSpinner } from './Loaders'
    Variants with a selected state use the additive `hover-wash`, so the
    active tint stays under hover. Variants never inject icons.
 
+   Pressed: while held down, every variant goes one ramp step past its hover
+   (the neutral wash deepens, a tint goes to step 5, primary darkens), with no
+   scale or movement, so a tap shows on touch screens, which have no hover.
+   A selected or disabled button takes no pressed step.
+
    Sizes: sm = min-h-6 px-2 py-0.5 rounded-md; md = min-h-8 px-3 py-1.5
    rounded-lg; both label-sm. lg = min-h-11 px-4 py-2.5 label-md, only for a
    standalone full-width conversion CTA (pricing, checkout, the API card);
@@ -131,26 +136,26 @@ type ButtonSize = 'sm' | 'md' | 'lg'
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	secondary:
-		'border border-medium text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
+		'border border-medium text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row not-disabled:not-aria-disabled:active:bg-pressed-row',
 	primary:
-		'border border-transparent bg-brand text-on-brand not-disabled:not-aria-disabled:hover:brightness-110 not-disabled:not-aria-disabled:focus-visible:brightness-110 focus-visible:focus-ring-on-brand',
+		'border border-transparent bg-brand text-on-brand not-disabled:not-aria-disabled:hover:brightness-110 not-disabled:not-aria-disabled:focus-visible:brightness-110 not-disabled:not-aria-disabled:active:brightness-90 focus-visible:focus-ring-on-brand',
 	outline:
-		'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-brand-tint focus-visible:bg-brand-tint',
+		'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-brand-tint focus-visible:bg-brand-tint not-disabled:not-aria-disabled:active:bg-brand-tint-pressed',
 	destructive:
-		'border border-error-muted text-error not-disabled:not-aria-disabled:hover:bg-error-tint focus-visible:bg-error-tint',
+		'border border-error-muted text-error not-disabled:not-aria-disabled:hover:bg-error-tint focus-visible:bg-error-tint not-disabled:not-aria-disabled:active:bg-error-tint-pressed',
 	ghost:
 		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link text-secondary not-data-[active=true]:not-disabled:not-aria-disabled:hover:text-primary not-data-[active=true]:focus-visible:text-primary',
 	filter:
-		'border border-brand text-primary not-data-[active=true]:not-disabled:not-aria-disabled:hover:bg-brand-tint not-data-[active=true]:focus-visible:bg-brand-tint data-[active=true]:bg-brand-muted',
+		'border border-brand text-primary not-data-[active=true]:not-disabled:not-aria-disabled:hover:bg-brand-tint not-data-[active=true]:focus-visible:bg-brand-tint not-data-[active=true]:not-disabled:not-aria-disabled:active:bg-brand-tint-pressed data-[active=true]:bg-brand-muted',
 	toggle:
 		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link',
 	metricBrowse:
-		'border border-dashed border-brand bg-brand-tint text-primary not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong',
+		'border border-dashed border-brand bg-brand-tint text-primary not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong not-disabled:not-aria-disabled:active:bg-brand-tint-pressed',
 	// Hidden until the pointer enters the rail or the arrow takes focus.
 	overlay:
 		'hover-wash border border-medium bg-surface text-primary shadow-overlay opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100',
 	ghostDestructive:
-		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error'
+		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-tint not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-tint focus-visible:text-error not-disabled:not-aria-disabled:active:bg-error-tint-pressed'
 }
 
 /* Every variant disables to one neutral look (design.md → Color ramps): disabled text, plus the disabled fill on

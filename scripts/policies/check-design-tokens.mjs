@@ -248,6 +248,19 @@ function matchDeprecatedTailwindSpelling(content) {
 	return found.length > 0 ? found : null
 }
 
+// Bare `shadow` is also an English word and an ECharts axisPointer type, so it counts only inside a class list.
+const STOCK_SHADOW_SIZE = /(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|inner)(?![\w-])/g
+function matchStockShadow(content) {
+	const found = content.match(STOCK_SHADOW_SIZE) ?? []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		const tokens = literal.slice(1, -1).split(/\s+/)
+		if (!tokens.some((t) => t.includes('-') && /^[\w!:[\]()/.%&>~*-]+$/.test(t))) continue
+		for (const token of tokens) if (/^(?:[\w[\]()&>~.*-]+:)*shadow$/.test(token)) found.push(token)
+	}
+	return found.length > 0 ? found : null
+}
+
 const NAMED_TYPOGRAPHY_UTILITY =
 	/^(?:heading-(?:lg|sm|xs)|title-(?:lg|md|sm)|table-header|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
 // text-[…] counts as typography only when the arbitrary value is not a color
@@ -665,8 +678,8 @@ const RULES = [
 	{
 		id: 'stock-shadow',
 		description:
-			'stock Tailwind shadow (shadow-xs … shadow-2xl, shadow-inner) — pick the elevation level: none for cards and in-flow panels, shadow-raised, shadow-overlay or shadow-dialog (design.md → Elevation)',
-		pattern: /(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*shadow-(?:2xs|xs|sm|md|lg|xl|2xl|inner)(?![\w-])/g
+			'stock Tailwind shadow (shadow, shadow-xs … shadow-2xl, shadow-inner) — pick the elevation level: none for cards and in-flow panels, shadow-raised, shadow-overlay or shadow-dialog (design.md → Elevation)',
+		match: matchStockShadow
 	},
 	{
 		id: 'product-utility-leak',

@@ -63,9 +63,10 @@
 	--text-success: var(--text-data-up);
 	--text-error: var(--text-data-down);
 	/* Tints and hued borders on the ramps (design.md → Color ramps): faint is
-	   step 2, tint 3, tint-strong 4, a muted border 7, a strong border 8. */
+	   step 2, tint 3, tint-strong 4, pressed 5, a muted border 7, a strong border 8. */
 	--bg-brand-tint: var(--blue-3);
 	--bg-brand-tint-strong: var(--blue-4);
+	--bg-brand-tint-pressed: var(--blue-5);
 	--bg-data-down-tint: var(--crimson-3);
 	--bg-data-down-tint-strong: var(--crimson-4);
 	--bg-data-up-tint: var(--emerald-3);
@@ -73,6 +74,7 @@
 	--bg-error-faint: var(--crimson-2);
 	--bg-error-tint: var(--crimson-3);
 	--bg-error-tint-strong: var(--crimson-4);
+	--bg-error-tint-pressed: var(--crimson-5);
 	--bg-success-faint: var(--emerald-2);
 	--bg-success-tint: var(--emerald-3);
 	--bg-success-tint-strong: var(--emerald-4);
@@ -125,6 +127,7 @@
 	   keeps its own hue. Focus-visible may keep the wash; the focus ring is the
 	   indicator. */
 	--bg-hover-row: #090b0c0f; /* popover, menu and table rows */
+	--bg-pressed-row: #090b0c1a; /* the same wash while a control is held down */
 	--bg-hover-card: #090b0c08; /* interactive cards */
 
 	/* ------------------------------------------------------------------
@@ -190,12 +193,14 @@ html.dark,
 
 	--bg-skeleton: var(--neutral-5);
 
-	/* Dark surfaces carry elevation with their lighter fill; raised and dialog shadows deepen so they still separate. */
+	/* Dark surfaces carry elevation with their lighter fill; every shadow deepens so it still shows on a near-black
+	   page. The overlay fill is one step above a card, so its shadow is what separates a menu from a busy chart. */
 	--elevation-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.3);
-	--elevation-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.25);
+	--elevation-overlay: 0 12px 32px -12px rgb(0 0 0 / 0.5);
 	--elevation-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.6);
 
 	--bg-hover-row: #ffffff0f;
+	--bg-pressed-row: #ffffff1a;
 	--bg-hover-card: #ffffff08;
 
 	/* Chart chrome */
@@ -258,6 +263,7 @@ html.dark,
 	/* State overlays — painted over bg-surface; also used for focus-visible */
 	--color-hover-row: var(--bg-hover-row);
 	--color-hover-card: var(--bg-hover-card);
+	--color-pressed-row: var(--bg-pressed-row);
 }
 
 /* Border-color utilities get explicit names ("--color-border-subtle" would
@@ -296,6 +302,9 @@ html.dark,
 @utility bg-brand-tint-strong {
 	background-color: var(--bg-brand-tint-strong);
 }
+@utility bg-brand-tint-pressed {
+	background-color: var(--bg-brand-tint-pressed);
+}
 /* Rising and falling marks drawn in the DOM (a change bar), the same colours the charts draw. */
 @utility bg-chart-up {
 	background-color: var(--chart-up);
@@ -323,6 +332,9 @@ html.dark,
 }
 @utility bg-error-tint-strong {
 	background-color: var(--bg-error-tint-strong);
+}
+@utility bg-error-tint-pressed {
+	background-color: var(--bg-error-tint-pressed);
 }
 @utility bg-success-faint {
 	background-color: var(--bg-success-faint);
@@ -440,7 +452,8 @@ html.dark,
    and strips the tint. Transparent-resting elements (popover and table
    rows) may keep hover:bg-hover-row. A selected control takes no wash: the
    selection is its state, and the wash would drop its text under AA on the
-   selected tint. A tinted control hovers to the next ramp step instead. */
+   selected tint. A tinted control hovers to the next ramp step instead.
+   While held down the wash deepens to bg-pressed-row. */
 .hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
 		[aria-pressed='true']
 	):hover,
@@ -448,6 +461,11 @@ html.dark,
 		[aria-pressed='true']
 	):focus-visible {
 	background-image: linear-gradient(var(--bg-hover-row), var(--bg-hover-row));
+}
+.hover-wash:not(:disabled):not([aria-disabled='true']):not([data-active='true']):not([aria-selected='true']):not(
+		[aria-pressed='true']
+	):active {
+	background-image: linear-gradient(var(--bg-pressed-row), var(--bg-pressed-row));
 }
 
 /* Card-strength variant (--bg-hover-card) for interactive tiles. */

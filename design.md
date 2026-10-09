@@ -101,14 +101,15 @@ Elevation is picked by how far a surface sits from the page, not by how much sha
 | overlay | `shadow-overlay` | Floats over nearby content: menus, popovers, tooltips, hovercards, floating toolbars and buttons   |
 | dialog  | `shadow-dialog`  | Over the whole UI: dialogs, sheets, modals, full-screen overlays                                   |
 
-- Each token carries its own dark value, so never add a `dark:` shadow fork. Stock Tailwind shadows (`shadow-sm` … `shadow-2xl`, `shadow-inner`) are not used (`stock-shadow`).
-- A floating surface takes `bg-overlay` with `shadow-overlay`; in dark mode its lighter fill carries the lift.
+- Each token carries its own dark value, so never add a `dark:` shadow fork. Stock Tailwind shadows (`shadow`, `shadow-sm` … `shadow-2xl`, `shadow-inner`) are not used (`stock-shadow`).
+- A floating surface takes `bg-overlay` with `shadow-overlay`. In dark mode its lighter fill and border carry the lift, and the shadow deepens so a menu still separates from a busy chart under it. Dark mode never gets more shadowed surfaces than light.
+- Shadow is depth, never a border substitute: an in-flow card keeps its translucent border and no shadow, because a shadow on every card in a dense grid reads as grey haze. A control laid over an image, a gradient or a coloured bar takes a translucent border token (or none) with `shadow-raised`, never a solid grey border, which turns muddy on colour.
 - Product glows (Research, LlamaAI gold, Subscription, investor accents) are accents in their theme files, not elevation.
 
 Usage rules:
 
 - Surfaces step `page → surface → elevated-1 → elevated-2`. Cards sit on `bg-surface`; elevation steps are for nested emphasis, never page-level fills.
-- Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode with surface lift.
+- Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode mainly with surface lift.
 - Text tiers are text-only: never `bg-primary`.
 - Use solid colors for text, fills and tints, translucent ones for neutral borders, dividers, hover washes, glass, veils and seams. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`): use the ramp step for that role.
 - The `opacity` utility is for imagery, decoration and show/hide motion, never for text or a control's state. Dimmed text takes the next text tier. A disabled control takes `text-disabled`, plus `bg-disabled` when filled and `border-disabled` when outlined, in every variant (`disabled-opacity`). Only a disabled composite whose children carry their own colors or imagery (an avatar picker, a logo row, a dataset card) keeps `opacity-60` on the whole.
@@ -128,6 +129,7 @@ Hover has two mechanisms, picked by the resting background:
 - `hover:bg-hover-row` replaces the background, so it goes only on elements that rest transparent.
 - `hover-wash` stacks the wash over the resting color and skips disabled and selected elements (`data-active`, `aria-selected`, `aria-pressed`), so it goes on anything opaque. Never put `hover:bg-hover-row` on `bg-brand-muted`: it replaces the tint.
 - A control's hover, focus and pressed states come from its own hue. Neutral controls take the neutral wash; a tinted control rests on `bg-{role}-tint` and hovers to `bg-{role}-tint-strong`; destructive buttons and menu rows hover with `bg-error-tint`; a brand-outlined control (`outline`, `filter`) hovers to `bg-brand-tint`; a selected control sits on `bg-brand-muted` and takes no wash. Brand blue never hovers a neutral control.
+- Pressed (`active:`) is one step past hover, with no transition so a quick tap still shows it: the neutral wash deepens to `bg-pressed-row` (`hover-wash` does this itself), a hued control goes to its step-5 `bg-{role}-tint-pressed`, and a solid fill darkens. Touch screens have no hover, so pressed is the only feedback a tap gets. Never scale or move a control on press: one shared look beats per-page motion.
 - A trigger resting on `bg-surface-elevated-1` may hover to `bg-surface-elevated-2` instead. Never combine that step with a wash.
 
 Focus and selection:
@@ -241,6 +243,7 @@ Spacing is Tailwind's 4px-based scale; never an arbitrary value such as `p-[10px
 - Use one radius per component type and never mix radii within a view.
 - 8px and 12px are `rounded-lg` and `rounded-xl`, never an arbitrary value (`arbitrary-standard-radius`).
 - A component that needs another radius exposes it as a variant (`Card radius="large"`), never a page-local `rounded-*`.
+- A rounded box nested in a rounded box takes the outer radius minus the padding between them, so the two curves stay parallel: `SegmentedControl`'s 8px track with 2px padding holds 6px items. When the result falls off the scale, round the inner box down, never the outer one up.
 
 Control heights come from one scale: 24px small (`sm`), 32px default (`md`), 44px inside a phone sheet's rows, 56px dialog headers.
 

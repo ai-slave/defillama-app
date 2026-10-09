@@ -36,7 +36,7 @@ export function Menu({
 
 	return (
 		<Ariakit.DialogProvider open={show} setOpen={setShow}>
-			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover">
+			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow-raised hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover">
 				<span className="sr-only">Open navigation menu</span>
 				<Icon name="menu" height={16} width={16} />
 			</Ariakit.DialogDisclosure>

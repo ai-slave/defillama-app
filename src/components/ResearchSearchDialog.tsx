@@ -49,7 +49,7 @@ const SECTION_ICONS = {
 
 const SEARCH_TRIGGER_STYLES: Record<SearchDialogVariant, string> = {
 	mobile:
-		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-on-brand-control text-on-brand shadow transition-colors hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden',
+		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-on-brand-control text-on-brand shadow-raised transition-colors hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden',
 	article:
 		'hidden h-11 min-w-[113px] items-center justify-center gap-2 rounded-full border border-medium bg-surface px-4 label-md text-primary transition-colors hover:border-brand hover:text-link lg:inline-flex',
 	desktop:

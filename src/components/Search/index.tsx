@@ -89,7 +89,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 			</BasicLink>
 			{searchTrigger ?? (
 				<Ariakit.DialogProvider store={siteSearchStore}>
-					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden">
+					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-on-brand-control p-3 text-on-brand shadow-raised hover:bg-on-brand-control-hover focus-visible:bg-on-brand-control-hover active:bg-on-brand-control-hover lg:hidden">
 						<span className="sr-only">Search</span>
 						<Icon name="search" height={16} width={16} />
 					</Ariakit.DialogDisclosure>
