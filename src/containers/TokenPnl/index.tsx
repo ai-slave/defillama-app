@@ -157,7 +157,10 @@ function TokenPnlContent({
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<section className="grid gap-2 sm:grid-cols-3" aria-label="Performance summary">
+			<section
+				className={`grid gap-2 ${annualizedReturn != null ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}
+				aria-label="Performance summary"
+			>
 				<StatTile label="Return" value={<Change value={percentChange} />} sub={quantityLabel} />
 				<StatTile
 					label="Holding period"
@@ -173,11 +176,13 @@ function TokenPnlContent({
 						</>
 					}
 				/>
-				<StatTile
-					label="Annualised return"
-					value={<Change value={annualizedReturn} />}
-					sub={`Based on ${holdingPeriodDays}d period`}
-				/>
+				{annualizedReturn != null ? (
+					<StatTile
+						label="Annualised return"
+						value={<Change value={annualizedReturn} />}
+						sub={`Based on ${holdingPeriodDays}d period`}
+					/>
+				) : null}
 			</section>
 
 			<Panel padding="none">

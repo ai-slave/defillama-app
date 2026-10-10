@@ -18,7 +18,8 @@ export type TokenPnlResult = {
 		rangeHigh: number
 		rangeLow: number
 		holdingPeriodDays: number
-		annualizedReturn: number
+		/** null under a year: the window's return is not annualised. */
+		annualizedReturn: number | null
 	}
 	currentPrice: number
 	chartData: { dataset: IMultiSeriesChartProps['dataset']; charts: IMultiSeriesChartProps['charts'] }
@@ -186,7 +187,7 @@ export async function computeTokenPnl(params: {
 				rangeHigh: 0,
 				rangeLow: 0,
 				holdingPeriodDays: 0,
-				annualizedReturn: 0
+				annualizedReturn: null
 			},
 			currentPrice: 0,
 			chartData: {
@@ -210,8 +211,12 @@ export async function computeTokenPnl(params: {
 	const percentChange = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0
 	const absoluteChange = endPrice - startPrice
 	const holdingPeriodDays = Math.max(1, Math.round((end - start) / DAY_IN_SECONDS))
-	const annualizedBase = Math.max(Number.EPSILON, 1 + percentChange / 100)
-	const annualizedReturn = (annualizedBase ** (365 / holdingPeriodDays) - 1) * 100
+	// A return is annualised only over a year or more, as the GIPS standard requires. Compounding a shorter window to a
+	// year turns a 5% week into over +1,000% and a big one-day move into Infinity. The floor keeps a total loss at -100%.
+	const annualizedReturn =
+		holdingPeriodDays >= 365
+			? (Math.max(Number.EPSILON, 1 + percentChange / 100) ** (365 / holdingPeriodDays) - 1) * 100
+			: null
 
 	const timeline: Array<TimelinePoint> = []
 	let rangeHigh = Number.NEGATIVE_INFINITY
