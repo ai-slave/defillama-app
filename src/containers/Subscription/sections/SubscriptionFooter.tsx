@@ -63,12 +63,12 @@ export function SubscriptionFooter() {
 						<img
 							src="/assets/defillama-dark-neutral.webp"
 							alt="DefiLlama"
-							className="h-7 w-auto object-contain object-left dark:hidden"
+							className="h-7 w-[82px] object-contain object-left dark:hidden"
 						/>
 						<img
 							src="/assets/defillama.webp"
 							alt="DefiLlama"
-							className="hidden h-7 w-auto object-contain object-left dark:block"
+							className="hidden h-7 w-[82px] object-contain object-left dark:block"
 						/>
 					</div>
 					<SocialIcons size={18} />

@@ -91,7 +91,11 @@ export function SubscriptionCoverage() {
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-8">
 					<div className="flex items-center justify-center gap-2">
-						<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
+						<img
+							src="/assets/defillama-dark.webp"
+							alt="DefiLlama"
+							className="h-14 w-[164px] md:h-10 md:w-[117px] dark:hidden"
+						/>
 						<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:size-10 dark:block" />
 						<span className="hidden heading-sm text-primary dark:inline">DefiLlama</span>
 					</div>

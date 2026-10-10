@@ -14,6 +14,11 @@ export function SponsoredByBadge({ sponsorLogo }: { sponsorLogo: ArticleImage })
 				src={sponsorLogo.url}
 				alt={sponsorLogo.alt || 'Sponsor logo'}
 				className="h-5 w-auto max-w-[80px] object-contain"
+				style={
+					sponsorLogo.width && sponsorLogo.height
+						? { aspectRatio: `${sponsorLogo.width} / ${sponsorLogo.height}` }
+						: undefined
+				}
 			/>
 		</div>
 	)

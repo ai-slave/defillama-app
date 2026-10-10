@@ -5,7 +5,7 @@
 - Use `bun` for package management and project commands, and `bunx` to run a package binary. Never use npm, npx, yarn or pnpm.
 - Run tests with `bun run test <path>`. Never use `bun test`: it runs Bun's own runner, not the repo's Vitest setup.
 - Never run `bun run build` or any other build. Builds fail on API rate limits.
-- The pre-commit hook formats and lints staged files and runs the date, number, hydration and column-picker policies on staged `src/` files.
+- The pre-commit hook formats and lints staged files and runs the date, number, hydration, column-picker and image-size policies on staged `src/` files.
 - `bun run check` runs what the hook does not: the whole-tree format check, typecheck, test:typecheck, and the design-token, color-contrast and focus-handoff policies.
 - While working, run only the targeted tests and checks that prove the change. Never rerun repo-wide checks after every intermediate edit.
 - Targeted tests include every test that imports a changed module, found by grepping importers across `src/`, not only the changed folder.

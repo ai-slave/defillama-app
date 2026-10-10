@@ -119,14 +119,14 @@ function FooterBrand({ className = '', wideDescription = false }: { className?: 
 					alt="DefiLlama Research"
 					width={229}
 					height={72}
-					className="h-10 w-auto dark:hidden"
+					className="h-10 w-[127px] dark:hidden"
 				/>
 				<img
 					src="/assets/research_logo_dark.webp"
 					alt="DefiLlama Research"
 					width={229}
 					height={72}
-					className="hidden h-10 w-auto dark:block"
+					className="hidden h-10 w-[127px] dark:block"
 				/>
 			</Link>
 			<p className={`${descriptionClassName} ${wideDescription ? '' : 'max-w-xs'}`}>

@@ -40,7 +40,11 @@ export function SubscriptionPricingSection({
 		<section className="subscription-pricing mx-auto flex max-w-[1440px] flex-col items-center px-4 pt-14 md:px-10 md:pt-20 md:pb-32 2xl:px-32">
 			<div className="pricing-original flex w-full flex-col items-center gap-9 text-center md:w-[600px]">
 				<div className="flex items-center gap-2">
-					<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
+					<img
+						src="/assets/defillama-dark.webp"
+						alt="DefiLlama"
+						className="h-14 w-[164px] md:h-10 md:w-[117px] dark:hidden"
+					/>
 					<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:h-10 md:w-10 dark:block" />
 					<span className="hidden heading-sm text-primary dark:inline">DefiLlama</span>
 				</div>

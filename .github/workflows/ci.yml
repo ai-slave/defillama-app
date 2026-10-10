@@ -58,6 +58,9 @@ jobs:
       - name: Check column picker policy
         run: bun scripts/policies/check-column-pickers.ts --self-test && bun scripts/policies/check-column-pickers.ts
 
+      - name: Check image size policy
+        run: bun scripts/policies/check-image-size.ts --self-test && bun scripts/policies/check-image-size.ts
+
       - name: Check focus handoff policy
         run: bun scripts/policies/check-focus-handoff.ts --self-test && bun scripts/policies/check-focus-handoff.ts
 

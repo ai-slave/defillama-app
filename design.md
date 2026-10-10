@@ -363,6 +363,10 @@ Icons:
 - An icon leading text that can wrap (a notice, a list item, a status row, a feature bullet) sits in a `flex h-lh shrink-0 items-center` box in an `items-start` row, so it centres on the first line at any type size, as `InlineStatus` does. Never nudge it with `mt-0.5`, `mt-px` or a translate, and never `items-center` a row whose text wraps: the icon then floats to the middle of the paragraph.
 - An icon-only control carries `aria-label` plus a `Tooltip` that renders as the control (`render={<Button … />}`), never one wrapped around it, so the tooltip describes the focusable control and a tap keeps the control's action. Exceptions, named by what sits beside them: a field's clear ✕ (the field's label names it), a row's expand chevron and a disclosure chevron beside its own label (`aria-expanded` says what it does), and a composer's send arrow. Never put data in a native `title=`: touch cannot reach it.
 
+Images:
+
+- An `<img>` reserves its box before the file loads: both sides, or one side and the aspect ratio, from classes, `style` or the `width`/`height` attributes. A logo with a fixed height takes the matching width (`h-5` with `width={58} height={20}`, or `h-7 w-[82px]`), never `w-auto`: Chrome and Lighthouse call a `w-auto` image unsized and blame it for layout shifts nearby (`check-image-size`). An uploaded image passes its stored dimensions as `aspectRatio`.
+
 Values and windows:
 
 - A measurement window says what span a value covers and sits bare after it: `$6.629b 24h`.
@@ -475,3 +479,4 @@ Controls that share a row must share a height and a centre line, and only the re
 - [`scripts/policies/check-focus-handoff.ts`](scripts/policies/check-focus-handoff.ts) refuses the shapes that drop keyboard focus to the page when a control disables itself.
 - [`scripts/policies/check-form-validation.ts`](scripts/policies/check-form-validation.ts) refuses the browser's own validation: a form without `noValidate`, `setCustomValidity`/`reportValidity`, and `user-invalid` styles.
 - [`scripts/policies/check-column-pickers.ts`](scripts/policies/check-column-pickers.ts) fails a Columns picker that does not keep the identity column out of its options.
+- [`scripts/policies/check-image-size.ts`](scripts/policies/check-image-size.ts) fails an `<img>` whose box waits for the file, including a `w-auto` logo.
