@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
-import { EmptyState } from '~/containers/ProDashboard/components/EmptyState'
+import { EmptyDashboard } from '~/containers/ProDashboard/components/EmptyDashboard'
 import {
 	ProDashboardAPIProvider,
 	useProDashboardCatalog,
@@ -116,7 +116,7 @@ function DashboardTabInner() {
 					<ChartGrid onAddChartClick={NOOP} />
 				</div>
 			)}
-			{dashboardReady && !protocolsLoading && items.length === 0 && <EmptyState onAddChart={NOOP} isReadOnly />}
+			{dashboardReady && !protocolsLoading && items.length === 0 && <EmptyDashboard onAddChart={NOOP} isReadOnly />}
 		</>
 	)
 }

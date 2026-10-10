@@ -9,6 +9,7 @@ import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { EmptyState } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -93,13 +94,10 @@ function CriterionCards({
 	)
 }
 
-function EmptyState() {
+function NotDisclosedPanel() {
 	return (
 		<Panel padding="none" className="min-h-32">
-			<div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-tertiary">
-				<Icon name="eye-off" height={22} width={22} />
-				<p className="body-sm">Data not disclosed</p>
-			</div>
+			<EmptyState size="md" icon="eye-off" title="Data not disclosed" />
 		</Panel>
 	)
 }
@@ -554,13 +552,13 @@ export function MarketMakerPerformance({
 							mmVolumePct={metrics?.mmVolumePct ?? null}
 							avgSpreadPct={avgProviderSpread}
 						/>
-						{providers.length > 0 ? <PerformanceSummary providers={providers} /> : <EmptyState />}
+						{providers.length > 0 ? <PerformanceSummary providers={providers} /> : <NotDisclosedPanel />}
 					</div>
 					{breakdown ? <PerformanceBreakdown breakdown={breakdown} /> : null}
 					{uptimeCalculations.length > 0 ? <UptimeCalculations rows={uptimeCalculations} /> : null}
 				</>
 			) : (
-				<EmptyState />
+				<NotDisclosedPanel />
 			)}
 			<CriterionCards criteria={criteria} gradingScale={gradingScale} onOpen={onOpenCriterion} />
 		</section>

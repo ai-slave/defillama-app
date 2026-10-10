@@ -19,16 +19,14 @@ import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { dateRangeErrors } from '~/hooks/useDateRangeValidation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change, changeTone, formatChange } from '~/ui/Change'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -112,25 +110,9 @@ function TokenPnlContent({
 	// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
 	if (routerReady && isError) {
 		return (
-			<Panel padding="sm" className="flex-1 items-center justify-center">
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The retry leaves once the read succeeds; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							pendingLabel="Retrying…"
-							pending={isFetching}
-							onClick={() => void onRetry()}
-						>
-							Try again
-						</Button>
-					}
-				>
-					Couldn&apos;t load the price data.
-				</InlineStatus>
-			</Panel>
+			<PanelStatus variant="error" retry={{ refetch: onRetry, isFetching }}>
+				Couldn&apos;t load the price data.
+			</PanelStatus>
 		)
 	}
 
@@ -140,9 +122,10 @@ function TokenPnlContent({
 
 	if (!pnlData || pnlData.priceSeries.length === 0) {
 		return (
-			<Panel padding="sm" className="flex-1 items-center justify-center gap-2 text-center">
-				<p className="heading-xs text-primary">No historical data available for this range.</p>
-				<p className="body-sm text-tertiary">Try a different date range or another token.</p>
+			<Panel padding="none" className="flex-1">
+				<EmptyState size="md" title="No historical data available for this range">
+					Try a different date range or another token.
+				</EmptyState>
 			</Panel>
 		)
 	}

@@ -5,8 +5,8 @@ import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { EmptyState } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { disclosedVestingDurationMonths, disclosedVestingSchedule } from './disclosedVesting'
@@ -104,12 +104,7 @@ function Commentary({ title, text }: { title: string; text: string }) {
 }
 
 function NotDisclosed() {
-	return (
-		<div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-lg border border-subtle bg-surface p-6 text-tertiary">
-			<Icon name="eye-off" height={22} width={22} />
-			<p className="body-sm">Data not disclosed</p>
-		</div>
-	)
+	return <EmptyState size="md" framed icon="eye-off" title="Data not disclosed" className="min-h-32" />
 }
 
 const VESTING_CHART_OPTIONS = createCategoryChartOptions('%')

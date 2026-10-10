@@ -12,6 +12,7 @@ import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
+import { EmptyState } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -155,13 +156,13 @@ export function FilterBuilderContent({
 	)
 }
 
-/** The empty well in the active pane before any filter is added. */
+/** The active pane before any filter is added; shared by every filter dialog. */
 export function NoActiveFilters() {
 	return (
-		<p className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
+		<EmptyState size="md" icon="settings" title="No filters applied">
 			<span className="sm:hidden">Add filters from the list below to narrow the table.</span>
 			<span className="max-sm:hidden">Add filters from the list to narrow the table.</span>
-		</p>
+		</EmptyState>
 	)
 }
 

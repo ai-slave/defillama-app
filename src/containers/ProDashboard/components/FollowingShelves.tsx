@@ -5,10 +5,11 @@ import { FollowAuthorButton } from '~/containers/Authors/FollowAuthorButton'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useFollowingAuthors } from '../hooks/useFollowingAuthors'
 import type { FollowingShelf } from '../services/DashboardAPI'
-import { DashedTile, proPanelStyles } from '../ui'
+import { DashedTile } from '../ui'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
@@ -111,9 +112,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 			</div>
 
 			{shelf.dashboards.length === 0 ? (
-				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
-					No public dashboards yet
-				</p>
+				<EmptyState size="md" title="No public dashboards yet" framed />
 			) : (
 				<ShelfRail itemCount={shelf.dashboards.length + (hasMore ? 1 : 0)}>
 					{shelf.dashboards.map((dashboard) => (
@@ -149,18 +148,20 @@ export function FollowingShelves() {
 
 	if (shelves.length === 0) {
 		return (
-			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-				<Icon name="users" height={32} width={32} className="text-tertiary" />
-				<h2 className="text-center title-lg text-primary">You're not following anyone yet</h2>
-				<p className="text-center body-md text-secondary">
-					Follow authors and their public dashboards will show up here.
-				</p>
-				<div className="mt-7">
+			<EmptyState
+				size="lg"
+				icon="users"
+				title="You're not following anyone yet"
+				headingAs="h2"
+				framed
+				actions={
 					<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
 						Browse dashboards
 					</Button>
-				</div>
-			</div>
+				}
+			>
+				Follow authors and their public dashboards will show up here.
+			</EmptyState>
 		)
 	}
 

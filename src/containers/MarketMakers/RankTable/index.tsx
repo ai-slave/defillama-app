@@ -4,7 +4,7 @@ import { sortedTableFeatures } from '~/components/Table/features/sorting'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ColumnConfig, DisplayMode, Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
@@ -77,21 +77,18 @@ export function RankTable({
 				</div>
 			</PanelHeader>
 			{isLoading ? (
-				<div role="status" aria-live="polite" className="flex min-h-[240px] items-center justify-center p-8">
-					<LoadingIndicator />
-					<span className="sr-only">Loading rankings</span>
-				</div>
+				<SurfaceBodyLoadingStatus label="Loading rankings" className="min-h-[240px]" />
 			) : rows.length === 0 ? (
-				<div
-					role="status"
-					aria-live="polite"
-					className="flex min-h-[240px] flex-col items-center justify-center gap-3 p-8 text-center"
-				>
-					<p className="body-sm text-secondary">Your filter preferences did not provide any result</p>
-					<Button type="button" onClick={onRefine} size="md">
-						Reset
-					</Button>
-				</div>
+				<EmptyState
+					size="md"
+					title="No market makers match your filters"
+					actions={
+						<Button type="button" onClick={onRefine} size="sm">
+							Reset
+						</Button>
+					}
+					className="min-h-[240px]"
+				/>
 			) : (
 				<StickyTable table={instance} />
 			)}

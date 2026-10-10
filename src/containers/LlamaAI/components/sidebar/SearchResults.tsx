@@ -2,6 +2,7 @@ import { memo } from 'react'
 import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { ListRow } from '~/ui/ListRow'
+import { NoResults } from '~/ui/NoResults'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 
@@ -57,11 +58,7 @@ export const SearchResults = memo(function SearchResults({
 	}
 
 	if (!isSearching && results.length === 0 && query.trim()) {
-		return (
-			<p className="flex items-center justify-center rounded-lg border border-dashed border-medium p-4 text-center body-sm text-tertiary">
-				No results for &ldquo;{query}&rdquo;
-			</p>
-		)
+		return <NoResults>No results for &ldquo;{query}&rdquo;</NoResults>
 	}
 
 	return (

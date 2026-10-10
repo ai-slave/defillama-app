@@ -45,6 +45,6 @@ describe('RankTable', () => {
 				onSelectMM={() => {}}
 			/>
 		)
-		expect(html).toContain('did not provide any result')
+		expect(html).toContain('No market makers match your filters')
 	})
 })

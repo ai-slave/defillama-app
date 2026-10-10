@@ -10,8 +10,7 @@ import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlock
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -382,12 +381,12 @@ export function UnlocksChartTab({
 						{chartContent}
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
-						<div>
-							<Icon name="linear-unlock" height={32} width={32} className="mx-auto mb-1" />
-							<p className="body-sm">Select a protocol to preview unlocks</p>
-						</div>
-					</div>
+					<EmptyState
+						size="md"
+						icon="linear-unlock"
+						title="Select a protocol to preview unlocks"
+						className="h-[320px]"
+					/>
 				)}
 			</div>
 		</div>

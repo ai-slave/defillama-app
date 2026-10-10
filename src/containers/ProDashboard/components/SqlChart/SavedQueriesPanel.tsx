@@ -7,6 +7,7 @@ import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface SavedQueriesPanelProps {
@@ -21,13 +22,9 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 
 	if (queries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle px-4 py-8 text-center">
-				<Icon name="bookmark" className="size-4 text-tertiary" />
-				<p className="body-sm text-secondary">No saved queries yet.</p>
-				<p className="body-sm text-tertiary">
-					Saving a SQL card stores its query here — reusable on any dashboard and in SQL Studio.
-				</p>
-			</div>
+			<EmptyState size="md" icon="bookmark" title="No saved queries yet">
+				Saving a SQL card stores its query here — reusable on any dashboard and in SQL Studio.
+			</EmptyState>
 		)
 	}
 

@@ -6,6 +6,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -93,9 +94,9 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 
 	if (!valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState size="md" icon="bar-chart-2" title="Not enough columns for a histogram" framed className="h-[220px]">
 				Histogram needs a numeric column.
-			</div>
+			</EmptyState>
 		)
 
 	return (

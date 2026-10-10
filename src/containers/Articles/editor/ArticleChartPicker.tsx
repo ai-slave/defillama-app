@@ -27,7 +27,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { EmptyState, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -497,13 +497,10 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 
 				<section className={`min-h-0 flex-col overflow-y-auto md:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}>
 					{series.length === 0 ? (
-						<div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-16 text-center">
-							<div className="label-md text-primary">Pick up to {MAX_SERIES} series</div>
-							<p className="max-w-sm body-sm text-tertiary">
-								Choose a metric from the left, then tick any protocols or chains to add them as series. Switch metric or
-								tab to mix different metrics and entity types on a single chart.
-							</p>
-						</div>
+						<EmptyState size="md" title={`Pick up to ${MAX_SERIES} series`}>
+							Choose a metric from the left, then tick any protocols or chains to add them as series. Switch metric or
+							tab to mix different metrics and entity types on a single chart.
+						</EmptyState>
 					) : (
 						<>
 							<div className="grid gap-2 px-5 pt-4 pb-3">

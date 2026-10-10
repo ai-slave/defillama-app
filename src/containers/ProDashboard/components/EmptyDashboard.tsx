@@ -2,9 +2,10 @@ import type { ComponentProps } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { ProButton } from '../ui'
 
-interface EmptyStateProps {
+interface EmptyDashboardProps {
 	onAddChart: () => void
 	onGenerateWithAI?: () => void
 	isReadOnly?: boolean
@@ -33,14 +34,45 @@ const EDITOR_HINTS: ReadonlyArray<{
 	}
 ]
 
-export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, editHref }: EmptyStateProps) {
+export function EmptyDashboard({ onAddChart, onGenerateWithAI, isReadOnly = false, editHref }: EmptyDashboardProps) {
 	const showAIGeneration = onGenerateWithAI && !isReadOnly
 
 	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg border border-subtle bg-surface px-1 py-12">
-			<Icon name="bar-chart-2" height={48} width={48} className="text-secondary" />
-			<h1 className="heading-lg">{isReadOnly ? 'This dashboard is empty' : 'No cards yet'}</h1>
-			<p className="max-w-lg text-center body-lg text-secondary">
+		<div className="flex flex-1 flex-col items-center justify-center gap-6">
+			<EmptyState
+				size="lg"
+				icon="bar-chart-2"
+				title={isReadOnly ? 'This dashboard is empty' : 'No cards yet'}
+				framed
+				className="w-full flex-none"
+				actions={
+					isReadOnly ? (
+						editHref ? (
+							<ProButton as={BasicLink} href={editHref} size="md" variant="primary">
+								<Icon name="pencil" height={14} width={14} />
+								Edit dashboard
+							</ProButton>
+						) : (
+							<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
+								Browse dashboards
+							</Button>
+						)
+					) : (
+						<>
+							<ProButton type="button" size="md" variant="primary" onClick={onAddChart}>
+								<Icon name="plus" height={14} width={14} />
+								Add your first card
+							</ProButton>
+							{showAIGeneration ? (
+								<ProButton type="button" size="md" variant="ai" onClick={onGenerateWithAI}>
+									<Icon name="sparkles" height={14} width={14} />
+									Generate with LlamaAI
+								</ProButton>
+							) : null}
+						</>
+					)
+				}
+			>
 				{isReadOnly
 					? editHref
 						? 'Switch to editing to add charts, tables, metrics or text.'
@@ -48,37 +80,9 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, e
 					: showAIGeneration
 						? 'Add charts, tables, metrics or text — or let LlamaAI draft the first version.'
 						: 'Add charts, tables, metrics or text.'}
-			</p>
-			{isReadOnly ? (
-				<div className="mt-7">
-					{editHref ? (
-						<ProButton as={BasicLink} href={editHref} size="lg" variant="primary">
-							<Icon name="pencil" height={20} width={20} />
-							Edit dashboard
-						</ProButton>
-					) : (
-						<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
-							Browse dashboards
-						</Button>
-					)}
-				</div>
-			) : null}
+			</EmptyState>
 			{!isReadOnly ? (
-				<div className="mt-7 flex flex-col justify-center gap-4 sm:flex-row">
-					<ProButton type="button" size="lg" variant="primary" onClick={onAddChart}>
-						<Icon name="plus" height={20} width={20} />
-						Add your first card
-					</ProButton>
-					{showAIGeneration ? (
-						<ProButton type="button" size="lg" variant="ai" onClick={onGenerateWithAI}>
-							<Icon name="sparkles" height={20} width={20} />
-							Generate with LlamaAI
-						</ProButton>
-					) : null}
-				</div>
-			) : null}
-			{!isReadOnly ? (
-				<ul aria-label="What you can add next" className="mt-10 grid w-full max-w-3xl gap-3 px-4 sm:grid-cols-3">
+				<ul aria-label="What you can add next" className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
 					{EDITOR_HINTS.map((hint) => (
 						<li
 							key={hint.title}

@@ -17,8 +17,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../../services/protocolTvl'
@@ -289,7 +288,7 @@ export function AdvancedTvlChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart…</p> : null}
+				{hasProtocolSelection && isLoading ? <LoadingIndicator label="Loading selected chart" /> : null}
 			</div>
 
 			<div className="overflow-hidden rounded-lg border border-subtle">
@@ -330,12 +329,12 @@ export function AdvancedTvlChartTab({
 						<div className="flex min-h-[400px] flex-col">{chartContent}</div>
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
-						<div>
-							<Icon name="trending-up" height={32} width={32} className="mx-auto mb-1" />
-							<p className="body-sm">Select a protocol to see available TVL charts</p>
-						</div>
-					</div>
+					<EmptyState
+						size="md"
+						icon="trending-up"
+						title="Select a protocol to see available TVL charts"
+						className="h-[320px]"
+					/>
 				)}
 			</div>
 		</div>

@@ -131,3 +131,15 @@ test('a failed search does not claim to be searching', async () => {
 	await waitForUi(() => expect(document.querySelector('[role="dialog"] [role="alert"]')).not.toBeNull())
 	expect(document.querySelector('[role="dialog"] [aria-live="polite"]')?.textContent).toBe('')
 })
+
+test('an empty feed leaves the count blank instead of saying 0 newest', async () => {
+	http.serve({
+		[articlesUrl]: { items: [], page: 1, perPage: 6, totalItems: 0, totalPages: 0 },
+		'/api/public/research/newsletters': { items: [], totalItems: 0 }
+	})
+	await click(container.querySelector<HTMLButtonElement>('button')!)
+	await waitForUi(() =>
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('No published content yet')
+	)
+	expect(document.querySelector('[role="dialog"] [aria-live="polite"]')?.textContent).toBe('')
+})

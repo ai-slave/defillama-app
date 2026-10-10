@@ -4,7 +4,7 @@ import { Field } from '~/ui/Field'
 import { focusRegionOnLeave, keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus } from '~/ui/Status'
 import { useTeam } from './useTeam'
 
 export function CreateTeamCard() {
@@ -12,31 +12,39 @@ export function CreateTeamCard() {
 	const createTeamButtonRef = useRef<HTMLButtonElement>(null)
 
 	return (
-		<div className="flex flex-col items-center gap-4 rounded-2xl border border-subtle bg-surface p-8 text-center">
-			<div className="flex flex-col gap-2">
-				<h2 className="heading-sm text-primary">Team management</h2>
-				<p className="max-w-sm body-md text-tertiary">
-					Create a team to manage subscriptions for your organization. Purchase seats and invite members.
-				</p>
-			</div>
-
-			{isCreating ? (
-				<CreateTeamForm
-					onCreated={() => setIsCreating(false)}
-					onCancel={() =>
-						// The form gives way to the Create team button that opened it, which takes focus back.
-						keepFocus(
-							() => setIsCreating(false),
-							() => createTeamButtonRef.current
-						)
-					}
-				/>
-			) : (
-				<Button type="button" variant="primary" size="md" ref={createTeamButtonRef} onClick={() => setIsCreating(true)}>
-					<Icon name="plus" height={16} width={16} />
-					Create team
-				</Button>
-			)}
+		<div className="flex flex-col rounded-2xl border border-subtle bg-surface">
+			<EmptyState
+				size="md"
+				headingAs="h2"
+				title="Team management"
+				actions={
+					isCreating ? (
+						<CreateTeamForm
+							onCreated={() => setIsCreating(false)}
+							onCancel={() =>
+								// The form gives way to the Create team button that opened it, which takes focus back.
+								keepFocus(
+									() => setIsCreating(false),
+									() => createTeamButtonRef.current
+								)
+							}
+						/>
+					) : (
+						<Button
+							type="button"
+							variant="primary"
+							size="sm"
+							ref={createTeamButtonRef}
+							onClick={() => setIsCreating(true)}
+						>
+							<Icon name="plus" height={16} width={16} />
+							Create team
+						</Button>
+					)
+				}
+			>
+				Create a team to manage subscriptions for your organization. Purchase seats and invite members.
+			</EmptyState>
 		</div>
 	)
 }
@@ -61,7 +69,7 @@ function CreateTeamForm({ onCreated, onCancel }: { onCreated: () => void; onCanc
 	}
 
 	return (
-		<form noValidate onSubmit={handleCreate} className="flex w-full max-w-xs flex-col gap-3 text-left">
+		<form noValidate onSubmit={handleCreate} className="flex w-80 max-w-full flex-col gap-3 text-left">
 			<Field label="Team name" error={submitted ? nameMessage : null}>
 				{(control) => (
 					<Input

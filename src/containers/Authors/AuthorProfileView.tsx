@@ -12,6 +12,7 @@ import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { avatarColorStyle } from './avatarColor'
 import { FollowAuthorButton } from './FollowAuthorButton'
@@ -436,24 +437,24 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	if (isOwnProfile) {
 		return (
-			<div className="grid justify-items-start gap-3 rounded-md border border-dashed border-medium bg-surface p-8">
-				<p className="title-lg text-primary">Your profile is live, but it has no dashboards yet</p>
-				<p className="max-w-lg body-md text-tertiary">
-					Build a dashboard and make it public to start collecting views, likes, and followers here.
-				</p>
-				<Button as={BasicLink} href="/pro" variant="primary" size="md">
-					Create your first dashboard
-				</Button>
-			</div>
+			<EmptyState
+				size="lg"
+				title="Your profile is live, but it has no dashboards yet"
+				framed
+				actions={
+					<Button as={BasicLink} href="/pro" variant="primary" size="md">
+						Create your first dashboard
+					</Button>
+				}
+			>
+				Build a dashboard and make it public to start collecting views, likes, and followers here.
+			</EmptyState>
 		)
 	}
 	return (
-		<div className="grid gap-2 rounded-md border border-dashed border-medium bg-surface p-8">
-			<p className="title-lg text-primary">No public dashboards yet</p>
-			<p className="max-w-lg body-md text-tertiary">
-				When this author publishes a dashboard, it will appear here with its tags, activity, and latest update.
-			</p>
-		</div>
+		<EmptyState size="lg" title="No public dashboards yet" framed>
+			When this author publishes a dashboard, it will appear here with its tags, activity, and latest update.
+		</EmptyState>
 	)
 }
 

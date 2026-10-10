@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportsAdminView } from '../admin/ReportsAdminView'
@@ -64,4 +65,33 @@ test('the status filter is one radio pick that narrows the reports list', async 
 	expect(radio('Drafts').checked).toBe(true)
 	expect(radio('All').checked).toBe(false)
 	expect(titles()).toEqual(['Draft report'])
+})
+
+test('a filter with no reports offers a way back to all of them', async () => {
+	session.serve({
+		[`${FEATURES_SERVER}/articles`]: {
+			items: [report('live', 'Live report', 'published')],
+			totalItems: 1,
+			totalPages: 1
+		}
+	})
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<ReportsAdminView />
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(titles()).toEqual(['Live report']))
+
+	await act(async () => radio('Drafts').click())
+	expect(container.textContent).toContain('No reports match this filter')
+	const showAll = [...container.querySelectorAll('button')].find(
+		(button) => accessibleName(button) === 'Show all reports'
+	)!
+	showAll.focus()
+	await act(async () => showAll.click())
+	expect(radio('All').checked).toBe(true)
+	expect(document.activeElement).toBe(radio('All'))
+	expect(titles()).toEqual(['Live report'])
 })

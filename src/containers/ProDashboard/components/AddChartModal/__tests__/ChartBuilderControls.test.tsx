@@ -156,5 +156,5 @@ test('a preview that fails to load says so and offers a retry, and an empty one 
 	container.remove()
 
 	await renderBuilder(config)
-	await waitForUi(() => expect(document.body.textContent).toContain('No data for these settings.'))
+	await waitForUi(() => expect(document.body.textContent).toContain('No data for these settings'))
 })

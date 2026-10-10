@@ -30,9 +30,9 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { FieldGroup } from '~/ui/Field'
-import { showFieldErrors } from '~/ui/focus'
+import { focusRegionOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { httpErrorMessage } from '~/utils/async'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
@@ -192,11 +192,9 @@ export function DefiWatchlistContainer({
 					) : isLoadingProtocolRows && watchedNames.length > 0 ? (
 						<PanelLoadingStatus />
 					) : (
-						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
-							<Icon name="bookmark" height={32} width={32} className="mb-3" />
-							<p className="body-sm text-tertiary">No protocols in your watchlist</p>
-							<p className="mt-1 body-sm text-tertiary">Use the selector above to add protocols</p>
-						</SurfaceBodyStatus>
+						<EmptyState size="md" icon="bookmark" title="No protocols in your watchlist" className="min-h-[360px]">
+							Use the selector above to add protocols.
+						</EmptyState>
 					)}
 				</Card>
 
@@ -229,11 +227,9 @@ export function DefiWatchlistContainer({
 					) : isLoadingChainRows && watchedChainNames.length > 0 ? (
 						<PanelLoadingStatus />
 					) : (
-						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
-							<Icon name="map" height={32} width={32} className="mb-3" />
-							<p className="body-sm text-tertiary">No chains in your watchlist</p>
-							<p className="mt-1 body-sm text-tertiary">Use the selector above to add chains</p>
-						</SurfaceBodyStatus>
+						<EmptyState size="md" icon="map" title="No chains in your watchlist" className="min-h-[360px]">
+							Use the selector above to add chains.
+						</EmptyState>
 					)}
 				</Card>
 			</div>
@@ -326,6 +322,7 @@ export function PortfolioNotifications({
 							variant="error"
 							action={
 								<Button
+									ref={focusRegionOnLeave}
 									type="button"
 									size="sm"
 									pendingLabel="Retrying…"

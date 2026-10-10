@@ -33,8 +33,9 @@ import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
@@ -185,13 +186,14 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 						<SurfaceBodyStatus variant="error" className="p-2">
 							<p>Token data is unavailable. Your saved tokens are unchanged.</p>
 							<Button
-								size="md"
+								ref={focusRegionOnLeave}
+								size="sm"
 								className="mt-2"
 								pendingLabel="Retrying…"
 								pending={isFetching}
 								onClick={() => void refetch()}
 							>
-								Retry
+								Try again
 							</Button>
 						</SurfaceBodyStatus>
 					) : hasSavedTokens && isLoading ? (
@@ -208,15 +210,14 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							)}
 						/>
 					) : (
-						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
-							<Icon name="bookmark" height={32} width={32} className="mb-3" />
-							<p className="body-sm text-tertiary">
-								{hasSavedTokens ? 'No ranking data for your saved tokens' : 'No tokens in your watchlist'}
-							</p>
-							{!hasSavedTokens ? (
-								<p className="mt-1 body-sm text-tertiary">Use the selector above to add tokens</p>
-							) : null}
-						</SurfaceBodyStatus>
+						<EmptyState
+							size="md"
+							icon="bookmark"
+							title={hasSavedTokens ? 'No ranking data for your saved tokens' : 'No tokens in your watchlist'}
+							className="min-h-[360px]"
+						>
+							{hasSavedTokens ? null : 'Use the selector above to add tokens.'}
+						</EmptyState>
 					)}
 				</Card>
 			</div>

@@ -32,6 +32,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { NoResults } from '~/ui/NoResults'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -42,8 +43,6 @@ import { formatUsd } from '~/utils/numberFormat'
 export const SIDEBAR_ROW_SURFACE =
 	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 export const SIDEBAR_ROW = `${SIDEBAR_ROW_SURFACE} px-2 py-1.5`
-export const SIDEBAR_WELL =
-	'flex items-center justify-center rounded-lg border border-dashed border-medium p-4 text-center body-sm text-tertiary'
 
 interface AgenticSidebarProps {
 	sessions: Array<ChatSession>
@@ -526,14 +525,14 @@ function SidebarPanel({
 
 					<nav className="px-4 pt-2 pb-4" aria-label="Chat history">
 						{isLoading ? (
-							<div role="status" aria-live="polite" className={SIDEBAR_WELL}>
+							<div role="status" aria-live="polite" className="flex justify-center py-6">
 								<LoadingSpinner size={14} />
 								<span className="sr-only">Loading chats</span>
 							</div>
 						) : loadError ? (
 							<InlineStatus variant="error">{loadError}</InlineStatus>
 						) : shownSessions.length === 0 ? (
-							<p className={SIDEBAR_WELL}>{emptyHistoryText}</p>
+							<NoResults>{emptyHistoryText}</NoResults>
 						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching || searchFailed) ? (
 							<SearchResults
 								results={searchResults}
@@ -554,7 +553,7 @@ function SidebarPanel({
 						) : filteredSessions.length === 0 &&
 						  trimmedSearchQuery &&
 						  (selectMode || (!isSearching && searchResults.length === 0)) ? (
-							<p className={SIDEBAR_WELL}>No chats matching &ldquo;{searchQuery}&rdquo;</p>
+							<NoResults>No chats matching &ldquo;{searchQuery}&rdquo;</NoResults>
 						) : (
 							<div
 								style={{

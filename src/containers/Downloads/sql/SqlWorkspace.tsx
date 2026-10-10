@@ -11,7 +11,7 @@ import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { PanelLoadingStatus, InlineStatus } from '~/ui/Status'
+import { EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -89,7 +89,7 @@ async function loadPlannedTables({
 		throwIfAborted(signal)
 		if (!isCurrent()) return { kind: 'superseded' }
 		const position = plan.length > 1 ? ` · ${index + 1}/${plan.length}` : ''
-		markLoading(step, `Loading ${step.label}${position}…`)
+		markLoading(step, `Loading ${step.label}${position}`)
 		const loaded = await load(step.source, signal)
 		throwIfAborted(signal)
 		if (!isCurrent()) return { kind: 'superseded' }
@@ -1168,7 +1168,7 @@ function StatusStrip({
 				<StatusDot tone={runTone} blink={busy} />
 				<span className="text-tertiary">Last run</span>
 				{loadingStage ? (
-					<span className="text-warning">{loadingStage}</span>
+					<span className="text-warning">{loadingStage}…</span>
 				) : running ? (
 					<span className="text-warning">running…</span>
 				) : error ? (
@@ -1278,13 +1278,9 @@ function SavedQueriesTab({
 
 	if (savedQueries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-12 text-center">
-				<Icon name="bookmark" className="size-6 text-tertiary" />
-				<p className="body-md text-secondary">No saved queries yet.</p>
-				<p className="max-w-sm body-sm text-tertiary">
-					Click Save in the editor to bookmark a query — saved queries survive across sessions.
-				</p>
-			</div>
+			<EmptyState size="lg" icon="bookmark" title="No saved queries yet" framed>
+				Click Save in the editor to bookmark a query — saved queries survive across sessions.
+			</EmptyState>
 		)
 	}
 	const busy = !!busyTaskId

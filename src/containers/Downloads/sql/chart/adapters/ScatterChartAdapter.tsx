@@ -3,6 +3,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -69,7 +70,12 @@ export function ScatterChartAdapter({ config, result, classified, onReady, heigh
 		return lines.join('<br/>')
 	}
 
-	if (!xCol || !yCol) return <EmptyHint message="Scatter needs at least two numeric columns." />
+	if (!xCol || !yCol)
+		return (
+			<EmptyState size="md" icon="bar-chart-2" title="Not enough columns for a scatter" framed className="h-[220px]">
+				Scatter needs at least two numeric columns.
+			</EmptyState>
+		)
 
 	return (
 		<Suspense
@@ -90,13 +96,5 @@ export function ScatterChartAdapter({ config, result, classified, onReady, heigh
 				onReady={onReady}
 			/>
 		</Suspense>
-	)
-}
-
-function EmptyHint({ message }: { message: string }) {
-	return (
-		<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
-			{message}
-		</div>
 	)
 }

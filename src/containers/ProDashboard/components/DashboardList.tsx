@@ -1,7 +1,8 @@
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import type { Dashboard } from '../dashboardTypes'
-import { ProButton, proPanelStyles } from '../ui'
+import { ProButton } from '../ui'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
@@ -27,23 +28,34 @@ export function DashboardList({
 	return (
 		<div>
 			{dashboards.length === 0 && emptyMessage ? (
-				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-					<Icon name="search" height={32} width={32} className="text-tertiary" />
-					<p className="text-center body-md text-secondary">{emptyMessage.title}</p>
-					<Button size="md" type="button" variant="secondary" onClick={emptyMessage.onClearFilters}>
-						Clear filters
-					</Button>
-				</div>
+				<EmptyState
+					size="lg"
+					icon="search"
+					title={emptyMessage.title}
+					headingAs="h2"
+					framed
+					actions={
+						<Button size="md" type="button" variant="secondary" onClick={emptyMessage.onClearFilters}>
+							Clear filters
+						</Button>
+					}
+				/>
 			) : dashboards.length === 0 ? (
-				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-					<Icon name="layers" height={32} width={32} className="text-tertiary" />
-					<h2 className="text-center title-lg text-primary">No dashboards yet</h2>
-					<p className="text-center body-md text-secondary">Create your first dashboard to get started</p>
-					<ProButton type="button" variant="primary" size="lg" onClick={onCreateNew}>
-						<Icon name="plus" height={16} width={16} />
-						Create dashboard
-					</ProButton>
-				</div>
+				<EmptyState
+					size="lg"
+					icon="layers"
+					title="No dashboards yet"
+					headingAs="h2"
+					framed
+					actions={
+						<ProButton type="button" variant="primary" size="md" onClick={onCreateNew}>
+							<Icon name="plus" height={14} width={14} />
+							Create dashboard
+						</ProButton>
+					}
+				>
+					Create your first dashboard to get started.
+				</EmptyState>
 			) : (
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 					{dashboards.map((dashboard) => (

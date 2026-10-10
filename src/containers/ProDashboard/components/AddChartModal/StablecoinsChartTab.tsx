@@ -28,9 +28,8 @@ import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -578,16 +577,16 @@ export function StablecoinsChartTab({
 						</div>
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
-						<div>
-							<Icon name="dollar-sign" height={32} width={32} className="mx-auto mb-1" />
-							<div className="body-sm">
-								{stablecoinMode === 'chain'
-									? 'Select a chain and chart type to see preview'
-									: 'Select a stablecoin and chart type to see preview'}
-							</div>
-						</div>
-					</div>
+					<EmptyState
+						size="md"
+						icon="dollar-sign"
+						title={
+							stablecoinMode === 'chain'
+								? 'Select a chain and chart type to see preview'
+								: 'Select a stablecoin and chart type to see preview'
+						}
+						className="h-[320px]"
+					/>
 				)}
 			</div>
 		</div>

@@ -36,7 +36,7 @@ import { DashboardLoadProgress } from './components/DashboardLoadProgress'
 import { type DashboardMenuAction, DashboardOverflowMenu } from './components/DashboardOverflowMenu'
 import { DashboardVariablesBar } from './components/DashboardVariablesBar'
 import { DemoPreviewFallback } from './components/DemoPreviewFallback'
-import { EmptyState } from './components/EmptyState'
+import { EmptyDashboard } from './components/EmptyDashboard'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
 import { ParameterHint } from './components/ParameterHint'
 import { SimilarDashboards } from './components/SimilarDashboards'
@@ -919,7 +919,7 @@ function ProDashboardContent() {
 			</Suspense>
 
 			{!protocolsLoading && !hasAnyItems ? (
-				<EmptyState
+				<EmptyDashboard
 					onAddChart={() => openQuickAdd()}
 					onGenerateWithAI={hasActiveSubscription ? () => setAiDialog('iterate') : () => showPaywall('llamaai')}
 					isReadOnly={isReadOnly}

@@ -37,7 +37,7 @@ import { tw } from './tw'
             min(720px, 100% − 32px). Never patch sheet height per dialog.
    Fill:    bg-overlay. `canvas` gives the elevated-1 fill, only for a body
             of bg-surface cards. Emphasis boxes inside a content dialog use
-            bg-surface-elevated-1; dashed empty-state wells use bg-page.
+            bg-surface-elevated-1; an empty state is EmptyState (src/ui/Status.tsx).
    Rows:    DialogToolbar, DialogBody, DialogFooter and a drawer's
             PopoverHeader search carry `data-sheet`. Below sm, controls in
             them take a 44px floor through the `sheet:` variant: fields,

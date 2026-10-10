@@ -16,6 +16,7 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { EmptyState } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -676,7 +677,17 @@ function SavedDownloadsContent({
 	}, [savedDownloads])
 
 	if (savedDownloads.length === 0) {
-		return <SavedEmptyState />
+		return (
+			<EmptyState size="lg" icon="bookmark" title="Pin your first preset" framed>
+				Save any dataset or chart configuration to run it again from here. Open a dataset, tweak your columns and
+				filters, then click{' '}
+				<span className="inline-flex items-center gap-1 rounded-sm border border-medium px-1.5 py-0.5 label-sm text-primary">
+					<Icon name="bookmark" className="size-3" />
+					Save preset
+				</span>
+				.
+			</EmptyState>
+		)
 	}
 
 	return (
@@ -729,41 +740,6 @@ function SavedDownloadsContent({
 				<DeletePresetDialog preset={deletingPreset} onDelete={onDelete} onClose={() => setDeletingPreset(null)} />
 			) : null}
 		</>
-	)
-}
-
-function SavedEmptyState() {
-	return (
-		<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-subtle px-6 py-12 text-center">
-			<div className="flex size-14 items-center justify-center rounded-full bg-brand-tint text-link">
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="1.75"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="size-7"
-					aria-hidden="true"
-				>
-					<path d="M6 3h12v18l-6-4-6 4z" />
-				</svg>
-			</div>
-			<div className="flex flex-col gap-1.5">
-				<h3 className="title-lg text-primary">Pin your first preset</h3>
-				<p className="max-w-sm body-md text-secondary">
-					Save any dataset or chart configuration to run it again from here.
-				</p>
-			</div>
-			<p className="body-sm text-tertiary">
-				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded-sm border border-medium px-1.5 py-0.5 label-sm text-primary">
-					<Icon name="bookmark" className="size-3" />
-					Save preset
-				</span>
-				.
-			</p>
-		</div>
 	)
 }
 

@@ -131,7 +131,7 @@ export function NotebookCell({
 				{cell.running && cell.loadingStage ? (
 					<span className="inline-flex items-center gap-1 label-sm text-warning">
 						<LoadingSpinner size={10} />
-						{cell.loadingStage}
+						{cell.loadingStage}…
 					</span>
 				) : cell.runError ? (
 					<span className="inline-flex items-center gap-1 label-sm text-error">

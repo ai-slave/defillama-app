@@ -2,6 +2,7 @@ import { BasicLink } from '~/components/Link'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { DashboardCard } from './DashboardCard'
@@ -75,9 +76,7 @@ export function DiscoverySection({
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
-				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
-					{emptyMessage}
-				</p>
+				<EmptyState size="md" title={emptyMessage} framed />
 			</div>
 		)
 	}

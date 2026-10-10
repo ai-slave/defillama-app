@@ -36,7 +36,9 @@ import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { queryReadFailed } from '~/utils/query'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
 
@@ -234,18 +236,15 @@ export function TrustedByAdminView() {
 					</Button>
 				</div>
 
-				{logosQuery.isLoading ? (
-					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
-				) : logosQuery.error ? (
-					<div className="rounded-md border border-error-muted bg-error-faint p-6">
-						<p className="body-md text-secondary">
-							{logosQuery.error instanceof ArticleApiError ? logosQuery.error.message : 'Failed to load logos'}
-						</p>
-					</div>
+				{queryReadFailed(logosQuery) ? (
+					<PanelStatus variant="error" retry={logosQuery} className="min-h-32">
+						Couldn&apos;t load logos.
+						{logosQuery.error instanceof ArticleApiError ? ` ${logosQuery.error.message}` : null}
+					</PanelStatus>
+				) : logosQuery.isLoading ? (
+					<PanelLoadingStatus label="Loading logos" className="min-h-32" />
 				) : logos.length === 0 ? (
-					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="body-md text-secondary">No logos yet.</p>
-					</div>
+					<EmptyState size="md" title="No logos yet" framed />
 				) : (
 					<DndContext sensors={logoSensors} onDragEnd={handleLogoDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
 						<SortableContext items={logos.map((logo) => logo.id)} strategy={verticalListSortingStrategy}>
@@ -283,18 +282,15 @@ export function TrustedByAdminView() {
 					</Button>
 				</div>
 
-				{mentionsQuery.isLoading ? (
-					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
-				) : mentionsQuery.error ? (
-					<div className="rounded-md border border-error-muted bg-error-faint p-6">
-						<p className="body-md text-secondary">
-							{mentionsQuery.error instanceof ArticleApiError ? mentionsQuery.error.message : 'Failed to load mentions'}
-						</p>
-					</div>
+				{queryReadFailed(mentionsQuery) ? (
+					<PanelStatus variant="error" retry={mentionsQuery} className="min-h-32">
+						Couldn&apos;t load mentions.
+						{mentionsQuery.error instanceof ArticleApiError ? ` ${mentionsQuery.error.message}` : null}
+					</PanelStatus>
+				) : mentionsQuery.isLoading ? (
+					<PanelLoadingStatus label="Loading mentions" className="min-h-32" />
 				) : mentions.length === 0 ? (
-					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="body-md text-secondary">No mentions yet.</p>
-					</div>
+					<EmptyState size="md" title="No mentions yet" framed />
 				) : (
 					<DndContext sensors={mentionSensors} onDragEnd={handleMentionDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
 						<SortableContext items={mentions.map((mention) => mention.id)} strategy={verticalListSortingStrategy}>

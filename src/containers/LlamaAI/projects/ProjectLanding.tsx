@@ -16,9 +16,8 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -134,44 +133,48 @@ export function ProjectLanding({
 	}, [])
 
 	if (project.isLoading && !queryReadFailed(project)) {
-		return (
-			<div role="status" className="flex h-full items-center justify-center gap-2 body-sm text-secondary">
-				<LoadingSpinner size={14} /> Loading project…
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading project" />
 	}
 
 	if (!project.data) {
-		const notFound =
-			project.error instanceof LlamaAITransportError && (project.error.status === 403 || project.error.status === 404)
+		if (
+			project.error instanceof LlamaAITransportError &&
+			(project.error.status === 403 || project.error.status === 404)
+		) {
+			return (
+				<EmptyState
+					size="lg"
+					headingAs="h1"
+					title="Project not found"
+					actions={
+						<Button as={BasicLink} href="/ai/projects" size="md">
+							Back to projects
+						</Button>
+					}
+				>
+					This project does not exist or you do not have access to it.
+				</EmptyState>
+			)
+		}
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
-				{notFound ? (
-					<>
-						<p role="alert" className="label-md text-primary">
-							Project not found
-						</p>
-						<p className="body-sm text-secondary">This project does not exist or you do not have access to it.</p>
-					</>
-				) : (
-					<InlineStatus
-						variant="error"
-						action={
-							<Button
-								ref={focusRegionOnLeave}
-								variant="secondary"
-								size="sm"
-								pendingLabel="Retrying…"
-								pending={project.isFetching}
-								onClick={() => void project.refetch()}
-							>
-								Try again
-							</Button>
-						}
-					>
-						Couldn&rsquo;t load this project.
-					</InlineStatus>
-				)}
+				<InlineStatus
+					variant="error"
+					action={
+						<Button
+							ref={focusRegionOnLeave}
+							variant="secondary"
+							size="sm"
+							pendingLabel="Retrying…"
+							pending={project.isFetching}
+							onClick={() => void project.refetch()}
+						>
+							Try again
+						</Button>
+					}
+				>
+					Couldn&rsquo;t load this project.
+				</InlineStatus>
 				<span className="label-sm">
 					<Button as={BasicLink} href="/ai/projects" variant="link">
 						Back to projects
@@ -434,18 +437,12 @@ export function ProjectLanding({
 									</div>
 								) : null}
 								{projectSessions.isLoading && !sessionsFailed ? (
-									<div role="status" aria-live="polite" className="flex justify-center py-8">
-										<LoadingIndicator label="Loading chats" />
-									</div>
+									<SurfaceBodyLoadingStatus label="Loading chats" className="min-h-24" />
 								) : sessions.length === 0 ? (
 									!sessionsFailed ? (
-										<div className="flex flex-col gap-1 py-4 text-center">
-											<h2 className="label-md text-primary">No chats yet</h2>
-											<p className="body-sm text-secondary">
-												Start a chat above. LlamaAI uses this project&apos;s instructions and files in every
-												conversation.
-											</p>
-										</div>
+										<EmptyState size="md" title="No chats yet" framed>
+											Start a chat above. LlamaAI uses this project&apos;s instructions and files in every conversation.
+										</EmptyState>
 									) : null
 								) : (
 									<ul className="flex flex-col">

@@ -4,6 +4,7 @@ import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -46,9 +47,9 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 
 	if (!nameCol || !valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState size="md" icon="bar-chart-2" title="Not enough columns for a pie" framed className="h-[220px]">
 				Pie needs a category column and a numeric column.
-			</div>
+			</EmptyState>
 		)
 
 	return (

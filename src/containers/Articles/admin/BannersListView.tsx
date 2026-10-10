@@ -12,7 +12,9 @@ import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from 
 import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { queryReadFailed } from '~/utils/query'
 
 export function BannersListView() {
 	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
@@ -26,11 +28,7 @@ export function BannersListView() {
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
 
-	const {
-		data: banners,
-		isLoading,
-		error
-	} = useQuery<Array<Banner>>({
+	const bannersQuery = useQuery<Array<Banner>>({
 		queryKey: ['research', 'admin', 'banners'],
 		queryFn: () => listBanners(authorizedFetch),
 		retry: false
@@ -57,21 +55,20 @@ export function BannersListView() {
 		}
 	})
 
-	if (isLoading) {
-		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
-	}
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banners'
+	if (queryReadFailed(bannersQuery)) {
+		const { error } = bannersQuery
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load banners</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
+			<PanelStatus variant="error" retry={bannersQuery} className="mx-auto w-full max-w-5xl">
+				Couldn&apos;t load banners.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
-	const items = banners ?? []
+	if (bannersQuery.isLoading) {
+		return <PanelLoadingStatus label="Loading banners" className="mx-auto w-full max-w-5xl" />
+	}
+
+	const items = bannersQuery.data ?? []
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-6 px-1 pb-16">
@@ -111,18 +108,16 @@ export function BannersListView() {
 				/>
 			) : null}
 			{items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-					<p className="body-md text-secondary">No banners yet.</p>
-					<Button
-						as={BasicLink}
-						variant="primary"
-						size="md"
-						href="/research/admin/banners/new"
-						className="mx-auto mt-3 w-fit"
-					>
-						Create your first banner
-					</Button>
-				</div>
+				<EmptyState
+					size="md"
+					title="No banners yet"
+					actions={
+						<Button as={BasicLink} variant="primary" size="sm" href="/research/admin/banners/new">
+							Create your first banner
+						</Button>
+					}
+					framed
+				/>
 			) : (
 				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 					{items.map((banner) => (

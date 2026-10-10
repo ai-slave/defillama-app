@@ -12,14 +12,14 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
-import { Icon, type IIcon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import { chartDatasets, chartDatasetsBySlug, type ChartDatasetDefinition, type ChartOptionsMap } from './chart-datasets'
 import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
@@ -231,8 +231,9 @@ export function MultiMetricModal({
 	)
 	const activeQuery = activeQueryIndex >= 0 ? csvQueries[activeQueryIndex] : null
 	const activeCsvText = (activeQuery?.data as string | undefined) ?? undefined
-	const activeLoading = !!activeQuery?.isLoading
-	const activeError = activeQuery?.error
+	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
+	const activeFailed = !!activeQuery && queryReadFailed(activeQuery)
+	const activeLoading = !activeFailed && !!activeQuery?.isLoading
 	const activeDataset = activeMetric ? (chartDatasetsBySlug.get(activeMetric) ?? null) : null
 
 	const parsedActive = useMemo(() => (activeCsvText ? parseCsv(activeCsvText) : null), [activeCsvText])
@@ -510,7 +511,7 @@ export function MultiMetricModal({
 				activeDataset ? metricDisplayName(activeDataset) : ''
 			}`
 		}
-		if (activeError) return 'Error loading metric'
+		if (activeFailed) return 'Error loading metric'
 		if (parsedActive) {
 			const rowsLabel = filterActive
 				? `${formatNumber(activeFilteredRows)} of ${formatNumber(activeTotalRows)} rows`
@@ -654,7 +655,7 @@ export function MultiMetricModal({
 									onSelect={handleChangeParam}
 								/>
 							) : !hasSelection ? (
-								<EmptyState
+								<SelectMetricsEmpty
 									paramType={paramType}
 									availableCount={availableMetrics.length}
 									onSelectAll={
@@ -664,22 +665,23 @@ export function MultiMetricModal({
 									}
 								/>
 							) : !activeMetric ? (
-								<CenteredHint icon="search" text="Pick a metric to preview" />
+								<EmptyState size="md" icon="search" title="Pick a metric to preview" />
 							) : activeLoading ? (
-								<CenteredLoader />
-							) : activeError ? (
+								<SurfaceBodyLoadingStatus label="Fetching data" className="min-h-0" />
+							) : activeFailed ? (
 								<CenteredError
-									error={activeError}
+									error={activeQuery!.error}
 									retrying={activeQuery!.isFetching}
 									onRetry={() => void activeQuery!.refetch()}
 								/>
 							) : !parsedActive || parsedActive.rows.length === 0 ? (
-								<CenteredHint icon="eye-off" text="No data" />
+								<EmptyState size="md" icon="eye-off" title="No data" />
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center body-md">
-										<Icon name="search" className="size-6 text-tertiary" />
-										<p className="text-secondary">No rows in selected date range</p>
+								<EmptyState
+									size="md"
+									icon="search"
+									title="No rows in selected date range"
+									actions={
 										<Button
 											variant="secondary"
 											size="sm"
@@ -693,8 +695,8 @@ export function MultiMetricModal({
 										>
 											Clear date range
 										</Button>
-									</div>
-								</div>
+									}
+								/>
 							) : (
 								<PreviewTable parsed={parsedActiveFiltered} isPreview={isPreview} />
 							)}
@@ -768,56 +770,53 @@ function ParamPickerEmpty({
 	const labels = PARAM_LABELS[paramType]
 
 	return (
-		<div className="flex flex-1 items-center justify-center px-6 py-8">
-			<div className="flex w-full max-w-md flex-col items-center gap-4 text-center">
-				<div className="flex size-11 items-center justify-center rounded-full bg-brand-tint">
-					<Icon name="layers" className="size-5 text-link" />
-				</div>
-				<div className="flex flex-col gap-1">
-					<p className="label-lg text-primary">Choose a {labels.singular} to begin</p>
-					<p className="body-sm text-tertiary">
-						Pick a {labels.singular} — we&rsquo;ll show its available metrics so you can combine them.
-					</p>
-				</div>
+		<EmptyState
+			size="md"
+			icon="layers"
+			title={`Choose a ${labels.singular} to begin`}
+			actions={
+				<div className="flex w-md max-w-full flex-col items-center gap-4">
+					<SegmentedControl<ParamType>
+						label="Pick by"
+						value={paramType}
+						onValueChange={onChangeParamType}
+						options={PARAM_TYPE_OPTIONS}
+						variant="default"
+						size="md"
+					/>
 
-				<SegmentedControl<ParamType>
-					label="Pick by"
-					value={paramType}
-					onValueChange={onChangeParamType}
-					options={PARAM_TYPE_OPTIONS}
-					variant="default"
-					size="md"
-				/>
+					<VirtualizedSelect
+						variant="field"
+						label={labels.title}
+						options={options}
+						selectedValue={null}
+						onChange={onSelect}
+						placeholder={labels.verb}
+						autoFocus
+						className="w-full text-left"
+					/>
 
-				<VirtualizedSelect
-					variant="field"
-					label={labels.title}
-					options={options}
-					selectedValue={null}
-					onChange={onSelect}
-					placeholder={labels.verb}
-					autoFocus
-					className="w-full text-left"
-				/>
-
-				{suggestions.length > 0 ? (
-					<div className="flex flex-col items-center gap-2">
-						<p className="label-xs tracking-[0.08em] text-tertiary uppercase">Or start with</p>
-						<div className="flex flex-wrap justify-center gap-1.5">
-							{suggestions.map((opt) => (
-								<Button key={opt.value} type="button" variant="secondary" size="sm" onClick={() => onSelect(opt)}>
-									{opt.label}
-								</Button>
-							))}
+					{suggestions.length > 0 ? (
+						<div className="flex flex-col items-center gap-2">
+							<p className="label-xs tracking-[0.08em] text-tertiary uppercase">Or start with</p>
+							<div className="flex flex-wrap justify-center gap-1.5">
+								{suggestions.map((opt) => (
+									<Button key={opt.value} type="button" variant="secondary" size="sm" onClick={() => onSelect(opt)}>
+										{opt.label}
+									</Button>
+								))}
+							</div>
 						</div>
-					</div>
-				) : null}
-			</div>
-		</div>
+					) : null}
+				</div>
+			}
+		>
+			Pick a {labels.singular} — we&rsquo;ll show its available metrics so you can combine them.
+		</EmptyState>
 	)
 }
 
-function EmptyState({
+function SelectMetricsEmpty({
 	paramType,
 	availableCount,
 	onSelectAll
@@ -827,38 +826,23 @@ function EmptyState({
 	onSelectAll?: () => void
 }) {
 	return (
-		<div className="flex flex-1 items-center justify-center px-6">
-			<div className="flex max-w-sm flex-col items-center gap-3 text-center">
-				<div className="flex size-10 items-center justify-center rounded-full bg-brand-tint">
-					<Icon name="layers" className="size-5 text-link" />
-				</div>
-				<div className="flex flex-col gap-1">
-					<p className="label-md text-primary">Select metrics to combine</p>
-					<p className="body-sm text-tertiary">
-						{availableCount > 0
-							? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
-							: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
-					</p>
-				</div>
-				{onSelectAll ? (
+		<EmptyState
+			size="md"
+			icon="layers"
+			title="Select metrics to combine"
+			actions={
+				onSelectAll ? (
 					<Button variant="outline" size="sm" onClick={onSelectAll}>
 						<Icon name="check" className="size-3.5" />
 						Select all {availableCount}
 					</Button>
-				) : null}
-			</div>
-		</div>
-	)
-}
-
-function CenteredLoader() {
-	return (
-		<div className="flex flex-1 items-center justify-center">
-			<div className="flex flex-col items-center gap-3">
-				<LoadingSpinner size={28} />
-				<p className="body-md text-secondary">Fetching data…</p>
-			</div>
-		</div>
+				) : null
+			}
+		>
+			{availableCount > 0
+				? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
+				: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
+		</EmptyState>
 	)
 }
 
@@ -875,17 +859,6 @@ function CenteredError({ error, retrying, onRetry }: { error: unknown; retrying:
 			>
 				{error instanceof Error ? error.message : 'Failed to fetch data'}
 			</InlineStatus>
-		</div>
-	)
-}
-
-function CenteredHint({ icon, text }: { icon: IIcon['name']; text: string }) {
-	return (
-		<div className="flex flex-1 items-center justify-center">
-			<div className="flex flex-col items-center gap-2 text-center">
-				<Icon name={icon} className="size-6 text-tertiary" />
-				<p className="body-md text-secondary">{text}</p>
-			</div>
 		</div>
 	)
 }

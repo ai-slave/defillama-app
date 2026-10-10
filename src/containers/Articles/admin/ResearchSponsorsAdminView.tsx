@@ -34,7 +34,8 @@ import {
 } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -182,9 +183,9 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			</div>
 
 			{sponsor.reports.length === 0 ? (
-				<div className="rounded-lg border border-dashed border-medium p-4 body-sm text-secondary">
-					No Research articles are linked yet. Search above to add the first one.
-				</div>
+				<EmptyState size="md" title="No Research articles linked yet">
+					Search above to add the first one.
+				</EmptyState>
 			) : (
 				<ul className="divide-y divide-(--border-subtle) overflow-hidden rounded-lg border border-subtle">
 					{sponsor.reports.map((report) => (
@@ -233,11 +234,13 @@ export function ResearchSponsorsAdminView() {
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
 	const [submitted, setSubmitted] = useState(false)
-	const { data, isLoading, error, refetch, isFetching } = useQuery({
+	const { data, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } = useQuery({
 		queryKey: SPONSORS_QUERY_KEY,
 		queryFn: () => listResearchSponsors(authorizedFetch),
 		retry: false
 	})
+	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
+	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
 	const createMutation = useMutation({
 		mutationFn: (entity: SponsorEntitySelection) => createResearchSponsor(payloadFromEntity(entity), authorizedFetch),
 		onSuccess: () => {
@@ -299,8 +302,8 @@ export function ResearchSponsorsAdminView() {
 				</form>
 			</Card>
 
-			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading clients…</div> : null}
-			{error ? (
+			{isLoading && !failed ? <PanelLoadingStatus label="Loading clients" className="min-h-40" /> : null}
+			{failed ? (
 				<InlineStatus
 					variant="error"
 					action={
@@ -316,14 +319,13 @@ export function ResearchSponsorsAdminView() {
 						</Button>
 					}
 				>
-					Couldn't load clients. {mutationMessage(error, 'Failed to load clients')}
+					Couldn't load clients. {mutationMessage(error, 'Try again in a moment.')}
 				</InlineStatus>
 			) : null}
-			{!isLoading && !error && data?.length === 0 ? (
-				<div className="rounded-lg border border-dashed border-medium bg-surface p-8 text-center">
-					<p className="label-md text-primary">No clients yet</p>
-					<p className="mt-1 body-sm text-secondary">Use the search above to add the first client.</p>
-				</div>
+			{!isLoading && !failed && data?.length === 0 ? (
+				<EmptyState size="md" title="No clients yet" framed>
+					Use the search above to add the first client.
+				</EmptyState>
 			) : null}
 			{data?.map((sponsor) => (
 				<SponsorPanel key={sponsor.id} sponsor={sponsor} />

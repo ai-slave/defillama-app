@@ -157,7 +157,8 @@ export async function runSql(
 			callbacks.onPendingChange?.(pending)
 			const stagePrefix =
 				plan.length > 1 ? `Loading ${step.label} · ${index + 1}/${plan.length}` : `Loading ${step.label}`
-			callbacks.onLoadingStage?.(`${stagePrefix}…`)
+			// No ellipsis: ResultsPanel's loading part draws its own dots; plain-text readers add one.
+			callbacks.onLoadingStage?.(stagePrefix)
 
 			const loaded = await ctx.loadSource(step.source, signal)
 			if (signal?.aborted) {

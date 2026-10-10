@@ -7,6 +7,7 @@ import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { SegmentedControlOption } from '~/ui/SegmentedControl'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
@@ -352,39 +353,39 @@ export function DashboardDiscovery({
 					<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
 				</>
 			) : dashboards.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-subtle bg-surface px-6 py-16">
-					<div className="flex size-20 items-center justify-center rounded-full bg-hover-row">
-						<Icon name="search" height={40} width={40} className="text-secondary" />
-					</div>
+				<EmptyState
+					size="lg"
+					icon="search"
+					title="No dashboards found"
+					headingAs="h1"
+					framed
+					actions={
+						<div className="flex flex-col items-center gap-3">
+							{searchQuery || selectedTags.length > 0 ? (
+								<SuggestedTags
+									selectedTags={selectedTags}
+									onTagClick={handleTagClick}
+									{...(initialCategories !== undefined ? { initialCategories } : {})}
+								/>
+							) : null}
 
-					<div className="flex flex-col items-center gap-1.5">
-						<h1 className="text-center heading-lg">No Dashboards Found</h1>
-						<p className="max-w-md text-center text-secondary">
-							{searchQuery || selectedTags.length > 0
-								? "We couldn't find any dashboards matching your search. Try different keywords or explore popular tags below."
-								: 'Be the first to share a public dashboard with the community!'}
-						</p>
-					</div>
+							<div className="flex items-center gap-3">
+								<div className="h-px w-12 bg-border-subtle" />
+								<span className="body-sm text-secondary">or</span>
+								<div className="h-px w-12 bg-border-subtle" />
+							</div>
 
-					{searchQuery || selectedTags.length > 0 ? (
-						<SuggestedTags
-							selectedTags={selectedTags}
-							onTagClick={handleTagClick}
-							{...(initialCategories !== undefined ? { initialCategories } : {})}
-						/>
-					) : null}
-
-					<div className="mt-2 flex items-center gap-3">
-						<div className="h-px w-12 bg-border-subtle" />
-						<span className="body-sm text-secondary">or</span>
-						<div className="h-px w-12 bg-border-subtle" />
-					</div>
-
-					<Button as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="md">
-						<Icon name="plus" height={14} width={14} />
-						Create Your First Dashboard
-					</Button>
-				</div>
+							<Button as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="md">
+								<Icon name="plus" height={14} width={14} />
+								Create your first dashboard
+							</Button>
+						</div>
+					}
+				>
+					{searchQuery || selectedTags.length > 0
+						? "We couldn't find any dashboards matching your search. Try different keywords or explore popular tags below."
+						: 'Be the first to share a public dashboard with the community!'}
+				</EmptyState>
 			) : (
 				<>
 					<p className="-mb-2 body-sm text-secondary">

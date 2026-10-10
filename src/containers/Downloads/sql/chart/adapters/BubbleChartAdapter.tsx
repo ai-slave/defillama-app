@@ -3,6 +3,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -97,9 +98,15 @@ export function BubbleChartAdapter({ config, result, classified, onReady, height
 
 	if (!xCol || !yCol || !sizeCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState
+				size="md"
+				icon="bar-chart-2"
+				title="Not enough columns for a bubble chart"
+				framed
+				className="h-[220px]"
+			>
 				Bubble needs at least three numeric columns (x, y, size).
-			</div>
+			</EmptyState>
 		)
 	return (
 		<Suspense

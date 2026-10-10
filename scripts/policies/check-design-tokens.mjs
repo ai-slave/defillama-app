@@ -1115,6 +1115,44 @@ const RULES = [
 		skipTests: true
 	},
 	{
+		id: 'hand-built-empty-state',
+		exceptions: {
+			'src/components/Newsletter/NewsletterSignup.tsx': 'the subscribed confirmation, a success check in a tinted disc',
+			'src/containers/Articles/admin/BannerForm.tsx':
+				"a banner preview's placeholder, drawn at the banner's own size until an image is chosen",
+			'src/containers/Articles/profile/AuthorProfileForm.tsx': "the author's avatar placeholder",
+			'src/pages/ai/index.tsx': "the demo video's play button",
+			'src/pages/sheets/auth.tsx': 'the signed-in confirmation, a success check in a tinted disc',
+			'src/pages/support.tsx': 'the request-sent confirmation, a success check in a tinted disc'
+		},
+		description:
+			'an empty state built by hand: an icon disc or a dashed text-centred well — render EmptyState from src/ui/Status.tsx (size md or lg, framed for a dashed well); a quick no-match in a list, popover or table is NoResults',
+		// An icon disc is a sized rounded-full box with a fill that centres its icon; a dashed box that centres quiet text is
+		// an empty well. A dashed box with a hover state is a control (DashedTile, UploadTile), not a well.
+		match: (content) => {
+			const found = []
+			for (const [literal] of withoutComments(content).matchAll(STRING_LITERAL)) {
+				const has = (token) => new RegExp(`(?<![\\w:-])${token}(?![\\w-])`).test(literal)
+				if (
+					has('rounded-full') &&
+					has('size-(?:1[0-9]|20)') &&
+					has('bg-[\\w-]+') &&
+					has('(?:justify|place-items)-center')
+				)
+					found.push('icon disc')
+				else if (
+					has('border-dashed') &&
+					!literal.includes('hover:') &&
+					(has('text-center') || (has('justify-center') && has('text-(?:tertiary|secondary)')))
+				)
+					found.push('dashed well')
+			}
+			return found.length > 0 ? found : null
+		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
 		id: 'raw-echarts-init',
 		exceptions: {
 			'src/containers/Unlocks/TreemapChart/index.tsx':

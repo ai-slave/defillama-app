@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
@@ -17,9 +17,12 @@ import type { ArticleDocument, ArticleImage, ArticlePdf } from '~/containers/Art
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { PdfUploadButton } from '~/containers/Articles/upload/PdfUploadButton'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { queryReadFailed } from '~/utils/query'
 
 function articleEditHref(article: ArticleDocument): string {
 	return `/research/edit/${encodeURIComponent(article.id)}`
@@ -244,12 +247,9 @@ const STATUS_FILTERS: ReadonlyArray<SegmentedControlOption<StatusFilter>> = [
 export function ReportsAdminView() {
 	const { authorizedFetch } = useAuthContext()
 	const [filter, setFilter] = useState<StatusFilter>('all')
+	const headerRef = useRef<HTMLElement>(null)
 
-	const {
-		data: reports,
-		isLoading,
-		error
-	} = useQuery({
+	const reportsQuery = useQuery({
 		queryKey: ['research', 'admin', 'reports'],
 		queryFn: async () => {
 			const response = await listArticles({ section: 'report', limit: 100 }, authorizedFetch)
@@ -258,26 +258,25 @@ export function ReportsAdminView() {
 		retry: false
 	})
 
-	if (isLoading) {
-		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
-	}
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load reports'
+	if (queryReadFailed(reportsQuery)) {
+		const { error } = reportsQuery
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load reports</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
+			<PanelStatus variant="error" retry={reportsQuery} className="mx-auto w-full max-w-5xl">
+				Couldn&apos;t load reports.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
-	const all = reports ?? []
+	if (reportsQuery.isLoading) {
+		return <PanelLoadingStatus label="Loading reports" className="mx-auto w-full max-w-5xl" />
+	}
+
+	const all = reportsQuery.data ?? []
 	const filtered = filter === 'all' ? all : all.filter((a) => a.status === filter)
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-6 px-1 pb-16">
-			<header className="flex flex-wrap items-end justify-between gap-3 pt-2 pb-2">
+			<header ref={headerRef} className="flex flex-wrap items-end justify-between gap-3 pt-2 pb-2">
 				<div>
 					<Link
 						href="/research/admin"
@@ -303,11 +302,27 @@ export function ReportsAdminView() {
 			</header>
 
 			{filtered.length === 0 ? (
-				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-					<p className="body-md text-secondary">
-						{all.length === 0 ? 'No Report articles yet.' : 'No reports match this filter.'}
-					</p>
-				</div>
+				<EmptyState
+					size="md"
+					title={all.length === 0 ? 'No Report articles yet' : 'No reports match this filter'}
+					actions={
+						all.length === 0 ? null : (
+							<Button
+								size="sm"
+								onClick={() =>
+									// The button leaves with the empty state; focus lands on the Status filter's now-checked All.
+									keepFocus(
+										() => setFilter('all'),
+										() => headerRef.current?.querySelector<HTMLElement>(':checked, [aria-checked="true"]')
+									)
+								}
+							>
+								Show all reports
+							</Button>
+						)
+					}
+					framed
+				/>
 			) : (
 				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 					{filtered.map((article) => (

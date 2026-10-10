@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Link from 'next/link'
+import { BasicLink } from '~/components/Link'
 import { ArticleApiError, getSectionBanner, listArticles } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
@@ -13,7 +14,10 @@ import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { EmptyState, PanelStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const SECTION_LANDING_CACHE_CONTROL = 'public, s-maxage=60'
@@ -123,7 +127,7 @@ function SectionLandingContent({
 	section: ArticleSection
 	initialData: Pick<SectionLandingPageProps, 'initialArticles' | 'sectionBanner'>
 }) {
-	const { data, isLoading, error } = useQuery({
+	const articlesQuery = useQuery({
 		queryKey: ['research', 'section-index', section],
 		queryFn: () => listArticles({ section, sort: 'newest', limit: 60 }),
 		initialData: initialData.initialArticles,
@@ -131,18 +135,18 @@ function SectionLandingContent({
 		staleTime: 60_000
 	})
 
-	if (isLoading) return <ResearchLoader />
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
+	if (queryReadFailed(articlesQuery)) {
+		const { error } = articlesQuery
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load this section</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
+			<PanelStatus variant="error" retry={articlesQuery} className="mx-auto w-full max-w-[1180px]">
+				Couldn&apos;t load this section.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
+	if (articlesQuery.isLoading) return <ResearchLoader />
+
+	const { data } = articlesQuery
 	const items = data?.items ?? []
 	const total = data?.totalItems ?? items.length
 	const sectionLabel = ARTICLE_SECTION_LABELS[section]
@@ -170,12 +174,16 @@ function SectionLandingContent({
 				</header>
 
 				{items.length === 0 ? (
-					<div className="mx-auto grid max-w-xl gap-2 rounded-md border border-medium bg-surface p-8 text-center">
-						<p className="body-md text-secondary">Nothing here yet.</p>
-						<Link href="/research" className="body-md text-link hover:underline">
-							Browse all research →
-						</Link>
-					</div>
+					<EmptyState
+						size="lg"
+						title="Nothing here yet"
+						actions={
+							<Button as={BasicLink} href="/research" size="md">
+								Browse all research
+							</Button>
+						}
+						framed
+					/>
 				) : (
 					<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 						{items.map((article) =>

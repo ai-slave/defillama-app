@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { QueryRetry } from '~/utils/query'
 import { Button } from './Button'
 import { focusRegionOnLeave } from './focus'
-import { Icon } from './Icon'
+import { Icon, type IIcon } from './Icon'
 import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
 
@@ -17,6 +17,7 @@ import { Panel } from './Panel'
    | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
    | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
    | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
+   | Nothing here yet, or nothing matched      | EmptyState (icon, title, hint, actions)     |
    | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
    | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
 
@@ -235,6 +236,77 @@ export function SurfaceBodyLoadingStatus({ label = 'Loading', className }: { lab
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				<LoadingIndicator label={label} />
 			</div>
+		</div>
+	)
+}
+
+const EMPTY_STATE_SIZE = {
+	md: {
+		box: 'gap-3 px-4 py-8',
+		disc: 'size-10',
+		icon: 'size-5',
+		text: 'gap-1',
+		title: 'label-lg',
+		hint: 'max-w-sm body-sm text-tertiary'
+	},
+	lg: {
+		box: 'gap-4 px-6 py-12',
+		disc: 'size-14',
+		icon: 'size-6',
+		text: 'gap-1.5',
+		title: 'heading-sm',
+		hint: 'max-w-md body-md text-secondary'
+	}
+} as const
+
+/** Where content would be and there is none: nothing created yet (no dashboards, no API key), nothing matched with a
+    way back (Clear filters), a choice to make first (pick a token), or a locked feature (Upgrade). Not an error, which
+    keeps PanelStatus or InlineStatus so it reads as broken, and not a quick no-match inside a table, list or popover,
+    which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus / ChartPanelBodyFallback.
+    `md` sits inside a Panel, Card or dialog body and takes sm buttons; `lg` fills a page or tab and takes md buttons,
+    with at most one primary. The icon sits in a neutral disc. `framed` draws a dashed well where a card, a grid of
+    cards or a list would sit with no surface of its own (the page, a canvas dialog body); inside the Panel or Card that
+    holds the content it draws no frame. `actions` holds the buttons, or the picker or form that fills the space; the
+    hint is inline text. The title is a <p>; `headingAs` makes it a heading when it stands in for the page's or tab's
+    own (a gated page's h1). `className` places it (min-h, height, grid area), never restyles it. Copy invites rather
+    than apologises: the title names the space with no closing period, the hint says how it fills and ends with one. */
+export function EmptyState({
+	size,
+	icon,
+	title,
+	children,
+	actions,
+	framed,
+	headingAs: Title = 'p',
+	className
+}: {
+	size: keyof typeof EMPTY_STATE_SIZE
+	icon?: IIcon['name']
+	title: ReactNode
+	/** The hint under the title. */
+	children?: ReactNode
+	actions?: ReactNode
+	framed?: boolean
+	headingAs?: 'p' | 'h1' | 'h2' | 'h3'
+	className?: string
+}) {
+	const s = EMPTY_STATE_SIZE[size]
+	return (
+		<div
+			className={`flex flex-1 flex-col items-center justify-center text-center ${s.box} ${framed ? 'rounded-lg border border-dashed border-medium' : ''} ${className ?? ''}`}
+		>
+			{icon ? (
+				<span
+					className={`flex shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-elevated-1 text-tertiary ${s.disc}`}
+				>
+					<Icon name={icon} className={s.icon} aria-hidden />
+				</span>
+			) : null}
+			<div role="status" aria-live="polite" className={`flex flex-col items-center ${s.text}`}>
+				<Title className={`text-balance text-primary ${s.title}`}>{title}</Title>
+				{children ? <p className={s.hint}>{children}</p> : null}
+			</div>
+			{actions ? <div className="flex flex-wrap items-center justify-center gap-2">{actions}</div> : null}
 		</div>
 	)
 }

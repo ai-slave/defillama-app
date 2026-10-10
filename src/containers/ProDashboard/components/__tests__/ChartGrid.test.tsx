@@ -482,8 +482,9 @@ test('an empty tab says so, and only offers the add tile to an editor', async ()
 		...tabbedItems.slice(2)
 	]
 	await renderGrid({ items })
-	expect(container.textContent).toContain('This tab has no cards yet.')
-	expect(container.querySelector('[data-testid="dashboard-grid"] [role="status"]')).toBeNull()
+	expect(container.querySelector('[data-testid="dashboard-grid"] [role="status"]')?.textContent).toBe(
+		'This tab has no cards yet'
+	)
 
 	await renderGrid({ items, isReadOnly: true })
 	expect(container.querySelector('[data-testid="dashboard-grid"] [role="status"]')?.textContent).toBe(

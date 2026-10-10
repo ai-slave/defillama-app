@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { useCallback, useMemo, useRef } from 'react'
-import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
 import { ChartToolbar } from './chart/ChartToolbar'
@@ -33,10 +33,10 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 	const hasNumeric = classified.some((c) => c.coarse === 'number')
 	if (!hasNumeric) {
 		return (
-			<EmptyState
-				message="No numeric columns detected in this result — nothing to chart."
-				hint="Tip: wrap aggregates in CAST(... AS DOUBLE) or SUM(...) to make them chartable."
-			/>
+			<EmptyState size="md" icon="bar-chart-2" title="Nothing to chart" framed>
+				This result has no numeric columns. Tip: wrap aggregates in CAST(... AS DOUBLE) or SUM(...) to make them
+				chartable.
+			</EmptyState>
 		)
 	}
 
@@ -56,16 +56,6 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 				</div>
 				<ChartRouter config={resolvedConfig} result={result} classified={classified} onReady={handleChartReady} />
 			</div>
-		</div>
-	)
-}
-
-function EmptyState({ message, hint }: { message: string; hint?: string }) {
-	return (
-		<div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-subtle px-6 py-10 text-center">
-			<Icon name="bar-chart-2" className="size-5 text-tertiary" />
-			<p className="body-md text-secondary">{message}</p>
-			{hint ? <p className="body-sm text-tertiary">{hint}</p> : null}
 		</div>
 	)
 }

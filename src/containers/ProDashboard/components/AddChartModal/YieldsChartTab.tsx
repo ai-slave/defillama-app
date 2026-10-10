@@ -11,7 +11,7 @@ import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { normalizeYieldChartType, type YieldChartType } from '../../types'
@@ -330,9 +330,7 @@ export function YieldsChartTab({
 					Couldn't load the yield pools.
 				</InlineStatus>
 			) : yieldsLoading ? (
-				<div role="status" aria-live="polite" className="flex h-32 items-center justify-center">
-					<LoadingIndicator />
-				</div>
+				<SurfaceBodyLoadingStatus className="min-h-32" />
 			) : (
 				<div className="flex flex-col gap-4">
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
@@ -705,17 +703,9 @@ export function YieldsChartTab({
 											</InlineStatus>
 										</div>
 									) : isPreviewLoading ? (
-										<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
-											<LoadingIndicator />
-										</div>
+										<SurfaceBodyLoadingStatus className="min-h-[280px]" />
 									) : (
-										<Suspense
-											fallback={
-												<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
-													<LoadingIndicator />
-												</div>
-											}
-										>
+										<Suspense fallback={<SurfaceBodyLoadingStatus className="min-h-[280px]" />}>
 											{selectedYieldChartType === 'tvl-apy' ? (
 												<MultiSeriesChart
 													height="280px"
@@ -772,12 +762,12 @@ export function YieldsChartTab({
 								</div>
 							</div>
 						) : (
-							<div className="flex h-[280px] items-center justify-center bg-surface text-center text-tertiary">
-								<div>
-									<Icon name="bar-chart-2" height={32} width={32} className="mx-auto mb-1" />
-									<p className="body-sm">Select a yield pool to see preview</p>
-								</div>
-							</div>
+							<EmptyState
+								size="md"
+								icon="bar-chart-2"
+								title="Select a yield pool to see preview"
+								className="h-[280px]"
+							/>
 						)}
 					</div>
 				</div>

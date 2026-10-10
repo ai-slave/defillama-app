@@ -262,7 +262,7 @@ test('only the route-selected panel is visible while tab navigation is pending',
 test.each([403, 404])('shows the same not-found page for inaccessible or missing projects (%s)', async (status) => {
 	detailReply = () => Response.json({ error: 'Private server detail' }, { status })
 	await render()
-	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project not found'))
+	await until(() => expect(container.querySelector('h1')?.textContent).toBe('Project not found'))
 	expect(container.textContent).not.toContain('Private server detail')
 	expect(container.querySelector('a[href="/ai/projects"]')).not.toBeNull()
 	expect(container.textContent).not.toContain('Try again')

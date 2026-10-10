@@ -600,9 +600,7 @@ export function ColumnManager({
 				>
 					<div className="max-h-[100px] overflow-y-auto">
 						{selectedColumns.length === 0 ? (
-							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-medium body-sm text-tertiary">
-								No columns selected
-							</div>
+							<NoResults>No columns selected</NoResults>
 						) : (
 							<SortableContext items={selectedColumns} strategy={horizontalListSortingStrategy}>
 								<div className="flex flex-wrap gap-1.5">

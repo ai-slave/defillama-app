@@ -5,6 +5,7 @@ import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
@@ -84,9 +85,7 @@ export function TopAuthorsRail() {
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
-				<p className="rounded-lg border border-dashed border-medium px-4 py-6 text-center body-md text-secondary">
-					No authors to show yet
-				</p>
+				<EmptyState size="md" title="No authors to show yet" framed />
 			</div>
 		)
 	}

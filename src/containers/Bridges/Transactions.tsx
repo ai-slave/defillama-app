@@ -30,9 +30,8 @@ import {
 	searchFieldInlineWrapperStyles,
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -478,22 +477,6 @@ export function getDefaultBridgeTransactionRange(nowSec: number): { startDate: s
 	return { startDate: toDateOnly(start), endDate: toDateOnly(end) }
 }
 
-function EmptyState({ hasFetched }: { hasFetched: boolean }) {
-	return (
-		<Card padding="md" className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-brand-muted text-link">
-				<Icon name={hasFetched ? 'search' : 'activity'} height={22} width={22} />
-			</div>
-			<h2 className="heading-xs">{hasFetched ? 'No transactions in this range' : 'Explore bridge transaction data'}</h2>
-			<p className="max-w-md body-sm text-secondary">
-				{hasFetched
-					? 'Try a wider date range or a different bridge. Transactions may be sparse for smaller bridges or short windows.'
-					: 'Pick a bridge and a date range, then fetch transactions. Results can be filtered, sorted, and exported as CSV.'}
-			</p>
-		</Card>
-	)
-}
-
 export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeInfo> }) {
 	const nowSec = useNowSeconds()
 	const defaultRange = getDefaultBridgeTransactionRange(nowSec)
@@ -666,12 +649,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 			</Card>
 
 			{isPending ? (
-				<Card padding="md" className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-					<LoadingDots />
-					<p className="body-sm text-secondary">
-						Fetching transactions. Large ranges may take a moment as we page through results.
-					</p>
-				</Card>
+				<PanelLoadingStatus label="Fetching transactions, large ranges take longer" className="min-h-[200px]" />
 			) : null}
 
 			{!isPending && stats && fetchedContext ? (
@@ -747,7 +725,19 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				/>
 			) : null}
 
-			{showEmpty ? <EmptyState hasFetched={fetchedContext != null} /> : null}
+			{showEmpty ? (
+				<EmptyState
+					size="md"
+					framed
+					icon={fetchedContext ? 'search' : 'activity'}
+					title={fetchedContext ? 'No transactions in this range' : 'Explore bridge transaction data'}
+					className="min-h-[240px]"
+				>
+					{fetchedContext
+						? 'Try a wider date range or a different bridge. Transactions may be sparse for smaller bridges or short windows.'
+						: 'Pick a bridge and a date range, then fetch transactions. Results can be filtered, sorted, and exported as CSV.'}
+				</EmptyState>
+			) : null}
 		</div>
 	)
 }

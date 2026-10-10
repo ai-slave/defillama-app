@@ -9,8 +9,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -243,7 +242,7 @@ export function BorrowedChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <p className="body-sm text-tertiary">Loading selected chart…</p> : null}
+				{hasProtocolSelection && isLoading ? <LoadingIndicator label="Loading selected chart" /> : null}
 
 				{hasProtocolSelection && !isLoading && !hasData ? (
 					<p className="body-sm text-tertiary">No data available for this chart type.</p>
@@ -292,12 +291,12 @@ export function BorrowedChartTab({
 						)}
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center text-tertiary">
-						<div>
-							<Icon name="trending-up" height={32} width={32} className="mx-auto mb-1" />
-							<p className="body-sm">Select a protocol to see available borrowed charts</p>
-						</div>
-					</div>
+					<EmptyState
+						size="md"
+						icon="trending-up"
+						title="Select a protocol to see available borrowed charts"
+						className="h-[320px]"
+					/>
 				)}
 			</div>
 		</div>

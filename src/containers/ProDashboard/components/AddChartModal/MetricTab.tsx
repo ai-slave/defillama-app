@@ -2,6 +2,7 @@ import { useId, useMemo } from 'react'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { EmptyState } from '~/ui/Status'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -197,12 +198,7 @@ export function MetricTab(props: MetricTabProps) {
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />
 					) : (
-						<div className="flex h-full items-center justify-center body-sm text-tertiary sm:body-md">
-							<div className="text-center">
-								<Icon name="activity" height={28} width={28} className="mx-auto mb-1 sm:size-8" />
-								<p>Select subject and metric to preview</p>
-							</div>
-						</div>
+						<EmptyState size="md" icon="activity" title="Select subject and metric to preview" className="h-full" />
 					)}
 				</div>
 			</div>

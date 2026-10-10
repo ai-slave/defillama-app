@@ -15,7 +15,7 @@ import { Icon, type IIcon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -284,29 +284,28 @@ function TopicExplorer({ onSelect }: { onSelect: (query: string) => void }) {
 	)
 }
 
-function EmptyState({ query, section }: { query: string; section: SearchContentType | null }) {
+function ResearchSearchEmpty({ query, section }: { query: string; section: SearchContentType | null }) {
 	const sectionLabel = section ? SECTION_FILTERS.find((filter) => filter.value === section)?.label : null
 
 	return (
-		<div className="flex min-h-56 flex-col items-center justify-center gap-2 px-6 text-center">
-			<span className="mb-1 grid size-10 place-items-center rounded-full bg-brand-faint text-link" aria-hidden>
-				<Icon name="search" className="size-4" />
-			</span>
-			<h3 className="label-lg text-primary">
-				{query
+		<EmptyState
+			size="md"
+			icon="search"
+			title={
+				query
 					? `No results for “${query}”`
 					: sectionLabel
 						? `No ${sectionLabel.toLowerCase()} yet`
-						: 'No published content yet'}
-			</h3>
-			<p className="max-w-sm body-sm text-tertiary">
-				{query
-					? 'Try a different keyword, topic, or format.'
-					: sectionLabel
-						? 'Choose another format or search across all content.'
-						: 'Published Research and newsletter content will appear here.'}
-			</p>
-		</div>
+						: 'No published content yet'
+			}
+			className="min-h-56"
+		>
+			{query
+				? 'Try a different keyword, topic, or format.'
+				: sectionLabel
+					? 'Choose another format or search across all content.'
+					: 'Published Research and newsletter content will appear here.'}
+		</EmptyState>
 	)
 }
 
@@ -375,7 +374,11 @@ function SearchResultsHeader({
 	activeSection: SectionFilter | undefined
 }) {
 	let resultCount = failed ? '' : 'Searching…'
-	if (data) {
+	// An empty feed says nothing rather than "0 newest"; a search with no matches keeps "0 results", the announcement
+	// a screen reader hears. The element stays mounted so the live region reads the next count.
+	if (data?.items.length === 0 && !query) {
+		resultCount = ''
+	} else if (data) {
 		resultCount = query
 			? `${formatNumber(data.totalItems)} ${data.totalItems === 1 ? 'result' : 'results'}`
 			: `${data.items.length} newest`
@@ -434,14 +437,10 @@ function SearchResults({
 	}
 
 	if (isLoading) {
-		return (
-			<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
-				<LoadingIndicator label="Searching Research and newsletters" />
-			</div>
-		)
+		return <SurfaceBodyLoadingStatus label="Searching Research and newsletters" className="min-h-64" />
 	}
 
-	if (!data?.items.length) return <EmptyState query={query} section={section} />
+	if (!data?.items.length) return <ResearchSearchEmpty query={query} section={section} />
 
 	return (
 		<div className="space-y-2">

@@ -10,11 +10,11 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import { parseCsv } from './csvParse'
 import type { DatasetDefinition } from './datasets'
@@ -167,9 +167,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 
 	const {
 		data: csvText,
-		isLoading: loading,
+		isLoading,
 		isFetching,
 		error,
+		errorUpdatedAt,
+		dataUpdatedAt,
 		refetch
 	} = useQuery({
 		queryKey: ['downloads-preview', dataset.slug, selectedChain, isPreview],
@@ -187,6 +189,9 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
+	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
+	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
+	const loading = isLoading && !failed
 
 	const { headers, rows } = useMemo(() => {
 		if (!csvText) return { headers: [] as Array<string>, rows: [] as Array<PreviewRow> }
@@ -305,7 +310,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 		[columnMeta]
 	)
 
-	const hasData = !loading && !error && headers.length > 0
+	const hasData = !loading && !failed && headers.length > 0
 
 	const rowVirtualizer = useVirtualItems({
 		count: displayedRows.length,
@@ -494,7 +499,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 					subtitle={
 						loading
 							? 'Loading…'
-							: error
+							: failed
 								? 'Error'
 								: (() => {
 										const isLimited = rowLimit !== null && rowLimit > 0 && displayedRows.length < sortedRows.length
@@ -595,13 +600,8 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 				<DialogBody kind="flush">
 					<div className="flex h-full min-h-0 flex-col">
 						{loading ? (
-							<div className="flex flex-1 items-center justify-center">
-								<div className="flex flex-col items-center gap-3">
-									<LoadingSpinner size={28} />
-									<p className="body-md text-secondary">Fetching dataset…</p>
-								</div>
-							</div>
-						) : error ? (
+							<SurfaceBodyLoadingStatus label="Fetching dataset" className="min-h-0" />
+						) : failed ? (
 							<div className="flex flex-1 items-center justify-center p-4">
 								<InlineStatus
 									variant="error"
@@ -615,19 +615,9 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 								</InlineStatus>
 							</div>
 						) : columnMeta.length === 0 ? (
-							<div className="flex flex-1 items-center justify-center">
-								<div className="flex flex-col items-center gap-2 text-center">
-									<Icon name="eye-off" className="size-6 text-tertiary" />
-									<p className="body-md text-secondary">No data</p>
-								</div>
-							</div>
+							<EmptyState size="md" icon="eye-off" title="No data" />
 						) : sortedRows.length === 0 ? (
-							<div className="flex flex-1 items-center justify-center">
-								<div className="flex flex-col items-center gap-2 text-center">
-									<Icon name="search" className="size-6 text-tertiary" />
-									<p className="body-md text-secondary">No matching rows</p>
-								</div>
-							</div>
+							<EmptyState size="md" icon="search" title="No matching rows" />
 						) : (
 							<div className="relative min-h-0 flex-1">
 								<div

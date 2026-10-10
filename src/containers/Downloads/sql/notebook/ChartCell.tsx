@@ -1,5 +1,6 @@
 import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../chartConfig'
 import { ResultsChart } from '../ResultsChart'
@@ -79,14 +80,11 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 			{result ? (
 				<ResultsChart result={result} chartConfig={cell.chartConfig} onChartConfigChange={onChartConfigChange} />
 			) : (
-				<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface px-6 py-10 text-center">
-					<Icon name="bar-chart-2" className="size-5 text-tertiary" />
-					<p className="body-md text-secondary">
-						{cell.source
-							? `${cell.source} has no results yet — run it first.`
-							: 'Pick a source cell above to visualize its output.'}
-					</p>
-				</div>
+				<EmptyState size="md" icon="bar-chart-2" title="No results to chart yet" framed>
+					{cell.source
+						? `${cell.source} has no results yet — run it first.`
+						: 'Pick a source cell above to visualize its output.'}
+				</EmptyState>
 			)}
 		</div>
 	)

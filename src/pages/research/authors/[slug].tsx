@@ -21,6 +21,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 type ArchiveFilter = ArticleSection | 'all'
@@ -79,26 +81,6 @@ export const getServerSideProps = withServerSidePropsTelemetry('/research/author
 function SocialLink({ kind, value }: { kind: string; value: string }) {
 	const href = value.startsWith('http') ? value : `https://${value}`
 	return <ExternalLinkButton href={href}>{kind.replace(/-/g, ' ')}</ExternalLinkButton>
-}
-
-function AuthorPageState({
-	title,
-	description,
-	children
-}: {
-	title: string
-	description?: string
-	children?: React.ReactNode
-}) {
-	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface px-6 py-16">
-			<div className="grid max-w-md gap-3 text-center">
-				<h1 className="heading-lg text-primary">{title}</h1>
-				{description ? <p className="body-lg text-secondary">{description}</p> : null}
-				{children}
-			</div>
-		</div>
-	)
 }
 
 function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
@@ -298,11 +280,7 @@ function DefillamaResearchContent({ articles }: { articles: Array<ArticleDocumen
 
 function AuthorContent({ slug, initialData }: { slug: string; initialData: ArticleAuthorResponse | null }) {
 	const isDefillamaResearch = slug === DEFILLAMA_RESEARCH_SLUG
-	const {
-		data = null,
-		isLoading,
-		error
-	} = useQuery({
+	const authorQuery = useQuery({
 		queryKey: ['research', 'author', slug],
 		queryFn: () => getAuthorBySlug(slug),
 		initialData: initialData ?? undefined,
@@ -311,6 +289,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		refetchOnMount: !initialData,
 		retry: false
 	})
+	const data = authorQuery.data ?? null
 
 	const articles = useMemo(() => {
 		return getAuthorPageArticles(slug, data?.articles ?? EMPTY_ARTICLES)
@@ -336,28 +315,31 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		return tabs
 	}, [sectionCounts])
 
-	if (isLoading) {
-		return <AuthorPageState title="Loading…" />
-	}
-
-	if (!data && !error) {
+	if (queryReadFailed(authorQuery)) {
+		const { error } = authorQuery
 		return (
-			<AuthorPageState title="Author not found">
-				<BasicLink href="/research" className="body-md text-link hover:underline">
-					Browse all research
-				</BasicLink>
-			</AuthorPageState>
+			<PanelStatus variant="error" retry={authorQuery} className="mx-auto w-full max-w-4xl">
+				Couldn&apos;t load this author.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
-	if (error || !data) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load author'
+	if (authorQuery.isLoading) {
+		return <PanelLoadingStatus label="Loading author" className="mx-auto w-full max-w-4xl" />
+	}
+
+	if (!data) {
 		return (
-			<AuthorPageState title="Couldn't load author" description={message}>
-				<BasicLink href="/research" className="body-md text-link hover:underline">
-					Browse all research
-				</BasicLink>
-			</AuthorPageState>
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Author not found"
+				actions={
+					<Button as={BasicLink} href="/research" size="md">
+						Browse all research
+					</Button>
+				}
+			/>
 		)
 	}
 
@@ -442,9 +424,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				</header>
 
 				{articles.length === 0 ? (
-					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="body-md text-secondary">No published research yet.</p>
-					</div>
+					<EmptyState size="lg" title="No published research yet" framed />
 				) : (
 					<>
 						{lead ? (

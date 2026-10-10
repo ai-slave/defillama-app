@@ -12,7 +12,7 @@ import * as React from 'react'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useMedia } from '~/hooks/useMedia'
-import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 import { TableColumnGroup } from './TableColumnGroup'
@@ -266,15 +266,9 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 	}, [tableContainerRef, rowCount, isSmallScreen, headerGroups.length, visibleLeafColumns.length, useStickyHeader])
 	if (hasNoVisibleColumns) {
 		return (
-			<div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-md bg-surface p-8 text-center">
-				<Icon name="eye-off" height={48} width={48} className="text-tertiary" />
-				<div className="flex flex-col gap-2">
-					<h3 className="heading-xs text-primary">No columns selected</h3>
-					<p className="body-sm text-secondary">
-						Please select at least one column from the Columns menu to view the table data.
-					</p>
-				</div>
-			</div>
+			<EmptyState size="md" icon="eye-off" title="No columns selected" className="min-h-[400px]">
+				Select at least one column from the Columns menu to view the table data.
+			</EmptyState>
 		)
 	}
 	const renderHeaderRows = ({ isStickyMirror = false }: { isStickyMirror?: boolean } = {}) => (

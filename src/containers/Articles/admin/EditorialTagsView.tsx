@@ -29,7 +29,8 @@ import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButto
 import { Button } from '~/ui/Button'
 import { passFocusOnLeave, focusRegionOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 
 export function EditorialTagsView() {
 	return (
@@ -62,11 +63,15 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	const revalidateLanding = useResearchLandingRevalidation()
 	const limit = definition.cardinality === 'singleton' ? 1 : 30
 
-	const { data, isLoading, error, refetch, isFetching } = useQuery<ArticleByTagResponse>({
-		queryKey: ['research', 'admin', 'editorial-tag', definition.slug],
-		queryFn: () => listArticlesByTag(definition.slug, limit, authorizedFetch),
-		retry: false
-	})
+	const { data, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } = useQuery<ArticleByTagResponse>(
+		{
+			queryKey: ['research', 'admin', 'editorial-tag', definition.slug],
+			queryFn: () => listArticlesByTag(definition.slug, limit, authorizedFetch),
+			retry: false
+		}
+	)
+	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
+	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'editorial-tag', definition.slug] })
@@ -169,7 +174,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				/>
 			</div>
 
-			{error ? (
+			{failed ? (
 				<InlineStatus
 					variant="error"
 					action={
@@ -188,11 +193,9 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 					{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}
 				</InlineStatus>
 			) : isLoading ? (
-				<p className="body-md text-tertiary">Loading…</p>
+				<SurfaceBodyLoadingStatus label="Loading articles" className="min-h-32" />
 			) : items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-medium bg-page p-3 text-center body-sm text-tertiary">
-					<p>No articles tagged as {definition.label.toLowerCase()} yet.</p>
-				</div>
+				<EmptyState size="md" title={`No articles tagged as ${definition.label.toLowerCase()} yet`} />
 			) : canReorder ? (
 				<ReorderableEditorialTagList
 					items={items}

@@ -3,8 +3,7 @@ import { useMemo } from 'react'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
-import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -143,12 +142,12 @@ export function IncomeStatementChartTab({
 						)}
 					</div>
 				) : (
-					<div className="flex h-[360px] items-center justify-center text-center text-tertiary">
-						<div>
-							<Icon name="file-text" height={32} width={32} className="mx-auto mb-1" />
-							<p className="body-sm">Select a protocol to preview the income statement</p>
-						</div>
-					</div>
+					<EmptyState
+						size="md"
+						icon="file-text"
+						title="Select a protocol to preview the income statement"
+						className="h-[360px]"
+					/>
 				)}
 			</div>
 		</div>

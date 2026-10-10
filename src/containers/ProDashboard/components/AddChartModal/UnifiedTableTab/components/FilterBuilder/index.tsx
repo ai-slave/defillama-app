@@ -7,6 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
 import { SearchField } from '~/ui/SearchField'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	FILTER_CATEGORIES,
@@ -690,10 +691,9 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 					className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1"
 				>
 					{allActiveFilters.length === 0 ? (
-						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-medium py-6 text-center">
-							<Icon name="settings" className="mb-2 size-5 text-tertiary" />
-							<p className="body-sm text-tertiary">No filters applied. Add from the left to start narrowing results.</p>
-						</div>
+						<EmptyState size="md" icon="settings" title="No filters applied">
+							Add from the left to start narrowing results.
+						</EmptyState>
 					) : (
 						allActiveFilters.map((filter) => {
 							const isPending = pendingFilters.some((f) => f.config.id === filter.config.id)

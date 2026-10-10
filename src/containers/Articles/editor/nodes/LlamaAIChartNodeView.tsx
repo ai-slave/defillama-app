@@ -4,6 +4,7 @@ import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/co
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { useArticleEditable } from '../useArticleEditable'
 
 function CaptionEditor({ caption, onChange }: { caption: string; onChange: (caption: string) => void }) {
@@ -135,9 +136,7 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 				) : config && chartData ? (
 					<div className="h-[338px]" />
 				) : (
-					<div className="flex items-center justify-center rounded-md border border-dashed border-medium py-10 body-md text-tertiary">
-						Invalid LlamaAI chart data — remove this block and re-export it.
-					</div>
+					<InlineStatus variant="error">Invalid LlamaAI chart data — remove this block and re-export it.</InlineStatus>
 				)}
 				{isEditable ? (
 					<CaptionEditor caption={caption} onChange={(next) => updateAttributes({ caption: next })} />

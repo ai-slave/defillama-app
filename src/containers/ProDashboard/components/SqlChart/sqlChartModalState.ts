@@ -193,7 +193,7 @@ export function sqlChartModalControls(
 			: locked
 				? 'Running query before saving. Stop query keeps your draft; Cancel closes the editor.'
 				: running
-					? (stage ?? 'Running query…')
+					? `${stage ?? 'Running query'}…`
 					: // An idle Save that cannot run says why, in the row it sits in.
 						schemaLoading
 						? 'Loading tables…'

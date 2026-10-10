@@ -85,7 +85,7 @@ describe('Tokens watchlist', () => {
 		await expectShows('Token data is unavailable')
 		expect(element.textContent).not.toContain('No tokens in your watchlist')
 		fetchJson.mockResolvedValue(page)
-		const retry = Array.from(element.querySelectorAll('button')).find((button) => button.textContent === 'Retry')
+		const retry = Array.from(element.querySelectorAll('button')).find((button) => button.textContent === 'Try again')
 		if (!retry) throw new Error('Missing retry button')
 		await act(async () => retry.click())
 		await expectShows('No ranking data for your saved tokens')

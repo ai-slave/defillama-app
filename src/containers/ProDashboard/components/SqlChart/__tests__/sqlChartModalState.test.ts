@@ -104,9 +104,9 @@ test('a plain run keeps the draft editable and shows its loading stage', () => {
 	const state = apply(
 		saved,
 		{ type: 'runStarted', saving: false, taskId: 'saved:q1' },
-		{ type: 'stageChanged', stage: 'Loading Chain TVL…' }
+		{ type: 'stageChanged', stage: 'Loading Chain TVL' }
 	)
-	expect(state.execution).toEqual({ saving: false, taskId: 'saved:q1', stage: 'Loading Chain TVL…' })
+	expect(state.execution).toEqual({ saving: false, taskId: 'saved:q1', stage: 'Loading Chain TVL' })
 	expect(sqlChartModalControls(state, ready)).toMatchObject({
 		locked: false,
 		canSave: false,

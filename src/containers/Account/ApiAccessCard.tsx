@@ -4,7 +4,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
@@ -61,24 +61,27 @@ export function ApiAccessCard({
 					<span className="label-lg text-primary">API access</span>
 				</div>
 
-				<div className="flex flex-col items-center gap-4 rounded-lg bg-surface-elevated-1 px-4 py-8 text-center">
-					<p className="max-w-sm body-md text-tertiary">
-						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
-					</p>
-					<Button
-						variant="primary"
-						size="md"
-						onClick={() =>
-							generateNewKeyMutation.mutate(undefined, { onError: (error) => setGenerateError(error.message) })
-						}
-						pendingLabel="Generating…"
-						pending={generateNewKeyMutation.isPending}
-					>
-						<Icon name="key" height={14} width={14} />
-						Generate API key
-					</Button>
-					{generateError ? <InlineStatus variant="error">{generateError}</InlineStatus> : null}
-				</div>
+				<EmptyState
+					size="md"
+					title="You don't have an API key yet"
+					actions={
+						<Button
+							variant="primary"
+							size="sm"
+							onClick={() =>
+								generateNewKeyMutation.mutate(undefined, { onError: (error) => setGenerateError(error.message) })
+							}
+							pendingLabel="Generating…"
+							pending={generateNewKeyMutation.isPending}
+						>
+							<Icon name="key" height={14} width={14} />
+							Generate API key
+						</Button>
+					}
+				>
+					Generate one to start making requests to the DefiLlama API.
+				</EmptyState>
+				{generateError ? <InlineStatus variant="error">{generateError}</InlineStatus> : null}
 			</div>
 		)
 	}

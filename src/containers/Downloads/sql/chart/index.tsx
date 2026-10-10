@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
 import type { QueryResult } from '../exportResults'
@@ -49,11 +49,6 @@ export function ChartRouter({ config, result, classified, onReady, height = SQL_
 		case 'candlestick':
 			return <CandlestickChartAdapter {...common} />
 		default:
-			return (
-				<div className="flex h-[220px] items-center justify-center gap-2 rounded-md border border-dashed border-subtle body-md text-secondary">
-					<Icon name="bar-chart-2" className="size-4" />
-					Unknown chart type
-				</div>
-			)
+			return <EmptyState size="md" icon="bar-chart-2" title="Unknown chart type" framed className="h-[220px]" />
 	}
 }

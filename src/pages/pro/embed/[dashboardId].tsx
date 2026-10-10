@@ -24,7 +24,9 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getDashboardEmbedPageProps } from '~/containers/ProDashboard/server/embedPageProps'
 import { dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 export const getServerSideProps = withServerSidePropsTelemetry('/pro/embed/[dashboardId]', getDashboardEmbedPageProps)
@@ -114,13 +116,18 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 
 	if (!item || !rawItem || item.kind === 'section') {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-subtle bg-surface p-6 text-center">
-				<p className="title-lg">Card not found</p>
-				<p className="body-md text-secondary">This card is no longer part of the dashboard.</p>
-				<a href={dashboardHref} target="_blank" rel="noreferrer" className="body-md text-link hover:underline">
-					Open the dashboard
-				</a>
-			</div>
+			<EmptyState
+				size="md"
+				title="Card not found"
+				framed
+				actions={
+					<Button as="a" href={dashboardHref} target="_blank" rel="noreferrer" size="sm">
+						Open the dashboard
+					</Button>
+				}
+			>
+				This card is no longer part of the dashboard.
+			</EmptyState>
 		)
 	}
 	const cardHeightScale = getCardHeightScale(getDashboardItemHeight(rawItem))

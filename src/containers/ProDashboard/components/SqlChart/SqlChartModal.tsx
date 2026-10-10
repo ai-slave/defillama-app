@@ -414,7 +414,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 
 						{loadingStage || engineLoading || controls.queryChanged ? (
 							<div className="flex shrink-0 flex-wrap items-center gap-3">
-								{loadingStage ? <span className="body-sm text-tertiary">{loadingStage}</span> : null}
+								{loadingStage ? <span className="body-sm text-tertiary">{loadingStage}…</span> : null}
 								{engineLoading ? (
 									<span className="body-sm text-tertiary">
 										Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.

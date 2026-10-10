@@ -11,13 +11,13 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug as toSlug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
@@ -274,8 +274,11 @@ export function ChartDatasetModal({
 	const rawCsvText = isCategoryMode
 		? ((breakdownQuery.data as string | undefined) ?? undefined)
 		: ((activeQuery?.data as string | undefined) ?? undefined)
-	const dataLoading = isCategoryMode ? breakdownQuery.isLoading : (activeQuery?.isLoading ?? false)
-	const dataError = isCategoryMode ? breakdownQuery.error : (activeQuery?.error ?? null)
+	const dataQuery = isCategoryMode ? breakdownQuery : activeQuery
+	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
+	const dataFailed = !!dataQuery && queryReadFailed(dataQuery)
+	const dataLoading = !dataFailed && !!dataQuery?.isLoading
+	const dataError = dataQuery?.error ?? null
 
 	const sumModeActive = sumMode && !!dataset.sumMode && !isCategoryMode
 	const sumColumnLabel = dataset.sumMode?.columnLabel ?? 'total'
@@ -447,7 +450,7 @@ export function ChartDatasetModal({
 	const gridTemplate = useMemo(() => columnMeta.map((c) => `minmax(${c.width}px, 1fr)`).join(' '), [columnMeta])
 
 	const hasPreviewTarget = isCategoryMode ? true : !!selectedParam
-	const hasData = !dataLoading && !dataError && headers.length > 0 && hasPreviewTarget
+	const hasData = !dataLoading && !dataFailed && headers.length > 0 && hasPreviewTarget
 	const hasSelection = isCategoryMode || selectedParams.length > 0
 	const isBulk = !isCategoryMode && selectedParams.length > 1
 	// The list exists only for two or more picks (the trigger names a single one), so dropping to one brings the
@@ -911,7 +914,7 @@ export function ChartDatasetModal({
 	const headerSubtitle = (() => {
 		if (isCategoryMode) {
 			if (dataLoading) return `Loading ${selectedCategory} breakdown…`
-			if (dataError) return 'Error'
+			if (dataFailed) return 'Error'
 			if (headers.length > 0) {
 				const protocolCols = Math.max(0, headers.length - 1)
 				const selectedProtocolCols = Math.max(0, selectedCount - (headers.includes('date') ? 1 : 0))
@@ -930,7 +933,7 @@ export function ChartDatasetModal({
 			return `${selectedParams.length} selected`
 		}
 		if (dataLoading) return 'Loading…'
-		if (dataError) return 'Error'
+		if (dataFailed) return 'Error'
 		if (headers.length > 0) {
 			return `${rowsCountLabel} · ${selectedCount}/${headers.length} cols selected`
 		}
@@ -1099,22 +1102,14 @@ export function ChartDatasetModal({
 					<div className="flex h-full min-h-0">
 						<div className={`relative min-w-0 flex-1 flex-col ${showSelected ? 'hidden sm:flex' : 'flex'}`}>
 							{!hasPreviewTarget ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-tertiary" />
-										<p className="body-md text-secondary">
-											Select a {dataset.paramLabel.toLowerCase()} above to load chart data
-										</p>
-									</div>
-								</div>
+								<EmptyState
+									size="md"
+									icon="search"
+									title={`Select a ${dataset.paramLabel.toLowerCase()} above to load chart data`}
+								/>
 							) : dataLoading ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-3">
-										<LoadingSpinner size={28} />
-										<p className="body-md text-secondary">Fetching chart data…</p>
-									</div>
-								</div>
-							) : dataError ? (
+								<SurfaceBodyLoadingStatus label="Fetching chart data" className="min-h-0" />
+							) : dataFailed ? (
 								<div className="flex flex-1 items-center justify-center p-4">
 									<InlineStatus
 										variant="error"
@@ -1133,24 +1128,20 @@ export function ChartDatasetModal({
 									</InlineStatus>
 								</div>
 							) : columnMeta.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="eye-off" className="size-6 text-tertiary" />
-										<p className="body-md text-secondary">No data</p>
-									</div>
-								</div>
+								<EmptyState size="md" icon="eye-off" title="No data" />
 							) : sortedRows.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center body-md">
-										<Icon name="search" className="size-6 text-tertiary" />
-										<p className="text-secondary">
-											{dateRange && rows.length > 0
-												? 'No rows in selected date range'
-												: deferredSearch.length > 0
-													? 'No rows match your search'
-													: 'No matching rows'}
-										</p>
-										{dateRange && rows.length > 0 ? (
+								<EmptyState
+									size="md"
+									icon="search"
+									title={
+										dateRange && rows.length > 0
+											? 'No rows in selected date range'
+											: deferredSearch.length > 0
+												? 'No rows match your search'
+												: 'No matching rows'
+									}
+									actions={
+										dateRange && rows.length > 0 ? (
 											<Button
 												variant="secondary"
 												size="sm"
@@ -1164,9 +1155,9 @@ export function ChartDatasetModal({
 											>
 												Clear date range
 											</Button>
-										) : null}
-									</div>
-								</div>
+										) : null
+									}
+								/>
 							) : (
 								<div className="relative min-h-0 flex-1">
 									<div

@@ -16,10 +16,9 @@ import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -817,10 +816,7 @@ export function ChartBuilderTab({
 								Couldn't load the preview.
 							</InlineStatus>
 						) : previewLoading ? (
-							<div className="flex flex-col items-center gap-2 text-center text-tertiary">
-								<LoadingSpinner size={24} />
-								<p className="body-md text-secondary">Loading preview…</p>
-							</div>
+							<SurfaceBodyLoadingStatus label="Loading preview" className="self-stretch" />
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
 								<Suspense fallback={<Skeleton className="size-full rounded-md" />}>
@@ -842,13 +838,11 @@ export function ChartBuilderTab({
 								</Suspense>
 							</div>
 						) : previewData ? (
-							<p className="body-md text-secondary">No data for these settings.</p>
+							<EmptyState size="md" icon="bar-chart-2" title="No data for these settings" />
 						) : (
-							<div className="text-center">
-								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-tertiary" />
-								<p className="body-md text-secondary">Configure chart settings to see preview</p>
-								<p className="mt-1 body-sm text-tertiary">Select a metric to generate chart (all chains by default)</p>
-							</div>
+							<EmptyState size="md" icon="bar-chart-2" title="Configure chart settings to see preview">
+								Select a metric to generate chart (all chains by default).
+							</EmptyState>
 						)}
 					</div>
 

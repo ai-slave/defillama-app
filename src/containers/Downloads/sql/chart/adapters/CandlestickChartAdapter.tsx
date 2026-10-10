@@ -2,6 +2,7 @@ import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -43,15 +44,15 @@ export function CandlestickChartAdapter({ config, result, classified, onReady, h
 
 	if (!mapping)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState size="md" icon="bar-chart-2" title="Candlestick columns not mapped" framed className="h-[220px]">
 				Candlestick needs timestamp + open/close/high/low columns. Map them in Advanced settings.
-			</div>
+			</EmptyState>
 		)
 	if (data.length === 0)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState size="md" icon="bar-chart-2" title="No candles to draw" framed className="h-[220px]">
 				No candles could be built from the current column mapping.
-			</div>
+			</EmptyState>
 		)
 
 	void config

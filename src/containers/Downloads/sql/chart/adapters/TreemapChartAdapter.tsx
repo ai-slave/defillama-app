@@ -2,6 +2,7 @@ import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -36,9 +37,9 @@ export function TreemapChartAdapter({ config, result, classified, onReady, heigh
 
 	if (!nameCol || !valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-secondary">
+			<EmptyState size="md" icon="bar-chart-2" title="Not enough columns for a treemap" framed className="h-[220px]">
 				Treemap needs a category column and a numeric column.
-			</div>
+			</EmptyState>
 		)
 
 	return (

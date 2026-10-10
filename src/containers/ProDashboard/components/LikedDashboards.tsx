@@ -1,9 +1,9 @@
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useLikedDashboards } from '../hooks/useLikedDashboards'
-import { proPanelStyles } from '../ui'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
@@ -16,16 +16,20 @@ export function LikedDashboards() {
 
 	if (dashboards.length === 0) {
 		return (
-			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
-				<Icon name="star" height={32} width={32} className="text-tertiary" />
-				<h2 className="text-center title-lg text-primary">No starred dashboards yet</h2>
-				<p className="text-center body-md text-secondary">Dashboards you star show up here.</p>
-				<div className="mt-7">
+			<EmptyState
+				size="lg"
+				icon="star"
+				title="No starred dashboards yet"
+				headingAs="h2"
+				framed
+				actions={
 					<Button as={BasicLink} href="/pro?tab=discover" size="md" variant="secondary">
 						Browse dashboards
 					</Button>
-				</div>
-			</div>
+				}
+			>
+				Dashboards you star show up here.
+			</EmptyState>
 		)
 	}
 

@@ -3,7 +3,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { DashboardPaywallModal, type PaywallReason } from './DashboardPaywallModal'
 
 interface PremiumFeatureGateProps {
@@ -21,38 +21,33 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 	}
 
 	if (loaders.userLoading) {
-		return (
-			<div className="flex min-h-[300px] items-center justify-center">
-				<LoadingIndicator />
-			</div>
-		)
+		return <SurfaceBodyLoadingStatus className="min-h-[300px]" />
 	}
 
 	return (
 		<>
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-6 text-center">
-				<div className="flex size-12 items-center justify-center rounded-full bg-brand-tint">
-					<Icon name="file-lock-2" height={24} width={24} className="text-link" />
-				</div>
-				<div className="space-y-2">
-					<h3 className="heading-xs text-primary">{featureName}</h3>
-					<p className="max-w-sm body-md text-secondary">
-						This feature requires a Pro subscription. Upgrade to unlock it.
-					</p>
-				</div>
-				<Button
-					type="button"
-					onClick={() => {
-						setSignupSource('pro-dashboard')
-						setPaywallOpen(true)
-					}}
-					variant="primary"
-					size="md"
-				>
-					<Icon name="sparkles" height={14} width={14} />
-					Upgrade to Pro
-				</Button>
-			</div>
+			<EmptyState
+				size="md"
+				icon="file-lock-2"
+				title={featureName}
+				className="min-h-[300px]"
+				actions={
+					<Button
+						type="button"
+						onClick={() => {
+							setSignupSource('pro-dashboard')
+							setPaywallOpen(true)
+						}}
+						variant="primary"
+						size="sm"
+					>
+						<Icon name="sparkles" height={14} width={14} />
+						Upgrade to Pro
+					</Button>
+				}
+			>
+				This feature requires a Pro subscription. Upgrade to unlock it.
+			</EmptyState>
 
 			{paywallOpen ? <DashboardPaywallModal reason={paywallReason} onClose={() => setPaywallOpen(false)} /> : null}
 		</>

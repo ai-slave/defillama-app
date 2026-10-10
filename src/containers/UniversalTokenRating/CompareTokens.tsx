@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { EmptyState } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns } from './CategoryBreakdown'
@@ -142,11 +142,9 @@ function CompareColumn({
 					/>
 				</>
 			) : (
-				<div className="flex min-h-[420px] flex-col items-center justify-center gap-1 rounded-lg border border-subtle bg-surface p-6 text-center">
-					<Icon name="file-plus" height={24} width={24} className="text-tertiary" />
-					<p className="label-lg">No Token Selected</p>
-					<p className="body-sm text-tertiary">Select a token above to start comparing.</p>
-				</div>
+				<EmptyState size="md" framed icon="file-plus" title="No token selected" className="min-h-[420px]">
+					Select a token above to start comparing.
+				</EmptyState>
 			)}
 		</div>
 	)

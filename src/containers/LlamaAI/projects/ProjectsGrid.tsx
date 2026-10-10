@@ -13,8 +13,8 @@ import {
 	searchFieldIconStyles,
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -80,20 +80,19 @@ export function ProjectsGrid() {
 
 	if (isLocked) {
 		return (
-			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
-				<div className="flex size-16 items-center justify-center rounded-full bg-brand-tint">
-					<Icon name="folder-plus" height={28} width={28} className="text-link" />
-				</div>
-				<div className="flex flex-col gap-2">
-					<h1 className="heading-lg text-primary">Projects are a paid feature</h1>
-					<p className="max-w-md body-md text-secondary">
-						Upload files or connect a GitHub repo, then chat with LlamaAI using that knowledge.
-					</p>
-				</div>
-				<Button as={BasicLink} href="/subscription" size="md" variant="primary">
-					Upgrade to enable Projects
-				</Button>
-			</div>
+			<EmptyState
+				size="lg"
+				icon="folder-plus"
+				title="Projects are a paid feature"
+				headingAs="h1"
+				actions={
+					<Button as={BasicLink} href="/subscription" size="md" variant="primary">
+						Upgrade to enable Projects
+					</Button>
+				}
+			>
+				Upload files or connect a GitHub repo, then chat with LlamaAI using that knowledge.
+			</EmptyState>
 		)
 	}
 
@@ -193,42 +192,29 @@ export function ProjectsGrid() {
 			) : null}
 
 			{queryReadFailed(projectList) ? (
-				<div
-					role="alert"
-					className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary"
-				>
-					<Icon name="alert-triangle" height={24} width={24} className="text-error" />
-					<p>Couldn&apos;t load projects.</p>
-					<Button
-						type="button"
-						size="md"
-						pendingLabel="Retrying…"
-						pending={projectList.isFetching}
-						onClick={() => void projectList.refetch()}
-					>
-						Retry
-					</Button>
-				</div>
+				<PanelStatus variant="error" retry={projectList}>
+					Couldn&apos;t load projects.
+				</PanelStatus>
 			) : projectList.isLoading ? (
-				<div className="flex justify-center py-10">
-					<LoadingSpinner size={16} />
-				</div>
+				<PanelLoadingStatus label="Loading projects" />
 			) : !hasProjects ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary">
-					<Icon name="folder-plus" height={28} width={28} className="text-tertiary" />
-					<p>Create your first project to upload files or connect a GitHub repo.</p>
-					{createProjectButton}
-				</div>
+				<EmptyState size="lg" icon="folder-plus" title="No projects yet" actions={createProjectButton} framed>
+					Create your first project to upload files or connect a GitHub repo.
+				</EmptyState>
 			) : visibleProjects.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary">
-					<Icon name="search" height={24} width={24} className="text-tertiary" />
-					<p>No projects match &ldquo;{deferredQuery.trim()}&rdquo;.</p>
-					{hasSearchQuery ? (
-						<Button type="button" size="md" onClick={clearSearch}>
-							Clear search
-						</Button>
-					) : null}
-				</div>
+				<EmptyState
+					size="lg"
+					icon="search"
+					title={<>No projects match &ldquo;{deferredQuery.trim()}&rdquo;</>}
+					actions={
+						hasSearchQuery ? (
+							<Button type="button" size="md" onClick={clearSearch}>
+								Clear search
+							</Button>
+						) : null
+					}
+					framed
+				/>
 			) : (
 				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{visibleProjects.map((p) => (

@@ -35,6 +35,7 @@ import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
 import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
@@ -847,12 +848,12 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 						{showAddTile ? addItemTile(options.placement) : null}
 					</CollapsibleGroup>
 					{showEmptyTabNotice ? (
-						<div
-							{...(showAddTile ? {} : { role: 'status' })}
-							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-medium px-3 text-center body-md text-tertiary"
-						>
-							{showAddTile ? 'This tab has no cards yet.' : 'Nothing in this tab yet'}
-						</div>
+						<EmptyState
+							size="md"
+							title={showAddTile ? 'This tab has no cards yet' : 'Nothing in this tab yet'}
+							framed
+							className="min-h-24"
+						/>
 					) : null}
 				</div>
 			)
