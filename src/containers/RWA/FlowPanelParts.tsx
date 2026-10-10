@@ -1,14 +1,10 @@
+import { Change, formatChange } from '~/ui/Change'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent } from '~/utils/numberFormat'
 import type { IRWAAssetFlowSummary, RWAChainFlowSummary } from './api.types'
 import { definitions } from './definitions'
-import {
-	formatSignedRWAFlow,
-	getRWAFlowTextClass,
-	type RWAFlowVsPriceAssetSummary,
-	type RWAFlowVsPriceSummary
-} from './flows'
+import type { RWAFlowVsPriceAssetSummary, RWAFlowVsPriceSummary } from './flows'
 
 /** Coverage below this share of days is flagged amber — flows meaningfully understate reality. */
 const LOW_COVERAGE_THRESHOLD = 0.5
@@ -52,7 +48,7 @@ export function RWAFlowCoverageTag({ coverage }: { coverage: number }) {
 export function formatRWAChainFlowSummary(summary: RWAChainFlowSummary): string {
 	switch (summary.status) {
 		case 'measured': {
-			const flow = formatSignedRWAFlow(summary.flow)
+			const flow = formatChange(summary.flow, 'usd')
 			return summary.coverage < 1
 				? `${flow} (${formatPercent(summary.coverage, { input: 'fraction', maximumFractionDigits: 0 })} coverage)`
 				: flow
@@ -152,8 +148,8 @@ function FlowVsPriceStat({
 				{breakdown.map((asset) => (
 					<span key={asset.key} className="flex justify-between gap-4">
 						<span>{asset.label}</span>
-						<span className={`font-jetbrains ${getRWAFlowTextClass(asset.summary[valueKey])}`}>
-							{formatSignedRWAFlow(asset.summary[valueKey])}
+						<span className="font-jetbrains">
+							<Change value={asset.summary[valueKey]} unit="usd" />
 						</span>
 					</span>
 				))}
@@ -166,7 +162,7 @@ function FlowVsPriceStat({
 	return (
 		<Tooltip content={content} render={<span className="inline-flex items-baseline gap-1 whitespace-nowrap" />}>
 			<span className="text-secondary underline decoration-dotted">{label}</span>
-			<span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
+			{value == null ? '-' : <Change value={value} unit="usd" />}
 		</Tooltip>
 	)
 }

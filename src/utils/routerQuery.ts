@@ -268,6 +268,13 @@ function removeResolvedDynamicRouteParams(query: ParsedUrlQueryInput, routePathn
  * (e.g. `scroll: false`, history replacement semantics, non-shallow transitions, or
  * intentionally replacing the full query object).
  */
+/** The browser path for render code: its query only once the router is ready. A static page's HTML was rendered
+    without the query, so a first client render that read it would disagree with that HTML and React would rebuild the
+    tree; the page re-renders with the query a moment later (policy: check-hydration). */
+export function readyAsPath(router: Pick<NextRouter, 'asPath' | 'isReady'>): string {
+	return router.isReady ? router.asPath : (router.asPath.split('?')[0] ?? router.asPath)
+}
+
 export function pushShallowQuery(
 	router: NextRouter,
 	updates: Record<string, QueryUpdateValue>,

@@ -3,7 +3,9 @@ import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import {
@@ -12,8 +14,7 @@ import {
 	formatPercent,
 	formatNumber,
 	USD_LOWERCASE_MILLIONS_OPTIONS,
-	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
 import { fractionChange, sumNullable } from './modelHelpers'
@@ -28,20 +29,6 @@ import { insideShown, IntraSpread } from './ProfileExecution'
 import { ProfileIdentity } from './ProfileIdentity'
 import { TierScale } from './ProfileRanking'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
-
-function ChangePct({ value }: { value: number }) {
-	return (
-		<span className={`label-sm ${value >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-			{value >= 0 ? '+' : ''}
-			{formatPercent(value, {
-				input: 'fraction',
-				minimumFractionDigits: 1,
-				maximumFractionDigits: 1,
-				useGrouping: false
-			})}
-		</span>
-	)
-}
 
 interface SegmentValue {
 	segment: ExchangeSegment
@@ -182,12 +169,13 @@ export function ProfileMetrics({
 				</div>
 			) : null}
 
-			<div className="flex flex-col">
-				<span className="body-sm text-secondary">24h Volume{showGlobalLabel ? ' · Global' : ''}</span>
-				<span className="flex flex-wrap items-baseline gap-2">
-					<span className="min-h-8 mono-xl">{formatUsd(totalVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</span>
-					{volumeChange != null ? <ChangePct value={volumeChange} /> : null}
-				</span>
+			<div className="flex flex-nowrap items-end justify-between gap-8">
+				<StatItem
+					label={`24h Volume${showGlobalLabel ? ' · Global' : ''}`}
+					value={formatUsd(totalVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+					truncate
+				/>
+				{volumeChange != null ? <SummaryChange value={volumeChange * 100} comparison="vs previous 24h" /> : null}
 			</div>
 
 			<div className="flex flex-col">
@@ -283,15 +271,10 @@ export function ProfileMetrics({
 								{profile.nativeToken.priceUsd != null ? (
 									<span>{formatUsd(profile.nativeToken.priceUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</span>
 								) : null}
-								{profile.nativeToken.change24h != null ? (
-									<span className={profile.nativeToken.change24h >= 0 ? 'text-data-up' : 'text-data-down'}>
-										({profile.nativeToken.change24h >= 0 ? '+' : ''}
-										{formatPercent(profile.nativeToken.change24h, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)})
-									</span>
-								) : null}
+								<Change value={profile.nativeToken.change24h} />
 							</BasicLink>
 						}
-						valueClassName="ml-auto text-right"
+						valueClassName="mono-md-bold ml-auto"
 					/>
 				) : null}
 			</div>

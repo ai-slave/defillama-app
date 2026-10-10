@@ -15,6 +15,7 @@ import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
@@ -49,9 +50,7 @@ import {
 } from './FlowPanelParts'
 import {
 	buildRWAFlowChart,
-	formatSignedRWAFlow,
 	getRWAFlowModeQueryValue,
-	getRWAFlowTextClass,
 	getRWAFlowVisibleRange,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowQueryState,
@@ -263,11 +262,12 @@ function AssetKeyMetrics({
 						<RWAFlowValueShimmer />
 					) : isFlowUnavailable ? (
 						<RWAFlowValueUnavailable />
+					) : flow7d?.flow == null ? (
+						'-'
 					) : (
-						formatSignedRWAFlow(flow7d?.flow)
+						<Change value={flow7d.flow} unit="usd" />
 					)
 				}
-				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
 			/>
 			<MetricRow
 				label={definitions.flows.assetNetFlow30d.label}
@@ -279,11 +279,12 @@ function AssetKeyMetrics({
 						<RWAFlowValueShimmer />
 					) : isFlowUnavailable ? (
 						<RWAFlowValueUnavailable />
+					) : flow30d?.flow == null ? (
+						'-'
 					) : (
-						formatSignedRWAFlow(flow30d?.flow)
+						<Change value={flow30d.flow} unit="usd" />
 					)
 				}
-				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
 			/>
 			{asset.price != null ? (
 				<MetricRow

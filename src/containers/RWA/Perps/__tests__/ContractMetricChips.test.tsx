@@ -18,6 +18,7 @@ const router = () =>
 	({
 		pathname: '/rwa/perps/contract/xyz-meta',
 		asPath,
+		isReady: true,
 		query: Object.fromEntries(new URLSearchParams(asPath.split('?')[1] ?? '')),
 		push
 	}) as unknown as NextRouter

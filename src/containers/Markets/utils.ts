@@ -27,8 +27,3 @@ export function materialChange(
 	if (prev < minimumBaseline && fraction > 10) return { kind: 'insufficient-baseline' }
 	return { kind: 'change', fraction }
 }
-
-/** Convert a fraction (0.05) to a percent (5) for the <PercentChange> component. */
-export function toPercent(fraction: number | null): number | null {
-	return fraction == null ? null : fraction * 100
-}

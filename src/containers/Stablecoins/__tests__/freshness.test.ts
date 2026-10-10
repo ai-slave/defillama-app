@@ -78,7 +78,7 @@ describe('stablecoin change freshness', () => {
 		).toMatchObject({
 			totalMcapCurrent: 90,
 			totalMcapPrevWeek: 80,
-			change7d: '12.50',
+			change7d: 12.5,
 			dataTimestamp: Date.parse('2026-07-14T00:00:00Z') / 1e3,
 			isDataStale: false
 		})

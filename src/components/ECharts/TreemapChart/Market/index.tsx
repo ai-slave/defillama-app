@@ -10,6 +10,7 @@ import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelCon
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { changeTone, formatChange } from '~/ui/Change'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
 import { formatChartValue } from '../../shared/formatters'
@@ -411,7 +412,10 @@ export default function MarketTreemapChart({
 							`Market Cap: ${formatUsd(data.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 						)
 					}
-					rows.push(`${colorLabel}: ${formatPercentChange(readPercentChange(values)) ?? '-'}`)
+					const change = readPercentChange(values)
+					rows.push(
+						`${colorLabel}: ${change == null ? '-' : `<span class="${changeTone(change)}">${formatChange(change)}</span>`}`
+					)
 					return rows.filter(Boolean).join('')
 				}
 			},

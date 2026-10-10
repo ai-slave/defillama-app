@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { IncludeOwnTokensSwitch, ReserveAssetsCharts } from '~/containers/Cexs/ReserveAssetsCharts'
 import { ReserveStablecoinCharts } from '~/containers/Cexs/ReserveStablecoinCharts'
+import { Change } from '~/ui/Change'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -29,9 +30,7 @@ function ReserveStatStrip({ profile }: { profile: ExchangeProfileModel }) {
 				label: field.label,
 				value:
 					key === 'in24h' ? (
-						<span className={field.value < 0 ? 'text-data-down' : field.value > 0 ? 'text-data-up' : ''}>
-							{formatUsd(field.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						</span>
+						<Change value={field.value} unit="usd" />
 					) : (
 						formatUsd(field.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 					)

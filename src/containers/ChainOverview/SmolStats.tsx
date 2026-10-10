@@ -1,7 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { SmolStatCard } from '~/ui/SmolStatCard'
 import { slug } from '~/utils'
-import { formatPercentChange, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
 import { SmolBarChart } from './SmolBarChart'
 import { SmolLineChart } from './SmolLineChart'
@@ -19,7 +19,7 @@ export function SmolStats(props: IChainOverviewData) {
 	const feesChart = props.chainFees.topProtocolsChart
 	const stablecoins = props.stablecoins
 	const stablecoinChart = stablecoins?.mcapChartData
-	const stablecoinChangeIsNonNegative = stablecoins != null && Number(stablecoins.change7d) >= 0
+	const stablecoinChangeIsNonNegative = stablecoins != null && (stablecoins.change7d ?? 0) >= 0
 	const unlocksTooltip =
 		unlocks !== null && unlocks.cliff14d !== null && unlocks.linear14d !== null
 			? `Cliff unlocks: ${formatUsd(unlocks.cliff14d)}. Linear releases: ${formatUsd(unlocks.linear14d)}. USD values use prices captured with the unlock snapshot. Events without a known amount or valid snapshot price are excluded.`
@@ -130,11 +130,7 @@ export function SmolStats(props: IChainOverviewData) {
 					}`}
 					link={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
 					value={stablecoins.mcap != null ? formatUsd(stablecoins.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) : null}
-					change={{
-						text: formatPercentChange(stablecoins.change7d),
-						tone: stablecoinChangeIsNonNegative ? 'text-data-up' : 'text-data-down',
-						comparison: 'over 7d'
-					}}
+					change={stablecoins.change7d != null ? { value: stablecoins.change7d, comparison: 'over 7d' } : undefined}
 				>
 					<SmolLineChart series={stablecoinChart} color={stablecoinChangeIsNonNegative ? 'green' : 'red'} />
 				</SmolStatCard>

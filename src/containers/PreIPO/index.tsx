@@ -10,6 +10,7 @@ import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -17,18 +18,12 @@ import { StaleText } from '~/ui/StaleText'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import type { PreIpoCompanyListItem } from './api.types'
 import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import type { PreIpoOverviewPageProps } from './types'
-
-const PERCENT_OPTIONS = {
-	input: 'percent',
-	signDisplay: 'exceptZero',
-	maximumFractionDigits: 2
-} as const
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGINATION: PaginationState = { pageIndex: 0, pageSize: 50 }
@@ -96,11 +91,7 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.valuationChange1Y.label,
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return (
-				<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-					{formatPercent(value, PERCENT_OPTIONS) ?? '-'}
-				</span>
-			)
+			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
 			headerClassName: 'w-[112px] min-w-[112px]',
@@ -143,11 +134,7 @@ const columns = columnHelper.columns([
 		header: preIpoDefinitions.company.premiumVsFunding.label,
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return (
-				<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-					{formatPercent(value, PERCENT_OPTIONS) ?? '-'}
-				</span>
-			)
+			return value == null ? '-' : <Change value={value} />
 		},
 		meta: {
 			headerClassName: 'w-[172px] min-w-[172px]',

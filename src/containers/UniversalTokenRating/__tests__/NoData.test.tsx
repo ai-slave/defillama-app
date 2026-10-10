@@ -22,7 +22,7 @@ describe('UTR empty states', () => {
 		expect(renderToStaticMarkup(<TopMovers movers={[]} />)).toBe('')
 	})
 
-	test('keeps explicit mover signs while using canonical percent formatting', () => {
+	test('signs movers with canonical percent formatting and shows zero unsigned', () => {
 		const html = renderToStaticMarkup(
 			<TopMovers
 				movers={[
@@ -32,7 +32,8 @@ describe('UTR empty states', () => {
 			/>
 		)
 
-		expect(html).toContain('+0%')
+		expect(html).toContain('>0%<')
+		expect(html).not.toContain('+0%')
 		expect(html).toContain('-1.23%')
 	})
 

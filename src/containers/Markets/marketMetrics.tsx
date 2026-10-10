@@ -1,14 +1,7 @@
 import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
-import { PercentChange } from '~/ui/PercentChange'
-import { materialChange, toPercent } from './utils'
-
-/** Fractional change rendered as a signed, coloured percent. */
-function ChangeCell({ fraction }: { fraction: number | null | undefined }) {
-	const pct = toPercent(fraction ?? null)
-	if (pct == null) return <span className="text-tertiary">–</span>
-	return <PercentChange percent={pct} />
-}
+import { Change } from '~/ui/Change'
+import { materialChange } from './utils'
 
 export function MaterialChangeCell({
 	current,
@@ -33,7 +26,7 @@ export function MaterialChangeCell({
 			</span>
 		)
 	}
-	return <ChangeCell fraction={change.fraction} />
+	return <Change value={change.fraction * 100} />
 }
 
 /** One label/value pair in a MetricStatStrip, the Markets mono variant of `InlineStatStrip` (src/ui). */

@@ -8,7 +8,7 @@ import pb from '~/utils/pocketbase'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import {
 	formatCountdown,
-	formatDayChange,
+	formatDayMove,
 	formatHourlyFunding,
 	formatPrice,
 	mergeLiveStats,
@@ -43,9 +43,9 @@ test('a tiny hourly funding fraction keeps its sign and digits instead of roundi
 	expect(formatHourlyFunding(0.00013, 113.88)).toEqual({ rate: '+0.0130%', apr: '113.9% APR' })
 })
 
-test('the 24h change pairs the price move since the prior day with its percent, signed by direction', () => {
-	expect(formatDayChange({ markPx: 95.66, prevDayPx: 93.1, dayChangePct: 2.7497 })).toBe('+2.560 / +2.75%')
-	expect(formatDayChange({ markPx: 93.1, prevDayPx: 95.66, dayChangePct: -2.6762 })).toBe('-2.560 / -2.68%')
+test('the price move behind the 24h change keeps the price precision and its sign', () => {
+	expect(formatDayMove({ markPx: 95.66, prevDayPx: 93.1 })).toBe('+$2.560')
+	expect(formatDayMove({ markPx: 93.1, prevDayPx: 95.66 })).toBe('-$2.560')
 })
 
 // The strip updates several times a second. A price that drops a trailing zero on one tick and

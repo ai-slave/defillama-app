@@ -2,8 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import * as React from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -133,7 +133,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 						{...(impact.geckoId !== undefined ? { geckoId: impact.geckoId } : {})}
 						value={
 							<span className="mono-md-bold">
-								<PercentChange percent={impact.impact} />
+								<Change value={impact.impact} />
 							</span>
 						}
 						trailingIcon={

@@ -19,6 +19,7 @@ import {
 import { SortIcon } from '~/components/Table/SortIcon'
 import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -32,9 +33,9 @@ import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import {
 	formatCompactNumber,
-	formatNumber,
 	formatPercent,
 	formatUsd,
+	roundNumber,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { InstantTooltip } from '../InstantTooltip'
@@ -186,20 +187,6 @@ function BenchmarkMetric({
 	delta: number | null
 	markerColor: string
 }) {
-	const flat = delta != null && Math.abs(delta) <= 0.005
-	const deltaText =
-		delta == null
-			? null
-			: flat
-				? `→ ${formatNumber(Math.abs(delta))}pp`
-				: delta > 0
-					? `↑ +${formatNumber(delta)}pp`
-					: `↓ −${formatNumber(Math.abs(delta))}pp`
-	const deltaClassName = flat
-		? 'text-secondary'
-		: delta != null && delta > 0
-			? 'text-(--yield-positive-text)'
-			: 'text-(--yield-negative-text)'
 	return (
 		<div className="flex items-center gap-1.5 whitespace-nowrap">
 			<dt className="flex items-center gap-1 body-sm text-secondary">
@@ -209,9 +196,10 @@ function BenchmarkMetric({
 			<dd className="-translate-y-px mono-md-bold text-primary">
 				{formatPercent(value, YIELD_PERCENT_OPTIONS) ?? '—'}
 			</dd>
-			{deltaText ? (
-				<dd className={`flex items-center gap-1 body-sm tabular-nums ${deltaClassName}`}>
-					{deltaText}
+			{delta != null ? (
+				<dd className="flex items-center gap-1 body-sm text-secondary tabular-nums">
+					{/* Rounded to the shown precision, so a move under 0.005pp reads flat instead of a coloured 0.00pp. */}
+					<Change value={roundNumber(delta, 2)} unit="pp" />
 					<span className="text-tertiary">vs 7d ago</span>
 				</dd>
 			) : null}

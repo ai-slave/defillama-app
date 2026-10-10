@@ -26,9 +26,9 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
-import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -551,14 +551,11 @@ const emissionsColumns = columnHelper.columns([
 		{
 			id: 'postUnlock',
 			header: '7d Price Change After Unlock',
-			cell: ({ getValue }) => {
-				const value = getValue()
-				return (
-					<div className="flex h-full items-center justify-end">
-						{value != null ? <PercentChange percent={value} /> : ''}
-					</div>
-				)
-			},
+			cell: ({ getValue }) => (
+				<div className="flex h-full items-center justify-end">
+					<Change value={getValue()} />
+				</div>
+			),
 			meta: {
 				headerClassName: 'w-[236px]',
 				align: 'end',

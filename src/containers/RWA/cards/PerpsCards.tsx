@@ -1,12 +1,11 @@
 import { SmolLineChart } from '~/containers/ChainOverview/SmolLineChart'
 import { SmolStatCard } from '~/ui/SmolStatCard'
-import { formatPercentChange } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../api.types'
 import { formatRwaKpiUsd } from '../kpi/format'
 import type { RwaPerpsKpi } from '../kpi/perpsKpi'
 import { perpsDefinitions } from '../Perps/definitions'
 import { buildRwaSplitCard, foldRwaSeriesTotal, getRwaPerpsMarkets, RWA_CARD_CHANGE_DAYS } from './cardData'
-import { getRwaChangeTone, RWAChangeCard, RWAValueBars } from './OverviewCard'
+import { RWAChangeCard, RWAValueBars } from './OverviewCard'
 import { buildRwaPerpsVolumeCard, rankRwaPerpsOpenInterest, toRwaSplitRows, type RwaPerpsCards } from './perpsCardData'
 
 export type RWAPerpsCardsProps = {
@@ -62,11 +61,7 @@ export function RWAPerpsCards({
 				tooltip="Daily volume across every market, averaged over the last seven days so a weekend does not read as a drop; the line is the last 90 days."
 				value={volume.value == null ? null : formatRwaKpiUsd(volume.value)}
 				qualifier="a day"
-				change={{
-					text: volume.changePct == null ? 'N/A' : formatPercentChange(volume.changePct),
-					tone: getRwaChangeTone(volume.changePct),
-					comparison: 'over a week'
-				}}
+				change={volume.changePct == null ? undefined : { value: volume.changePct, comparison: 'over a week' }}
 			>
 				<SmolLineChart series={volume.series} color="blue" />
 			</SmolStatCard>

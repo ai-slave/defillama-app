@@ -17,15 +17,15 @@ import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/componen
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { calcCirculating } from '~/containers/Stablecoins/hooks'
+import { Change, formatChange } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 
 type StablecoinDeviationInfo = {
 	timestamp: number
@@ -48,9 +48,9 @@ type StablecoinsTableInputRow = {
 	change_1d?: number | null
 	change_7d?: number | null
 	change_1m?: number | null
-	change_1d_nol?: string | null
-	change_7d_nol?: string | null
-	change_1m_nol?: string | null
+	change_1d_usd?: number | null
+	change_7d_usd?: number | null
+	change_1m_usd?: number | null
 	mcap?: number | null
 	pegType?: string | null
 	unreleased?: number | null
@@ -118,7 +118,7 @@ const stablecoinsColumns = columnHelper.columns([
 			return (
 				<span className="flex w-full items-center justify-end gap-1">
 					{rowValues.depeggedTwoPercent ? <QuestionHelper text="Currently de-pegged by 2% or more." /> : null}
-					{value != null ? formattedPeggedPercent(value) : <span>-</span>}
+					{value != null ? <Change value={value} /> : <span>-</span>}
 				</span>
 			)
 		},
@@ -139,7 +139,7 @@ const stablecoinsColumns = columnHelper.columns([
 			return (
 				<span className="flex w-full items-center justify-end gap-1">
 					{rowValues.pegDeviationInfo ? <QuestionHelper text={pegDeviationText(rowValues.pegDeviationInfo)} /> : null}
-					{value != null ? formattedPeggedPercent(value) : <span>-</span>}
+					{value != null ? <Change value={value} /> : <span>-</span>}
 				</span>
 			)
 		},
@@ -175,19 +175,9 @@ const stablecoinsColumns = columnHelper.columns([
 		id: 'change_1d',
 		header: '1d Change',
 		cell: (info) =>
-			info.row.original.change_1d_nol != null ? (
-				<Tooltip
-					content={info.row.original.change_1d_nol}
-					render={
-						<span
-							className={`underline decoration-dotted ${
-								info.row.original.change_1d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-							}`}
-						/>
-					}
-				>
-					<PercentChange percent={info.getValue()} />
-				</Tooltip>
+			// A percent needs the previous mcap, so its dollar change is always there too.
+			info.getValue() != null ? (
+				<Change value={info.getValue()} tooltip={formatChange(info.row.original.change_1d_usd!, 'usd')} />
 			) : (
 				'-'
 			),
@@ -200,19 +190,8 @@ const stablecoinsColumns = columnHelper.columns([
 		id: 'change_7d',
 		header: '7d Change',
 		cell: (info) =>
-			info.row.original.change_7d_nol != null ? (
-				<Tooltip
-					content={info.row.original.change_7d_nol}
-					render={
-						<span
-							className={`underline decoration-dotted ${
-								info.row.original.change_7d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-							}`}
-						/>
-					}
-				>
-					<PercentChange percent={info.getValue()} />
-				</Tooltip>
+			info.getValue() != null ? (
+				<Change value={info.getValue()} tooltip={formatChange(info.row.original.change_7d_usd!, 'usd')} />
 			) : (
 				'-'
 			),
@@ -225,19 +204,8 @@ const stablecoinsColumns = columnHelper.columns([
 		id: 'change_1m',
 		header: '1m Change',
 		cell: (info) =>
-			info.row.original.change_1m_nol != null ? (
-				<Tooltip
-					content={info.row.original.change_1m_nol}
-					render={
-						<span
-							className={`underline decoration-dotted ${
-								info.row.original.change_1m_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
-							}`}
-						/>
-					}
-				>
-					<PercentChange percent={info.getValue()} />
-				</Tooltip>
+			info.getValue() != null ? (
+				<Change value={info.getValue()} tooltip={formatChange(info.row.original.change_1m_usd!, 'usd')} />
 			) : (
 				'-'
 			),
@@ -293,51 +261,6 @@ const assetsColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['name', 'mcap', 'change_1d', 'change_7d', 'change_1m', 'price', 'pegDeviation', 'pegDeviation_1m', 'chains'],
 	1024: ['name', 'chains', 'mcap', 'pegDeviation', 'pegDeviation_1m', 'price', 'change_1d', 'change_7d', 'change_1m']
 }
-function formattedPeggedPercent(percent: unknown, noSign = false) {
-	if (!percent && percent !== 0) {
-		return null
-	}
-
-	let up = 'green'
-	let down = 'red'
-
-	if (noSign) {
-		up = down = ''
-	}
-
-	let color = ''
-	let finalValue = ''
-
-	const numericPercent = parseFloat(String(percent))
-
-	if (!numericPercent || numericPercent === 0) {
-		finalValue = '0%'
-	} else if (numericPercent < 0.0001 && numericPercent > 0) {
-		color = up
-		finalValue = '< 0.0001%'
-	} else if (numericPercent < 0 && numericPercent > -0.0001) {
-		color = down
-		finalValue = '< 0.0001%'
-	} else {
-		const fixedPercent = roundNumber(numericPercent, 2)
-
-		finalValue = formatPercent(fixedPercent, {
-			input: 'percent',
-			maximumFractionDigits: fixedPercent > 100 ? 0 : 2,
-			signDisplay: !noSign && fixedPercent > 0 ? 'always' : 'auto',
-			useGrouping: false
-		})
-		if (fixedPercent > 0) color = up
-		if (fixedPercent < 0) color = down
-	}
-
-	return (
-		<span className={`${noSign ? '' : color === 'green' ? 'text-data-up' : color === 'red' ? 'text-data-down' : ''}`}>
-			{finalValue}
-		</span>
-	)
-}
-
 const formatPriceSource: Record<string, string> = {
 	chainlink: 'Chainlink',
 	uniswap: 'a Uniswap v3 pool oracle',

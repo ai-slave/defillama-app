@@ -7,7 +7,6 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { chartColor } from '~/constants/colors'
-import { formatPercentChangeText } from '~/ui/PercentChange'
 import {
 	formatUsd,
 	formatCompactNumber,
@@ -245,11 +244,6 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 			children: marketReferenceChildren
 		},
 		pointInTimeRows: [
-			{
-				label: d.openInterestChange24h.label,
-				tooltip: d.openInterestChange24h.description,
-				value: formatPercentChangeText(contractData.market.openInterestChange24h) ?? '-'
-			},
 			{
 				label: d.fundingRate.label,
 				tooltip: d.fundingRate.description,

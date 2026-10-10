@@ -24,7 +24,7 @@ import {
 import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
-import { insideShown, IntraSpread, Markout, NA, pctOfBps, SlippagePair } from './ProfileExecution'
+import { insideShown, IntraSpread, Markout, FractionChange, NA, pctOfBps, SlippagePair } from './ProfileExecution'
 
 const PERCENT_OPTIONS = {
 	input: 'fraction',
@@ -51,17 +51,6 @@ const columnHelper = createColumnHelper<SearchTableFeatures, PairTableRow>()
 
 export function formatPairPrice(price: number | null | undefined, quote: string) {
 	return price == null ? '–' : `${formatCompactNumber(price, NUMBER_LOWERCASE_MILLIONS_OPTIONS)} ${quote.toUpperCase()}`
-}
-
-function Change({ value }: { value: number | undefined }) {
-	return value == null ? (
-		<span className="text-tertiary">–</span>
-	) : (
-		<span className={value >= 0 ? 'text-data-up' : 'text-data-down'}>
-			{value >= 0 ? '+' : ''}
-			{formatPercent(value, PERCENT_OPTIONS) ?? '–'}
-		</span>
-	)
 }
 
 function UnsupportedMetric() {
@@ -163,7 +152,7 @@ export function buildPairColumns(
 		columnHelper.accessor((row) => row.priceChange24h ?? undefined, {
 			id: 'priceChange24h',
 			header: definitions.priceChange24h.label,
-			cell: ({ getValue }) => <Change value={getValue()} />,
+			cell: ({ getValue }) => <FractionChange value={getValue()} />,
 			meta: {
 				headerClassName: 'w-[95px]',
 				align: 'end',
@@ -291,7 +280,7 @@ export function buildPairColumns(
 		columnHelper.accessor((row) => row.volumeChange24h ?? undefined, {
 			id: 'volumeChange24h',
 			header: definitions.volumeChange24h.label,
-			cell: ({ getValue }) => <Change value={getValue()} />,
+			cell: ({ getValue }) => <FractionChange value={getValue()} />,
 			meta: {
 				headerClassName: 'w-[100px]',
 				align: 'end',
@@ -381,7 +370,10 @@ export function buildPairColumns(
 				columnHelper.accessor((row) => row.openInterestChange24h ?? undefined, {
 					id: 'openInterestChange24h',
 					header: definitions.openInterestChange24h.label,
-					cell: ({ getValue }) => (capabilities.openInterest ? <Change value={getValue()} /> : <UnsupportedMetric />),
+					cell: ({ getValue }) => {
+						if (!capabilities.openInterest) return <UnsupportedMetric />
+						return <FractionChange value={getValue()} />
+					},
 					meta: {
 						headerClassName: 'w-[90px]',
 						align: 'end',

@@ -13,6 +13,7 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -414,7 +415,6 @@ function GrowthReadout({
 
 	// Whatever the chart is actually drawing.
 	const total = combined ?? summary
-	const toneClass = (total?.gain ?? 0) < 0 ? 'text-(--yield-negative-text)' : 'text-(--yield-positive-text)'
 	const annualized = combined == null ? summary?.annualizedPct : null
 
 	const drawdown = summary ? selectGrowthDrawdown(summary, combined) : null
@@ -503,13 +503,13 @@ function GrowthReadout({
 							: ''
 					}`}
 				>
-					<span className={`mono-xl ${toneClass}`}>{formatUsd(total.endValue, money)}</span>
+					<span className="mono-xl text-primary">{formatUsd(total.endValue, money)}</span>
 				</ReadoutCell>
 			) : null}
 			{total ? (
 				<ReadoutCell label="Total return">
-					<span className={`mono-xl ${toneClass}`}>
-						{formatPercent(total.returnPct, { ...percent, signDisplay: 'exceptZero' })}
+					<span className="mono-xl">
+						<Change value={total.returnPct} />
 					</span>
 				</ReadoutCell>
 			) : null}

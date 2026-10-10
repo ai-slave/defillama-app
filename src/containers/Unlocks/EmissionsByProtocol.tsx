@@ -13,6 +13,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -28,7 +29,7 @@ import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange, roundNumber } from '~/utils/numberFormat'
+import { formatUsd, formatCompactNumber, formatPercent, roundNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartRow } from './api.types'
@@ -274,7 +275,7 @@ function TokenHeader({
 	geckoId: string | null
 }) {
 	return (
-		<div className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
+		<div className="flex w-full flex-wrap items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
 			<TokenLogo
 				name={name}
 				kind="token"
@@ -294,8 +295,11 @@ function TokenHeader({
 						})}
 					</span>
 					{percentChange !== null ? (
-						<span className={`mono-md ${percentChange > 0 ? 'text-data-up' : 'text-data-down'}`}>
-							{formatPercentChange(percentChange)}
+						<span className="flex items-baseline gap-1">
+							<span className="mono-md">
+								<Change value={percentChange} />
+							</span>
+							<span className="body-md text-tertiary">over 24h</span>
 						</span>
 					) : null}
 				</>

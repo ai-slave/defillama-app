@@ -33,6 +33,7 @@ import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/lo
 import type { TablePageRequestResult } from '~/hooks/useTablePages'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
 import {
@@ -42,7 +43,6 @@ import {
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -1381,7 +1381,7 @@ const columns = columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('change_1d'), {
 				id: 'change_1d',
 				header: '1d Change',
-				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
 					headerClassName: 'w-[109px] min-w-[109px]',
 					align: 'end',
@@ -1391,7 +1391,7 @@ const columns = columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('change_7d'), {
 				id: 'change_7d',
 				header: '7d Change',
-				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
 					headerClassName: 'w-[110px] min-w-[110px]',
 					align: 'end',
@@ -1401,7 +1401,7 @@ const columns = columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('change_1m'), {
 				id: 'change_1m',
 				header: '1m Change',
-				cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
 					headerClassName: 'w-[112px] min-w-[112px]',
 					align: 'end',
@@ -1918,7 +1918,7 @@ const columns = columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('dex_volume_change_7d'), {
 				id: 'dex_volume_change_7d',
 				header: 'Spot Change 7d',
-				cell: ({ getValue }) => (getValue() !== 0 ? <PercentChange percent={getValue()} /> : null),
+				cell: ({ getValue }) => (getValue() !== 0 ? <Change value={getValue()} /> : null),
 				meta: {
 					headerClassName: 'w-[145px] min-w-[145px]',
 					align: 'end',

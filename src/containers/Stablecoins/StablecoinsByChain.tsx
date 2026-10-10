@@ -77,7 +77,7 @@ import {
 	buildStablecoinMarketCapPresentation,
 	prepareStablecoinMarketCapSeries
 } from './marketCapPresentation'
-import { StablecoinChangeStats, type StablecoinChangeStat } from './StablecoinChangeStats'
+import { StablecoinChangeStats } from './StablecoinChangeStats'
 import { StablecoinsTable } from './StablecoinsAssetsTable'
 import { useStablecoinChartSelection } from './useStablecoinChartSelection'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
@@ -119,22 +119,6 @@ interface StablecoinsByChainProps {
 	defaultChartData: StablecoinChartSeriesPayload
 	entityQuestions?: Array<string>
 	deprecated?: boolean
-}
-
-const toChangeStat = (
-	days: StablecoinChangeStat['days'],
-	percent: string | null | undefined,
-	absolute: number | null | undefined
-): StablecoinChangeStat => {
-	const absoluteLabel =
-		absolute == null
-			? null
-			: formatUsd(String(absolute), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-	return {
-		days,
-		percent: percent == null ? null : percent.startsWith('-') ? percent : `+${percent}`,
-		absolute: absoluteLabel == null ? null : absoluteLabel.startsWith('-') ? absoluteLabel : `+${absoluteLabel}`
-	}
 }
 
 export function StablecoinsByChain({
@@ -299,11 +283,6 @@ export function StablecoinsByChain({
 		: hasActiveStablecoinUrlFilters
 			? (selectedChartData?.summary ?? null)
 			: (selectedChartData?.summary ?? defaultChartData.summary)
-	const changeStats = [
-		toChangeStat(7, chartSummary?.change7d, chartSummary?.change7dUsd),
-		toChangeStat(1, chartSummary?.change1d, chartSummary?.change1dUsd),
-		toChangeStat(30, chartSummary?.change30d, chartSummary?.change30dUsd)
-	]
 	const totalMcapCurrent = chartSummary?.totalMcapCurrent ?? null
 	const mcapToDisplay = formatUsd(totalMcapCurrent, {
 		compact: true,
@@ -515,17 +494,16 @@ export function StablecoinsByChain({
 
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<StatItem
+					<StablecoinChangeStats
 						label={
 							<span className="flex items-center gap-2">
 								<span>Total {title}</span>
 								{deprecated ? <DeprecatedEntityText /> : null}
 							</span>
 						}
-						labelAs="h1"
 						value={mcapToDisplay}
+						changes={chartSummary}
 					/>
-					<StablecoinChangeStats stats={changeStats} />
 					<StatItem label={<>{topTokenSymbol} Dominance</>} value={formatPercent(dominance, { input: 'percent' })} />
 					{chartSummary?.isDataStale && chartSummary.dataTimestamp != null ? (
 						<DataFreshness

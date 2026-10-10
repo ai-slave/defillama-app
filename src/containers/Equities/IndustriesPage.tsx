@@ -11,10 +11,12 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { childColors } from '~/constants/colors'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
+import { StatTile } from '~/ui/SummaryStats'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildIndustrySummary,
@@ -30,10 +32,8 @@ import {
 } from './aggregateData'
 import {
 	AggregateTreemap,
-	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
-	MetricCard,
 	ReturnMatrix,
 	RowNumber,
 	sectorColor,
@@ -147,7 +147,10 @@ const industryColumns = industryColumnHelper.columns([
 		industryColumnHelper.accessor((row) => row[field] ?? undefined, {
 			id: field,
 			header,
-			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
+			cell: ({ getValue }) => {
+				const value = getValue()
+				return value == null ? '—' : <Change value={value} />
+			},
 			meta: { headerClassName: 'w-18', align: 'end' }
 		})
 	),
@@ -279,38 +282,40 @@ function IndustriesReadyPage({
 			/>
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-6">
-				<MetricCard
+				<StatTile
 					label="Industries"
 					value={summary.industryCount}
-					detail={`${filterIndustryTail(sectorRows, { hideTail: true }).visibleRows.length} shown above the tail`}
+					sub={`${filterIndustryTail(sectorRows, { hideTail: true }).visibleRows.length} shown above the tail`}
 				/>
-				<MetricCard
+				<StatTile
 					label="Top 10 · share of market"
 					value={formatMetric(summary.top10MarketShare, 'percent')}
-					detail={`Top 20 · ${formatMetric(summary.top20MarketShare, 'percent')}`}
+					sub={`Top 20 · ${formatMetric(summary.top20MarketShare, 'percent')}`}
 				/>
-				<MetricCard
+				<StatTile
 					label="Largest industry"
-					value={summary.largestIndustry?.industry ?? '—'}
-					valueKind="text"
-					detail={`${formatMetric(summary.largestIndustry?.marketCap ?? null, 'usd')} · ${summary.largestIndustry?.companyCount ?? 0} companies`}
+					value={formatMetric(summary.largestIndustry?.marketCap ?? null, 'usd')}
+					sub={
+						summary.largestIndustry
+							? `${summary.largestIndustry.industry} · ${summary.largestIndustry.companyCount} companies`
+							: undefined
+					}
 				/>
-				<MetricCard
+				{/* buildIndustrySummary picks best and worst only from rows with a 1M return. */}
+				<StatTile
 					label="Best industry · 1M"
-					value={summary.bestIndustry1m?.industry ?? '—'}
-					valueKind="text"
-					change={<ChangeValue value={summary.bestIndustry1m?.priceChangePercentage1m ?? null} />}
+					value={summary.bestIndustry1m ? <Change value={summary.bestIndustry1m.priceChangePercentage1m!} /> : '—'}
+					sub={summary.bestIndustry1m?.industry}
 				/>
-				<MetricCard
+				<StatTile
 					label="Worst industry · 1M"
-					value={summary.worstIndustry1m?.industry ?? '—'}
-					valueKind="text"
-					change={<ChangeValue value={summary.worstIndustry1m?.priceChangePercentage1m ?? null} />}
+					value={summary.worstIndustry1m ? <Change value={summary.worstIndustry1m.priceChangePercentage1m!} /> : '—'}
+					sub={summary.worstIndustry1m?.industry}
 				/>
-				<MetricCard
+				<StatTile
 					label="Under 0.1% of market"
 					value={summary.underPointOnePercentCount}
-					detail={`of ${summary.industryCount} · below ${formatMetric(summary.underPointOnePercentMarketCapThreshold, 'usd')}`}
+					sub={`of ${summary.industryCount} · below ${formatMetric(summary.underPointOnePercentMarketCapThreshold, 'usd')}`}
 				/>
 			</div>
 

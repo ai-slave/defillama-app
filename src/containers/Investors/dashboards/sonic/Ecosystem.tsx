@@ -327,9 +327,13 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Protocol Fees</SectionHeader>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-					<StatTile label="24h Fees" value={data.fees.kpis.total24h.formatted} change={data.fees.kpis.change1d} />
-					<StatTile label="7d Fees" value={data.fees.kpis.total7d.formatted} change={data.fees.kpis.change7d} />
-					<StatTile label="30d Fees" value={data.fees.kpis.total30d.formatted} change={data.fees.kpis.change1m} />
+					<StatTile
+						label="24h Fees"
+						value={data.fees.kpis.total24h.formatted}
+						change={{ value: data.fees.kpis.change1d.value, comparison: 'vs 24h ago' }}
+					/>
+					<StatTile label="7d Fees" value={data.fees.kpis.total7d.formatted} />
+					<StatTile label="30d Fees" value={data.fees.kpis.total30d.formatted} />
 					<StatTile label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartPanel>
@@ -359,18 +363,10 @@ export default function Ecosystem() {
 					<StatTile
 						label="24h Volume"
 						value={data.dexVolume.kpis.total24h.formatted}
-						change={data.dexVolume.kpis.change1d}
+						change={{ value: data.dexVolume.kpis.change1d.value, comparison: 'vs 24h ago' }}
 					/>
-					<StatTile
-						label="7d Volume"
-						value={data.dexVolume.kpis.total7d.formatted}
-						change={data.dexVolume.kpis.change7d}
-					/>
-					<StatTile
-						label="30d Volume"
-						value={data.dexVolume.kpis.total30d.formatted}
-						change={data.dexVolume.kpis.change1m}
-					/>
+					<StatTile label="7d Volume" value={data.dexVolume.kpis.total7d.formatted} />
+					<StatTile label="30d Volume" value={data.dexVolume.kpis.total30d.formatted} />
 					<StatTile label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartPanel>

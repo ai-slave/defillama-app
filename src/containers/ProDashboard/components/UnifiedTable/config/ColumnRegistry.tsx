@@ -6,11 +6,11 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import type { MetricGroup } from '../../../unifiedTable/config/columnDictionary'
 import { COLUMN_DICTIONARY_BY_ID } from '../../../unifiedTable/config/columnDictionary'
 import { FILTERED_SHARE_METRIC_KEYS, getFilteredShareColumnId } from '../../../unifiedTable/config/filteredShareColumns'
@@ -37,11 +37,7 @@ const renderPercent = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return (
-		<span className="text-secondary">
-			<PercentChange percent={value} noSign />
-		</span>
-	)
+	return <span className="text-secondary">{formatPercent(value, { input: 'percent' })}</span>
 }
 
 const renderPercentChangeCell = (value: number | null | undefined) => {
@@ -50,7 +46,7 @@ const renderPercentChangeCell = (value: number | null | undefined) => {
 	}
 	return (
 		<span className="text-secondary">
-			<PercentChange percent={value} />
+			<Change value={value} />
 		</span>
 	)
 }

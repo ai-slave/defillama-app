@@ -33,6 +33,7 @@ import {
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { InlineStatus } from '~/ui/Status'
+import { StatTile } from '~/ui/SummaryStats'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -477,24 +478,6 @@ export function getDefaultBridgeTransactionRange(nowSec: number): { startDate: s
 	return { startDate: toDateOnly(start), endDate: toDateOnly(end) }
 }
 
-interface StatCardProps {
-	label: string
-	value: React.ReactNode
-	sublabel?: React.ReactNode
-	accent?: 'default' | 'success' | 'error'
-}
-
-function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps) {
-	const accentClass = accent === 'success' ? 'text-success' : accent === 'error' ? 'text-error' : 'text-primary'
-	return (
-		<Card padding="md" className="flex flex-col gap-1">
-			<span className="label-sm text-secondary uppercase">{label}</span>
-			<span className={`mono-xl ${accentClass}`}>{value}</span>
-			{sublabel ? <span className="label-sm text-tertiary">{sublabel}</span> : null}
-		</Card>
-	)
-}
-
 function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	return (
 		<Card padding="md" className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
@@ -706,45 +689,43 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 					</div>
 
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-						<StatCard
+						<StatTile
 							label="Transactions"
 							value={formatCompactNumber(stats.total, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-							sublabel={stats.unknownValueCount > 0 ? `${stats.unknownValueCount} without USD value` : undefined}
+							sub={stats.unknownValueCount > 0 ? `${stats.unknownValueCount} without USD value` : undefined}
 						/>
-						<StatCard
+						<StatTile
 							label="Total Volume"
 							value={formatUsd(stats.totalVolume, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-							sublabel="USD, priced rows only"
+							sub="USD, priced rows only"
 						/>
-						<StatCard
+						<StatTile
 							label="Deposits"
 							value={formatCompactNumber(stats.deposits, {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-							sublabel={formatUsd(stats.depositVolume, {
+							sub={formatUsd(stats.depositVolume, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-							accent="success"
 						/>
-						<StatCard
+						<StatTile
 							label="Withdrawals"
 							value={formatCompactNumber(stats.withdrawals, {
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-							sublabel={formatUsd(stats.withdrawalVolume, {
+							sub={formatUsd(stats.withdrawalVolume, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-							accent="error"
 						/>
 					</div>
 				</div>

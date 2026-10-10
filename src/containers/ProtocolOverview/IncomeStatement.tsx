@@ -13,6 +13,7 @@ import {
 import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -1044,14 +1045,10 @@ function PerformanceTooltipContent({
 	if (previousValue == null || currentValue == null) return null
 	const valueChange = currentValue - previousValue
 	const percentageChange = previousValue !== 0 ? (valueChange / Math.abs(previousValue)) * 100 : 0
-	const percentageChangeText = formatPercent(percentageChange, {
-		input: 'percent',
-		signDisplay: 'exceptZero'
-	})
 	const displayLabel = label ? label.toLowerCase() : dataType
 	return (
 		<p className="body-sm">
-			<span className={percentageChange > 0 ? 'text-data-up' : 'text-data-down'}>{`${percentageChangeText}`}</span>{' '}
+			<Change value={percentageChange} />{' '}
 			<span>
 				compared to previous {groupBy === 'Yearly' ? 'year' : groupBy === 'Quarterly' ? 'quarter' : 'month'} total{' '}
 				{displayLabel}

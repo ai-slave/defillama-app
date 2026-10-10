@@ -15,6 +15,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -207,10 +208,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 					<Tooltip
 						content={
 							<>
-								24h change:{' '}
-								<span
-									className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
-								>{`${priceChange24h > 0 ? '+' : ''}${formatPercent(priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}</span>
+								24h change: <Change value={priceChange24h} />
 							</>
 						}
 						className="justify-end underline decoration-dotted"

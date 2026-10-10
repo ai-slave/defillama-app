@@ -1,17 +1,13 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { formatChange } from '~/ui/Change'
 import { SmolStatCard } from '~/ui/SmolStatCard'
-import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
-import { formatRwaKpiUsd } from '../kpi/format'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { RWA_CARD_CHANGE_DAYS, type RwaChangeBar, type RwaChangeCard, type RwaNamedBar } from './cardData'
 
 /** Whole dollars under a million, as the table prints them; one decimal on the compact values above. */
 const BAR_USD = { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' } as const
 /** The bar leaves room for its label in the same column. */
 const BAR_MAX_WIDTH_PCT = 45
-
-export function formatRwaSignedUsd(value: number): string {
-	return `${value >= 0 ? '+' : '-'}${formatRwaKpiUsd(Math.abs(value))}`
-}
 
 export function formatRwaBarUsd(value: number, signed = true): string {
 	const text = formatUsd(Math.abs(value), {
@@ -25,11 +21,6 @@ export function formatRwaBarUsd(value: number, signed = true): string {
 function formatBarPercent(value: number): string {
 	const digits = Math.abs(value) >= 100 ? 0 : 1
 	return `${value >= 0 ? '+' : ''}${formatPercent(value, { input: 'percent', maximumFractionDigits: digits, useGrouping: false })}`
-}
-
-export function getRwaChangeTone(value: number | null): 'text-data-up' | 'text-data-down' | 'text-secondary' {
-	if (value == null || value === 0) return 'text-secondary'
-	return value > 0 ? 'text-data-up' : 'text-data-down'
 }
 
 type RwaBarRow = {
@@ -114,12 +105,10 @@ export function RWAChangeCard({
 		<SmolStatCard
 			title={title}
 			tooltip={tooltip}
-			value={card.changeUsd == null ? null : formatRwaSignedUsd(card.changeUsd)}
-			change={{
-				text: card.changePct == null ? 'N/A' : formatPercentChange(card.changePct),
-				tone: getRwaChangeTone(card.changeUsd),
-				comparison: `over ${RWA_CARD_CHANGE_DAYS}d`
-			}}
+			value={card.changeUsd == null ? null : formatChange(card.changeUsd, 'usd')}
+			change={
+				card.changePct == null ? undefined : { value: card.changePct, comparison: `over ${RWA_CARD_CHANGE_DAYS}d` }
+			}
 		>
 			<RWAChangeBars bars={card.bars} logo={logo} />
 		</SmolStatCard>

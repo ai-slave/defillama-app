@@ -21,6 +21,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -252,10 +253,7 @@ const overviewColumns = columnHelper.columns([
 				<Tooltip
 					content={
 						<>
-							24h change:{' '}
-							<span
-								className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
-							>{`${priceChange24h > 0 ? '+' : ''}${formatPercent(priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}</span>
+							24h change: <Change value={priceChange24h} />
 						</>
 					}
 					className="justify-end underline decoration-dotted"

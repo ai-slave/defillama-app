@@ -222,14 +222,14 @@ export function buildChainChartData({
 }): {
 	finalCharts: ChainOverviewChartData
 	valueSymbol: string
-	loadingCharts: string
+	loadingCharts: Array<string>
 	failedMetrics: Array<ChainChartLabels>
 } {
 	if (loadingCharts.length > 0) {
 		return {
 			finalCharts: {},
 			valueSymbol: denomination === 'USD' ? '$' : denomination,
-			loadingCharts: loadingCharts.join(', ').toLowerCase(),
+			loadingCharts,
 			failedMetrics: []
 		}
 	}
@@ -351,7 +351,7 @@ export function buildChainChartData({
 	return {
 		finalCharts: charts,
 		valueSymbol: canConvertDenomination ? denomination : '$',
-		loadingCharts: '',
+		loadingCharts: [],
 		failedMetrics
 	}
 }

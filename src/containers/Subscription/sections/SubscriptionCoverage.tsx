@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
@@ -79,7 +80,7 @@ export function SubscriptionCoverage() {
 		{
 			label: 'Protocols',
 			value: data?.protocols,
-			change: data ? `+${formatNumber(data.protocolsAddedThisWeek)} this week` : null
+			addedThisWeek: data?.protocolsAddedThisWeek
 		},
 		{ label: 'Chains', value: data?.chains },
 		{ label: 'Yield pools', value: data?.yieldPools },
@@ -141,14 +142,20 @@ export function SubscriptionCoverage() {
 						</div>
 					</div>
 					<dl aria-busy={loading} className="grid w-full max-w-5xl grid-cols-2 gap-y-6 md:grid-cols-4">
-						{coverage.map(({ label, value, change }) => (
+						{coverage.map(({ label, value, addedThisWeek }) => (
 							<div
 								key={label}
 								className="flex min-w-0 flex-col items-center gap-2 px-2 even:border-l even:border-subtle md:border-l md:first:border-l-0"
 							>
 								<dt className="order-last label-lg text-primary md:heading-sm">{label}</dt>
 								<dd className="flex flex-col items-center gap-2">
-									<div className="min-h-5 label-md text-data-up">{change}</div>
+									<div className="min-h-5 label-md text-secondary">
+										{addedThisWeek == null ? null : (
+											<>
+												<Change value={addedThisWeek} unit="count" /> <span className="text-tertiary">this week</span>
+											</>
+										)}
+									</div>
 									<div className="flex items-center justify-center gap-2 text-primary">
 										<span aria-hidden="true" className="size-2.5 shrink-0 rounded-full bg-sub-live" />
 										{value != null ? (

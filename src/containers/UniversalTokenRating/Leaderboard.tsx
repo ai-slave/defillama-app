@@ -3,9 +3,9 @@ import { BasicLink } from '~/components/Link'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { formatPercentChangeText } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -359,7 +359,6 @@ export function Leaderboard({
 				<tbody>
 					{pagedRows.map((row) => {
 						const expanded = expandedAssets.has(row.asset)
-						const momText = formatPercentChangeText(row.scores.overallMomChangePct)
 						return (
 							<Fragment key={row.asset}>
 								<tr
@@ -396,12 +395,12 @@ export function Leaderboard({
 									<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
 										<span className="flex items-center gap-3">
 											<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
-											<span
-												className={`tabular-nums ${
-													(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-data-up' : 'text-data-down'
-												}`}
-											>
-												{momText ?? '—'}
+											<span className="tabular-nums">
+												{row.scores.overallMomChangePct == null ? (
+													'—'
+												) : (
+													<Change value={row.scores.overallMomChangePct} />
+												)}
 											</span>
 										</span>
 									</td>

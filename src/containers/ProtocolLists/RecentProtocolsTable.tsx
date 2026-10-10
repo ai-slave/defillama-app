@@ -19,10 +19,10 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useTablePages } from '~/hooks/useTablePages'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
@@ -250,7 +250,7 @@ const protocolsColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d TVL Change',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -260,7 +260,7 @@ const protocolsColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_7d ?? undefined, {
 		id: 'change_7d',
 		header: '7d TVL Change',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -270,7 +270,7 @@ const protocolsColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
 		header: '1m TVL Change',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

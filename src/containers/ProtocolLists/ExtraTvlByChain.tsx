@@ -13,9 +13,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { PercentChange } from '~/ui/PercentChange'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -76,7 +76,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 							})}
 							truncate
 						/>
-						{props.change24h != null ? <SummaryChange percent={props.change24h} comparison="over 24h" /> : null}
+						{props.change24h != null ? <SummaryChange value={props.change24h} comparison="over 24h" /> : null}
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
@@ -210,7 +210,7 @@ function createColumns(metric: ExtraTvlMetric) {
 		columnHelper.accessor((row) => row.change_1m ?? undefined, {
 			id: 'change_1m',
 			header: 'Change 30d',
-			cell: (info) => <PercentChange percent={info.getValue()} />,
+			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
 				headerClassName: 'w-[110px]',
 				align: 'end'

@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { HEAT_DOWN } from '~/constants/colors'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -27,6 +28,11 @@ export const pctOfBps = (bps: number | null) => {
 }
 
 export const NA = <span className="text-tertiary">n/a</span>
+
+/** Exchange change fields arrive as fractions (0.05), so the cell owns the ×100 for Change. */
+export function FractionChange({ value }: { value: number | null | undefined }) {
+	return value == null ? <span className="text-tertiary">–</span> : <Change value={value * 100} />
+}
 
 export function SlippagePair({ predicted, actual }: { predicted: number | null; actual: number | null }) {
 	if (actual == null) return NA

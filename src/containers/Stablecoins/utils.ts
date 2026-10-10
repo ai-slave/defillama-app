@@ -23,7 +23,7 @@
  */
 
 import { getPercentChange, slug } from '~/utils'
-import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
+import { formatFixedNumber } from '~/utils/numberFormat'
 import {
 	DAY_MS,
 	findTimeSeriesPointNear,
@@ -87,9 +87,9 @@ interface IStablecoinMcapStats {
 	totalMcapPrevDay: number | null
 	totalMcapPrevWeek: number | null
 	totalMcapPrevMonth: number | null
-	change1d: string | null
-	change7d: string | null
-	change30d: string | null
+	change1d: number | null
+	change7d: number | null
+	change30d: number | null
 	change1dUsd: number | null
 	change7dUsd: number | null
 	change30dUsd: number | null
@@ -149,9 +149,9 @@ export type FormattedStablecoinAsset = Pick<
 	change_1d: number | null
 	change_7d: number | null
 	change_1m: number | null
-	change_1d_nol: string | null
-	change_7d_nol: string | null
-	change_1m_nol: string | null
+	change_1d_usd: number | null
+	change_7d_usd: number | null
+	change_1m_usd: number | null
 	pegDeviation: number | null
 	pegDeviation_1m: number | null
 	pegDeviationInfo: StablecoinDeviationInfo | null
@@ -363,19 +363,15 @@ export const getStablecoinMcapStatsFromTotals = (
 	const totalMcapPrevDay = getPreviousMcap(1)
 	const totalMcapPrevWeek = getPreviousMcap(7)
 	const totalMcapPrevMonth = getPreviousMcap(30)
-	const formatChange = (previous: number | null): string | null => {
-		const change = getPercentChange(totalMcapCurrent, previous)
-		return change == null ? null : formatFixedNumber(change, 2)
-	}
 
 	return {
 		totalMcapCurrent,
 		totalMcapPrevDay,
 		totalMcapPrevWeek,
 		totalMcapPrevMonth,
-		change1d: formatChange(totalMcapPrevDay),
-		change7d: formatChange(totalMcapPrevWeek),
-		change30d: formatChange(totalMcapPrevMonth),
+		change1d: getPercentChange(totalMcapCurrent, totalMcapPrevDay),
+		change7d: getPercentChange(totalMcapCurrent, totalMcapPrevWeek),
+		change30d: getPercentChange(totalMcapCurrent, totalMcapPrevMonth),
 		change1dUsd: totalMcapCurrent != null && totalMcapPrevDay != null ? totalMcapCurrent - totalMcapPrevDay : null,
 		change7dUsd: totalMcapCurrent != null && totalMcapPrevWeek != null ? totalMcapCurrent - totalMcapPrevWeek : null,
 		change30dUsd: totalMcapCurrent != null && totalMcapPrevMonth != null ? totalMcapCurrent - totalMcapPrevMonth : null,
@@ -479,34 +475,9 @@ export const formatPeggedAssetsData = ({
 		const change_7d = getPercentChange(mcap, mcapPrevWeek)
 		const change_1m = getPercentChange(mcap, mcapPrevMonth)
 
-		const change_1d_nol =
-			mcap != null && mcapPrevDay != null
-				? formatUsd(String(mcap - mcapPrevDay), {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})
-				: null
-		const change_7d_nol =
-			mcap != null && mcapPrevWeek != null
-				? formatUsd(String(mcap - mcapPrevWeek), {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})
-				: null
-		const change_1m_nol =
-			mcap != null && mcapPrevMonth != null
-				? formatUsd(String(mcap - mcapPrevMonth), {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})
-				: null
-
-		const signedChange1d = !change_1d_nol ? null : change_1d_nol.startsWith('-') ? change_1d_nol : `+${change_1d_nol}`
-		const signedChange7d = !change_7d_nol ? null : change_7d_nol.startsWith('-') ? change_7d_nol : `+${change_7d_nol}`
-		const signedChange1m = !change_1m_nol ? null : change_1m_nol.startsWith('-') ? change_1m_nol : `+${change_1m_nol}`
+		const change_1d_usd = mcap != null && mcapPrevDay != null ? mcap - mcapPrevDay : null
+		const change_7d_usd = mcap != null && mcapPrevWeek != null ? mcap - mcapPrevWeek : null
+		const change_1m_usd = mcap != null && mcapPrevMonth != null ? mcap - mcapPrevMonth : null
 
 		let pegDeviation: number | null = null
 		let pegDeviation1m: number | null = null
@@ -585,9 +556,9 @@ export const formatPeggedAssetsData = ({
 			change_1d,
 			change_7d,
 			change_1m,
-			change_1d_nol: signedChange1d,
-			change_7d_nol: signedChange7d,
-			change_1m_nol: signedChange1m,
+			change_1d_usd,
+			change_7d_usd,
+			change_1m_usd,
 			pegDeviation,
 			pegDeviation_1m: pegDeviation1m,
 			pegDeviationInfo,

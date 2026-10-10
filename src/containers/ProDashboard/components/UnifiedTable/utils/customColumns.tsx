@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Parser } from 'expr-eval'
-import { PercentChange } from '~/ui/PercentChange'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import {
 	isProtocolTableMetricKey,
@@ -55,11 +54,7 @@ const renderNumber = (value: number | null | undefined) => {
 
 const renderPercent = (value: number | null | undefined) => {
 	if (value == null) return renderDash()
-	return (
-		<span className="text-secondary">
-			<PercentChange percent={value} noSign />
-		</span>
-	)
+	return <span className="text-secondary">{formatPercent(value, { input: 'percent' })}</span>
 }
 
 const renderRatio = (value: number | null | undefined) => {

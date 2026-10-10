@@ -80,7 +80,7 @@ describe('chain chart data', () => {
 	test('reports loading charts without building partial series', () => {
 		expect(
 			build({ toggledCharts: ['TVL', 'Chain Fees'], loadingCharts: ['Chain Fees', 'Token Price'], denomination: 'ETH' })
-		).toEqual({ finalCharts: {}, valueSymbol: 'ETH', loadingCharts: 'chain fees, token price', failedMetrics: [] })
+		).toEqual({ finalCharts: {}, valueSymbol: 'ETH', loadingCharts: ['Chain Fees', 'Token Price'], failedMetrics: [] })
 	})
 
 	test('averages grouped active addresses, leaves them out of cumulative, and keeps daily values', () => {

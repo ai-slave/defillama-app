@@ -15,6 +15,7 @@ import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
@@ -84,14 +85,7 @@ const buildSnapshotShareColumn = (shareHeader: string) =>
 
 const SNAPSHOT_INFLOW_COLUMN = snapshotColumnHelper.accessor('value', {
 	header: 'Net Inflow',
-	cell: ({ getValue }) => {
-		const value = getValue()
-		return (
-			<span className={value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : undefined}>
-				{formatUsd(value, { compact: true, signDisplay: 'exceptZero' })}
-			</span>
-		)
-	},
+	cell: ({ getValue }) => <Change value={getValue()} unit="usd" />,
 	meta: { headerClassName: 'w-[130px]', align: 'end' }
 })
 

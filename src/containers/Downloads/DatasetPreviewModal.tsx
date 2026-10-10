@@ -26,8 +26,7 @@ import {
 	downloadPreviewHasTime,
 	parseDownloadPreviewDate,
 	parseNumericValue,
-	formatCellValue,
-	getCellTone
+	formatCellValue
 } from './previewFormatting'
 import { PreviewHeaderActions } from './PreviewHeaderActions'
 import { PlaceholderRows, PREVIEW_ROW_HEIGHT, PreviewPaywall } from './PreviewPaywall'
@@ -727,12 +726,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 														const displayValue = formatCellValue(rawValue, column)
 														const isSticky = position === 0
 														const isSelected = cols.has(column.index)
-														const tone = isSelected ? getCellTone(rawValue, column) : ''
 														return (
 															<div
 																key={column.index}
 																title={rawValue || undefined}
-																className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
+																className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
 																style={{
 																	textAlign: column.align,
 																	position: isSticky ? 'sticky' : undefined,

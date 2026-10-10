@@ -18,6 +18,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -87,7 +88,8 @@ interface ChainChartPanelProps {
 	chainGeckoId: string | null
 	finalCharts: ChainOverviewChartData
 	valueSymbol: string
-	isFetchingChartData: boolean
+	/** Labels of the metrics still loading; their chips show a spinner and the chart waits for all of them. */
+	loadingCharts: Array<string>
 	failedMetrics: Array<ChainChartLabels>
 	darkMode: boolean
 }
@@ -105,7 +107,7 @@ export function ChainChartPanel({
 	chainGeckoId,
 	finalCharts,
 	valueSymbol,
-	isFetchingChartData,
+	loadingCharts,
 	failedMetrics,
 	darkMode
 }: ChainChartPanelProps) {
@@ -237,7 +239,13 @@ export function ChainChartPanel({
 									}}
 								>
 									<span>{selectedChartLabel(tchart)}</span>
-									<Icon name="x" className="size-3.5" />
+									{loadingCharts.includes(tchart) ? (
+										<span aria-label={`${tchart} is loading`} role="status">
+											<LoadingSpinner size={14} />
+										</span>
+									) : (
+										<Icon name="x" className="size-3.5" />
+									)}
 								</span>
 							</label>
 						))}
@@ -276,12 +284,12 @@ export function ChainChartPanel({
 					/>
 				) : null}
 			</ChartPanelToolbar>
-			{isClient && !isFetchingChartData ? (
+			{isClient && loadingCharts.length === 0 ? (
 				<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
 			) : null}
 
 			<ChartPanelBody>
-				{isFetchingChartData ? (
+				{loadingCharts.length > 0 ? (
 					chartLoading
 				) : toggledCharts.length === 0 ? (
 					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">

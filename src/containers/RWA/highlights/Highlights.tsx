@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercentChange } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../api.types'
 import { RWAFlowValueShimmer, RWAFlowValueUnavailable } from '../FlowPanelParts'
-import { formatSignedRWAFlow, getRWAFlowTextClass } from '../flows'
 import { useRWAFlowSummary } from '../flows.hooks'
 import { RWAListYourAssetsButton } from '../links'
 import { getRwaMovers, type RWAMover } from './movers'
@@ -110,7 +110,9 @@ function MoverList({ title, movers }: { title: string; movers: Array<RWAMover> }
 								{asset.assetName}
 							</BasicLink>
 							<span className="flex shrink-0 items-baseline gap-2">
-								<span className={`label-md ${getRWAFlowTextClass(flow)}`}>{formatSignedRWAFlow(flow)}</span>
+								<span className="label-md">
+									<Change value={flow} unit="usd" />
+								</span>
 								<span className="label-sm text-secondary">{formatPercentChange(change7d) ?? ''}</span>
 							</span>
 						</li>

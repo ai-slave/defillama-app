@@ -8,8 +8,8 @@ import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
-import { formatPercent } from '~/utils/numberFormat'
 import { EXCHANGE_SEGMENTS, type ExchangePairModel, type ExchangeProfileModel, type ExchangeSegment } from './models'
 import { formatPairPrice } from './PairTable'
 
@@ -77,29 +77,25 @@ export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }
 				ref={fitRows}
 				className="grid min-h-0 grid-cols-1 content-start gap-2 overflow-hidden sm:grid-cols-3 xl:h-0 xl:flex-1"
 			>
-				{movers.slice(0, rows * PER_ROW).map(({ pair, segment }) => {
-					const change = pair.priceChange24h ?? 0
-					return (
-						<Card key={`${segment}:${pair.symbol}`} padding="sm" className="flex items-center gap-2">
-							<TokenLogo
-								src={pair.baseGeckoId ? geckoTokenIconUrl(pair.baseGeckoId, 24) : null}
-								size={24}
-								fallbackSrc={letterLogoDataUri(pair.base)}
-								alt=""
-							/>
-							<BasicLink href={pair.pairUrl} target="_blank" className="truncate label-md text-link hover:underline">
-								{pair.symbol.toUpperCase()}
-							</BasicLink>
-							<span className="ml-auto flex flex-col items-end">
-								<span className="mono-sm">{formatPairPrice(pair.price, pair.quote)}</span>
-								<span className={`label-sm ${change >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-									{change >= 0 ? '+' : ''}
-									{formatPercent(change, { input: 'fraction', maximumFractionDigits: 1, useGrouping: false })}
-								</span>
+				{movers.slice(0, rows * PER_ROW).map(({ pair, segment }) => (
+					<Card key={`${segment}:${pair.symbol}`} padding="sm" className="flex items-center gap-2">
+						<TokenLogo
+							src={pair.baseGeckoId ? geckoTokenIconUrl(pair.baseGeckoId, 24) : null}
+							size={24}
+							fallbackSrc={letterLogoDataUri(pair.base)}
+							alt=""
+						/>
+						<BasicLink href={pair.pairUrl} target="_blank" className="truncate label-md text-link hover:underline">
+							{pair.symbol.toUpperCase()}
+						</BasicLink>
+						<span className="ml-auto flex flex-col items-end">
+							<span className="mono-sm">{formatPairPrice(pair.price, pair.quote)}</span>
+							<span className="label-sm">
+								<Change value={pair.priceChange24h * 100} />
 							</span>
-						</Card>
-					)
-				})}
+						</span>
+					</Card>
+				))}
 			</div>
 		</section>
 	)

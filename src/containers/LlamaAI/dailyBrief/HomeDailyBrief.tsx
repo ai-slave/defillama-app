@@ -43,9 +43,6 @@ const askStyles = 'text-ai-gold-deep'
 const questionCardStyles =
 	'hover-wash-card flex h-full w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 text-left active:bg-surface-elevated-1'
 
-const chipStyles =
-	'hover-wash-card flex min-h-8 max-w-64 shrink-0 items-center gap-1.5 rounded-lg border border-subtle bg-surface px-3 py-1.5 body-sm text-secondary hover:text-primary focus-visible:text-primary sm:max-w-none sm:min-w-0 sm:flex-1 sm:shrink'
-
 function tabsFade(canScrollLeft: boolean, canScrollRight: boolean): string | undefined {
 	if (canScrollLeft && canScrollRight)
 		return 'linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent)'
@@ -240,11 +237,17 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 								key={question}
 								content={question}
 								render={
-									<button type="button" aria-label={`Ask LlamaAI: ${question}`} onClick={() => onAsk(question)} />
+									<Button
+										variant="secondary"
+										size="md"
+										truncate
+										aria-label={`Ask LlamaAI: ${question}`}
+										onClick={() => onAsk(question)}
+									/>
 								}
-								className={chipStyles}
+								className="max-w-64 shrink-0 sm:max-w-none sm:flex-1 sm:shrink"
 							>
-								<Icon name="sparkles" height={14} width={14} className={`shrink-0 ${askStyles}`} />
+								<Icon name="sparkles" className={`size-3.5 shrink-0 ${askStyles}`} />
 								<span className="truncate">{question}</span>
 							</Tooltip>
 						))}

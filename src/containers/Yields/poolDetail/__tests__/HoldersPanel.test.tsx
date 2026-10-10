@@ -21,20 +21,31 @@ function holder(sharePct: number | null): Holder {
 
 describe('holder movement badges', () => {
 	test('renders unknown and null directional deltas as unavailable', () => {
-		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'unknown', value: null }} />)).toContain('—')
-		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'up', value: null }} />)).toContain('—')
-		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'down', value: null }} />)).toContain('—')
+		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'unknown', value: null, unit: 'percent' }} />)).toContain(
+			'—'
+		)
+		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'up', value: null, unit: 'percent' }} />)).toContain('—')
+		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'down', value: null, unit: 'percent' }} />)).toContain(
+			'—'
+		)
 	})
 
 	test('reserves Steady for the explicit steady status', () => {
-		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'steady', value: null }} />)).toContain('Steady')
-		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'unknown', value: null }} />)).not.toContain('Steady')
+		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'steady', value: null, unit: 'percent' }} />)).toContain(
+			'Steady'
+		)
+		expect(
+			renderToStaticMarkup(<ChangeBadge delta={{ status: 'unknown', value: null, unit: 'percent' }} />)
+		).not.toContain('Steady')
 	})
 
-	test('keeps known directional deltas numeric', () => {
-		const html = renderToStaticMarkup(<ChangeBadge delta={{ status: 'up', value: 1.25 }} />)
-		expect(html).toContain('1.3%')
+	test('keeps known directional deltas numeric, in percentage points for share', () => {
+		const html = renderToStaticMarkup(<ChangeBadge delta={{ status: 'up', value: 1.25, unit: 'percent' }} />)
+		expect(html).toContain('+1.25%')
 		expect(html).not.toContain('—')
+		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'down', value: 0.5, unit: 'pp' }} />)).toContain(
+			'-0.50pp'
+		)
 	})
 })
 

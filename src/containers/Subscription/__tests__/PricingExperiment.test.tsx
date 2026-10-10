@@ -411,7 +411,8 @@ test('unavailable coverage never appears as zero or sample campaign counts', asy
 		await vi.advanceTimersByTimeAsync(1)
 	})
 	expect([...host.querySelectorAll('dd .sr-only')].map((node) => node.textContent)).toEqual(['0', '0', '0', '0'])
-	expect(host.textContent).toContain('+0 this week')
+	expect(host.textContent).toContain('0 this week')
+	expect(host.textContent).not.toContain('+0')
 	expect(host.querySelector('[role="alert"]')).toBeNull()
 })
 

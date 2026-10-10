@@ -2,9 +2,9 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { formatPercentChangeText } from '~/ui/PercentChange'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns } from './CategoryBreakdown'
@@ -14,7 +14,6 @@ import { PerformanceMatrix } from './PerformanceMatrix'
 import type { UtrGradingConfig, UtrLeaderboardRow, UtrScoringConfig, UtrUniverse } from './types'
 
 function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
-	const momText = formatPercentChangeText(row.scores.overallMomChangePct)
 	const rows: Array<[string, React.ReactNode]> = [
 		['Status', <span key="status">{LISTING_STATUS_LABELS[row.listingStatus]}</span>],
 		[
@@ -29,13 +28,8 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 		],
 		[
 			'MoM Change',
-			<span
-				key="mom"
-				className={`font-jetbrains tabular-nums ${
-					(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-data-up' : 'text-data-down'
-				}`}
-			>
-				{momText ?? 'N/A'}
+			<span key="mom" className="font-jetbrains tabular-nums">
+				{row.scores.overallMomChangePct == null ? 'N/A' : <Change value={row.scores.overallMomChangePct} />}
 			</span>
 		],
 		[

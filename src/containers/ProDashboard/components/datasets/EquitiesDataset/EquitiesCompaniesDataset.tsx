@@ -19,6 +19,7 @@ import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -28,7 +29,7 @@ import {
 } from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
-import { formatPercentChange, formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
@@ -90,9 +91,7 @@ const columns = columnHelper.columns([
 		header: '1d Change',
 		cell: (info) => {
 			const val = info.getValue()
-			if (val == null) return '—'
-			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
-			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
+			return val == null ? '—' : <Change value={val} />
 		},
 		meta: { align: 'end' },
 		size: 110
@@ -102,9 +101,7 @@ const columns = columnHelper.columns([
 		header: '7d Change',
 		cell: (info) => {
 			const val = info.getValue()
-			if (val == null) return '—'
-			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
-			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
+			return val == null ? '—' : <Change value={val} />
 		},
 		meta: { align: 'end' },
 		size: 110
@@ -114,9 +111,7 @@ const columns = columnHelper.columns([
 		header: '1m Change',
 		cell: (info) => {
 			const val = info.getValue()
-			if (val == null) return '—'
-			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
-			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
+			return val == null ? '—' : <Change value={val} />
 		},
 		meta: { align: 'end' },
 		size: 110

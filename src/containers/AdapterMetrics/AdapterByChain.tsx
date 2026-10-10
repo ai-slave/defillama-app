@@ -35,6 +35,7 @@ import { UtrGradeHovercard } from '~/containers/TokenRights/UtrPopover'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -44,7 +45,7 @@ import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
+import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { AdapterByChainChart } from './ChainChart'
 import { getRatio, HIGH_RATIO_MULTIPLE, type OptionsRatioKey } from './optionsRatios'
 import type { IAdapterByChainPageData } from './types'
@@ -332,8 +333,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 								<MetricRow
 									label="Weekly Change"
 									tooltip="Change of last 7d volume over the previous 7d volume"
-									value={formatPercentChange(props.change_7dover7d)}
-									valueClassName={`mono-md-bold ml-auto ${props.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}`}
+									value={<Change value={props.change_7dover7d} />}
 								/>
 							) : null}
 						</div>

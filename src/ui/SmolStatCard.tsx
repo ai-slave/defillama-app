@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
 import { Card } from '~/ui/Card'
+import { Change, type ChangeData } from '~/ui/Change'
 import { Tooltip } from '~/ui/Tooltip'
 import { Watermark } from '~/ui/Watermark'
 
@@ -12,8 +13,8 @@ interface SmolStatCardProps {
 	value: string | null
 	/** The window the value covers, such as "24h" or "next 14 days". */
 	qualifier?: string
-	/** The value's movement and what it is compared against, such as "over 7d" or "vs 24h ago". */
-	change?: { text: string; tone: 'text-data-up' | 'text-data-down' | 'text-secondary'; comparison: string }
+	/** The value's movement and its window, such as "over 7d" or "vs 24h ago". */
+	change?: ChangeData
 	/** 'split' puts the chart beside the text on xl, for the short home page row, and drops the mark there to fit. */
 	layout?: 'stack' | 'split'
 	/** Height classes; the grid decides how tall its cards are. */
@@ -24,7 +25,7 @@ interface SmolStatCardProps {
 
 /** A small chart-forward stat card: a title-md title with its definition and the DefiLlama mark, one value line, then
     the chart. The line reads value → qualifier → change → comparison: the value is text-secondary, the signed change
-    a colored body-sm, and qualifiers bare tertiary spans one tier below what they qualify, with no parentheses. A
+    a body-sm Change, and qualifiers bare tertiary spans one tier below what they qualify, with no parentheses. A
     missing value reads a tertiary "Unavailable". The line wraps only between its two groups (value + qualifier,
     change + comparison) and never truncates the value. */
 export function SmolStatCard({
@@ -61,8 +62,8 @@ export function SmolStatCard({
 					{qualifier ? <span className="text-tertiary">{qualifier}</span> : null}
 				</span>
 				{change ? (
-					<span className="flex items-baseline gap-1 body-sm whitespace-nowrap">
-						<span className={change.tone}>{change.text}</span>
+					<span className="flex items-baseline gap-1 body-sm whitespace-nowrap text-secondary">
+						<Change value={change.value} unit={change.unit} tooltip={change.tooltip} />
 						<span className="text-tertiary">{change.comparison}</span>
 					</span>
 				) : null}

@@ -1,6 +1,6 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import { formatPercent } from '~/utils/numberFormat'
 import type { UtrTopMover } from './types'
 
 export function TopMovers({ movers }: { movers: Array<UtrTopMover> }) {
@@ -13,15 +13,7 @@ export function TopMovers({ movers }: { movers: Array<UtrTopMover> }) {
 				<span key={key} className="flex shrink-0 items-center gap-1.5 px-2 label-sm">
 					<TokenLogo src={mover.logoUrl ?? null} size={18} />
 					<span className="text-primary">{mover.name}</span>
-					<span className={mover.momChangePct >= 0 ? 'text-data-up' : 'text-data-down'}>
-						{formatPercent(mover.momChangePct, {
-							input: 'percent',
-							maximumFractionDigits: 2,
-							signDisplay: 'always',
-							smallValueDisplay: 'rounded',
-							useGrouping: false
-						})}
-					</span>
+					<Change value={mover.momChangePct} />
 				</span>
 			))}
 		</div>

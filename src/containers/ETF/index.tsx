@@ -20,6 +20,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -70,14 +71,8 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 									</div>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
 										<span className="text-secondary">Flows</span>
-										<span
-											className={`ml-auto mono-md ${assetFlows > 0 ? 'text-data-up' : assetFlows < 0 ? 'text-data-down' : ''}`}
-										>
-											{formatUsd(assetFlows, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})}
+										<span className="ml-auto mono-md">
+											<Change value={assetFlows} unit="usd" />
 										</span>
 									</p>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
@@ -185,21 +180,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.flows ?? undefined, {
 		id: 'flows',
 		header: 'Flows',
-		cell: ({ getValue }) => {
-			const value = getValue()
-			const formattedValue =
-				value != null
-					? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: null
-
-			return (
-				<span
-					className={value != null && value > 0 ? 'text-data-up' : value != null && value < 0 ? 'text-data-down' : ''}
-				>
-					{formattedValue}
-				</span>
-			)
-		},
+		cell: ({ getValue }) => <Change value={getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

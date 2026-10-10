@@ -41,13 +41,13 @@ export interface PeggedChainsPageData {
 	chainList: Array<string>
 	chainsGroupbyParent: Record<string, Record<string, Array<string>>>
 	deprecatedChains: Record<string, true>
-	change1d: string | null
-	change7d: string | null
-	change30d: string | null
+	change1d: number | null
+	change7d: number | null
+	change30d: number | null
 	totalMcapCurrent: number | null
-	change1d_nol: string | null
-	change7d_nol: string | null
-	change30d_nol: string | null
+	change1dUsd: number | null
+	change7dUsd: number | null
+	change30dUsd: number | null
 	dataTimestamp: number | null
 	isDataStale: boolean
 }
@@ -112,7 +112,7 @@ export interface PeggedAssetPageProps {
 export interface PeggedChainMcapSummary {
 	mcap: number | null
 	change7dUsd: number | null
-	change7d: string | null
+	change7d: number | null
 	topToken: { symbol: string; mcap: number }
 	dominance: string | null
 	mcapChartData: Array<[number, number]> | null

@@ -90,13 +90,13 @@ interface ChainsWithStablecoinsProps {
 	chainList: Array<string>
 	chainsGroupbyParent: Record<string, Record<string, Array<string>>>
 	deprecatedChains: Record<string, true>
-	change1d: string | null
-	change7d: string | null
-	change30d: string | null
+	change1d: number | null
+	change7d: number | null
+	change30d: number | null
 	totalMcapCurrent: number | null
-	change1d_nol: string | null
-	change7d_nol: string | null
-	change30d_nol: string | null
+	change1dUsd: number | null
+	change7dUsd: number | null
+	change30dUsd: number | null
 	dataTimestamp: number | null
 	isDataStale: boolean
 }
@@ -114,9 +114,9 @@ export function ChainsWithStablecoins({
 	change7d,
 	change30d,
 	totalMcapCurrent,
-	change1d_nol,
-	change7d_nol,
-	change30d_nol,
+	change1dUsd,
+	change7dUsd,
+	change30dUsd,
 	dataTimestamp,
 	isDataStale
 }: ChainsWithStablecoinsProps) {
@@ -311,14 +311,10 @@ export function ChainsWithStablecoins({
 		<>
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<StatItem label="Total Stablecoins Market Cap" labelAs="h1" value={mcapToDisplay} />
-
 					<StablecoinChangeStats
-						stats={[
-							{ days: 7, percent: change7d, absolute: change7d_nol },
-							{ days: 1, percent: change1d, absolute: change1d_nol },
-							{ days: 30, percent: change30d, absolute: change30d_nol }
-						]}
+						label="Total Stablecoins Market Cap"
+						value={mcapToDisplay}
+						changes={{ change1d, change7d, change30d, change1dUsd, change7dUsd, change30dUsd }}
 					/>
 
 					<StatItem label={<>{topChain.name} Dominance</>} value={formatPercent(dominance, { input: 'percent' })} />

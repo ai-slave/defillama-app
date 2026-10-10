@@ -13,11 +13,13 @@ import {
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { formatChange } from '~/ui/Change'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { downloadCSV } from '~/utils/download'
 import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import { formatUsd } from '~/utils/numberFormat'
+import { readyAsPath } from '~/utils/routerQuery'
 import { ChainChartPanel } from './ChainChartPanel'
 import { BAR_CHARTS, chainCharts } from './constants'
 import { KeyMetrics } from './KeyMetrics'
@@ -41,10 +43,8 @@ export function Stats(props: IStatsProps) {
 		? { padding: 'sm', className: 'xl:col-span-full' }
 		: { padding: 'sm' }
 
-	const searchParams = useMemo(() => {
-		const queryString = router.asPath.split('?')[1]?.split('#')[0] ?? ''
-		return new URLSearchParams(queryString)
-	}, [router.asPath])
+	const path = readyAsPath(router)
+	const searchParams = useMemo(() => new URLSearchParams(path.split('?')[1]?.split('#')[0] ?? ''), [path])
 
 	const [darkMode] = useDarkModeManager()
 
@@ -77,7 +77,7 @@ export function Stats(props: IStatsProps) {
 		}
 	}, [searchParams, props.chainTokenInfo, props.metadata, props.charts])
 
-	const { totalValueUSD, change24h, valueChange24hUSD, finalCharts, valueSymbol, isFetchingChartData, failedMetrics } =
+	const { totalValueUSD, change24h, valueChange24hUSD, finalCharts, valueSymbol, loadingCharts, failedMetrics } =
 		useFetchChainChartData({
 			denomination,
 			selectedChain: props.metadata.name,
@@ -164,15 +164,7 @@ export function Stats(props: IStatsProps) {
 							truncate
 						/>
 						{change24h != null && valueChange24hUSD != null ? (
-							<SummaryChange
-								percent={change24h}
-								comparison="over 24h"
-								tooltip={formatUsd(valueChange24hUSD, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
-							/>
+							<SummaryChange value={change24h} comparison="over 24h" tooltip={formatChange(valueChange24hUSD, 'usd')} />
 						) : null}
 					</div>
 				) : null}
@@ -213,7 +205,7 @@ export function Stats(props: IStatsProps) {
 					chainGeckoId={chainGeckoId}
 					finalCharts={finalCharts}
 					valueSymbol={valueSymbol}
-					isFetchingChartData={isFetchingChartData}
+					loadingCharts={loadingCharts}
 					failedMetrics={failedMetrics}
 					darkMode={darkMode}
 				/>

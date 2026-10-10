@@ -25,6 +25,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { StaleText } from '~/ui/StaleText'
@@ -65,22 +66,6 @@ const tableFeaturesConfig = tableFeatures({
 
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesListCompanyRow>()
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
-
-function ChangePercent({ value }: { value: number | null }) {
-	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatEquitiesCompactValue(value, '%') ?? '-'}
-		</span>
-	)
-}
-
-function ChangeValue({ value, symbol }: { value: number | null; symbol?: string }) {
-	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatEquitiesCompactValue(value, symbol) ?? '-'}
-		</span>
-	)
-}
 
 function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListCompanyRow } }) {
 	const rowIndex = usePaginatedTableDisplayRowNumber(row.id)
@@ -210,7 +195,10 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 	columnHelper.accessor((row) => row.priceChangePercentage1d ?? undefined, {
 		id: 'priceChangePercentage1d',
 		header: defs.priceChangePercentage1d.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return value == null ? '-' : <Change value={value} />
+		},
 		meta: {
 			headerClassName: 'w-[153px] min-w-[153px]',
 			align: 'end',
@@ -220,7 +208,10 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 	columnHelper.accessor((row) => row.priceChangePercentage7d ?? undefined, {
 		id: 'priceChangePercentage7d',
 		header: defs.priceChangePercentage7d.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return value == null ? '-' : <Change value={value} />
+		},
 		meta: {
 			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
@@ -230,7 +221,10 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 	columnHelper.accessor((row) => row.priceChangePercentage1m ?? undefined, {
 		id: 'priceChangePercentage1m',
 		header: defs.priceChangePercentage1m.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return value == null ? '-' : <Change value={value} />
+		},
 		meta: {
 			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
@@ -250,7 +244,10 @@ const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyR
 	columnHelper.accessor((row) => row.marketCapChange1d ?? undefined, {
 		id: 'marketCapChange1d',
 		header: defs.marketCapChange1d.label,
-		cell: ({ getValue }) => <ChangeValue value={getValue() ?? null} symbol="$" />,
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return value == null ? '-' : <Change value={value} unit="usd" />
+		},
 		meta: {
 			headerClassName: 'w-[196px] min-w-[196px]',
 			align: 'end',

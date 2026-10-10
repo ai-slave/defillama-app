@@ -24,6 +24,7 @@ import { useEmailNotifications, type MetricType, type NotificationSettings } fro
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
@@ -31,7 +32,6 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { formatPercentChangeText } from '~/ui/PercentChange'
 import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { httpErrorMessage } from '~/utils/async'
@@ -903,12 +903,8 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 												<span className="truncate label-sm text-primary">{mover.name}</span>
 											)}
 										</span>
-										<span
-											className={`shrink-0 label-sm ${
-												mover.change > 0 ? 'text-data-up' : mover.change < 0 ? 'text-data-down' : 'text-secondary'
-											}`}
-										>
-											{formatPercentChangeText(mover.change)}
+										<span className="shrink-0 label-sm text-secondary">
+											<Change value={mover.change} />
 										</span>
 									</div>
 								))}

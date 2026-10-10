@@ -19,7 +19,6 @@ import { getPercentChange, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import { getDeprecatedChainsByName } from '~/utils/metadata/deprecatedChains'
-import { formatUsd } from '~/utils/numberFormat'
 import { toUnixMsTimestamp } from '~/utils/timeSeries'
 import {
 	fetchStablecoinAssetApi,
@@ -343,7 +342,7 @@ const getStablecoinsOverviewChartSource = async (chain: string | null): Promise<
 const getStablecoinsOverviewSource = async (chain: string | null): Promise<StablecoinOverviewSource> => {
 	const chainKey = chain ? slug(chain) : 'all'
 	return cachedResult('stablecoin-page-source', `overview:${chainKey}`, STABLECOIN_SOURCE_RESULT_CACHE_OPTIONS, () =>
-		withStablecoinsCache(`overview-page-v4:${chainKey}`, async () => {
+		withStablecoinsCache(`overview-page-v5:${chainKey}`, async () => {
 			const [chartSource, priceData, rateData] = await Promise.all([
 				getStablecoinsOverviewChartSource(chain),
 				getStablecoinPrices().catch(() => null),
@@ -450,7 +449,7 @@ export const getStablecoinOverviewChartSeries = async ({
 
 export async function getStablecoinChainMcapSummary(chain: string | null): Promise<PeggedChainMcapSummary> {
 	const chainKey = chain != null ? slug(chain) : 'all'
-	return withStablecoinsCache(`overview-summary-v2:${chainKey}`, async () => {
+	return withStablecoinsCache(`overview-summary-v3:${chainKey}`, async () => {
 		const [{ peggedAssets }, chainData] = await Promise.all([
 			getStablecoinAssets(),
 			chain ? fetchStablecoinChartApi(chain) : fetchStablecoinChartAllApi()
@@ -496,15 +495,6 @@ export async function getStablecoinsByChainPageData(chain: string | null): Promi
 	}
 }
 
-const toSignedChangeLabel = (value: string | null): string | null => {
-	if (value == null) return null
-	const numericValue = Number.parseFloat(value.replace(/[^0-9.+-]/g, ''))
-	if (!Number.isNaN(numericValue) && numericValue === 0) return value
-	const trimmedValue = value.trimStart()
-	if (trimmedValue.startsWith('+') || trimmedValue.startsWith('-')) return value
-	return `+${value}`
-}
-
 export const buildStablecoinChainsPageSummary = (
 	raw: StablecoinChainsPageInput,
 	{ chainMetadata, currentTimeMs }: StablecoinChainsPageSummaryOptions
@@ -535,44 +525,21 @@ export const buildStablecoinChainsPageSummary = (
 		currentTimeMs
 	})
 	const mcapStats = getStablecoinMcapStatsFromTotals(raw.aggregatedChart, currentTimeMs)
-	const {
-		totalMcapCurrent,
-		totalMcapPrevDay,
-		totalMcapPrevWeek,
-		totalMcapPrevMonth,
-		change1d,
-		change7d,
-		change30d,
-		dataTimestamp,
-		isDataStale
-	} = mcapStats
-
-	const formatAbsoluteChange = (previous: number | null): string | null =>
-		totalMcapCurrent != null && previous != null
-			? formatUsd(String(totalMcapCurrent - previous), {
-					compact: true,
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				})
-			: null
-	const change1d_nol = formatAbsoluteChange(totalMcapPrevDay)
-	const change7d_nol = formatAbsoluteChange(totalMcapPrevWeek)
-	const change30d_nol = formatAbsoluteChange(totalMcapPrevMonth)
 	const deprecatedChains = getDeprecatedChainsByName(chainMetadata, chainList)
 	return {
 		chainCirculatings,
 		chainList,
 		chainsGroupbyParent,
 		deprecatedChains,
-		change1d: toSignedChangeLabel(change1d),
-		change7d: toSignedChangeLabel(change7d),
-		change30d: toSignedChangeLabel(change30d),
-		totalMcapCurrent,
-		change1d_nol: toSignedChangeLabel(change1d_nol),
-		change7d_nol: toSignedChangeLabel(change7d_nol),
-		change30d_nol: toSignedChangeLabel(change30d_nol),
-		dataTimestamp,
-		isDataStale
+		change1d: mcapStats.change1d,
+		change7d: mcapStats.change7d,
+		change30d: mcapStats.change30d,
+		totalMcapCurrent: mcapStats.totalMcapCurrent,
+		change1dUsd: mcapStats.change1dUsd,
+		change7dUsd: mcapStats.change7dUsd,
+		change30dUsd: mcapStats.change30dUsd,
+		dataTimestamp: mcapStats.dataTimestamp,
+		isDataStale: mcapStats.isDataStale
 	}
 }
 
@@ -626,9 +593,9 @@ export const revalidateStablecoinChainsPageData = (
 			pageData.change1d != null ||
 			pageData.change7d != null ||
 			pageData.change30d != null ||
-			pageData.change1d_nol != null ||
-			pageData.change7d_nol != null ||
-			pageData.change30d_nol != null)
+			pageData.change1dUsd != null ||
+			pageData.change7dUsd != null ||
+			pageData.change30dUsd != null)
 	if (!aggregateNeedsUpdate && chainCirculatings === pageData.chainCirculatings) return pageData
 
 	return {
@@ -639,9 +606,9 @@ export const revalidateStablecoinChainsPageData = (
 					change1d: null,
 					change7d: null,
 					change30d: null,
-					change1d_nol: null,
-					change7d_nol: null,
-					change30d_nol: null,
+					change1dUsd: null,
+					change7dUsd: null,
+					change30dUsd: null,
 					isDataStale: true
 				}
 			: {})
@@ -649,7 +616,7 @@ export const revalidateStablecoinChainsPageData = (
 }
 
 export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageData> {
-	const cacheEntry = await withStablecoinsCache<StablecoinChainsPageCacheEntry>('chains-page-data-v5', async () => {
+	const cacheEntry = await withStablecoinsCache<StablecoinChainsPageCacheEntry>('chains-page-data-v6', async () => {
 		const [{ peggedAssets, chains }, { chainCoingeckoIds }, chartData, { dominanceMap, chainChartMap }, metadataCache] =
 			await Promise.all([
 				getStablecoinAssets(),

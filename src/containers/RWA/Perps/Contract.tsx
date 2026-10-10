@@ -11,16 +11,16 @@ import { BasicLink } from '~/components/Link'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
-import { SummaryChange } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
+import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
-import { pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, readyAsPath } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
 import { RWASuspiciousWarning } from '../SuspiciousWarning'
 import {
@@ -129,21 +129,18 @@ function RWAPerpsContractHeader({
 function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContractData }) {
 	return (
 		<div className="flex flex-nowrap items-end justify-between gap-8">
-			<div className="flex flex-col">
-				<Tooltip content={d.price.description} className="text-secondary underline decoration-dotted">
-					{d.price.label}
-				</Tooltip>
-				<p className="min-h-8 truncate mono-xl">
-					{formatUsd(contract.market.price, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				</p>
-			</div>
-
+			<StatItem
+				label={d.price.label}
+				tooltip={d.price.description}
+				value={formatUsd(contract.market.price, {
+					compact: true,
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})}
+				truncate
+			/>
 			{contract.market.priceChange24h != null ? (
-				<SummaryChange percent={contract.market.priceChange24h} comparison="over 24h" />
+				<SummaryChange value={contract.market.priceChange24h} comparison="over 24h" />
 			) : null}
 		</div>
 	)
@@ -185,6 +182,13 @@ function RWAPerpsContractMetricsList({ contract }: { contract: IRWAPerpsContract
 				))}
 			</MetricSection>
 
+			<MetricRow
+				label={d.openInterestChange24h.label}
+				tooltip={d.openInterestChange24h.description}
+				value={
+					contract.market.openInterestChange24h == null ? '-' : <Change value={contract.market.openInterestChange24h} />
+				}
+			/>
 			{sections.pointInTimeRows.map((row) => (
 				<MetricRow key={row.label} label={row.label} tooltip={row.tooltip} value={row.value} />
 			))}
@@ -267,11 +271,8 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 
 function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractData }) {
 	const router = useRouter()
-	const searchParams = useMemo(() => {
-		// Use the raw URL so chart controls reflect the current search string before router.query is hydrated.
-		const queryString = router.asPath.split('?')[1]?.split('#')[0] ?? ''
-		return new URLSearchParams(queryString)
-	}, [router.asPath])
+	const path = readyAsPath(router)
+	const searchParams = useMemo(() => new URLSearchParams(path.split('?')[1]?.split('#')[0] ?? ''), [path])
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const groupBy = getRWAPerpsContractChartGroup(searchParams.get('groupBy'))

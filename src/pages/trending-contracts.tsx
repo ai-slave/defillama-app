@@ -5,9 +5,9 @@ import { useBlockExplorers } from '~/api/client'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import Layout from '~/layout'
+import { Change } from '~/ui/Change'
 import { CopyHelper } from '~/ui/Copy'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { truncateAddress } from '~/utils'
@@ -189,7 +189,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 		columnHelper.accessor((row) => row.txns_percentage_growth ?? undefined, {
 			id: 'txns_percentage_growth',
 			header: 'Tx Growth',
-			cell: (info) => <PercentChange percent={info.getValue()} />,
+			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
 				headerClassName: 'w-[120px]',
 				align: 'end'
@@ -206,7 +206,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 		columnHelper.accessor((row) => row.accounts_percentage_growth ?? undefined, {
 			id: 'accounts_percentage_growth',
 			header: 'Account Growth',
-			cell: (info) => <PercentChange percent={info.getValue()} />,
+			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
 				headerClassName: 'w-[150px]',
 				align: 'end'
@@ -224,7 +224,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 		columnHelper.accessor((row) => row.gas_spend_percentage_growth ?? undefined, {
 			id: 'gas_spend_percentage_growth',
 			header: 'Gas Growth',
-			cell: (info) => <PercentChange percent={info.getValue()} />,
+			cell: (info) => <Change value={info.getValue()} />,
 			meta: {
 				headerClassName: 'w-[120px]',
 				align: 'end'

@@ -31,8 +31,8 @@ async function renderPanel(
 	charts: Array<ChainChartLabels>,
 	{
 		toggledCharts = [],
-		isFetchingChartData = false
-	}: { toggledCharts?: Array<ChainChartLabels>; isFetchingChartData?: boolean } = {}
+		loadingCharts = []
+	}: { toggledCharts?: Array<ChainChartLabels>; loadingCharts?: Array<string> } = {}
 ) {
 	await act(async () =>
 		root.render(
@@ -50,7 +50,7 @@ async function renderPanel(
 					chainGeckoId={null}
 					finalCharts={{}}
 					valueSymbol="$"
-					isFetchingChartData={isFetchingChartData}
+					loadingCharts={loadingCharts}
 					failedMetrics={[]}
 					darkMode={false}
 				/>
@@ -84,10 +84,19 @@ test('offers no export or embed while nothing is plotted', async () => {
 
 test('offers export and embed once a metric is plotted', async () => {
 	// Fetching keeps the chart itself out of the render; the toolbar is what this test observes.
-	await renderPanel(['TVL', 'Stablecoins Mcap'], { toggledCharts: ['TVL'], isFetchingChartData: true })
+	await renderPanel(['TVL', 'Stablecoins Mcap'], { toggledCharts: ['TVL'], loadingCharts: ['TVL'] })
 	expect(buttonNames().filter((name) => ['.csv', '.png', 'Embed chart'].includes(name))).toEqual([
 		'Embed chart',
 		'.csv',
 		'.png'
 	])
+})
+
+test('marks the chip of a metric that is still loading', async () => {
+	await renderPanel(['TVL', 'Stablecoins Mcap'], {
+		toggledCharts: ['TVL', 'Stablecoins Mcap'],
+		loadingCharts: ['Stablecoins Mcap']
+	})
+	const loading = [...container.querySelectorAll('[role="status"][aria-label$="is loading"]')]
+	expect(loading.map((status) => status.getAttribute('aria-label'))).toEqual(['Stablecoins Mcap is loading'])
 })

@@ -10,11 +10,12 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change, formatChange } from '~/ui/Change'
 import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
-import { formatUsd } from '~/utils/numberFormat'
+import { StatTile } from '~/ui/SummaryStats'
 import {
 	buildSectorTreemapData,
 	filterKnownAggregates,
@@ -25,10 +26,8 @@ import {
 } from './aggregateData'
 import {
 	AggregateTreemap,
-	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
-	MetricCard,
 	ReturnMatrix,
 	RowNumber,
 	sectorColor,
@@ -106,7 +105,10 @@ const sectorColumns = sectorColumnHelper.columns([
 		sectorColumnHelper.accessor((row) => row[field] ?? undefined, {
 			id: field,
 			header,
-			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
+			cell: ({ getValue }) => {
+				const value = getValue()
+				return value == null ? '—' : <Change value={value} />
+			},
 			meta: { headerClassName: 'w-20', align: 'end' }
 		})
 	),
@@ -232,33 +234,51 @@ function SectorsReadyPage({
 			<StaleDataNotice stale={state.stale} updatedAt={sectors[0]?.updatedAt} />
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
-				<MetricCard
+				<StatTile
 					label="Total equity market cap"
 					value={formatMetric(overview.marketCap, 'usd')}
-					change={<ChangeValue value={overview.priceChangePercentage1d} />}
-					detail={`${formatUsd(overview.marketCapChange1d, { compact: true, maximumFractionDigits: 2 }) ?? '—'} today`}
+					change={
+						overview.priceChangePercentage1d == null
+							? undefined
+							: {
+									value: overview.priceChangePercentage1d,
+									comparison: 'today',
+									tooltip:
+										overview.marketCapChange1d == null ? undefined : formatChange(overview.marketCapChange1d, 'usd')
+								}
+					}
 				/>
-				<MetricCard
+				<StatTile
 					label="24h trading volume"
 					value={formatMetric(overview.dollarVolume24h, 'usd')}
-					detail={`Across ${overview.sectorCount} sectors`}
+					sub={`Across ${overview.sectorCount} sectors`}
 				/>
-				<MetricCard
+				<StatTile
 					label="Best sector · 1D"
-					value={overview.bestSector1d.sector}
-					valueKind="text"
-					change={<ChangeValue value={overview.bestSector1d.priceChangePercentage1d} />}
+					value={
+						overview.bestSector1d.priceChangePercentage1d == null ? (
+							'—'
+						) : (
+							<Change value={overview.bestSector1d.priceChangePercentage1d} />
+						)
+					}
+					sub={overview.bestSector1d.sector}
 				/>
-				<MetricCard
+				<StatTile
 					label="Worst sector · 1D"
-					value={overview.worstSector1d.sector}
-					valueKind="text"
-					change={<ChangeValue value={overview.worstSector1d.priceChangePercentage1d} />}
+					value={
+						overview.worstSector1d.priceChangePercentage1d == null ? (
+							'—'
+						) : (
+							<Change value={overview.worstSector1d.priceChangePercentage1d} />
+						)
+					}
+					sub={overview.worstSector1d.sector}
 				/>
-				<MetricCard
+				<StatTile
 					label={`${overview.largestSector.sector} dominance`}
 					value={formatMetric(overview.largestSector.weight, 'percent')}
-					detail={`${sectorsUp} of ${overview.sectorCount} sectors up today`}
+					sub={`${sectorsUp} of ${overview.sectorCount} sectors up today`}
 				/>
 			</div>
 
@@ -317,7 +337,7 @@ function SectorsReadyPage({
 					<SurfaceBodyStatus variant="empty">No sector returns are available for this period.</SurfaceBodyStatus>
 				)}
 				<p className="border-t border-subtle px-4 py-3 body-sm text-tertiary">
-					All tracked equities <ChangeValue value={marketReturn} /> over the same period
+					All tracked equities {marketReturn == null ? '—' : <Change value={marketReturn} />} over the same period
 					{outperforming == null
 						? ''
 						: ` · ${outperforming} of ${performanceRows.length} sectors with data outperforming the market`}
@@ -375,7 +395,7 @@ function SectorsReadyPage({
 									1D
 									<br />
 									<span className="label-lg">
-										<ChangeValue value={sector.priceChangePercentage1d} />
+										{sector.priceChangePercentage1d == null ? '—' : <Change value={sector.priceChangePercentage1d} />}
 									</span>
 								</p>
 								<p className="body-sm text-secondary">

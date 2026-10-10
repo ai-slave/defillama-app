@@ -15,7 +15,7 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { PercentChange } from '~/ui/PercentChange'
+import { Change } from '~/ui/Change'
 import { slug } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatUsd } from '~/utils/numberFormat'
@@ -90,7 +90,7 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'

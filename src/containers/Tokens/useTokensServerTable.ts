@@ -34,8 +34,6 @@ const EMPTY_TOKENS_PAGE_RESPONSE: TokensPageResponse = {
 	},
 	statsDisplay: {
 		totalMarketCap: '$0',
-		marketCapWeightedChange24h: null,
-		marketCapWeightedChange24hTone: 'neutral',
 		spotVolume24h: '$0',
 		perpsVolume24h: '$0',
 		openInterest24h: '$0',

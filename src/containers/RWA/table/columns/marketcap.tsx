@@ -1,6 +1,7 @@
+import { Change } from '~/ui/Change'
 import { definitions } from '../../definitions'
 import { percentChange, type RWAChangePeriod } from '../change'
-import { ChangeCell, columnHelper, getLeafRow, numberColumnMeta, UsdBreakdownCell } from './shared'
+import { columnHelper, getLeafRow, numberColumnMeta, UsdBreakdownCell } from './shared'
 
 export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 	return columnHelper.group({
@@ -40,7 +41,7 @@ export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 				{
 					id: 'activeMcapChange',
 					header: period,
-					cell: ({ getValue }) => <ChangeCell value={getValue()} />,
+					cell: ({ getValue }) => <Change value={getValue()} />,
 					meta: numberColumnMeta(
 						'w-[96px]',
 						`Change of Active AUM against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,

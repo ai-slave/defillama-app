@@ -48,7 +48,16 @@ import type {
 	ExchangeVenueKind
 } from './models'
 import { EXCHANGE_SEGMENT_LABELS } from './models'
-import { insideShown, IntraSpread, MarkoutHorizons, money, NA, SegmentLines, SlippageLadder } from './ProfileExecution'
+import {
+	insideShown,
+	IntraSpread,
+	MarkoutHorizons,
+	money,
+	FractionChange,
+	NA,
+	SegmentLines,
+	SlippageLadder
+} from './ProfileExecution'
 import { withCountryParam, type DirectoryScope } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
@@ -74,15 +83,6 @@ export const EXECUTION_COLUMN_IDS = [
 function ratio(value: number | null | undefined): string {
 	if (value == null) return '–'
 	return `${formatRatio(value, { maximumFractionDigits: value >= 100 ? 0 : 1 })}×`
-}
-
-function Change({ value }: { value: number | undefined }) {
-	if (value == null) return <span className="text-tertiary">–</span>
-	return (
-		<span
-			className={value >= 0 ? 'text-data-up' : 'text-data-down'}
-		>{`${value >= 0 ? '+' : ''}${formatPercent(value, PERCENT_OPTIONS) ?? '–'}`}</span>
-	)
 }
 
 function UnsupportedMetric() {
@@ -877,8 +877,10 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			{
 				id: 'openInterestChange24h',
 				header: definitions.openInterestChange24h.label,
-				cell: ({ row, getValue }) =>
-					scopedActivity(row.original)?.supportsOpenInterest ? <Change value={getValue()} /> : <UnsupportedMetric />,
+				cell: ({ row, getValue }) => {
+					if (!scopedActivity(row.original)?.supportsOpenInterest) return <UnsupportedMetric />
+					return <FractionChange value={getValue()} />
+				},
 				meta: {
 					headerClassName: 'w-[89px] min-w-[89px]',
 					align: 'end',
@@ -933,7 +935,7 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			{
 				id: 'volumeChange24h',
 				header: definitions.volumeChange24h.label,
-				cell: ({ getValue }) => <Change value={getValue()} />,
+				cell: ({ getValue }) => <FractionChange value={getValue()} />,
 				meta: {
 					headerClassName: 'w-[102px] min-w-[102px]',
 					align: 'end',

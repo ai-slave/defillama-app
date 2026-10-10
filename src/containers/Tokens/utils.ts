@@ -1,7 +1,7 @@
 import type { ParsedUrlQuery } from 'node:querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import {
 	isTrueQueryParam,
 	parseNumberQueryParam,
@@ -241,14 +241,9 @@ function priceDisplay(value: number | null): string | null {
 	return formatUsd(value, { maximumFractionDigits })
 }
 
-function percentDisplay(value: number | null, signed = false): string | null {
+function percentDisplay(value: number | null): string | null {
 	if (value == null) return null
-	return signed ? formatPercentChange(value) : formatPercent(value, { input: 'percent' })
-}
-
-function percentTone(value: number | null): 'positive' | 'negative' | 'neutral' {
-	if (value == null || value === 0) return 'neutral'
-	return value > 0 ? 'positive' : 'negative'
+	return formatPercent(value, { input: 'percent' })
 }
 
 function percentWidth(value: number | null): string | null {
@@ -259,12 +254,6 @@ function percentWidth(value: number | null): string | null {
 function getRowDisplay(row: TokensSourceRow): TokensTableRowDisplay {
 	return {
 		price: priceDisplay(row.price),
-		priceChange24h: percentDisplay(row.priceChange24h, true),
-		priceChange24hTone: percentTone(row.priceChange24h),
-		priceChange7d: percentDisplay(row.priceChange7d, true),
-		priceChange7dTone: percentTone(row.priceChange7d),
-		priceChange30d: percentDisplay(row.priceChange30d, true),
-		priceChange30dTone: percentTone(row.priceChange30d),
 		marketCap: formatUsd(row.marketCap, { compact: true }),
 		fdv: formatUsd(row.fdv, { compact: true }),
 		outstandingFdv: formatUsd(row.outstandingFdv, { compact: true }),
@@ -297,8 +286,6 @@ function toTableRow(row: TokensSourceRow, rowNumber: number): TokensTableRow {
 export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDisplay {
 	return {
 		totalMarketCap: formatUsd(stats.totalMarketCap, { compact: true }),
-		marketCapWeightedChange24h: percentDisplay(stats.marketCapWeightedChange24h, true),
-		marketCapWeightedChange24hTone: percentTone(stats.marketCapWeightedChange24h),
 		spotVolume24h: formatUsd(stats.spotVolume24h, { compact: true }),
 		perpsVolume24h: formatUsd(stats.perpsVolume24h, { compact: true }),
 		openInterest24h: formatUsd(stats.openInterest24h, { compact: true }),

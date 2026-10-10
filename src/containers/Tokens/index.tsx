@@ -14,6 +14,7 @@ import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPop
 import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -43,9 +44,9 @@ import { TokensSourceAvailability } from './SourceAvailability'
 import { TokensChartsSection } from './TokensChartsSection'
 import { TokensFiltersDialog } from './TokensFiltersDialog'
 import type {
-	TokensDisplayTone,
 	TokensFilterOption,
 	TokensPageProps,
+	TokensPageStats,
 	TokensPageStatsDisplay,
 	TokensTableRow
 } from './types'
@@ -61,12 +62,6 @@ export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDE
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokensTableRow>()
-
-const VALUE_TONE_CLASSES: Record<TokensDisplayTone, string> = {
-	positive: 'text-data-up',
-	negative: 'text-data-down',
-	neutral: ''
-}
 
 type TokensTableStyle = React.CSSProperties & {
 	'--tokens-rank-column-width': string
@@ -88,11 +83,6 @@ function Dash() {
 
 function CurrencyValue({ value }: { value: string | null }) {
 	return value === null ? <Dash /> : <span className="whitespace-nowrap">{value}</span>
-}
-
-function PercentValue({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
-	if (value === null) return <Dash />
-	return <span className={VALUE_TONE_CLASSES[tone]}>{value}</span>
 }
 
 function ProgressPercentValue({ value, width }: { value: string | null; width: string | null }) {
@@ -194,9 +184,8 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.priceChange24h ?? undefined, {
 		...specColumn('priceChange24h'),
-		cell: ({ row }) => (
-			<PercentValue value={row.original.display.priceChange24h} tone={row.original.display.priceChange24hTone} />
-		),
+		cell: ({ row }) =>
+			row.original.priceChange24h == null ? <Dash /> : <Change value={row.original.priceChange24h} />,
 		meta: {
 			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
@@ -205,9 +194,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.priceChange7d ?? undefined, {
 		...specColumn('priceChange7d'),
-		cell: ({ row }) => (
-			<PercentValue value={row.original.display.priceChange7d} tone={row.original.display.priceChange7dTone} />
-		),
+		cell: ({ row }) => (row.original.priceChange7d == null ? <Dash /> : <Change value={row.original.priceChange7d} />),
 		meta: {
 			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
@@ -216,9 +203,8 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.priceChange30d ?? undefined, {
 		...specColumn('priceChange30d'),
-		cell: ({ row }) => (
-			<PercentValue value={row.original.display.priceChange30d} tone={row.original.display.priceChange30dTone} />
-		),
+		cell: ({ row }) =>
+			row.original.priceChange30d == null ? <Dash /> : <Change value={row.original.priceChange30d} />,
 		meta: {
 			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
@@ -397,40 +383,42 @@ export const EXPANDABLE_TOKENS_COLUMNS = [
 	...TOKENS_COLUMNS.slice(expanderInsertIndex)
 ]
 
-function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
+function TokensStats({ stats, display }: { stats: TokensPageStats; display: TokensPageStatsDisplay }) {
 	const items: Array<InlineStatStripItem> = [
 		{
 			label: 'MCap',
 			tooltip:
 				'Total market capitalization excluding wrapped, staked and other receipt assets identified by CoinGecko. The 24-hour change estimates price-driven movement using current circulating supplies.',
-			value: stats.totalMarketCap,
-			change: stats.marketCapWeightedChange24h,
-			changeClassName: VALUE_TONE_CLASSES[stats.marketCapWeightedChange24hTone]
+			value: display.totalMarketCap,
+			change:
+				stats.marketCapWeightedChange24h == null
+					? undefined
+					: { value: stats.marketCapWeightedChange24h, comparison: 'over 24h' }
 		},
 		{
 			label: '24H Spot Vol',
-			value: stats.spotVolume24h ?? '—',
+			value: display.spotVolume24h ?? '—',
 			tooltip: 'Spot trading volume over the last 24 hours across tracked markets.'
 		},
 		{
 			label: '24H Perps Vol',
-			value: stats.perpsVolume24h ?? '—',
+			value: display.perpsVolume24h ?? '—',
 			tooltip: 'Perpetual futures trading volume over the last 24 hours across tracked markets.'
 		},
 		{
 			label: 'OI',
-			value: stats.openInterest24h ?? '—',
+			value: display.openInterest24h ?? '—',
 			tooltip: 'Current USD value of outstanding perpetual futures positions across tracked markets.'
 		},
 		{
 			label: 'Past 30D Unlocks',
-			value: stats.unlock30dUsd ?? '—',
+			value: display.unlock30dUsd ?? '—',
 			tooltip:
 				'Estimated value of cliff and linear releases during the previous 30 days, valued at current token prices.'
 		},
 		{
 			label: 'Next 30D Unlocks',
-			value: stats.upcomingUnlockUsd ?? '—',
+			value: display.upcomingUnlockUsd ?? '—',
 			tooltip:
 				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices.'
 		}
@@ -677,7 +665,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 
 	return (
 		<div className="flex flex-col gap-2">
-			<TokensStats stats={serverTable.data.statsDisplay} />
+			<TokensStats stats={serverTable.data.stats} display={serverTable.data.statsDisplay} />
 			{view === 'table' ? <TokensSourceAvailability sources={serverTable.data.unavailableSources} /> : null}
 			<Panel padding="none">
 				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>

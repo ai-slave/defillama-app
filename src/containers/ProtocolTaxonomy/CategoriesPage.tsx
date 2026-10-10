@@ -15,10 +15,10 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -112,7 +112,7 @@ const categoriesColumns = columnHelper.columns([
 			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />
+		cell: ({ getValue }) => <Change value={getValue()} />
 	}),
 	columnHelper.accessor((row) => row.change_7d ?? undefined, {
 		id: 'change_7d',
@@ -121,7 +121,7 @@ const categoriesColumns = columnHelper.columns([
 			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />
+		cell: ({ getValue }) => <Change value={getValue()} />
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
@@ -130,7 +130,7 @@ const categoriesColumns = columnHelper.columns([
 			headerClassName: 'w-[140px]',
 			align: 'end'
 		},
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />
+		cell: ({ getValue }) => <Change value={getValue()} />
 	}),
 	columnHelper.accessor((row) => row.revenue ?? undefined, {
 		id: 'revenue',

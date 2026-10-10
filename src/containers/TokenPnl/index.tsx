@@ -21,6 +21,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change, changeTone, formatChange } from '~/ui/Change'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
 import { focusRegionOnLeave } from '~/ui/focus'
@@ -28,7 +29,8 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { StatTile } from '~/ui/SummaryStats'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ComparisonPanel } from './ComparisonPanel'
@@ -37,7 +39,6 @@ import { DateInput } from './DateInput'
 import { formatDateLabel, formatPnlPercent } from './format'
 import { buildComparisonEntry, computeTokenPnl } from './queries'
 import type { TokenPnlResult } from './queries'
-import { StatsCard } from './StatsCard'
 import type { ComparisonEntry } from './types'
 
 const EMPTY_SELECTED_COINS: Record<string, TokenSearchResult> = {}
@@ -148,50 +149,35 @@ function TokenPnlContent({
 
 	const { metrics, timeline, currentPrice, chartData } = pnlData
 	const tokenExportName = selectedCoinInfo?.name ?? selectedCoinId
-	const { percentChange, isProfit, holdingPeriodDays, annualizedReturn, absoluteChange } = metrics
-	const quantityValue = quantity !== 0 ? absoluteChange * quantity : absoluteChange
-	const formattedQuantityValue = formatCompactNumber(Math.abs(quantityValue), {
-		minimumCompactValue: 1_000_000,
-		compactSuffix: 'lowercase'
-	})
-	const formattedAbsoluteChange = formatCompactNumber(Math.abs(absoluteChange), {
-		minimumCompactValue: 1_000_000,
-		compactSuffix: 'lowercase'
-	})
+	const { percentChange, holdingPeriodDays, annualizedReturn, absoluteChange } = metrics
 	const quantityLabel =
 		quantity !== 0
-			? `${formatCompactNumber(quantity, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} tokens → ${quantityValue >= 0 ? '+$' : '-$'}${formattedQuantityValue}`
-			: `${absoluteChange >= 0 ? '+$' : '-$'}${formattedAbsoluteChange} per token`
+			? `${formatCompactNumber(quantity, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} tokens → ${formatChange(absoluteChange * quantity, 'usd')}`
+			: `${formatChange(absoluteChange, 'usd')} per token`
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
 			<section className="grid gap-2 sm:grid-cols-3" aria-label="Performance summary">
-				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
-					<dt className="label-xs text-secondary uppercase">Return</dt>
-					<dd className={`mono-xl ${isProfit ? 'text-data-up' : 'text-data-down'}`}>
-						{formatPnlPercent(percentChange)}
-					</dd>
-					<dd className="body-sm text-secondary">{quantityLabel}</dd>
-				</Card>
-				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
-					<dt className="label-xs text-secondary uppercase">Holding Period</dt>
-					<dd className="mono-xl text-primary">
-						{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
-					</dd>
-					<dd className="body-sm text-secondary">
-						<time dateTime={unixToDateString(start)}>{formatDateLabel(start)}</time> →{' '}
-						<time dateTime={unixToDateString(end)}>{formatDateLabel(end)}</time>
-					</dd>
-				</Card>
-				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
-					<dt className="label-xs text-secondary uppercase">Annualised Return</dt>
-					<dd className={`mono-xl ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-						{formatPnlPercent(annualizedReturn)}
-					</dd>
-					<dd className="body-sm text-secondary">
-						{annualizedReturn >= 0 ? '↑' : '↓'} Based on {holdingPeriodDays}d period
-					</dd>
-				</Card>
+				<StatTile label="Return" value={<Change value={percentChange} />} sub={quantityLabel} />
+				<StatTile
+					label="Holding period"
+					value={
+						<>
+							{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
+						</>
+					}
+					sub={
+						<>
+							<time dateTime={unixToDateString(start)}>{formatDateLabel(start)}</time> →{' '}
+							<time dateTime={unixToDateString(end)}>{formatDateLabel(end)}</time>
+						</>
+					}
+				/>
+				<StatTile
+					label="Annualised return"
+					value={<Change value={annualizedReturn} />}
+					sub={`Based on ${holdingPeriodDays}d period`}
+				/>
 			</section>
 
 			<Panel padding="none">
@@ -223,29 +209,32 @@ function TokenPnlContent({
 			</Panel>
 
 			<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-				<StatsCard
-					label="Current Price"
+				<StatTile
+					label="Current price"
 					value={formatUsd(currentPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-					subtle={selectedCoinInfo?.symbol?.toUpperCase()}
+					sub={selectedCoinInfo?.symbol?.toUpperCase()}
 				/>
-				<StatsCard
-					label="Start Price"
+				<StatTile
+					label="Start price"
 					value={formatUsd(metrics.startPrice, {
 						compact: true,
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					})}
 				/>
-				<StatsCard
-					label="End Price"
+				<StatTile
+					label="End price"
 					value={formatUsd(metrics.endPrice, {
 						compact: true,
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					})}
 				/>
-				<StatsCard label="Max Drawdown" value={formatPnlPercent(-Math.abs(metrics.maxDrawdown))} />
-				<StatsCard label="Volatility (Ann.)" value={formatPnlPercent(metrics.volatility)} />
+				<StatTile label="Max drawdown" value={formatPnlPercent(-Math.abs(metrics.maxDrawdown))} />
+				<StatTile
+					label="Volatility (ann.)"
+					value={formatPercent(metrics.volatility, { input: 'percent', maximumFractionDigits: 2 })}
+				/>
 			</div>
 
 			<DailyPnLGrid timeline={timeline} />
@@ -423,15 +412,13 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 					const seriesValue = getTooltipRawYValue(point, point.seriesName ?? '')
 					const price = typeof seriesValue === 'number' ? seriesValue : Number(seriesValue ?? 0)
 					const changeFromStart = startPrice !== 0 ? ((price - startPrice) / startPrice) * 100 : 0
-					const changeColor = changeFromStart >= 0 ? 'var(--text-data-up)' : 'var(--text-data-down)'
-					const changeSign = changeFromStart >= 0 ? '+' : ''
 
 					const chartdate = Number.isFinite(timestamp) ? formatTooltipChartDate(timestamp, 'daily') : ''
 
 					return `<div style="background: var(--bg-surface); border: 1px solid var(--border-medium); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
 						<div style="color: var(--text-secondary); margin-bottom: 2px;">${chartdate}</div>
 						<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">${formatTooltipValue(price, '$')}</div>
-						<div style="font-size: 11px; color: ${changeColor}; font-weight: 500;">${changeSign}${formatTooltipValue(changeFromStart, '%')} from start</div>
+						<div class="${changeTone(changeFromStart)}" style="font-size: 11px; font-weight: 500;">${formatChange(changeFromStart)} from start</div>
 					</div>`
 				}
 			}

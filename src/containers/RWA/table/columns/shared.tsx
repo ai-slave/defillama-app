@@ -3,7 +3,7 @@ import { Fragment, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../../api.types'
 import { BreakdownTooltipContent } from '../../BreakdownTooltipContent'
 import type { rwaTableFeatures } from '../features'
@@ -74,13 +74,6 @@ export function UsdBreakdownCell({
 			{formatted}
 		</Hovercard>
 	)
-}
-
-export function ChangeCell({ value }: { value: number | null | undefined }) {
-	const formatted = formatPercentChange(value)
-	if (formatted == null) return null
-	const tone = value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : 'text-primary'
-	return <span className={tone}>{formatted}</span>
 }
 
 /** A value with its definition in a tooltip. */

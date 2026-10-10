@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
+import { Change } from '~/ui/Change'
 import { Skeleton } from '~/ui/Skeleton'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -39,9 +40,6 @@ function entityLogoUrl(entity: ArticleEntityRef) {
 	return null
 }
 
-const changeColor = (n?: number | null) =>
-	typeof n !== 'number' ? 'text-tertiary' : n > 0 ? 'text-data-up' : n < 0 ? 'text-data-down' : 'text-tertiary'
-
 function fetchEntityPreview(
 	type: ArticleEntityType,
 	slug: string,
@@ -54,19 +52,15 @@ function fetchEntityPreview(
 		.catch(() => null)
 }
 
-function ChangeChip({ value, label }: { value?: number | null; label: string }) {
-	const text = formatPercent(value, {
-		input: 'fraction',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-		signDisplay: 'exceptZero',
-		useGrouping: false
-	})
-	if (!text) return null
+/** One window of the TVL or supply change; the preview sends it as a fraction. */
+function ChangeChip({ value, comparison }: { value?: number | null; comparison: string }) {
+	if (value == null) return null
 	return (
-		<span className={`inline-flex items-baseline gap-1 ${changeColor(value)}`}>
-			<span className="label-xs tabular-nums">{text}</span>
-			<span className="body-xs tracking-wider text-tertiary uppercase">{label}</span>
+		<span className="inline-flex items-baseline gap-1 text-tertiary">
+			<span className="label-xs tabular-nums">
+				<Change value={value * 100} />
+			</span>
+			<span className="body-xs">{comparison}</span>
 		</span>
 	)
 }
@@ -121,9 +115,9 @@ function PreviewBody({
 						</span>
 					) : null}
 					<span className="flex flex-wrap gap-x-3 gap-y-1">
-						<ChangeChip value={preview.change1d} label="24h" />
-						<ChangeChip value={preview.change7d} label="7d" />
-						<ChangeChip value={preview.change30d} label="30d" />
+						<ChangeChip value={preview.change1d} comparison="over 24h" />
+						<ChangeChip value={preview.change7d} comparison="over 7d" />
+						<ChangeChip value={preview.change30d} comparison="over 30d" />
 					</span>
 					{preview.chains && preview.chains.length > 0 ? (
 						<span className="flex flex-wrap gap-1">
@@ -148,8 +142,8 @@ function PreviewBody({
 						</span>
 					) : null}
 					<span className="flex flex-wrap gap-x-3 gap-y-1">
-						<ChangeChip value={preview.change1d} label="24h" />
-						<ChangeChip value={preview.change7d} label="7d" />
+						<ChangeChip value={preview.change1d} comparison="over 24h" />
+						<ChangeChip value={preview.change7d} comparison="over 7d" />
 					</span>
 					{typeof preview.protocolCount === 'number' ? (
 						<MetricRow label="Protocols" value={formatNumber(preview.protocolCount)} />
@@ -179,7 +173,7 @@ function PreviewBody({
 							<span className="body-xs tracking-wider text-tertiary uppercase">Circulating</span>
 						</span>
 					) : null}
-					<ChangeChip value={preview.change7d} label="7d" />
+					<ChangeChip value={preview.change7d} comparison="over 7d" />
 					{preview.topChains && preview.topChains.length > 0 ? (
 						<span className="flex flex-col gap-0.5">
 							<span className="body-xs tracking-wider text-tertiary uppercase">Top chains</span>
@@ -256,14 +250,7 @@ function PreviewBody({
 						<MetricRow label="Spot 24h" value={formatUsd(preview.spotVolume, { compact: true }) ?? '—'} />
 					) : null}
 					{preview.inflows1w != null ? (
-						<MetricRow
-							label="Net 1w"
-							value={
-								<span className={changeColor(preview.inflows1w)}>
-									{formatUsd(preview.inflows1w, { compact: true })}
-								</span>
-							}
-						/>
+						<MetricRow label="Net 1w" value={<Change value={preview.inflows1w} unit="usd" />} />
 					) : null}
 				</span>
 			)

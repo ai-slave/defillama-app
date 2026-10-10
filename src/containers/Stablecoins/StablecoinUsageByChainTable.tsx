@@ -15,6 +15,7 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { groupBridgeData } from '~/containers/Stablecoins/hooks'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -23,7 +24,6 @@ import {
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
@@ -136,7 +136,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -145,7 +145,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_7d ?? undefined, {
 		id: 'change_7d',
 		header: '7d Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
@@ -154,7 +154,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
 		header: '1m Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'

@@ -247,13 +247,13 @@ describe('stablecoin server query helpers', () => {
 			chainList: ['Ethereum', 'Arbitrum', 'Base', 'Empty'],
 			chainsGroupbyParent: { Ethereum: { L2: ['Arbitrum', 'Base'] } },
 			deprecatedChains: { Base: true },
-			change1d: '+11.11',
-			change7d: '+25.00',
-			change30d: '+42.86',
+			change1d: 11.11111111111111,
+			change7d: 25,
+			change30d: 42.857142857142854,
 			totalMcapCurrent: 1000,
-			change1d_nol: '+$100',
-			change7d_nol: '+$200',
-			change30d_nol: '+$300',
+			change1dUsd: 100,
+			change7dUsd: 200,
+			change30dUsd: 300,
 			dataTimestamp: Number(daysAgo(0)),
 			isDataStale: false
 		})
@@ -281,7 +281,7 @@ describe('stablecoin server query helpers', () => {
 		expect(page).not.toHaveProperty('peggedChartDataByChain')
 	})
 
-	test('preserves signed zero labels and reports stale aggregate timestamps exactly', () => {
+	test('keeps zero changes and reports stale aggregate timestamps exactly', () => {
 		const raw = chainsRawFixture()
 		raw.aggregatedChart = [
 			aggregatePoint(40, 1000),
@@ -296,9 +296,9 @@ describe('stablecoin server query helpers', () => {
 			change1d: null,
 			change7d: null,
 			change30d: null,
-			change1d_nol: null,
-			change7d_nol: null,
-			change30d_nol: null,
+			change1dUsd: null,
+			change7dUsd: null,
+			change30dUsd: null,
 			dataTimestamp: Number(daysAgo(10)),
 			isDataStale: true
 		})
@@ -311,12 +311,12 @@ describe('stablecoin server query helpers', () => {
 		]
 		const unchanged = buildStablecoinChainsPageSummary(raw, { currentTimeMs: NOW, chainMetadata: {} })
 		expect(unchanged).toMatchObject({
-			change1d: '0.00',
-			change7d: '0.00',
-			change30d: '0.00',
-			change1d_nol: '$0',
-			change7d_nol: '$0',
-			change30d_nol: '$0'
+			change1d: 0,
+			change7d: 0,
+			change30d: 0,
+			change1dUsd: 0,
+			change7dUsd: 0,
+			change30dUsd: 0
 		})
 	})
 

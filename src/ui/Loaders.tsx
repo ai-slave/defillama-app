@@ -8,10 +8,12 @@ export function LoadingDots() {
 	)
 }
 
-/** The spinner for buttons and inline controls; never hand-roll an `animate-spin` border circle. */
+/** The spinner for buttons and inline controls; never hand-roll an `animate-spin` border circle. It is a block-level
+    flex box, so a wrapper around it (a role="status" span) holds no text line and the spinner centres in its row;
+    an inline-flex spinner rode that line's baseline, above centre. */
 export function LoadingSpinner({ size }: { size: number }) {
 	return (
-		<span className="inline-flex shrink-0 animate-spin">
+		<span className="flex shrink-0 animate-spin">
 			<svg
 				className="shrink-0"
 				xmlns="http://www.w3.org/2000/svg"

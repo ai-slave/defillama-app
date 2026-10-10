@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { readyAsPath } from '~/utils/routerQuery'
 import type { RWAPageKind } from './pageLayout'
 import { getRwaPageTabRow } from './pageTabs'
 import { RWAQueryZoneGuard } from './QueryZoneGuard'
@@ -11,10 +12,7 @@ import { RWAQueryZoneGuard } from './QueryZoneGuard'
  */
 export function RWAPageTabs({ kind, embedded = false }: { kind: RWAPageKind; embedded?: boolean }) {
 	const router = useRouter()
-	/* A static page renders on the server without its query, so the first client render reads the bare path too; the
-	   query (?view=, filters) joins once the router is ready, and the tabs re-render then. */
-	const path = router.isReady ? router.asPath : router.asPath.split('?')[0]
-	const row = getRwaPageTabRow(kind, path, { embedded })
+	const row = getRwaPageTabRow(kind, readyAsPath(router), { embedded })
 	const sameRoute = kind === 'platform' || kind === 'venue'
 	return (
 		<>

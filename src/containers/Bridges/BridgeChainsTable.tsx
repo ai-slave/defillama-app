@@ -14,6 +14,7 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -52,16 +53,7 @@ const bridgeChainsColumn = columnHelper.columns([
 	columnHelper.accessor((row) => row.prevDayNetFlow ?? undefined, {
 		id: 'prevDayNetFlow',
 		header: '24h Net Flow',
-		cell: (info) => {
-			const value = info.getValue()
-			if (value == null) return null
-			if (value === 0) return <>$0</>
-			return (
-				<span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>
-					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-				</span>
-			)
-		},
+		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
 			align: 'end'
@@ -90,16 +82,7 @@ const bridgeChainsColumn = columnHelper.columns([
 	columnHelper.accessor((row) => row.prevWeekNetFlow ?? undefined, {
 		id: 'prevWeekNetFlow',
 		header: '7d Net Flow',
-		cell: (info) => {
-			const value = info.getValue()
-			if (value == null) return null
-			if (value === 0) return <>$0</>
-			return (
-				<span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>
-					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-				</span>
-			)
-		},
+		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
 			align: 'end'

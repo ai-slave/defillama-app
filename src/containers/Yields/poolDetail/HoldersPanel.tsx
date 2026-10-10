@@ -13,11 +13,11 @@ import {
 } from '~/components/Table/helpers'
 import { childColors, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { CopyHelper } from '~/ui/Copy'
-import { Icon } from '~/ui/Icon'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { StatItem } from '~/ui/SummaryStats'
+import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import {
@@ -60,31 +60,22 @@ function fmtToken(balance: string | null, decimals: number | null): string {
 		: '—'
 }
 
-function windowDelta(change: HolderChange, mode: HolderMode): { status: HolderStatus; value: number | null } {
+type HolderDelta = { status: HolderStatus; value: number | null; unit: 'pp' | 'percent' }
+
+function windowDelta(change: HolderChange, mode: HolderMode): HolderDelta {
 	return mode === 'share'
-		? { status: change.share.status, value: change.share.pct_point_delta }
-		: { status: change.balance.status, value: change.balance.pct_delta }
+		? { status: change.share.status, value: change.share.pct_point_delta, unit: 'pp' }
+		: { status: change.balance.status, value: change.balance.pct_delta, unit: 'percent' }
 }
 
-export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number | null } | null }) {
+export function ChangeBadge({ delta }: { delta: HolderDelta | null }) {
 	if (!delta) return <span className="text-secondary">—</span>
 	switch (delta.status) {
 		case 'up':
-			if (delta.value === null) return <span className="text-secondary">—</span>
-			return (
-				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-positive-text)">
-					<Icon name="arrow-up" className="size-3.5 shrink-0" aria-hidden />+
-					{formatPercent(Math.abs(delta.value), PERCENT_OPTIONS)}
-				</span>
-			)
 		case 'down':
 			if (delta.value === null) return <span className="text-secondary">—</span>
-			return (
-				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-negative-text)">
-					<Icon name="arrow-down" className="size-3.5 shrink-0" aria-hidden />-
-					{formatPercent(Math.abs(delta.value), PERCENT_OPTIONS)}
-				</span>
-			)
+			// The status carries the direction, as it did when the badge drew its own arrow.
+			return <Change value={(delta.status === 'down' ? -1 : 1) * Math.abs(delta.value)} unit={delta.unit} />
 		case 'entered_top_10':
 			return (
 				<Tooltip
@@ -328,27 +319,15 @@ function HolderSummary({ holders, donut }: { holders: DetailHolders; donut: Reac
 			{count != null || avg != null ? (
 				<div className="mt-auto flex flex-wrap justify-center gap-x-12 gap-y-4 border-t border-subtle pt-4">
 					{count != null ? (
-						<div className="flex flex-col gap-1">
-							<span className="label-md text-secondary">Total holders</span>
-							<span className="mono-xl text-primary">{formatNumber(count)}</span>
+						<div className="flex items-end gap-2">
+							<StatItem label="Total holders" value={formatNumber(count)} />
 							{countChange30d != null ? (
-								<span className="body-md text-tertiary">
-									<span
-										className={`mono-md-bold ${countChange30d > 0 ? 'text-(--yield-positive-text)' : countChange30d < 0 ? 'text-(--yield-negative-text)' : 'text-secondary'}`}
-									>
-										{countChange30d > 0 ? '+' : ''}
-										{formatNumber(countChange30d)}
-									</span>{' '}
-									30d
-								</span>
+								<SummaryChange value={countChange30d} unit="count" comparison="over 30d" />
 							) : null}
 						</div>
 					) : null}
 					{avg != null ? (
-						<div className="flex flex-col gap-1">
-							<span className="label-md text-secondary">Avg holder amount</span>
-							<span className="mono-xl text-primary">{formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
-						</div>
+						<StatItem label="Avg holder amount" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)} />
 					) : null}
 				</div>
 			) : null}

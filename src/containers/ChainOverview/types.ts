@@ -74,7 +74,7 @@ export interface IChainOverviewData {
 	stablecoins: {
 		mcap: number | null
 		change7dUsd: number | null
-		change7d: string | null
+		change7d: number | null
 		topToken: { symbol: string; mcap: number }
 		dominance: string | null
 		mcapChartData: Array<[number, number]> | null

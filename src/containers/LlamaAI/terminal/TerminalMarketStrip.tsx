@@ -4,12 +4,13 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { AI_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Tag } from '~/ui/Tag'
-import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { subscribeTerminalStats, type TerminalLiveStats, unsubscribeTerminalListener } from './terminalSocket'
 
 export interface TerminalStats {
@@ -84,7 +85,8 @@ export function pairName(symbol: string): string {
 
 const coinIconUrl = (symbol: string) => `https://app.hyperliquid.xyz/coins/${encodeURIComponent(symbol)}.svg`
 
-const directionClass = (value: number) => (value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : '')
+// Funding is coloured by who pays (positive: longs pay shorts), not as a movement.
+const fundingClass = (value: number) => (value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : '')
 
 export function priceDecimals(referencePx: number): number {
 	if (!Number.isFinite(referencePx) || referencePx <= 0) return 2
@@ -97,13 +99,12 @@ export function formatPrice(value: number | undefined, decimals: number): string
 	return typeof value === 'number' && Number.isFinite(value) ? formatUsd(value, fixed(decimals)) : '—'
 }
 
-export function formatDayChange(stats: Pick<TerminalStats, 'markPx' | 'prevDayPx' | 'dayChangePct'>): string {
-	const absolute = formatNumber(stats.markPx - stats.prevDayPx, {
+/** The 24h price move beside its percent, at the price's own precision (Change's usd unit is compact). */
+export function formatDayMove(stats: Pick<TerminalStats, 'markPx' | 'prevDayPx'>): string {
+	return formatUsd(stats.markPx - stats.prevDayPx, {
 		signDisplay: 'exceptZero',
 		...fixed(priceDecimals(stats.prevDayPx))
 	})
-	const percent = formatPercent(stats.dayChangePct, { input: 'percent', signDisplay: 'exceptZero', ...fixed(2) })
-	return `${absolute} / ${percent}`
 }
 
 function MarketIdentity({ symbol, maxLeverage }: { symbol: string; maxLeverage?: number }) {
@@ -133,13 +134,18 @@ function statItems(symbol: string, stats: TerminalStats | undefined): Array<Inli
 			labelHidden: true,
 			value: <MarketIdentity symbol={stats.symbol} maxLeverage={stats.maxLeverage} />
 		},
-		{ label: 'Mark', value: <span className="tabular-nums">{formatPrice(stats.markPx, decimals)}</span> },
+		{
+			label: 'Mark',
+			value: <span className="tabular-nums">{formatPrice(stats.markPx, decimals)}</span>
+		},
 		{ label: 'Oracle', value: <span className="tabular-nums">{formatPrice(stats.oraclePx, decimals)}</span> },
+		// The strip is stacked, so the label names the window and the change stays one line tall like its neighbours.
 		{
 			label: '24h change',
 			value: (
-				<span className={`tabular-nums ${directionClass(stats.markPx - stats.prevDayPx)}`}>
-					{formatDayChange(stats)}
+				<span className="flex gap-1 tabular-nums">
+					{formatDayMove(stats)}
+					<Change value={stats.dayChangePct} />
 				</span>
 			)
 		},
@@ -156,7 +162,7 @@ function statItems(symbol: string, stats: TerminalStats | undefined): Array<Inli
 			tooltip: `≈ ${funding.apr} · paid hourly`,
 			value: (
 				<span>
-					<span className={`tabular-nums ${directionClass(stats.funding)}`}>{funding.rate}</span>
+					<span className={`tabular-nums ${fundingClass(stats.funding)}`}>{funding.rate}</span>
 					<span className="text-secondary"> / </span>
 					<FundingCountdown />
 				</span>

@@ -19,7 +19,6 @@ export type TokenPnlResult = {
 		rangeLow: number
 		holdingPeriodDays: number
 		annualizedReturn: number
-		isProfit: boolean
 	}
 	currentPrice: number
 	chartData: { dataset: IMultiSeriesChartProps['dataset']; charts: IMultiSeriesChartProps['charts'] }
@@ -187,8 +186,7 @@ export async function computeTokenPnl(params: {
 				rangeHigh: 0,
 				rangeLow: 0,
 				holdingPeriodDays: 0,
-				annualizedReturn: 0,
-				isProfit: false
+				annualizedReturn: 0
 			},
 			currentPrice: 0,
 			chartData: {
@@ -264,8 +262,7 @@ export async function computeTokenPnl(params: {
 			rangeHigh,
 			rangeLow,
 			holdingPeriodDays,
-			annualizedReturn,
-			isProfit: percentChange >= 0
+			annualizedReturn
 		},
 		currentPrice: endPrice,
 		chartData,

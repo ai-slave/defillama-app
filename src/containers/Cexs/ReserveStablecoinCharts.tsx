@@ -300,9 +300,21 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 						? [
 								{
 									label: 'Dominant Backing Type',
-									value: <span className="capitalize">{dominantBacking.mechanism.replace('-', ' ')}</span>,
-									change: `(${formatPercent(dominantBacking.percentage, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })})`,
-									changeClassName: 'text-tertiary'
+									value: (
+										<>
+											<span className="capitalize">{dominantBacking.mechanism.replace('-', ' ')}</span>{' '}
+											<span className="text-tertiary">
+												(
+												{formatPercent(dominantBacking.percentage, {
+													input: 'percent',
+													minimumFractionDigits: 1,
+													maximumFractionDigits: 1,
+													useGrouping: false
+												})}
+												)
+											</span>
+										</>
+									)
 								},
 								{
 									label: 'Fiat-Backed %',

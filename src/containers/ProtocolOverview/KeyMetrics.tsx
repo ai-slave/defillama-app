@@ -336,7 +336,6 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 			{props.currentTvlByChain?.staking != null ? (
 				<MetricRow
 					label="Staked"
-					valueClassName="ml-auto"
 					value={
 						<StakedValue
 							staking={props.currentTvlByChain.staking}
@@ -366,10 +365,10 @@ function StakedValue({
 	formatPrice: IKeyMetricsProps['formatPrice']
 }) {
 	const share = getSharePercent(staking, marketCap)
-	if (share == null) return <span className="font-jetbrains">{formatPrice(staking)}</span>
+	if (share == null) return <span>{formatPrice(staking)}</span>
 	return (
-		<span className="flex items-center gap-1">
-			<span className="font-jetbrains">{formatPrice(staking)}</span>
+		<span className="flex items-baseline gap-1">
+			<span>{formatPrice(staking)}</span>
 			<span className="body-sm text-tertiary">({formatPercent(share, { input: 'percent' })} of mcap)</span>
 		</span>
 	)
@@ -914,7 +913,7 @@ function Expenses(props: IKeyMetricsProps) {
 				>
 					<span className="flex flex-wrap justify-between">
 						<span className="text-secondary">{category}</span>
-						<span className="font-jetbrains">{props.formatPrice(amount)}</span>
+						<span className="mono-md">{props.formatPrice(amount)}</span>
 					</span>
 				</p>
 			))}
@@ -1013,10 +1012,9 @@ function TokenCGData(props: IKeyMetricsProps) {
 					/>
 					<SubMetricRow
 						label="DEX Volume"
-						valueClassName="ml-auto"
 						value={
-							<span className="flex items-center gap-1">
-								<span className="font-jetbrains">
+							<span className="flex items-baseline gap-1">
+								<span>
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
 								{dexVolumeShare != null ? (
@@ -1050,7 +1048,7 @@ function Raises(props: IKeyMetricsProps) {
 					<span className="flex flex-wrap justify-between">
 						<span className="text-secondary">{formatDate(raise.date, { input: 'seconds' })}</span>
 						{raise.amountUsd != null ? (
-							<span className="font-jetbrains">
+							<span className="mono-md">
 								{formatUsd(raise.amountUsd, {
 									compact: true,
 									minimumCompactValue: 1_000_000,

@@ -234,10 +234,9 @@ export function TokensChartsSection({
 				</>
 			) : movers ? (
 				<div className="grid grid-cols-1 lg:grid-cols-2">
-					<MoversChart title="Top Gainers" titleClassName="text-data-up" entries={movers.gainers} color={CHART_UP} />
+					<MoversChart title="Top Gainers" entries={movers.gainers} color={CHART_UP} />
 					<MoversChart
 						title="Top Losers"
-						titleClassName="text-data-down"
 						className="border-t border-subtle lg:border-t-0 lg:border-l"
 						entries={movers.losers}
 						color={CHART_DOWN}
@@ -250,13 +249,11 @@ export function TokensChartsSection({
 
 function MoversChart({
 	title,
-	titleClassName,
 	className,
 	entries,
 	color
 }: {
 	title: string
-	titleClassName: string
 	className?: string
 	entries: Array<TokensMoverEntry>
 	color: string
@@ -289,7 +286,7 @@ function MoversChart({
 
 	return (
 		<div className={`flex min-w-0 flex-col ${className ?? ''}`.trim()}>
-			<h3 className={`px-3 pt-2 label-md ${titleClassName}`}>{title}</h3>
+			<h3 className="px-3 pt-2 label-md">{title}</h3>
 			{entries.length === 0 ? (
 				<div className="flex items-center justify-center body-sm text-tertiary" style={{ height: MOVERS_HEIGHT }}>
 					Nothing to show

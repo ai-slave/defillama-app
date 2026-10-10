@@ -1,6 +1,6 @@
 import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 15
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 16
 export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
 
 export interface TokenMarketSummary {
@@ -70,16 +70,8 @@ export interface TokensNumericFilter {
 	min: number | null
 	max: number | null
 }
-export type TokensDisplayTone = 'positive' | 'negative' | 'neutral'
-
 export interface TokensTableRowDisplay {
 	price: string | null
-	priceChange24h: string | null
-	priceChange24hTone: TokensDisplayTone
-	priceChange7d: string | null
-	priceChange7dTone: TokensDisplayTone
-	priceChange30d: string | null
-	priceChange30dTone: TokensDisplayTone
 	marketCap: string | null
 	fdv: string | null
 	outstandingFdv: string | null
@@ -184,8 +176,6 @@ export interface TokensPageStats {
 
 export interface TokensPageStatsDisplay {
 	totalMarketCap: string
-	marketCapWeightedChange24h: string | null
-	marketCapWeightedChange24hTone: TokensDisplayTone
 	spotVolume24h: string | null
 	perpsVolume24h: string | null
 	openInterest24h: string | null

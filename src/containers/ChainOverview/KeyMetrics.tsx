@@ -5,16 +5,16 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
 import { definitions } from '~/public/definitions'
+import { Change, formatChange } from '~/ui/Change'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import {
 	MetricRow as ChainMetricRow,
 	MetricSection as ChainMetricSection,
 	SubMetricRow as ChainSubMetricRow
 } from '~/ui/MetricPrimitives'
-import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
-import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange } from '~/utils/numberFormat'
+import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IChainOverviewData } from './types'
 
 const formatKeyMetricsValue = (value: number | string | null) => {
@@ -181,20 +181,7 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 			{stablecoins.change7d != null ? (
 				<ChainSubMetricRow
 					label="Change (7d)"
-					value={
-						<Tooltip
-							content={`${formatUsd(stablecoins.change7dUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
-							render={
-								<span
-									className={`mono-md underline decoration-dotted ${
-										+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
-									}`}
-								/>
-							}
-						>
-							{formatPercentChange(stablecoins.change7d)}
-						</Tooltip>
-					}
+					value={<Change value={stablecoins.change7d} tooltip={formatChange(stablecoins.change7dUsd, 'usd')} />}
 				/>
 			) : null}
 			{stablecoins.dominance != null ? (
@@ -258,11 +245,7 @@ function DexsVolume({ dexs }: { dexs: IChainOverviewData['dexs'] }) {
 				<ChainSubMetricRow
 					label="Weekly Change"
 					tooltip={definitions.dexs.chain['change7dover7d']}
-					value={
-						<span className={dexs.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
-							{formatPercentChange(dexs.change_7dover7d)}
-						</span>
-					}
+					value={<Change value={dexs.change_7dover7d} />}
 				/>
 			) : null}
 			{dexs.dexsDominance != null ? (
@@ -299,11 +282,7 @@ function PerpsVolume({ perps }: { perps: IChainOverviewData['perps'] }) {
 				<ChainSubMetricRow
 					label="Weekly Change"
 					tooltip={definitions.perps.chain['change7dover7d']}
-					value={
-						<span className={perps.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
-							{formatPercentChange(perps.change_7dover7d)}
-						</span>
-					}
+					value={<Change value={perps.change_7dover7d} />}
 				/>
 			) : null}
 		</ChainMetricSection>

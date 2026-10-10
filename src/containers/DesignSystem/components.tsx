@@ -5,6 +5,7 @@ import { ViewTabs } from '~/components/ViewTabs'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button, ButtonGroup } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { CountBadge } from '~/ui/CountBadge'
@@ -20,7 +21,6 @@ import { metricChipStyles, metricOptionChipStyles, metricSeriesToggleStyles } fr
 import { NoResults } from '~/ui/NoResults'
 import { OptionTile } from '~/ui/OptionTile'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -36,7 +36,7 @@ import {
 	SurfaceBodyLoadingStatus,
 	SurfaceBodyStatus
 } from '~/ui/Status'
-import { StatTile } from '~/ui/SummaryStats'
+import { InlineStatStrip, StatItem, StatTile, SummaryChange } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tabs } from '~/ui/Tabs'
 import { Tag, TagButton } from '~/ui/Tag'
@@ -798,11 +798,19 @@ export function ChipsGroup() {
 					</Tooltip>
 				</Row>
 			</Example>
-			<Example name="PercentChange" note="A signed change in the data up and down colours.">
+			<Example
+				name="Change"
+				prop="unit / tooltip"
+				note="A signed movement: up green, down red, zero in its container's colour. The tooltip holds the same movement in another unit."
+			>
 				<Row>
-					<PercentChange percent={4.21} />
-					<PercentChange percent={-3.12} />
-					<PercentChange percent={0} />
+					<Change value={4.21} />
+					<Change value={-3.12} />
+					<Change value={0} />
+					<Change value={52_100_000} unit="usd" />
+					<Change value={-1234} unit="count" />
+					<Change value={0.12} unit="pp" />
+					<Change value={1.4} tooltip="+$2.1b" />
 				</Row>
 			</Example>
 		</Group>
@@ -928,19 +936,57 @@ export function SurfacesGroup() {
 			<Example wide name="StatTile" note="A grid of KPI tiles: value, change, definition, a line under it, or loading.">
 				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
 					<StatTile label="Revenue (30d)" value="$12.4m" sub="Across 14 chains" />
-					<StatTile label="Fees (24h)" value="$1.06m" change={{ value: 3.2, formatted: '+3.2%' }} />
+					<StatTile
+						label="Fees (24h)"
+						value="$1.06m"
+						change={{ value: 3.2, comparison: 'vs 24h ago', tooltip: '+$32.9k' }}
+					/>
 					<StatTile label="Active loans" value="$1.82b" tooltip="Borrowed value still outstanding." />
 					<StatTile label="Holders" loading />
 				</div>
 			</Example>
-			<Example name="Text tiers" note="Text and data colours on a surface.">
+			<Example
+				name="SummaryChange"
+				note="A headline's change beside its StatItem: the change, then the window it covers. Containers take the change as data."
+			>
+				<div className="flex flex-wrap items-end justify-between gap-2">
+					<StatItem label="Total Value Locked" value="$4.82b" />
+					<SummaryChange value={-2.2} comparison="over 24h" tooltip="-$108.4m" />
+				</div>
+			</Example>
+			<Example
+				wide
+				name="InlineStatStrip"
+				prop="change"
+				note="Label and value pairs above a table; a change carries its window."
+			>
+				<InlineStatStrip
+					items={[
+						{ label: 'Market cap', value: '$2.41t', change: { value: 1.84, comparison: 'over 24h' } },
+						{
+							label: 'Volume (24h)',
+							value: '$96.2b',
+							change: { value: -4_120_000_000, unit: 'usd', comparison: 'vs 24h ago' }
+						},
+						{ label: 'Tokens', value: '12,418', change: { value: 0, unit: 'count', comparison: 'over 7d' } }
+					]}
+				/>
+			</Example>
+			<Example
+				name="Text tiers"
+				note="Text and data colours on a surface. Data colours only reach text through Change."
+			>
 				<div className="grid grid-cols-2 gap-x-6 gap-y-1">
 					<span className="body-sm text-primary">text-primary</span>
 					<span className="body-sm text-link">text-link</span>
 					<span className="body-sm text-secondary">text-secondary</span>
-					<span className="body-sm text-data-up">text-data-up +2.41%</span>
+					<span className="body-sm text-secondary">
+						data-up <Change value={2.41} />
+					</span>
 					<span className="body-sm text-tertiary">text-tertiary</span>
-					<span className="body-sm text-data-down">text-data-down −3.12%</span>
+					<span className="body-sm text-secondary">
+						data-down <Change value={-3.12} />
+					</span>
 					<span className="body-sm text-disabled">text-disabled</span>
 					<span className="body-sm text-warning">text-warning</span>
 					<span />

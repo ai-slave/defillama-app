@@ -348,7 +348,8 @@ export const useFetchChainChartData = ({
 	])
 
 	return {
-		isFetchingChartData: !!chartData.loadingCharts,
+		isFetchingChartData: chartData.loadingCharts.length > 0,
+		loadingCharts: chartData.loadingCharts,
 		finalCharts: chartData.finalCharts,
 		valueSymbol: chartData.valueSymbol,
 		failedMetrics: chartData.failedMetrics,

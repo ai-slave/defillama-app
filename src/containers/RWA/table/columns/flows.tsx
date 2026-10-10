@@ -1,8 +1,8 @@
+import { Change } from '~/ui/Change'
 import { Tooltip } from '~/ui/Tooltip'
 import type { RWAFlowWindow } from '../../api.types'
 import { definitions } from '../../definitions'
 import { RWAFlowSummaryTooltip, RWAFlowValueShimmer, RWAFlowValueUnavailable } from '../../FlowPanelParts'
-import { formatSignedRWAFlow, getRWAFlowTextClass } from '../../flows'
 import type { RWAChangePeriod } from '../change'
 import { columnHelper, getLeafRow, numberColumnMeta } from './shared'
 
@@ -41,7 +41,7 @@ export function createFlowsColumnGroup(status: RWAFlowStatus, period: RWAChangeP
 						if (status === 'loading') return <RWAFlowValueShimmer label={`Loading ${header.label}`} />
 						if (status === 'unavailable') return <RWAFlowValueUnavailable />
 						const value = getValue()
-						const display = <span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
+						const display = value == null ? '-' : <Change value={value} unit="usd" />
 						const leaf = getLeafRow(row.original)
 						const summary = leaf?.chainScope ? undefined : leaf?.flows[window]
 						return summary ? (

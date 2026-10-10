@@ -1,6 +1,5 @@
 import { SmolLineChart } from '~/containers/ChainOverview/SmolLineChart'
 import { SmolStatCard } from '~/ui/SmolStatCard'
-import { formatPercentChange } from '~/utils/numberFormat'
 import type { IRWAAssetsOverview } from '../api.types'
 import { definitions } from '../definitions'
 import { formatRwaKpiUsd } from '../kpi/format'
@@ -13,7 +12,7 @@ import {
 	type RwaOverviewCards
 } from './cardData'
 import { foldRwaChainChangeCard } from './chainChangeCard'
-import { formatRwaSignedUsd, getRwaChangeTone, RWAChangeCard, RWAValueBars } from './OverviewCard'
+import { RWAChangeCard, RWAValueBars } from './OverviewCard'
 import { useRwaChainChangeRows } from './useChainChangeRows'
 
 export type RWAOverviewCardsProps = {
@@ -60,11 +59,11 @@ export function RWAOverviewCards({
 				title="RWA in DeFi by Protocol"
 				tooltip={`${definitions.totalDefiActiveTvl.description} The bars leave bridge and interop protocols out.`}
 				value={defi.value == null ? null : formatRwaKpiUsd(defi.value)}
-				change={{
-					text: defi.changeUsd == null ? 'N/A' : formatRwaSignedUsd(defi.changeUsd),
-					tone: getRwaChangeTone(defi.changeUsd),
-					comparison: `over ${RWA_CARD_CHANGE_DAYS}d`
-				}}
+				change={
+					defi.changeUsd == null
+						? undefined
+						: { value: defi.changeUsd, unit: 'usd', comparison: `over ${RWA_CARD_CHANGE_DAYS}d` }
+				}
 			>
 				<RWAValueBars bars={defi.bars} />
 			</SmolStatCard>
@@ -78,11 +77,9 @@ export function RWAOverviewCards({
 				title="RWA Perps Open Interest"
 				tooltip={perpsDefinitions.totalOpenInterest.description}
 				value={perpsValue == null ? null : formatRwaKpiUsd(perpsValue)}
-				change={{
-					text: perps.changePct == null ? 'N/A' : formatPercentChange(perps.changePct),
-					tone: getRwaChangeTone(perps.changePct),
-					comparison: `over ${RWA_CARD_CHANGE_DAYS}d`
-				}}
+				change={
+					perps.changePct == null ? undefined : { value: perps.changePct, comparison: `over ${RWA_CARD_CHANGE_DAYS}d` }
+				}
 			>
 				<SmolLineChart series={perps.series} color={(perps.changePct ?? 0) >= 0 ? 'green' : 'red'} />
 			</SmolStatCard>

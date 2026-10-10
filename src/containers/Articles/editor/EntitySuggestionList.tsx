@@ -1,7 +1,8 @@
 import type { Ref } from 'react'
 import { useId, useImperativeHandle, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { Change } from '~/ui/Change'
+import { formatUsd } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
 import { SuggestionPopover, useSuggestionAccessibility, type SuggestionAnchor } from './SuggestionPopover'
@@ -52,26 +53,21 @@ const FILTER_ORDER: Array<{ key: Filter; label: string }> = [
 	{ key: 'bridge', label: 'Bridge' }
 ]
 
-const changeColor = (n?: number | null) =>
-	typeof n !== 'number' ? '' : n > 0 ? 'text-data-up' : n < 0 ? 'text-data-down' : ''
-
 function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 	const p = item.preview
 	if (!p) return null
 	if (p.kind === 'protocol' || p.kind === 'chain') {
 		const tvl = formatUsd(p.tvl, { compact: true })
-		const change = formatPercent(p.change7d, {
-			input: 'fraction',
-			minimumFractionDigits: 1,
-			maximumFractionDigits: 1,
-			signDisplay: 'exceptZero',
-			useGrouping: false
-		})
-		if (!tvl && !change) return null
+		if (!tvl && p.change7d == null) return null
 		return (
 			<span className="ml-1 flex shrink-0 flex-col items-end gap-0.5 leading-none">
 				{tvl ? <span className="body-sm text-secondary tabular-nums">{tvl}</span> : null}
-				{change ? <span className={`body-xs tabular-nums ${changeColor(p.change7d)}`}>{change}</span> : null}
+				{p.change7d == null ? null : (
+					<span className="body-xs tabular-nums">
+						{/* The preview sends the 7d change as a fraction. */}
+						<Change value={p.change7d * 100} />
+					</span>
+				)}
 			</span>
 		)
 	}

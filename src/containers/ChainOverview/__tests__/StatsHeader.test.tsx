@@ -103,7 +103,8 @@ describe('ChainOverview Stats header', () => {
 					</session.Wrapper>
 				)
 			)
-			const change = [...container.querySelectorAll('span')].find((el) => el.textContent === '-0.28%')!
+			// The innermost span is the tooltip anchor; its wrappers share its text.
+			const change = [...container.querySelectorAll('span')].findLast((el) => el.textContent === '-0.28%')!
 			await act(async () => change.dispatchEvent(new Event('touchstart', { bubbles: true })))
 			await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('-$149.46m'))
 		} finally {

@@ -78,7 +78,7 @@ export function RWAKpiCard({
 					value={formatRwaKpiUsd(headline.value)}
 					truncate
 				/>
-				{percent != null ? <SummaryChange percent={percent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} /> : null}
+				{percent != null ? <SummaryChange value={percent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} /> : null}
 			</div>
 			<KeyMetricsPanel
 				footer={

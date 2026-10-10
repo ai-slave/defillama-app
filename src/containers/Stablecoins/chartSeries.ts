@@ -46,9 +46,9 @@ export type StablecoinChartSeriesType =
 
 export type StablecoinChartSummary = {
 	totalMcapCurrent: number | null
-	change1d: string | null
-	change7d: string | null
-	change30d: string | null
+	change1d: number | null
+	change7d: number | null
+	change30d: number | null
 	change1dUsd: number | null
 	change7dUsd: number | null
 	change30dUsd: number | null

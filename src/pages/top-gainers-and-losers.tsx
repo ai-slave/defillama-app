@@ -14,8 +14,8 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
+import { Change } from '~/ui/Change'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -97,7 +97,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d TVL Change',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

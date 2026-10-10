@@ -74,10 +74,10 @@ export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: Her
 				{byChain.map(([chain, chainValue]) => (
 					<p
 						key={chain}
-						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 last:border-none"
+						className="flex items-baseline justify-between gap-1 border-b border-dashed border-subtle py-1 last:border-none"
 					>
 						<span className="text-secondary">{chain}</span>
-						<span className="font-jetbrains">{chainValue}</span>
+						<span className="mono-md">{chainValue}</span>
 					</p>
 				))}
 			</div>

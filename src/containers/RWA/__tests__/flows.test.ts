@@ -4,7 +4,6 @@ import {
 	aggregateRWAFlowRows,
 	buildRWAFlowChart,
 	buildRWAFlowRotationChart,
-	formatSignedRWAFlow,
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
@@ -25,11 +24,6 @@ const aggregatePoint = (timestampMs: number, netFlowUsd: number | null, coverage
 })
 
 describe('RWA flow chart data', () => {
-	test('keeps unknown flow distinct from a measured zero', () => {
-		expect(formatSignedRWAFlow(null)).toBe('-')
-		expect(formatSignedRWAFlow(0)).toBe('$0')
-	})
-
 	test('restores flow view and grouping from canonical deep links', () => {
 		expect(parseRWAFlowQueryState('flows', 'weekly', false)).toEqual({
 			view: 'netFlows',

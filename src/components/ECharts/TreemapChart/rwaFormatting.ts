@@ -1,4 +1,5 @@
-import { formatPercent, formatPercentChange } from '~/utils/numberFormat'
+import { changeTone, formatChange } from '~/ui/Change'
+import { formatPercent } from '~/utils/numberFormat'
 import { escapeHtml } from '../shared/escapeHtml'
 import type { TreemapValue } from './types'
 
@@ -34,7 +35,8 @@ export function formatRwaTreemapTooltip({
 	const metricValue = formatMetricValue(value?.[0] ?? 0)
 	const shareOfParent = formatPercent(value?.[1] ?? 0, { input: 'percent' })
 	const shareOfTotal = formatPercent(value?.[2] ?? 0, { input: 'percent' })
-	const change = value?.[3] == null ? '' : `1D return: ${formatPercentChange(value[3])}<br>`
+	const change =
+		value?.[3] == null ? '' : `1D return: <span class="${changeTone(value[3])}">${formatChange(value[3])}</span><br>`
 
 	if (treePath.length >= 2) {
 		const parent = treePath[treePath.length - 2]

@@ -25,7 +25,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
-import { pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, readyAsPath } from '~/utils/routerQuery'
 import { getProtocolSeriesName } from './chartPresentation'
 import { readAsPathQuery, resolveProtocolChartQuery } from './chartQuery'
 import {
@@ -63,7 +63,8 @@ const getProtocolMetricLabel = (chart: ProtocolChartsLabels, tokenSymbol?: strin
 
 export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const router = useRouter()
-	const getQueryValue = useMemo(() => readAsPathQuery(router.asPath), [router.asPath])
+	const path = readyAsPath(router)
+	const getQueryValue = useMemo(() => readAsPathQuery(path), [path])
 	const [isThemeDark] = useDarkModeManager()
 	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useGetChartInstance()
 	const overviewImageFilename = slug(props.name)

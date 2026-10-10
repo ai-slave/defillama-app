@@ -12,6 +12,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -28,7 +29,7 @@ import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
-import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { IDATCompanyPageProps } from './types'
 
 const DEFAULT_SORTING_STATE = [{ id: 'report_date', desc: true }]
@@ -175,10 +176,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 										<Tooltip
 											content={
 												<>
-													24h change:{' '}
-													<span className={props.priceChange24h > 0 ? 'text-data-up' : 'text-data-down'}>
-														{`${props.priceChange24h > 0 ? '+' : ''}${formatPercent(props.priceChange24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
-													</span>
+													24h change: <Change value={props.priceChange24h} />
 												</>
 											}
 											className="underline decoration-dotted"
@@ -375,8 +373,8 @@ export const datTransactionColumns = columnHelper.columns([
 			cell: ({ getValue, row }) => {
 				const value = getValue()
 				return (
-					<span className={value < 0 ? 'text-data-down' : 'text-data-up'}>
-						{`${value < 0 ? '-' : '+'}${formatCompactNumber(Math.abs(value), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${row.original.assetTicker}`}
+					<span>
+						<Change value={value} unit="count" /> {row.original.assetTicker}
 					</span>
 				)
 			},

@@ -27,9 +27,9 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { tabTrackStyles, TabLink } from '~/ui/Tab'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -103,7 +103,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.stakedEthPctChange7d ?? undefined, {
 		id: 'stakedEthPctChange7d',
 		header: '7d Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -113,7 +113,7 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.stakedEthPctChange30d ?? undefined, {
 		id: 'stakedEthPctChange30d',
 		header: '30d Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -181,7 +181,7 @@ const LST_PEG_COLUMN = columnHelper.accessor((row) => row.ethPeg?.deviation ?? u
 				}
 				className="justify-end"
 			>
-				<PercentChange percent={peg.deviation} />
+				<Change value={peg.deviation} />
 			</Tooltip>
 		)
 	},

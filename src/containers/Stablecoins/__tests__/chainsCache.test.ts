@@ -125,7 +125,7 @@ describe('stablecoin chain caches', () => {
 		const page = await getStablecoinChainsPageData()
 
 		expect(page.totalMcapCurrent).toBe(150)
-		expect(page.change1d).toBe('+11.11')
+		expect(page.change1d).toBeCloseTo(11.11, 2)
 	})
 
 	test('the chain market cap chart plots each chain history on its own column', async () => {
@@ -205,13 +205,13 @@ const pageData = (overrides: Partial<PeggedChainsPageData> = {}): PeggedChainsPa
 	chainList: ['Ethereum', 'Arbitrum'],
 	chainsGroupbyParent: {},
 	deprecatedChains: {},
-	change1d: '+11.11',
-	change7d: '+25.00',
-	change30d: '+42.86',
+	change1d: 11.11,
+	change7d: 25,
+	change30d: 42.86,
 	totalMcapCurrent: 150,
-	change1d_nol: '+15',
-	change7d_nol: '+30',
-	change30d_nol: '+45',
+	change1dUsd: 15,
+	change7dUsd: 30,
+	change30dUsd: 45,
 	dataTimestamp: Date.parse('2026-07-22T00:00:00Z') / 1e3,
 	isDataStale: false,
 	...overrides
@@ -235,9 +235,9 @@ describe('revalidating a stored chains page', () => {
 			change1d: null,
 			change7d: null,
 			change30d: null,
-			change1d_nol: null,
-			change7d_nol: null,
-			change30d_nol: null,
+			change1dUsd: null,
+			change7dUsd: null,
+			change30dUsd: null,
 			totalMcapCurrent: 150,
 			dataTimestamp: THREE_DAYS_AGO
 		})
@@ -253,7 +253,7 @@ describe('revalidating a stored chains page', () => {
 			NOW
 		)
 
-		expect(result).toMatchObject({ change1d: '+11.11', change7d: '+25.00', change30d: '+42.86', isDataStale: false })
+		expect(result).toMatchObject({ change1d: 11.11, change7d: 25, change30d: 42.86, isDataStale: false })
 		expect(result.chainCirculatings).toEqual([row('Ethereum'), row('Arbitrum', clearedDeltas)])
 		expect(stored).toEqual(pageData())
 	})
@@ -266,7 +266,7 @@ describe('revalidating a stored chains page', () => {
 			NOW
 		)
 
-		expect(result).toMatchObject({ dataTimestamp: null, isDataStale: false, change1d: '+11.11' })
+		expect(result).toMatchObject({ dataTimestamp: null, isDataStale: false, change1d: 11.11 })
 	})
 
 	test('an entry that is fresh everywhere is returned as stored', async () => {

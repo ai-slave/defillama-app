@@ -15,9 +15,9 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { PercentChange } from '~/ui/PercentChange'
 import { SegmentedControl, TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
@@ -389,7 +389,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 	columnHelper.accessor((row) => row.change ?? undefined, {
 		id: 'change',
 		header: 'Δ%',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -460,7 +460,7 @@ const CategoryPerformanceColumn = columnHelper.columns([
 	columnHelper.accessor((row) => row.change ?? undefined, {
 		id: 'change',
 		header: 'Δ%',
-		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
+		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',

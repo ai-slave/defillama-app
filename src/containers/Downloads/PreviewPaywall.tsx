@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { type ColumnMeta, formatCellValue, getCellTone } from './previewFormatting'
+import { type ColumnMeta, formatCellValue } from './previewFormatting'
 
 export const PREVIEW_ROW_HEIGHT = 36
 
@@ -63,11 +63,10 @@ export function PlaceholderRows({
 							const displayValue = formatCellValue(rawValue, column)
 							const isSticky = position === 0
 							const isSelected = cols.has(column.index)
-							const tone = isSelected ? getCellTone(rawValue, column) : ''
 							return (
 								<div
 									key={column.index}
-									className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
+									className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${!isSelected ? 'text-tertiary opacity-40' : ''}`}
 									style={{
 										textAlign: column.align,
 										position: isSticky ? 'sticky' : undefined,

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
+import { Change, type ChangeData } from '~/ui/Change'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatPercentChange } from '~/utils/numberFormat'
 
 /* ----------------------------------------------------------------------------
    Summary metric cards: the overview card beside a page's main chart.
@@ -30,8 +30,9 @@ import { formatPercentChange } from '~/utils/numberFormat'
    shown only on desktop passes className="max-xl:hidden".
    Titles (h1 + logo) and collapsible bodies stay callsite JSX. A grid of
    stat tiles (KPI rows) is StatTile; never a page-local KpiCard. Every
-   headline change renders
-   through SummaryChange; never hand-roll the percent and its window.
+   headline change renders through SummaryChange, and a tile's, strip's or
+   small card's through its `change` data (./Change.tsx); never hand-roll the
+   change and its window.
 
    Inline summary strips above a table or chart use InlineStatStrip; never
    hand-roll a new strip.
@@ -103,36 +104,16 @@ export function StatItem({ label, value, tooltip, labelAs = 'span', className, t
 	)
 }
 
-/** A headline's change beside its StatItem: the signed percent colored by direction, then what it is compared against. */
-export function SummaryChange({
-	percent,
-	comparison,
-	tooltip
-}: {
-	percent: number
-	/** A comparison window the caller words from the metric's definition: "over 24h", or "vs 24h ago" for a rolling
-	    value against its own earlier snapshot. The component never adds "over" itself. */
-	comparison: string
-	/** The same movement in another unit, such as the dollar change; underlines the percent. */
-	tooltip?: string
-}) {
-	const tone = percent > 0 ? 'text-data-up' : percent < 0 ? 'text-data-down' : 'text-secondary'
-	const className = 'relative bottom-0.5 flex flex-nowrap items-center gap-1'
-	const children = (
-		<>
-			<span className={`truncate mono-md ${tone} ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>
-				{formatPercentChange(percent)}
+/** A headline's change beside its StatItem: the signed change in mono-md, then the window it covers. */
+export function SummaryChange({ value, unit, comparison, tooltip }: ChangeData) {
+	return (
+		// A span, not a p: it also sits in phrasing-only parents such as a disclosure's <summary>.
+		<span className="relative bottom-0.5 flex flex-nowrap items-baseline gap-1">
+			<span className="mono-md text-secondary">
+				<Change value={value} unit={unit} tooltip={tooltip} />
 			</span>
 			<span className="body-md text-tertiary">{comparison}</span>
-		</>
-	)
-
-	return tooltip ? (
-		<Tooltip content={tooltip} className={className}>
-			{children}
-		</Tooltip>
-	) : (
-		<p className={className}>{children}</p>
+		</span>
 	)
 }
 
@@ -142,14 +123,12 @@ export interface InlineStatStripItem {
 	/** Keeps the label for screen readers only, for a self-describing value such as a market name. */
 	labelHidden?: boolean
 	value: ReactNode
-	/** Optional delta text rendered after the value. */
-	change?: ReactNode
-	/** Tone/color classes for the change (e.g. text-data-up); type comes from the recipe. */
-	changeClassName?: string
+	/** The value's movement and its window, after the value. */
+	change?: ChangeData
 }
 
 /** Inline stat strip: a full-width Card of `label: value` pairs above a table or chart. One rhythm everywhere: strip
-    padding, 14px pairs (body-md secondary labels, label-md values), an optional colored change, 24px item gaps.
+    padding, 14px pairs (body-md secondary labels, label-md values), an optional change with its window, 24px item gaps.
     `stacked` puts each label over its value for dense one-row headers. */
 export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStripItem>; stacked?: boolean }) {
 	return (
@@ -170,8 +149,11 @@ export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStr
 						)}
 					</dt>
 					<dd className="label-md">{item.value}</dd>
-					{item.change != null ? (
-						<dd className={`label-md ${item.changeClassName ?? ''}`.trim()}>{item.change}</dd>
+					{item.change ? (
+						<dd className="flex items-baseline gap-1 label-md text-secondary">
+							<Change value={item.change.value} unit={item.change.unit} tooltip={item.change.tooltip} />
+							<span className="text-tertiary">{item.change.comparison}</span>
+						</dd>
 					) : null}
 				</div>
 			))}
@@ -181,7 +163,7 @@ export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStr
 
 /** A stat tile in a grid of tiles (investor dashboards, KPI rows): a Card with a label-sm text-secondary label over a
     mono-xl value, an optional body-sm tertiary line under it, and a definition as a dotted-underline tooltip on the
-    label. `change` sits beside the value, coloured by its sign (the data up/down tones). `loading` draws the value's
+    label. `change` sits beside the value with its window ("+3.20% over 24h"). `loading` draws the value's
     Skeleton at the same height, so the grid does not jump. A value that is missing once loaded is "—", which the
     caller passes. Lay tiles out with a grid at the call site. */
 export function StatTile({
@@ -194,8 +176,7 @@ export function StatTile({
 	label: string
 	tooltip?: ReactNode
 	sub?: ReactNode
-	/** A signed change and its formatted text, e.g. { value: -3.1, formatted: '-3.1%' }. */
-	change?: { value: number; formatted: string }
+	change?: ChangeData
 } & ({ loading: true } | { loading?: false; value: ReactNode })) {
 	return (
 		<Card padding="md" className="flex min-w-0 flex-col gap-1">
@@ -214,10 +195,9 @@ export function StatTile({
 				<span className="flex flex-wrap items-baseline gap-x-2">
 					<span className="mono-xl break-words text-primary">{state.value}</span>
 					{change ? (
-						<span
-							className={`label-sm ${change.value > 0 ? 'text-data-up' : change.value < 0 ? 'text-data-down' : 'text-secondary'}`}
-						>
-							{change.formatted}
+						<span className="flex items-baseline gap-1 label-sm text-secondary">
+							<Change value={change.value} unit={change.unit} tooltip={change.tooltip} />
+							<span className="text-tertiary">{change.comparison}</span>
 						</span>
 					) : null}
 				</span>

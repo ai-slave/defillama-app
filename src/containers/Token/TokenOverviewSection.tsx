@@ -28,7 +28,7 @@ import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/M
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { LoadingIndicator } from '~/ui/Status'
-import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
@@ -36,7 +36,6 @@ import { tokenIconUrl } from '~/utils/icons'
 import {
 	formatUsd,
 	formatCompactNumber,
-	formatPercent,
 	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
@@ -94,11 +93,6 @@ function formatSupply(value: number | null | undefined, symbol: string) {
 	if (value == null) return 'N/A'
 	if (value === Infinity) return `∞ ${symbol}`.trim()
 	return `${formatCompactNumber(value, NUMBER_LOWERCASE_MILLIONS_OPTIONS)} ${symbol}`.trim()
-}
-
-function formatTokenPercentChange(value: number | null | undefined) {
-	if (value == null) return null
-	return `${value > 0 ? '+' : ''}${formatPercent(value, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }
 
 function formatDateLabel(value: string | number | null | undefined) {
@@ -188,12 +182,10 @@ export function TokenPageHero({
 	geckoId?: string | null | undefined
 	headingAs?: 'h1' | 'div'
 }) {
-	const percentChange = formatTokenPercentChange(overview.marketData.percentChange24h)
+	const change24h = overview.marketData.percentChange24h
 	const hasPriceBreakdown = overview.marketData.ath != null || overview.marketData.atl != null
-	const percentChangeClassName =
-		overview.marketData.percentChange24h != null && overview.marketData.percentChange24h >= 0
-			? 'text-data-up'
-			: 'text-data-down'
+	const price = formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'
+	const summaryChange = change24h == null ? null : <SummaryChange value={change24h} comparison="over 24h" />
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -224,64 +216,56 @@ export function TokenPageHero({
 			</EntityTitleRow>
 			{hasPriceBreakdown ? (
 				<details className="group/price">
-					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
-						<span className="basis-full text-secondary">Token Price</span>
-						<StaleText className="min-h-8 mono-xl">
-							{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-						</StaleText>
-						<Icon
-							name="chevron-down"
-							height={18}
-							width={18}
-							className="text-tertiary transition-transform duration-100 group-open/price:rotate-180"
-						/>
+					{/* The change sits in the summary so it shows without opening the price range. */}
+					<summary className="flex flex-nowrap items-end justify-between gap-8">
+						<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+							<span className="basis-full text-secondary">Token Price</span>
+							<StaleText className="min-h-8 mono-xl">{price}</StaleText>
+							<Icon
+								name="chevron-down"
+								height={18}
+								width={18}
+								className="text-tertiary transition-transform duration-100 group-open/price:rotate-180"
+							/>
+						</span>
+						{summaryChange}
 					</summary>
 					<div className="mt-3 flex flex-col">
-						{percentChange ? (
-							<SubMetricRow
-								label="24h Change"
-								value={<span className={percentChangeClassName}>{percentChange}</span>}
-							/>
-						) : null}
 						{overview.marketData.ath != null ? (
 							<SubMetricRow
 								label="All Time High"
-								className="items-end"
 								extra={
 									formatDateLabel(overview.marketData.athDate) ? (
-										<span className="ml-auto self-end label-sm text-tertiary">
+										<span className="ml-auto label-sm text-tertiary">
 											{formatDateLabel(overview.marketData.athDate)}
 										</span>
 									) : null
 								}
-								valueClassName="font-jetbrains"
+								// The date takes the free space, so the value sits right after it rather than on its own ml-auto.
+								valueClassName="mono-md"
 								value={formatUsd(overview.marketData.ath, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 							/>
 						) : null}
 						{overview.marketData.atl != null ? (
 							<SubMetricRow
 								label="All Time Low"
-								className="items-end"
 								extra={
 									formatDateLabel(overview.marketData.atlDate) ? (
-										<span className="ml-auto self-end label-sm text-tertiary">
+										<span className="ml-auto label-sm text-tertiary">
 											{formatDateLabel(overview.marketData.atlDate)}
 										</span>
 									) : null
 								}
-								valueClassName="font-jetbrains"
+								valueClassName="mono-md"
 								value={formatUsd(overview.marketData.atl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 							/>
 						) : null}
 					</div>
 				</details>
 			) : (
-				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<span className="basis-full text-secondary">Token Price</span>
-					<StaleText className="min-h-8 mono-xl">
-						{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					</StaleText>
-					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}
+				<div className="flex flex-nowrap items-end justify-between gap-8">
+					<StatItem label="Token Price" value={<StaleText>{price}</StaleText>} truncate />
+					{summaryChange}
 				</div>
 			)}
 		</div>

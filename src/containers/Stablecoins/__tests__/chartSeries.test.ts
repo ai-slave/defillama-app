@@ -119,7 +119,7 @@ describe('stablecoin chart series builders', () => {
 			expect(payload.dataset.source.at(-1)).toEqual(lastRows[chart])
 			expect(payload.summary).toEqual({
 				totalMcapCurrent: 240,
-				change1d: '29.73',
+				change1d: ((240 - 185) / 185) * 100,
 				change7d: null,
 				change30d: null,
 				change1dUsd: 55,

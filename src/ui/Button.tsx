@@ -61,7 +61,8 @@ import { LoadingSpinner } from './Loaders'
    Pick a pill by its job: a removable active filter or a filter picker is
    `filter`; a pill that turns a list filter on or off is `toggle`; a pill
    that runs or inserts something (a suggestion, a search topic, a formula
-   field) is `secondary` sm with no active state.
+   field) is `secondary` sm with no active state; LlamaAI question strips
+   use md, keeping their 32px row.
    Variants with a selected state use the additive `hover-wash`, so the
    active tint stays under hover. Variants never inject icons.
    `stateIcon` (toggle and filter pills that add or remove something, such
@@ -104,7 +105,8 @@ import { LoadingSpinner } from './Loaders'
    this file, not a className override.
 
    Width: `min-w-fit` keeps the label from shrinking under the global
-   `* { min-width: 0 }`, and a button with a `pendingLabel` is always as wide
+   `* { min-width: 0 }`, except with `truncate`, where a pill in a shared row
+   shrinks and its label (in a `truncate` span) ends in an ellipsis, and a button with a `pendingLabel` is always as wide
    as the wider of its idle and busy labels, at rest too, so "Save" never
    grows into "Saving…" and the row does not reflow when the action starts.
 
@@ -254,10 +256,10 @@ type ButtonLook =
 	| { variant: 'link'; size?: never; square?: never }
 	| { variant?: ButtonVariant; size: ButtonSize; square?: boolean }
 
-function buttonStyles(look: ButtonLook): string {
+function buttonStyles(look: ButtonLook, truncate: boolean): string {
 	if (look.variant === 'link') return LINK_CLASSES
 	const { variant = 'secondary', size, square = false } = look
-	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
+	return `touch-target flex ${truncate ? 'min-w-0' : 'min-w-fit shrink-0'} cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:cursor-not-allowed aria-busy:cursor-progress ${variant === 'onMedia' || variant === 'onBrand' ? '' : DISABLED_TEXT} ${DISABLED_CLASSES[variant]} ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' || (variant === 'onMedia' && square) ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
@@ -281,6 +283,9 @@ type ButtonProps<T extends ElementType> = ButtonLook & {
 	/** A short success label ("Copied") shown with a check while `done`; the button keeps the wider width throughout. */
 	doneLabel?: string
 	done?: boolean
+	/** Let the button shrink below its label, which then ends in an ellipsis: a row of suggestion pills that share one
+	    line. The text to cut goes in `<span className="truncate">`; an icon beside it stays whole. */
+	truncate?: boolean
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
@@ -299,10 +304,11 @@ export function Button<T extends ElementType = 'button'>(buttonProps: ButtonProp
 		stateIcon = false,
 		doneLabel,
 		done = false,
+		truncate = false,
 		className,
 		...props
 	} = buttonProps
-	const classes = `${buttonStyles(buttonProps)} ${className ?? ''}`.trim()
+	const classes = `${buttonStyles(buttonProps, truncate)} ${className ?? ''}`.trim()
 	const idleContent = stateIcon ? (
 		<>
 			<Icon name={dataActive === true || dataActive === 'true' ? 'check' : 'plus'} className="size-3.5" aria-hidden />

@@ -5,7 +5,7 @@ import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -17,7 +17,7 @@ import {
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
-import { formatCompactNumber, formatNumber, formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
@@ -40,12 +40,6 @@ export function RowNumber({ rowId }: { rowId: string }) {
 			{usePaginatedTableDisplayRowNumber(rowId)}
 		</span>
 	)
-}
-
-export function ChangeValue({ value }: { value: number | null | undefined }) {
-	const color =
-		value == null ? 'text-tertiary' : value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : 'text-secondary'
-	return <span className={color}>{formatPercentChange(value) ?? '—'}</span>
 }
 
 export function EquitiesPageHeader({
@@ -73,32 +67,6 @@ export function EquitiesPageHeader({
 			</div>
 			<p className="max-w-4xl body-md text-secondary">{description}</p>
 		</header>
-	)
-}
-
-/** The dense KPI card of the Equities aggregate pages. A numeric value is mono-lg in cards narrower than 13rem and
-    mono-xl when the card has room, so compact currency values stay whole instead of ending in an ellipsis; a text
-    value (`valueKind="text"`) is heading-sm and may truncate. */
-export function MetricCard({
-	label,
-	value,
-	detail,
-	change,
-	valueKind = 'metric'
-}: {
-	label: string
-	value: ReactNode
-	detail?: ReactNode
-	change?: ReactNode
-	valueKind?: 'metric' | 'text'
-}) {
-	return (
-		<Card padding="md" className="@container flex min-w-0 flex-col gap-1">
-			<p className="body-sm text-secondary">{label}</p>
-			<p className={`truncate ${valueKind === 'metric' ? 'mono-lg @min-[13rem]:mono-xl' : 'heading-sm'}`}>{value}</p>
-			{change ? <p className="label-sm">{change}</p> : null}
-			{detail ? <p className="body-sm text-tertiary">{detail}</p> : null}
-		</Card>
 	)
 }
 
@@ -203,17 +171,18 @@ export function ReturnMatrix({
 								</th>
 								{RETURN_PERIODS.map((period) => {
 									const value = row.values[period.key]
+									// A heat-matrix cell tints its fill by sign; Change draws the text.
 									const tone =
 										value == null
 											? 'bg-surface-elevated-1 text-tertiary'
 											: value > 0
-												? 'bg-data-up-tint text-data-up'
+												? 'bg-data-up-tint'
 												: value < 0
-													? 'bg-data-down-tint text-data-down'
+													? 'bg-data-down-tint'
 													: 'bg-surface-elevated-1 text-secondary'
 									return (
 										<td key={period.key} className={`rounded-md px-2 py-2 text-center label-sm ${tone}`}>
-											{formatPercentChange(value) ?? '—'}
+											{value == null ? '—' : <Change value={value} />}
 										</td>
 									)
 								})}

@@ -20,6 +20,7 @@ import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
+import { Change } from '~/ui/Change'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
@@ -29,7 +30,7 @@ import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getPercentChange, slug } from '~/utils'
-import { formatUsd, formatPercentChange } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolInflowsData,
@@ -313,7 +314,7 @@ export function BridgeInfo({
 					)}
 
 					{volPercentChange != null ? (
-						<StatItem label="Volume Change (prev day)" value={formatPercentChange(volPercentChange)} />
+						<StatItem label="Volume Change (prev day)" value={<Change value={volPercentChange} />} />
 					) : null}
 					{config?.url ? (
 						<ExternalLinkButton

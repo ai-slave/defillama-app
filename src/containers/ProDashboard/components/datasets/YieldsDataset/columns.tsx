@@ -3,8 +3,7 @@ import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems, yieldsChainHref } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { PercentChange } from '~/ui/PercentChange'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ProYieldRow } from '../../../yieldData'
 import type { tableFeaturesConfig } from './useYieldsTable'
 
@@ -34,7 +33,8 @@ export type YieldColumnId = (typeof YIELDS_COLUMN_IDS)[number]
 
 function PercentCell({ value, bold = false }: { value: number | null | undefined; bold?: boolean }) {
 	if (value == null) return <>-</>
-	return bold ? <PercentChange percent={value} noSign fontWeight={700} /> : <PercentChange percent={value} noSign />
+	const text = formatPercent(value, { input: 'percent' })
+	return bold ? <span className="label-md">{text}</span> : <>{text}</>
 }
 
 function DollarCell({ value }: { value: number | null | undefined }) {

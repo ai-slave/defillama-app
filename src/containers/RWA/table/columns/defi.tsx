@@ -1,8 +1,9 @@
+import { Change } from '~/ui/Change'
 import { formatPercent } from '~/utils/numberFormat'
 import { definitions } from '../../definitions'
 import { percentChange, type RWAChangePeriod } from '../change'
 import type { RWATableMetrics } from '../rows'
-import { ChangeCell, columnHelper, getLeafRow, numberColumnMeta, UsdBreakdownCell } from './shared'
+import { columnHelper, getLeafRow, numberColumnMeta, UsdBreakdownCell } from './shared'
 
 const PROTOCOL_BREAKDOWN_UNAVAILABLE = 'Protocol breakdown unavailable when bridge TVL is excluded.'
 
@@ -53,7 +54,7 @@ export function createDefiColumnGroup(period: RWAChangePeriod) {
 				{
 					id: 'defiActiveTvlChange',
 					header: period,
-					cell: ({ getValue }) => <ChangeCell value={getValue()} />,
+					cell: ({ getValue }) => <Change value={getValue()} />,
 					meta: numberColumnMeta(
 						'w-[96px]',
 						`Change of DeFi Active TVL against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,

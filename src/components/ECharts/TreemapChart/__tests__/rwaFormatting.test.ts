@@ -42,7 +42,7 @@ describe('rwa treemap formatting', () => {
 		})
 
 		expect(tooltip).toBe(
-			'Software<br>Market Cap: 2<br>Share of Technology: 40%<br>Share of total: 12.5%<br>1D return: -1.25%<br>'
+			'Software<br>Market Cap: 2<br>Share of Technology: 40%<br>Share of total: 12.5%<br>1D return: <span class="text-data-down">-1.25%</span><br>'
 		)
 	})
 

@@ -10,10 +10,12 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
+import { Change, formatChange } from '~/ui/Change'
 import { CHART_FILL, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { StatTile } from '~/ui/SummaryStats'
 import {
 	calculateCompanyDollarVolume,
 	calculateConstituentSectorWeight,
@@ -21,14 +23,7 @@ import {
 	filterKnownAggregates,
 	getSelectionChip
 } from './aggregateData'
-import {
-	ChangeValue,
-	EquitiesPageHeader,
-	formatMetric,
-	MetricCard,
-	RowNumber,
-	StaleDataNotice
-} from './AggregateShared'
+import { EquitiesPageHeader, formatMetric, RowNumber, StaleDataNotice } from './AggregateShared'
 import {
 	readEquitiesSectorPageCompanies,
 	type IEquitiesSectorPageCompanyRow,
@@ -104,7 +99,10 @@ const constituentColumns = constituentColumnHelper.columns([
 		constituentColumnHelper.accessor((row) => row[field] ?? undefined, {
 			id: field,
 			header,
-			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
+			cell: ({ getValue }) => {
+				const value = getValue()
+				return value == null ? '—' : <Change value={value} />
+			},
 			meta: { headerClassName: 'w-20', align: 'end' }
 		})
 	),
@@ -282,46 +280,49 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 			<StaleDataNotice stale={state.stale} updatedAt={sector.updatedAt} />
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-				<MetricCard
+				<StatTile
 					label="Market cap"
 					value={formatMetric(sector.marketCap, 'usd')}
-					change={<ChangeValue value={sector.priceChangePercentage1d} />}
-					detail={`${formatMetric(sector.marketCapChange1d, 'usd')} · 1D`}
+					change={
+						sector.priceChangePercentage1d == null
+							? undefined
+							: {
+									value: sector.priceChangePercentage1d,
+									comparison: 'today',
+									tooltip: sector.marketCapChange1d == null ? undefined : formatChange(sector.marketCapChange1d, 'usd')
+								}
+					}
 				/>
-				<MetricCard
-					label="Sector weight"
-					value={formatMetric(sector.weight, 'percent')}
-					detail="of tracked market cap"
-				/>
-				<MetricCard
+				<StatTile label="Sector weight" value={formatMetric(sector.weight, 'percent')} sub="of tracked market cap" />
+				<StatTile
 					label="Volume 24h"
 					value={formatMetric(sector.dollarVolume24h, 'usd')}
-					detail={`${formatMetric(sector.dollarVolumeShare24h, 'percent')} of market volume`}
+					sub={`${formatMetric(sector.dollarVolumeShare24h, 'percent')} of market volume`}
 				/>
-				<MetricCard label="Revenue TTM" value={formatMetric(sector.revenueTTM, 'usd')} detail="Sum of constituents" />
-				<MetricCard
+				<StatTile label="Revenue TTM" value={formatMetric(sector.revenueTTM, 'usd')} sub="Sum of constituents" />
+				<StatTile
 					label="Net income TTM"
 					value={formatMetric(sector.earningsTTM, 'usd')}
-					detail={`${formatMetric(netMargin, 'percent')} net margin`}
+					sub={`${formatMetric(netMargin, 'percent')} net margin`}
 				/>
-				<MetricCard
-					label="P/E (TTM)"
+				<StatTile
+					label={sector.trailingPE == null ? 'Earnings yield' : 'P/E (TTM)'}
 					value={
 						sector.trailingPE == null
-							? `${formatMetric(sector.earningsYield, 'percent')} earnings yield`
+							? formatMetric(sector.earningsYield, 'percent')
 							: formatMetric(sector.trailingPE, 'multiple')
 					}
-					detail={`Market ${formatMetric(overview.trailingPE, 'multiple')}`}
+					sub={`Market P/E ${formatMetric(overview.trailingPE, 'multiple')}`}
 				/>
-				<MetricCard
+				<StatTile
 					label="Dividend yield"
 					value={formatMetric(sector.dividendYield, 'percent')}
-					detail={`Market ${formatMetric(overview.dividendYield, 'percent')}`}
+					sub={`Market ${formatMetric(overview.dividendYield, 'percent')}`}
 				/>
-				<MetricCard
+				<StatTile
 					label="Employees"
 					value={formatMetric(sector.employeeCount, 'number')}
-					detail={`Across ${sector.companyCount} companies`}
+					sub={`Across ${sector.companyCount} companies`}
 				/>
 			</div>
 
@@ -349,7 +350,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								</Link>
 								<span>{formatMetric(industry.marketCap, 'usd')}</span>
 								<span className="w-16 text-right">
-									<ChangeValue value={industry.priceChangePercentage1m} />
+									{industry.priceChangePercentage1m == null ? '—' : <Change value={industry.priceChangePercentage1m} />}
 								</span>
 							</div>
 						))}
@@ -511,16 +512,14 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								{returnRows.map(([label, sectorReturn, marketReturn]) => (
 									<tr key={label} className="border-b border-subtle body-md">
 										<th className="p-3 text-left font-medium">{label}</th>
+										<td className="p-3 text-right">{sectorReturn == null ? '—' : <Change value={sectorReturn} />}</td>
+										<td className="p-3 text-right">{marketReturn == null ? '—' : <Change value={marketReturn} />}</td>
 										<td className="p-3 text-right">
-											<ChangeValue value={sectorReturn} />
-										</td>
-										<td className="p-3 text-right">
-											<ChangeValue value={marketReturn} />
-										</td>
-										<td className="p-3 text-right">
-											<ChangeValue
-												value={sectorReturn == null || marketReturn == null ? null : sectorReturn - marketReturn}
-											/>
+											{sectorReturn == null || marketReturn == null ? (
+												'—'
+											) : (
+												<Change value={sectorReturn - marketReturn} unit="pp" />
+											)}
 										</td>
 									</tr>
 								))}

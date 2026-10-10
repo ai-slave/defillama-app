@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { Change } from '~/ui/Change'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { formatRwaMultiple } from '../../kpi/format'
@@ -18,14 +19,7 @@ import {
 	venueTypeColumn
 } from './perps'
 import { venueColumn } from './platform'
-import {
-	ChangeCell,
-	columnHelper,
-	createDistinctTextColumn,
-	formatTableUsd,
-	numberColumnMeta,
-	textColumnMeta
-} from './shared'
+import { columnHelper, createDistinctTextColumn, formatTableUsd, numberColumnMeta, textColumnMeta } from './shared'
 
 const d = perpsDefinitions
 
@@ -52,14 +46,14 @@ const assetClassColumn = createDistinctTextColumn({
 
 /** A group's change marks the markets it leaves out; a market shows its own percent. */
 function ChangeWithDropsCell({ change, group }: { change: RWAPerpsChange; group: boolean }) {
-	if (!group || change.dropped === 0 || change.percent == null) return <ChangeCell value={change.percent} />
+	if (!group || change.dropped === 0 || change.percent == null) return <Change value={change.percent} />
 	const markets = change.dropped === 1 ? '1 market' : `${change.dropped} markets`
 	return (
 		<Tooltip
 			content={`Leaves out ${markets} that fell to zero in 24h: the value a day before cannot be rebuilt from zero.`}
 			className="justify-end underline decoration-dotted"
 		>
-			<ChangeCell value={change.percent} />*
+			<Change value={change.percent} />*
 		</Tooltip>
 	)
 }
@@ -109,7 +103,7 @@ const markPriceColumn = columnHelper.accessor((row) => row.metrics.price ?? unde
 const priceChange24hColumn = columnHelper.accessor((row) => row.metrics.priceChange24h ?? undefined, {
 	id: 'priceChange24h',
 	header: '24h',
-	cell: ({ getValue }) => <ChangeCell value={getValue()} />,
+	cell: ({ getValue }) => <Change value={getValue()} />,
 	meta: numberColumnMeta('w-[100px]', d.priceChange24h.description, d.priceChange24h.label)
 })
 

@@ -1,9 +1,9 @@
 import { BasicLink } from '~/components/Link'
 import { utrGradeColor } from '~/containers/UniversalTokenRating/gradeBands'
 import { GradeBadge } from '~/containers/UniversalTokenRating/grades'
+import { Change } from '~/ui/Change'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { formatPercentChangeText } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
@@ -75,7 +75,6 @@ export function UtrPopover({
 	utr: TokenRightsUtrSummary
 	rights: TokenRightsLink | null
 }) {
-	const change = formatPercentChangeText(utr.momChangePct)
 	const facts = getUtrFacts(utr)
 
 	return (
@@ -96,14 +95,10 @@ export function UtrPopover({
 						<span className="flex items-baseline gap-2">
 							<span className="mono-md-bold">{utr.score != null ? formatScore(utr.score) : 'N/A'}</span>
 							<span className="label-xs text-tertiary">/ 100</span>
-							{change ? (
-								<Tooltip
-									content="Change over the last month"
-									className={`label-sm tabular-nums ${
-										utr.momChangePct! > 0 ? 'text-data-up' : utr.momChangePct! < 0 ? 'text-data-down' : 'text-tertiary'
-									}`}
-								>
-									{change} MoM
+							{utr.momChangePct != null ? (
+								<Tooltip content="Change over the last month" className="gap-1 label-sm text-tertiary tabular-nums">
+									<Change value={utr.momChangePct} />
+									MoM
 								</Tooltip>
 							) : null}
 						</span>

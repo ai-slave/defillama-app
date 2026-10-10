@@ -1044,6 +1044,48 @@ const RULES = [
 		skipTests: true
 	},
 	{
+		id: 'hand-coloured-change',
+		exceptions: {
+			'src/containers/Bridges/BridgesLargeTxsTable.tsx':
+				'a Deposit or Withdrawal label names a direction, not a movement',
+			'src/containers/Bridges/Transactions.tsx': 'the deposit or withdrawal direction pill, a tinted label',
+			'src/containers/DeFiWatchlist/index.tsx':
+				'the Positive and Negative filter labels name a direction, beside their checkboxes',
+			'src/containers/Exchanges/PairTable.tsx': 'a funding rate, coloured by who pays',
+			'src/containers/Exchanges/ProfileExecution.tsx': 'an execution cost, red when it costs the trader',
+			'src/containers/LlamaAI/terminal/TerminalMarketStrip.tsx': 'the hourly funding rate, coloured by who pays',
+			'src/containers/ProDashboard/components/datasets/StablecoinsDataset/columns.tsx':
+				'the off-peg warning icon, tinted by which side of the peg the price sits',
+			'src/containers/ProDashboard/ui/ProBadge.tsx':
+				"the Pro metric card's change pill, which tints its fill; Pro cards are their own card system",
+			'src/containers/ProtocolOverview/IncomeStatement.tsx':
+				'earnings coloured as a profit or a loss, a level, not a movement',
+			'src/containers/RWA/table/columns/perps.tsx':
+				'funding and premium coloured by what they cost a long, so positive is red',
+			'src/containers/Yields/Tables/Pools.tsx': 'the stable or volatile rating pill',
+			'src/components/ECharts/shared/chartTheme.ts': 'maps the tokens to the colours ECharts draws with',
+			'src/containers/Yields/Tables/YieldsCells.tsx': 'a signed APY is a rate that can go negative, not a movement',
+			'src/containers/Yields/poolDetail/AnswerStrip.tsx': 'the stable or volatile rating',
+			'src/containers/Yields/poolDetail/ExitReliabilityPanel.tsx':
+				'exit statuses (full, queued, blocked), not movements',
+			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx': 'an unrecovered drawdown, a status beside the figures',
+			'src/containers/Yields/poolDetail/PoolLiquidityChart.tsx': 'reverted days or no interruptions, a status',
+			'src/containers/Yields/VaultRisk/components/HistoryStrip.tsx':
+				'incident outcomes (made whole, not recovered), statuses',
+			'src/containers/Yields/VaultRisk/components/ScenarioDetailPanel.tsx': 'a made-whole outcome, a status',
+			'src/containers/Yields/VaultRisk/kindMeta.ts': 'incident kinds tinted as a loss or a recovery, statuses'
+		},
+		description:
+			'a movement coloured by hand with text-data-up/down — render Change from src/ui/Change.tsx (unit percent, usd, count or pp), or pass `change` data to SummaryChange, StatTile, InlineStatStrip or SmolStatCard; Change owns the sign, the format and the zero colour',
+		// The aliases count too: --yield-positive-text is --text-data-up, and var() or text-(--…) reach the same colour.
+		match: (content) =>
+			withoutComments(content).match(
+				/(?:(?<![\w-])text-data-(?:up|down)|--(?:text-|color-)?data-(?:up|down)|--yield-(?:positive|negative)-text)(?![\w-])/g
+			),
+		uiOwned: true,
+		skipTests: true
+	},
+	{
 		id: 'raw-echarts-init',
 		exceptions: {
 			'src/containers/Unlocks/TreemapChart/index.tsx':

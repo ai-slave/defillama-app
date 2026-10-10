@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
-import { PercentChange } from '~/ui/PercentChange'
+import { Change } from '~/ui/Change'
 import {
 	formatCompactNumber,
 	formatRatio,
@@ -13,11 +13,7 @@ import {
 import type { tableFeaturesConfig } from './index'
 
 const renderChange = (value: number | null) => (
-	<span
-		className={`${value != null && value > 0 ? 'text-data-up' : value != null && value < 0 ? 'text-data-down' : 'text-secondary'}`}
-	>
-		{value == null ? '-' : <PercentChange percent={value} fontWeight={100} />}
-	</span>
+	<span className="text-secondary">{value == null ? '-' : <Change value={value} />}</span>
 )
 
 type UsdColumnKey =

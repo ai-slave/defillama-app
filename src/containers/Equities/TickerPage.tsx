@@ -10,13 +10,14 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { LoadingIndicator } from '~/ui/Status'
-import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
@@ -102,14 +103,6 @@ const TAB_LABELS: Record<EquityTab, string> = {
 	tokens: 'Tokens',
 	markets: 'Markets',
 	unlocks: 'Unlocks'
-}
-
-function ChangeMetricValue({ value, symbol }: { value: number | null; symbol?: string }) {
-	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-			{formatEquitiesCompactValue(value, symbol) ?? '-'}
-		</span>
-	)
 }
 
 function getFundamentalChartFromQuery(value?: string): EquityFundamentalChartOption {
@@ -351,10 +344,11 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						name={props.name}
 						website={props.metadata.website}
 					/>
-					<p className="flex flex-col">
-						<span className="text-secondary">{defs.marketCap.label}</span>
-						<span className="min-h-8 mono-xl">{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}</span>
-					</p>
+					<StatItem
+						label={defs.marketCap.label}
+						value={formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+						truncate
+					/>
 					<EquityKeyMetrics summary={props.summary} />
 				</SummaryStatsCard>
 
@@ -368,12 +362,11 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								name={props.name}
 								website={props.metadata.website}
 							/>
-							<p className="flex flex-col">
-								<span className="text-secondary">{defs.marketCap.label}</span>
-								<span className="min-h-8 mono-xl">
-									{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-								</span>
-							</p>
+							<StatItem
+								label={defs.marketCap.label}
+								value={formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+								truncate
+							/>
 						</div>
 
 						<ChartPanelToolbar>
@@ -513,27 +506,57 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									<MetricRow
 										label={defs.priceChangePercentage1d.label}
 										tooltip={defs.priceChangePercentage1d.description}
-										value={<ChangeMetricValue value={props.summary.priceChangePercentage1d} symbol="%" />}
+										value={
+											props.summary.priceChangePercentage1d == null ? (
+												'-'
+											) : (
+												<Change value={props.summary.priceChangePercentage1d} />
+											)
+										}
 									/>
 									<MetricRow
 										label={defs.priceChangePercentage7d.label}
 										tooltip={defs.priceChangePercentage7d.description}
-										value={<ChangeMetricValue value={props.summary.priceChangePercentage7d} symbol="%" />}
+										value={
+											props.summary.priceChangePercentage7d == null ? (
+												'-'
+											) : (
+												<Change value={props.summary.priceChangePercentage7d} />
+											)
+										}
 									/>
 									<MetricRow
 										label={defs.priceChangePercentage1m.label}
 										tooltip={defs.priceChangePercentage1m.description}
-										value={<ChangeMetricValue value={props.summary.priceChangePercentage1m} symbol="%" />}
+										value={
+											props.summary.priceChangePercentage1m == null ? (
+												'-'
+											) : (
+												<Change value={props.summary.priceChangePercentage1m} />
+											)
+										}
 									/>
 									<MetricRow
 										label={defs.priceChange1d.label}
 										tooltip={defs.priceChange1d.description}
-										value={<ChangeMetricValue value={props.summary.priceChange1d} symbol="$" />}
+										value={
+											props.summary.priceChange1d == null ? (
+												'-'
+											) : (
+												<Change value={props.summary.priceChange1d} unit="usd" />
+											)
+										}
 									/>
 									<MetricRow
 										label={defs.marketCapChange1d.label}
 										tooltip={defs.marketCapChange1d.description}
-										value={<ChangeMetricValue value={props.summary.marketCapChange1d} symbol="$" />}
+										value={
+											props.summary.marketCapChange1d == null ? (
+												'-'
+											) : (
+												<Change value={props.summary.marketCapChange1d} unit="usd" />
+											)
+										}
 									/>
 									<MetricRow
 										label={defs.fiftyTwoWeekLow.label}

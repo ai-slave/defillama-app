@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { PercentChange } from '~/ui/PercentChange'
 import { Skeleton } from '~/ui/Skeleton'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -71,12 +71,8 @@ function AssetRow({
 					formatAssetPrice(market?.price ?? null)
 				)}
 			</span>
-			<span className="w-[52px] shrink-0 text-right body-sm tabular-nums">
-				{showSkeleton ? (
-					<Skeleton className="inline-block h-3 w-9 align-middle" />
-				) : change != null ? (
-					<PercentChange percent={change} fontWeight={600} />
-				) : null}
+			<span className="w-[52px] shrink-0 text-right label-sm tabular-nums">
+				{showSkeleton ? <Skeleton className="inline-block h-3 w-9 align-middle" /> : <Change value={change} />}
 			</span>
 		</>
 	)

@@ -25,9 +25,6 @@ interface Props {
 	isLoading?: boolean
 }
 
-const tileStyles =
-	'hover-wash-card flex min-h-8 shrink-0 snap-start touch-pan-x items-center rounded-lg border border-subtle bg-surface px-3 py-1.5 body-sm whitespace-nowrap text-secondary hover:text-primary focus-visible:text-primary'
-
 const SignInDialog = lazy(() =>
 	import('~/containers/Subscription/SignInDialog').then((module) => ({ default: module.SignInDialog }))
 )
@@ -138,14 +135,15 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 										<Skeleton key={`skeleton-${i}`} className="h-8 shrink-0 rounded-lg" style={{ width: w }} />
 									))
 								: questions.map((question) => (
-										<button
-											type="button"
+										<Button
+											variant="secondary"
+											size="md"
 											key={`q-string-${question}`}
 											onClick={() => handleClick(question)}
-											className={tileStyles}
+											className="touch-pan-x snap-start"
 										>
 											{question}
-										</button>
+										</Button>
 									))}
 						</div>
 					</div>

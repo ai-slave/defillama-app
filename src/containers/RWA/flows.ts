@@ -7,7 +7,6 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS, CHART_DOWN, CHART_UP, chartColor } from '~/constants/colors'
-import { formatUsd } from '~/utils/numberFormat'
 import { rwaUnixSecondsToMilliseconds } from './api'
 import type {
 	IRWAAssetsOverview,
@@ -877,15 +876,4 @@ export function buildRWAFlowRotationChart(
 		})),
 		groupBy
 	}
-}
-
-export function getRWAFlowTextClass(value: number | null | undefined): string {
-	if (value == null || value === 0) return 'text-primary'
-	return value > 0 ? 'text-data-up' : 'text-data-down'
-}
-
-export function formatSignedRWAFlow(value: number | null | undefined): string {
-	if (value == null) return '-'
-	const prefix = value > 0 ? '+' : value < 0 ? '-' : ''
-	return `${prefix}${formatUsd(Math.abs(value), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }

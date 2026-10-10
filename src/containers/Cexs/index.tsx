@@ -11,6 +11,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Skeleton } from '~/ui/Skeleton'
@@ -77,15 +78,7 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 				</Tooltip>
 			)
 		case 'measured':
-			return (
-				<span
-					className={value != null && value < 0 ? 'text-data-down' : value != null && value > 0 ? 'text-data-up' : ''}
-				>
-					{value == null
-						? null
-						: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-				</span>
-			)
+			return <Change value={value} unit="usd" />
 		default: {
 			const exhaustiveState: never = state
 			return exhaustiveState
@@ -255,16 +248,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.inflows_24h ?? undefined, {
 		id: 'inflows_24h',
 		header: '24h Inflows',
-		cell: (info) => {
-			const value = info.getValue()
-			return (
-				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null
-						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-						: ''}
-				</span>
-			)
-		},
+		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -273,16 +257,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.inflows_1w ?? undefined, {
 		id: 'inflows_1w',
 		header: '7d Inflows',
-		cell: (info) => {
-			const value = info.getValue()
-			return (
-				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null
-						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-						: ''}
-				</span>
-			)
-		},
+		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
@@ -291,16 +266,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.inflows_1m ?? undefined, {
 		id: 'inflows_1m',
 		header: '1m Inflows',
-		cell: (info) => {
-			const value = info.getValue()
-			return (
-				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-					{value != null
-						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-						: ''}
-				</span>
-			)
-		},
+		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'

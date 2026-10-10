@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -96,14 +96,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		header: '1d Change',
 		id: 'change_1d',
 		accessorFn: (row) => row.change_1d ?? undefined,
-		cell: ({ row }) => {
-			const value = row.original.change_1d
-			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
-					<PercentChange percent={value} />
-				</span>
-			)
-		},
+		cell: ({ row }) => <Change value={row.original.change_1d} />,
 		size: 100,
 		meta: {
 			align: 'end'
@@ -113,14 +106,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		header: '7d Change',
 		id: 'change_7d',
 		accessorFn: (row) => row.change_7d ?? undefined,
-		cell: ({ row }) => {
-			const value = row.original.change_7d
-			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
-					<PercentChange percent={value} />
-				</span>
-			)
-		},
+		cell: ({ row }) => <Change value={row.original.change_7d} />,
 		size: 100,
 		meta: {
 			align: 'end'
@@ -130,14 +116,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		header: '1m Change',
 		id: 'change_1m',
 		accessorFn: (row) => row.change_1m ?? undefined,
-		cell: ({ row }) => {
-			const value = row.original.change_1m
-			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
-					<PercentChange percent={value} />
-				</span>
-			)
-		},
+		cell: ({ row }) => <Change value={row.original.change_1m} />,
 		size: 100,
 		meta: {
 			align: 'end'

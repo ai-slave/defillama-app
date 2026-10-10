@@ -19,6 +19,8 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  *    the clock it means, and a render caller then gets it from one of the two hooks.
  * 4. Date arithmetic and field reads use the UTC methods. Local-zone methods are for the few places that
  *    deliberately work in the visitor's zone, listed below with their reason.
+ * 5. Render code never reads the query from `router.asPath` (`asPath.split('?')[1]`): the server rendered a static
+ *    page without it. `readyAsPath(router)` from src/utils/routerQuery adds the query once the router is ready.
  */
 
 const root = path.resolve(import.meta.dirname, '../..')
@@ -250,6 +252,22 @@ function clockReadKind(node: ts.Node, bindings: ReadonlySet<string>): string | n
 	return null
 }
 
+/** `x.asPath.split('?')[1]`: the query half of the browser path, which a static page's server render never had. */
+function readsAsPathQuery(node: ts.Node): boolean {
+	if (!ts.isElementAccessExpression(node) || node.argumentExpression.getText() !== '1') return false
+	const call = node.expression
+	if (!ts.isCallExpression(call) || !ts.isPropertyAccessExpression(call.expression)) return false
+	const split = call.expression
+	return (
+		split.name.text === 'split' &&
+		ts.isPropertyAccessExpression(split.expression) &&
+		split.expression.name.text === 'asPath' &&
+		call.arguments[0] !== undefined &&
+		ts.isStringLiteral(call.arguments[0]) &&
+		call.arguments[0].text === '?'
+	)
+}
+
 export function scanSource(relative: string, file: string, source: string): Array<string> {
 	const violations: Array<string> = []
 	if (isTestFile(relative)) return violations
@@ -289,6 +307,13 @@ export function scanSource(relative: string, file: string, source: string): Arra
 	}
 
 	function visit(node: ts.Node) {
+		if (readsAsPathQuery(node)) {
+			report(
+				node,
+				"reads the query from router.asPath during render; a static page's HTML has none, so the first client render disagrees with it. Read the path through readyAsPath(router) from src/utils/routerQuery"
+			)
+		}
+
 		if (ts.isJsxAttribute(node) && node.name.getText() === 'suppressHydrationWarning' && relative !== STALE_TEXT) {
 			report(
 				node,
@@ -456,6 +481,16 @@ if (process.argv.includes('--self-test')) {
 		},
 		{ name: 'local month arithmetic', source: 'date.setMonth(date.getMonth() - 1)', violation: true },
 		{ name: 'UTC month arithmetic', source: 'date.setUTCMonth(date.getUTCMonth() - 1)', violation: false },
+		{
+			name: 'query read from asPath',
+			source: "export function Panel({ router }) { const q = router.asPath.split('?')[1] ?? ''; return <p>{q}</p> }",
+			violation: true
+		},
+		{
+			name: 'path read from asPath',
+			source: "export function Panel({ router }) { return <p>{router.asPath.split('?')[0]}</p> }",
+			violation: false
+		},
 		{
 			name: 'getStaticProps read',
 			source: 'export const getStaticProps = async () => ({ props: { at: Date.now() } })',

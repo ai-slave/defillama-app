@@ -22,10 +22,10 @@ import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
+import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -323,7 +323,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d TVL Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -333,7 +333,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_7d ?? undefined, {
 		id: 'change_7d',
 		header: '7d TVL Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -343,7 +343,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
 		header: '1m TVL Change',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
+		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',

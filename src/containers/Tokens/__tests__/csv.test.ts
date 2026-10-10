@@ -39,9 +39,6 @@ function row(overrides: Partial<TokensTableRow>): TokensTableRow {
 		isStablecoin: false,
 		display: {
 			price: null,
-			priceChange24h: null,
-			priceChange7d: null,
-			priceChange30d: null,
 			marketCap: null,
 			fdv: null,
 			outstandingFdv: null,
@@ -56,10 +53,7 @@ function row(overrides: Partial<TokensTableRow>): TokensTableRow {
 			trsPercent: null,
 			trsPercentWidth: null,
 			unlock30dUsd: null,
-			upcomingUnlockUsd: null,
-			priceChange24hTone: 'neutral',
-			priceChange7dTone: 'neutral',
-			priceChange30dTone: 'neutral'
+			upcomingUnlockUsd: null
 		},
 		...overrides
 	}
