@@ -16,7 +16,14 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
@@ -948,60 +955,55 @@ export function RWAAssetPage({
 				</SectionCard>
 			) : null}
 
-			{(asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset)) || displayPools.length > 0 ? (
-				<div
-					className={`grid gap-2 ${(isLoadingYieldChart || nativeYieldDataset) && displayPools.length > 0 ? 'lg:grid-cols-2' : ''}`}
-				>
-					{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
-						<ChartPanel className="overflow-hidden">
-							<div
-								className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--series) to-transparent"
-								style={{ '--series': NATIVE_YIELD_CHARTS[0].color } as CSSProperties}
-							/>
-							<ChartPanelToolbar className="items-start">
-								{/* A headline stat like the summary cards': a secondary label over the mono-xl value. */}
-								{asset.nativeYieldCurrent != null ? (
-									<StatItem
-										label="Native Yield"
-										labelAs="h2"
-										className="mr-auto"
-										value={formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
-									/>
-								) : (
-									<h2 className="mr-auto text-secondary">Native Yield</h2>
-								)}
-								<ChartExportButtons
-									chartInstance={nativeYieldChartInstance}
-									filename={nativeYieldExportFilename}
-									title={nativeYieldExportTitle}
-									csvSource={nativeYieldDataset ? { type: 'dataset', prepare: () => nativeYieldDataset } : null}
+			{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
+				<ChartPanel className="overflow-hidden">
+					<div
+						className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--series) to-transparent"
+						style={{ '--series': NATIVE_YIELD_CHARTS[0].color } as CSSProperties}
+					/>
+					<ChartPanelToolbar
+						className="items-start"
+						leading={
+							// A headline stat like the summary cards': a secondary label over the mono-xl value.
+							asset.nativeYieldCurrent != null ? (
+								<StatItem
+									label="Native Yield"
+									labelAs="h2"
+									value={formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 								/>
-							</ChartPanelToolbar>
-
-							{isLoadingYieldChart ? (
-								<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1">
-									<LoadingIndicator />
-								</ChartPanelBodyFallback>
 							) : (
-								<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>
-									<MultiSeriesChart
-										charts={NATIVE_YIELD_CHARTS}
-										dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
-										valueSymbol="%"
-										showLegend
-										exportButtons="hidden"
-										onReady={onNativeYieldChartReady}
-										containerClassName={CHART_FILL}
-									/>
-								</Suspense>
-							)}
+								<ChartPanelTitle headingAs="h2">Native Yield</ChartPanelTitle>
+							)
+						}
+					>
+						<ChartExportButtons
+							chartInstance={nativeYieldChartInstance}
+							filename={nativeYieldExportFilename}
+							title={nativeYieldExportTitle}
+							csvSource={nativeYieldDataset ? { type: 'dataset', prepare: () => nativeYieldDataset } : null}
+						/>
+					</ChartPanelToolbar>
 
-							{asset.issuer ? (
-								<p className="px-2 pb-2 body-sm text-secondary">Historical APY from {asset.issuer}</p>
-							) : null}
-						</ChartPanel>
-					) : null}
-				</div>
+					{isLoadingYieldChart ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1">
+							<LoadingIndicator />
+						</ChartPanelBodyFallback>
+					) : (
+						<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>
+							<MultiSeriesChart
+								charts={NATIVE_YIELD_CHARTS}
+								dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
+								valueSymbol="%"
+								showLegend
+								exportButtons="hidden"
+								onReady={onNativeYieldChartReady}
+								containerClassName={CHART_FILL}
+							/>
+						</Suspense>
+					)}
+
+					{asset.issuer ? <p className="px-2 pb-2 body-sm text-secondary">Historical APY from {asset.issuer}</p> : null}
+				</ChartPanel>
 			) : null}
 
 			{displayPools.length > 0 ? (
