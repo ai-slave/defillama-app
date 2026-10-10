@@ -53,12 +53,14 @@ export function ChainsByCategoryTable({
 	data,
 	useStickyHeader = true,
 	borderless = false,
-	showByGroup
+	showByGroup,
+	tvlQuickPicks
 }: {
 	data: Array<IFormattedDataWithExtraTvl>
 	useStickyHeader?: boolean
 	borderless?: boolean
 	showByGroup: boolean
+	tvlQuickPicks: ReadonlyArray<number>
 }) {
 	const rawColumnsInStorage = useStorageItem(optionsKey, '{}')
 	const columnsInStorage = React.useDeferredValue(rawColumnsInStorage)
@@ -161,7 +163,7 @@ export function ChainsByCategoryTable({
 					variant="filter"
 					size="md"
 				/>
-				<TVLRange size="md" />
+				<TVLRange size="md" quickPicks={tvlQuickPicks} />
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })}
 					smol

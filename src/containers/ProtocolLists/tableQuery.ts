@@ -9,7 +9,10 @@ export type ProtocolListKind = 'recent' | 'airdrops'
 export type ProtocolListQuery = Record<string, string | Array<string> | undefined>
 export type RecentProtocolTableRow = ReturnType<typeof applyExtraTvl>[number]
 export type ProtocolListPage = CursorTablePage<RecentProtocolTableRow> &
-	Pick<IRecentProtocolsPageData, 'chainList' | 'categories'>
+	Pick<IRecentProtocolsPageData, 'chainList' | 'categories'> & {
+		// The TVL range's min chips for this query, from `rangeQuickPicks`.
+		tvlQuickPicks: Array<number>
+	}
 export type ProtocolListInitialProps = Pick<IRecentProtocolsPageData, 'chainList' | 'categories'> & {
 	protocols: Array<RecentProtocolTableRow>
 	protocolList: Omit<ProtocolListPage, 'rows' | 'chainList' | 'categories'>

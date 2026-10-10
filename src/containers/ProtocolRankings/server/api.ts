@@ -93,7 +93,7 @@ export function loadPreparedProtocolRankingRows(
 		signature: protocolRankingQuery.signature(query),
 		memory: { ttlMs: 5 * 60 * 1000, maxEntries: 32, maxBytes: 48 * 1024 * 1024 },
 		prepare: () => getProtocolRankingRows(snapshot, query),
-		measureBytes: (rows) =>
+		measureBytes: ({ rows }) =>
 			rows.reduce((bytes, row) => bytes + 512 + (row.childProtocols?.length ?? 0) * 128, rows.length * 8)
 	})
 }
@@ -115,7 +115,7 @@ export const protocolRankingsApi = defineApiRoute({
 
 		try {
 			const querySignature = protocolRankingQuery.signature(parsed.query)
-			const preparedRows = await loadPreparedProtocolRankingRows(parsed.chain, snapshot, parsed.query)
+			const prepared = await loadPreparedProtocolRankingRows(parsed.chain, snapshot, parsed.query)
 			const cacheKey = `${parsed.chain}:${snapshot.snapshot}:${querySignature}:${parsed.cursor ?? ''}:${parsed.limit}`
 			const payload = await cachedJsonResult(
 				'protocol-rankings-page',
@@ -126,7 +126,7 @@ export const protocolRankingsApi = defineApiRoute({
 						paginateProtocolRankingRows({
 							snapshot,
 							query: parsed.query,
-							rows: preparedRows,
+							prepared,
 							cursor: parsed.cursor,
 							limit: parsed.limit
 						})

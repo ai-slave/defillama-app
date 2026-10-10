@@ -48,6 +48,30 @@ describe('getEarnPage prepared-rows memoization', () => {
 		expect(asc.rows.map((row) => row.id)).toEqual(['b', 'a'])
 	})
 
+	test('offers only the range chips that keep rows, counted under every other filter', async () => {
+		const snapshot = yieldsSnapshot({
+			earn: [
+				pool('a', { tvl_usd: 2_000_000, apy: apyOf(30) }),
+				pool('b', { tvl_usd: 1_500_000, apy: apyOf(25) }),
+				pool('c', { tvl_usd: 1_200_000, apy: apyOf(22) }),
+				pool('d', { tvl_usd: 300_000, apy: apyOf(6) }),
+				pool('e', { tvl_usd: 200_000, apy: apyOf(7) }),
+				pool('f', { tvl_usd: 50_000, apy: apyOf(1) })
+			]
+		})
+
+		// No pool reaches $10m or 50%, so those chips would empty the table.
+		expect(await getEarnPage(snapshot, {})).toMatchObject({
+			tvlQuickPicks: [100_000, 1_000_000],
+			apyQuickPicks: [5, 10, 20]
+		})
+		// A TVL floor keeps its own chips and narrows the APY chips to the pools it leaves.
+		expect(await getEarnPage(snapshot, { minTvl: '1000000' })).toMatchObject({
+			tvlQuickPicks: [100_000, 1_000_000],
+			apyQuickPicks: []
+		})
+	})
+
 	test('keeps the wire contract for clamped pages and pageSize=all', async () => {
 		const snapshot = yieldsSnapshot({ earn: Array.from({ length: 7 }, (_, index) => withTvl(`p${index}`, 7 - index)) })
 

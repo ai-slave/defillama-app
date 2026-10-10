@@ -6,7 +6,7 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { Select } from '~/components/Select/Select'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { stablecoinAttributeOptions, stablecoinBackingOptions, stablecoinPegTypeOptions } from './filterPolicy'
 
 const isStablecoinChartQueryKey = (key: string) => key === 'chartType' || key === 'chartView' || key === 'groupBy'
@@ -67,18 +67,19 @@ function PegType({
 	)
 }
 
-function McapRange({ nestedMenu }: { nestedMenu: boolean }) {
+function McapRange({ nestedMenu, quickPicks }: { nestedMenu: boolean; quickPicks: ReadonlyArray<number> }) {
 	const { min, max, handleSubmit, handleClear } = useRangeFilter('minMcap', 'maxMcap')
 
 	return (
 		<FilterBetweenRange
 			heading="Mcap"
+			quickPicks={quickPicks.map((value) => ({ label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS), value }))}
 			trigger={
 				<>
 					{min || max ? (
 						<>
 							<span>Mcap: </span>
-							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
+							<span className="text-link">{`${formatUsd(min, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'min'} - ${formatUsd(max, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'max'}`}</span>
 						</>
 					) : (
 						'Mcap'
@@ -127,12 +128,14 @@ function PeggedFiltersDropdowns({
 	pathname,
 	nestedMenu,
 	availableBackings,
-	availablePegTypes
+	availablePegTypes,
+	mcapQuickPicks
 }: {
 	pathname: string
 	nestedMenu?: boolean
 	availableBackings: Array<StablecoinFilterKey>
 	availablePegTypes: Array<StablecoinFilterKey>
+	mcapQuickPicks: ReadonlyArray<number>
 }) {
 	return (
 		<>
@@ -148,7 +151,7 @@ function PeggedFiltersDropdowns({
 			/>
 			<BackingType nestedMenu={!!nestedMenu} availableBackings={availableBackings} />
 			<PegType nestedMenu={!!nestedMenu} availablePegTypes={availablePegTypes} />
-			<McapRange nestedMenu={!!nestedMenu} />
+			<McapRange nestedMenu={!!nestedMenu} quickPicks={mcapQuickPicks} />
 			<ResetAllStablecoinFilters pathname={pathname} nestedMenu={!!nestedMenu} />
 		</>
 	)
@@ -158,6 +161,7 @@ export function PeggedFilters(props: {
 	pathname: string
 	availableBackings: Array<StablecoinFilterKey>
 	availablePegTypes: Array<StablecoinFilterKey>
+	mcapQuickPicks: ReadonlyArray<number>
 }) {
 	return (
 		<Card padding="sm" className="flex flex-col gap-2">

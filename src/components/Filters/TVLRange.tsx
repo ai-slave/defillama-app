@@ -2,12 +2,10 @@ import type * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import type { FormSubmitEvent } from '~/types/forms'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 type QueryUpdates = Record<string, string | Array<string> | undefined>
-
-const formatPresetLabel = (value: number) => (value >= 1_000_000 ? `$${value / 1_000_000}M` : `$${value / 1000}k`)
 
 export function TVLRange({
 	variant = 'primary',
@@ -18,7 +16,7 @@ export function TVLRange({
 	resetPageOnChange,
 	pushQueryUpdates,
 	label = 'TVL Range',
-	minPresets
+	quickPicks
 }: {
 	variant?: 'primary' | 'secondary'
 	size?: 'sm' | 'md'
@@ -28,7 +26,8 @@ export function TVLRange({
 	resetPageOnChange?: boolean
 	pushQueryUpdates?: (updates: QueryUpdates) => void
 	label?: string
-	minPresets?: ReadonlyArray<number>
+	/** Min chips from `rangeQuickPicks`, counted over the rows the other filters keep. */
+	quickPicks: ReadonlyArray<number>
 }) {
 	const router = useRouter()
 
@@ -72,14 +71,14 @@ export function TVLRange({
 	return (
 		<FilterBetweenRange
 			heading={label}
-			{...(minPresets ? { quickPicks: minPresets.map((value) => ({ label: formatPresetLabel(value), value })) } : {})}
+			quickPicks={quickPicks.map((value) => ({ label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS), value }))}
 			trigger={
 				variant === 'secondary' ? (
 					<>
 						{min || max ? (
 							<>
 								<span>TVL: </span>
-								<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
+								<span className="text-link">{`${formatUsd(min, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'min'} - ${formatUsd(max, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'max'}`}</span>
 							</>
 						) : (
 							<span>{label}</span>

@@ -11,6 +11,7 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
@@ -150,7 +151,7 @@ export function ChainsByCategory({
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
-	const { showByGroup, chainsTableData, chartIgnoredFilters } = useGroupAndFormatChains({
+	const { showByGroup, chainsTableData, chartIgnoredFilters, tvlQuickPicks } = useGroupAndFormatChains({
 		chains,
 		category: categoryName
 	})
@@ -262,7 +263,7 @@ export function ChainsByCategory({
 			<React.Suspense
 				fallback={<Panel padding="none" style={{ minHeight: `${chainsTableData.length * 50 + 200}px` }} />}
 			>
-				<ChainsByCategoryTable data={chainsTableData} showByGroup={showByGroup} />
+				<ChainsByCategoryTable data={chainsTableData} showByGroup={showByGroup} tvlQuickPicks={tvlQuickPicks} />
 			</React.Suspense>
 		</>
 	)
@@ -405,54 +406,52 @@ export const useGroupAndFormatChains = ({
 			showByGroup ? toggledChainsGroupbyParent : []
 		)
 
-		const data = chains
-			.map((chain) => {
-				const finalTvl = applyChainsTvlSettings(
-					chain.tvl,
-					getChainRowExtraValues({ chain, metric: 'tvl' }),
-					toggledTvlSettings
-				)
-				const finalTvlPrevDay = applyChainsTvlSettings(
-					chain.tvlPrevDay,
-					getChainRowExtraValues({ chain, metric: 'tvlPrevDay' }),
-					toggledTvlSettings
-				)
-				const finalTvlPrevWeek = applyChainsTvlSettings(
-					chain.tvlPrevWeek,
-					getChainRowExtraValues({ chain, metric: 'tvlPrevWeek' }),
-					toggledTvlSettings
-				)
-				const finalTvlPrevMonth = applyChainsTvlSettings(
-					chain.tvlPrevMonth,
-					getChainRowExtraValues({ chain, metric: 'tvlPrevMonth' }),
-					toggledTvlSettings
-				)
-
-				const change_1d = getPercentChange(finalTvl, finalTvlPrevDay)
-				const change_7d = getPercentChange(finalTvl, finalTvlPrevWeek)
-				const change_1m = getPercentChange(finalTvl, finalTvlPrevMonth)
-
-				return {
-					...chain,
-					tvl: finalTvl,
-					tvlPrevDay: finalTvlPrevDay,
-					tvlPrevWeek: finalTvlPrevWeek,
-					tvlPrevMonth: finalTvlPrevMonth,
-					change_1d,
-					change_7d,
-					change_1m,
-					mcaptvl: getChainMcapTvlRatio(chain.mcap, finalTvl)
-				}
-			})
-			.filter((chain) =>
-				minTvl == null && maxTvl == null
-					? true
-					: chain.tvl != null &&
-						(minTvl != null ? chain.tvl >= minTvl : true) &&
-						(maxTvl != null ? chain.tvl <= maxTvl : true)
+		const allChains = chains.map((chain) => {
+			const finalTvl = applyChainsTvlSettings(
+				chain.tvl,
+				getChainRowExtraValues({ chain, metric: 'tvl' }),
+				toggledTvlSettings
+			)
+			const finalTvlPrevDay = applyChainsTvlSettings(
+				chain.tvlPrevDay,
+				getChainRowExtraValues({ chain, metric: 'tvlPrevDay' }),
+				toggledTvlSettings
+			)
+			const finalTvlPrevWeek = applyChainsTvlSettings(
+				chain.tvlPrevWeek,
+				getChainRowExtraValues({ chain, metric: 'tvlPrevWeek' }),
+				toggledTvlSettings
+			)
+			const finalTvlPrevMonth = applyChainsTvlSettings(
+				chain.tvlPrevMonth,
+				getChainRowExtraValues({ chain, metric: 'tvlPrevMonth' }),
+				toggledTvlSettings
 			)
 
-		if (!showByGroup) return { showByGroup, chainsTableData: data, chartIgnoredFilters }
+			const change_1d = getPercentChange(finalTvl, finalTvlPrevDay)
+			const change_7d = getPercentChange(finalTvl, finalTvlPrevWeek)
+			const change_1m = getPercentChange(finalTvl, finalTvlPrevMonth)
+
+			return {
+				...chain,
+				tvl: finalTvl,
+				tvlPrevDay: finalTvlPrevDay,
+				tvlPrevWeek: finalTvlPrevWeek,
+				tvlPrevMonth: finalTvlPrevMonth,
+				change_1d,
+				change_7d,
+				change_1m,
+				mcaptvl: getChainMcapTvlRatio(chain.mcap, finalTvl)
+			}
+		})
+		// Counted before the TVL range, so applying a chip leaves the other chips in place.
+		const tvlQuickPicks = rangeQuickPicks(
+			USD_QUICK_PICK_LADDER,
+			allChains.map((chain) => chain.tvl)
+		)
+		const data = allChains.filter((chain) => inRange(chain.tvl, minTvl, maxTvl))
+
+		if (!showByGroup) return { showByGroup, chainsTableData: data, chartIgnoredFilters, tvlQuickPicks }
 		const chainsTableData: Array<IFormattedDataWithExtraTvl> = []
 		for (const chain of getTopLevelGroupedChains(data, toggledChainsGroupbyParent)) {
 			const subChainsList = new Set<string>()
@@ -541,6 +540,7 @@ export const useGroupAndFormatChains = ({
 		return {
 			showByGroup,
 			chartIgnoredFilters,
+			tvlQuickPicks,
 			chainsTableData: chainsTableData.sort((a, b) => {
 				if (a.tvl == null) return b.tvl == null ? 0 : 1
 				if (b.tvl == null) return -1

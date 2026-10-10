@@ -2,6 +2,7 @@ import type { ParsedUrlQuery } from 'node:querystring'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { MultiSeriesChartSeriesConfig, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
@@ -123,6 +124,7 @@ export function buildRaisesData(
 		isAmountRangeActive
 
 	const filteredRaisesList: Array<Raise> = []
+	const amounts: Array<number | null> = []
 	let undisclosedCount = 0
 	for (const raise of raises) {
 		// A raise with several investors or chains stays while any of them is selected.
@@ -135,11 +137,9 @@ export function buildRaisesData(
 		if (selectedRoundsSet && !selectedRoundsSet.has(raise.round?.trim() || UNKNOWN_OPTION)) continue
 		if (selectedSectorsSet && !selectedSectorsSet.has(raise.category?.trim() || UNKNOWN_OPTION)) continue
 
-		if (isAmountRangeActive) {
-			if (raise.amountUsd === null) continue
-			if (minimumAmountRaised !== null && raise.amountUsd < minimumAmountRaised) continue
-			if (maximumAmountRaised !== null && raise.amountUsd > maximumAmountRaised) continue
-		}
+		// The chips count the raises every other filter keeps, so applying one leaves its own chips in place.
+		amounts.push(raise.amountUsd)
+		if (!inRange(raise.amountUsd, minimumAmountRaised, maximumAmountRaised)) continue
 
 		if (raise.category) {
 			raisesByCategory[raise.category] = (raisesByCategory[raise.category] ?? 0) + 1
@@ -234,6 +234,7 @@ export function buildRaisesData(
 	return {
 		hasActiveFilters,
 		filteredRaisesList,
+		amountQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, amounts),
 		raisesByCategory: finalRaisesByCategory.sort((a, b) => b.value - a.value),
 		investmentByRounds: finalInvestmentByRounds.sort((a, b) => b.value - a.value),
 		monthlyInvestmentChart,

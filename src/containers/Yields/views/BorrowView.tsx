@@ -63,7 +63,7 @@ function BorrowView({
 	const endpoint = routesMode ? YIELD_BORROW_ROUTES_DATASET_API : YIELD_BORROW_MARKETS_DATASET_API
 	const defaultSorting = routesMode ? ROUTES_DEFAULT_SORT : MARKETS_DEFAULT_SORT
 
-	const { rows, total, isLoading, rowsQuery, tableProps, buildAllRowsQueryString } = useYieldsServerTable<
+	const { rows, total, data, isLoading, rowsQuery, tableProps, buildAllRowsQueryString } = useYieldsServerTable<
 		MarketTableRow | RouteTableRow
 	>({
 		endpoint,
@@ -75,11 +75,11 @@ function BorrowView({
 	async function prepareCsv() {
 		const url = `${endpoint}${buildAllRowsQueryString()}`
 		if (routesMode) {
-			const data = await fetchJson<BorrowRowsResponse<RouteTableRow>>(url)
-			return prepareBorrowRoutesCsv(data.rows, router.query)
+			const csvData = await fetchJson<BorrowRowsResponse<RouteTableRow>>(url)
+			return prepareBorrowRoutesCsv(csvData.rows, router.query)
 		}
-		const data = await fetchJson<BorrowRowsResponse<MarketTableRow>>(url)
-		return prepareBorrowMarketsCsv(data.rows, router.query)
+		const csvData = await fetchJson<BorrowRowsResponse<MarketTableRow>>(url)
+		return prepareBorrowMarketsCsv(csvData.rows, router.query)
 	}
 
 	const emptyMessage = routesMode
@@ -115,7 +115,7 @@ function BorrowView({
 				categoryList={categoryList}
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
-				availableRange
+				availableRange={data?.availableQuickPicks ?? []}
 				apyControls={<ApyViewControls ready={normalized} />}
 				resetFilters
 				prepareCsv={prepareCsv}

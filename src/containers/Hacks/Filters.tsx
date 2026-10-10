@@ -6,7 +6,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 type FormSubmitHandler = NonNullable<React.ComponentProps<'form'>['onSubmit']>
@@ -16,6 +16,7 @@ interface HacksFiltersProps {
 	techniqueOptions: Array<string>
 	classificationOptions: Array<string>
 	hasActiveFilters: boolean
+	amountQuickPicks: ReadonlyArray<number>
 }
 
 interface FiltersInnerProps {
@@ -29,6 +30,7 @@ interface FiltersInnerProps {
 	maxLostVal: number | null
 	handleAmountSubmit: FormSubmitHandler
 	handleAmountClear: () => void
+	amountQuickPicks: ReadonlyArray<number>
 	hasActiveFilters: boolean
 	onClearAll: () => void
 	isMobile?: boolean
@@ -59,7 +61,8 @@ export function HacksFilters({
 	chainOptions,
 	techniqueOptions,
 	classificationOptions,
-	hasActiveFilters
+	hasActiveFilters,
+	amountQuickPicks
 }: HacksFiltersProps) {
 	const router = useRouter()
 	const { time } = router.query
@@ -103,6 +106,7 @@ export function HacksFilters({
 						maxLostVal={maxLostVal}
 						handleAmountSubmit={handleAmountSubmit}
 						handleAmountClear={handleAmountClear}
+						amountQuickPicks={amountQuickPicks}
 						classificationOptions={classificationOptions}
 						techniqueOptions={techniqueOptions}
 						timeOptions={defaultTimeOptions}
@@ -124,6 +128,7 @@ function Filters({
 	maxLostVal,
 	handleAmountSubmit,
 	handleAmountClear,
+	amountQuickPicks,
 	classificationOptions,
 	techniqueOptions,
 	timeOptions,
@@ -147,12 +152,16 @@ function Filters({
 			/>
 			<FilterBetweenRange
 				heading="Amount lost"
+				quickPicks={amountQuickPicks.map((value) => ({
+					label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS),
+					value
+				}))}
 				trigger={
 					minLostVal != null || maxLostVal != null ? (
 						<>
 							<span>Amount: </span>
-							<span className="text-link">{`${formatNumber(minLostVal) ?? 'min'} - ${
-								formatNumber(maxLostVal) ?? 'max'
+							<span className="text-link">{`${formatUsd(minLostVal, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'min'} - ${
+								formatUsd(maxLostVal, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'max'
 							}`}</span>
 						</>
 					) : (

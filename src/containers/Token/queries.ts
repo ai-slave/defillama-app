@@ -1,3 +1,4 @@
+import { APY_QUICK_PICK_LADDER, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
@@ -58,9 +59,13 @@ export function buildInitialYieldsSnapshot(
 	tokenKeys: Array<string>
 ): TokenYieldsHydration {
 	const chainList = new Set<string>()
+	const tvlValues: Array<number | null> = []
+	const apyValues: Array<number | null> = []
 	for (const row of yieldsRows) {
 		const chain = row.chains[0]
 		if (chain) chainList.add(chain)
+		tvlValues.push(row.tvl)
+		apyValues.push(row.apy)
 	}
 
 	return {
@@ -68,7 +73,9 @@ export function buildInitialYieldsSnapshot(
 		rowCount: yieldsRows.length,
 		chainList: Array.from(chainList).toSorted(),
 		pageSize: DEFAULT_TABLE_PAGE_SIZE,
-		tokenKeys
+		tokenKeys,
+		tvlQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues),
+		apyQuickPicks: rangeQuickPicks(APY_QUICK_PICK_LADDER, apyValues)
 	}
 }
 
@@ -90,6 +97,16 @@ export function buildInitialBorrowRoutesSnapshot(
 		chainLists: {
 			useAsCollateral: getBorrowRouteChainList(routes.useAsCollateral),
 			borrowThis: getBorrowRouteChainList(routes.borrowThis)
+		},
+		availableQuickPicks: {
+			useAsCollateral: rangeQuickPicks(
+				USD_QUICK_PICK_LADDER,
+				routes.useAsCollateral.map((row) => row.availableBorrowUsd ?? null)
+			),
+			borrowThis: rangeQuickPicks(
+				USD_QUICK_PICK_LADDER,
+				routes.borrowThis.map((row) => row.availableBorrowUsd ?? null)
+			)
 		},
 		pageSize: DEFAULT_TABLE_PAGE_SIZE,
 		tokenKeys

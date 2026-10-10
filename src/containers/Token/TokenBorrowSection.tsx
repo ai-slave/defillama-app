@@ -22,7 +22,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRoutes, formatBorrowRoutesSummary } from './TokenBorrowSection.utils'
@@ -55,7 +55,7 @@ function getSelectedChains(selectedChains: Array<string> | null, availableChains
 
 function formatAvailableTriggerValue(value: string) {
 	const numericValue = Number(value)
-	return Number.isFinite(numericValue) ? formatNumber(numericValue) : value
+	return Number.isFinite(numericValue) ? formatUsd(numericValue, USD_LOWERCASE_MILLIONS_OPTIONS) : value
 }
 
 function TokenBorrowAvailableRange({
@@ -63,13 +63,15 @@ function TokenBorrowAvailableRange({
 	maxAvailable,
 	setMinAvailable,
 	setMaxAvailable,
-	nestedMenu
+	nestedMenu,
+	quickPicks
 }: {
 	minAvailable: string
 	maxAvailable: string
 	setMinAvailable: React.Dispatch<React.SetStateAction<string>>
 	setMaxAvailable: React.Dispatch<React.SetStateAction<string>>
 	nestedMenu: boolean
+	quickPicks: ReadonlyArray<number>
 }) {
 	const handleSubmit = (event: FormSubmitEvent) => {
 		event.preventDefault()
@@ -89,6 +91,7 @@ function TokenBorrowAvailableRange({
 	return (
 		<FilterBetweenRange
 			heading="Available"
+			quickPicks={quickPicks.map((value) => ({ label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS), value }))}
 			trigger={
 				hasRange ? (
 					<>
@@ -235,7 +238,7 @@ export function TokenBorrowSection({
 		[activeTab]
 	)
 
-	const filteredRows = React.useMemo(
+	const filtered = React.useMemo(
 		() =>
 			filterBorrowRoutes({
 				rows,
@@ -245,6 +248,12 @@ export function TokenBorrowSection({
 			}),
 		[maxAvailable, minAvailable, rows, selectedChains]
 	)
+	const filteredRows = filtered.rows
+	// Until the full routes load, the snapshot's chips cover every route; the first page alone would not.
+	const availableQuickPicks =
+		data || !hydration
+			? filtered.availableQuickPicks
+			: hydration.availableQuickPicks[activeTab === 'use' ? 'useAsCollateral' : 'borrowThis']
 
 	const hasActiveFilters = selectedChains.length !== chainList.length || minAvailable !== '' || maxAvailable !== ''
 	const resetFilters = React.useCallback(() => {
@@ -381,6 +390,7 @@ export function TokenBorrowSection({
 												setMinAvailable={setMinAvailable}
 												setMaxAvailable={setMaxAvailable}
 												nestedMenu={nestedMenu}
+												quickPicks={availableQuickPicks}
 											/>
 											<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
 												Reset filters

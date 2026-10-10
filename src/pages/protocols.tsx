@@ -25,7 +25,7 @@ export const getStaticProps = withPerformanceLogging('protocols', async () => {
 	const { rows: protocols, ...protocolRankings } = paginateProtocolRankingRows({
 		snapshot,
 		query: DEFAULT_PROTOCOL_RANKING_QUERY,
-		rows: getProtocolRankingRows(snapshot, DEFAULT_PROTOCOL_RANKING_QUERY),
+		prepared: getProtocolRankingRows(snapshot, DEFAULT_PROTOCOL_RANKING_QUERY),
 		limit: PROTOCOL_RANKINGS_LIMITS.initial
 	})
 

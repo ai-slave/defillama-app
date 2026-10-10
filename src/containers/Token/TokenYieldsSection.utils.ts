@@ -1,3 +1,4 @@
+import { APY_QUICK_PICK_LADDER, inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { formatPercent } from '~/utils/numberFormat'
 import type { TokenYieldStats } from './yieldStats'
@@ -31,19 +32,25 @@ export function filterTokenYieldPools({
 	minApy: number | null
 	maxApy: number | null
 }) {
-	let filtered = pools
-
 	// Every chain selected means no chain filter; Deselect All keeps no pools.
-	if (selectedChains.length < chainCount) {
-		const chainSet = new Set(selectedChains)
-		filtered = filtered.filter((pool) => chainSet.has(pool.chains[0]))
+	const chainSet = selectedChains.length < chainCount ? new Set(selectedChains) : null
+	const filtered: Array<IYieldTableRow> = []
+	const tvlValues: Array<number | null> = []
+	const apyValues: Array<number | null> = []
+	for (const pool of pools) {
+		if (chainSet && !chainSet.has(pool.chains[0])) continue
+		const inTvlRange = inRange(pool.tvl, minTvl, maxTvl)
+		const inApyRange = inRange(pool.apy, minApy, maxApy)
+		// A range's chips count the pools every other filter keeps, so applying one leaves its own chips in place.
+		if (inApyRange) tvlValues.push(pool.tvl)
+		if (inTvlRange) apyValues.push(pool.apy)
+		if (inTvlRange && inApyRange) filtered.push(pool)
 	}
-	if (minTvl != null) filtered = filtered.filter((pool) => pool.tvl != null && pool.tvl >= minTvl)
-	if (maxTvl != null) filtered = filtered.filter((pool) => pool.tvl != null && pool.tvl <= maxTvl)
-	if (minApy != null) filtered = filtered.filter((pool) => pool.apy != null && pool.apy >= minApy)
-	if (maxApy != null) filtered = filtered.filter((pool) => pool.apy != null && pool.apy <= maxApy)
-
-	return filtered
+	return {
+		pools: filtered,
+		tvlQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues),
+		apyQuickPicks: rangeQuickPicks(APY_QUICK_PICK_LADDER, apyValues)
+	}
 }
 
 /** A partial count means only the hydrated first page is loaded, so the total comes from the snapshot. */

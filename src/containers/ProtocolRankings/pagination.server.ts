@@ -1,3 +1,4 @@
+import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { compareTableSortValues, cursorTablePage } from '~/server/tablePages/cursorPage.server'
 import { hashTableQuerySignature } from '~/server/tablePages/preparedRows.server'
@@ -87,18 +88,33 @@ function enabledTvlSettings(tvlKeys: Array<string>): Record<string, boolean> {
 	return Object.fromEntries(tvlKeys.map((key) => [key, true]))
 }
 
+export type PreparedProtocolRankingRows = { rows: Array<IProtocol>; tvlQuickPicks: Array<number> }
+
 export function getProtocolRankingRows(
 	snapshot: ProtocolRankingsSnapshotData,
 	query: ProtocolRankingQuery
-): Array<IProtocol> {
+): PreparedProtocolRankingRows {
 	const getSortValue = createCachedSortValueGetter(query)
-	const adjustedRows = applyProtocolTvlSettings({
-		protocols: snapshot.protocols,
-		extraTvlsEnabled: enabledTvlSettings(query.tvlKeys),
+	const searchedRows = searchRows(
+		applyProtocolTvlSettings({
+			protocols: snapshot.protocols,
+			extraTvlsEnabled: enabledTvlSettings(query.tvlKeys),
+			minTvl: null,
+			maxTvl: null
+		}),
+		query.search
+	)
+	// The chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+	const tvlValues: Array<number | null> = []
+	for (const row of searchedRows) tvlValues.push(row.tvl?.default.tvl ?? null)
+	// The rows already carry the extra TVL, so this second pass only applies the bounds, to parents and children alike.
+	const rangedRows = applyProtocolTvlSettings({
+		protocols: searchedRows,
+		extraTvlsEnabled: {},
 		minTvl: query.minTvl,
 		maxTvl: query.maxTvl
 	})
-	return searchRows(adjustedRows, query.search)
+	const rows = rangedRows
 		.map((row) =>
 			row.childProtocols?.length
 				? {
@@ -108,23 +124,24 @@ export function getProtocolRankingRows(
 				: row
 		)
 		.toSorted((a, b) => compareRows(a, b, query.order, getSortValue))
+	return { rows, tvlQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues) }
 }
 
 export function paginateProtocolRankingRows({
 	snapshot,
 	query,
-	rows,
+	prepared,
 	cursor = null,
 	limit = PROTOCOL_RANKINGS_LIMITS.page
 }: {
 	snapshot: ProtocolRankingsSnapshotData
 	query: ProtocolRankingQuery
-	rows: Array<IProtocol>
+	prepared: PreparedProtocolRankingRows
 	cursor?: string | null
 	limit?: number
 }): ProtocolRankingPage {
 	const page = cursorTablePage({
-		rows,
+		rows: prepared.rows,
 		version: snapshot.snapshot,
 		queryHash: hashTableQuerySignature(protocolRankingQuery.signature(query)),
 		cursor,
@@ -140,6 +157,7 @@ export function paginateProtocolRankingRows({
 		snapshot: page.version,
 		total: page.total,
 		hasMore: page.hasMore,
-		availableActivityMetrics: snapshot.availableActivityMetrics
+		availableActivityMetrics: snapshot.availableActivityMetrics,
+		tvlQuickPicks: prepared.tvlQuickPicks
 	}
 }

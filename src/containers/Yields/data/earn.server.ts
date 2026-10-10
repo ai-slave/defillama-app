@@ -1,3 +1,4 @@
+import { APY_QUICK_PICK_LADDER, inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean } from '~/server/api/params'
@@ -73,7 +74,12 @@ function tokenFilterInput(row: EnrichedEarnRow): TokenFilterInput {
 	}
 }
 
-type PreparedEarn = { rows: Array<EarnPageRow>; medianApy: number | null }
+type PreparedEarn = {
+	rows: Array<EarnPageRow>
+	medianApy: number | null
+	tvlQuickPicks: Array<number>
+	apyQuickPicks: Array<number>
+}
 
 export interface EarnPageAccess {
 	/**
@@ -109,7 +115,9 @@ export async function getEarnPage(
 
 	return {
 		...sliceYieldsPage(prepared.rows, query),
-		medianApy: prepared.medianApy
+		medianApy: prepared.medianApy,
+		tvlQuickPicks: prepared.tvlQuickPicks,
+		apyQuickPicks: prepared.apyQuickPicks
 	}
 }
 
@@ -169,6 +177,8 @@ async function buildPreparedEarn(
 	const maxApy = parseNumber(query, 'maxApy')
 
 	const pageRows: Array<EarnPageRow> = []
+	const tvlValues: Array<number | null> = []
+	const apyValues: Array<number | null> = []
 	for (const row of rows) {
 		if (common.ids && !common.ids.has(row.id)) continue
 		if (common.matchesChain && !common.matchesChain(row.chain)) continue
@@ -182,9 +192,8 @@ async function buildPreparedEarn(
 		if (hasAudit && !row.hasAudit) continue
 		if (verifiedOnly && !row.verified) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
-		if (minTvl != null && !(row.tvl_usd != null && row.tvl_usd >= minTvl)) continue
-		if (maxTvl != null && !(row.tvl_usd != null && row.tvl_usd <= maxTvl)) continue
 		if (!matchesToken(tokenFilterInput(row))) continue
+		const inTvlRange = inRange(row.tvl_usd, minTvl, maxTvl)
 
 		// Folded in FIRST, so the filters, median, sort key and cell all read the same number.
 		const reportedApy = resolveApy(row.apy, row.intrinsic, window, components)
@@ -203,6 +212,12 @@ async function buildPreparedEarn(
 					intrinsicReported: null,
 					reportedTotal: reportedApy.total
 				}
+		const inApyRange = inRange(resolvedApy.total, minApy, maxApy)
+		// A range's chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+		if (inApyRange) tvlValues.push(row.tvl_usd)
+		if (inTvlRange) apyValues.push(resolvedApy.total)
+		if (!inTvlRange || !inApyRange) continue
+
 		// A reading too old to land in the headline still reaches the card, labelled with its age,
 		// so a subscriber sees WHY the seal went quiet rather than a pool that looks unmeasured.
 		const verifiedLastApy =
@@ -216,8 +231,6 @@ async function buildPreparedEarn(
 			access.verifiedAccess && resolvedApy.measured == null && isVerifiedCurrent(row.verified?.apy_as_of, now)
 				? resolveVerifiedApy(row.verified, window)
 				: null
-		if (minApy != null && !(resolvedApy.total != null && resolvedApy.total >= minApy)) continue
-		if (maxApy != null && !(resolvedApy.total != null && resolvedApy.total <= maxApy)) continue
 
 		const pageRow = toEarnPageRow(
 			row,
@@ -249,7 +262,9 @@ async function buildPreparedEarn(
 			fallbackSortAccessor: (row, sortBy) => row[sortBy as keyof EarnPageRow],
 			defaultSort: { sortBy: 'tvl', sortDesc: true }
 		}),
-		medianApy: medianApyOf(pageRows)
+		medianApy: medianApyOf(pageRows),
+		tvlQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues),
+		apyQuickPicks: rangeQuickPicks(APY_QUICK_PICK_LADDER, apyValues)
 	}
 }
 

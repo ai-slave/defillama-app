@@ -14,8 +14,6 @@ import { YieldProjects } from './Projects'
 import { ResetAllYieldFilters } from './ResetAll'
 import type { IDropdownMenusProps } from './types'
 
-const TVL_MIN_PRESETS = [100_000, 500_000, 1_000_000, 10_000_000]
-
 export function YieldFilterDropdowns({
 	pathname,
 	chainList,
@@ -77,7 +75,7 @@ export function YieldFilterDropdowns({
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					variant="secondary"
 					placement="bottom-start"
-					minPresets={TVL_MIN_PRESETS}
+					quickPicks={tvlRange}
 					pushQueryUpdates={(updates) => {
 						void pushYieldsQuery(router, updates, {
 							pathname: effectivePathname
@@ -99,7 +97,13 @@ export function YieldFilterDropdowns({
 				/>
 			) : null}
 
-			{apyRange ? <APYRange {...(nestedMenu !== undefined ? { nestedMenu } : {})} placement="bottom-start" /> : null}
+			{apyRange ? (
+				<APYRange
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
+					placement="bottom-start"
+					quickPicks={apyRange}
+				/>
+			) : null}
 
 			{showColumns ? (
 				<ColumnsSelect
@@ -112,6 +116,7 @@ export function YieldFilterDropdowns({
 				<AvailableRange
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					placement="bottom-start"
+					quickPicks={availableRange}
 					pushQueryUpdates={(updates) => {
 						void pushYieldsQuery(router, updates, {
 							pathname: effectivePathname

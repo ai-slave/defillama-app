@@ -48,7 +48,8 @@ const initialPage = {
 	snapshot: 'abcdefghijklmnopqrst',
 	total: 1,
 	hasMore: false,
-	availableActivityMetrics: []
+	availableActivityMetrics: [],
+	tvlQuickPicks: []
 } satisfies ProtocolRankingInitialPage
 
 const responsePage = {

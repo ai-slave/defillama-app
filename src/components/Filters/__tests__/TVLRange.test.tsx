@@ -29,7 +29,7 @@ test.each([
 	[true, { chain: 'Ethereum', minTvl: '100', maxTvl: '200' }],
 	[false, { page: '3', chain: 'Ethereum', minTvl: '100', maxTvl: '200' }]
 ])('with page reset %s, applying a range navigates to %j', async (resetPageOnChange, expectedQuery) => {
-	await act(async () => root.render(<TVLRange resetPageOnChange={resetPageOnChange} />))
+	await act(async () => root.render(<TVLRange resetPageOnChange={resetPageOnChange} quickPicks={[]} />))
 	await act(async () => container.querySelector('button')!.click())
 	const min = document.querySelector<HTMLInputElement>('input[name="min"]')!
 	const max = document.querySelector<HTMLInputElement>('input[name="max"]')!
@@ -40,7 +40,7 @@ test.each([
 })
 
 test.each(['typed', 'picked'])('a min above the max, %s, says so under the max instead of applying', async (entry) => {
-	await act(async () => root.render(<TVLRange minPresets={[1000]} />))
+	await act(async () => root.render(<TVLRange quickPicks={[1000]} />))
 	await act(async () => container.querySelector('button')!.click())
 	const min = document.querySelector<HTMLInputElement>('input[name="min"]')!
 	const max = document.querySelector<HTMLInputElement>('input[name="max"]')!
@@ -54,7 +54,7 @@ test.each(['typed', 'picked'])('a min above the max, %s, says so under the max i
 		await type(min, '1000')
 		await act(async () => document.querySelector('form')!.requestSubmit())
 	} else {
-		const pick = [...document.querySelectorAll('button')].find((button) => button.textContent === '$1k')!
+		const pick = [...document.querySelectorAll('button')].find((button) => button.textContent === '$1,000')!
 		await act(async () => pick.click())
 	}
 	expect(router.push).not.toHaveBeenCalled()

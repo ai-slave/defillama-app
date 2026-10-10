@@ -1,3 +1,4 @@
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean } from '~/server/api/params'
@@ -189,12 +190,15 @@ export async function getBorrowMarketsPage(
 		snapshot,
 		query,
 		prepare: () => buildPreparedBorrowMarkets(snapshot, query),
-		measureBytes: (rows) => rows.length * 1024 + 256
+		measureBytes: (value) => value.rows.length * 1024 + 256
 	})
-	return sliceYieldsPage(prepared, query)
+	return { ...sliceYieldsPage(prepared.rows, query), availableQuickPicks: prepared.availableQuickPicks }
 }
 
-async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<MarketTableRow>> {
+async function buildPreparedBorrowMarkets(
+	snapshot: YieldsSnapshot,
+	query: ApiQuery
+): Promise<{ rows: Array<MarketTableRow>; availableQuickPicks: Array<number> }> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -217,6 +221,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
 	const pageRows: Array<MarketTableRow> = []
+	const availableValues: Array<number | null> = []
 	for (const row of rows) {
 		if (common.matchesChain && !common.matchesChain(row.chain)) continue
 		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
@@ -224,12 +229,11 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
-		if (minAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd >= minAvailable))
-			continue
-		if (maxAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd <= maxAvailable))
-			continue
 		if (!matchesCollateral([row.tokenKeys?.reference_asset])) continue
 		if (!matchesBorrow([row.tokenKeys?.borrow_token])) continue
+		// The chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+		availableValues.push(row.available_borrow_usd)
+		if (!inRange(row.available_borrow_usd, minAvailable, maxAvailable)) continue
 
 		const marketRow = toMarketTableRow(row, window, components)
 		// Outbound link: the protocol's referral rides on the market's own URL when it can, else
@@ -249,7 +253,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 		pageRows.push(marketRow)
 	}
 
-	return sortYieldsRows<MarketTableRow, MarketSortKey>({
+	const sorted = sortYieldsRows<MarketTableRow, MarketSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: {
@@ -261,6 +265,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 		},
 		defaultSort: { sortBy: 'available_borrow', sortDesc: true }
 	})
+	return { rows: sorted, availableQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, availableValues) }
 }
 
 export async function getBorrowRoutesPage(
@@ -272,12 +277,15 @@ export async function getBorrowRoutesPage(
 		snapshot,
 		query,
 		prepare: () => buildPreparedBorrowRoutes(snapshot, query),
-		measureBytes: (rows) => rows.length * 1024 + 256
+		measureBytes: (value) => value.rows.length * 1024 + 256
 	})
-	return sliceYieldsPage(prepared, query)
+	return { ...sliceYieldsPage(prepared.rows, query), availableQuickPicks: prepared.availableQuickPicks }
 }
 
-async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<RouteTableRow>> {
+async function buildPreparedBorrowRoutes(
+	snapshot: YieldsSnapshot,
+	query: ApiQuery
+): Promise<{ rows: Array<RouteTableRow>; availableQuickPicks: Array<number> }> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -300,6 +308,7 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
 	const pageRows: Array<RouteTableRow> = []
+	const availableValues: Array<number | null> = []
 	for (const row of rows) {
 		if (common.matchesChain && !common.matchesChain(row.chain)) continue
 		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
@@ -307,23 +316,24 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 		if (memePoolIds && (memePoolIds.has(row.collateral.id) || memePoolIds.has(row.borrow.id))) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
-		const available = row.borrow.available_borrow_usd
-		if (minAvailable != null && !(available != null && available >= minAvailable)) continue
-		if (maxAvailable != null && !(available != null && available <= maxAvailable)) continue
 		if (!matchesCollateral([row.collateralTokenKeys])) continue
 		if (!matchesBorrow([row.borrowTokenKeys])) continue
+		// The chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+		availableValues.push(row.borrow.available_borrow_usd)
+		if (!inRange(row.borrow.available_borrow_usd, minAvailable, maxAvailable)) continue
 
 		pageRows.push(
 			decorateRouteTableRow(row, window, components, depegByPool, raiseValuationsUsd, referralUrls, riskCovered)
 		)
 	}
 
-	return sortYieldsRows<RouteTableRow, RouteSortKey>({
+	const sorted = sortYieldsRows<RouteTableRow, RouteSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: ROUTE_SORT_ACCESSORS,
 		defaultSort: DEFAULT_ROUTE_SORT
 	})
+	return { rows: sorted, availableQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, availableValues) }
 }
 
 export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, tokenKeys: Array<string>) {

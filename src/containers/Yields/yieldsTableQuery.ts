@@ -17,6 +17,11 @@ export type YieldsPaginatedTableResponse<TRow> = {
 	hasMore: boolean
 	// Median APY of the full filtered set, all pages (earn route only).
 	medianApy?: number | null
+	// Min chips for each range filter the route serves, from `rangeQuickPicks`: earn has TVL and APY,
+	// the borrow and loop routes have available liquidity.
+	tvlQuickPicks?: Array<number>
+	apyQuickPicks?: Array<number>
+	availableQuickPicks?: Array<number>
 }
 
 function parsePositiveIntegerQueryParam(value: ParsedUrlQuery[string], fallback: number): number {

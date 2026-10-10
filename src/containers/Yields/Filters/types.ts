@@ -24,13 +24,14 @@ export interface IDropdownMenusProps {
 	categoriesLabel?: string
 	categoryList?: Array<string>
 	attributeIds?: Array<AttributeId>
-	tvlRange?: boolean
+	// Each range filter shows when its min chips are given; the server counts them per query (`rangeQuickPicks`).
+	tvlRange?: ReadonlyArray<number>
 	// Opt-in (/yields): trigger label override for the TVL range (defaults to 'TVL Range').
 	tvlRangeLabel?: string
 	// Optional label override (defaults to 'Clear filters').
 	resetFiltersLabel?: string
-	apyRange?: boolean
-	availableRange?: boolean
+	apyRange?: ReadonlyArray<number>
+	availableRange?: ReadonlyArray<number>
 	resetFilters?: boolean
 	nestedMenu?: boolean
 	prepareCsv?: PrepareYieldCsv

@@ -32,12 +32,17 @@ export type TokenYieldsHydration = {
 	pageSize: number
 	// Resolved token option keys the client re-fetches full data with.
 	tokenKeys: Array<string>
+	// The range chips over every row, since `rows` holds only the first page.
+	tvlQuickPicks: Array<number>
+	apyQuickPicks: Array<number>
 }
 
 export type TokenBorrowRoutesHydration = {
 	data: TokenBorrowRoutesData
 	counts: TokenBorrowRoutesCounts
 	chainLists: TokenBorrowRoutesChainLists
+	// The Available chips over every route, since `data` holds only the first page of each tab.
+	availableQuickPicks: { useAsCollateral: Array<number>; borrowThis: Array<number> }
 	pageSize: number
 	// Resolved token option keys the client re-fetches full data with.
 	tokenKeys: Array<string>

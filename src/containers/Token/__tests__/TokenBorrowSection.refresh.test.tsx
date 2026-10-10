@@ -129,6 +129,7 @@ test.each(SCENARIOS)(
 			},
 			counts: { useAsCollateral: 2, borrowThis: 2 },
 			chainLists: { useAsCollateral: ['Ethereum'], borrowThis: ['Ethereum'] },
+			availableQuickPicks: { useAsCollateral: [], borrowThis: [] },
 			pageSize: 1
 		}
 		let collateral = Promise.withResolvers<Response>()

@@ -54,7 +54,9 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		rowCount: POOLS.length,
 		chainList: ['Ethereum'],
 		pageSize: 1,
-		tokenKeys: ['asset:doge']
+		tokenKeys: ['asset:doge'],
+		tvlQuickPicks: [],
+		apyQuickPicks: []
 	}
 	const pending = { response: Promise.withResolvers<Response>() }
 	http.serve({ '/api/public/yields/earn': () => pending.response.promise })

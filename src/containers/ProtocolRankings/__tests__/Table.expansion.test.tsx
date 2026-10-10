@@ -43,7 +43,8 @@ const initialPage = {
 	snapshot: 'abcdefghijklmnopqrst',
 	total: 1,
 	hasMore: false,
-	availableActivityMetrics: []
+	availableActivityMetrics: [],
+	tvlQuickPicks: []
 } satisfies ProtocolRankingInitialPage
 
 const searchPage = { ...initialPage, rows: [parent] } satisfies ProtocolRankingPage<IProtocol>

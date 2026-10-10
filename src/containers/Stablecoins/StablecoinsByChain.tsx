@@ -17,6 +17,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
+import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useSelectionIntent } from '~/components/Select/localSelection'
@@ -220,6 +221,18 @@ export function StablecoinsByChain({
 		() => filterStablecoinAssets(filteredPeggedAssets, stablecoinFilterState),
 		[filteredPeggedAssets, stablecoinFilterState]
 	)
+	// Counted without the mcap range, so applying a chip leaves the other chips in place.
+	const mcapQuickPicks = React.useMemo(() => {
+		const mcaps: Array<number | null> = []
+		for (const asset of filterStablecoinAssets(filteredPeggedAssets, {
+			...stablecoinFilterState,
+			minMcap: null,
+			maxMcap: null
+		})) {
+			mcaps.push(asset.mcap)
+		}
+		return rangeQuickPicks(USD_QUICK_PICK_LADDER, mcaps)
+	}, [filteredPeggedAssets, stablecoinFilterState])
 
 	const chainOptions = React.useMemo(
 		() => ['All', ...chains].map((label) => ({ label, to: handleRouting(label, router.query) })),
@@ -490,6 +503,7 @@ export function StablecoinsByChain({
 				pathname={selectedChain === 'All' ? '/stablecoins' : `/stablecoins/${selectedChain}`}
 				availableBackings={availableBackings}
 				availablePegTypes={availablePegTypes}
+				mcapQuickPicks={mcapQuickPicks}
 			/>
 
 			<SummaryCardGrid>

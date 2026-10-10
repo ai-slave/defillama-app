@@ -1,3 +1,4 @@
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean, queryIntClamped } from '~/server/api/params'
@@ -83,12 +84,15 @@ export async function getLoopsPage(
 		snapshot,
 		query,
 		prepare: () => buildPreparedLoops(snapshot, query),
-		measureBytes: (rows) => rows.length * 1024 + 256
+		measureBytes: (value) => value.rows.length * 1024 + 256
 	})
-	return sliceYieldsPage(prepared, query)
+	return { ...sliceYieldsPage(prepared.rows, query), availableQuickPicks: prepared.availableQuickPicks }
 }
 
-async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<LoopTableRow>> {
+async function buildPreparedLoops(
+	snapshot: YieldsSnapshot,
+	query: ApiQuery
+): Promise<{ rows: Array<LoopTableRow>; availableQuickPicks: Array<number> }> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -110,17 +114,17 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 	const matchesToken = createTokensMatcher(common.tokens)
 
 	const pageRows: Array<LoopTableRow> = []
+	const availableValues: Array<number | null> = []
 	for (const row of rows) {
 		if (common.matchesChain && !common.matchesChain(row.chain)) continue
 		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
-		if (minAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd >= minAvailable))
-			continue
-		if (maxAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd <= maxAvailable))
-			continue
 		if (!matchesToken([row.tokenKeys?.reference_asset])) continue
+		// The chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+		availableValues.push(row.available_borrow_usd)
+		if (!inRange(row.available_borrow_usd, minAvailable, maxAvailable)) continue
 
 		const loopRow = toLoopTableRow(row, window, components, loopCount)
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
@@ -138,7 +142,7 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 		pageRows.push(loopRow)
 	}
 
-	return sortYieldsRows<LoopTableRow, LoopSortKey>({
+	const sorted = sortYieldsRows<LoopTableRow, LoopSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: {
@@ -151,4 +155,5 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 		},
 		defaultSort: { sortBy: 'loop_apy', sortDesc: true }
 	})
+	return { rows: sorted, availableQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, availableValues) }
 }

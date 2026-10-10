@@ -3,19 +3,19 @@ import { useRouter } from 'next/router'
 import type { FormEvent } from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatPercent } from '~/utils/numberFormat'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import { pushYieldsQuery } from '../queryUpdates.client'
-
-const APY_MIN_PRESETS = [5, 10, 20, 50].map((value) => ({ label: `${value}%`, value }))
 
 interface IAPYRange {
 	nestedMenu?: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
 	size?: 'sm' | 'md'
+	/** Min chips from `rangeQuickPicks`, counted over the rows the other filters keep. */
+	quickPicks: ReadonlyArray<number>
 }
 
-export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
+export function APYRange({ nestedMenu, placement, size = 'sm', quickPicks }: IAPYRange) {
 	const router = useRouter()
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -59,7 +59,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 					{min || max ? (
 						<>
 							<span>APY: </span>
-							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
+							<span className="text-link">{`${formatPercent(min, { input: 'percent' }) ?? 'min'} - ${formatPercent(max, { input: 'percent' }) ?? 'max'}`}</span>
 						</>
 					) : (
 						<span>APY</span>
@@ -67,7 +67,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 				</>
 			}
 			variant="secondary"
-			quickPicks={APY_MIN_PRESETS}
+			quickPicks={quickPicks.map((value) => ({ label: formatPercent(value, { input: 'percent' }), value }))}
 			onSubmit={handleSubmit}
 			onClear={handleClear}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}

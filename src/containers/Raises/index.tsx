@@ -26,13 +26,14 @@ interface RaisesContainerProps {
 function RaisesContainer({ raises, investors, rounds, sectors, chains, investorName }: RaisesContainerProps) {
 	const { pathname } = useRouter()
 
-	const { filteredRaisesList, hasActiveFilters, fundingSummary, monthlyInvestmentChart } = useRaisesData({
-		raises,
-		investors,
-		rounds,
-		sectors,
-		chains
-	})
+	const { filteredRaisesList, hasActiveFilters, amountQuickPicks, fundingSummary, monthlyInvestmentChart } =
+		useRaisesData({
+			raises,
+			investors,
+			rounds,
+			sectors,
+			chains
+		})
 	const deferredMonthlyInvestmentChart = React.useDeferredValue(monthlyInvestmentChart)
 	const monthlyInvestmentTitle = investorName ? `${investorName} Monthly Funding` : 'Monthly Funding'
 
@@ -58,6 +59,7 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 			</Announcement>
 			<RaisesFilters
 				hasActiveFilters={hasActiveFilters}
+				amountQuickPicks={amountQuickPicks}
 				header={investorName ? `${investorName} raises` : 'Raises'}
 				headingAs="h1"
 				rounds={rounds}

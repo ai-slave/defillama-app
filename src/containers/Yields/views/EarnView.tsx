@@ -226,9 +226,9 @@ function EarnView({
 						<VerifiedFilterToggle nestedMenu />
 					</>
 				}
-				tvlRange
+				tvlRange={data?.tvlQuickPicks ?? []}
 				tvlRangeLabel="TVL"
-				apyRange
+				apyRange={data?.apyQuickPicks ?? []}
 				resetFilters
 				prepareCsv={prepareCsv}
 				watchlist

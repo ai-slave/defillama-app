@@ -7,7 +7,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { RaisesSearch } from '~/containers/Raises/Search'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 interface IDropdownMenusProps {
@@ -19,6 +19,7 @@ interface IDropdownMenusProps {
 	sectors: Array<string>
 	rounds: Array<string>
 	hasActiveFilters: boolean
+	amountQuickPicks: ReadonlyArray<number>
 }
 
 export function RaisesFilters(props: IDropdownMenusProps) {
@@ -39,6 +40,7 @@ function Filters({
 	rounds,
 	hasActiveFilters,
 	pathname,
+	amountQuickPicks,
 	nestedMenu
 }: IDropdownMenusProps & { nestedMenu: boolean }) {
 	const router = useRouter()
@@ -117,7 +119,7 @@ function Filters({
 				/>
 			) : null}
 
-			<RaisedRange nestedMenu={nestedMenu} placement="bottom-start" />
+			<RaisedRange nestedMenu={nestedMenu} placement="bottom-start" quickPicks={amountQuickPicks} />
 
 			<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
 				Reset all filters
@@ -128,22 +130,25 @@ function Filters({
 
 function RaisedRange({
 	nestedMenu,
-	placement
+	placement,
+	quickPicks
 }: {
 	nestedMenu: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
+	quickPicks: ReadonlyArray<number>
 }) {
 	const { min, max, handleSubmit, handleClear } = useRangeFilter('minRaised', 'maxRaised')
 
 	return (
 		<FilterBetweenRange
 			heading="Amount Raised"
+			quickPicks={quickPicks.map((value) => ({ label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS), value }))}
 			trigger={
 				<>
 					{min !== null || max !== null ? (
 						<>
 							<span>Amount Raised: </span>
-							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
+							<span className="text-link">{`${formatUsd(min, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'min'} - ${formatUsd(max, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'max'}`}</span>
 						</>
 					) : (
 						<span>Amount Raised</span>

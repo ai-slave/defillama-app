@@ -1,3 +1,4 @@
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 
 function parseAvailableBound(value: string) {
@@ -20,18 +21,20 @@ export function filterBorrowRoutes({
 	const minAvailableValue = parseAvailableBound(minAvailable)
 	const maxAvailableValue = parseAvailableBound(maxAvailable)
 	const chainSet = new Set(selectedChains)
-
-	return rows.filter((row) => {
-		const rowChain = row.chains[0]
-		const available = row.availableBorrowUsd ?? null
-
-		if (selectedChains.length === 0) return false
-		if (rowChain && !chainSet.has(rowChain)) return false
-		if (minAvailableValue != null && (available == null || available < minAvailableValue)) return false
-		if (maxAvailableValue != null && (available == null || available > maxAvailableValue)) return false
-
-		return true
-	})
+	const filtered: Array<RouteTableRow> = []
+	const availableValues: Array<number | null> = []
+	// Deselect All keeps no routes.
+	if (selectedChains.length > 0) {
+		for (const row of rows) {
+			const rowChain = row.chains[0]
+			if (rowChain && !chainSet.has(rowChain)) continue
+			const available = row.availableBorrowUsd ?? null
+			// The chips count the routes the chain filter keeps, so applying one leaves its own chips in place.
+			availableValues.push(available)
+			if (inRange(available, minAvailableValue, maxAvailableValue)) filtered.push(row)
+		}
+	}
+	return { rows: filtered, availableQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, availableValues) }
 }
 
 /** A partial count means only the hydrated first page is loaded, so the total comes from the snapshot. */

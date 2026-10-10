@@ -178,7 +178,7 @@ function ProtocolYieldsTab({
 	// so the tier is the client's alone.
 	const { hasAccess, isDenied } = useVerifiedAccess()
 	const { defaultColumns } = resolveEarnColumnAccess({ hasAccess, initialVerifiedAccess: false, isDenied })
-	const { rows, total, isLoading, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
+	const { rows, total, data, isLoading, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
 		privateEndpoint: YIELD_EARN_PRIVATE_API,
 		enabled: hasProtocols && preferencesReady,
@@ -201,9 +201,9 @@ function ProtocolYieldsTab({
 				<YieldFilters
 					chainList={chainList}
 					evmChains={evmChains}
-					tvlRange
+					tvlRange={data?.tvlQuickPicks ?? []}
 					tvlRangeLabel="TVL"
-					apyRange
+					apyRange={data?.apyQuickPicks ?? []}
 					showColumns
 					defaultColumns={defaultColumns}
 					apyControls={<ApyViewControls ready={preferencesReady} />}

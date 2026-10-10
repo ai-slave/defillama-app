@@ -95,14 +95,20 @@ export function InvestorContainer({
 	chains,
 	investorName
 }: InvestorContainerProps) {
-	const { filteredRaisesList, hasActiveFilters, raisesByCategory, fundingRoundsByMonthChart, investmentByRounds } =
-		useRaisesData({
-			raises,
-			investors,
-			rounds,
-			sectors,
-			chains
-		})
+	const {
+		filteredRaisesList,
+		hasActiveFilters,
+		amountQuickPicks,
+		raisesByCategory,
+		fundingRoundsByMonthChart,
+		investmentByRounds
+	} = useRaisesData({
+		raises,
+		investors,
+		rounds,
+		sectors,
+		chains
+	})
 	const deferredFundingRoundsByMonthChart = React.useDeferredValue(fundingRoundsByMonthChart)
 	// The pies fold past the series cap; their CSVs and the category list beside them keep every row.
 	const investmentByRoundsSeries = React.useMemo(
@@ -132,6 +138,7 @@ export function InvestorContainer({
 
 			<RaisesFilters
 				hasActiveFilters={hasActiveFilters}
+				amountQuickPicks={amountQuickPicks}
 				header="Raises"
 				headingAs="h2"
 				rounds={rounds}

@@ -131,7 +131,11 @@ export function DefiWatchlistContainer({
 	})
 	const savedChainsList = watchedChainNames.length > 0 ? (chainRowsData ?? EMPTY_SAVED_CHAINS) : EMPTY_SAVED_CHAINS
 
-	const { chainsTableData } = useGroupAndFormatChains({ chains: savedChainsList, category: 'All', hideGroupBy: true })
+	const { chainsTableData, tvlQuickPicks } = useGroupAndFormatChains({
+		chains: savedChainsList,
+		category: 'All',
+		hideGroupBy: true
+	})
 
 	const handleChainSelection = (selectedValues: Array<string>) => {
 		const currentSet = new Set(selectedChainNames)
@@ -215,7 +219,13 @@ export function DefiWatchlistContainer({
 						/>
 					</TableToolbar>
 					{chainsTableData.length > 0 ? (
-						<ChainsByCategoryTable data={chainsTableData} useStickyHeader={false} borderless showByGroup={false} />
+						<ChainsByCategoryTable
+							data={chainsTableData}
+							useStickyHeader={false}
+							borderless
+							showByGroup={false}
+							tvlQuickPicks={tvlQuickPicks}
+						/>
 					) : isLoadingChainRows && watchedChainNames.length > 0 ? (
 						<PanelLoadingStatus />
 					) : (

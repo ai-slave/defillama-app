@@ -32,7 +32,7 @@ describe('server protocol lists', () => {
 		const rows = getProtocolListRows(
 			data([row('Old', 1, 10), row('B', 3, 20), row('A', 3, 30), row('Middle', 2, 40)]),
 			{}
-		)
+		).rows
 		const first = paginateProtocolListRows(rows, 'version', {}, null, 2)
 		const second = paginateProtocolListRows(rows, 'version', {}, first.nextCursor, 2)
 		expect(names(first.rows)).toEqual(['A', 'B'])
@@ -58,7 +58,7 @@ describe('server protocol lists', () => {
 			row('Fork', 4, 20)
 		])
 		const query = { search: 'match', minTvl: '15', sort: 'tvl', order: 'asc', hideForks: 'true' }
-		const rows = getProtocolListRows(source, query)
+		const rows = getProtocolListRows(source, query).rows
 		const first = paginateProtocolListRows(rows, 'v', query, null, 1)
 		expect(names(first.rows)).toEqual(['Match B'])
 		expect(first.total).toBe(2)
@@ -81,14 +81,30 @@ describe('server protocol lists', () => {
 				tvlKeys: ['staking', 'doublecounted'],
 				minTvl: '15',
 				maxTvl: '15'
-			}).map((r) => [r.name, r.tvl])
+			}).rows.map((r) => [r.name, r.tvl])
 		).toEqual([['Dual', 15]])
-		expect(names(getProtocolListRows(source, { chain: 'Base' }))).toEqual(['Dual'])
-		expect(names(getProtocolListRows(source, { category: 'Dexs' }))).toEqual(['Dex'])
-		expect(names(getProtocolListRows(source, { category: 'None' }))).toEqual([])
-		expect(names(getProtocolListRows(source, { chain: 'None' }))).toEqual([])
-		expect(names(getProtocolListRows(source, { hideForks: 'true' }))).toEqual(['Dex', 'Dual'])
+		expect(names(getProtocolListRows(source, { chain: 'Base' }).rows)).toEqual(['Dual'])
+		expect(names(getProtocolListRows(source, { category: 'Dexs' }).rows)).toEqual(['Dex'])
+		expect(names(getProtocolListRows(source, { category: 'None' }).rows)).toEqual([])
+		expect(names(getProtocolListRows(source, { chain: 'None' }).rows)).toEqual([])
+		expect(names(getProtocolListRows(source, { hideForks: 'true' }).rows)).toEqual(['Dex', 'Dual'])
 	})
+	test('counts TVL chips over the searched rows, before the TVL range', () => {
+		const source = data([
+			row('Swap A', 1, 2_000_000),
+			row('Swap B', 2, 1_500_000),
+			row('Swap C', 3, 1_200_000),
+			row('Swap D', 4, 200_000),
+			row('Lend A', 5, 5_000_000_000),
+			row('Lend B', 6, 5_000_000_000),
+			row('Lend C', 7, 5_000_000_000)
+		])
+
+		expect(getProtocolListRows(source, {}).tvlQuickPicks).toEqual([1_000_000, 10_000_000, 100_000_000, 1_000_000_000])
+		expect(getProtocolListRows(source, { search: 'swap' }).tvlQuickPicks).toEqual([1_000_000])
+		expect(getProtocolListRows(source, { search: 'swap', minTvl: '1000000' }).tvlQuickPicks).toEqual([1_000_000])
+	})
+
 	test('keeps unavailable measurements last in either order and preserves zero bounds', () => {
 		const source = data([
 			row('Unknown', 1, null),
@@ -96,15 +112,15 @@ describe('server protocol lists', () => {
 			row('Known', 3, 10),
 			{ ...row('Missing', 4, 100), chainTvls: {} }
 		])
-		expect(names(getProtocolListRows(source, { sort: 'tvl', order: 'asc' }))).toEqual([
+		expect(names(getProtocolListRows(source, { sort: 'tvl', order: 'asc' }).rows)).toEqual([
 			'Zero',
 			'Known',
 			'Missing',
 			'Unknown'
 		])
-		expect(names(getProtocolListRows(source, { sort: 'tvl' }))).toEqual(['Known', 'Zero', 'Missing', 'Unknown'])
-		expect(names(getProtocolListRows(source, { maxTvl: '0' }))).toEqual(['Zero'])
-		expect(names(getProtocolListRows(source, { minTvl: '10' }))).toEqual(['Known'])
+		expect(names(getProtocolListRows(source, { sort: 'tvl' }).rows)).toEqual(['Known', 'Zero', 'Missing', 'Unknown'])
+		expect(names(getProtocolListRows(source, { maxTvl: '0' }).rows)).toEqual(['Zero'])
+		expect(names(getProtocolListRows(source, { minTvl: '10' }).rows)).toEqual(['Known'])
 	})
 	test('sorts and exports funding subtotals and undisclosed counts without losing nulls', () => {
 		const source = data([
@@ -112,7 +128,7 @@ describe('server protocol lists', () => {
 			{ ...row('Zero', 2, 20), raiseSummary: { totalUsd: 0, undisclosedCount: 0 } },
 			{ ...row('Partial', 3, 30), raiseSummary: { totalUsd: 100, undisclosedCount: 1 } }
 		])
-		const rows = getProtocolListRows(source, { sort: 'totalRaised' })
+		const rows = getProtocolListRows(source, { sort: 'totalRaised' }).rows
 		expect(names(rows)).toEqual(['Partial', 'Zero', 'Unknown'])
 		expect(buildProtocolListCsv(rows, 'airdrops')).toBe(
 			'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nPartial,Lending,30,100,1,3,0,0,0\nZero,Lending,20,0,0,2,0,0,0\nUnknown,Lending,10,,2,1,0,0,0'

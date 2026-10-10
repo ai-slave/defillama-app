@@ -31,7 +31,7 @@ export const protocolListsApi = defineApiRoute({
 			}
 			snapshot = latest
 		}
-		const rows = await prepareProtocolListRows(snapshot, query)
+		const { rows, tvlQuickPicks } = await prepareProtocolListRows(snapshot, query)
 		if (csv === 'true')
 			return {
 				status: 200,
@@ -52,6 +52,7 @@ export const protocolListsApi = defineApiRoute({
 						typeof cursor === 'string' ? cursor : null,
 						PROTOCOL_LIST_LIMITS.page
 					),
+					tvlQuickPicks,
 					chainList: snapshot.chainList,
 					categories: snapshot.categories
 				}

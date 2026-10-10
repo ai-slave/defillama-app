@@ -43,6 +43,8 @@ export type ProtocolRankingPage<Row> = {
 	total: number
 	hasMore: boolean
 	availableActivityMetrics: Array<ProtocolRankingActivityMetricKey>
+	// The TVL range's min chips for this query, from `rangeQuickPicks`.
+	tvlQuickPicks: Array<number>
 }
 
 export type ProtocolRankingInitialPage = Omit<ProtocolRankingPage<never>, 'rows'>

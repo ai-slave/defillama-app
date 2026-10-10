@@ -5,6 +5,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { readSelectionFromQuery } from '~/components/Select/query'
@@ -156,6 +157,12 @@ export function HacksContainer({
 		filters.maxLost !== null
 
 	const filteredData = React.useMemo(() => filterHacksRows(data, filters), [data, filters])
+	// Counted without the amount range, so applying a chip leaves the other chips in place.
+	const amountQuickPicks = React.useMemo(() => {
+		const amounts: Array<number | null> = []
+		for (const row of filterHacksRows(data, { ...filters, minLost: null, maxLost: null })) amounts.push(row.amountUsd)
+		return rangeQuickPicks(USD_QUICK_PICK_LADDER, amounts)
+	}, [data, filters])
 
 	const derivedStats = React.useMemo(() => {
 		if (!hasActiveFilters) return null
@@ -187,6 +194,7 @@ export function HacksContainer({
 				techniqueOptions={techniqueOptions}
 				classificationOptions={classificationOptions}
 				hasActiveFilters={hasActiveFilters}
+				amountQuickPicks={amountQuickPicks}
 			/>
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">

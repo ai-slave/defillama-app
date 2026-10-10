@@ -2,7 +2,7 @@ import type * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import type { FormSubmitEvent } from '~/types/forms'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 type QueryUpdates = Record<string, string | Array<string> | undefined>
@@ -10,11 +10,14 @@ type QueryUpdates = Record<string, string | Array<string> | undefined>
 export function AvailableRange({
 	nestedMenu,
 	placement,
-	pushQueryUpdates
+	pushQueryUpdates,
+	quickPicks
 }: {
 	nestedMenu?: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
 	pushQueryUpdates?: (updates: QueryUpdates) => void
+	/** Min chips from `rangeQuickPicks`, counted over the rows the other filters keep. */
+	quickPicks: ReadonlyArray<number>
 }) {
 	const router = useRouter()
 
@@ -51,11 +54,12 @@ export function AvailableRange({
 	return (
 		<FilterBetweenRange
 			heading="Available"
+			quickPicks={quickPicks.map((value) => ({ label: formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS), value }))}
 			trigger={
 				min || max ? (
 					<>
 						<span>Available: </span>
-						<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>
+						<span className="text-link">{`${formatUsd(min, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'min'} - ${formatUsd(max, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'max'}`}</span>
 					</>
 				) : (
 					'Available'

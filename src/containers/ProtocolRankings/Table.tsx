@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
@@ -21,6 +22,7 @@ import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { getProtocolTvlStrike } from '~/containers/ProtocolRankings/tvlStrike'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import {
@@ -339,6 +341,16 @@ function ChainProtocolsTableInner({
 			suppressTvlStrike
 		]
 	)
+	// The server counts remote chips per query. Local tables are short (forks, watchlist, compare), so their chips
+	// take a pass of their own over the rows before the TVL range.
+	const tvlQuickPicks = useMemo(() => {
+		if (remoteEnabled) return remoteRankings.tvlQuickPicks
+		const tvlValues: Array<number | null> = []
+		for (const row of applyProtocolTvlSettings({ protocols, extraTvlsEnabled, minTvl: null, maxTvl: null })) {
+			tvlValues.push(row.tvl?.default.tvl ?? null)
+		}
+		return rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues)
+	}, [extraTvlsEnabled, protocols, remoteEnabled, remoteRankings.tvlQuickPicks])
 
 	const allColumns = useMemo(() => {
 		const customColumnDefs = customColumns.map((col) => {
@@ -621,6 +633,7 @@ function ChainProtocolsTableInner({
 			/>
 			<TVLRange
 				size="md"
+				quickPicks={tvlQuickPicks}
 				onValueChange={(nextMinTvl, nextMaxTvl) => {
 					if (nextMinTvl !== effectiveMinTvl || nextMaxTvl !== effectiveMaxTvl) {
 						userReplacementPendingRef.current = true

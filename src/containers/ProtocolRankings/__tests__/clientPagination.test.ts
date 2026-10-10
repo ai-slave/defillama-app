@@ -20,6 +20,7 @@ const initialState = {
 	total: 3,
 	hasMore: true,
 	availableActivityMetrics: [],
+	tvlQuickPicks: [],
 	isReplacing: false,
 	isLoadingMore: false,
 	error: null as 'replace' | 'append' | null,
@@ -35,6 +36,7 @@ function page(rows: Array<IProtocol>, overrides: Partial<RankingPage> = {}): Ran
 		total: rows.length,
 		hasMore: false,
 		availableActivityMetrics: [],
+		tvlQuickPicks: [],
 		...overrides
 	}
 }
@@ -90,7 +92,8 @@ describe('protocol ranking client request ordering', () => {
 				version: 'v2',
 				total: 1,
 				hasMore: true,
-				availableActivityMetrics: []
+				availableActivityMetrics: [],
+				tvlQuickPicks: []
 			},
 			defaultQuerySignature: protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY)
 		})

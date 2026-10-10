@@ -71,12 +71,12 @@ export function prepareProtocolListRows(snapshot: Snapshot, query: ProtocolListQ
 		signature: protocolListSignature(query),
 		memory,
 		prepare: () => getProtocolListRows(snapshot, query),
-		measureBytes: (rows) => rows.length * 1024
+		measureBytes: (prepared) => prepared.rows.length * 1024
 	})
 }
 export async function getProtocolListInitialProps(kind: ProtocolListKind): Promise<ProtocolListInitialProps> {
 	const snapshot = await getProtocolListSnapshot(kind)
-	const rows = await prepareProtocolListRows(snapshot, {})
+	const { rows, tvlQuickPicks } = await prepareProtocolListRows(snapshot, {})
 	const { rows: protocols, ...protocolList } = paginateProtocolListRows(
 		rows,
 		snapshot.version,
@@ -86,7 +86,7 @@ export async function getProtocolListInitialProps(kind: ProtocolListKind): Promi
 	)
 	return {
 		protocols,
-		protocolList,
+		protocolList: { ...protocolList, tvlQuickPicks },
 		kind,
 		chainList: snapshot.chainList,
 		categories: snapshot.categories

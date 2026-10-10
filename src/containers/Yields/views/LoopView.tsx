@@ -52,7 +52,7 @@ function LoopView({
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
 	}
 
-	const { rows, total, isLoading, rowsQuery, tableProps, buildAllRowsQueryString, query } =
+	const { rows, total, data, isLoading, rowsQuery, tableProps, buildAllRowsQueryString, query } =
 		useYieldsServerTable<LoopTableRow>({
 			endpoint: YIELD_LOOPS_DATASET_API,
 			enabled: normalized,
@@ -62,8 +62,8 @@ function LoopView({
 
 	async function prepareCsv() {
 		const url = `${YIELD_LOOPS_DATASET_API}${buildAllRowsQueryString()}`
-		const data = await fetchJson<LoopRowsResponse>(url)
-		return prepareLoopsCsv(data.rows, query)
+		const csvData = await fetchJson<LoopRowsResponse>(url)
+		return prepareLoopsCsv(csvData.rows, query)
 	}
 
 	return (
@@ -91,7 +91,7 @@ function LoopView({
 				projectList={projectList}
 				projectsLabel="Protocols"
 				attributeIds={attributeIds}
-				availableRange
+				availableRange={data?.availableQuickPicks ?? []}
 				apyControls={
 					<>
 						<ApyViewControls ready={normalized} />

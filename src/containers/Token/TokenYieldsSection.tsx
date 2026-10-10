@@ -130,7 +130,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	const { selectedChains, minTvl, maxTvl, minApy, maxApy } = useFormatYieldQueryParams({ chainList })
 
-	const filteredPools = React.useMemo(
+	const filtered = React.useMemo(
 		() =>
 			filterTokenYieldPools({
 				pools: poolsList,
@@ -143,6 +143,9 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 			}),
 		[chainList.length, maxApy, maxTvl, minApy, minTvl, poolsList, selectedChains]
 	)
+	const filteredPools = filtered.pools
+	// Until the full rows load, the snapshot's chips cover every pool; the first page alone would not.
+	const quickPicks = fetchedRows || !hydration ? filtered : hydration
 
 	const filteredStats = React.useMemo(() => {
 		return getTokenYieldStats(filteredPools)
@@ -231,8 +234,14 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 								{(nestedMenu) => (
 									<>
 										<FilterByChain chainList={chainList} nestedMenu={nestedMenu} size="md" />
-										<TVLRange label="TVL" variant="secondary" nestedMenu={nestedMenu} size="md" />
-										<APYRange nestedMenu={nestedMenu} size="md" />
+										<TVLRange
+											label="TVL"
+											variant="secondary"
+											nestedMenu={nestedMenu}
+											size="md"
+											quickPicks={quickPicks.tvlQuickPicks}
+										/>
+										<APYRange nestedMenu={nestedMenu} size="md" quickPicks={quickPicks.apyQuickPicks} />
 										<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
 											Reset filters
 										</ResetFiltersButton>

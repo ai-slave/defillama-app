@@ -520,7 +520,7 @@ export async function getChainOverviewData({
 		const initialProtocolPage = paginateProtocolRankingRows({
 			snapshot: rankingSnapshotData,
 			query: DEFAULT_PROTOCOL_RANKING_QUERY,
-			rows: await loadPreparedProtocolRankingRows(chain, rankingSnapshotData, DEFAULT_PROTOCOL_RANKING_QUERY),
+			prepared: await loadPreparedProtocolRankingRows(chain, rankingSnapshotData, DEFAULT_PROTOCOL_RANKING_QUERY),
 			limit: PROTOCOL_RANKINGS_LIMITS.initial
 		})
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
@@ -659,7 +659,8 @@ export async function getChainOverviewData({
 				snapshot: initialProtocolPage.snapshot,
 				total: initialProtocolPage.total,
 				hasMore: initialProtocolPage.hasMore,
-				availableActivityMetrics: initialProtocolPage.availableActivityMetrics
+				availableActivityMetrics: initialProtocolPage.availableActivityMetrics,
+				tvlQuickPicks: initialProtocolPage.tvlQuickPicks
 			},
 			tvlChart,
 			tvlChartSummary,

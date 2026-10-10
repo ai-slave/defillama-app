@@ -35,29 +35,53 @@ describe('token yields filters', () => {
 	})
 
 	test('treats every chain selected as no chain filter', () => {
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: ['Base'] }))).toEqual(['base'])
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: ['Base', 'Ethereum'] }))).toEqual([
-			'eth-big',
-			'eth-small',
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: ['Base'] }).pools)).toEqual([
 			'base'
 		])
+		expect(
+			ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: ['Base', 'Ethereum'] }).pools)
+		).toEqual(['eth-big', 'eth-small', 'base'])
 		// A pool whose chain is missing from the chain list still shows while every listed chain is selected.
 		const unlisted = [...POOLS, pool('arbitrum', 'Arbitrum', 10, 1)]
 		expect(
-			ids(filterTokenYieldPools({ pools: unlisted, ...NO_FILTERS, selectedChains: ['Base', 'Ethereum'] }))
+			ids(filterTokenYieldPools({ pools: unlisted, ...NO_FILTERS, selectedChains: ['Base', 'Ethereum'] }).pools)
 		).toEqual(['eth-big', 'eth-small', 'base', 'arbitrum'])
 	})
 
 	test('shows no pools after Deselect All', () => {
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: [] }))).toEqual([])
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: [] }).pools)).toEqual([])
 	})
 
 	test('drops pools without a TVL or APY once that bound is set', () => {
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minTvl: 10_000, maxTvl: 100_000 }))).toEqual([
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minTvl: 10_000, maxTvl: 100_000 }).pools)).toEqual([
 			'base'
 		])
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minApy: 1 }))).toEqual(['eth-big', 'eth-small'])
-		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minTvl: 5_000_000 }))).toEqual([])
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minApy: 1 }).pools)).toEqual([
+			'eth-big',
+			'eth-small'
+		])
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, minTvl: 5_000_000 }).pools)).toEqual([])
+	})
+})
+
+describe('token yields range chips', () => {
+	test('count each range over the pools every other filter keeps', () => {
+		const pools = [
+			pool('a', 'Ethereum', 2_000_000, 30),
+			pool('b', 'Ethereum', 1_500_000, 25),
+			pool('c', 'Ethereum', 1_200_000, 22),
+			pool('d', 'Base', 300_000, 6),
+			pool('e', 'Base', 200_000, 7),
+			pool('f', 'Base', 50_000, 1)
+		]
+		expect(filterTokenYieldPools({ pools, ...NO_FILTERS })).toMatchObject({
+			tvlQuickPicks: [100_000, 1_000_000],
+			apyQuickPicks: [5, 10, 20]
+		})
+		expect(filterTokenYieldPools({ pools, ...NO_FILTERS, minTvl: 1_000_000 })).toMatchObject({
+			tvlQuickPicks: [100_000, 1_000_000],
+			apyQuickPicks: []
+		})
 	})
 })
 

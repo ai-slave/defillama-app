@@ -43,7 +43,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	const { snapshot, mismatch } = await loadProtocolRankingSnapshot(chain, requestedSnapshot)
 	if (mismatch) return res.status(409).json({ error: 'snapshot_mismatch', snapshot: snapshot.snapshot })
 
-	const rows = await loadPreparedProtocolRankingRows(chain, snapshot, query)
+	const { rows } = await loadPreparedProtocolRankingRows(chain, snapshot, query)
 	const csv = buildProtocolRankingsCsv({ rows, columns: body.columns as Array<ProtocolRankingExportColumn> })
 	res.setHeader('Cache-Control', 'no-store')
 	res.setHeader('Content-Type', 'text/csv; charset=utf-8')

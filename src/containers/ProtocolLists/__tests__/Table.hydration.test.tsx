@@ -72,7 +72,7 @@ const props: ProtocolListInitialProps = {
 	protocols: [protocol],
 	chainList: ['Ethereum', 'Base'],
 	categories: ['Lending'],
-	protocolList: { version: 'abcdefghijklmnopqrst', nextCursor: 'next', total: 2, hasMore: true }
+	protocolList: { version: 'abcdefghijklmnopqrst', nextCursor: 'next', total: 2, hasMore: true, tvlQuickPicks: [] }
 }
 
 describe('RecentlyListedProtocolsTable', () => {

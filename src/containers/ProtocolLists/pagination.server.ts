@@ -1,3 +1,4 @@
+import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { compareTableSortValues, cursorTablePage } from '~/server/tablePages/cursorPage.server'
 import { hashTableQuerySignature } from '~/server/tablePages/preparedRows.server'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
@@ -16,16 +17,11 @@ function filterRows(data: IRecentProtocolsPageData, query: ProtocolListQuery) {
 	const { protocols, categories, forkedList } = data
 	const { selectedChains, selectedCategories } = protocolListSelection(query, data.chainList, categories)
 	const toHideForkedProtocols = query.hideForks === 'true'
-	const minTvl = parseNumberQueryParam(query.minTvl)
-	const maxTvl = parseNumberQueryParam(query.maxTvl)
 	const rawKeys = query.tvlKeys ?? []
 	const tvlKeys = (typeof rawKeys === 'string' ? [rawKeys] : rawKeys).filter(isProtocolListTvlKey)
 	const categoriesToFilterSet = new Set(selectedCategories.map((selectedCategory) => selectedCategory.toLowerCase()))
 
 	const chainsToSelectSet = new Set(selectedChains.map((t) => t.toLowerCase()))
-
-	// TVL range should work with min-only, max-only, or both.
-	const isValidTvlRange = minTvl != null || maxTvl != null
 
 	const filteredProtocols: Array<IRecentProtocol> = []
 
@@ -56,16 +52,7 @@ function filterRows(data: IRecentProtocolsPageData, query: ProtocolListQuery) {
 	}
 
 	// Apply extraTvl toggles (staking/pool2/borrowed)
-	const withExtraTvl = applyExtraTvl(filteredProtocols, Object.fromEntries(tvlKeys.map((key) => [key, true])))
-
-	if (isValidTvlRange) {
-		const rangeFiltered = withExtraTvl.filter(
-			(p) => p.tvl != null && (minTvl != null ? p.tvl >= minTvl : true) && (maxTvl != null ? p.tvl <= maxTvl : true)
-		)
-		return rangeFiltered
-	}
-
-	return withExtraTvl
+	return applyExtraTvl(filteredProtocols, Object.fromEntries(tvlKeys.map((key) => [key, true])))
 }
 export function protocolListSortValue(row: RecentProtocolTableRow, query: ProtocolListQuery) {
 	switch (query.sort) {
@@ -89,7 +76,16 @@ export function protocolListSortValue(row: RecentProtocolTableRow, query: Protoc
 }
 export function getProtocolListRows(data: IRecentProtocolsPageData, query: ProtocolListQuery) {
 	const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : ''
-	const rows = filterRows(data, query).filter((row) => row.name.toLowerCase().includes(search))
+	const minTvl = parseNumberQueryParam(query.minTvl)
+	const maxTvl = parseNumberQueryParam(query.maxTvl)
+	const tvlValues: Array<number | null> = []
+	const rows: Array<RecentProtocolTableRow> = []
+	for (const row of filterRows(data, query)) {
+		if (!row.name.toLowerCase().includes(search)) continue
+		// The chips count the rows every other filter keeps, so applying one leaves its own chips in place.
+		tvlValues.push(row.tvl)
+		if (inRange(row.tvl, minTvl, maxTvl)) rows.push(row)
+	}
 	rows.sort(
 		(a, b) =>
 			compareTableSortValues(
@@ -98,8 +94,11 @@ export function getProtocolListRows(data: IRecentProtocolsPageData, query: Proto
 				query.order === 'asc' ? 'asc' : 'desc'
 			) || (a.defillamaId < b.defillamaId ? -1 : a.defillamaId > b.defillamaId ? 1 : 0)
 	)
-	// Chain snapshots and additive sections are needed only by the server transform.
-	return rows.map((row) => ({ ...row, chainTvls: {}, extraTvl: {} }))
+	return {
+		// Chain snapshots and additive sections are needed only by the server transform.
+		rows: rows.map((row) => ({ ...row, chainTvls: {}, extraTvl: {} })),
+		tvlQuickPicks: rangeQuickPicks(USD_QUICK_PICK_LADDER, tvlValues)
+	}
 }
 export function paginateProtocolListRows(
 	rows: Array<RecentProtocolTableRow>,

@@ -57,7 +57,7 @@ describe('token borrow routes', () => {
 			selectedChains: ['Ethereum'],
 			minAvailable: '10000',
 			maxAvailable: ''
-		})
+		}).rows
 
 		expect(filtered).toHaveLength(1)
 		expect(filtered.map((row) => row.borrowSymbol)).toEqual(['USDC'])
@@ -72,7 +72,7 @@ describe('token borrow routes', () => {
 			selectedChains: ['Ethereum'],
 			minAvailable: 'not-a-number',
 			maxAvailable: 'also-not-a-number'
-		})
+		}).rows
 
 		expect(filtered).toHaveLength(2)
 	})
@@ -83,7 +83,7 @@ describe('token borrow routes', () => {
 			selectedChains: [],
 			minAvailable: '',
 			maxAvailable: ''
-		})
+		}).rows
 
 		expect(filtered).toHaveLength(0)
 	})

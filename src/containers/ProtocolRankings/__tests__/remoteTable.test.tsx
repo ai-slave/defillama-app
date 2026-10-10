@@ -15,7 +15,8 @@ const initialPage = {
 	snapshot: 'abcdefghijklmnopqrst',
 	total: 2,
 	hasMore: true,
-	availableActivityMetrics: []
+	availableActivityMetrics: [],
+	tvlQuickPicks: []
 } satisfies ProtocolRankingInitialPage
 
 type HookResult = ReturnType<typeof useRemoteProtocolRankingsTable>

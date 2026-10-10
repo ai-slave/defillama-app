@@ -28,6 +28,10 @@ interface IFilterBetweenRange {
 	maxLabel?: string
 	minInputProps?: InputHTMLAttributes<HTMLInputElement>
 	maxInputProps?: InputHTMLAttributes<HTMLInputElement>
+	/**
+	 * Min chips. Take the values from `rangeQuickPicks` over the rows the other filters keep, never a fixed
+	 * list: a fixed step empties the table on a page whose rows all sit below it.
+	 */
 	quickPicks?: ReadonlyArray<RangeQuickPick>
 }
 

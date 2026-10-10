@@ -131,7 +131,7 @@ export function RecentlyListedProtocolsTable({
 						size="md"
 					/>
 				) : null}
-				<TVLRange size="md" />
+				<TVLRange size="md" quickPicks={pages.tvlQuickPicks} />
 				<CSVDownloadButton onClick={downloadCsv} isLoading={false} smol size="md" />
 			</TableToolbar>
 			<div className="relative">

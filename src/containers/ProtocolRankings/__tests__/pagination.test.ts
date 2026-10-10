@@ -18,7 +18,7 @@ function queryProtocolRankingSnapshot({
 	return paginateProtocolRankingRows({
 		snapshot: data,
 		query,
-		rows: getProtocolRankingRows(data, query),
+		prepared: getProtocolRankingRows(data, query),
 		cursor,
 		...(limit === undefined ? {} : { limit })
 	})
@@ -108,6 +108,25 @@ describe('protocol ranking pagination', () => {
 
 		expect(page.total).toBe(1)
 		expect(page.rows[0]?.id).toBe('p-73')
+	})
+
+	test('counts TVL chips over the searched rows, before the TVL range', () => {
+		const data = snapshot('global', [
+			row('swap-a', 'Swap A', 2_000_000),
+			row('swap-b', 'Swap B', 1_500_000),
+			row('swap-c', 'Swap C', 1_200_000),
+			row('swap-d', 'Swap D', 200_000),
+			row('lend-a', 'Lend A', 5_000_000_000),
+			row('lend-b', 'Lend B', 5_000_000_000),
+			row('lend-c', 'Lend C', 5_000_000_000)
+		])
+		const chips = (query: Partial<ProtocolRankingQuery>) =>
+			queryProtocolRankingSnapshot({ snapshot: data, query: { ...DEFAULT_PROTOCOL_RANKING_QUERY, ...query } })
+				.tvlQuickPicks
+
+		expect(chips({})).toEqual([1_000_000, 10_000_000, 100_000_000, 1_000_000_000])
+		expect(chips({ search: 'swap' })).toEqual([1_000_000])
+		expect(chips({ search: 'swap', minTvl: 1_000_000 })).toEqual([1_000_000])
 	})
 
 	test('rejects a cursor from a different snapshot or query', () => {

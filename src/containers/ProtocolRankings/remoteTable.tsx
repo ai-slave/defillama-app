@@ -156,7 +156,8 @@ export function useRemoteProtocolRankingsTable({
 		snapshot: 'local',
 		total: initialRows.length,
 		hasMore: false,
-		availableActivityMetrics: []
+		availableActivityMetrics: [],
+		tvlQuickPicks: []
 	}
 	const querySignature = protocolRankingQuery.signature(query)
 	const pages = useTablePages<IProtocol, RankingPage>({
