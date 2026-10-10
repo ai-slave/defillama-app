@@ -185,6 +185,22 @@ describe('public chain charts', () => {
 		expect(response).toMatchObject({ status: 200, body: expected })
 		expect(response.cache).toContain('s-maxage=')
 	})
+	test('serves the default TVL and its setting series in ms for a chain and for all chains, and refuses an unknown chain', async () => {
+		serve({
+			[`${SERVER_URL}/lite/charts/Base`]: { tvl: [[1_700_000_000, 10]], staking: [[1_700_000_000, 2.7]] },
+			[`${SERVER_URL}/lite/charts`]: { tvl: [[1_700_000_000, 10]], borrowed: [[1_700_000_000, 5]] }
+		})
+
+		const base = await run({ kind: 'extra-tvl', chain: 'base' })
+		expect(base.status).toBe(200)
+		expect(base.body.tvlChart).toEqual([[1_700_000_000_000, 10]])
+		expect(base.body.extraTvlCharts.staking).toEqual({ 1_700_000_000_000: 2 })
+		expect(base.body.extraTvlCharts.borrowed).toEqual({})
+		expect((await run({ kind: 'extra-tvl', chain: 'All' })).body.extraTvlCharts.borrowed).toEqual({
+			1_700_000_000_000: 5
+		})
+		expect((await run({ kind: 'extra-tvl', chain: 'nowhere' })).status).toBe(404)
+	})
 	test('accepts lowercase all for aggregate adapter charts', async () => {
 		serve({ [`${V2_SERVER_URL}/chart/fees`]: [[1, 42]] })
 		expect(await run({ kind: 'adapter-chain', adapterType: 'fees', chain: 'all' })).toMatchObject({

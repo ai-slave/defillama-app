@@ -625,6 +625,22 @@ function withoutComments(content) {
 	return content.replace(/(^|\s)\/\*[\s\S]*?\*\//g, '$1').replace(/(^|\s)\/\/.*$/gm, '$1')
 }
 
+// A JSX opening tag from its `<`: braces and quotes keep a `>` inside a prop value or an arrow from ending it.
+function openingTag(source, start) {
+	let depth = 0
+	let quote = null
+	for (let i = start + 1; i < source.length; i++) {
+		const char = source[i]
+		if (quote) {
+			if (char === quote) quote = null
+		} else if (char === '"' || char === "'" || char === '`') quote = char
+		else if (char === '{') depth++
+		else if (char === '}') depth--
+		else if (char === '>' && depth === 0) return source.slice(start, i + 1)
+	}
+	return source.slice(start)
+}
+
 function matchUngatedHover(content) {
 	// Walk the CSS blocks: a `:hover` selector counts unless an enclosing @media requires `hover: hover`.
 	// Scrollbar thumbs are left out: only a pointer can reach them.
@@ -1041,6 +1057,36 @@ const RULES = [
 			if (dynamicCharts && !/\bloading\s*:/.test(content)) found.push(...dynamicCharts)
 			return found.length > 0 ? found : null
 		},
+		skipTests: true
+	},
+	{
+		id: 'kept-mounted-surface',
+		exceptions: {
+			'src/containers/Articles/editor/ArticleChartPicker.tsx':
+				'the editor renders the picker only while it is open (chartDialogOpen), and a new key starts each opening',
+			'src/containers/Articles/editor/ArticleEditorControls.tsx':
+				'the table toolbar mounts only while a table is selected, and its store opens on mount',
+			'src/containers/Articles/editor/ArticleMetaDialog.tsx':
+				'holds unsaved schedule, guest-author and topic drafts in local state, which unmounting on hide would drop; editor page only',
+			'src/containers/Articles/editor/SuggestionPopover.tsx':
+				'mounted only while a suggestion is active, on a store that starts open'
+		},
+		description:
+			'a dialog, side sheet, popover, menu or hovercard that stays in the DOM while closed: Ariakit keeps a closed surface mounted unless it unmounts on hide, so pass `unmountOnHide`, or render it only while open with a literal `open`. A surface kept mounted on purpose (`unmountOnHide={false}`) renders its content once `useDeferredValue(true, false) || open` holds, so it is never built inside hydration (src/ui/PopoverSurface.tsx, src/ui/Dialog.tsx)',
+		match: (content) => {
+			const source = withoutComments(content)
+			const found = []
+			for (const surface of source.matchAll(
+				/<(?:Ariakit\.(?:Dialog|Popover|Menu|SelectPopover|ComboboxPopover|Hovercard)|Dialog|SideSheet)\b/g
+			)) {
+				const tag = openingTag(source, surface.index)
+				if (!/\bunmountOnHide\b/.test(tag) && !/\sopen(?=[\s/>])/.test(tag)) found.push(surface[0])
+			}
+			if (/unmountOnHide=\{false\}/.test(source) && !/useDeferredValue\(true, false\)/.test(source))
+				found.push('unmountOnHide={false}')
+			return found.length > 0 ? found : null
+		},
+		uiOwned: true,
 		skipTests: true
 	},
 	{

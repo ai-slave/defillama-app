@@ -462,6 +462,7 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
 				portal
+				unmountOnHide
 				gutter={6}
 				overflowPadding={16}
 				className={`${popoverHovercardSurfaceStyles} flex w-96 min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 p-3`}

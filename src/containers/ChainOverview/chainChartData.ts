@@ -31,7 +31,7 @@ type FetchedChainChartLabel = Exclude<
 	| 'Devs Commits'
 >
 
-function buildChainChartApiUrl(params: Record<string, string | undefined>) {
+export function buildChainChartApiUrl(params: Record<string, string | undefined>) {
 	const searchParams = new URLSearchParams()
 	for (const key in params) {
 		const value = params[key]

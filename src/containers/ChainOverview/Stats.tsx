@@ -33,7 +33,9 @@ const normalizeChartInterval = (value: string | null | undefined): LowercaseDwmc
 	}
 	return null
 }
-interface IStatsProps extends IChainOverviewData {
+interface IStatsProps extends Omit<IChainOverviewData, 'extraTvlCharts'> {
+	/** Compare chains passes the series its data carries; chain pages pass null and load them on demand. */
+	extraTvlCharts: IChainOverviewData['extraTvlCharts'] | null
 	hideChart?: boolean
 }
 
@@ -77,19 +79,27 @@ export function Stats(props: IStatsProps) {
 		}
 	}, [searchParams, props.chainTokenInfo, props.metadata, props.charts])
 
-	const { totalValueUSD, change24h, valueChange24hUSD, finalCharts, valueSymbol, loadingCharts, failedMetrics } =
-		useFetchChainChartData({
-			denomination,
-			selectedChain: props.metadata.name,
-			tvlChart: props.tvlChart,
-			tvlChartSummary: props.tvlChartSummary,
-			extraTvlCharts: props.extraTvlCharts,
-			tvlSettings,
-			chainGeckoId,
-			gasTokenGeckoId: props.metadata.gasTokenGeckoId ?? null,
-			toggledCharts,
-			groupBy
-		})
+	const {
+		totalValueUSD,
+		change24h,
+		valueChange24hUSD,
+		finalCharts,
+		valueSymbol,
+		loadingCharts,
+		failedMetrics,
+		tvlSettingsFailed
+	} = useFetchChainChartData({
+		denomination,
+		selectedChain: props.metadata.name,
+		tvlChart: props.tvlChart,
+		tvlChartSummary: props.tvlChartSummary,
+		extraTvlCharts: props.extraTvlCharts,
+		tvlSettings,
+		chainGeckoId,
+		gasTokenGeckoId: props.metadata.gasTokenGeckoId ?? null,
+		toggledCharts,
+		groupBy
+	})
 
 	const { mutate: downloadAndPrepareChartCsv, isPending: isDownloadingChartCsv } = useMutation({
 		mutationFn: async () => {
@@ -207,6 +217,7 @@ export function Stats(props: IStatsProps) {
 					valueSymbol={valueSymbol}
 					loadingCharts={loadingCharts}
 					failedMetrics={failedMetrics}
+					tvlSettingsFailed={tvlSettingsFailed}
 					darkMode={darkMode}
 				/>
 			) : null}

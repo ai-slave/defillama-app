@@ -22,6 +22,17 @@ function resizeChart(instanceRef: ChartInstanceRef) {
 	instance.resize()
 }
 
+// A ResizeObserver reports every element once when it starts observing, which lands right after the chart's first
+// render, and ECharts lays every series out again on resize() even at the same size. An observed box that still
+// matches the drawn size is left alone.
+function resizeChangedChart(instanceRef: ChartInstanceRef) {
+	const instance = instanceRef.current
+	if (!instance || instance.isDisposed()) return
+	const dom = instance.getDom()
+	if (dom.clientWidth === instance.getWidth() && dom.clientHeight === instance.getHeight()) return
+	instance.resize()
+}
+
 function resizeCharts() {
 	for (const [instanceRef, element] of chartElementsByInstanceRef) {
 		if (element) {
@@ -57,7 +68,7 @@ function observeChartElement(instanceRef: ChartInstanceRef, element: Element, op
 					registration.onVisibilityChange?.(false)
 					continue
 				}
-				resizeChart(registration.instanceRef)
+				resizeChangedChart(registration.instanceRef)
 				registration.onResize?.()
 				registration.onVisibilityChange?.(true)
 			}

@@ -91,6 +91,8 @@ interface ChainChartPanelProps {
 	/** Labels of the metrics still loading; their chips show a spinner and the chart waits for all of them. */
 	loadingCharts: Array<string>
 	failedMetrics: Array<ChainChartLabels>
+	/** A TVL setting is on but its series failed to load, so TVL shows the default. */
+	tvlSettingsFailed: boolean
 	darkMode: boolean
 }
 
@@ -109,6 +111,7 @@ export function ChainChartPanel({
 	valueSymbol,
 	loadingCharts,
 	failedMetrics,
+	tvlSettingsFailed,
 	darkMode
 }: ChainChartPanelProps) {
 	const router = useRouter()
@@ -287,6 +290,7 @@ export function ChainChartPanel({
 			{isClient && loadingCharts.length === 0 ? (
 				<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
 			) : null}
+			{tvlSettingsFailed ? <FailedDataNote labels={['your TVL settings']} shows="TVL leaves them out." /> : null}
 
 			<ChartPanelBody>
 				{loadingCharts.length > 0 ? (

@@ -1,7 +1,13 @@
 import { expect, test } from 'vitest'
 import { needsMeasuring, overflowReducer } from '../LinksWithDropdown'
 
-const START = { renderMenuOnly: false, firstOverflowIndex: null, isMeasuring: true, measuredSignature: null }
+const START = {
+	renderMenuOnly: false,
+	firstOverflowIndex: null,
+	isMeasuring: true,
+	measureAllSignature: null,
+	measuredSignature: null
+}
 
 test('a measured link set renders from its measurement, and a different link set measures again', () => {
 	const measured = overflowReducer(START, {
@@ -36,6 +42,7 @@ test('a resize recalculation keeps the link set it was measured for', () => {
 		renderMenuOnly: false,
 		firstOverflowIndex: 1,
 		isMeasuring: false,
+		measureAllSignature: null,
 		measuredSignature: 'a\u0001b'
 	})
 	expect(needsMeasuring(resized, 'a\u0001b')).toBe(false)

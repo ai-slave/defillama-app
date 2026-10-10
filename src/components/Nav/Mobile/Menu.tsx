@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useDeferredValue, useState } from 'react'
 import { Button, StableLabel } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { catchLostFocus } from '~/ui/focus'
@@ -32,6 +32,11 @@ export function Menu({
 	asPath: string
 }) {
 	const [show, setShow] = useState(false)
+	// The closed drawer keeps its state between opens, so its links are built once, in a background render after
+	// hydration instead of inside it. A tap before that render finishes paints the drawer and its close button at once,
+	// and the links fill in during the slide.
+	const navReady = useDeferredValue(true, false) || show
+	const linksReady = useDeferredValue(navReady)
 	const dashboardsDisclosure = useDashboardsDisclosure()
 	// An explicit store: inside the Tooltip's provider the disclosure would otherwise open the tooltip's own store.
 	const dialog = Ariakit.useDialogStore({ open: show, setOpen: setShow })
@@ -58,68 +63,84 @@ export function Menu({
 				unmountOnHide={false}
 				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
 			>
-				<nav
-					ref={observeMenu}
-					data-menu-layout="mobile"
-					onClickCapture={(event) => {
-						trackMenuClick(event)
-						// Any link in the drawer navigates, so following one closes the drawer.
-						if (event.target instanceof Element && event.target.closest('a[href]')) setShow(false)
-					}}
-					onAuxClickCapture={trackMenuClick}
-					className="flex flex-1 flex-col"
-				>
-					<DialogCloseButton className="ml-auto" ariaLabel="Close navigation menu" />
+				{navReady ? (
+					<nav
+						ref={observeMenu}
+						data-menu-layout="mobile"
+						onClickCapture={(event) => {
+							trackMenuClick(event)
+							// Any link in the drawer navigates, so following one closes the drawer.
+							if (event.target instanceof Element && event.target.closest('a[href]')) setShow(false)
+						}}
+						onAuxClickCapture={trackMenuClick}
+						className="flex flex-1 flex-col"
+					>
+						<DialogCloseButton className="ml-auto" ariaLabel="Close navigation menu" />
 
-					{mainLinks.map(({ category, pages }) => (
-						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
-							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 label-sm text-secondary">{category}</p>}
-							<hr className="border-subtle" />
-							{category === 'Main' ? (
-								<PrimaryNavLinks pages={pages} asPath={asPath} />
-							) : (
-								<NavItems pages={pages} asPath={asPath} />
-							)}
-						</div>
-					))}
-
-					{pinnedPages.length > 0 ? <PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} /> : null}
-
-					{userDashboards.length > 0 || dashboardsStatus ? (
-						<details className="group mb-3" data-nav-dashboards {...dashboardsDisclosure}>
-							<summary className={`${navSummaryStyles} label-sm`}>
-								<span>Your Dashboards</span>
-								<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
-							</summary>
-							<div className="flex flex-col">
-								{userDashboards.map(({ name, route, icon }) => (
-									<LinkToPage
-										route={route}
-										name={name}
-										icon={icon}
-										key={`mobile-nav-${name}-${route}`}
-										asPath={asPath}
-									/>
+						{linksReady ? (
+							<>
+								{mainLinks.map(({ category, pages }) => (
+									<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
+										{category === 'Premium' ? (
+											<PremiumHeader />
+										) : (
+											<p className="mb-1 label-sm text-secondary">{category}</p>
+										)}
+										<hr className="border-subtle" />
+										{category === 'Main' ? (
+											<PrimaryNavLinks pages={pages} asPath={asPath} />
+										) : (
+											<NavItems pages={pages} asPath={asPath} />
+										)}
+									</div>
 								))}
-							</div>
-							{dashboardsStatus ? <div className="pt-2">{dashboardsStatus}</div> : null}
-						</details>
-					) : null}
 
-					{footerLinks.map(({ category, pages }) => (
-						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
-							<p className="mb-1 label-sm text-secondary">{category}</p>
-							<hr className="border-subtle" />
-							{pages.map(({ name, route, icon }) => (
-								<LinkToPage route={route} name={name} icon={icon} key={`mobile-nav-${name}-${route}`} asPath={asPath} />
-							))}
-						</div>
-					))}
+								{pinnedPages.length > 0 ? <PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
-					<hr className="my-3 border-subtle" />
+								{userDashboards.length > 0 || dashboardsStatus ? (
+									<details className="group mb-3" data-nav-dashboards {...dashboardsDisclosure}>
+										<summary className={`${navSummaryStyles} label-sm`}>
+											<span>Your Dashboards</span>
+											<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+										</summary>
+										<div className="flex flex-col">
+											{userDashboards.map(({ name, route, icon }) => (
+												<LinkToPage
+													route={route}
+													name={name}
+													icon={icon}
+													key={`mobile-nav-${name}-${route}`}
+													asPath={asPath}
+												/>
+											))}
+										</div>
+										{dashboardsStatus ? <div className="pt-2">{dashboardsStatus}</div> : null}
+									</details>
+								) : null}
 
-					<Account />
-				</nav>
+								{footerLinks.map(({ category, pages }) => (
+									<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
+										<p className="mb-1 label-sm text-secondary">{category}</p>
+										<hr className="border-subtle" />
+										{pages.map(({ name, route, icon }) => (
+											<LinkToPage
+												route={route}
+												name={name}
+												icon={icon}
+												key={`mobile-nav-${name}-${route}`}
+												asPath={asPath}
+											/>
+										))}
+									</div>
+								))}
+
+								<hr className="my-3 border-subtle" />
+
+								<Account />
+							</>
+						) : null}
+					</nav>
+				) : null}
 			</Ariakit.Dialog>
 		</>
 	)

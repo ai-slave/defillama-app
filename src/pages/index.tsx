@@ -10,7 +10,7 @@ import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
 
 const pageName = ['Overview']
 
-export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
+export const getStaticProps = withPerformanceLogging<Omit<IChainOverviewData, 'extraTvlCharts'>>(
 	'index',
 	async () => {
 		const phaseTimer = createRoutePhaseTimer()
@@ -37,8 +37,10 @@ export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
 			])
 			if (!data) throw new Error('Missing homepage chain overview data')
 
+			// The TVL settings series load from the chain charts API once a reader turns a setting on.
+			const { extraTvlCharts: _extraTvlCharts, ...overview } = data
 			return {
-				props: { ...data, dailyBrief },
+				props: { ...overview, dailyBrief },
 				revalidate: maxAgeForNext([22])
 			}
 		} finally {

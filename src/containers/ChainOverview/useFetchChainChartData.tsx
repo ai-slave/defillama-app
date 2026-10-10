@@ -5,9 +5,11 @@ import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/Multi
 import type { ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
 import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
+import { TVL_SETTINGS, TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import { fetchJson } from '~/utils/async'
 import {
+	buildChainChartApiUrl,
 	buildChainChartData,
 	buildDenominationPriceHistory,
 	type DenominationPriceHistory,
@@ -56,7 +58,8 @@ export const useFetchChainChartData = ({
 	selectedChain: string
 	tvlChart: Array<[number, number]>
 	tvlChartSummary: IChainOverviewData['tvlChartSummary']
-	extraTvlCharts: Record<string, Record<string, number>>
+	/** The TVL setting series when the page data carries them (compare chains); null loads them on demand. */
+	extraTvlCharts: IChainOverviewData['extraTvlCharts'] | null
 	tvlSettings: Record<string, boolean>
 	chainGeckoId: string | null
 	gasTokenGeckoId: string | null
@@ -221,6 +224,26 @@ export const useFetchChainChartData = ({
 		enabled: isBridgedTvlEnabled
 	})
 
+	// Without the series in the page data, they load once a reader turns on a setting that has one. Gov tokens has
+	// none: it only adds a chain's own tokens to the bridged TVL chart.
+	const loadsExtraTvl =
+		extraTvlCharts === null && TVL_SETTINGS_KEYS.some((key) => key !== TVL_SETTINGS.GOV_TOKENS && tvlSettings[key])
+	const {
+		data: loadedTvlCharts = null,
+		isLoading: fetchingExtraTvlCharts,
+		isError: extraTvlChartsFailed
+	} = useQuery({
+		queryKey: ['chain-overview', 'extra-tvl', selectedChain],
+		queryFn: () =>
+			fetchJson<Pick<IChainOverviewData, 'tvlChart' | 'extraTvlCharts'> & { computedAtMs: number }>(
+				buildChainChartApiUrl({ kind: 'extra-tvl', chain: selectedChain })
+			),
+		staleTime: 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 0,
+		enabled: loadsExtraTvl
+	})
+
 	const isRaisesEnabled = toggledChartsSet.has('Raises')
 	const { data: raisesData = null, isLoading: fetchingRaises } = useQuery<Array<[number, number]>>({
 		queryKey: ['chain-overview', 'raises'],
@@ -245,18 +268,29 @@ export const useFetchChainChartData = ({
 	})
 
 	const { finalTvlChart, totalValueUSD, valueChange24hUSD, change24h, isGovTokensEnabled } = useMemo(() => {
-		// The settings-adjusted change is measured on the day the server's summary was, wherever the data came from.
+		// Each chart's change is measured on the clock of the data it came from. Loaded series bring their own default
+		// chart, so a toggled TVL never mixes two snapshots. Until they arrive, or if they fail, TVL stays the default.
+		if (loadsExtraTvl) {
+			return buildChainTvlChartState({
+				tvlChart: loadedTvlCharts?.tvlChart ?? tvlChart,
+				tvlChartSummary,
+				extraTvlCharts: loadedTvlCharts?.extraTvlCharts ?? null,
+				tvlSettings,
+				nowMs: loadedTvlCharts?.computedAtMs ?? tvlChartSummary.computedAtMs
+			})
+		}
 		return buildChainTvlChartState({
 			tvlChart,
 			tvlChartSummary,
-			extraTvlCharts,
+			extraTvlCharts: extraTvlCharts ?? {},
 			tvlSettings,
 			nowMs: tvlChartSummary.computedAtMs
 		})
-	}, [tvlChart, tvlChartSummary, extraTvlCharts, tvlSettings])
+	}, [loadsExtraTvl, loadedTvlCharts, extraTvlCharts, tvlChart, tvlChartSummary, tvlSettings])
 
 	const chartData = useMemo(() => {
 		const loadingCharts: Array<string> = []
+		if (loadsExtraTvl && fetchingExtraTvlCharts && toggledChartsSet.has('TVL')) loadingCharts.push('TVL')
 		if (fetchingDenominationPriceHistory) loadingCharts.push('Denomination Price')
 		if (fetchingTokenPriceHistory) loadingCharts.push('Token Price')
 		if (fetchingChainFees) loadingCharts.push(chainFeesMetric.label)
@@ -304,6 +338,9 @@ export const useFetchChainChartData = ({
 			}
 		})
 	}, [
+		loadsExtraTvl,
+		fetchingExtraTvlCharts,
+		toggledChartsSet,
 		fetchingDenominationPriceHistory,
 		fetchingTokenPriceHistory,
 		fetchingChainFees,
@@ -353,6 +390,7 @@ export const useFetchChainChartData = ({
 		finalCharts: chartData.finalCharts,
 		valueSymbol: chartData.valueSymbol,
 		failedMetrics: chartData.failedMetrics,
+		tvlSettingsFailed: loadsExtraTvl && extraTvlChartsFailed,
 		totalValueUSD,
 		valueChange24hUSD,
 		change24h

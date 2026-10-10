@@ -35,6 +35,13 @@ import { tw } from './tw'
             cap, so it shrinks above the keyboard and scrolls inside.
             From sm, a centered card that fits its content up to
             min(720px, 100% − 32px). Never patch sheet height per dialog.
+   Mount:   pass `unmountOnHide`, so a closed dialog leaves the DOM. A dialog
+            kept mounted to keep its state between opens (Ariakit's default,
+            or `unmountOnHide={false}`) renders its content only
+            once `useDeferredValue(true, false) || open` holds, so it is never
+            built inside hydration. A heavy body renders behind one more
+            deferred value, as the Metrics grid does: an early tap paints the
+            header and search first, and the body fills in during the fade.
    Fill:    bg-overlay. `canvas` gives the elevated-1 fill, only for a body
             of bg-surface cards. Emphasis boxes inside a content dialog use
             bg-surface-elevated-1; an empty state is EmptyState (src/ui/Status.tsx).

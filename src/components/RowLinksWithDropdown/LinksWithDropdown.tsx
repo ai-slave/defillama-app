@@ -1,6 +1,5 @@
 import { type AnchorHTMLAttributes, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
-import { useIsClient } from '~/hooks/useIsClient'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { OtherLinks } from './OtherLinks'
 
@@ -20,12 +19,17 @@ interface IRowLinksProps {
 const EMPTY_LINKS: Array<ILink> = []
 const ROW_WRAP_TOLERANCE_PX = 1
 const RESIZE_DEBOUNCE_MS = 100
-const SSR_LINK_LIMIT = 20
+// The server renders this many links, and the first measurement reads them. Only a row wide enough for all of them
+// renders and measures the full list.
+const FIRST_MEASURE_LINK_LIMIT = 20
 
 interface OverflowState {
 	renderMenuOnly: boolean
 	firstOverflowIndex: number | null
 	isMeasuring: boolean
+	/** The link set whose first links all fit in one row, so measuring it renders every link. A new set starts
+	    with the first links again. */
+	measureAllSignature: string | null
 	/** The link labels the last measurement saw; a different set needs measuring before it renders. */
 	measuredSignature: string | null
 }
@@ -34,6 +38,7 @@ const INITIAL_OVERFLOW_STATE: OverflowState = {
 	renderMenuOnly: false,
 	firstOverflowIndex: null,
 	isMeasuring: true,
+	measureAllSignature: null,
 	measuredSignature: null
 }
 
@@ -47,6 +52,7 @@ type OverflowResult = { renderMenuOnly: boolean; firstOverflowIndex: number | nu
 
 type OverflowAction =
 	| { type: 'REQUEST_MEASURE' }
+	| { type: 'MEASURE_ALL'; signature: string }
 	| { type: 'AWAIT_CONTAINER' }
 	| { type: 'MEASURED'; result: OverflowResult; signature: string }
 	| { type: 'RESIZED'; result: OverflowResult }
@@ -59,6 +65,10 @@ export function overflowReducer(state: OverflowState, action: OverflowAction): O
 	switch (action.type) {
 		case 'REQUEST_MEASURE':
 			return state.isMeasuring ? state : { ...state, isMeasuring: true }
+		case 'MEASURE_ALL':
+			return state.isMeasuring && state.measureAllSignature === action.signature
+				? state
+				: { ...state, isMeasuring: true, measureAllSignature: action.signature }
 		case 'AWAIT_CONTAINER':
 			return { ...state, renderMenuOnly: false, firstOverflowIndex: null, isMeasuring: true }
 		case 'MEASURED': {
@@ -68,7 +78,7 @@ export function overflowReducer(state: OverflowState, action: OverflowAction): O
 				state.firstOverflowIndex !== result.firstOverflowIndex ||
 				state.isMeasuring ||
 				state.measuredSignature !== signature
-			return didChange ? { ...result, isMeasuring: false, measuredSignature: signature } : state
+			return didChange ? { ...state, ...result, isMeasuring: false, measuredSignature: signature } : state
 		}
 		case 'RESIZED': {
 			const { result } = action
@@ -91,12 +101,13 @@ function finiteOr(...values: Array<number>): number {
 	return 0
 }
 
-// Full DOM measurement — reads all link positions and caches widths for resize
+// Full DOM measurement — reads the rendered link positions and caches widths for resize.
+// Null: every rendered link fits in one row, but the row has more links than were rendered.
 function measureOverflow(
 	linkCount: number,
 	priorityNav: HTMLDivElement | null,
 	cache: React.MutableRefObject<CachedLayout | null>
-): OverflowResult {
+): OverflowResult | null {
 	if (typeof window === 'undefined') return { renderMenuOnly: false, firstOverflowIndex: null }
 
 	if (linkCount > 2 && window.innerWidth <= 640) {
@@ -125,11 +136,12 @@ function measureOverflow(
 		}
 	}
 
-	return { renderMenuOnly: false, firstOverflowIndex: null }
+	return linkRects.length < linkCount ? null : { renderMenuOnly: false, firstOverflowIndex: null }
 }
 
-// Pure math: recalculate overflow from cached link widths — no DOM mutation needed
-function recalculateFromCache(containerWidth: number, cached: CachedLayout, linkCount: number): OverflowResult {
+// Pure math: recalculate overflow from cached link widths — no DOM mutation needed.
+// Null: every cached width fits, but the row has links the cache never measured.
+function recalculateFromCache(containerWidth: number, cached: CachedLayout, linkCount: number): OverflowResult | null {
 	if (linkCount > 2 && window.innerWidth <= 640) {
 		return { renderMenuOnly: true, firstOverflowIndex: null }
 	}
@@ -146,12 +158,13 @@ function recalculateFromCache(containerWidth: number, cached: CachedLayout, link
 		}
 	}
 
-	return { renderMenuOnly: false, firstOverflowIndex: null }
+	return cached.linkWidths.length < linkCount ? null : { renderMenuOnly: false, firstOverflowIndex: null }
 }
 
 // Renders a row of chain pills clipped to one row; overflow links are removed from DOM and shown in the "Others"
 // menu (OtherLinks).
-// Initial measurement renders all links (hidden by CSS) to cache widths, then trims.
+// The first measurement reads the links the server rendered (hidden by CSS past one row), caches their widths, then
+// trims. Only when all of them fit does it render and measure the full list.
 // Resize uses cached widths for instant recalculation — no DOM churn.
 //
 // Pill: rounded-sm px-2 py-1 label-sm, resting bg-brand-tint + text-link, hover and focus bg-brand-tint-strong,
@@ -168,7 +181,6 @@ export function LinksWithDropdown({
 	const [overflowState, dispatch] = useReducer(overflowReducer, INITIAL_OVERFLOW_STATE)
 	const priorityNavRef = useRef<HTMLDivElement | null>(null)
 	const linksLayoutSignature = useMemo(() => links.map((link) => link.label).join('\u0001'), [links])
-	const isClient = useIsClient()
 	const cachedRef = useRef<CachedLayout | null>(null)
 	// The resize listeners below call this after their debounce, so it reads the current link count. A stable
 	// callback rather than an effect event: it escapes into a timer and a ResizeObserver.
@@ -187,20 +199,25 @@ export function LinksWithDropdown({
 		}
 
 		const containerWidth = nav.getBoundingClientRect().width
-		dispatch({ type: 'RESIZED', result: recalculateFromCache(containerWidth, cached, links.length) })
+		const result = recalculateFromCache(containerWidth, cached, links.length)
+		dispatch(result ? { type: 'RESIZED', result } : { type: 'MEASURE_ALL', signature: linksLayoutSignature })
 	})
 
 	// A new link set measures in the commit it arrives in, before paint. The cached widths need no reset: the
 	// resize path only reads them through a mounted row, and the row's measurement rewrites them first.
 	const isMeasuring = needsMeasuring(overflowState, linksLayoutSignature)
+	const measureAll = overflowState.measureAllSignature === linksLayoutSignature
 
 	// Full measurement: runs synchronously before paint when isMeasuring is true.
-	// Deferred until isClient so we measure all links, not just the SSR-limited subset.
 	useLayoutEffect(() => {
-		if (!isClient || !isMeasuring) return
+		if (!isMeasuring) return
 
 		const priorityNav = priorityNavRef.current
 		const result = measureOverflow(links.length, priorityNav, cachedRef)
+		if (!result) {
+			dispatch({ type: 'MEASURE_ALL', signature: linksLayoutSignature })
+			return
+		}
 
 		// Container not mounted yet (transitioning out of renderMenuOnly).
 		// Clear renderMenuOnly so the container renders, stay in measuring mode.
@@ -210,8 +227,8 @@ export function LinksWithDropdown({
 		}
 
 		dispatch({ type: 'MEASURED', result, signature: linksLayoutSignature })
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the trigger: AWAIT_CONTAINER clears menu-only, and the container it mounts must be measured.
-	}, [isClient, isMeasuring, overflowState.renderMenuOnly, links.length, linksLayoutSignature])
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the triggers: AWAIT_CONTAINER clears menu-only and MEASURE_ALL renders every link, and both must be measured.
+	}, [isMeasuring, measureAll, overflowState.renderMenuOnly, links.length, linksLayoutSignature])
 
 	// Resize listeners — fast cached recalculation, no two-phase render needed
 	useEffect(() => {
@@ -246,9 +263,9 @@ export function LinksWithDropdown({
 
 	// During measurement: render all links (CSS hides overflow). After: only visible links in DOM.
 	const visibleLinks = isMeasuring
-		? isClient
+		? measureAll
 			? links
-			: links.slice(0, SSR_LINK_LIMIT)
+			: links.slice(0, FIRST_MEASURE_LINK_LIMIT)
 		: overflowIndex !== null
 			? links.slice(0, overflowIndex)
 			: links

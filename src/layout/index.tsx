@@ -5,9 +5,7 @@ import { Nav } from '~/components/Nav'
 import { DesktopSearch } from '~/components/Search'
 import { Select } from '~/components/Select/Select'
 import { type ISEOProps, SEO } from '~/components/SEO'
-import { useIsClient } from '~/hooks/useIsClient'
-
-const Toaster = React.lazy(() => import('~/components/Toast').then((m) => ({ default: m.Toast })))
+import { Toast } from '~/components/Toast'
 
 interface ILayoutProps extends ISEOProps {
 	children: React.ReactNode
@@ -33,7 +31,6 @@ function Layout({
 	hideDesktopSearch = false,
 	...props
 }: ILayoutProps) {
-	const isClient = useIsClient()
 	return (
 		<>
 			<SEO
@@ -60,11 +57,7 @@ function Layout({
 				{pageName ? <MetricsAndTools currentMetric={pageName} /> : null}
 				{children}
 			</main>
-			{isClient ? (
-				<React.Suspense fallback={null}>
-					<Toaster />
-				</React.Suspense>
-			) : null}
+			<Toast />
 		</>
 	)
 }

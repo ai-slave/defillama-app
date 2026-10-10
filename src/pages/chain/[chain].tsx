@@ -77,8 +77,10 @@ export const getStaticProps = withPerformanceLogging('chain/[chain]', async ({ p
 				: Promise.resolve({})
 		])
 
+		// The TVL settings series load from the chain charts API once a reader turns a setting on.
+		const { extraTvlCharts: _extraTvlCharts, ...overview } = data
 		return {
-			props: { ...data, entityQuestions, customServerData },
+			props: { ...overview, entityQuestions, customServerData },
 			revalidate: maxAgeForNext([22])
 		}
 	} finally {

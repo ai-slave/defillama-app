@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ChainChartPanel } from '../ChainChartPanel'
 import type { ChainChartLabels } from '../constants'
@@ -31,8 +32,9 @@ async function renderPanel(
 	charts: Array<ChainChartLabels>,
 	{
 		toggledCharts = [],
-		loadingCharts = []
-	}: { toggledCharts?: Array<ChainChartLabels>; loadingCharts?: Array<string> } = {}
+		loadingCharts = [],
+		tvlSettingsFailed = false
+	}: { toggledCharts?: Array<ChainChartLabels>; loadingCharts?: Array<string>; tvlSettingsFailed?: boolean } = {}
 ) {
 	await act(async () =>
 		root.render(
@@ -52,6 +54,7 @@ async function renderPanel(
 					valueSymbol="$"
 					loadingCharts={loadingCharts}
 					failedMetrics={[]}
+					tvlSettingsFailed={tvlSettingsFailed}
 					darkMode={false}
 				/>
 			</session.Wrapper>
@@ -99,4 +102,10 @@ test('marks the chip of a metric that is still loading', async () => {
 	})
 	const loading = [...container.querySelectorAll('[role="status"][aria-label$="is loading"]')]
 	expect(loading.map((status) => status.getAttribute('aria-label'))).toEqual(['Stablecoins Mcap is loading'])
+})
+
+test('a TVL setting whose series failed to load says TVL leaves the settings out', async () => {
+	await renderPanel(['TVL'], { toggledCharts: ['TVL'], tvlSettingsFailed: true })
+
+	expect(alertTexts(container)).toEqual(["Couldn't load your TVL settings. TVL leaves them out."])
 })

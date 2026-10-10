@@ -169,7 +169,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 @layer base {
 	/* Every phone sheet, dialog or popover drawer, shares one height: a content sheet caps at it, a full sheet fills
 	   it. It leaves the page's top showing (85dvh, Apple's large detent) and shrinks above the iOS keyboard through
-	   --visual-viewport-height, which useKeyboardInset sets on <html>. */
+	   --visual-viewport-height, which useKeyboardInset sets on <html> while the keyboard is open. */
 	:root {
 		--sheet-height: min(85dvh, calc(var(--visual-viewport-height, 100dvh) - 3rem));
 	}

@@ -1012,7 +1012,7 @@ export function OverlaysGroup() {
 				<Button size="md" onClick={() => setDialog(true)}>
 					Open dialog
 				</Button>
-				<Dialog size="sm" open={dialog} onClose={() => setDialog(false)}>
+				<Dialog size="sm" open={dialog} onClose={() => setDialog(false)} unmountOnHide>
 					<DialogHeader title="Rename dashboard" subtitle="Names show in the sidebar." />
 					<DialogBody>
 						<Field label="Name">{(control) => <Input {...control} defaultValue="Lending" />}</Field>

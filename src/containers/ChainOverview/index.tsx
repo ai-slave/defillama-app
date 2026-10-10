@@ -25,7 +25,7 @@ const InvestorRelationsView = lazy(() =>
 	import('~/containers/Investors/InvestorRelationsView').then((m) => ({ default: m.InvestorRelationsView }))
 )
 
-export function ChainOverview(props: IChainOverviewData) {
+export function ChainOverview(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 	const router = useRouter()
 	const entitySlug = slug(props.metadata.name)
 	const researchSponsorEntitySlug = props.researchSponsorEntitySlug ?? entitySlug
@@ -106,7 +106,7 @@ export function ChainOverview(props: IChainOverviewData) {
 						{props.dailyBrief ? <HomeDailyBrief brief={props.dailyBrief} /> : null}
 						{props.isDataAvailable ? (
 							<>
-								<Stats {...props} />
+								<Stats {...props} extraTvlCharts={null} />
 								<SmolStats {...props} />
 							</>
 						) : (

@@ -1,7 +1,10 @@
+import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import { getPercentChange } from '~/utils'
+import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import { shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
+import type { IChainOverviewData } from './types'
 
 interface ChainTvlChartSummary {
 	totalValueUSD: number | null
@@ -54,7 +57,8 @@ export function buildChainTvlChartState({
 }: {
 	tvlChart: Array<[number, number]>
 	tvlChartSummary: ChainTvlChartSummary
-	extraTvlCharts: Record<string, Record<string, number>>
+	/** Null until the settings series load, or when they fail: TVL stays the default the page was built with. */
+	extraTvlCharts: Record<string, Record<string, number>> | null
 	tvlSettings: Record<string, boolean>
 	nowMs: number
 }): {
@@ -64,7 +68,9 @@ export function buildChainTvlChartState({
 	change24h: number | null
 	isGovTokensEnabled?: boolean
 } {
-	const chartWithSettings = applyChainTvlChartSettings({ tvlChart, extraTvlCharts, tvlSettings })
+	const chartWithSettings = extraTvlCharts
+		? applyChainTvlChartSettings({ tvlChart, extraTvlCharts, tvlSettings })
+		: null
 
 	if (!chartWithSettings) {
 		return {
@@ -83,4 +89,42 @@ export function buildChainTvlChartState({
 	const change24h = totalValueUSD != null && tvlPrevDay != null ? getPercentChange(totalValueUSD, tvlPrevDay) : null
 
 	return { finalTvlChart, totalValueUSD, valueChange24hUSD, change24h, isGovTokensEnabled }
+}
+
+function formatExtraTvlChart(chart: ChainChartResponse['tvl'] = []): Record<string, number> {
+	const formatted: Record<string, number> = {}
+	for (const [date, totalLiquidityUSD] of chart) {
+		formatted[Number(date) * 1e3] = Math.trunc(totalLiquidityUSD)
+	}
+	return formatted
+}
+
+/** The default TVL chart and the TVL setting series that toggles add or subtract, keyed by ms date, from one chain
+    chart response. Both come from the same response, so a toggled TVL never mixes two snapshots. */
+export function buildChainTvlCharts(
+	chartData: ChainChartResponse
+): Pick<IChainOverviewData, 'tvlChart' | 'extraTvlCharts'> {
+	const extraTvlCharts = {
+		staking: formatExtraTvlChart(chartData.staking),
+		borrowed: formatExtraTvlChart(chartData.borrowed),
+		pool2: formatExtraTvlChart(chartData.pool2),
+		vesting: formatExtraTvlChart(chartData.vesting),
+		offers: formatExtraTvlChart(chartData.offers),
+		doublecounted: formatExtraTvlChart(chartData.doublecounted),
+		liquidstaking: formatExtraTvlChart(chartData.liquidstaking),
+		dcAndLsOverlap: formatExtraTvlChart(chartData.dcAndLsOverlap)
+	}
+	// The default leaves liquid staking and double counted TVL out, but adds their overlap back so it is not
+	// subtracted twice.
+	const tvlChart: Array<[number, number]> = []
+	for (const [date, totalLiquidityUSD] of chartData.tvl ?? []) {
+		const timestamp = Number(date) * 1e3
+		const sum = applyTvlOverlapBaseAdjustment(Math.trunc(totalLiquidityUSD), {
+			liquidstaking: extraTvlCharts.liquidstaking[timestamp],
+			doublecounted: extraTvlCharts.doublecounted[timestamp],
+			dcAndLsOverlap: extraTvlCharts.dcAndLsOverlap[timestamp]
+		})
+		tvlChart.push([timestamp, sum])
+	}
+	return { tvlChart, extraTvlCharts }
 }

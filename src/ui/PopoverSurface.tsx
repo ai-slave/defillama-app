@@ -86,7 +86,13 @@ import { tw } from './tw'
    a comment saying why: a nav menu that must open instantly on a phone, or
    state that has to survive a close. Note that a closed ComboboxSelect only
    does type-ahead over mounted options; the shared Select never had that, so
-   it is not a reason on its own.
+   it is not a reason on its own. A kept surface renders its content only once
+   `useDeferredValue(true, false) || open` holds (OtherLinks): built in a
+   background render after hydration, never inside it, and at once when a tap
+   comes first. Content of hundreds of nodes sits behind a second
+   `useDeferredValue` of that value (the phone nav Menu), so an early tap
+   paints the surface and its header first and the rest fills in during the
+   open animation.
 ---------------------------------------------------------------------------- */
 
 /* The surface recipes and the drawer wrapper live here, not in Popover.ts, so

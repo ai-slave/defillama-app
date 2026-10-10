@@ -62,6 +62,9 @@ export function Metrics({
 	const [tab, setTab] = useState<Tab>('All')
 	const [searchValue, setSearchValue] = useState('')
 	const deferredSearchValue = useDeferredValue(searchValue)
+	// In the dialog the section grid, nearly all of its nodes, renders in a background pass. A tap that opens the dialog
+	// before the page built it paints the header and search at once, and the grid fills in during the open animation.
+	const sectionsReady = useDeferredValue(true, !canDismiss)
 
 	const router = useRouter()
 	const currentCategory = findCurrentCategory(router.pathname)
@@ -211,7 +214,7 @@ export function Metrics({
 						{categoryJumps}
 					</div>
 				</DialogToolbar>
-				<DialogBody>{sections}</DialogBody>
+				<DialogBody>{sectionsReady ? sections : null}</DialogBody>
 			</>
 		)
 	}
@@ -338,6 +341,10 @@ const getTotalTracked = (totalTrackedByMetric: Record<string, unknown>, totalTra
 
 export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string> }) {
 	const dialogStore = Ariakit.useDialogStore()
+	// The closed dialog keeps its state between opens, so its ~1,300 nodes are built once, in a background render
+	// after hydration instead of inside it. A tap before that render finishes builds the header at once.
+	const open = Ariakit.useStoreState(dialogStore, 'open')
+	const contentReady = useDeferredValue(true, false) || open
 	const searchInputRef = useRef<HTMLInputElement>(null)
 	const scrolledToCategoryRef = useRef<string | null>(null)
 	const router = useRouter()
@@ -445,16 +452,17 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 				autoFocusOnShow={() => {
 					// Only the first open scrolls to the page's category; later opens keep the reader's scroll.
 					if (currentCategory && scrolledToCategoryRef.current !== currentCategory) {
-						scrolledToCategoryRef.current = currentCategory
-						dialogStore
-							.getState()
-							.contentElement!.querySelector(`[data-category="${currentCategory}"]`)
-							?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+						// Opened before its grid was built, the dialog has nothing to scroll to yet; the next open does it.
+						const target = dialogStore.getState().contentElement!.querySelector(`[data-category="${currentCategory}"]`)
+						if (target) {
+							scrolledToCategoryRef.current = currentCategory
+							target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+						}
 					}
 					return true
 				}}
 			>
-				<Metrics canDismiss searchInputRef={searchInputRef} />
+				{contentReady ? <Metrics canDismiss searchInputRef={searchInputRef} /> : null}
 			</Dialog>
 		</Ariakit.DialogProvider>
 	)

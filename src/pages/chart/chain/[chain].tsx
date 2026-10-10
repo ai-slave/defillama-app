@@ -12,6 +12,7 @@ import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useFetchChainChartData } from '~/containers/ChainOverview/useFetchChainChartData'
 import { useIsClient } from '~/hooks/useIsClient'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -55,8 +56,10 @@ export const getStaticProps = withPerformanceLogging(
 			throw new Error(`Missing page data for route=/chart/chain/[chain] chain=${chain}`)
 		}
 
+		// The TVL settings series load from the chain charts API when the embed's settings turn one on.
+		const { extraTvlCharts: _extraTvlCharts, ...overview } = data
 		return {
-			props: data,
+			props: overview,
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -76,7 +79,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function ChainChartPage(props: IChainOverviewData) {
+export default function ChainChartPage(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 	const router = useRouter()
 	const selectedChain = props.metadata.name
 	const queryParamsString = useMemo(() => {
@@ -103,12 +106,12 @@ export default function ChainChartPage(props: IChainOverviewData) {
 	)
 
 	const chartColors = useMemo(() => getChainChartColors(toggledCharts), [toggledCharts])
-	const { finalCharts, valueSymbol, isFetchingChartData } = useFetchChainChartData({
+	const { finalCharts, valueSymbol, isFetchingChartData, tvlSettingsFailed } = useFetchChainChartData({
 		denomination,
 		selectedChain,
 		tvlChart: props.tvlChart,
 		tvlChartSummary: props.tvlChartSummary,
-		extraTvlCharts: props.extraTvlCharts,
+		extraTvlCharts: null,
 		tvlSettings,
 		chainGeckoId,
 		gasTokenGeckoId: props.metadata.gasTokenGeckoId ?? null,
@@ -142,6 +145,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
+					{tvlSettingsFailed ? <FailedDataNote labels={['your TVL settings']} shows="TVL leaves them out." /> : null}
 					{activeAddressesNotice === 'inline' ? (
 						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />
 					) : null}

@@ -29,10 +29,10 @@ import { roundNumber } from '~/utils/numberFormat'
 import { recordOptionalPageDataFailure } from '~/utils/optionalPageData'
 import type { RoutePhaseTimer } from '~/utils/perf'
 import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
-import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import type { ChainChartLabels } from './constants'
 import { fetchHomepageUnlocksSummary } from './homepageUnlocks.server'
+import { buildChainTvlCharts } from './tvlChart'
 import type { IChainOverviewData } from './types'
 import { formatChainAssets, getChainWarningBanners } from './utils'
 
@@ -66,14 +66,6 @@ function computeTvlChartSummary(
 	const change24h = lastValue != null && tvlPrevDay != null ? getPercentChange(lastValue, tvlPrevDay) : null
 
 	return { totalValueUSD: lastValue, tvlPrevDay, valueChange24hUSD, change24h, computedAtMs: nowMs }
-}
-
-function formatExtraTvlChart(chart: ChainChartResponse['tvl']): Record<string, number> {
-	const formatted: Record<string, number> = {}
-	for (const [date, totalLiquidityUSD] of chart) {
-		formatted[Number(date) * 1e3] = Math.trunc(totalLiquidityUSD)
-	}
-	return formatted
 }
 
 export function shouldFetchChainDexs({
@@ -525,41 +517,10 @@ export async function getChainOverviewData({
 		})
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
 
-		const {
-			tvl = [],
-			staking = [],
-			borrowed = [],
-			pool2 = [],
-			vesting = [],
-			offers = [],
-			doublecounted = [],
-			liquidstaking = [],
-			dcAndLsOverlap = []
-		} = chartData
+		const { tvl = [] } = chartData
 
 		const availableTvlOptions = getChainOverviewTvlOptions(chartData)
-		const extraTvlCharts: IChainOverviewData['extraTvlCharts'] = {
-			staking: formatExtraTvlChart(staking),
-			borrowed: formatExtraTvlChart(borrowed),
-			pool2: formatExtraTvlChart(pool2),
-			vesting: formatExtraTvlChart(vesting),
-			offers: formatExtraTvlChart(offers),
-			doublecounted: formatExtraTvlChart(doublecounted),
-			liquidstaking: formatExtraTvlChart(liquidstaking),
-			dcAndLsOverlap: formatExtraTvlChart(dcAndLsOverlap)
-		}
-
-		// by default we should not include liquidstaking and doublecounted in the tvl chart, but include overlapping tvl so you don't subtract twice
-		const tvlChart: Array<[number, number]> = []
-		for (const [date, totalLiquidityUSD] of tvl) {
-			const timestamp = Number(date) * 1e3
-			const sum = applyTvlOverlapBaseAdjustment(Math.trunc(totalLiquidityUSD), {
-				liquidstaking: extraTvlCharts.liquidstaking[timestamp],
-				doublecounted: extraTvlCharts.doublecounted[timestamp],
-				dcAndLsOverlap: extraTvlCharts.dcAndLsOverlap[timestamp]
-			})
-			tvlChart.push([timestamp, sum])
-		}
+		const { tvlChart, extraTvlCharts } = buildChainTvlCharts(chartData)
 
 		// Pre-compute TVL summary to avoid client-side iteration
 		const tvlChartSummary = computeTvlChartSummary(tvlChart, Date.now())

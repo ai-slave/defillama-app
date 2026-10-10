@@ -4,6 +4,8 @@ import { fetchChainAssetsChart } from '~/containers/BridgedTVL/api'
 import { fetchRawBridgeVolumeByChain } from '~/containers/Bridges/api'
 import { normalizeBridgeVolumeResponse } from '~/containers/Bridges/bridgeOverviewVolumeData'
 import type { BridgeOverviewVolumeChartTuple } from '~/containers/Bridges/types'
+import { buildChainTvlCharts } from '~/containers/ChainOverview/tvlChart'
+import { fetchChainChart } from '~/containers/Chains/api'
 import { fetchRaises } from '~/containers/Raises/api'
 import { getStablecoinOverviewChartSeries } from '~/containers/Stablecoins/queries.server'
 import { getProtocolUnlockUsdChart } from '~/containers/Unlocks/queries'
@@ -280,6 +282,23 @@ export const chainCharts = defineApiRoute({
 				}
 
 				return ok(data)
+			}
+
+			if (kind === 'extra-tvl') {
+				// The TVL settings series load only when a reader turns a setting on; the page HTML carries the default TVL.
+				// The default chart comes along, so a toggled TVL is built from one snapshot.
+				const chain = queryString(req.query, 'chain')
+				if (!chain) {
+					return badRequest('chain parameter is required')
+				}
+				const canonicalChain = await resolveCanonicalChainParam(chain)
+				if (!canonicalChain) {
+					return notFound('chain not found')
+				}
+
+				const chartData = await fetchChainChart(canonicalChain === 'All' ? undefined : canonicalChain)
+				// The response's own clock measures its 24h change; it can be a day newer than the page that asked.
+				return ok({ ...buildChainTvlCharts(chartData), computedAtMs: Date.now() })
 			}
 
 			if (kind === 'token-incentives') {

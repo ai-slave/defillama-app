@@ -9,6 +9,20 @@ import { useChartResize } from '../useChartResize'
 type FakeChart = {
 	isDisposed: ReturnType<typeof vi.fn>
 	resize: ReturnType<typeof vi.fn>
+	getDom: () => { clientWidth: number; clientHeight: number }
+	getWidth: () => number
+	getHeight: () => number
+}
+
+/** A chart drawn at `drawn` whose element now measures `box`; happy-dom has no layout to measure. */
+function fakeChart({ disposed = false, box = [320, 180], drawn = [0, 0] } = {}): FakeChart {
+	return {
+		isDisposed: vi.fn(() => disposed),
+		resize: vi.fn(),
+		getDom: () => ({ clientWidth: box[0], clientHeight: box[1] }),
+		getWidth: () => drawn[0],
+		getHeight: () => drawn[1]
+	}
 }
 
 function resizeEntry(target: Element, width = 320, height = 180) {
@@ -80,8 +94,8 @@ describe('useChartResize', () => {
 
 	test('uses one resize listener to resize every live chart instance', async () => {
 		const addListener = vi.spyOn(window, 'addEventListener')
-		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
-		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const first = fakeChart()
+		const second = fakeChart()
 
 		await act(async () =>
 			root.render(
@@ -100,8 +114,8 @@ describe('useChartResize', () => {
 	})
 
 	test('uses one element observer and resizes only the chart whose container changed', async () => {
-		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
-		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const first = fakeChart()
+		const second = fakeChart()
 		const firstElementResize = vi.fn()
 		const secondElementResize = vi.fn()
 
@@ -135,8 +149,27 @@ describe('useChartResize', () => {
 		expect(observerDisconnect).toHaveBeenCalledOnce()
 	})
 
+	test('an observed chart still at its drawn size is not laid out again, but a window resize still redraws it', async () => {
+		const instance = fakeChart({ box: [320, 180], drawn: [320, 180] })
+		const onElementResize = vi.fn()
+		await act(async () =>
+			root.render(<ChartHarness instance={instance} observeElement onElementResize={onElementResize} />)
+		)
+		const element = container.querySelector('div')!
+		vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 320, height: 180 } as DOMRect)
+
+		// The observer's first report, right after the chart's first render.
+		observerCallback?.([resizeEntry(element)], {} as ResizeObserver)
+		expect(instance.resize).not.toHaveBeenCalled()
+		expect(onElementResize).toHaveBeenCalledOnce()
+
+		// A device-pixel-ratio change keeps the box size and arrives only as a window resize.
+		window.dispatchEvent(new Event('resize'))
+		expect(instance.resize).toHaveBeenCalledOnce()
+	})
+
 	test('waits to resize an observed chart until its hidden container becomes visible', async () => {
-		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const instance = fakeChart()
 		const onElementResize = vi.fn()
 		const onElementVisibilityChange = vi.fn()
 		await act(async () =>
@@ -171,7 +204,7 @@ describe('useChartResize', () => {
 	})
 
 	test('globally resizes visible observed charts but skips hidden containers', async () => {
-		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const instance = fakeChart()
 		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
 		const element = container.querySelector('div')!
 		const getBounds = vi.spyOn(element, 'getBoundingClientRect')
@@ -186,7 +219,7 @@ describe('useChartResize', () => {
 	})
 
 	test('moves observation to a chart element recreated after an empty render', async () => {
-		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
+		const instance = fakeChart()
 		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
 		const firstElement = container.querySelector('div')!
 		expect(observerObserve).toHaveBeenLastCalledWith(firstElement)
@@ -209,7 +242,7 @@ describe('useChartResize', () => {
 	})
 
 	test('skips disposed instances', async () => {
-		const instance = { isDisposed: vi.fn(() => true), resize: vi.fn() }
+		const instance = fakeChart({ disposed: true })
 		await act(async () => root.render(<ChartHarness instance={instance} />))
 
 		window.dispatchEvent(new Event('resize'))

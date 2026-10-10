@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { startTransition, useMemo, useRef, useState } from 'react'
+import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -36,6 +36,9 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 	}, [options, searchValue])
 
 	const [viewableMatches, setViewableMatches] = useState(20)
+	const [open, setOpen] = useState(false)
+	// Kept mounted, so its rows are built in a background render after hydration, or at once on an earlier tap.
+	const rowsReady = useDeferredValue(true, false) || open
 	const comboboxRef = useRef<HTMLDivElement>(null)
 
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -55,7 +58,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 				})
 			}}
 		>
-			<Ariakit.MenuProvider>
+			<Ariakit.MenuProvider open={open} setOpen={setOpen}>
 				<Ariakit.MenuButton
 					render={
 						<Button variant="toggle" size={size} data-active={isActive} className={`my-auto ${className ?? ''}`} />
@@ -67,27 +70,33 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
 				<MenuSurface variant="panel" heading={heading} unmountOnHide={false} gutter={6}>
-					<PopoverHeader search={<Ariakit.Combobox placeholder="Search…" render={<Input className="w-full" />} />} />
-					{matches.length > 0 ? (
-						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
-							{matches.slice(0, viewableMatches).map((value) => (
-								<Item label={value.label} to={value.to} key={`${keyPrefix}:${value.label}:${value.to}`} />
-							))}
-							{matches.length > viewableMatches ? (
-								<Ariakit.ComboboxItem
-									value="__see_more__"
-									setValueOnClick={false}
-									hideOnClick={false}
-									className={popoverSeeMoreStyles}
-									onClick={handleSeeMore}
-								>
-									See more…
-								</Ariakit.ComboboxItem>
-							) : null}
-						</Ariakit.ComboboxList>
-					) : (
-						<NoResults />
-					)}
+					{rowsReady ? (
+						<>
+							<PopoverHeader
+								search={<Ariakit.Combobox placeholder="Search…" render={<Input className="w-full" />} />}
+							/>
+							{matches.length > 0 ? (
+								<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+									{matches.slice(0, viewableMatches).map((value) => (
+										<Item label={value.label} to={value.to} key={`${keyPrefix}:${value.label}:${value.to}`} />
+									))}
+									{matches.length > viewableMatches ? (
+										<Ariakit.ComboboxItem
+											value="__see_more__"
+											setValueOnClick={false}
+											hideOnClick={false}
+											className={popoverSeeMoreStyles}
+											onClick={handleSeeMore}
+										>
+											See more…
+										</Ariakit.ComboboxItem>
+									) : null}
+								</Ariakit.ComboboxList>
+							) : (
+								<NoResults />
+							)}
+						</>
+					) : null}
 				</MenuSurface>
 			</Ariakit.MenuProvider>
 		</Ariakit.ComboboxProvider>

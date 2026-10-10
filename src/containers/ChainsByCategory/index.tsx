@@ -121,8 +121,12 @@ export function ChainsByCategory({
 	const chartReadFailed = queryReadFailed(chartDataQuery)
 	const showSharedChartState = chartReadFailed || (shouldFetchChartData && chartDataQuery.isLoading)
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
+	// The dominance chart starts on the ten largest chains and folds the rest into Others: drawing all ~500 chains as
+	// their own bands cost about a second of main-thread time on every load. Picking chains still draws exactly those.
+	const defaultDominanceSeries = React.useMemo(() => chainSeries.slice(0, CHART_SERIES_LIMIT), [chainSeries])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: chainSeries,
+		defaultSeries: defaultDominanceSeries,
 		scope: categoryName
 	})
 	const selectedDominance = React.useMemo(
