@@ -41,6 +41,13 @@ export function buildLogoByCategory(x: ChartConfiguration['axes']['x']): Map<str
 	return map.size > 0 ? map : undefined
 }
 
+export const parseFiniteNumber = (value: unknown): number | null => {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null
+	if (typeof value !== 'string' || value.trim() === '') return null
+	const parsed = parseFloat(value)
+	return Number.isFinite(parsed) ? parsed : null
+}
+
 export const parseStringNumber = (value: unknown): number => {
 	if (typeof value === 'number') return value
 	if (typeof value === 'string') {

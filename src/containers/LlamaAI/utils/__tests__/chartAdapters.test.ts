@@ -90,6 +90,34 @@ describe('chart adapters', () => {
 		)
 	})
 
+	test('plots line series with their own numeric x values on one numeric axis in x order', () => {
+		const lineSeries = (chain: string) => ({
+			...baseSeries,
+			name: chain,
+			type: 'line' as const,
+			dataMapping: { xField: 'x', yField: 'y', entityFilter: { field: 'chain', value: chain } }
+		})
+		const config = {
+			...baseConfig,
+			type: 'line',
+			series: [lineSeries('A'), lineSeries('B')]
+		} satisfies ChartConfiguration
+
+		const result = adaptCartesianChartData(config, [
+			{ chain: 'A', x: '50', y: 80 },
+			{ chain: 'A', x: '100', y: 100 },
+			{ chain: 'B', x: '33.3', y: 60 },
+			{ chain: 'B', x: '100', y: 100 }
+		])
+
+		expect(result.props.chartOptions?.xAxis).toMatchObject({ type: 'value' })
+		expect(result.props.dataset.source).toEqual([
+			[33.3, undefined, 60],
+			[50, 80, undefined],
+			[100, 100, 100]
+		])
+	})
+
 	test('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {
 		const categoryConfig = {
 			...baseConfig,

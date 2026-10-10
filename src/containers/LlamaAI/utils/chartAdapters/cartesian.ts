@@ -17,6 +17,7 @@ import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~
 import {
 	buildLogoByCategory,
 	parseChartDateMs,
+	parseFiniteNumber,
 	parseStringNumber
 } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
@@ -62,13 +63,15 @@ export interface AdaptedLlamaAICartesianChart {
 	title: string
 	description: string
 	rowCount: number
-	axisType: 'time' | 'category'
+	axisType: CartesianAxisType
 	isTimeChart: boolean
 	hasHallmarks: boolean
 	groupingPolicy: 'always' | 'never'
 	defaultExportKind: 'cartesian'
 	seriesMeta: Array<LlamaAICartesianSeriesMeta>
 }
+
+type CartesianAxisType = 'time' | 'category' | 'value'
 
 const MONTH_NAME_TO_INDEX = {
 	jan: 0,
@@ -176,10 +179,10 @@ function inferTimeSeriesAxis(
 	config: ChartConfiguration,
 	rawData: ChartDataSeries
 ): {
-	axisType: 'time' | 'category'
-	dimensionName: 'timestamp' | 'category'
+	axisType: CartesianAxisType
+	dimensionName: 'timestamp' | 'category' | 'value'
 	normalizeXValue: (rawValue: unknown) => number | string | null
-	reason: 'declared-time' | 'promoted-date-category' | 'category'
+	reason: 'declared-time' | 'promoted-date-category' | 'category' | 'declared-value'
 } {
 	if (config.axes.x.type === 'time') {
 		return {
@@ -187,6 +190,15 @@ function inferTimeSeriesAxis(
 			dimensionName: 'timestamp',
 			normalizeXValue: (rawValue) => parseStrictDateLabelToMs(rawValue),
 			reason: 'declared-time'
+		}
+	}
+
+	if (config.axes.x.type === 'value') {
+		return {
+			axisType: 'value',
+			dimensionName: 'value',
+			normalizeXValue: parseFiniteNumber,
+			reason: 'declared-value'
 		}
 	}
 
@@ -265,8 +277,10 @@ const isValidCartesianPoint = (
 	x: string | number | null | undefined,
 	value: number | null,
 	baseType: 'line' | 'area' | 'bar',
-	axisType: 'time' | 'category'
+	axisType: CartesianAxisType
 ) => {
+	if (axisType === 'value') return typeof x === 'number' && value != null && !Number.isNaN(value)
+
 	if (axisType === 'time') {
 		if (typeof x !== 'number' || Number.isNaN(x)) return false
 		return baseType === 'bar' ? value != null && !Number.isNaN(value) : value == null || !Number.isNaN(value)
@@ -278,7 +292,9 @@ const isValidCartesianPoint = (
 
 export const createCategoryTooltipFormatter = (
 	valueSymbol: string,
-	charts: Array<LlamaAICartesianSeriesConfig> = []
+	charts: Array<LlamaAICartesianSeriesConfig> = [],
+	formatHeader: (item: ReturnType<typeof normalizeTooltipItems>[number]) => string = (item) =>
+		String(item.name ?? item.axisValue ?? '')
 ): ((params: unknown) => string) => {
 	const symbolBySeries = new Map<string, string>()
 	for (const chart of charts) symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
@@ -287,7 +303,7 @@ export const createCategoryTooltipFormatter = (
 		const items = normalizeTooltipItems(params)
 		const firstItem = items[0]
 		if (!firstItem) return ''
-		const header = String(firstItem.name ?? firstItem.axisValue ?? '')
+		const header = formatHeader(firstItem)
 		const values: Array<{ marker: string; seriesName: string; value: number; symbol: string }> = []
 		for (const item of items) {
 			const seriesName = item.seriesName
@@ -385,7 +401,8 @@ export function adaptCartesianChartData(
 				encode: { x: 0, y: seriesIndex + 1 },
 				color: resolvedColor,
 				valueSymbol: seriesValueSymbol,
-				yAxisIndex
+				yAxisIndex,
+				...(axisType === 'value' ? { connectNulls: true } : {})
 			})
 
 			const meta: LlamaAICartesianSeriesMeta = {
@@ -452,7 +469,7 @@ export function adaptCartesianChartData(
 					})
 				: []
 		const datasetSource: Array<LlamaAICartesianDatasetRow> = []
-		if (axisType === 'time') {
+		if (axisType !== 'category') {
 			const entries = Array.from(rowsByX.entries()).sort(([a], [b]) => Number(a) - Number(b))
 			for (const [, row] of entries) datasetSource.push(row)
 		} else {
@@ -487,6 +504,21 @@ export function adaptCartesianChartData(
 			}
 			chartOptions.tooltip = {
 				formatter: createCategoryTooltipFormatter(config.valueSymbol ?? '', charts)
+			}
+		}
+
+		if (axisType === 'value') {
+			const xAxisSymbol = config.axes.x.valueSymbol ?? ''
+			const xAxisLabel = config.axes.x.label
+			chartOptions.xAxis = {
+				type: 'value',
+				axisLabel: { formatter: (value: number) => formatChartValue(value, xAxisSymbol) }
+			}
+			chartOptions.tooltip = {
+				formatter: createCategoryTooltipFormatter(config.valueSymbol ?? '', charts, (item) => {
+					const x = formatChartValue(Number(item.axisValue), xAxisSymbol)
+					return xAxisLabel ? `${xAxisLabel}: ${x}` : x
+				})
 			}
 		}
 
@@ -538,7 +570,7 @@ export function adaptCartesianChartData(
 			chartOptions,
 			valueSymbol:
 				config.valueSymbol ?? (config.axes.yAxes.length === 1 ? (config.axes.yAxes[0]?.valueSymbol ?? '') : ''),
-			hideDataZoom: axisType === 'category'
+			hideDataZoom: axisType !== 'time'
 		}
 		if (axisType === 'time') props.groupBy = 'daily'
 		if (axisType === 'time' && config.hallmarks?.length) {

@@ -2,6 +2,7 @@ import type { IScatterChartProps, ScatterTooltipParams } from '~/components/ECha
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
+import { parseFiniteNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 
 export interface AdaptedScatterChartData {
 	chartType: 'scatter'
@@ -9,13 +10,6 @@ export interface AdaptedScatterChartData {
 	title: string
 	description: string
 	defaultExportKind: 'scatter'
-}
-
-const parseScatterNumber = (value: unknown): number | null => {
-	if (typeof value === 'number') return Number.isFinite(value) ? value : null
-	if (typeof value !== 'string' || value.trim() === '') return null
-	const parsed = parseFloat(value)
-	return Number.isFinite(parsed) ? parsed : null
 }
 
 export function adaptScatterChartData(config: ChartConfiguration, rawData: ChartDataSeries): AdaptedScatterChartData {
@@ -33,8 +27,8 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 		const scatterData: Array<[number, number, string, string]> = []
 		for (const row of rawData) {
 			if (!isChartDataRow(row)) continue
-			const xValue = parseScatterNumber(row[xField])
-			const yValue = parseScatterNumber(row[yField])
+			const xValue = parseFiniteNumber(row[xField])
+			const yValue = parseFiniteNumber(row[yField])
 			// Missing legacy scatter coordinates must be dropped; coercing them to 0
 			// creates phantom origin points in restored pre-keyed chart sessions.
 			if (xValue == null || yValue == null) continue
