@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setReferrer } from '~/auth/referrer'
+import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
 import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
@@ -15,9 +16,11 @@ import { LlamaAIMobileAppGate } from '~/containers/MobileApp/LlamaAIMobileAppGat
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import Layout from '~/layout'
-import { LoadingDots } from '~/ui/Loaders'
+import { Button } from '~/ui/Button'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import pb from '~/utils/pocketbase'
+import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 interface SharedSession {
@@ -72,11 +75,14 @@ export const getServerSideProps = withServerSidePropsTelemetry<PageProps>(
 	getServerSidePropsHandler
 )
 
-async function getSharedSession(shareToken: string) {
-	if (!shareToken) {
-		return null
-	}
-	return await fetchJson<SharedSession>(`${AI_SERVER}/user/public/${shareToken}`)
+// A link to a conversation that is gone or private resolves to null (not found), which is not a failed read.
+async function getSharedSession(shareToken: string): Promise<SharedSession | null> {
+	// fetchJson's browser timeout: a server that never answers ends in the error state, not a loader that spins forever.
+	const res = await fetch(`${AI_SERVER}/user/public/${shareToken}`, { signal: AbortSignal.timeout(60_000) })
+	// Every 4xx means this link has no conversation to show (revoked, expired, malformed); 5xx stays a failed read.
+	if (res.status >= 400 && res.status < 500) return null
+	if (!res.ok) throw new Error(`Shared conversation failed with ${res.status}`)
+	return res.json()
 }
 
 export default function SharedConversationPage({ shareToken: ssrToken, sessionTitle }: PageProps) {
@@ -99,11 +105,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 		? `${sessionTitle} — AI-powered DeFi analysis by LlamaAI`
 		: 'Get AI-powered answers about chains, protocols, metrics like TVL, fees, revenue, and compare them based on your prompts'
 
-	const {
-		data: session,
-		isLoading,
-		error
-	} = useQuery({
+	const sessionQuery = useQuery({
 		queryKey: ['llamaai', 'shared-session', shareToken],
 		queryFn: () => getSharedSession(shareToken),
 		enabled: !!shareToken && typeof shareToken === 'string',
@@ -111,6 +113,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 		refetchOnWindowFocus: false,
 		retry: false
 	})
+	const session = sessionQuery.data
 
 	// Unauth user submitting: save message + show login. After login, the
 	// `initialPrompt` below auto-fires AgenticChat's in-place fork.
@@ -133,28 +136,40 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 		setRouteOverride(buildForkedSharedRoute(forkedSessionId))
 	}, [])
 
-	if (isLoading || !router.isReady) {
+	const head = (
+		<Head>
+			<meta property="og:image" content={ogImageUrl} />
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:image" content={ogImageUrl} />
+		</Head>
+	)
+
+	if (queryReadFailed(sessionQuery)) {
 		return (
 			<Layout title={title} description={description} canonicalUrl={null} noIndex>
-				<Head>
-					<meta property="og:image" content={ogImageUrl} />
-					<meta name="twitter:card" content="summary_large_image" />
-					<meta name="twitter:image" content={ogImageUrl} />
-				</Head>
+				{head}
 				<LlamaAIMobileAppGate>
-					<LlamaAIAnimationPreloads />
-					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-						<p className="flex items-center gap-1 text-center">
-							Loading conversation
-							<LoadingDots />
-						</p>
-					</div>
+					<PanelStatus variant="error" retry={sessionQuery}>
+						Couldn't load this conversation.
+					</PanelStatus>
 				</LlamaAIMobileAppGate>
 			</Layout>
 		)
 	}
 
-	if (error || !session) {
+	if (sessionQuery.isLoading || !router.isReady) {
+		return (
+			<Layout title={title} description={description} canonicalUrl={null} noIndex>
+				{head}
+				<LlamaAIMobileAppGate>
+					<LlamaAIAnimationPreloads />
+					<PanelLoadingStatus label="Loading conversation" />
+				</LlamaAIMobileAppGate>
+			</Layout>
+		)
+	}
+
+	if (!session) {
 		return (
 			<Layout
 				title="Conversation Not Found - DefiLlama"
@@ -163,12 +178,18 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				noIndex
 			>
 				<LlamaAIMobileAppGate>
-					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-						<div className="text-center">
-							<div className="mb-2 body-xl text-error">{error?.message ?? 'Conversation not found'}</div>
-							<p className="text-secondary">The conversation may have been made private or the link is invalid.</p>
-						</div>
-					</div>
+					<EmptyState
+						size="lg"
+						headingAs="h1"
+						title="Conversation not found"
+						actions={
+							<Button as={BasicLink} href="/ai/chat" size="md">
+								Go to LlamaAI
+							</Button>
+						}
+					>
+						The conversation may have been made private or the link is invalid.
+					</EmptyState>
 				</LlamaAIMobileAppGate>
 			</Layout>
 		)
@@ -176,11 +197,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 
 	return (
 		<Layout title={title} description={description} canonicalUrl={null} noIndex hideDesktopSearchLlamaAiButton>
-			<Head>
-				<meta property="og:image" content={ogImageUrl} />
-				<meta name="twitter:card" content="summary_large_image" />
-				<meta name="twitter:image" content={ogImageUrl} />
-			</Head>
+			{head}
 			<LlamaAIMobileAppGate>
 				<LlamaAIAnimationPreloads />
 				<LlamaAIRouteProvider value={routeOverride}>

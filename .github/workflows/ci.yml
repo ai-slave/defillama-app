@@ -64,6 +64,9 @@ jobs:
       - name: Check focus handoff policy
         run: bun scripts/policies/check-focus-handoff.ts --self-test && bun scripts/policies/check-focus-handoff.ts
 
+      - name: Check status parts policy
+        run: bun scripts/policies/check-status-parts.ts --self-test && bun scripts/policies/check-status-parts.ts
+
       - name: Check form validation policy
         run: bun scripts/policies/check-form-validation.ts --self-test && bun scripts/policies/check-form-validation.ts
 

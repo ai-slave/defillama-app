@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Router, { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import {
 	ArticleApiError,
@@ -22,17 +23,20 @@ import {
 	type ArticleBannerStripInitialData
 } from '~/containers/Articles/renderer/ArticleBannerStrip'
 import { ArticleRenderer } from '~/containers/Articles/renderer/ArticleRenderer'
-import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleAuthor, ArticleDocument, ArticlePublicAuthorProfile } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const ARTICLE_CACHE_CONTROL = 'public, s-maxage=60'
 const ARTICLE_NO_STORE = 'no-store'
+
+const researchLoading = <PanelLoadingStatus label="Loading research" className="mx-auto w-full max-w-[1300px]" />
 
 type ArticleRouteParams = {
 	section: string
@@ -183,11 +187,7 @@ function SectionArticleContent({
 	initialBanners?: ArticleBannerStripInitialData | null
 }) {
 	const expectedSection = ARTICLE_SECTION_FROM_SLUG[sectionSlug]
-	const {
-		data: article = null,
-		isLoading,
-		error
-	} = useQuery({
+	const articleQuery = useQuery({
 		queryKey: ['research', 'article', slug],
 		queryFn: async () => {
 			const nextArticle = await getArticleBySlug(slug)
@@ -199,6 +199,7 @@ function SectionArticleContent({
 		refetchOnMount: 'always',
 		retry: false
 	})
+	const article = articleQuery.data ?? null
 
 	useEffect(() => {
 		if (!article) return
@@ -211,37 +212,45 @@ function SectionArticleContent({
 
 	if (!expectedSection) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
-				<h1 className="heading-sm text-primary">Section not found</h1>
-				<Link href="/research" className="body-md text-link hover:underline">
-					Browse all research →
-				</Link>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Section not found"
+				actions={
+					<Button as={BasicLink} href="/research" size="md">
+						Browse all research
+					</Button>
+				}
+			/>
 		)
 	}
 
-	if (isLoading) {
-		return <ResearchLoader />
-	}
-
-	if (!article && !error) {
+	// The page refetches on mount over the server-rendered article; a failed refetch keeps the article it has.
+	if (queryReadFailed(articleQuery)) {
+		const { error } = articleQuery
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
-				<h1 className="heading-sm text-primary">Research not found</h1>
-				<Link href="/research" className="body-md text-link hover:underline">
-					Browse all research →
-				</Link>
-			</div>
+			<PanelStatus variant="error" retry={articleQuery} className="mx-auto w-full max-w-[1300px]">
+				Couldn&apos;t load research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
+	}
+
+	if (articleQuery.isLoading) {
+		return researchLoading
 	}
 
 	if (!article) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load research</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Research not found"
+				actions={
+					<Button as={BasicLink} href="/research" size="md">
+						Browse all research
+					</Button>
+				}
+			/>
 		)
 	}
 
@@ -249,7 +258,7 @@ function SectionArticleContent({
 	const slugMismatch = article.slug !== slug
 
 	if ((sectionMismatch || slugMismatch) && article.status === 'published') {
-		return <ResearchLoader />
+		return researchLoading
 	}
 
 	return (
@@ -315,7 +324,7 @@ export default function SectionArticlePage({
 						initialBanners={initialBanners}
 					/>
 				) : (
-					<ResearchLoader />
+					researchLoading
 				)}
 			</ArticleProxyAuthProvider>
 		</Layout>

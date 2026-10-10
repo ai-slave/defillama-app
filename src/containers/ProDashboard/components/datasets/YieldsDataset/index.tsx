@@ -1,7 +1,8 @@
 import * as React from 'react'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { ProYieldRow } from '../../../yieldData'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { useYieldsData } from './useYieldsData'
@@ -29,7 +30,11 @@ export function YieldsDataset({
 	onColumnsChange = NOOP_COLUMNS_CHANGE,
 	onFiltersChange = NOOP_FILTERS_CHANGE
 }: YieldsDatasetProps) {
-	const { data, isLoading, error } = useYieldsData(chains)
+	const { query: yieldsQuery, isLoading } = useYieldsData(chains)
+	const { data } = yieldsQuery
+	const readFailed = queryReadFailed(yieldsQuery)
+	// The header's controls act on rows, so they stay inert until rows load.
+	const unavailable = isLoading || readFailed
 
 	const {
 		table,
@@ -85,25 +90,25 @@ export function YieldsDataset({
 				columnPresets={columnPresets}
 				applyPreset={applyPreset}
 				activePreset={activePreset}
-				showColumnPanel={!isLoading && !error && showColumnPanel}
-				setShowColumnPanel={isLoading || error ? NOOP : setShowColumnPanel}
-				downloadCSV={isLoading || error ? undefined : downloadCSV}
-				poolName={isLoading || error ? '' : poolName}
-				setPoolName={isLoading || error ? NOOP : setPoolName}
-				showFiltersPanel={!isLoading && !error && showFiltersPanel}
-				setShowFiltersPanel={isLoading || error ? NOOP : setShowFiltersPanel}
-				activeFilterCount={isLoading || error ? 0 : activeFilterCount}
+				showColumnPanel={!unavailable && showColumnPanel}
+				setShowColumnPanel={unavailable ? NOOP : setShowColumnPanel}
+				downloadCSV={unavailable ? undefined : downloadCSV}
+				poolName={unavailable ? '' : poolName}
+				setPoolName={unavailable ? NOOP : setPoolName}
+				showFiltersPanel={!unavailable && showFiltersPanel}
+				setShowFiltersPanel={unavailable ? NOOP : setShowFiltersPanel}
+				activeFilterCount={unavailable ? 0 : activeFilterCount}
 				filtersToggleRef={filtersToggleRef}
 				columnsToggleRef={columnsToggleRef}
 			/>
 
-			{isLoading ? (
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading yields data…" />
+			{readFailed ? (
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load yields data" retry={yieldsQuery} />
 				</div>
-			) : error ? (
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load yields data</div>
+			) : isLoading ? (
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading yields data" />
 				</div>
 			) : (
 				<>
@@ -135,6 +140,7 @@ export function YieldsDataset({
 						/>
 					) : null}
 
+					{queryRefreshFailed(yieldsQuery) ? <ProCardRefreshFailed retry={yieldsQuery} /> : null}
 					<TableBody table={table} />
 					<TablePagination
 						pageSize={pageSize}

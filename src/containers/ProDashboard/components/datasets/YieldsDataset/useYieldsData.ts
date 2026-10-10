@@ -32,5 +32,5 @@ export function useYieldsData(chains?: Array<string>, enabled = true) {
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		retry: 1
 	})
-	return { ...query, isLoading: query.isLoading || (!streamDone && query.data === undefined) }
+	return { query, isLoading: query.isLoading || (!streamDone && query.data === undefined) }
 }

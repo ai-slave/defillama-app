@@ -50,9 +50,8 @@ import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransf
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -797,24 +796,10 @@ function ActiveSingleChart({
 }
 
 function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | undefined }) {
-	return (
-		<div
-			role="status"
-			aria-live="polite"
-			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-tertiary"
-		>
-			<LoadingSpinner size={16} />
-			<p>
-				{chartTypes?.length ? (
-					<>
-						Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
-					</>
-				) : (
-					<>Creating visualization&hellip;</>
-				)}
-			</p>
-		</div>
-	)
+	const label = chartTypes?.length
+		? `Creating ${chartTypes.join(', ')} visualization${chartTypes.length > 1 ? 's' : ''}`
+		: 'Creating visualization'
+	return <ChartPanelBodyLoading label={label} className="px-4 text-center" />
 }
 
 // Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.

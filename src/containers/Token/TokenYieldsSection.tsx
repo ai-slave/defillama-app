@@ -8,8 +8,9 @@
  *   discovery. With neither flag the page acquires no Yields snapshot; with both, Earn and Borrow share one snapshot
  *   handle. Each section still needs matching rows to show.
  * - Browser refreshes acquire current data and are not pinned to the SSR snapshot.
- * - A failed full-data load keeps the existing rows and offers Retry beside the section error, or in the error
- *   placeholder when there are no rows. Retry shows loading, blocks duplicate requests and keeps the page and sorting.
+ * - A failed full-data load keeps the existing rows and offers Try again in the section error, above the rows or in
+ *   their place when there are none. The error stays while the retry runs, which blocks duplicate requests and keeps
+ *   the page and sorting.
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -33,10 +34,10 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
-import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import {
 	filterTokenYieldPools,
@@ -95,13 +96,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		hydration == null || paid || (isClient && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
 
 	const tokenKeys = hydration?.tokenKeys ?? []
-	const {
-		data: fetchedRows,
-		error,
-		isFetching,
-		isFetched,
-		refetch
-	} = useQuery({
+	const rowsQuery = useQuery({
 		// Tier in the key: a lapsed subscription must not read the paid entry.
 		queryKey: ['token-yields', 'token-page', TOKEN_PAGE_EARN_QUERY, paid, ...tokenKeys],
 		queryFn: () => fetchTokenYieldRows(tokenKeys, paid ? authorizedFetch : null),
@@ -111,6 +106,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		// Not while the tier is unknown: a public fetch then would be waste for a subscriber.
 		enabled: tokenKeys.length > 0 && needsFullData && !isPending
 	})
+	const { data: fetchedRows, error, isFetching } = rowsQuery
 	const poolsList = fetchedRows ?? hydration?.rows ?? EMPTY_YIELD_TABLE_ROWS
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
 	const totalRowCount = fetchedRows?.length ?? hydration?.rowCount ?? poolsList.length
@@ -159,15 +155,13 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 			!needsFullData &&
 			hasPartialData &&
 			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
-	const showRetry = error != null || (isFetching && isFetched && !fetchedRows)
+	// Above the snapshot's first page or the pools already loaded, and in their place when there are none.
+	const showRetry = queryReadFailed(rowsQuery) || queryRefreshFailed(rowsQuery)
 	const retryStatus = showRetry ? (
-		<TokenDataRetry
-			message={error?.message ?? 'Loading full dataset…'}
-			isRetrying={isFetching}
-			onRetry={() => {
-				void refetch({ cancelRefetch: false })
-			}}
-		/>
+		// cancelRefetch: false keeps a second press from restarting the request the first one started.
+		<InlineStatus variant="error" retry={{ refetch: () => rowsQuery.refetch({ cancelRefetch: false }), isFetching }}>
+			Couldn't load yield pools.
+		</InlineStatus>
 	) : null
 	const showInitialLoader = isFetchingFullData && poolsList.length === 0 && !showRetry
 	const showBackgroundLoading = isFetchingFullData && poolsList.length > 0
@@ -215,16 +209,16 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 					/>
 					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 				</PanelTitle>
-				{!showInitialLoader && !error && summaryText ? (
+				{!showInitialLoader && !showRetry && summaryText ? (
 					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>
 				) : null}
 			</PanelHeader>
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				{showInitialLoader ? (
-					<SurfaceBodyLoadingStatus />
+					<SurfaceBodyLoadingStatus label="Loading yield pools" />
 				) : showRetry && poolsList.length === 0 ? (
-					<SurfaceBodyStatus variant="error">{retryStatus}</SurfaceBodyStatus>
+					<div className="flex flex-1 items-center justify-center">{retryStatus}</div>
 				) : poolsList.length === 0 ? (
 					<SurfaceBodyStatus variant="empty">No yield pools found.</SurfaceBodyStatus>
 				) : (
@@ -249,7 +243,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 								)}
 							</ResponsiveFilterLayout>
 						</TableToolbarControlGroup>
-						{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
+						{retryStatus}
 
 						{isFilteredEmpty ? (
 							<SurfaceBodyStatus variant="empty">No pools match current filters</SurfaceBodyStatus>

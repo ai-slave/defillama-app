@@ -18,7 +18,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 
 const RESEARCH_SEARCH_LIMIT = 10
 const LATEST_RESEARCH_LIMIT = 6
@@ -399,37 +399,27 @@ function SearchResultsHeader({
 function SearchResults({
 	data,
 	isLoading,
-	failed,
-	retrying,
+	failedRead,
 	query,
 	section,
 	activeSection,
 	onSelectTopic,
-	onSelectResult,
-	onRetry
+	onSelectResult
 }: {
 	data: ResearchSearchResponse | undefined
 	isLoading: boolean
-	failed: boolean
-	retrying: boolean
-	onRetry: () => void
+	/** The search when it has nothing to show and failed: its error and Try again replace the list. */
+	failedRead: QueryRetry | null
 	query: string
 	section: SearchContentType | null
 	activeSection: SectionFilter | undefined
 	onSelectTopic: (query: string) => void
 	onSelectResult: () => void
 }) {
-	if (failed) {
+	if (failedRead) {
 		return (
 			<div className="p-2">
-				<InlineStatus
-					variant="error"
-					action={
-						<Button type="button" size="sm" pendingLabel="Retrying…" pending={retrying} onClick={onRetry}>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={failedRead}>
 					Couldn&rsquo;t load search results.
 				</InlineStatus>
 			</div>
@@ -493,7 +483,7 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 		retry: false,
 		staleTime: 60_000
 	})
-	const { data, isLoading, isFetching, refetch } = searchQuery
+	const { data, isLoading } = searchQuery
 
 	return (
 		<>
@@ -530,8 +520,7 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 				<SearchResults
 					data={data}
 					isLoading={isLoading}
-					failed={queryReadFailed(searchQuery)}
-					retrying={isFetching}
+					failedRead={queryReadFailed(searchQuery) ? searchQuery : null}
 					query={debouncedQuery}
 					section={section}
 					activeSection={activeSection}
@@ -540,7 +529,6 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 						inputRef.current?.focus()
 					}}
 					onSelectResult={onSelectResult}
-					onRetry={() => void refetch()}
 				/>
 			</DialogBody>
 		</>

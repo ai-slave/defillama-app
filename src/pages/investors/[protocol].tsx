@@ -7,9 +7,9 @@ import {
 	getInvestorsSiteWithPathFallback,
 	type InvestorsSiteId
 } from '~/containers/Investors/config'
-import { Logo } from '~/containers/Investors/Logo'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
 import { useInvestorsSite } from '~/containers/Investors/SiteContext'
+import { PanelLoadingStatus } from '~/ui/Status'
 
 const InvestorsDashboard = lazy(() => import('~/containers/Investors'))
 
@@ -67,8 +67,8 @@ export default function InvestorsProtocolPage({
 				fallback={
 					<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-page md:flex-row">
 						<aside className="sl-sidebar fixed top-0 left-0 hidden h-screen w-56 md:block" />
-						<div className="flex flex-1 items-center justify-center p-5 md:ml-56">
-							<Logo animate />
+						<div className="flex flex-1 flex-col p-5 md:ml-56">
+							<PanelLoadingStatus label="Loading dashboard" />
 						</div>
 					</div>
 				}

@@ -18,7 +18,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -230,8 +230,8 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			? isBasicTvlLoading || (!streamDone && basicTvlDataset === undefined)
 			: advancedQuery.isLoading || (!streamDone && !advancedQuery.hasSourceData && !suppressTokenBreakdowns)
 
-	const hasError = chartType === 'tvl' ? queryReadFailed(basicTvlQuery) : advancedQuery.readFailed
-	const hasLoadedData = chartType === 'tvl' ? basicTvlDataset !== undefined : advancedQuery.hasSourceData
+	const readFailed = chartType === 'tvl' ? queryReadFailed(basicTvlQuery) : advancedQuery.readFailed
+	const refreshFailed = chartType === 'tvl' ? queryRefreshFailed(basicTvlQuery) : advancedQuery.refreshFailed
 	const retryChartData = chartType === 'tvl' ? basicTvlQuery : advancedQuery
 
 	const hallmarks = useDashboardAnnotationHallmarks()
@@ -248,7 +248,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		</div>
 	)
 
-	if (hasError && !hasLoadedData) {
+	if (readFailed) {
 		return renderStatusShell(<ProCardError retry={retryChartData} />)
 	}
 
@@ -289,7 +289,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(402px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(418px*var(--card-scale,1))]">
-			{hasError ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{refreshFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

@@ -458,6 +458,7 @@ function ProDashboardAPIProviderInner({
 		!dashboardReady || dashboardStreamNeedsProtocolCatalog(items.slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
 	const {
 		data: protocolsAndChains,
+		isPlaceholderData: protocolCatalogIsPlaceholder,
 		errorUpdatedAt: protocolCatalogErrorAt,
 		dataUpdatedAt: protocolCatalogDataAt,
 		isFetching: protocolCatalogFetching,
@@ -467,6 +468,7 @@ function ProDashboardAPIProviderInner({
 		() =>
 			getProtocolCatalogPrerequisite(needsProtocolCatalog, {
 				data: protocolsAndChains,
+				isPlaceholderData: protocolCatalogIsPlaceholder,
 				errorUpdatedAt: protocolCatalogErrorAt,
 				dataUpdatedAt: protocolCatalogDataAt,
 				isFetching: protocolCatalogFetching,
@@ -475,6 +477,7 @@ function ProDashboardAPIProviderInner({
 		[
 			needsProtocolCatalog,
 			protocolsAndChains,
+			protocolCatalogIsPlaceholder,
 			protocolCatalogErrorAt,
 			protocolCatalogDataAt,
 			protocolCatalogFetching,

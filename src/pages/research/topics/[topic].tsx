@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
-import Error from 'next/error'
 import Link from 'next/link'
+import { BasicLink } from '~/components/Link'
 import { ArticleApiError, listArticlesByTopic } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { GenericCard } from '~/containers/Articles/landing/GenericCard'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
-import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { safeDecodeURIComponent } from '~/utils/route'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -82,7 +84,7 @@ export const getServerSideProps = withServerSidePropsTelemetry('/research/topics
 
 function TopicLandingContent({ topic, initialArticles }: { topic: string; initialArticles: ArticleListResponse }) {
 	const topicLabel = humanizeTopic(topic)
-	const { data, isLoading, error } = useQuery({
+	const topicQuery = useQuery({
 		queryKey: ['research', 'topic-index', topic],
 		queryFn: () => listArticlesByTopic(topic, { sort: 'newest', limit: 60 }),
 		initialData: initialArticles,
@@ -90,23 +92,36 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 		staleTime: 60_000
 	})
 
-	if (isLoading) return <ResearchLoader />
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
+	// A failed focus refetch keeps the server-rendered grid on screen.
+	if (queryReadFailed(topicQuery)) {
+		const { error } = topicQuery
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load this topic</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
+			<PanelStatus variant="error" retry={topicQuery} className="mx-auto w-full max-w-[1180px]">
+				Couldn&apos;t load this topic.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
+	if (topicQuery.isLoading)
+		return <PanelLoadingStatus label="Loading topic" className="mx-auto w-full max-w-[1180px]" />
+
+	const { data } = topicQuery
 	const items = data?.items ?? []
 	const total = data?.totalItems ?? items.length
 
 	if (total < MIN_TOPIC_ARTICLE_COUNT) {
-		return <Error statusCode={404} />
+		return (
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Topic not found"
+				actions={
+					<Button as={BasicLink} href="/research" size="md">
+						Browse all research
+					</Button>
+				}
+			/>
+		)
 	}
 
 	return (

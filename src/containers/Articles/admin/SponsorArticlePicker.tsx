@@ -7,6 +7,7 @@ import type { ResearchSponsorArticleSearchResult } from '~/containers/Articles/t
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -50,7 +51,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 				sameWidth
 				className="max-h-[min(320px,var(--popover-available-height))]"
 			>
-				{isFetching && items.length === 0 ? <p className="p-3 body-sm text-tertiary">Searching…</p> : null}
+				{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
 				{!isFetching && items.length === 0 ? (
 					<p className="p-3 body-sm text-tertiary">
 						{query ? 'No matching unlinked articles.' : 'No additional Research articles available.'}

@@ -6,10 +6,12 @@ import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { ArticleApiError, listResearchSponsors, setArticleClient } from '../api'
 import type { ArticleClient, ArticleClientRelation } from '../types'
 import { ARTICLE_CLIENT_RELATION_LABELS } from '../types'
@@ -57,8 +59,8 @@ export function ArticleClientField({
 		? save.error instanceof ArticleApiError
 			? save.error.message
 			: 'Failed to update client'
-		: sponsors.error
-			? 'Failed to load clients'
+		: queryReadFailed(sponsors)
+			? "Couldn't load clients."
 			: null
 
 	return (
@@ -93,7 +95,7 @@ export function ArticleClientField({
 							</Ariakit.ComboboxItem>
 						)
 					})}
-					{sponsors.isPending && listOpen ? <p className="px-3 py-2 body-sm text-tertiary">Loading clients…</p> : null}
+					{sponsors.isPending && listOpen ? <ListLoading label="Loading clients" /> : null}
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			<SegmentedControl

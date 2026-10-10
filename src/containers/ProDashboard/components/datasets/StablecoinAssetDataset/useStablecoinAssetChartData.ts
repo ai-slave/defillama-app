@@ -29,7 +29,7 @@ import {
 	isStablecoinChartDateVisible,
 	sumStablecoinPegBalances
 } from '~/containers/Stablecoins/utils'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { StablecoinAssetChartType } from '../../../types'
 
 type StablecoinAssetPresentation =
@@ -53,6 +53,7 @@ interface UseStablecoinAssetChartDataResult {
 	isLoading: boolean
 	isFetching: boolean
 	readFailed: boolean
+	refreshFailed: boolean
 	refetch: () => void
 }
 
@@ -249,6 +250,7 @@ export function useStablecoinAssetChartData(
 	)
 	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
 	const readFailed = queryReadFailed(chartQuery)
+	const refreshFailed = queryRefreshFailed(chartQuery)
 	const prepareCsvDataset = useCallback(() => {
 		if (!rawData) throw new Error('Stablecoin asset data is unavailable')
 		return buildStablecoinAssetCsvDataset(rawData, chartType, periodBounds, selectionOptions, canonicalHistory)
@@ -265,6 +267,7 @@ export function useStablecoinAssetChartData(
 			isLoading,
 			isFetching,
 			readFailed,
+			refreshFailed,
 			refetch
 		}),
 		[
@@ -277,6 +280,7 @@ export function useStablecoinAssetChartData(
 			isLoading,
 			isFetching,
 			readFailed,
+			refreshFailed,
 			refetch
 		]
 	)

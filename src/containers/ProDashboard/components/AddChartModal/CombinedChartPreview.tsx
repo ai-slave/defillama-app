@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { getProDashboardChartTypeConfig } from '../../types'
@@ -55,10 +55,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			<div className="flex size-full items-center justify-center">
 				<div className="rounded-md border border-subtle bg-surface p-4 text-center">
 					{anyLoading ? (
-						<div className="flex flex-col items-center gap-2 text-tertiary">
-							<LoadingSpinner size={20} />
-							<p className="body-sm text-tertiary">Loading chart data…</p>
-						</div>
+						<SurfaceBodyLoadingStatus label="Loading chart data" className="min-h-0" />
 					) : (
 						<>
 							<p className="mb-2 body-md text-secondary">Chart preview</p>

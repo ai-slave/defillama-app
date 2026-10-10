@@ -170,7 +170,7 @@ function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelec
 
 	if (debouncedSearchValue) {
 		// The failure first: a retry from it moves the query back to loading, and the error waits in its Try again.
-		if (search.data.length === 0 && search.failed) {
+		if (search.failed) {
 			return <SearchError retrying={search.isFetching} onRetry={() => void search.refetch()} />
 		}
 		if (search.isLoading) return <SearchLoading />

@@ -36,9 +36,9 @@ import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
 
@@ -236,6 +236,11 @@ export function TrustedByAdminView() {
 					</Button>
 				</div>
 
+				{queryRefreshFailed(logosQuery) ? (
+					<InlineStatus variant="error" retry={logosQuery}>
+						Couldn&apos;t refresh logos. It may not show your latest change.
+					</InlineStatus>
+				) : null}
 				{queryReadFailed(logosQuery) ? (
 					<PanelStatus variant="error" retry={logosQuery} className="min-h-32">
 						Couldn&apos;t load logos.
@@ -282,6 +287,11 @@ export function TrustedByAdminView() {
 					</Button>
 				</div>
 
+				{queryRefreshFailed(mentionsQuery) ? (
+					<InlineStatus variant="error" retry={mentionsQuery}>
+						Couldn&apos;t refresh mentions. It may not show your latest change.
+					</InlineStatus>
+				) : null}
 				{queryReadFailed(mentionsQuery) ? (
 					<PanelStatus variant="error" retry={mentionsQuery} className="min-h-32">
 						Couldn&apos;t load mentions.

@@ -214,9 +214,7 @@ export function EquitiesTreemapSection({
 				</TableToolbarControlGroup>
 			</TableToolbar>
 			{filterPills}
-			{/* A retry from an error shows the previous filter's rows as placeholder data; the error stays until it loads.
-			    A failed refresh of rows already drawn keeps them. */}
-			{queryReadFailed(datasetQuery) && (data == null || datasetQuery.isPlaceholderData) ? (
+			{queryReadFailed(datasetQuery) ? (
 				<ChartPanelBodyError retry={datasetQuery} style={{ height: CHART_HEIGHT }}>
 					Failed to load chart data.
 				</ChartPanelBodyError>

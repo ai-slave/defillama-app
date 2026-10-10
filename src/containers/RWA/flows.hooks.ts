@@ -100,7 +100,7 @@ export type RWAFlowSeriesResult = {
 	/** A scoped page: one row per day with a value per asset, folded by `aggregateRWAFlowRows`. */
 	assetRows: Array<IRWAFlowAssetBreakdownRow> | undefined
 	isLoading: boolean
-	/** The query when its read failed, for the chart's Try again. */
+	/** The query when it has nothing to show and its read failed, for the chart's Try again. */
 	failedRead: QueryRetry | null
 }
 

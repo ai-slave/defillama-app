@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -102,16 +103,42 @@ test('a successful draft create opens the new draft', async () => {
 })
 
 test('an article that fails to load shows the error instead of a blank editor', async () => {
+	session.serve({ [`${FEATURES_SERVER}/articles/broken/edit`]: fixtureStatus(500, { error: 'Research is down' }) })
+	await mount('broken')
+	await waitForUi(() => expect(alertText()).toBe("Couldn't load this research. Research is down"))
+	expect(container.querySelector('[role="textbox"][aria-label="Article body"]')).toBeNull()
+})
+
+test('a missing article reads as not found, with a way back and no retry', async () => {
 	session.serve({ [`${FEATURES_SERVER}/articles/missing/edit`]: fixtureStatus(404, { error: 'Article not found' }) })
 	await mount('missing')
-	await waitForUi(() => expect(alertText()).toBe('Article not found'))
+	await waitForUi(() => expect(container.querySelector('h1')?.textContent).toBe('Research not found'))
+	const back = [...container.querySelectorAll('a')].find((el) => accessibleName(el) === 'Back to my research')
+	expect(back?.getAttribute('href')).toBe('/research/mine')
+	expect([...container.querySelectorAll('button')].some((el) => accessibleName(el) === 'Try again')).toBe(false)
+	expect(alertText()).toBeUndefined()
+	expect(container.querySelector('[role="textbox"][aria-label="Article body"]')).toBeNull()
+})
+
+test('Try again on an article that failed to load keeps the error on screen while the read runs again', async () => {
+	session.serveInOrder(`${FEATURES_SERVER}/articles/missing/edit`, [
+		fixtureStatus(500, { error: 'Research is down' }),
+		() => new Promise<Response>(() => {})
+	])
+	await mount('missing')
+	await waitForUi(() => expect(alertText()).toBe("Couldn't load this research. Research is down"))
+
+	const retry = [...container.querySelectorAll('button')].find((el) => accessibleName(el) === 'Try again')!
+	await act(async () => retry.click())
+	await waitForUi(() => expect(container.querySelector('button[aria-busy="true"]')).not.toBeNull())
+	expect(alertText()).toContain("Couldn't load this research.")
 	expect(container.querySelector('[role="textbox"][aria-label="Article body"]')).toBeNull()
 })
 
 test('the save shortcut on an article that failed to load does not create a new draft', async () => {
 	session.serve({ [`${FEATURES_SERVER}/articles/missing/edit`]: fixtureStatus(404, { error: 'Article not found' }) })
 	await mount('missing')
-	await waitForUi(() => expect(alertText()).toBe('Article not found'))
+	await waitForUi(() => expect(container.querySelector('h1')?.textContent).toBe('Research not found'))
 	await act(async () =>
 		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true, cancelable: true }))
 	)

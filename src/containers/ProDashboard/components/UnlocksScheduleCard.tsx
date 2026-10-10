@@ -8,7 +8,7 @@ import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { slug } from '~/utils'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
@@ -50,7 +50,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		staleTime: 60 * 60 * 1000
 	})
 	const { data, isLoading } = scheduleQuery
-	const readFailed = queryReadFailed(scheduleQuery)
 
 	// Pre-built from the API — no need to reconstruct dataset/charts from scratch.
 	const apiDataset = data?.datasets?.[resolvedDataType] ?? EMPTY_DATASET
@@ -107,7 +106,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		</div>
 	)
 
-	if (readFailed && data === undefined) {
+	if (queryReadFailed(scheduleQuery)) {
 		return renderStatusShell(<ProCardError retry={scheduleQuery} />)
 	}
 
@@ -117,7 +116,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
-			{readFailed ? <ProCardRefreshFailed retry={scheduleQuery} /> : null}
+			{queryRefreshFailed(scheduleQuery) ? <ProCardRefreshFailed retry={scheduleQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={title}

@@ -8,8 +8,8 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingDots } from '~/ui/Loaders'
-import { queryReadFailed } from '~/utils/query'
+import { ErrorLine, LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { navLinkStyles } from './shared'
 
 // A retry that succeeds leaves; the account link above it stays, so it takes focus.
@@ -26,10 +26,10 @@ export function Account() {
 		[subscriptionUserId, subscriptionToken]
 	)
 	const subscriptionQuery = useQuery(subscriptionQueryConfig)
-	const { data, isFetching, refetch } = subscriptionQuery
-	const failed = queryReadFailed(subscriptionQuery)
+	const { isFetching, refetch } = subscriptionQuery
 	// With no status at all, the failure is the account's subtitle and outranks the provider's loading state.
-	const unavailable = failed && data === undefined
+	const unavailable = queryReadFailed(subscriptionQuery)
+	const refreshFailed = queryRefreshFailed(subscriptionQuery)
 	const isClient = useIsClient()
 
 	if (!isClient) {
@@ -39,11 +39,8 @@ export function Account() {
 	return (
 		<>
 			{loaders?.userLoading && !(isAuthenticated && user && unavailable) ? (
-				<div className="flex min-h-7 w-full items-center justify-center">
-					<p className="flex items-center gap-1">
-						Loading
-						<LoadingDots />
-					</p>
+				<div role="status" aria-live="polite" className="flex min-h-7 w-full items-center justify-center">
+					<LoadingIndicator label="Loading account" />
 				</div>
 			) : isAuthenticated && user ? (
 				<div data-account className="flex w-full flex-col">
@@ -63,9 +60,9 @@ export function Account() {
 						</div>
 						<Icon name="chevron-right" className="size-5 shrink-0 text-tertiary" />
 					</BasicLink>
-					{failed ? (
+					{unavailable || refreshFailed ? (
 						<div className="ml-9 flex flex-wrap items-center gap-2">
-							{unavailable ? null : <span className="label-xs text-error">Subscription unavailable</span>}
+							{refreshFailed ? <ErrorLine inset="none">Subscription unavailable</ErrorLine> : null}
 							<Button
 								size="sm"
 								ref={focusAccountOnLeave}

@@ -39,7 +39,7 @@ export function combineChainQueries(
 	results: Array<
 		Pick<
 			UseQueryResult<IRWAChartMetricRows>,
-			'data' | 'isLoading' | 'isFetching' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'refetch'
+			'data' | 'isPlaceholderData' | 'isLoading' | 'isFetching' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'refetch'
 		>
 	>
 ): ChainQueries {

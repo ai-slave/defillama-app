@@ -124,12 +124,23 @@ describe('useWebMobilePushPreference', () => {
 		serverStatus = 'fail'
 		await renderHook()
 		await waitForUi(() => expect(result.preference.kind).toBe('error'))
-		expect(result.preference).toMatchObject({ kind: 'error', message: 'Network unavailable' })
 
 		serverStatus = { available: true, enabled: false }
-		await act(async () => result.preference.kind === 'error' && result.preference.retry())
+		await act(async () => result.preference.kind === 'error' && result.preference.retry.refetch())
 
 		await waitForPreference(DISABLED)
+	})
+
+	test('keeps the error while its retry runs', async () => {
+		serverStatus = 'fail'
+		await renderHook()
+		await waitForUi(() => expect(result.preference.kind).toBe('error'))
+
+		serverStatus = 'hang'
+		await act(async () => void (result.preference.kind === 'error' && result.preference.retry.refetch()))
+
+		await waitForUi(() => expect(result.preference.kind === 'error' && result.preference.retry.isFetching).toBe(true))
+		expect(statusReads()).toBe(2)
 	})
 
 	test('keeps a known preference when a background refetch fails', async () => {

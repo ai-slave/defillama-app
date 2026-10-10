@@ -36,14 +36,13 @@ import { Field } from '~/ui/Field'
 import { neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { BalanceSettings } from './BalanceSettings'
 import { RetryNotice } from './RetryNotice'
 import { RAIL_TAB } from './tabRailStyles'
@@ -141,8 +140,9 @@ export const SettingsModal = memo(function SettingsModal({
 	// blank. Constraining the selection here keeps one source of truth for which tab is showing.
 	const activeTab: SettingsTabId = selectedTab === 'lab' && !isDark ? 'persona' : selectedTab
 	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
-	const memoriesFailed = queryReadFailed(agentHome.memories)
-	const skillsFailed = queryReadFailed(agentHome.skills)
+	// Each notice sits above the lists it kept, so a failed refresh counts too.
+	const memoriesFailed = queryReadFailed(agentHome.memories) || queryRefreshFailed(agentHome.memories)
+	const skillsFailed = queryReadFailed(agentHome.skills) || queryRefreshFailed(agentHome.skills)
 	const openingKey = useOpeningKey(isOpen)
 	// A failed save shows at the end of the tab it came from, in whichever opening is on screen when it fails; each
 	// opening starts clean. A save that fails while the dialog is closed, such as the instructions saved on close, can
@@ -409,9 +409,8 @@ export const SettingsModal = memo(function SettingsModal({
 					<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<p className="m-0 label-md text-primary">Mobile notifications</p>
-							<p className="m-0 body-sm text-secondary">Loading your mobile notification preference…</p>
+							<LoadingIndicator label="Loading your preference" />
 						</div>
-						<LoadingSpinner size={16} />
 					</div>
 				</>
 			)
@@ -420,16 +419,10 @@ export const SettingsModal = memo(function SettingsModal({
 			mobileNotificationRow = (
 				<>
 					<RowDivider />
-					<div role="alert" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
-						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-							<p className="m-0 label-md text-primary">Mobile notifications</p>
-							<p className="m-0 body-sm text-secondary">
-								Couldn't load mobile notifications. {mobileNotificationPreference.message}
-							</p>
-						</div>
-						<Button type="button" size="sm" onClick={mobileNotificationPreference.retry}>
-							Try again
-						</Button>
+					<div className="px-4 py-3.5">
+						<InlineStatus variant="error" retry={mobileNotificationPreference.retry}>
+							Couldn't load mobile notifications.
+						</InlineStatus>
 					</div>
 				</>
 			)

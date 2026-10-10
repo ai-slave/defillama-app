@@ -4,7 +4,7 @@ import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
 import { ProMeta } from '../ui'
@@ -39,7 +39,6 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		staleTime: 60 * 60 * 1000
 	})
 	const { data, isLoading } = pieQuery
-	const readFailed = queryReadFailed(pieQuery)
 
 	const chartData = useMemo(() => {
 		if (chartType === 'allocation') {
@@ -85,7 +84,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		</div>
 	)
 
-	if (readFailed && data === undefined) {
+	if (queryReadFailed(pieQuery)) {
 		return renderStatusShell(<ProCardError retry={pieQuery} />)
 	}
 
@@ -95,7 +94,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={pieQuery} /> : null}
+			{queryRefreshFailed(pieQuery) ? <ProCardRefreshFailed retry={pieQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTitle}

@@ -1,9 +1,9 @@
 import type { GetStaticPropsContext, GetStaticPropsResult } from 'next'
-import { TemporarilyDisabledPage } from '~/components/TemporarilyDisabledPage'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgesOverviewByChain } from '~/containers/Bridges/BridgesOverviewByChain'
 import { getBridgeOverviewPageData } from '~/containers/Bridges/queries.server'
 import Layout from '~/layout'
+import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -94,15 +94,15 @@ const pageName = ['Bridges Volume', 'by', 'Chain']
 export default function Bridges(props: BridgesPageProps) {
 	if (props.state === 'disabled') {
 		return (
-			<TemporarilyDisabledPage
+			<Layout
 				title={`Bridges Volume on ${props.chainLabel} - DefiLlama`}
 				description="This bridge chain route is temporarily unavailable and will be back shortly."
 				canonicalUrl={`/bridges/${props.chainSlug}`}
-				heading="Bridge chain data temporarily unavailable"
+				pageName={pageName}
 			>
-				<p>We recognize this chain route, but the upstream bridge APIs failed while loading this page.</p>
-				<p>Please try again in a few minutes.</p>
-			</TemporarilyDisabledPage>
+				{/* Static props: the page rebuilds on its revalidate interval, so there is no read here to retry. */}
+				<PanelStatus variant="error">Couldn't load bridge data for {props.chainLabel}.</PanelStatus>
+			</Layout>
 		)
 	}
 

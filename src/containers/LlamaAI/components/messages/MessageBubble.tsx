@@ -29,9 +29,9 @@ import { readFilePreview, readUrlPreview, type AttachmentPreview } from '~/conta
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Button } from '~/ui/Button'
+import { ChartPanel, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { ArtifactCard } from './ArtifactCard'
@@ -42,13 +42,9 @@ const KBD = 'rounded-sm border border-medium bg-surface-elevated-1 px-1 py-px mo
 // Every state of a chart takes the finished chart's box (its card and 360px body), so nothing jumps when it lands.
 function StreamingChartPlaceholder() {
 	return (
-		<div
-			role="status"
-			className="flex h-[360px] flex-col items-center justify-center gap-2 rounded-lg border border-subtle bg-surface body-sm text-tertiary"
-		>
-			<LoadingSpinner size={16} />
-			<p>Loading chart…</p>
-		</div>
+		<ChartPanel>
+			<ChartPanelBodyLoading />
+		</ChartPanel>
 	)
 }
 

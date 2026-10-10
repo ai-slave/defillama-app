@@ -11,6 +11,7 @@ import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { formatDateTime } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { checkTokenPricingDetails, fetchPricingChains, tokenPriceKey } from './api'
 import { pricingChainName } from './chains'
 
@@ -246,21 +247,8 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 							For Move tokens, enter a coin type such as {moveTokenExample}.
 						</p>
 					) : null}
-					{chainsQuery.isError ? (
-						<InlineStatus
-							variant="error"
-							action={
-								<Button
-									type="button"
-									size="sm"
-									pendingLabel="Retrying…"
-									pending={chainsQuery.isFetching}
-									onClick={() => void chainsQuery.refetch()}
-								>
-									Try again
-								</Button>
-							}
-						>
+					{queryReadFailed(chainsQuery) ? (
+						<InlineStatus variant="error" retry={chainsQuery}>
 							Couldn&rsquo;t load the supported chains.
 						</InlineStatus>
 					) : null}

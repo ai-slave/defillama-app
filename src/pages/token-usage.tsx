@@ -34,12 +34,13 @@ import { ChartPanel, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { InlineStatus, LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { ErrorLine, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
@@ -69,11 +70,7 @@ export default function Tokens() {
 	const tokenSymbol = token ? (typeof token === 'string' ? token : token[0]) : null
 	const includeCentraliseExchanges = includecex === 'true'
 
-	const {
-		data: protocols,
-		error,
-		isLoading
-	} = useQuery({
+	const protocolsQuery = useQuery({
 		queryKey: ['token-usage', 'protocols-by-token', tokenSymbol],
 		queryFn: () => fetchProtocols(tokenSymbol, authorizedFetch),
 		staleTime: 60 * 60 * 1000,
@@ -81,6 +78,7 @@ export default function Tokens() {
 		retry: false,
 		enabled: !!tokenSymbol && isAuthenticated && !!hasActiveSubscription
 	})
+	const protocols = protocolsQuery.data
 
 	const filteredProtocols = useMemo(() => {
 		return (
@@ -147,12 +145,12 @@ export default function Tokens() {
 
 			<TokenUsageSearch />
 
-			{!isClient || isLoading || !router.isReady || loaders.userLoading ? (
-				<PanelLoadingStatus className="min-h-[380px]" />
-			) : error ? (
-				<PanelStatus variant="error" className="min-h-[380px]">
-					{error.message}
+			{queryReadFailed(protocolsQuery) ? (
+				<PanelStatus variant="error" retry={protocolsQuery} className="min-h-[380px]">
+					Couldn't load token usage.
 				</PanelStatus>
+			) : !isClient || protocolsQuery.isLoading || !router.isReady || loaders.userLoading ? (
+				<PanelLoadingStatus label="Loading token usage" className="min-h-[380px]" />
 			) : !tokenSymbol ? (
 				<PanelStatus variant="empty" className="min-h-[380px]">
 					No token selected
@@ -338,12 +336,13 @@ export function TokenUsageSearch() {
 	const searchValue = typedValue ?? urlToken?.toUpperCase() ?? ''
 
 	const debouncedSearchValue = useDebouncedValue(searchValue, 200)
-	const { data, isLoading, error } = useQuery({
+	const searchQuery = useQuery({
 		queryKey: ['token-usage', 'search-tokens', debouncedSearchValue],
 		queryFn: () => searchTokens(debouncedSearchValue, 20),
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
+	const { data } = searchQuery
 
 	const [open, setOpen] = useState(false)
 
@@ -389,14 +388,10 @@ export function TokenUsageSearch() {
 				sameWidth
 				className="max-h-[min(400px,var(--popover-available-height))]"
 			>
-				{isLoading ? (
-					<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">
-						<LoadingIndicator />
-					</p>
-				) : error ? (
-					<div className="p-3">
-						<InlineStatus variant="error">{`Error: ${error.message}`}</InlineStatus>
-					</div>
+				{queryReadFailed(searchQuery) ? (
+					<ErrorLine inset="menuRow">Couldn't search tokens.</ErrorLine>
+				) : searchQuery.isLoading ? (
+					<ListLoading label="Searching" />
 				) : !data?.length ? (
 					<NoResults />
 				) : (

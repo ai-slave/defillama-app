@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { useId, useImperativeHandle, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
@@ -250,7 +251,11 @@ export function EntitySuggestionList({
 				role="listbox"
 			>
 				{flat.length === 0 ? (
-					<div className="px-3 py-8 text-center body-sm text-tertiary">{loading ? 'Searching…' : 'No matches'}</div>
+					loading ? (
+						<ListLoading label="Searching" />
+					) : (
+						<NoResults>No matches</NoResults>
+					)
 				) : (
 					<>
 						{showRecents ? recents.map((i) => renderItem(i, { recent: true })) : null}

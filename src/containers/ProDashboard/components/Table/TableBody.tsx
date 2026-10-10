@@ -95,7 +95,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 										<td colSpan={table.getAllLeafColumns().length} className="py-8 text-center">
 											{isLoading ? (
 												<div className="flex">
-													<ProCardLoading variant="table" label="Loading data…" />
+													<ProCardLoading variant="table" label="Loading data" />
 												</div>
 											) : (
 												<span className="text-tertiary">{emptyMessage}</span>

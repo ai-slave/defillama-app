@@ -32,8 +32,9 @@ import {
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 
@@ -107,7 +108,7 @@ function useEquitiesFilingsData(ticker: string) {
 	const streamDone = useContext(StreamDoneContext)
 	const tickerCountry = parseEquityTickerCountryParam(ticker)
 
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: getEquitiesTableQueryKey('filings', ticker) ?? getProEquitiesFilingsCacheKey(ticker),
 		queryFn: async () => {
 			if (!tickerCountry) throw new Error('Missing ticker param')
@@ -124,9 +125,8 @@ function useEquitiesFilingsData(ticker: string) {
 		enabled: Boolean(tickerCountry) && Boolean(authToken) && streamDone
 	})
 	return {
-		data,
-		isLoading: isLoading || (tickerCountry !== null && !streamDone && data === undefined),
-		error
+		query,
+		isLoading: query.isLoading || (tickerCountry !== null && !streamDone && query.data === undefined)
 	}
 }
 
@@ -143,7 +143,8 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	})
 	const [selectedForm, setSelectedForm] = useState<string>('All')
 
-	const { data, isLoading, error } = useEquitiesFilingsData(ticker)
+	const { query: filingsQuery, isLoading } = useEquitiesFilingsData(ticker)
+	const { data } = filingsQuery
 	const formOptions = useMemo(() => {
 		const forms = new Set<string>()
 		for (const filing of data ?? []) {
@@ -188,8 +189,18 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	if (!ticker) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">No ticker specified</div>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardEmpty message="No ticker specified." />
+				</div>
+			</div>
+		)
+	}
+
+	if (queryReadFailed(filingsQuery)) {
+		return (
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load SEC filings" retry={filingsQuery} />
 				</div>
 			</div>
 		)
@@ -199,17 +210,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading SEC filings…" />
-				</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load SEC filings</div>
+					<ProCardLoading variant="table" label="Loading SEC filings" />
 				</div>
 			</div>
 		)
@@ -268,6 +269,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 					</div>
 				</div>
 			</div>
+			{queryRefreshFailed(filingsQuery) ? <ProCardRefreshFailed retry={filingsQuery} /> : null}
 			<TableBody table={instance} />
 			<TablePagination
 				pageSize={pagination.pageSize}

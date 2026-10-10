@@ -18,7 +18,7 @@ import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
@@ -585,17 +585,7 @@ function ProDashboardContent() {
 	if (!isAuthenticated && !hasActiveSubscription && dashboardVisibility !== 'public') {
 		return (
 			<ErrorBoundary fallback={<DemoPreviewFallback />}>
-				<Suspense
-					fallback={
-						<div
-							role="status"
-							aria-live="polite"
-							className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface p-1"
-						>
-							<LoadingIndicator label="Loading preview" />
-						</div>
-					}
-				>
+				<Suspense fallback={<PanelLoadingStatus label="Loading preview" />}>
 					<DemoPreview />
 				</Suspense>
 			</ErrorBoundary>

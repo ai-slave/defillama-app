@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { TokenBorrowSection } from '../TokenBorrowSection'
@@ -146,31 +147,38 @@ test.each(SCENARIOS)(
 			[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
 				(input) => input.parentElement?.textContent === label
 			)!
-		const findButton = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent === text)!
+		const findButton = (name: string) =>
+			[...container.querySelectorAll('button')].find((b) => accessibleName(b) === name)
 		const shownIds = () =>
 			[...container.querySelectorAll('tbody tr')].map((row) => row.textContent?.match(/(use|borrow)-\d/)?.[0])
 		const sectionState = () => ({
 			rows: shownIds(),
 			noRoutes: container.textContent?.includes('No borrow routes found') ?? false,
-			retry: container.textContent?.includes('Retry') ?? false
+			retry: findButton('Try again') != null
 		})
 		const waitForRetryEnabled = () =>
 			waitForUi(async () => {
-				await act(async () => expect(findButton('Retry')?.getAttribute('aria-disabled')).toBe(null))
+				await act(async () => {
+					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load borrow routes.")
+					expect(findButton('Try again')?.getAttribute('aria-disabled')).toBe(null)
+				})
 			})
-		/** Double-clicks Retry, which must start one request per leg; resolves collateral and leaves the debt leg. */
+		/** Double-clicks Try again, which must start one request per leg; resolves collateral and leaves the debt leg. */
 		const retry = async (retained: Array<string>) => {
 			collateral = Promise.withResolvers<Response>()
 			borrow = Promise.withResolvers<Response>()
+			const button = findButton('Try again')!
 			await act(async () => {
-				findButton('Retry').click()
-				findButton('Retry').click()
+				button.click()
+				button.click()
 			})
 			await waitForUi(async () => {
 				// A retry in flight keeps its focus and ignores presses: busy and aria-disabled, never natively disabled.
 				await act(async () => {
 					const pending = container.querySelector<HTMLButtonElement>('button[aria-busy="true"]')!
-					expect(pending.textContent).toContain('Retrying…')
+					expect(accessibleName(pending)).toBe('Retrying…')
+					// The failure stays on screen while its retry runs.
+					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load borrow routes.")
 					expect([pending.getAttribute('aria-disabled'), pending.disabled]).toEqual(['true', false])
 				})
 			})
@@ -215,7 +223,7 @@ test.each(SCENARIOS)(
 			const retained = scenario.switchesLegAfterFailure ? [] : hydrated
 			expect(shownIds()).toEqual(retained)
 
-			// A retry whose debt leg fails again keeps the rows and re-enables Retry.
+			// A retry whose debt leg fails again keeps the rows and re-enables Try again.
 			await retry(retained)
 			await act(async () => borrow.reject(new Error('Still unavailable')))
 			await waitForRetryEnabled()

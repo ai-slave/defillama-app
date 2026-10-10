@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useTab, type KpkMandateClient, type KpkMandates, type KpkMandateSleeve, type KpkMandateWindow } from './api'
 import { KPK_BENCH_TEXT, KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
@@ -22,7 +24,6 @@ import {
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
-	QueryError,
 	RefLinks,
 	RowLink,
 	scopeLine,
@@ -53,7 +54,8 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 }
 
 export default function Mandates() {
-	const { data, isError } = useTab<KpkMandates>('mandates')
+	const query = useTab<KpkMandates>('mandates')
+	const { data } = query
 	const [selectedDenom, setSelectedDenom] = useState<string | null>(null)
 
 	const denomOptions = useMemo(
@@ -75,7 +77,13 @@ export default function Mandates() {
 
 	const clientFooter = useMemo(() => (data ? clientFooterRows(data) : undefined), [data])
 
-	if (isError) return <QueryError label="Treasury mandates" />
+	if (queryReadFailed(query)) {
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load treasury mandate data.
+			</PanelStatus>
+		)
+	}
 
 	return (
 		<div className="flex flex-col gap-5">

@@ -18,9 +18,9 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { TextLoader } from '../../Logo'
 import {
 	type PerpMarket,
 	type PredictedFunding,
@@ -616,13 +616,7 @@ export default function Stats() {
 
 	const isLoading = perpsLoading || spotLoading
 
-	if (isLoading) {
-		return (
-			<div className="flex flex-1 items-center justify-center py-20">
-				<TextLoader />
-			</div>
-		)
-	}
+	if (isLoading) return <PanelLoadingStatus label="Loading market stats" />
 
 	return (
 		<div className="flex flex-col gap-4">

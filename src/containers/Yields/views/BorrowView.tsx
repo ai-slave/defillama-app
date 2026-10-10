@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { YIELD_BORROW_MARKETS_DATASET_API, YIELD_BORROW_ROUTES_DATASET_API } from '../constants'
 import type { MarketTableRow, RouteTableRow, TokenOption } from '../data/types'
 import { prepareBorrowMarketsCsv, prepareBorrowRoutesCsv } from '../domain/borrowCsv'
@@ -121,10 +122,12 @@ function BorrowView({
 				prepareCsv={prepareCsv}
 			/>
 
-			{isLoading ? (
+			{queryReadFailed(rowsQuery) ? (
+				<PanelStatus variant="error" retry={rowsQuery}>
+					{errorMessage}
+				</PanelStatus>
+			) : isLoading ? (
 				<PanelLoadingStatus label={routesMode ? 'Loading routes' : 'Loading borrow markets'} />
-			) : rowsQuery.isError && !rowsQuery.data ? (
-				<PanelStatus variant="error">{errorMessage}</PanelStatus>
 			) : rows.length > 0 ? (
 				routesMode ? (
 					<PaginatedBorrowRoutesTable data={rows as Array<RouteTableRow>} {...tableProps} />

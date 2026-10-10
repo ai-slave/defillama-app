@@ -107,7 +107,7 @@ test('a dashboard that fails to load leaves the loader for its failure', async (
 		[`${FEATURES_SERVER}/dashboards/private-dashboard`]: fixtureStatus(404, { message: 'Not found' })
 	})
 	await open('private-dashboard')
-	await waitForUi(() => expect(heading()).toBe('Dashboard Not Found'))
+	await waitForUi(() => expect(heading()).toBe('Dashboard not found'))
 })
 
 test('a failed subscription read does not hold a public dashboard behind the loader', async () => {

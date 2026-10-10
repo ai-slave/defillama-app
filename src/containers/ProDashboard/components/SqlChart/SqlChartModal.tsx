@@ -35,7 +35,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus } from '~/ui/Status'
+import { ErrorLine, InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
@@ -536,9 +536,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 			<DialogFooter
 				leading={
 					refusalReason ? (
-						<span role="alert" className="body-sm text-error">
-							{refusalReason}
-						</span>
+						<ErrorLine inset="none">{refusalReason}</ErrorLine>
 					) : (
 						<span role="status" className="body-sm text-tertiary">
 							{controls.status}

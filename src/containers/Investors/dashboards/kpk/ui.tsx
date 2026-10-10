@@ -316,14 +316,6 @@ export function Disclaimer({ title, children }: { title: string; children: React
 	)
 }
 
-export function QueryError({ label }: { label: string }) {
-	return (
-		<Card>
-			<p className="body-md text-secondary">{label} data is unavailable right now. Please try again later.</p>
-		</Card>
-	)
-}
-
 /* ──────────────────────────── marks ──────────────────────────── */
 
 /** A 30-point APY history, inline beside the number it belongs to. */

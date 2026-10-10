@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { CandlestickPoint } from '~/components/ECharts/CandlestickChart/types'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -57,13 +57,7 @@ export function CandlestickChartAdapter({ config, result, classified, onReady, h
 
 	void config
 	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center" style={{ height }}>
-					<LoadingSpinner size={18} />
-				</div>
-			}
-		>
+		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
 			<CandlestickChart data={data} height={height} onReady={onReady} />
 		</Suspense>
 	)

@@ -10,6 +10,7 @@ import type { AuthorDashboardSort } from '~/containers/Authors/types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const authorPageCacheHeader = 'public, s-maxage=300, stale-while-revalidate=3600'
@@ -48,18 +49,18 @@ function AuthorNotFound({ canonicalPath }: { canonicalPath: string }) {
 			canonicalUrl={canonicalPath}
 			noIndex
 		>
-			<div className="mx-auto flex min-h-[56vh] max-w-3xl flex-col items-start justify-center gap-5 px-4">
-				<div className="grid gap-2">
-					<p className="label-xs tracking-[0.2em] text-tertiary uppercase">Author index</p>
-					<h1 className="text-[clamp(2rem,1.4rem+2vw,3.25rem)] leading-tight font-semibold text-primary">
-						Author not found
-					</h1>
-					<p className="max-w-lg body-md text-secondary">This dashboard author profile is not available.</p>
-				</div>
-				<Button as={BasicLink} href="/pro" variant="primary" size="md">
-					Browse dashboards
-				</Button>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Author not found"
+				actions={
+					<Button as={BasicLink} href="/pro" variant="primary" size="md">
+						Browse dashboards
+					</Button>
+				}
+			>
+				This dashboard author profile is not available.
+			</EmptyState>
 		</Layout>
 	)
 }

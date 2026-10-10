@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
@@ -12,6 +12,7 @@ import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ApiAccessCard } from '../ApiAccessCard'
+import type { ApiUsageStats } from '../ApiUsageBreakdown'
 
 const session = installSubscriberSession('admin')
 
@@ -98,15 +99,14 @@ function ApiHarness({ initialKey = 'old-test-key' }: { initialKey?: string | nul
 		mutationFn: () => regenerate(),
 		onSuccess: (generatedKey) => setKey(generatedKey)
 	})
+	// Never runs: the card shows no usage yet, as for an account whose stats have not been read.
+	const usageStatsQuery = useQuery<ApiUsageStats | null>({
+		queryKey: ['usage-stats'],
+		queryFn: () => null,
+		enabled: false
+	})
 	return (
-		<ApiAccessCard
-			apiKey={key}
-			credits={null}
-			usageStats={null}
-			isUsageStatsLoading={false}
-			isUsageStatsError={false}
-			generateNewKeyMutation={generation}
-		/>
+		<ApiAccessCard apiKey={key} credits={null} usageStatsQuery={usageStatsQuery} generateNewKeyMutation={generation} />
 	)
 }
 test('copy reports success only after the clipboard accepts the key and retries a rejection', async () => {

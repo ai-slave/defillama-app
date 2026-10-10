@@ -8,7 +8,7 @@ import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
 import { RetryNotice } from '../components/RetryNotice'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
@@ -84,7 +84,8 @@ export function ProjectFilesPanel({
 
 	const files = filesQuery.data?.files ?? []
 	const githubSources = sources.filter((s) => s.adapter_type === 'github')
-	const filesFailed = queryReadFailed(filesQuery)
+	// The notice also sits above files it kept, so a failed refresh counts too.
+	const filesFailed = queryReadFailed(filesQuery) || queryRefreshFailed(filesQuery)
 	const isInitialLoading = !filesFailed && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
 
 	const fileErrorNotice = filesFailed ? (
@@ -146,7 +147,7 @@ export function ProjectFilesPanel({
 			</header>
 
 			<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
-			{queryReadFailed(sourcesQuery) ? (
+			{queryReadFailed(sourcesQuery) || queryRefreshFailed(sourcesQuery) ? (
 				<RetryNotice
 					message="Couldn't load connected sources."
 					retrying={sourcesQuery.isFetching}

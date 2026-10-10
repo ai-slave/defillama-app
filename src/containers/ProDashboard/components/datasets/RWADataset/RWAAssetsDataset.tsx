@@ -29,8 +29,9 @@ import {
 } from '~/ui/Input'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import {
@@ -133,7 +134,7 @@ function useRWAAssetsTableData(chain?: string) {
 	)
 
 	const hasValidChain = chain === undefined || chain.length > 0
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: PRO_RWA_ASSETS_TABLE_QUERY_KEY,
 		enabled: streamDone && hasValidChain,
 		queryFn: () => (authToken ? fetchProDashboardProxy('rwaAssetsList', {}, authToken) : fetchRWAActiveTVLs()),
@@ -142,7 +143,7 @@ function useRWAAssetsTableData(chain?: string) {
 		retry: 1,
 		select: selectRows
 	})
-	return { data, isLoading: isLoading || (hasValidChain && !streamDone && data === undefined), error }
+	return { query, isLoading: query.isLoading || (hasValidChain && !streamDone && query.data === undefined) }
 }
 
 export function RWAAssetsDataset({ chain }: { chain?: string }) {
@@ -151,7 +152,8 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
-	const { data, isLoading, error } = useRWAAssetsTableData(chain)
+	const { query: assetsQuery, isLoading } = useRWAAssetsTableData(chain)
+	const { data } = assetsQuery
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
@@ -168,24 +170,24 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 	})
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
+	if (queryReadFailed(assetsQuery)) {
+		return (
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load RWA assets data" retry={assetsQuery} />
+				</div>
+			</div>
+		)
+	}
+
 	if (isLoading) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
 					<ProCardLoading
 						variant="table"
-						label={chain === undefined ? 'Loading RWA assets data…' : `Loading RWA assets for ${chain}…`}
+						label={chain === undefined ? 'Loading RWA assets data' : `Loading RWA assets for ${chain}`}
 					/>
-				</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load RWA assets data</div>
 				</div>
 			</div>
 		)
@@ -220,6 +222,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 					</div>
 				</div>
 			</div>
+			{queryRefreshFailed(assetsQuery) ? <ProCardRefreshFailed retry={assetsQuery} /> : null}
 			<TableBody table={instance} />
 			<TablePagination
 				pageSize={pagination.pageSize}

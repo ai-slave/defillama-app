@@ -6,7 +6,7 @@ import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthor
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
-import { LoadingIndicator } from '~/ui/Status'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { AuthenticationCard } from './AuthenticationCard'
 import { DeleteAccountCard } from './DeleteAccountCard'
@@ -43,11 +43,7 @@ export function ManageAccount() {
 	}
 
 	if (!isClient || loaders.userLoading || !router.isReady) {
-		return (
-			<div role="status" aria-live="polite" className="flex h-64 items-center justify-center">
-				<LoadingIndicator />
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading account" className="min-h-64" />
 	}
 
 	if (!isAuthenticated || !user) {

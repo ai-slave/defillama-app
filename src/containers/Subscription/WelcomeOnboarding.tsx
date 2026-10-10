@@ -20,7 +20,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { OptionTile } from '~/ui/OptionTile'
 import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
-import { LoadingIndicator } from '~/ui/Status'
+import { LoadingIndicator, PanelLoadingStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const ONBOARDING_OPTIONS = [
@@ -301,11 +301,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 
 	// Until the router reads the query, a checkout return looks like a plain visit and would confirm any active plan.
 	if (loaders.userLoading || !router.isReady) {
-		return (
-			<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center">
-				<LoadingIndicator label="Loading your subscription" />
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading your subscription" className="min-h-[60vh]" />
 	}
 
 	if (isPaymentFailed) {

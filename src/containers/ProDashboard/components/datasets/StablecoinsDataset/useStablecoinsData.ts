@@ -8,12 +8,12 @@ export type StablecoinsTableRow = StablecoinsTableData[number]
 
 export function useStablecoinsData(chain: string) {
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: getProStablecoinsTableQueryKey(chain),
 		queryFn: () => fetchStablecoinsTableData(chain),
 		enabled: streamDone,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 		refetchInterval: 5 * 60 * 1000 // 5 minutes
 	})
-	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
+	return { query, isLoading: query.isLoading || (!streamDone && query.data === undefined) }
 }

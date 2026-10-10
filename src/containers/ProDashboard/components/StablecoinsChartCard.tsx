@@ -63,7 +63,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		[selectionIntent]
 	)
 	const chartRead = useStablecoinsChartData(chain, chartType, true, selectionOptions)
-	const { chartPayload, pieSeries, defaultSeries, prepareCsvDataset, isLoading, readFailed } = chartRead
+	const { chartPayload, pieSeries, defaultSeries, prepareCsvDataset, isLoading, readFailed, refreshFailed } = chartRead
 	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries: null,
@@ -140,7 +140,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		</div>
 	)
 
-	if (readFailed && !hasChartData) {
+	if (readFailed) {
 		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
@@ -159,7 +159,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
+			{refreshFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

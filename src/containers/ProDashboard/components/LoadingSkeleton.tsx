@@ -17,6 +17,8 @@ export function LoadingSkeleton({ viewMode = 'grid', items = 18 }: LoadingSkelet
 			aria-live="polite"
 			aria-busy="true"
 		>
+			{/* The cards are aria-hidden shapes, so the region needs words to announce. */}
+			<span className="sr-only">Loading dashboards</span>
 			{Array.from({ length: items }).map((_, i) => (
 				// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 				<SkeletonCard key={`skeleton-item-${i}`} viewMode={viewMode} />

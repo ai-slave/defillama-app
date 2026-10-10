@@ -5,6 +5,7 @@ import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -86,11 +87,12 @@ export function YieldsWatchlistContainer() {
 					/>
 				</PanelHeader>
 
-				{savedPoolIds.length > 0 && !rowsQuery.data && queryReadFailed(rowsQuery) ? (
+				{savedPoolIds.length > 0 && queryReadFailed(rowsQuery) ? (
 					<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
 						<p>Couldn&apos;t load your saved pools. They are still saved.</p>
 						<Button
-							size="md"
+							ref={focusRegionOnLeave}
+							size="sm"
 							pendingLabel="Retrying…"
 							pending={rowsQuery.isFetching}
 							onClick={() => void rowsQuery.refetch()}

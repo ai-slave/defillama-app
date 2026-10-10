@@ -3,12 +3,20 @@ import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuth
 import { ArticlesAccessGate } from '~/containers/Articles/ArticlesAccessGate'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import Layout from '~/layout'
+import { PanelLoadingStatus } from '~/ui/Status'
+
+// The editor's own loading frame and label, so nothing moves when the chunk and the draft land.
+const editorLoading = (
+	<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
+		<PanelLoadingStatus label="Loading editor" />
+	</div>
+)
 
 const ArticleEditorClient = dynamic(
 	() => import('~/containers/Articles/editor/ArticleEditorClient').then((mod) => mod.ArticleEditorClient),
 	{
 		ssr: false,
-		loading: () => <div className="rounded-md border border-medium bg-surface p-4">Loading research editor…</div>
+		loading: () => editorLoading
 	}
 )
 
@@ -23,7 +31,7 @@ export default function NewArticlePage() {
 		>
 			<ArticleProxyAuthProvider>
 				<AppMetadataProvider>
-					<ArticlesAccessGate>
+					<ArticlesAccessGate loadingFallback={editorLoading}>
 						<ArticleEditorClient />
 					</ArticlesAccessGate>
 				</AppMetadataProvider>

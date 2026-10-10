@@ -4,7 +4,7 @@ import { tableNameFor, type RegisteredTable } from '~/containers/Downloads/sql/u
 import { buildShareUrl } from '~/containers/Downloads/urlState'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { SqlChartConfig, SqlSnapshot } from '../../types'
 
@@ -94,8 +94,8 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 			<div className="min-h-[180px]">
 				<Suspense
 					fallback={
-						<div className="flex min-h-[180px] items-center justify-center rounded-sm border border-subtle bg-surface">
-							<LoadingSpinner size={16} />
+						<div className="flex rounded-sm border border-subtle bg-surface">
+							<SurfaceBodyLoadingStatus label="Loading editor" className="min-h-[180px]" />
 						</div>
 					}
 				>

@@ -7,12 +7,12 @@ import {
 	setWebMobilePushEnabled,
 	type WebMobilePushStatus
 } from '~/containers/LlamaAI/api/mobilePush'
-import { getErrorMessage } from '~/utils/error'
+import { queryReadFailed, type QueryRetry } from '~/utils/query'
 
 export type WebMobilePreference =
 	| { kind: 'signed-out' }
 	| { kind: 'loading' }
-	| { kind: 'error'; message: string; retry: () => void }
+	| { kind: 'error'; retry: QueryRetry }
 	| { kind: 'known'; available: boolean; enabled: boolean }
 
 export function isWebMobileToggleVisible(
@@ -123,12 +123,9 @@ export function useWebMobilePushPreference() {
 	let preference: WebMobilePreference
 	if (!isAuthenticated || !userId) {
 		preference = { kind: 'signed-out' }
-	} else if (statusQuery.isError && !statusQuery.data) {
-		preference = {
-			kind: 'error',
-			message: getErrorMessage(statusQuery.error),
-			retry: () => void statusQuery.refetch()
-		}
+	} else if (queryReadFailed(statusQuery)) {
+		// Read isFetching here so the query re-renders this hook when the retry starts (React Query tracks read props).
+		preference = { kind: 'error', retry: { refetch: statusQuery.refetch, isFetching: statusQuery.isFetching } }
 	} else if (!statusQuery.data) {
 		preference = { kind: 'loading' }
 	} else {

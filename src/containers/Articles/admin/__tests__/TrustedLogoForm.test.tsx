@@ -35,7 +35,7 @@ test('a logo list that fails to load says so with a Try again, not that the logo
 		)
 	)
 	await waitForUi(() => expect(container.textContent).toContain("Couldn't load the logos"))
-	expect(container.textContent).not.toContain("Couldn't find this logo")
+	expect(container.textContent).not.toContain('Logo not found')
 
 	session.serve({
 		[`${FEATURES_SERVER}/research/trusted-by/logos`]: {
@@ -55,5 +55,5 @@ test('a logo list that fails to load says so with a Try again, not that the logo
 	})
 	await act(async () => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Try again')!.click())
 	await waitForUi(() => expect(container.textContent).not.toContain("Couldn't load the logos"))
-	expect(container.textContent).not.toContain("Couldn't find this logo")
+	expect(container.textContent).not.toContain('Logo not found')
 })

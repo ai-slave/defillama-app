@@ -7,7 +7,7 @@ const total: RWAPositionalChartDataset = { dimensions: ['timestamp', 'Total Acti
 const chains = ['Ethereum', 'Solana']
 const EMPTY = { source: [], dimensions: ['timestamp'] }
 
-const settledQuery = { isLoading: false, isFetching: false, refetch: vi.fn() }
+const settledQuery = { isPlaceholderData: false, isLoading: false, isFetching: false, refetch: vi.fn() }
 const loaded = (value: number) => ({
 	...settledQuery,
 	data: [{ timestamp: 1, 'ondo/usdy': value }],
@@ -60,6 +60,17 @@ describe('buildRwaChainChartDataset', () => {
 		expect(chainChart([loaded(600_000), failed()])).toEqual({
 			chartDataset: {
 				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Others'],
+				source: [[1, 800_000, 600_000, 200_000]]
+			},
+			isChartLoading: false,
+			failedRead: null
+		})
+	})
+
+	test('keeps a chain whose refetch failed over its loaded history', () => {
+		expect(chainChart([loaded(600_000), { ...loaded(200_000), errorUpdatedAt: 2 }])).toEqual({
+			chartDataset: {
+				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Solana'],
 				source: [[1, 800_000, 600_000, 200_000]]
 			},
 			isChartLoading: false,

@@ -87,8 +87,7 @@ export function YieldsChartTab({
 	onMinTvlChange,
 	onMaxTvlChange
 }: YieldsChartTabProps) {
-	const yieldsQuery = useYieldsData()
-	const yieldsLoading = yieldsQuery.isLoading
+	const { query: yieldsQuery, isLoading: yieldsLoading } = useYieldsData()
 	const yieldsData = yieldsQuery.data ?? EMPTY_YIELDS_DATA
 	const [poolSearch, setPoolSearch] = useState('')
 	const deferredPoolSearch = useDeferredValue(poolSearch)
@@ -312,21 +311,8 @@ export function YieldsChartTab({
 
 	return (
 		<div className="flex flex-col gap-4">
-			{queryReadFailed(yieldsQuery) && !yieldsQuery.data ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							type="button"
-							size="sm"
-							pendingLabel="Retrying…"
-							pending={yieldsQuery.isFetching}
-							onClick={() => void yieldsQuery.refetch()}
-						>
-							Try again
-						</Button>
-					}
-				>
+			{queryReadFailed(yieldsQuery) ? (
+				<InlineStatus variant="error" retry={yieldsQuery}>
 					Couldn't load the yield pools.
 				</InlineStatus>
 			) : yieldsLoading ? (
@@ -684,21 +670,9 @@ export function YieldsChartTab({
 								) : null}
 
 								<div className="h-[280px]">
-									{queryReadFailed(previewHistory) && !previewHistory.data ? (
+									{queryReadFailed(previewHistory) ? (
 										<div className="flex h-full items-center justify-center">
-											<InlineStatus
-												variant="error"
-												action={
-													<Button
-														size="sm"
-														pendingLabel="Retrying…"
-														pending={previewHistory.isFetching}
-														onClick={() => void previewHistory.refetch()}
-													>
-														Try again
-													</Button>
-												}
-											>
+											<InlineStatus variant="error" retry={previewHistory}>
 												Couldn't load this pool's history.
 											</InlineStatus>
 										</div>

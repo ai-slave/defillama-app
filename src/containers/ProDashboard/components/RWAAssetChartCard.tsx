@@ -26,7 +26,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const chartRead = useRWAAssetChartData(assetId)
-	const { chartDataset, isLoading, readFailed } = chartRead
+	const { chartDataset, isLoading, readFailed, refreshFailed } = chartRead
 
 	const filteredDataset = useMemo(() => {
 		if (!chartDataset) return null
@@ -52,7 +52,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 		</div>
 	)
 
-	if (readFailed && chartDataset === null) {
+	if (readFailed) {
 		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
@@ -64,7 +64,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
+			{refreshFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={assetName}

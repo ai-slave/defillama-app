@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
-import { Button } from '~/ui/Button'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -57,31 +57,16 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 											chartOptions={CHART_OPTIONS}
 										/>
 									</Suspense>
+								) : item.hasError ? (
+									<ChartPanelBodyError retry={item.canRetry ? item : undefined} className="size-full min-h-0">
+										Couldn&apos;t load this series.
+									</ChartPanelBodyError>
+								) : item.isLoading ? (
+									<ChartPanelBodyLoading label="Loading chart data" className="size-full min-h-0" />
 								) : (
-									<div className="flex size-full flex-col items-center justify-center gap-1.5 body-sm text-tertiary">
-										{item.hasError ? (
-											<>
-												<p role="alert" className="text-error">
-													Couldn't load this series.
-												</p>
-												{item.canRetry ? (
-													<Button
-														type="button"
-														size="sm"
-														pendingLabel="Retrying…"
-														pending={item.isFetching}
-														onClick={item.refetch}
-													>
-														Try again
-													</Button>
-												) : null}
-											</>
-										) : item.isLoading ? (
-											'Loading chart data…'
-										) : (
-											'No data'
-										)}
-									</div>
+									<ChartPanelBodyFallback className="size-full min-h-0 body-sm text-tertiary">
+										No data
+									</ChartPanelBodyFallback>
 								)}
 							</div>
 						</div>

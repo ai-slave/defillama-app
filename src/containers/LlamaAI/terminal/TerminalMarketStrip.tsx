@@ -2,15 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useEffect, useId, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { AI_SERVER } from '~/constants'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Tag } from '~/ui/Tag'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { subscribeTerminalStats, type TerminalLiveStats, unsubscribeTerminalListener } from './terminalSocket'
 
 export interface TerminalStats {
@@ -203,20 +202,14 @@ function useLiveStats(symbol: string, enabled: boolean, lastLiveAtRef: RefObject
 
 export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetchFn: typeof fetch }) {
 	const lastLiveAtRef = useRef(0)
-	const {
-		data: rest,
-		dataUpdatedAt,
-		isError,
-		isFetching,
-		refetch
-	} = useQuery({
+	const query = useQuery({
 		queryKey: ['llamaai-terminal-stats', symbol],
 		queryFn: () => fetchTerminalStats(symbol, fetchFn),
 		refetchInterval: () => (Date.now() - lastLiveAtRef.current < LIVE_GRACE_MS ? LIVE_REFRESH_MS : REFRESH_MS),
 		staleTime: REFRESH_MS
 	})
-	const live = useLiveStats(symbol, rest !== null, lastLiveAtRef)
-	const data = mergeLiveStats(rest, dataUpdatedAt, live)
+	const live = useLiveStats(symbol, query.data !== null, lastLiveAtRef)
+	const data = mergeLiveStats(query.data, query.dataUpdatedAt, live)
 
 	if (data === null) {
 		return (
@@ -225,24 +218,10 @@ export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetch
 			</Card>
 		)
 	}
-	if (data === undefined && isError) {
+	if (queryReadFailed(query)) {
 		return (
-			<InlineStatus
-				variant="error"
-				action={
-					<Button
-						// The retry leaves once the read succeeds; the region keeps focus.
-						ref={focusRegionOnLeave}
-						size="sm"
-						pendingLabel="Retrying…"
-						pending={isFetching}
-						onClick={() => void refetch()}
-					>
-						Try again
-					</Button>
-				}
-			>
-				Market data for {pairName(symbol)} could not be loaded.
+			<InlineStatus variant="error" retry={query}>
+				Couldn't load market data for {pairName(symbol)}.
 			</InlineStatus>
 		)
 	}

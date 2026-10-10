@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -76,10 +77,18 @@ function inputValues() {
 }
 
 describe('the dashboard author profile card', () => {
-	test('a failed load shows the error card instead of spinning forever', async () => {
+	test('a failed load shows the error card instead of spinning forever, and Try again loads the form', async () => {
 		respond = fixtureStatus(500, { error: 'nope' })
 		await render()
-		await waitForUi(() => expect(container.textContent).toContain('Profile could not be loaded.'), { timeout: 1000 })
+		await waitForUi(
+			() => expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load your profile."),
+			{ timeout: 1000 }
+		)
+		const tryAgain = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Try again')!
+
+		respond = () => Response.json({ author: profile })
+		await act(async () => tryAgain.click())
+		await waitForUi(() => expect(inputValues()).toContain('ada'), { timeout: 1000 })
 	})
 
 	test('the form opens on the loaded profile', async () => {

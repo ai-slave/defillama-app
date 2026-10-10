@@ -17,10 +17,10 @@ import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
 import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
-import { TextLoader } from '../../Logo'
 import {
 	type HlpData,
 	type HlpFill,
@@ -507,13 +507,7 @@ export default function Positions() {
 		}
 	}, [data.summary, filteredPositions.length, funding24h.totalUsdc, funding7d.totalUsdc, portfolio.volume])
 
-	if (isLoading) {
-		return (
-			<div className="flex flex-1 items-center justify-center py-20">
-				<TextLoader />
-			</div>
-		)
-	}
+	if (isLoading) return <PanelLoadingStatus label="Loading positions" />
 
 	return (
 		<div className="flex flex-col gap-4">

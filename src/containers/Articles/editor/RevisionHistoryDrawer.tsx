@@ -533,7 +533,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 						</div>
 
 						<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
-							{queryReadFailed(revisionsQuery) && !revisionsQuery.data ? (
+							{queryReadFailed(revisionsQuery) ? (
 								<LoadError
 									message="Couldn't load the revision history."
 									retrying={revisionsQuery.isFetching}
@@ -670,7 +670,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 							/>
 						) : null}
 						<div className="min-h-0 flex-1 overflow-y-auto">
-							{queryReadFailed(selectedRevisionQuery) && !selectedRevisionQuery.data ? (
+							{queryReadFailed(selectedRevisionQuery) ? (
 								<LoadError
 									message="Couldn't load this revision."
 									retrying={selectedRevisionQuery.isFetching}
@@ -685,7 +685,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 									<SurfaceBodyStatus variant="empty">
 										{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}
 									</SurfaceBodyStatus>
-								) : queryReadFailed(baseRevisionQuery) && !baseRevisionQuery.data ? (
+								) : queryReadFailed(baseRevisionQuery) ? (
 									<LoadError
 										message="Couldn't load the revision to compare against."
 										retrying={baseRevisionQuery.isFetching}

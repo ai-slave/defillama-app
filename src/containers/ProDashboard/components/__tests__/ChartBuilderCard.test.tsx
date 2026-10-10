@@ -69,7 +69,7 @@ describe('ChartBuilderCard streamed loading state', () => {
 	test('shows loading before the stream has provided a cache entry', () => {
 		const html = renderCard(new QueryClient())
 
-		expect(html).toContain('Loading chart…')
+		expect(html).toContain('Loading chart')
 		expect(html).not.toContain('No data available')
 	})
 
@@ -78,7 +78,7 @@ describe('ChartBuilderCard streamed loading state', () => {
 		queryClient.setQueryData(queryKey, { series: [] })
 		const html = renderCard(queryClient)
 
-		expect(html).not.toContain('Loading chart…')
+		expect(html).not.toContain('Loading chart')
 		expect(html).toContain('No data available')
 	})
 

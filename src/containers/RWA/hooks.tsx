@@ -455,7 +455,7 @@ export function useRwaChartDataset({
 	chartDataset: RWAPositionalChartDataset
 	assetRows: IRWAChartMetricRows | undefined
 	isChartLoading: boolean
-	/** The query when its read failed, for the chart's Try again. */
+	/** The query when it has nothing to show and its read failed, for the chart's Try again. */
 	failedRead: QueryRetry | null
 } {
 	const hasSpotAssets = filteredAssets.some((asset) => asset.kind === 'spot')

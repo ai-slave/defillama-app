@@ -259,7 +259,7 @@ test('a preview whose data fails to load says so as an error, not as missing dat
 			chartType: 'fees'
 		}
 	})
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Could not load chart data'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load chart data."))
 })
 
 test('each remove button names the row it removes', async () => {

@@ -104,13 +104,11 @@
 /* Investors dashboards: core tokens plus the partner colors above. */
 .investors-dashboard {
 	--sl-frozen-bg: var(--bg-surface);
-	--sl-stroke-brand: #0090b3;
 	--sl-kpk-mint: #007556;
 	--sl-kpk-mint-muted: color-mix(in srgb, var(--sl-kpk-mint) 45%, transparent);
 	--sl-kpk-benchmark: #5865cd;
 
 	html.dark & {
-		--sl-stroke-brand: #00d4ff;
 		--sl-kpk-mint: #00af82;
 		--sl-kpk-benchmark: #7384ef;
 	}
@@ -133,22 +131,6 @@
 	& [data-btn='colors'] {
 		display: none;
 	}
-}
-
-@keyframes sl-pulse-glow {
-	0%,
-	100% {
-		opacity: 0.5;
-		filter: drop-shadow(0 0 4px rgba(33, 114, 229, 0.1));
-	}
-	50% {
-		opacity: 1;
-		filter: drop-shadow(0 0 24px rgba(33, 114, 229, 0.4)) drop-shadow(0 0 8px rgba(33, 114, 229, 0.2));
-	}
-}
-
-.sl-loader {
-	animation: sl-pulse-glow 2s ease-in-out infinite;
 }
 
 /* A landing project card's hover border and glow, translucent variants of the

@@ -2,40 +2,53 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { BannerForm } from '~/containers/Articles/admin/BannerForm'
 import { ArticleApiError, getBanner } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ArticlesAccessGate } from '~/containers/Articles/ArticlesAccessGate'
 import type { Banner } from '~/containers/Articles/types'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 
 function EditBannerInner({ id }: { id: string }) {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
-	const {
-		data: banner,
-		isLoading,
-		error
-	} = useQuery<Banner>({
+	const bannerQuery = useQuery<Banner>({
 		queryKey: ['research', 'admin', 'banner', id],
 		queryFn: () => getBanner(id, authorizedFetch),
 		enabled: !!id && isAuthenticated && !loaders.userLoading,
 		retry: false
 	})
+	const { data: banner, error } = bannerQuery
+	const notFound = error instanceof ArticleApiError && error.status === 404
 
-	if (isLoading) {
-		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
+	// A failed refetch keeps the form, and its unsaved edits, on screen; a 404 is a missing banner, not a failed read.
+	if (queryReadFailed(bannerQuery) && !notFound) {
+		return (
+			<PanelStatus variant="error" retry={bannerQuery} className="mx-auto w-full max-w-4xl">
+				Couldn&apos;t load this banner.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
+		)
 	}
 
-	if (error || !banner) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banner'
+	if (bannerQuery.isLoading) {
+		return <PanelLoadingStatus label="Loading banner" className="mx-auto w-full max-w-4xl" />
+	}
+
+	if (!banner) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load banner</h1>
-				<p className="body-md text-secondary">{message}</p>
-				<Link href="/research/admin/banners" className="body-md text-link hover:underline">
-					Back to banners
-				</Link>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h1"
+				title="Banner not found"
+				actions={
+					<Button as={BasicLink} href="/research/admin/banners" size="md">
+						Back to banners
+					</Button>
+				}
+			/>
 		)
 	}
 

@@ -23,7 +23,7 @@ import {
 } from '~/containers/Stablecoins/chartSeries'
 import type { IBuildStablecoinChartDataParams } from '~/containers/Stablecoins/utils'
 import { sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { StablecoinChartType } from '../../../types'
 
 interface UseStablecoinsChartDataResult {
@@ -37,6 +37,7 @@ interface UseStablecoinsChartDataResult {
 	isLoading: boolean
 	isFetching: boolean
 	readFailed: boolean
+	refreshFailed: boolean
 	refetch: () => void
 }
 
@@ -50,7 +51,7 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
 type StablecoinPresentation = Omit<
 	UseStablecoinsChartDataResult,
-	'prepareCsvDataset' | 'isLoading' | 'isFetching' | 'readFailed' | 'refetch'
+	'prepareCsvDataset' | 'isLoading' | 'isFetching' | 'readFailed' | 'refreshFailed' | 'refetch'
 >
 
 const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
@@ -275,6 +276,7 @@ export function useStablecoinsChartData(
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
 		isFetching,
 		readFailed: queryReadFailed(chartQuery),
+		refreshFailed: queryRefreshFailed(chartQuery),
 		refetch
 	}
 }

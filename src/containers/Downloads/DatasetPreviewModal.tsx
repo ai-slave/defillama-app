@@ -167,6 +167,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 
 	const {
 		data: csvText,
+		isPlaceholderData,
 		isLoading,
 		isFetching,
 		error,
@@ -190,7 +191,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 		retry: 1
 	})
 	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
-	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
+	const failed = queryReadFailed({ data: csvText, isPlaceholderData, errorUpdatedAt, dataUpdatedAt })
 	const loading = isLoading && !failed
 
 	const { headers, rows } = useMemo(() => {

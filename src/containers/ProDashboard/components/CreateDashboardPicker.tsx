@@ -329,7 +329,7 @@ function DashboardTemplates({
 					: undefined
 		const needsCatalog = !parameterized && !dimension
 		const queryMissing = query && query.data === undefined
-		const failed = (needsCatalog && protocolCatalog.status === 'error') || (queryMissing && queryReadFailed(query))
+		const failed = (needsCatalog && protocolCatalog.status === 'error') || (query && queryReadFailed(query))
 		const loading = !failed && ((needsCatalog && protocolCatalog.status === 'loading') || queryMissing)
 		const empty = !parameterized && !failed && !loading && selection.length === 0
 		return { template, selection, failed: !!failed, loading: !!loading, empty }
@@ -337,7 +337,7 @@ function DashboardTemplates({
 	const anyFailed = cards.some((card) => card.failed)
 
 	// One failure notice covers every template it blocks; the cards stay listed but cannot start.
-	const failedQueries = sourceQueries.filter((query) => query.data === undefined && queryReadFailed(query))
+	const failedQueries = sourceQueries.filter(queryReadFailed)
 	const retry = () => {
 		if (protocolCatalog.status === 'error') protocolCatalog.retry()
 		for (const query of failedQueries) void query.refetch()

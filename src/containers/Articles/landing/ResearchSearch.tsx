@@ -22,12 +22,11 @@ import {
 	getArticleBylineAuthorEntries,
 	readingMinutes
 } from '~/containers/Articles/landing/utils'
-import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 
@@ -423,6 +422,7 @@ export default function ResearchSearch() {
 
 	const {
 		data: response,
+		isPlaceholderData,
 		isLoading,
 		error,
 		refetch,
@@ -449,7 +449,7 @@ export default function ResearchSearch() {
 	})
 
 	const resultsLoading = !router.isReady || isLoading
-	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
+	const failed = queryReadFailed({ data: response, isPlaceholderData, errorUpdatedAt, dataUpdatedAt })
 	const totalItems = response?.totalItems ?? 0
 	const totalPages = response ? Math.max(1, response.totalPages) : 1
 	const safePage = Math.min(Math.max(1, page), totalPages)
@@ -488,26 +488,11 @@ export default function ResearchSearch() {
 
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
 			{failed ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={() => void refetch()}
-							pendingLabel="Retrying…"
-							pending={isFetching}
-						>
-							Try again
-						</Button>
-					}
-				>
-					Couldn't load research. {error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
+				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
+					Couldn&apos;t load research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
 				</InlineStatus>
 			) : resultsLoading ? (
-				<div className="grid min-h-[280px] place-items-center py-12">
-					<ResearchLoader />
-				</div>
+				<PanelLoadingStatus label="Loading research" className="min-h-[280px]" />
 			) : response.items.length > 0 ? (
 				<>
 					<ul className="grid divide-y divide-(--border-subtle)">

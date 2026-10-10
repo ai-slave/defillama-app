@@ -307,14 +307,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const start = dateStringToUnix(startDate)
 	const end = dateStringToUnix(endDate)
 
-	const {
-		data: pnlData,
-		isLoading,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch,
-		isFetching
-	} = useQuery({
+	const pnlQuery = useQuery({
 		queryKey: ['token-pnl', selectedCoinId, start, end],
 		queryFn: () => computeTokenPnl({ id: selectedCoinId, start, end }),
 		enabled: !!(router.isReady && selectedCoinId && start != null && end != null && end > start),
@@ -322,6 +315,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 		refetchOnWindowFocus: false,
 		retry: 0
 	})
+	const { data: pnlData, isLoading, refetch, isFetching } = pnlQuery
 
 	const comparisonQueries = useQueries({
 		queries: DEFAULT_TOKEN_PNL_TOKEN_IDS.map((tokenId) => ({
@@ -499,7 +493,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 					routerReady={router.isReady}
 					isLoading={isLoading}
 					isFetching={isFetching}
-					isError={queryReadFailed({ errorUpdatedAt, dataUpdatedAt })}
+					isError={queryReadFailed(pnlQuery)}
 					onRetry={() => refetch()}
 					pnlData={pnlData}
 					quantity={quantity}

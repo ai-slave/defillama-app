@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { Card } from '~/ui/Card'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getEmbedAspectRatio, getEmbedProviderLabel } from '../embedProviders'
 import type { ArticleEmbedConfig } from '../types'
 
@@ -220,9 +221,7 @@ export function TweetEmbed({
 					</a>
 				</blockquote>
 			) : (
-				<div className="flex h-32 items-center justify-center label-xs tracking-[0.18em] text-tertiary uppercase">
-					Loading…
-				</div>
+				<SurfaceBodyLoadingStatus label="Loading post" className="min-h-32" />
 			)}
 		</div>
 	)

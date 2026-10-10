@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { dashboardModuleQuery } from '../dashboardTabs'
@@ -147,9 +148,8 @@ describe('InvestorRelationsView', () => {
 		await client.prefetchQuery({ ...query, queryFn: () => Promise.reject(new Error('ChunkLoadError')) })
 
 		renderNow(SPARK)
-		expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't load this dashboard. Reload the page to try again."
-		)
+		expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load this dashboard.")
+		expect(Array.from(container.querySelectorAll('button'), accessibleName)).toContain('Try again')
 		expect(tabButtons()).toEqual([])
 	})
 

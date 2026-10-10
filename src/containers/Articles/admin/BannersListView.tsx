@@ -12,9 +12,9 @@ import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from 
 import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
-import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export function BannersListView() {
 	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
@@ -106,6 +106,11 @@ export function BannersListView() {
 						returnFocusRef.current = deleteTarget.neighbour ?? newBannerRef.current
 					}}
 				/>
+			) : null}
+			{queryRefreshFailed(bannersQuery) ? (
+				<InlineStatus variant="error" retry={bannersQuery}>
+					Couldn&apos;t refresh banners. It may not show your latest change.
+				</InlineStatus>
 			) : null}
 			{items.length === 0 ? (
 				<EmptyState

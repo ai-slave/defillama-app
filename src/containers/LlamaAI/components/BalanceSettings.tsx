@@ -5,6 +5,7 @@ import type { TopupResult } from '~/containers/LlamaAI/utils/settingsIntent'
 import { TopupForm } from '~/containers/Subscription/shared/TopupModal'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 
 export function BalanceSettings({ result, balanceBefore }: { result?: TopupResult; balanceBefore?: number }) {
@@ -60,7 +61,9 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 				</p>
 				<div className="flex min-h-7 items-center justify-between gap-3">
 					{isLoading && !readFailed ? (
-						<p role="status">Loading balance…</p>
+						<div role="status" aria-live="polite">
+							<LoadingIndicator label="Loading balance" />
+						</div>
 					) : balance ? (
 						<p className="mono-lg text-primary tabular-nums">
 							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -72,29 +75,29 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 						Payment cancelled.
 					</p>
 				) : null}
-				{readFailed || (result === 'success' && returnState !== 'hidden') ? (
+				{readFailed ? (
+					<InlineStatus variant="error" retry={{ refetch, isFetching }}>
+						Couldn't load your balance.
+					</InlineStatus>
+				) : result === 'success' && returnState !== 'hidden' ? (
 					<div className="space-y-3 rounded-lg border border-subtle bg-brand-muted p-4">
-						<div role={readFailed ? 'alert' : 'status'} className="space-y-1 body-sm">
+						<div role="status" className="space-y-1 body-sm">
 							<p className="font-semibold text-primary">
-								{readFailed
-									? "Couldn't load your balance"
-									: returnState === 'updated'
-										? 'Balance updated'
-										: returnState === 'exhausted'
-											? 'Still waiting for your balance to update'
-											: 'Checking your payment'}
+								{returnState === 'updated'
+									? 'Balance updated'
+									: returnState === 'exhausted'
+										? 'Still waiting for your balance to update'
+										: 'Checking your payment'}
 							</p>
 							<p className="text-secondary">
-								{readFailed
-									? 'Try refreshing your balance.'
-									: returnState === 'updated'
-										? `Your current balance is ${formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
-										: 'Your balance may take a moment to update.'}
+								{returnState === 'updated'
+									? `Your current balance is ${formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+									: 'Your balance may take a moment to update.'}
 							</p>
 						</div>
-						{readFailed || returnState === 'exhausted' ? (
+						{returnState === 'exhausted' ? (
 							<div className="flex flex-wrap items-center gap-3">
-								{!readFailed ? <p className="body-sm text-secondary">Balance still unchanged?</p> : null}
+								<p className="body-sm text-secondary">Balance still unchanged?</p>
 								<Button
 									type="button"
 									variant="outline"

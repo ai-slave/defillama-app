@@ -9,7 +9,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -369,11 +368,8 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 		// Checked before loading, so a retry keeps the error and its button on screen until it succeeds.
 		if (query.isPending && !queryReadFailed(query)) return <PanelLoadingStatus label="Loading earnings calendar" />
 		return (
-			<PanelStatus variant="error">
-				<span className="flex flex-col items-center gap-3">
-					The earnings calendar didn’t load.
-					<RetryButton size="md" refetch={query.refetch} fetching={query.isFetching} />
-				</span>
+			<PanelStatus variant="error" retry={query}>
+				Couldn&apos;t load the earnings calendar.
 			</PanelStatus>
 		)
 	}
@@ -417,11 +413,8 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				description={`When ${formatNumber(summary.uniqueCompanyCount) ?? '0'} US companies report. Past dates come from SEC filings; upcoming dates are projections, never announced times.`}
 			/>
 			<StaleDataNotice stale={view.stale} updatedAt={view.updatedAt} />
-			{!query.data && queryReadFailed(query) ? (
-				<InlineStatus
-					variant="error"
-					action={<RetryButton size="sm" refetch={query.refetch} fetching={query.isFetching} />}
-				>
+			{queryReadFailed(query) ? (
+				<InlineStatus variant="error" retry={query}>
 					The full calendar didn’t load, so only this week is shown and search is off.
 				</InlineStatus>
 			) : null}
@@ -558,22 +551,5 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				<p>Names and market caps come from company data · dates come from SEC EDGAR and DefiLlama projections.</p>
 			</footer>
 		</div>
-	)
-}
-
-function RetryButton({ size, refetch, fetching }: { size: 'sm' | 'md'; refetch: () => void; fetching: boolean }) {
-	return (
-		<Button
-			// The error leaves once the read succeeds; the region keeps focus.
-			ref={focusRegionOnLeave}
-			type="button"
-			variant="secondary"
-			size={size}
-			pendingLabel="Retrying…"
-			pending={fetching}
-			onClick={() => refetch()}
-		>
-			Try again
-		</Button>
 	)
 }

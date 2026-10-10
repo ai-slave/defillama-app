@@ -31,7 +31,7 @@ export function useTokenUsageData(tokenSymbols: Array<string>, includeCex: boole
 		retry: 1
 	})
 	return {
-		...query,
+		query,
 		isLoading: normalizedTokenSymbols.length > 0 && (query.isLoading || (!streamDone && query.data === undefined))
 	}
 }

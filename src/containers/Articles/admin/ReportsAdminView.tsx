@@ -20,9 +20,9 @@ import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 function articleEditHref(article: ArticleDocument): string {
 	return `/research/edit/${encodeURIComponent(article.id)}`
@@ -301,6 +301,11 @@ export function ReportsAdminView() {
 				/>
 			</header>
 
+			{queryRefreshFailed(reportsQuery) ? (
+				<InlineStatus variant="error" retry={reportsQuery}>
+					Couldn&apos;t refresh reports. It may not show your latest change.
+				</InlineStatus>
+			) : null}
 			{filtered.length === 0 ? (
 				<EmptyState
 					size="md"

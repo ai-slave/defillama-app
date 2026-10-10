@@ -6,6 +6,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
+import { queryReadFailed } from '~/utils/query'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, resolveEmbeddedDashboardTabs } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
@@ -79,8 +80,10 @@ export function InvestorRelationsView({
 							<HeaderComponent />
 						</Suspense>
 					) : null}
-					{moduleQuery.isError ? (
-						<PanelStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</PanelStatus>
+					{queryReadFailed(moduleQuery) ? (
+						<PanelStatus variant="error" retry={moduleQuery}>
+							Couldn't load this dashboard.
+						</PanelStatus>
 					) : tabs == null ? (
 						<SkeletonTable />
 					) : isControlled ? (

@@ -21,8 +21,9 @@ import {
 } from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { stablecoinsDatasetColumns } from './columns'
@@ -68,7 +69,8 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useStablecoinsData(chain)
+	const { query: stablecoinsQuery, isLoading } = useStablecoinsData(chain)
+	const { data } = stablecoinsQuery
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
@@ -92,21 +94,21 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
-	if (isLoading) {
+	if (queryReadFailed(stablecoinsQuery)) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading stablecoin data…" />
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load stablecoins data" retry={stablecoinsQuery} />
 				</div>
 			</div>
 		)
 	}
 
-	if (error) {
+	if (isLoading) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load stablecoins data</div>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading stablecoin data" />
 				</div>
 			</div>
 		)
@@ -153,6 +155,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 					</div>
 				</div>
 			</div>
+			{queryRefreshFailed(stablecoinsQuery) ? <ProCardRefreshFailed retry={stablecoinsQuery} /> : null}
 			<TableBody table={instance} />
 			<TablePagination
 				pageSize={pagination.pageSize}

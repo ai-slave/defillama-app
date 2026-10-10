@@ -4,7 +4,12 @@ import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Select } from '~/components/Select/Select'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
-import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
+import {
+	ArticleApiError,
+	deleteArticle as deleteArticleApi,
+	listMyArticles,
+	type ArticleListResponse
+} from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ArticlesAccessGate } from '~/containers/Articles/ArticlesAccessGate'
 import { isScheduled } from '~/containers/Articles/articleSchedule'
@@ -16,7 +21,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl, focusRegionOnLeave } from '~/ui/focus'
+import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -25,6 +30,7 @@ import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 type StatusFilter = 'all' | 'draft' | 'published'
 type SortKey = 'updated' | 'created' | 'title'
@@ -81,12 +87,14 @@ function MyArticlesContent() {
 	const search = useDebouncedValue(searchInput, 200).trim().toLowerCase()
 
 	const myArticlesQueryKey = ['research', 'my-articles'] as const
-	const { data, isLoading, error, refetch, isFetching } = useQuery({
+	const myArticlesQuery = useQuery({
 		queryKey: myArticlesQueryKey,
 		queryFn: () => listMyArticles({ limit: FETCH_LIMIT }, authorizedFetch),
 		enabled: !loaders.userLoading && isAuthenticated,
 		retry: false
 	})
+	const { data, isLoading, error } = myArticlesQuery
+	const failed = queryReadFailed(myArticlesQuery)
 
 	const deleteArticleMutation = useMutation({
 		mutationFn: (articleId: string) => deleteArticleApi(articleId, authorizedFetch),
@@ -291,27 +299,15 @@ function MyArticlesContent() {
 				) : null}
 			</header>
 
-			{error ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The retry leaves once the read succeeds; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={() => void refetch()}
-							pendingLabel="Retrying…"
-							pending={isFetching}
-						>
-							Try again
-						</Button>
-					}
-				>
-					{error instanceof Error ? error.message : 'Failed to load research'}
+			{/* A failed refresh keeps the list below, with this notice above it. */}
+			{failed || queryRefreshFailed(myArticlesQuery) ? (
+				<InlineStatus variant="error" retry={myArticlesQuery}>
+					Couldn&apos;t load your research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
 				</InlineStatus>
 			) : null}
 
-			{showLoading ? (
+			{/* A failed first read has no list to show: the error above says why, rather than an empty list. */}
+			{failed ? null : showLoading ? (
 				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 					{Array.from({ length: 6 }).map((_, i) => (
 						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.

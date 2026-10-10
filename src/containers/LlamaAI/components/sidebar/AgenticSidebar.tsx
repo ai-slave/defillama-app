@@ -34,7 +34,7 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
@@ -526,8 +526,7 @@ function SidebarPanel({
 					<nav className="px-4 pt-2 pb-4" aria-label="Chat history">
 						{isLoading ? (
 							<div role="status" aria-live="polite" className="flex justify-center py-6">
-								<LoadingSpinner size={14} />
-								<span className="sr-only">Loading chats</span>
+								<LoadingIndicator label="Loading chats" />
 							</div>
 						) : loadError ? (
 							<InlineStatus variant="error">{loadError}</InlineStatus>

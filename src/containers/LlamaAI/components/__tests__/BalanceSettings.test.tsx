@@ -2,6 +2,7 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { getSettingsIntentFromQuery } from '../../utils/settingsIntent'
@@ -138,10 +139,12 @@ test('accounts without an active subscription can see balance but cannot start a
 test('failed balance reads offer a retry that reads the balance again', async () => {
 	balanceFails = true
 	await draw(<BalanceSettings />)
-	await settle(() => expect(button('Refresh balance')).toBeDefined())
+	const retry = () => [...host.querySelectorAll('button')].find((b) => accessibleName(b) === 'Try again')
+	await settle(() => expect(host.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your balance."))
 	balanceFails = false
-	await act(async () => button('Refresh balance')!.click())
+	await act(async () => retry()!.click())
 	await settle(() => expect(host.textContent).toContain('$10.00'))
+	expect(host.querySelector('[role="alert"]')).toBeNull()
 })
 
 test('an increased balance resolves the notice and then dismisses it', async () => {

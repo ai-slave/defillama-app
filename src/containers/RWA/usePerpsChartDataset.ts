@@ -78,7 +78,7 @@ export function useRwaPerpsChartQuery(url: string, enabled: boolean) {
 export function useRwaPerpsChartDataset({ source, metric, includeCex, scope, enabled }: RwaPerpsChartDatasetRequest): {
 	chartDataset: RWAPositionalChartDataset
 	isChartLoading: boolean
-	/** The query when its read failed, for the chart's Try again. */
+	/** The query when it has nothing to show and its read failed, for the chart's Try again. */
 	failedRead: QueryRetry | null
 } {
 	const url = getRwaPerpsChartUrl({ source, metric, includeCex, scope })

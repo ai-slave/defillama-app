@@ -37,7 +37,7 @@ function ProCardRetryButton({ retry }: { retry: QueryRetry }) {
 // A dashboard loads many cards at once, so loading is a busy skeleton with a
 // screen-reader label, not a live region per card.
 export function ProCardLoading({
-	label = 'Loading…',
+	label = 'Loading card',
 	className,
 	variant = 'chart'
 }: {

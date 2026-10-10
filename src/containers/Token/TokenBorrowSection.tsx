@@ -4,8 +4,9 @@
  * - Requests use `TOKEN_PAGE_BORROW_QUERY` on both legs (use as collateral, borrow this): meme pools included, net APY
  *   descending, the same settings and cache identity as SSR.
  * - Both leg responses must succeed before either list replaces the hydrated rows.
- * - A failed load keeps the existing rows and offers Retry beside the section error, or in the placeholder when there
- *   are no rows. Retry shows loading, blocks duplicate requests and keeps the page and sorting.
+ * - A failed load keeps the existing rows and offers Try again in the section error, above the rows or in their place
+ *   when there are none. The error stays while the retry runs, which blocks duplicate requests and keeps the page and
+ *   sorting.
  */
 
 import type { SortingState } from '@tanstack/react-table'
@@ -20,13 +21,13 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRoutes, formatBorrowRoutesSummary } from './TokenBorrowSection.utils'
-import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenBorrowRoutesHydration } from './types'
 import { useTokenBorrowRoutes } from './useTokenBorrowRoutes'
@@ -166,9 +167,8 @@ export function TokenBorrowSection({
 				requestedPageIndexByTab[activeTab] > 0))
 
 	const tokenKeys = hydration?.tokenKeys ?? []
-	const { data, error, isFetching, isFetched, refetch } = useTokenBorrowRoutes(tokenKeys, {
-		enabled: needsFullData
-	})
+	const routesQuery = useTokenBorrowRoutes(tokenKeys, { enabled: needsFullData })
+	const { data, error, isFetching } = routesQuery
 	const useRows = data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? EMPTY_ROUTE_TABLE_ROWS
 	const borrowRows = data?.borrowThis ?? hydration?.data.borrowThis ?? EMPTY_ROUTE_TABLE_ROWS
 	const useChainList = React.useMemo(
@@ -271,15 +271,13 @@ export function TokenBorrowSection({
 			!needsFullData &&
 			hasPartialData &&
 			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndexByTab[activeTab] > 0))
-	const showRetry = error != null || (isFetching && isFetched && !data)
+	// Above the snapshot's first page or the routes already loaded, and in their place when there are none.
+	const showRetry = queryReadFailed(routesQuery) || queryRefreshFailed(routesQuery)
 	const retryStatus = showRetry ? (
-		<TokenDataRetry
-			message={error?.message ?? 'Loading full dataset…'}
-			isRetrying={isFetching}
-			onRetry={() => {
-				void refetch({ cancelRefetch: false })
-			}}
-		/>
+		// cancelRefetch: false keeps a second press from restarting the request the first one started.
+		<InlineStatus variant="error" retry={{ refetch: () => routesQuery.refetch({ cancelRefetch: false }), isFetching }}>
+			Couldn't load borrow routes.
+		</InlineStatus>
 	) : null
 	const showInitialLoader = isFetchingFullData && rows.length === 0 && !showRetry
 	const showBackgroundLoading = isFetchingFullData && rows.length > 0
@@ -332,7 +330,7 @@ export function TokenBorrowSection({
 					/>
 					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 				</PanelTitle>
-				{!showInitialLoader && !error && summaryText ? (
+				{!showInitialLoader && !showRetry && summaryText ? (
 					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>
 				) : null}
 			</PanelHeader>
@@ -354,19 +352,15 @@ export function TokenBorrowSection({
 						/>
 					</TableToolbarControlGroup>
 					{showInitialLoader ? (
-						<div className="flex flex-1 items-center justify-center">
-							<LoadingIndicator />
-						</div>
+						<SurfaceBodyLoadingStatus label="Loading borrow routes" />
 					) : showRetry && rows.length === 0 ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">{retryStatus}</div>
+						<div className="flex flex-1 items-center justify-center">{retryStatus}</div>
 					) : rows.length === 0 ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p role="status" className="body-sm text-tertiary">
-								{activeTab === 'use'
-									? `No borrow routes found using ${tokenSymbol} as collateral.`
-									: `No routes found to borrow ${tokenSymbol} with supported collateral.`}
-							</p>
-						</div>
+						<SurfaceBodyStatus variant="empty" className="px-4">
+							{activeTab === 'use'
+								? `No borrow routes found using ${tokenSymbol} as collateral.`
+								: `No routes found to borrow ${tokenSymbol} with supported collateral.`}
+						</SurfaceBodyStatus>
 					) : (
 						<>
 							<TableToolbarControlGroup>
@@ -399,7 +393,7 @@ export function TokenBorrowSection({
 									)}
 								</ResponsiveFilterLayout>
 							</TableToolbarControlGroup>
-							{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
+							{retryStatus}
 
 							{filteredRows.length === 0 && !isFetchingFullData ? (
 								<SurfaceBodyStatus variant="empty">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</SurfaceBodyStatus>

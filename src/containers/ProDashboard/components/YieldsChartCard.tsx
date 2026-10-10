@@ -7,7 +7,7 @@ import { getYieldBorrowHistoryQueryKey, getYieldSupplyHistoryQueryKey } from '~/
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -67,7 +67,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		enabled: streamDone && needsSupplyData && Boolean(poolConfigId)
 	})
 	const { data: chart, isLoading: fetchingChartData } = supplyQuery
-	const chartError = queryReadFailed(supplyQuery)
 
 	const borrowQuery = useQuery({
 		queryKey: getYieldBorrowHistoryQueryKey(poolConfigId),
@@ -82,7 +81,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		enabled: streamDone && needsBorrowData && Boolean(poolConfigId)
 	})
 	const { data: borrowChart, isLoading: fetchingBorrowData } = borrowQuery
-	const borrowError = queryReadFailed(borrowQuery)
 
 	const { dataset: currentChartDataset, latestData } = useYieldChartTransformations({
 		chartType,
@@ -158,14 +156,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const isLoading =
 		(needsBorrowData ? fetchingBorrowData : fetchingChartData) || (!streamDone && selectedData === undefined)
 
-	const hasError = needsBorrowData ? chartError || borrowError : chartError
-	const retryChartData = {
-		refetch: () => {
-			if (chartError) void supplyQuery.refetch()
-			if (borrowError) void borrowQuery.refetch()
-		},
-		isFetching: needsBorrowData ? borrowQuery.isFetching || supplyQuery.isFetching : supplyQuery.isFetching
-	}
+	// The chart type draws from one history only; the other query stays disabled.
+	const selectedQuery = needsBorrowData ? borrowQuery : supplyQuery
 
 	const hasRequiredData = currentChartDataset.source.length > 0
 	const hallmarks = useDashboardAnnotationHallmarks()
@@ -182,8 +174,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		</div>
 	)
 
-	if (hasError && selectedData === undefined) {
-		return renderStatusShell(<ProCardError retry={retryChartData} />)
+	if (queryReadFailed(selectedQuery)) {
+		return renderStatusShell(<ProCardError retry={selectedQuery} />)
 	}
 
 	if (isLoading) {
@@ -209,7 +201,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{hasError ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{queryRefreshFailed(selectedQuery) ? <ProCardRefreshFailed retry={selectedQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={poolName}

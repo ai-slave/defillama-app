@@ -15,7 +15,7 @@ import { orderedFilteredTableFeatures } from '~/components/Table/features/ordere
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
@@ -175,8 +175,8 @@ export function ChainsDataset({
 	// The preset follows the columns, so undo, redo and a saved card mark the preset they show.
 	const selectedPreset = matchingChainColumnPreset(activeColumns)
 
-	const chainsQuery = useChainsData(category)
-	const { data, isLoading } = chainsQuery
+	const { query: chainsQuery, isLoading } = useChainsData(category)
+	const { data } = chainsQuery
 
 	const totals = React.useMemo(() => buildChainShareTotals(data), [data])
 
@@ -325,17 +325,17 @@ export function ChainsDataset({
 				/>
 			) : null}
 
-			{queryReadFailed(chainsQuery) && !data ? (
+			{queryReadFailed(chainsQuery) ? (
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
 					<ProCardError title="Couldn't load chains data" retry={chainsQuery} />
 				</div>
 			) : isLoading ? (
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading chains data…" />
+					<ProCardLoading variant="table" label="Loading chains data" />
 				</div>
 			) : (
 				<>
-					{queryReadFailed(chainsQuery) ? <ProCardRefreshFailed retry={chainsQuery} /> : null}
+					{queryRefreshFailed(chainsQuery) ? <ProCardRefreshFailed retry={chainsQuery} /> : null}
 					<div className="min-h-0 flex-1">
 						<TableBody table={instance} />
 					</div>

@@ -27,7 +27,7 @@ export default function DistributionRewards() {
 	const stakedUsds = useGetChartInstance()
 
 	// Checked before the panels' loading states, so a retry keeps the error and its button on screen until it succeeds.
-	if (queryReadFailed(query) && !query.data)
+	if (queryReadFailed(query))
 		return (
 			<PanelStatus variant="error" retry={query}>
 				Couldn&apos;t load Spark distribution rewards.

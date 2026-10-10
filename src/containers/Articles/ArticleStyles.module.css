@@ -1,70 +1,10 @@
 /* ----------------------------------------------------------------------------
-   Articles / Research surface styles — the research landing loader, the
-   Tiptap/ProseMirror article editor, rendered-article prose (Q&A, tables,
-   marks, code highlighting).
+   Articles / Research surface styles — the Tiptap/ProseMirror article
+   editor, rendered-article prose (Q&A, tables, marks, code highlighting).
 
    The research/callout palette lives in src/styles/themes/articles.css.
    Rules are scoped to the owning Article renderer/editor root below.
 ---------------------------------------------------------------------------- */
-
-/* --------------------------- Research page loader --------------------------- */
-.root:global(.research-loader) {
-	display: grid;
-	place-items: center;
-	min-height: clamp(480px, 72vh, 800px);
-	padding: 4rem 1.5rem;
-}
-
-.root :global(.rl) {
-	--rl-size: clamp(200px, 22vw, 280px);
-	position: relative;
-	width: var(--rl-size);
-	aspect-ratio: 620 / 196;
-	isolation: isolate;
-	display: block;
-}
-
-.root :global(.rl__layer) {
-	position: absolute;
-	inset: 0;
-	background-size: contain;
-	background-repeat: no-repeat;
-	background-position: center;
-	will-change: transform, filter;
-	animation: rl-soft 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
-}
-.root :global(.rl__layer--light) {
-	background-image: url('/assets/research_logo.webp');
-}
-.root :global(.rl__layer--dark) {
-	background-image: url('/assets/research_logo_dark.webp');
-	display: none;
-}
-:global(html.dark) .root :global(.rl__layer--light) {
-	display: none;
-}
-:global(html.dark) .root :global(.rl__layer--dark) {
-	display: block;
-}
-
-@keyframes rl-soft {
-	0% {
-		filter: drop-shadow(0 0 5px color-mix(in oklch, var(--text-link) 40%, transparent))
-			drop-shadow(0 0 17px color-mix(in oklch, var(--text-link) 18%, transparent));
-		transform: scale(1);
-	}
-	100% {
-		filter: drop-shadow(0 0 17px color-mix(in oklch, var(--text-link) 85%, transparent))
-			drop-shadow(0 0 41px color-mix(in oklch, var(--text-link) 55%, transparent));
-		transform: scale(1.018);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.root :global(.rl__layer) {
-		animation: none;
-	}
-}
 
 /* ------------------------------ Article editor ------------------------------ */
 .root :global(.article-editor-prose) {

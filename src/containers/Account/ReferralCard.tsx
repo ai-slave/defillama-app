@@ -4,11 +4,12 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { handleSimpleFetchResponse } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 
 interface ReferralStats {
 	referralsCount: number
@@ -21,13 +22,7 @@ export function ReferralCard() {
 
 	const referralCode = user?.referral_code
 
-	const {
-		data: stats,
-		isLoading: isStatsLoading,
-		isError: isStatsError,
-		isFetching: isStatsFetching,
-		refetch: refetchStats
-	} = useQuery<ReferralStats>({
+	const statsQuery = useQuery<ReferralStats>({
 		queryKey: ['referral-stats', user?.id],
 		queryFn: async () => {
 			const data = await authorizedFetch(`${FEATURES_SERVER}/user/referral-stats`, {
@@ -44,6 +39,8 @@ export function ReferralCard() {
 	})
 
 	if (!referralCode) return null
+
+	const stats = statsQuery.data
 
 	const referralLink = `https://defillama.com/subscription?ref=${referralCode}`
 	const refParam = `?ref=${referralCode}`
@@ -88,43 +85,31 @@ export function ReferralCard() {
 				</p>
 			</div>
 
-			<div className="flex flex-col gap-3 rounded-lg bg-surface-elevated-1 p-3">
-				{/* A failed lookup must not read as zero referrals; keep previously loaded stats visible. */}
-				{isStatsError && stats == null ? (
-					<div className="flex items-center justify-between gap-2">
-						<span className="body-sm text-primary">Couldn't load referral stats.</span>
-						<Button
-							variant="secondary"
-							size="sm"
-							ref={focusRegionOnLeave}
-							onClick={() => void refetchStats()}
-							pendingLabel="Retrying…"
-							pending={isStatsFetching}
-						>
-							Try again
-						</Button>
+			{/* A failed lookup must not read as zero referrals; keep previously loaded stats visible. */}
+			{queryReadFailed(statsQuery) ? (
+				<InlineStatus variant="error" retry={statsQuery}>
+					Couldn't load referral stats.
+				</InlineStatus>
+			) : (
+				<div className="flex flex-col gap-3 rounded-lg bg-surface-elevated-1 p-3">
+					<div className="flex items-center justify-between">
+						<span className="body-sm text-primary">Sign-ups</span>
+						{statsQuery.isLoading ? (
+							<Skeleton className="h-4 w-8" />
+						) : (
+							<span className="label-sm text-primary">{stats?.referralsCount ?? 0}</span>
+						)}
 					</div>
-				) : (
-					<>
-						<div className="flex items-center justify-between">
-							<span className="body-sm text-primary">Sign-ups</span>
-							{isStatsLoading ? (
-								<Skeleton className="h-4 w-8" />
-							) : (
-								<span className="label-sm text-primary">{stats?.referralsCount ?? 0}</span>
-							)}
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="body-sm text-primary">Paid subscriptions</span>
-							{isStatsLoading ? (
-								<Skeleton className="h-4 w-8" />
-							) : (
-								<span className="label-sm text-primary">{stats?.paidReferralsCount ?? 0}</span>
-							)}
-						</div>
-					</>
-				)}
-			</div>
+					<div className="flex items-center justify-between">
+						<span className="body-sm text-primary">Paid subscriptions</span>
+						{statsQuery.isLoading ? (
+							<Skeleton className="h-4 w-8" />
+						) : (
+							<span className="label-sm text-primary">{stats?.paidReferralsCount ?? 0}</span>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

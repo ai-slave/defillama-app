@@ -25,6 +25,7 @@ interface ChartQueryResult {
 	data: Array<[number, number]> | undefined
 	isLoading: boolean
 	isFetching: boolean
+	isPlaceholderData: boolean
 	errorUpdatedAt: number
 	dataUpdatedAt: number
 	refetch: () => void
@@ -39,7 +40,10 @@ const LOADING_CHART_DATA = { status: 'loading' } as const satisfies ChartDataPre
 /** The protocol catalog that protocol cards wait on. Its failure stays through a retry, like a card's own read. */
 export function getProtocolCatalogPrerequisite(
 	needed: boolean,
-	query: Pick<QueryObserverResult<unknown>, 'data' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'isFetching' | 'refetch'>
+	query: Pick<
+		QueryObserverResult<unknown>,
+		'data' | 'isPlaceholderData' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'isFetching' | 'refetch'
+	>
 ): ChartDataPrerequisite {
 	if (!needed || query.data !== undefined) return READY_CHART_DATA
 	if (queryReadFailed(query)) return { status: 'error', retry: () => void query.refetch(), retrying: query.isFetching }
@@ -91,7 +95,7 @@ export function toChartRuntimeState(
 			refetch: query.refetch
 		}
 	}
-	const hasError = queryReadFailed(query) && query.data === undefined
+	const hasError = queryReadFailed(query)
 	return {
 		data: query.data ?? EMPTY_CHART_DATA,
 		isLoading: !hasError && (query.isLoading || (!streamDone && query.data === undefined)),

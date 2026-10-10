@@ -14,9 +14,9 @@ import {
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { formatProjectBytes } from './format'
@@ -191,6 +191,12 @@ export function ProjectsGrid() {
 				</div>
 			) : null}
 
+			{/* The same copy as the sidebar's notice for this query. */}
+			{queryRefreshFailed(projectList) ? (
+				<InlineStatus variant="error" retry={projectList}>
+					Couldn&apos;t load projects.
+				</InlineStatus>
+			) : null}
 			{queryReadFailed(projectList) ? (
 				<PanelStatus variant="error" retry={projectList}>
 					Couldn&apos;t load projects.

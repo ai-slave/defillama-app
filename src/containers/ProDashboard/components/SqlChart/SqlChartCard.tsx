@@ -149,7 +149,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 						{cardView === 'query' ? (
 							<SqlQueryView config={config} snapshot={snapshot} />
 						) : body === 'loading' ? (
-							<ProCardLoading label="Running the query…" />
+							<ProCardLoading label="Running the query" />
 						) : body === 'not-run' ? (
 							<ProCardEmpty message="This query hasn't run yet." action={{ label: 'Run query', onClick: refresh }} />
 						) : body === 'owner-not-run' || !result ? (

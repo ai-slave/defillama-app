@@ -14,7 +14,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { chartBuilderHasExactRemainder, chartBuilderScopeHidesOthers } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
 import { chartBuilderSubtitleParts } from '../chartBuilderSubtitle'
@@ -186,7 +186,6 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		refetchOnWindowFocus: false
 	})
 	const { data: chartData, isPending: isChartDataPending } = chartDataQuery
-	const isChartDataError = queryReadFailed(chartDataQuery)
 
 	const chartView = useMemo(() => {
 		if (!chartData?.series || config.chartType === 'treemap') {
@@ -391,7 +390,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
-			{isChartDataError && hasRenderableData ? <ProCardRefreshFailed retry={chartDataQuery} /> : null}
+			{queryRefreshFailed(chartDataQuery) ? <ProCardRefreshFailed retry={chartDataQuery} /> : null}
 			<ProCardHeader
 				title={
 					builder.name ||
@@ -561,10 +560,10 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
-				{isChartDataError && !hasRenderableData ? (
+				{queryReadFailed(chartDataQuery) ? (
 					<ProCardError retry={chartDataQuery} />
 				) : isChartDataPending ? (
-					<ProCardLoading label="Loading chart…" />
+					<ProCardLoading label="Loading chart" />
 				) : hasRenderableData ? (
 					<Suspense fallback={<div className="min-h-[calc(300px*var(--card-scale,1))]" />}>
 						{config.chartType === 'treemap' ? (

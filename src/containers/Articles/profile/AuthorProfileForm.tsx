@@ -17,9 +17,11 @@ import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 
 const DISPLAY_NAME_MAX = 120
 const SLUG_MAX = 60
@@ -228,35 +230,28 @@ function Section({ title, description, children }: { title: string; description:
 
 export function AuthorProfileForm() {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
-	const {
-		data: loadedProfile,
-		isLoading,
-		error: loadError
-	} = useQuery({
+	const profileQuery = useQuery({
 		queryKey: ['research', 'author-profile'],
 		queryFn: () => getMyAuthorProfile(authorizedFetch),
 		enabled: !loaders.userLoading && isAuthenticated,
 		retry: false,
 		refetchOnWindowFocus: false
 	})
+	const loadedProfile = profileQuery.data
 
-	if (loaders.userLoading || (isAuthenticated && isLoading)) {
+	// Only a load that produced nothing is an error here. A failed refetch keeps the editor, and its
+	// unsaved draft, on screen.
+	if (queryReadFailed(profileQuery)) {
+		const { error } = profileQuery
 		return (
-			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 body-md text-tertiary">Loading…</div>
+			<PanelStatus variant="error" retry={profileQuery} className="mx-auto w-full max-w-4xl">
+				Couldn&apos;t load your profile.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+			</PanelStatus>
 		)
 	}
 
-	// As above: only a load that produced nothing is an error here. A failed refetch keeps the editor,
-	// and its unsaved draft, on screen.
-	if (!loadedProfile) {
-		const message = loadError instanceof ArticleApiError ? loadError.message : 'Failed to load profile'
-		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load profile</h1>
-				<p className="body-md text-secondary">{message}</p>
-			</div>
-		)
-	}
+	// The access gate renders this form only for a signed-in researcher, so no profile yet means the read is running.
+	if (!loadedProfile) return <PanelLoadingStatus label="Loading profile" className="mx-auto w-full max-w-4xl" />
 
 	// Keyed by the loaded profile, so the fields are seeded once at mount instead of being written into
 	// place after the request lands.

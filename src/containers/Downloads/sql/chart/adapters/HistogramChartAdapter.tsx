@@ -5,7 +5,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
@@ -100,13 +100,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 		)
 
 	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center" style={{ height }}>
-					<LoadingSpinner size={18} />
-				</div>
-			}
-		>
+		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
 			<MultiSeriesChart
 				dataset={chartModel.dataset}
 				charts={chartModel.charts}

@@ -1,3 +1,4 @@
+import type { UseQueryResult } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
@@ -12,8 +13,9 @@ import {
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { formatCompactNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -27,12 +29,6 @@ export interface ApiUsageStats {
 		totalRequests: number
 		routes?: Record<string, number>
 	}>
-}
-
-interface ApiUsageBreakdownProps {
-	usageStats: ApiUsageStats | null | undefined
-	isLoading: boolean
-	isError: boolean
 }
 
 const DEFAULT_WINDOW_DAYS = 30
@@ -72,7 +68,8 @@ function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 	return { sortedStats, totalRequests, averageRequests, windowDays, routeSeries }
 }
 
-export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBreakdownProps) {
+export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQueryResult<ApiUsageStats | null> }) {
+	const usageStats = usageStatsQuery.data
 	const [isDark] = useDarkModeManager()
 	const activeColors = isDark ? DARK_CHART_COLORS : LIGHT_CHART_COLORS
 
@@ -91,7 +88,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	)
 	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])
 
-	const hasData = sortedStats.length > 0 && !isLoading && !isError
+	const hasData = sortedStats.length > 0
 	const totalLabel = hasData
 		? formatCompactNumber(totalRequests, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		: '--'
@@ -209,19 +206,18 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 			)}
 
 			{/* Chart */}
-			{isLoading ? (
-				<div className="flex min-h-[200px] items-center justify-center gap-2 body-sm text-tertiary">
-					<LoadingSpinner size={14} />
-					<span>Loading usage stats…</span>
-				</div>
-			) : isError ? (
-				<div className="flex min-h-[200px] items-center justify-center body-sm text-tertiary">
-					Unable to load usage stats right now.
-				</div>
+			{queryReadFailed(usageStatsQuery) ? (
+				<ChartPanelBodyError retry={usageStatsQuery} className="min-h-[200px]">
+					Couldn't load usage stats.
+				</ChartPanelBodyError>
+			) : usageStatsQuery.isLoading ? (
+				<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />
 			) : sortedStats.length === 0 ? (
-				<div className="flex min-h-[200px] items-center justify-center body-sm text-tertiary">No usage data yet.</div>
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="min-h-[200px] body-sm text-tertiary">
+					No usage data yet.
+				</ChartPanelBodyFallback>
 			) : (
-				<Suspense fallback={<div className="min-h-[200px]" />}>
+				<Suspense fallback={<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />}>
 					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}

@@ -1,7 +1,7 @@
 import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import Router, { useRouter } from 'next/router'
-import { type ReactNode, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import ProDashboard from '~/containers/ProDashboard'
@@ -21,6 +21,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { EmptyState, PanelStatus } from '~/ui/Status'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const GENERIC_TITLE = 'DefiLlama Pro - Custom DeFi Dashboard'
@@ -81,25 +82,6 @@ export default function DashboardPage({
 				</ProDashboardAPIProvider>
 			</div>
 		</Layout>
-	)
-}
-
-// The full-card states (sign in, not found, failed): one heading, an optional line and one action.
-function DashboardPageNotice({
-	title,
-	message,
-	children
-}: {
-	title: string
-	message?: ReactNode
-	children: ReactNode
-}) {
-	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface p-1">
-			<h1 className="heading-lg">{title}</h1>
-			{message ? <p className="text-center body-lg text-secondary">{message}</p> : null}
-			{children}
-		</div>
 	)
 }
 
@@ -190,6 +172,8 @@ function DashboardPageContent({
 	// keeps the shown dashboard and its open dialogs. A failed subscription read ends the wait in both.
 	const isAccountLoading = loaders.sessionLoading && (isEditing || !currentDashboard)
 	const isLoading = (isEditing && !isClient) || isAccountLoading || isValidating || isLoadingDashboard
+	// The loader takes over while a reload runs, so this Try again never shows as pending.
+	const dashboardRetry = { refetch: reloadDashboard, isFetching: isLoadingDashboard }
 	const initialSeoSummary =
 		!isEditing && initialDashboard && initialDashboard.visibility === 'public' && seo && !currentDashboard ? (
 			<DashboardSeoSummary dashboard={initialDashboard as PublicDashboardInitialRenderPayload} seo={seo} />
@@ -211,167 +195,93 @@ function DashboardPageContent({
 
 	if (isEditing && !currentDashboard) {
 		if (loadError?.status === 401) {
-			return (
-				<DashboardPageNotice title="Sign In Required" message="Please sign in to edit this dashboard">
-					<Button
-						as={BasicLink}
-						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-						variant="primary"
-						size="md"
-						className="mt-7"
-					>
-						Sign In
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <SignInRequired hint="Sign in to edit this dashboard." />
 		}
 
 		if (loadError && loadError.status >= 500) {
 			return (
-				<DashboardPageNotice title="Failed to load dashboard">
-					<Button as={BasicLink} href={`/pro/${dashboardId}`} variant="primary" size="md" className="mt-2">
-						Back to dashboard
-					</Button>
-				</DashboardPageNotice>
+				<PanelStatus variant="error" retry={dashboardRetry}>
+					Couldn&apos;t load this dashboard.
+				</PanelStatus>
 			)
 		}
 
-		return (
-			<DashboardPageNotice title="Dashboard Not Found">
-				<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
-					Browse Dashboards
-				</Button>
-			</DashboardPageNotice>
-		)
+		return <DashboardNotFound />
 	}
 
 	if (!isEditing) {
 		if (dashboardId !== 'new' && !currentDashboard && initialStatus === 404) {
-			return (
-				<DashboardPageNotice title="Dashboard Not Found" message="This dashboard does not exist.">
-					<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
-						Browse Dashboards
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <DashboardNotFound hint="This dashboard does not exist." />
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && loadError?.status === 401) {
-			return (
-				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
-					<Button
-						as={BasicLink}
-						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-						variant="primary"
-						size="md"
-						className="mt-7"
-					>
-						Sign In
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <SignInRequired hint="Sign in to view this dashboard." />
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && loadError && loadError.status >= 500) {
 			return (
-				<DashboardPageNotice
-					title="Failed to load dashboard"
-					message="Something went wrong while loading this dashboard. Please try again."
-				>
-					<Button type="button" onClick={reloadDashboard} variant="primary" size="md" className="mt-2">
-						Retry
-					</Button>
-				</DashboardPageNotice>
+				<PanelStatus variant="error" retry={dashboardRetry}>
+					Couldn&apos;t load this dashboard.
+				</PanelStatus>
 			)
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && isAuthenticated) {
-			return (
-				<DashboardPageNotice
-					title="Dashboard Not Found"
-					message="This dashboard does not exist or you don't have permission to view it"
-				>
-					<Button as={BasicLink} href="/pro" variant="primary" size="md" className="mt-7">
-						Browse Dashboards
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <DashboardNotFound hint="This dashboard does not exist or you don't have permission to view it." />
 		}
 
 		if (dashboardId === 'new' && !isAuthenticated) {
-			return (
-				<DashboardPageNotice title="Sign In Required" message="Please sign in to create a new dashboard">
-					<Button
-						as={BasicLink}
-						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-						variant="primary"
-						size="md"
-						className="mt-7"
-					>
-						Sign In
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <SignInRequired hint="Sign in to create a new dashboard." />
 		}
 
 		if (!isAuthenticated && dashboardVisibility === 'private') {
-			return (
-				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
-					<Button
-						as={BasicLink}
-						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-						variant="primary"
-						size="md"
-						className="mt-7"
-					>
-						Sign In
-					</Button>
-				</DashboardPageNotice>
-			)
+			return <SignInRequired hint="Sign in to view this dashboard." />
 		}
 
 		// Team viewers and admins without a seat may read private team dashboards; the server decided.
 		const hasServerAccess = !!currentDashboard?.access && currentDashboard.access.role !== 'none'
 		if (!hasActiveSubscription && dashboardVisibility !== 'public' && !hasServerAccess) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-subtle bg-surface p-1">
-					<h1 className="heading-lg">Pro Dashboard Access</h1>
-					<p className="-mt-6 text-center body-lg text-secondary">
-						Subscribe to Pro to access this dashboard and unlock advanced features
-					</p>
-
-					<div className="mx-auto flex flex-wrap items-center justify-center gap-4">
-						<div className="flex items-center gap-2 body-md">
-							<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-link" />
-							<span>Customizable Charts</span>
+				<EmptyState
+					size="lg"
+					headingAs="h1"
+					title="Pro dashboard access"
+					actions={
+						<div className="flex flex-col items-center gap-6">
+							<ul className="flex flex-wrap items-center justify-center gap-4">
+								<li className="flex items-center gap-2 body-md">
+									<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-link" />
+									<span>Customizable Charts</span>
+								</li>
+								<li className="flex items-center gap-2 body-md">
+									<Icon name="activity" height={16} width={16} className="shrink-0 text-link" />
+									<span>Multiple Dashboards</span>
+								</li>
+								<li className="flex items-center gap-2 body-md">
+									<Icon name="percent" height={16} width={16} className="shrink-0 text-link" />
+									<span>Advanced Analytics</span>
+								</li>
+								<li className="flex items-center gap-2 body-md">
+									<Icon name="layers" height={16} width={16} className="shrink-0 text-link" />
+									<span>Multi-Charts</span>
+								</li>
+							</ul>
+							<p className="heading-lg text-primary">
+								$49<span className="body-xl text-secondary">/month</span>
+							</p>
+							<Button
+								as={BasicLink}
+								href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
+								variant="primary"
+								size="md"
+							>
+								Subscribe now
+							</Button>
 						</div>
-						<div className="flex items-center gap-2 body-md">
-							<Icon name="activity" height={16} width={16} className="shrink-0 text-link" />
-							<span>Multiple Dashboards</span>
-						</div>
-						<div className="flex items-center gap-2 body-md">
-							<Icon name="percent" height={16} width={16} className="shrink-0 text-link" />
-							<span>Advanced Analytics</span>
-						</div>
-						<div className="flex items-center gap-2 body-md">
-							<Icon name="layers" height={16} width={16} className="shrink-0 text-link" />
-							<span>Multi-Charts</span>
-						</div>
-					</div>
-
-					<h2 className="heading-lg text-primary">
-						$49<span className="body-xl text-secondary">/month</span>
-					</h2>
-
-					<Button
-						as={BasicLink}
-						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-						variant="primary"
-						size="md"
-					>
-						Subscribe Now
-					</Button>
-				</div>
+					}
+				>
+					Subscribe to Pro to access this dashboard and unlock advanced features.
+				</EmptyState>
 			)
 		}
 	}
@@ -385,6 +295,46 @@ function DashboardPageContent({
 			) : null}
 			<ProDashboard />
 		</>
+	)
+}
+
+function SignInRequired({ hint }: { hint: string }) {
+	const router = useRouter()
+	return (
+		<EmptyState
+			size="lg"
+			headingAs="h1"
+			title="Sign in required"
+			actions={
+				<Button
+					as={BasicLink}
+					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
+					variant="primary"
+					size="md"
+				>
+					Sign in
+				</Button>
+			}
+		>
+			{hint}
+		</EmptyState>
+	)
+}
+
+function DashboardNotFound({ hint }: { hint?: string }) {
+	return (
+		<EmptyState
+			size="lg"
+			headingAs="h1"
+			title="Dashboard not found"
+			actions={
+				<Button as={BasicLink} href="/pro" size="md">
+					Browse dashboards
+				</Button>
+			}
+		>
+			{hint}
+		</EmptyState>
 	)
 }
 

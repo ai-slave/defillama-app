@@ -1,4 +1,4 @@
-import { useMutation, type UseMutationResult } from '@tanstack/react-query'
+import { useMutation, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
@@ -14,9 +14,7 @@ const API_CREDITS_LIMIT = 1_000_000
 interface ApiAccessCardProps {
 	apiKey: string | null
 	credits: number | null
-	usageStats: ApiUsageStats | null | undefined
-	isUsageStatsLoading: boolean
-	isUsageStatsError: boolean
+	usageStatsQuery: UseQueryResult<ApiUsageStats | null>
 	generateNewKeyMutation: UseMutationResult<string, Error, void>
 	/** The extra-usage switch, only for the account's own Stripe API subscription. */
 	overage?: { enabled: boolean; onToggle: () => void; isPending: boolean; error: string | null } | null
@@ -25,9 +23,7 @@ interface ApiAccessCardProps {
 export function ApiAccessCard({
 	apiKey,
 	credits,
-	usageStats,
-	isUsageStatsLoading,
-	isUsageStatsError,
+	usageStatsQuery,
 	generateNewKeyMutation,
 	overage
 }: ApiAccessCardProps) {
@@ -200,7 +196,7 @@ export function ApiAccessCard({
 			)}
 
 			{/* API Usage Breakdown */}
-			<ApiUsageBreakdown usageStats={usageStats} isLoading={isUsageStatsLoading} isError={isUsageStatsError} />
+			<ApiUsageBreakdown usageStatsQuery={usageStatsQuery} />
 		</div>
 	)
 }

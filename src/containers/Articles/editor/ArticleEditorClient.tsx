@@ -6,14 +6,17 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { InlineStatus, PanelStatus } from '~/ui/Status'
+import { focusRegionOnLeave } from '~/ui/focus'
+import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
+import { queryReadFailed } from '~/utils/query'
 import {
 	ArticleApiError,
 	createArticle,
@@ -34,7 +37,6 @@ import {
 	normalizeLocalArticleDocument,
 	validateLocalArticleForPublish
 } from '../document'
-import { ResearchLoader } from '../ResearchLoader'
 import type {
 	ArticleCalloutTone,
 	ArticleChartConfig,
@@ -868,16 +870,40 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		[buildPreviewArticle, viewMode]
 	)
 
-	if (isLoading) {
-		return <ResearchLoader />
-	}
-
 	// Without the article there is nothing to edit: an editor here would save as an unrelated new draft.
 	// A failed background refetch keeps the loaded article on screen.
-	if (ownedArticleQuery.isLoadingError) {
+	if (queryReadFailed(ownedArticleQuery)) {
+		const { error } = ownedArticleQuery
+		// A 404 is a missing article, not a failed read: there is nothing to retry.
+		if (error instanceof ArticleApiError && error.status === 404) {
+			return (
+				<EmptyState
+					size="lg"
+					headingAs="h1"
+					title="Research not found"
+					className="mx-auto w-full max-w-[760px] px-4 sm:px-6"
+					actions={
+						<Button as={BasicLink} href="/research/mine" size="md">
+							Back to my research
+						</Button>
+					}
+				/>
+			)
+		}
 		return (
 			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
-				<PanelStatus variant="error">{errorMessageOr(ownedArticleQuery.error, 'Failed to load research')}</PanelStatus>
+				<PanelStatus variant="error" retry={ownedArticleQuery}>
+					Couldn&apos;t load this research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				</PanelStatus>
+			</div>
+		)
+	}
+
+	// The same frame and label as the route's loader for this chunk, so nothing moves when the editor lands.
+	if (isLoading) {
+		return (
+			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
+				<PanelLoadingStatus label="Loading editor" />
 			</div>
 		)
 	}
@@ -889,6 +915,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 					variant="error"
 					action={
 						<Button
+							// The retry leaves once the draft opens; the page content keeps focus.
+							ref={focusRegionOnLeave}
 							type="button"
 							size="sm"
 							onClick={createDraft}

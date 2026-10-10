@@ -4,7 +4,8 @@ import { useAuthContext } from '~/auth'
 import { getAuthorBySlug, getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { AuthorProfileView } from '~/containers/Authors/AuthorProfileView'
 import type { AuthorDashboardSort } from '~/containers/Authors/types'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 
 const DASHBOARD_LIMIT = 24
 
@@ -13,16 +14,16 @@ export function MyProfileTab() {
 	const [dashboardPage, setDashboardPage] = useState(1)
 	const [dashboardSort, setDashboardSort] = useState<AuthorDashboardSort>('recent')
 
-	const { data: profile, isError: profileFailed } = useQuery({
+	const profileQuery = useQuery({
 		queryKey: ['dashboard-author-profile', user?.id],
 		queryFn: () => getMyDashboardAuthorProfile(authorizedFetch),
 		enabled: isAuthenticated && !loaders.userLoading && !!user?.id,
 		retry: false,
 		refetchOnWindowFocus: false
 	})
-	const slug = profile?.slug
+	const slug = profileQuery.data?.slug
 
-	const { data: view, isError: pageFailed } = useQuery({
+	const pageQuery = useQuery({
 		queryKey: ['author-page', slug, dashboardPage, dashboardSort, user?.id],
 		queryFn: () =>
 			getAuthorBySlug(slug!, { dashboardPage, dashboardLimit: DASHBOARD_LIMIT, dashboardSort }, authorizedFetch),
@@ -32,21 +33,20 @@ export function MyProfileTab() {
 		refetchOnWindowFocus: false
 	})
 
-	if (profileFailed || pageFailed) {
+	const failedRead = mergeFailedReads([
+		queryReadFailed(profileQuery) ? profileQuery : null,
+		queryReadFailed(pageQuery) ? pageQuery : null
+	])
+	if (failedRead) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface px-1 py-12">
-				<p className="text-center text-secondary">Your profile could not be loaded. Please try again later.</p>
-			</div>
+			<PanelStatus variant="error" retry={failedRead}>
+				Couldn&apos;t load your profile.
+			</PanelStatus>
 		)
 	}
 
-	if (!view) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface px-1 py-12">
-				<LoadingSpinner size={24} />
-			</div>
-		)
-	}
+	const view = pageQuery.data
+	if (!view) return <PanelLoadingStatus label="Loading profile" />
 
 	return (
 		<AuthorProfileView

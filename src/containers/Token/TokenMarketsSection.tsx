@@ -19,8 +19,9 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { fetchTokenMarkets } from './api'
 import { DeferredTokenMarketsTable } from './deferred/DeferredTokenMarketsTable'
 
@@ -262,7 +263,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, 'all')
 	const [categoryTab, setCategoryTab] = useReducer((_: Segment, next: Segment) => next, 'spot')
 
-	const { data, error, isLoading } = useQuery({
+	const marketsQuery = useQuery({
 		queryKey: ['token-markets', geckoId],
 		queryFn: () => fetchTokenMarkets(geckoId),
 		staleTime: 60 * 60 * 1000,
@@ -270,6 +271,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		retry: false,
 		enabled: Boolean(geckoId)
 	})
+	const { data } = marketsQuery
 
 	// Measured fills decide which venues the order-book chart may show, so a failure
 	// here means no chart rather than an unverified one. Fetched separately: it is a
@@ -342,13 +344,25 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		</PanelHeader>
 	)
 
-	if (isLoading) {
+	if (queryReadFailed(marketsQuery)) {
+		const status = (
+			<InlineStatus variant="error" retry={marketsQuery}>
+				Couldn't load {tokenSymbol} markets.
+			</InlineStatus>
+		)
+		// Each keeps its loading state's height, so the error does not move the page.
+		if (embedded) return <div className="flex min-h-[200px] items-center justify-center p-3">{status}</div>
+		return (
+			<Panel padding="none" className="flex-1">
+				{sectionHeader}
+				<div className="flex min-h-[360px] flex-1 items-center justify-center p-2">{status}</div>
+			</Panel>
+		)
+	}
+
+	if (marketsQuery.isLoading) {
 		if (embedded) {
-			return (
-				<div className="flex min-h-[200px] items-center justify-center p-3">
-					<LoadingIndicator />
-				</div>
-			)
+			return <SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="min-h-[200px] p-3" />
 		}
 		return (
 			<Panel padding="none" className="flex-1">
@@ -358,13 +372,13 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		)
 	}
 
-	const isEmpty = Boolean(error) || !data || visibleVenueTabs.length === 0 || rows.length === 0
+	const isEmpty = !data || visibleVenueTabs.length === 0 || rows.length === 0
 	if (isEmpty) {
 		if (embedded) {
 			return (
-				<div className="flex min-h-[120px] items-center justify-center p-4 body-sm text-secondary">
+				<SurfaceBodyStatus variant="empty" className="min-h-[120px] p-4">
 					No market data available for this token.
-				</div>
+				</SurfaceBodyStatus>
 			)
 		}
 		return null

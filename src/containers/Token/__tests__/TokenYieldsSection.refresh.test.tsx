@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { earnPageRow } from '~/utils/testing/yieldsEarnFixture'
@@ -70,7 +71,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		container.remove()
 		client.clear()
 	}
-	const findButton = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent === text)
+	const findButton = (name: string) => [...container.querySelectorAll('button')].find((b) => accessibleName(b) === name)
 	const shownPools = () =>
 		[...container.querySelectorAll('tbody tr')].map((row) => row.textContent?.match(/direct|held|meme/)?.[0])
 	const earnRequests = () => http.requests.filter((request) => request.url.pathname === '/api/public/yields/earn')
@@ -103,6 +104,14 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 			})
 		},
 		awaitRequests: (count: number) => waitForUi(() => expect(earnRequests()).toHaveLength(count)),
+		/** Waits until the failure shows with its Try again ready to press again. */
+		awaitFailure: () =>
+			waitForUi(async () => {
+				await act(async () => {
+					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load yield pools.")
+					expect(findButton('Try again')?.getAttribute('aria-busy')).toBe(null)
+				})
+			}),
 		/** Replaces the in-flight response, as a retry does. */
 		restart() {
 			pending.response = Promise.withResolvers<Response>()
@@ -116,7 +125,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		state: () => ({
 			pools: shownPools(),
 			noPools: container.textContent?.includes('No yield pools found.') ?? false,
-			retry: container.textContent?.includes('Retry') ?? false
+			retry: findButton('Try again') != null
 		}),
 		unmount: teardown
 	}
@@ -176,18 +185,14 @@ test.each([
 		await refresh.awaitRequests(1)
 
 		await refresh.reject('Yields unavailable')
-		await waitForUi(async () => {
-			await act(async () => expect(refresh.container.textContent).toContain('Yields unavailable'))
-		})
+		await refresh.awaitFailure()
 		// The failed refresh leaves the hydrated selection on screen rather than emptying the table.
 		expect(refresh.shownPools()).toEqual(hydratedPools)
 
-		// A retry that fails again keeps that selection and offers Retry once more.
+		// A retry that fails again keeps that selection and offers Try again once more.
 		await retryOnce(refresh, hydratedPools)
 		await refresh.reject('Still unavailable')
-		await waitForUi(async () => {
-			await act(async () => expect(refresh.container.textContent).toContain('Still unavailable'))
-		})
+		await refresh.awaitFailure()
 
 		// The retry that succeeds restores the page and sort the scenario asked for.
 		await retryOnce(refresh, hydratedPools)
@@ -207,10 +212,11 @@ test.each([
 	}
 })
 
-/** Double-clicks Retry, which must start exactly one request and ignore presses, keeping focus, while it runs. */
+/** Double-clicks Try again, which must start exactly one request and ignore presses, keeping focus, while it runs. The
+    failure stays on screen while the retry runs. */
 async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydratedPools: Array<string>) {
 	refresh.restart()
-	const retry = refresh.findButton('Retry')!
+	const retry = refresh.findButton('Try again')!
 	await act(async () => {
 		retry.click()
 		retry.click()
@@ -222,7 +228,8 @@ async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydr
 				'true',
 				false
 			])
-			expect(retry.textContent).toContain('Retrying…')
+			expect(accessibleName(retry)).toBe('Retrying…')
+			expect(refresh.container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load yield pools.")
 		})
 	})
 	expect(refresh.shownPools()).toEqual(hydratedPools)

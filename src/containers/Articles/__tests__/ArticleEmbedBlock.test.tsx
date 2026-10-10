@@ -77,12 +77,12 @@ test('a tweet loads once it nears the viewport and stays loaded after scrolling 
 	)
 	const tweetLink = () => container.querySelector<HTMLAnchorElement>('blockquote.twitter-tweet a')
 	expect(tweetLink()).toBeNull()
-	expect(container.textContent).toContain('Loading…')
+	expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading post')
 
 	await scroll(true)
 	expect(tweetLink()!.textContent).toBe('DefiLlama on X')
 
 	await scroll(false)
 	expect(tweetLink()!.textContent).toBe('DefiLlama on X')
-	expect(container.textContent).not.toContain('Loading…')
+	expect(container.querySelector('[role="status"]')).toBeNull()
 })

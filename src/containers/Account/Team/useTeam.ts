@@ -5,7 +5,7 @@ import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { scheduleConfirmationReads } from '../utils'
 import type { PurchaseSeatsResponse, Team } from './types'
 
@@ -139,9 +139,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		staleTime: Infinity
 	})
 
-	// A refetch failure keeps showing the cached team; error means nothing is known. Attempt times keep the error, not a
-	// loading state, on screen while its retry runs.
-	const isTeamError = queryReadFailed(teamQuery) && teamQuery.data == null
+	// A refetch failure keeps showing the cached team (or the known "no team"); error means nothing is known. Attempt
+	// times keep the error, not a loading state, on screen while its retry runs.
+	// No team (null) is the one answer a failed read cannot confirm: Check membership asks exactly that, so a failed
+	// check over it is an error, not "no team".
+	const isTeamError = queryReadFailed(teamQuery) || (teamQuery.data === null && queryRefreshFailed(teamQuery))
 	const isTeamLoading = teamQuery.isLoading && !isTeamError
 	const isTeamRetrying = teamQuery.isFetching
 	const isAdmin = team?.isAdmin === true
@@ -345,7 +347,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		canChangeTeamBilling: billingWait === null && billingLockReason === null,
 		billingWait,
 		billingLockReason,
-		isTeamRefreshError: queryReadFailed(teamQuery) && teamQuery.data != null,
+		isTeamRefreshError: queryRefreshFailed(teamQuery),
 		team,
 		isTeamLoading,
 		isTeamError,

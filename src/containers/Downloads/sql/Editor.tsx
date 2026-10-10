@@ -2,7 +2,7 @@ import MonacoEditor, { loader } from '@monaco-editor/react'
 import type { Ref } from 'react'
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { registerSqlCompletions, registerSqlHovers, type CompletionContext } from './completions'
 import { DARK_THEME_ID, defineSqlEditorThemes, LIGHT_THEME_ID } from './editorTheme'
 import type { RegisteredTable } from './useTableRegistry'
@@ -334,11 +334,7 @@ export function Editor({
 				onChange={(v) => onChange(v ?? '')}
 				beforeMount={defineSqlEditorThemes}
 				onMount={handleMount}
-				loading={
-					<div className="flex h-full items-center justify-center">
-						<LoadingSpinner size={16} />
-					</div>
-				}
+				loading={<SurfaceBodyLoadingStatus label="Loading editor" className="h-full min-h-0" />}
 				options={{
 					minimap: { enabled: false },
 					readOnly,

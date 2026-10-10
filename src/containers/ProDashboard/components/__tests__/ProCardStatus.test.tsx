@@ -27,19 +27,19 @@ function buttonLabelled(label: string) {
 }
 
 test('the loading state is busy with an accessible label and no live region', async () => {
-	await act(async () => root.render(<ProCardLoading label="Loading chart…" />))
+	await act(async () => root.render(<ProCardLoading label="Loading chart" />))
 	const busy = container.querySelector('[aria-busy="true"]')
 	expect(busy).not.toBeNull()
-	expect(busy?.textContent).toContain('Loading chart…')
+	expect(busy?.textContent).toContain('Loading chart')
 	expect(container.querySelector('[role="status"]')).toBeNull()
 	expect(container.querySelector('[aria-live]')).toBeNull()
 })
 
 test('the loading state shows a skeleton for the card shape', async () => {
-	await act(async () => root.render(<ProCardLoading label="Loading table…" variant="table" />))
+	await act(async () => root.render(<ProCardLoading label="Loading table" variant="table" />))
 	const busy = container.querySelector('[aria-busy="true"]')
 	expect(busy?.querySelector('[data-skeleton="table"]')).not.toBeNull()
-	expect(busy?.textContent).toContain('Loading table…')
+	expect(busy?.textContent).toContain('Loading table')
 })
 
 test('the error state is an alert and calls back from Try again', async () => {

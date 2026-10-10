@@ -277,9 +277,7 @@ export function SubscriptionSection() {
 		isPastDueRetrying,
 		refetchPastDueSubscription,
 		credits,
-		usageStats,
-		isUsageStatsLoading,
-		isUsageStatsError,
+		usageStatsQuery,
 		createPortalSession,
 		createPortalSessionMutation,
 		generateNewKeyMutation,
@@ -448,9 +446,7 @@ export function SubscriptionSection() {
 					<ApiAccessCard
 						apiKey={apiKey}
 						credits={credits}
-						usageStats={usageStats}
-						isUsageStatsLoading={isUsageStatsLoading}
-						isUsageStatsError={isUsageStatsError}
+						usageStatsQuery={usageStatsQuery}
 						generateNewKeyMutation={generateNewKeyMutation}
 					/>
 					{balanceCard}
@@ -533,9 +529,7 @@ export function SubscriptionSection() {
 				<ApiAccessCard
 					apiKey={apiKey}
 					credits={credits}
-					usageStats={usageStats}
-					isUsageStatsLoading={isUsageStatsLoading}
-					isUsageStatsError={isUsageStatsError}
+					usageStatsQuery={usageStatsQuery}
 					generateNewKeyMutation={generateNewKeyMutation}
 					overage={
 						canManageOverage

@@ -7,7 +7,7 @@ import { LlamaAIMobileAppGate } from '~/containers/MobileApp/LlamaAIMobileAppGat
 import { LlamaAIRouteProvider, useLlamaAIRouteState, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import Layout from '~/layout'
-import { LoadingIndicator } from '~/ui/Status'
+import { PanelLoadingStatus } from '~/ui/Status'
 
 const CHAT_SEO = {
 	title: 'AI Crypto Analysis - DeFi & TradFi Data - LlamaAI',
@@ -36,18 +36,6 @@ function seoFromRoute(route: LlamaAIRouteState) {
 	return route.kind === 'project' ? PROJECT_SEO : CHAT_SEO
 }
 
-function LoadingState() {
-	return (
-		<div
-			role="status"
-			aria-live="polite"
-			className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1"
-		>
-			<LoadingIndicator />
-		</div>
-	)
-}
-
 export function LlamaAIShell({ children }: { children: ReactNode }) {
 	const route = useLlamaAIRouteState()
 	const { user, loaders } = useAuthContext()
@@ -61,7 +49,7 @@ export function LlamaAIShell({ children }: { children: ReactNode }) {
 				<LlamaAIAnimationPreloads />
 				<SessionAliasProvider userId={userId}>
 					<LlamaAIRouteProvider value={route}>
-						{loaders.userLoading ? <LoadingState /> : null}
+						{loaders.userLoading ? <PanelLoadingStatus label="Loading account" /> : null}
 						{shouldMountChat ? <AgenticChat /> : null}
 						{children}
 					</LlamaAIRouteProvider>

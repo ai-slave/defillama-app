@@ -97,8 +97,9 @@ describe('profile country view states', () => {
 		} = {}
 	) => ({
 		data: patch.data,
+		isPlaceholderData: false,
 		isFetching: patch.isFetching ?? false,
-		// A failed read is one whose last error is newer than its last data, as queryReadFailed reads it.
+		// A failed attempt is one whose last error is newer than its last data, as queryReadFailed reads it.
 		errorUpdatedAt: patch.failed ? 2 : 0,
 		dataUpdatedAt: patch.data ? 1 : 0,
 		refetch: vi.fn()
@@ -139,6 +140,10 @@ describe('profile country view states', () => {
 		(availability) => {
 			const view = resolveProfileCountryView('DE', query({ data: regional(availability) }))
 			expect(view).toMatchObject({ status: availability, country: 'DE' })
+			// A refetch that fails keeps the regional answer already shown.
+			expect(resolveProfileCountryView('DE', query({ data: regional(availability), failed: true }))).toMatchObject({
+				status: availability
+			})
 		}
 	)
 

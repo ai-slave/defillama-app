@@ -20,6 +20,7 @@ import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { ErrorLine } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { useFileDropTarget } from './FileDrop'
 import { ComposerFrame } from './input/ComposerFrame'
@@ -565,11 +566,7 @@ export function PromptInput({
 				onItemClick={entityCombobox.selectEntity}
 			/>
 
-			{submitError ? (
-				<p role="alert" className="body-sm text-error">
-					{submitError}
-				</p>
-			) : null}
+			{submitError ? <ErrorLine inset="none">{submitError}</ErrorLine> : null}
 
 			<div className="flex items-center justify-between gap-4 p-0">
 				<div className="hidden min-w-0 flex-1 [scrollbar-width:none] items-center gap-2 overflow-x-auto *:shrink-0 @sm:flex">

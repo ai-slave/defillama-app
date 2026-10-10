@@ -11,7 +11,6 @@ import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import {
@@ -21,7 +20,6 @@ import {
 	ChartPanelExportShellFallback,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -1147,23 +1145,7 @@ export function UnlocksCharts({
 	if (!resolvedData || resolvedData.name === null) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center p-2">
-				<InlineStatus
-					variant="error"
-					action={
-						readFailed ? (
-							<Button
-								// The retry leaves once the read succeeds; the region keeps focus.
-								ref={focusRegionOnLeave}
-								size="sm"
-								onClick={() => void emissionsQuery.refetch()}
-								pendingLabel="Retrying…"
-								pending={emissionsQuery.isFetching}
-							>
-								Try again
-							</Button>
-						) : undefined
-					}
-				>
+				<InlineStatus variant="error" retry={readFailed ? emissionsQuery : undefined}>
 					{readFailed ? "Couldn't load the emissions data." : 'No emissions data for this protocol.'}
 				</InlineStatus>
 			</div>

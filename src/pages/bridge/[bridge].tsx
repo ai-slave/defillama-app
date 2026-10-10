@@ -1,9 +1,9 @@
 import type { GetStaticPropsContext, GetStaticPropsResult, InferGetStaticPropsType } from 'next'
-import { TemporarilyDisabledPage } from '~/components/TemporarilyDisabledPage'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgeProtocolOverview } from '~/containers/Bridges/BridgeProtocolOverview'
 import { getBridgePageData } from '~/containers/Bridges/queries.server'
 import Layout from '~/layout'
+import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -83,15 +83,14 @@ export const getStaticPaths = () => {
 export default function Bridge(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	if (props.state === 'disabled') {
 		return (
-			<TemporarilyDisabledPage
+			<Layout
 				title="Bridge Volume - DefiLlama"
 				description="This bridge route is temporarily unavailable and will be back shortly."
 				canonicalUrl={`/bridge/${props.bridgeSlug}`}
-				heading="Bridge data temporarily unavailable"
 			>
-				<p>We recognize this bridge route, but the upstream bridge APIs failed while loading this page.</p>
-				<p>Please try again in a few minutes.</p>
-			</TemporarilyDisabledPage>
+				{/* Static props: the page rebuilds on its revalidate interval, so there is no read here to retry. */}
+				<PanelStatus variant="error">Couldn't load bridge data.</PanelStatus>
+			</Layout>
 		)
 	}
 

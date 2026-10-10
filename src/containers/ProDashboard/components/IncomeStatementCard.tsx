@@ -3,7 +3,7 @@ import { useContext, useMemo, useState } from 'react'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useAppMetadata } from '../AppMetadataContext'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -51,7 +51,6 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 		staleTime: 60 * 60 * 1000
 	})
 	const { data: incomeStatement, isLoading } = incomeStatementQuery
-	const readFailed = queryReadFailed(incomeStatementQuery)
 
 	const hasData = useMemo(() => {
 		if (!incomeStatement?.data) return false
@@ -67,7 +66,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			{readFailed && incomeStatement !== undefined ? <ProCardRefreshFailed retry={incomeStatementQuery} /> : null}
+			{queryRefreshFailed(incomeStatementQuery) ? <ProCardRefreshFailed retry={incomeStatementQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={`${displayName} Income statement`}
@@ -86,7 +85,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 				}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
-				{readFailed && incomeStatement === undefined ? (
+				{queryReadFailed(incomeStatementQuery) ? (
 					<ProCardError retry={incomeStatementQuery} />
 				) : showLoader ? (
 					<ProCardLoading />

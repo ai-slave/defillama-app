@@ -9,6 +9,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -34,11 +35,10 @@ type Props = {
 	value: string | null
 	onChange: (article: ArticleDocument | null) => void
 	hint?: string
-	error?: string | null
 	listArticlesParams?: Partial<ListArticlesParams>
 }
 
-export function ArticlePicker({ value, onChange, hint, error, listArticlesParams }: Props) {
+export function ArticlePicker({ value, onChange, hint, listArticlesParams }: Props) {
 	const { authorizedFetch } = useAuthContext()
 	const [searchValue, setSearchValue] = useState('')
 	const [open, setOpen] = useState(false)
@@ -95,7 +95,6 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						ref={inputRef}
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						aria-invalid={error ? true : undefined}
 						render={<Input className={`${searchFieldInputPlacementStyles} pr-9`} />}
 					/>
 					{value ? (
@@ -124,12 +123,8 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					sameWidth
 					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
-					{isFetching && items.length === 0 ? (
-						<p className="p-3 text-center body-sm text-tertiary">Searching…</p>
-					) : null}
-					{!isFetching && items.length === 0 ? (
-						<p className="p-3 text-center body-sm text-tertiary">No results</p>
-					) : null}
+					{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
+					{!isFetching && items.length === 0 ? <NoResults>No results</NoResults> : null}
 					{items.map((article) => (
 						<Ariakit.ComboboxItem
 							key={article.id}
@@ -161,7 +156,6 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				</p>
 			) : null}
 			{hint ? <p className="body-sm text-tertiary">{hint}</p> : null}
-			{error ? <p className="body-sm text-error">{error}</p> : null}
 		</div>
 	)
 }

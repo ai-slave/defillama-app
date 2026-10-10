@@ -21,7 +21,7 @@ import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus 
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
 import { ComposerFrame } from '../components/input/ComposerFrame'
 import { AddSourcesMenu } from './AddSourcesMenu'
@@ -68,7 +68,8 @@ export function ProjectLanding({
 	const usage = useProjectUsage()
 	const project = useProjectDetail(projectId)
 	const projectSessions = useProjectSessions(projectId)
-	const sessionsFailed = queryReadFailed(projectSessions)
+	// The error sits above the chats it kept, so a failed refresh counts too.
+	const sessionsFailed = queryReadFailed(projectSessions) || queryRefreshFailed(projectSessions)
 	const projectMenuRef = useRef<HTMLButtonElement>(null)
 	const renameStore = Ariakit.useDialogStore()
 	const [confirmDelete, setConfirmDelete] = useState(false)

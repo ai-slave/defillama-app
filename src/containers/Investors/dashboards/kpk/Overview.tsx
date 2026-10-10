@@ -1,5 +1,7 @@
 import { useCallback } from 'react'
+import { PanelStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useTab, type KpkRef, type KpkOverview } from './api'
 import { CompositionSection, type CompositionSubtotal } from './CompositionSection'
 import { MILLION } from './transform'
@@ -8,7 +10,6 @@ import {
 	ContinuityRule,
 	LedgerStrip,
 	LedgerTile,
-	QueryError,
 	REBALANCING_REF,
 	RefLinks,
 	usdFromMillions,
@@ -26,7 +27,8 @@ const BOOK_TITLES = {
 }
 
 export default function Overview() {
-	const { data, isError } = useTab<KpkOverview>('overview')
+	const query = useTab<KpkOverview>('overview')
+	const { data } = query
 
 	const adjusted = data?.tvaAdjusted
 	const books = data?.books
@@ -43,7 +45,13 @@ export default function Overview() {
 		[books]
 	)
 
-	if (isError) return <QueryError label="Overview" />
+	if (queryReadFailed(query)) {
+		return (
+			<PanelStatus variant="error" retry={query}>
+				Couldn't load overview data.
+			</PanelStatus>
+		)
+	}
 
 	const tvaMetrics: Array<LedgerMetric> | undefined = data
 		? [

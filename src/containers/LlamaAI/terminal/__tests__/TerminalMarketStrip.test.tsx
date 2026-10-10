@@ -5,7 +5,9 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import {
 	formatCountdown,
 	formatDayMove,
@@ -104,7 +106,25 @@ test('a symbol that is not a Hyperliquid perp says so rather than showing zeros'
 	const fetchFn = (async () => new Response('not found', { status: 404 })) as typeof fetch
 	const container = await renderStrip('AAVE', fetchFn, (text) => text.includes('not a Hyperliquid perp'))
 	expect(container.textContent).toContain('AAVE is not a Hyperliquid perp')
-	expect(container.textContent).not.toMatch(/\$|Open interest|could not be loaded/)
+	expect(container.textContent).not.toMatch(/\$|Open interest|Couldn't load market data/)
+})
+
+test('a failed read keeps its error and waiting Try again while the retry runs', async () => {
+	let fetchStats = async () => new Response('down', { status: 500 })
+	const fetchFn = (async () => fetchStats()) as typeof fetch
+	const container = await renderStrip('HYPE', fetchFn, (text) =>
+		text.includes("Couldn't load market data for HYPE-USDC.")
+	)
+	const retry = () => [...container.querySelectorAll('button')].find((b) => accessibleName(b) === 'Try again')
+	expect(retry()).toBeDefined()
+
+	fetchStats = () => new Promise<Response>(() => {})
+	const button = retry()!
+	await act(async () => button.click())
+
+	// React Query reports the retry's fetching state on its next tick, after act settles.
+	await waitForUi(() => expect(button.getAttribute('aria-busy')).toBe('true'))
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load market data for HYPE-USDC.")
 })
 
 test('a backend that does not send the oracle price yet shows a dash there instead of breaking the strip', async () => {

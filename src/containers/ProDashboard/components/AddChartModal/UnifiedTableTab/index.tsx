@@ -18,6 +18,7 @@ import { Button } from '~/ui/Button'
 import { DialogCancelButton, DialogFooter, useRefusal } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { ErrorLine } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { requestDashboardItemReveal } from '../../../hooks/useDashboardItemDeepLink'
@@ -849,13 +850,7 @@ export function UnifiedTableTab({
 			</div>
 
 			<DialogFooter
-				leading={
-					refusalReason ? (
-						<p role="alert" className="body-sm text-error">
-							{refusalReason}
-						</p>
-					) : null
-				}
+				leading={refusalReason ? <ErrorLine inset="none">{refusalReason}</ErrorLine> : null}
 				dismiss={<DialogCancelButton />}
 			>
 				<Button variant="primary" size="md" onClick={handleAdd}>

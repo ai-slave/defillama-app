@@ -6,7 +6,15 @@ describe('classic chart runtime state', () => {
 		const refetch = vi.fn()
 		expect(
 			toChartRuntimeState(
-				{ data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch },
+				{
+					data: undefined,
+					isLoading: false,
+					isFetching: false,
+					isPlaceholderData: false,
+					errorUpdatedAt: 0,
+					dataUpdatedAt: 0,
+					refetch
+				},
 				false,
 				{ status: 'ready' }
 			)
@@ -25,7 +33,15 @@ describe('classic chart runtime state', () => {
 		const data: Array<[number, number]> = [[1_700_000_000, 42]]
 		expect(
 			toChartRuntimeState(
-				{ data, isLoading: false, isFetching: false, errorUpdatedAt: 2000, dataUpdatedAt: 1000, refetch },
+				{
+					data,
+					isLoading: false,
+					isFetching: false,
+					isPlaceholderData: false,
+					errorUpdatedAt: 2000,
+					dataUpdatedAt: 1000,
+					refetch
+				},
 				true,
 				{ status: 'ready' }
 			)
@@ -42,7 +58,15 @@ describe('classic chart runtime state', () => {
 	test('waits for the protocol catalog and retries its failure before starting a chart source', () => {
 		const refetch = vi.fn()
 		const retryCatalog = vi.fn()
-		const query = { data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch }
+		const query = {
+			data: undefined,
+			isLoading: false,
+			isFetching: false,
+			isPlaceholderData: false,
+			errorUpdatedAt: 0,
+			dataUpdatedAt: 0,
+			refetch
+		}
 
 		expect(toChartRuntimeState(query, true, { status: 'loading' })).toMatchObject({
 			isLoading: true,
@@ -64,6 +88,7 @@ describe('classic chart runtime state', () => {
 			data: undefined,
 			isLoading: false,
 			isFetching: false,
+			isPlaceholderData: false,
 			errorUpdatedAt: 0,
 			dataUpdatedAt: 0,
 			refetch: vi.fn()
@@ -71,6 +96,7 @@ describe('classic chart runtime state', () => {
 		// A retry from a failure with no data: the query is pending again, so isError is false while it runs.
 		const catalog = getProtocolCatalogPrerequisite(true, {
 			data: undefined,
+			isPlaceholderData: false,
 			errorUpdatedAt: 2000,
 			dataUpdatedAt: 0,
 			isFetching: true,
@@ -85,6 +111,7 @@ describe('classic chart runtime state', () => {
 		expect(
 			getProtocolCatalogPrerequisite(true, {
 				data: { protocols: [], chains: [] },
+				isPlaceholderData: false,
 				errorUpdatedAt: 2000,
 				dataUpdatedAt: 3000,
 				isFetching: false,
@@ -107,7 +134,15 @@ describe('classic chart runtime state', () => {
 		expect(prerequisite).toEqual({ status: 'unavailable' })
 		expect(
 			toChartRuntimeState(
-				{ data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch },
+				{
+					data: undefined,
+					isLoading: false,
+					isFetching: false,
+					isPlaceholderData: false,
+					errorUpdatedAt: 0,
+					dataUpdatedAt: 0,
+					refetch
+				},
 				true,
 				prerequisite
 			)

@@ -9,12 +9,11 @@ import { fetchTokenExchangeListings } from '~/containers/Token/api'
 import { hydrateTokenSearchOptionsByIds, mergeTokenSearchResults, searchTokens } from '~/containers/TokenSearch/search'
 import { TOKEN_SEARCH_LIMIT } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { letterLogoDataUri } from '~/utils/icons'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { resolveCountryAvailability } from './countryAvailability'
 import { ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
@@ -183,7 +182,7 @@ export function ExchangeTokenFinder({
 							filterOptions={false}
 							onSearchChange={setTokenSearch}
 							isLoading={tokenSearchQuery.isLoading}
-							emptyMessage={tokenSearchQuery.isError ? 'Token search failed.' : 'No tokens found.'}
+							emptyMessage={tokenSearchQuery.isError ? "Couldn't search tokens." : 'No tokens found.'}
 							setSelectedValues={(values) => {
 								void pushShallowQuery(router, {
 									[EXCHANGES_QUERY_KEYS.tokenFinderTokens]: values.slice(0, 8).join(',') || undefined
@@ -223,33 +222,21 @@ export function ExchangeTokenFinder({
 
 			<Card padding="none" className="overflow-x-auto">
 				{selectedTokens.length === 0 ? (
-					<p className="p-4 body-sm text-tertiary">Select one or more tokens to find exchanges.</p>
-				) : listingsQuery.isPending ? (
-					<div className="flex min-h-32 items-center justify-center">
-						<LoadingIndicator />
-					</div>
-				) : listingsQuery.isError ? (
+					<SurfaceBodyStatus variant="empty" className="min-h-32 px-4">
+						Select one or more tokens to find exchanges.
+					</SurfaceBodyStatus>
+				) : queryReadFailed(listingsQuery) ? (
 					<div className="p-4">
-						<InlineStatus
-							variant="error"
-							action={
-								<Button
-									// The retry leaves once the read succeeds; the region keeps focus.
-									ref={focusRegionOnLeave}
-									size="sm"
-									onClick={() => void listingsQuery.refetch()}
-									pendingLabel="Retrying…"
-									pending={listingsQuery.isFetching}
-								>
-									Try again
-								</Button>
-							}
-						>
-							Token listings failed to load.
+						<InlineStatus variant="error" retry={listingsQuery}>
+							Couldn't load token listings.
 						</InlineStatus>
 					</div>
+				) : listingsQuery.isPending ? (
+					<SurfaceBodyLoadingStatus label="Loading token listings" className="min-h-32" />
 				) : rows.length === 0 ? (
-					<p className="p-4 body-sm text-tertiary">No exchanges match the selected tokens and region.</p>
+					<SurfaceBodyStatus variant="empty" className="min-h-32 px-4">
+						No exchanges match the selected tokens and region.
+					</SurfaceBodyStatus>
 				) : (
 					<table className="w-full text-left body-sm">
 						<thead>

@@ -1224,13 +1224,13 @@ test.each([true, false])('recovers a lost invite response by reading membership:
 	await click('Check membership')
 	await waitForUi(async () => {
 		await act(async () => {})
-		expect(container.textContent).toContain('Could not check membership')
+		expect(container.textContent).toContain("Couldn't check membership")
 	})
 	api.fetch.mockImplementation(async () => Response.json({ team: joined ? team : null }))
 	await click('Check membership')
 	await waitForUi(async () => {
 		await act(async () => {})
-		expect(container.textContent?.includes('Could not check membership')).toBe(false)
+		expect(container.textContent?.includes("Couldn't check membership")).toBe(false)
 		expect(router.replace.mock.calls.length > 0).toBe(joined)
 	})
 	expect(posts()).toHaveLength(1)

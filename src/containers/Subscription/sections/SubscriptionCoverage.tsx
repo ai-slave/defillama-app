@@ -6,7 +6,7 @@ import { InlineStatus } from '~/ui/Status'
 import { readExperimentVariant } from '~/utils/analytics/experiment'
 import { fetchJson } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { SubscriptionCoverageData } from '../coverage'
 import { PRICING_EXPERIMENT_ID } from '../pricingExperiment'
 import type { PricingCardData } from '../types'
@@ -186,11 +186,9 @@ export function SubscriptionCoverage() {
 					</dl>
 				</div>
 				{failed ? (
-					<InlineStatus variant="error">
-						{data
-							? 'Coverage could not refresh. Showing the last available counts.'
-							: 'Coverage data is temporarily unavailable.'}
-					</InlineStatus>
+					<InlineStatus variant="error">Coverage data is temporarily unavailable.</InlineStatus>
+				) : queryRefreshFailed(query) ? (
+					<InlineStatus variant="error">Coverage could not refresh. Showing the last available counts.</InlineStatus>
 				) : null}
 			</div>
 			<p className="body-lg text-primary">The most-cited data provider in crypto</p>

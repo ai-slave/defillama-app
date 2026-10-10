@@ -15,6 +15,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import { DASHBOARD_CARD_HEIGHT_LABELS, getEmbedCardHeight } from '../dashboardLayout/cardHeight'
@@ -348,9 +349,9 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						) : null}
 					</Ariakit.MenuList>
 					{csvDownload.status === 'error' ? (
-						<p role="alert" className="max-w-xs px-3 py-2 body-sm text-error">
-							{CSV_DOWNLOAD_ERROR}
-						</p>
+						<div className="max-w-xs">
+							<ErrorLine inset="menuRow">{CSV_DOWNLOAD_ERROR}</ErrorLine>
+						</div>
 					) : null}
 				</MenuSurface>
 			</Ariakit.MenuProvider>

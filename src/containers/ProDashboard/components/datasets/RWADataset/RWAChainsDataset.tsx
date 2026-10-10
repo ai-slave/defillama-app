@@ -30,8 +30,9 @@ import {
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 
@@ -143,7 +144,7 @@ function useRWAChainsTableData() {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: PRO_RWA_CHAINS_TABLE_QUERY_KEY,
 		enabled: streamDone,
 		queryFn: async () => {
@@ -157,7 +158,7 @@ function useRWAChainsTableData() {
 		retry: 1,
 		select: selectRWAChainRows
 	})
-	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
+	return { query, isLoading: query.isLoading || (!streamDone && query.data === undefined) }
 }
 
 const EMPTY_DATA: Array<RWAChainsTableRow> = []
@@ -172,7 +173,8 @@ export function RWAChainsDataset() {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useRWAChainsTableData()
+	const { query: chainsQuery, isLoading } = useRWAChainsTableData()
+	const { data } = chainsQuery
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
@@ -196,21 +198,21 @@ export function RWAChainsDataset() {
 
 	const [_chainName, setChainName] = useTableSearch({ instance, columnToSearch: 'chain' })
 
-	if (isLoading) {
+	if (queryReadFailed(chainsQuery)) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading RWA chains data…" />
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load RWA chains data" retry={chainsQuery} />
 				</div>
 			</div>
 		)
 	}
 
-	if (error) {
+	if (isLoading) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load RWA chains data</div>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading RWA chains data" />
 				</div>
 			</div>
 		)
@@ -256,6 +258,7 @@ export function RWAChainsDataset() {
 					</div>
 				</div>
 			</div>
+			{queryRefreshFailed(chainsQuery) ? <ProCardRefreshFailed retry={chainsQuery} /> : null}
 			<TableBody table={instance} />
 			<TablePagination
 				pageSize={pagination.pageSize}

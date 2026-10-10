@@ -9,6 +9,7 @@ import { RailItem } from '~/ui/RailItem'
 import { PanelStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
+import { queryReadFailed } from '~/utils/query'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
@@ -271,8 +272,10 @@ function InvestorsShell({
 									hasCustomHeader={!!HeaderComponent}
 									hideDuplicateButton
 								/>
-							) : activeModule?.isError ? (
-								<PanelStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</PanelStatus>
+							) : activeModule && queryReadFailed(activeModule) ? (
+								<PanelStatus variant="error" retry={activeModule}>
+									Couldn't load this dashboard.
+								</PanelStatus>
 							) : activeModule?.isLoading ? null : (
 								<InvestorsContent
 									tabs={tabs}

@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
+import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
 import type { LocalArticleDocument } from '../types'
@@ -146,7 +147,11 @@ export function ArticleCoverImageEditor({
 					onClick={openCoverPicker}
 				/>
 			)}
-			{publishError ? <p className="mt-2 body-sm text-error">{publishError}</p> : null}
+			{publishError ? (
+				<div className="mt-2">
+					<ErrorLine inset="none">{publishError}</ErrorLine>
+				</div>
+			) : null}
 		</div>
 	)
 }

@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import { useMemo, useState } from 'react'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import {
 	addCollaborator,
 	ArticleApiError,
@@ -136,7 +136,8 @@ export function useArticleCollaborators({
 		collaboratorUpdatingId: updateCollaboratorMutation.isPending ? updateCollaboratorMutation.variables.pbUserId : null,
 		collaboratorEmail,
 		collaborators,
-		collaboratorsLoadFailed: queryReadFailed(collaboratorsQuery),
+		// The dialog shows the error above the authors it kept, so a failed refresh counts too.
+		collaboratorsLoadFailed: queryReadFailed(collaboratorsQuery) || queryRefreshFailed(collaboratorsQuery),
 		collaboratorsRetrying: collaboratorsQuery.isFetching,
 		collaboratorsLoading,
 		handleAddCollaborator,

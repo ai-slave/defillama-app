@@ -1,9 +1,9 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
-import { TemporarilyDisabledPage } from '~/components/TemporarilyDisabledPage'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgedTVLByChain } from '~/containers/BridgedTVL/BridgedTVLByChain'
 import { getBridgedTVLByChain } from '~/containers/BridgedTVL/queries'
 import Layout from '~/layout'
+import { PanelStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -60,15 +60,15 @@ const pageName = ['Bridged TVL', 'by', 'Chain']
 export default function Bridged(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	if (!props.chainData) {
 		return (
-			<TemporarilyDisabledPage
+			<Layout
 				title={`${props.chainName} Bridged Assets & Cross-Chain TVL - DefiLlama`}
 				description={`Track total value of assets bridged to ${props.chainName} from other chains. View bridged TVL breakdown by token, source chain, and bridge protocol. Real-time cross-chain asset analytics for ${props.chainName}.`}
 				canonicalUrl={`/bridged/${props.chain}`}
-				heading="Bridged TVL temporarily unavailable"
+				pageName={pageName}
 			>
-				<p>We recognize this route, but the upstream bridge APIs failed while loading this page.</p>
-				<p>Please try again in a few minutes.</p>
-			</TemporarilyDisabledPage>
+				{/* Static props: the page rebuilds on its revalidate interval, so there is no read here to retry. */}
+				<PanelStatus variant="error">Couldn't load bridged TVL for {props.chainName}.</PanelStatus>
+			</Layout>
 		)
 	}
 

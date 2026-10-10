@@ -30,7 +30,7 @@ import { Button } from '~/ui/Button'
 import { passFocusOnLeave, focusRegionOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export function EditorialTagsView() {
 	return (
@@ -63,15 +63,15 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	const revalidateLanding = useResearchLandingRevalidation()
 	const limit = definition.cardinality === 'singleton' ? 1 : 30
 
-	const { data, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } = useQuery<ArticleByTagResponse>(
-		{
+	const { data, isPlaceholderData, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } =
+		useQuery<ArticleByTagResponse>({
 			queryKey: ['research', 'admin', 'editorial-tag', definition.slug],
 			queryFn: () => listArticlesByTag(definition.slug, limit, authorizedFetch),
 			retry: false
-		}
-	)
+		})
 	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
-	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
+	const read = { data, isPlaceholderData, errorUpdatedAt, dataUpdatedAt }
+	const failed = queryReadFailed(read)
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'editorial-tag', definition.slug] })
@@ -174,6 +174,12 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				/>
 			</div>
 
+			{/* The tag mutations below invalidate this list; a failed refetch keeps rows that may predate the change. */}
+			{queryRefreshFailed(read) ? (
+				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
+					Couldn&apos;t refresh {definition.label}. It may not show your latest change.
+				</InlineStatus>
+			) : null}
 			{failed ? (
 				<InlineStatus
 					variant="error"

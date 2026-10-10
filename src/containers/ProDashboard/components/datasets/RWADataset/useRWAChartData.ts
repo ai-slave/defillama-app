@@ -14,7 +14,7 @@ import {
 import type { IFetchedRWAProject, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
 import { toRwaPositionalChartDataset } from '~/containers/RWA/breakdownDataset'
 import { tokenIconUrl } from '~/utils/icons'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
 import { sumRwaMetricBreakdown } from '../../../rwaMetrics'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
@@ -76,6 +76,7 @@ export function useRWABreakdownChartData(
 		isLoading: isLoading || (!streamDone && data === undefined),
 		isFetching,
 		readFailed: queryReadFailed(chartQuery),
+		refreshFailed: queryRefreshFailed(chartQuery),
 		refetch
 	}
 }
@@ -145,6 +146,7 @@ export function useRWAAssetChartData(assetId: string | null) {
 		isLoading: isLoading || (assetId !== null && !streamDone && data === undefined),
 		isFetching,
 		readFailed: queryReadFailed(chartQuery),
+		refreshFailed: queryRefreshFailed(chartQuery),
 		refetch
 	}
 }

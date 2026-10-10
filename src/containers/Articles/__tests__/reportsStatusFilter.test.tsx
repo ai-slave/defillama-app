@@ -95,3 +95,33 @@ test('a filter with no reports offers a way back to all of them', async () => {
 	expect(document.activeElement).toBe(radio('All'))
 	expect(titles()).toEqual(['Live report'])
 })
+
+test('a refresh that fails after a change keeps the reports and says the list may be stale until a retry loads it', async () => {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<ReportsAdminView />
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(titles()).toEqual(['Live report', 'Draft report']))
+
+	session.serve({ [`${FEATURES_SERVER}/articles`]: () => new Response('offline', { status: 503 }) })
+	await act(async () => session.client.invalidateQueries({ queryKey: ['research', 'admin', 'reports'] }))
+	await waitForUi(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't refresh reports.")
+	)
+	expect(titles()).toEqual(['Live report', 'Draft report'])
+
+	session.serve({
+		[`${FEATURES_SERVER}/articles`]: {
+			items: [report('live', 'Live report', 'published')],
+			totalItems: 1,
+			totalPages: 1
+		}
+	})
+	const tryAgain = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Try again')!
+	await act(async () => tryAgain.click())
+	await waitForUi(() => expect(titles()).toEqual(['Live report']))
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+})

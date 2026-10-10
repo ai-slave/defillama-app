@@ -1,15 +1,9 @@
 import Head from 'next/head'
-import { SEO } from '~/components/SEO'
 import { TemporarilyDisabledPage } from '~/components/TemporarilyDisabledPage'
 
 export default function Liquidity() {
 	return (
 		<>
-			<SEO
-				title="Token Liquidity - DefiLlama"
-				description="Check token liquidity and swap depth across decentralized exchanges on DefiLlama."
-				canonicalUrl="/liquidity"
-			/>
 			<Head>
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 			</Head>
@@ -20,11 +14,12 @@ export default function Liquidity() {
 				sandbox="allow-scripts"
 			/> */}
 			<TemporarilyDisabledPage
-				title="Token Liquidity"
+				title="Token Liquidity - DefiLlama"
 				description="Check token liquidity and swap depth across decentralized exchanges on DefiLlama."
+				canonicalUrl="/liquidity"
+				heading="Token liquidity is unavailable"
 			>
-				<p>Token liquidity data is not available on DefiLlama for the time being.</p>
-				<p>We&apos;re working on bringing this page back in a future update.</p>
+				Token liquidity data is not available on DefiLlama for now. This page returns in a future update.
 			</TemporarilyDisabledPage>
 		</>
 	)

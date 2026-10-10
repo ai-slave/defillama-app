@@ -4,6 +4,7 @@ import { Button } from './Button'
 import { focusRegionOnLeave } from './focus'
 import { Panel } from './Panel'
 import { QuestionHelper } from './QuestionHelper'
+import { LoadingIndicator } from './Status'
 
 /* ----------------------------------------------------------------------------
    ChartPanel — the chart shell: `Panel padding="none"`, an optional
@@ -36,9 +37,11 @@ import { QuestionHelper } from './QuestionHelper'
 
    A failed read renders ChartPanelBodyError where the chart would be: the
    red message and, when the chart's data comes from a query in the browser,
-   that query's Try again (`retry`). Check `queryReadFailed` before loading,
-   so the error and its button stay on screen while the retry runs. Data the
-   server rendered has nothing to retry and passes no `retry`.
+   that query's Try again (`retry`). Check `queryReadFailed` (nothing to draw
+   and the read failed) before loading, so the error and its button stay on
+   screen while the retry runs. A refetch that fails under a drawn chart keeps
+   the chart (`queryRefreshFailed`). Data the server rendered has nothing to
+   retry and passes no `retry`.
 ---------------------------------------------------------------------------- */
 
 export function ChartPanel({ className, ...props }: ComponentProps<'div'>) {
@@ -108,20 +111,40 @@ export function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWi
 	)
 }
 
+/** A chart loading in its slot (a ChartPanelBody, a chart's Suspense fallback, a preview tile): the quiet indicator,
+    announced. `className` and `style` take the slot's size where it is smaller than the 360px default (min-h-0, h-*). */
+export function ChartPanelBodyLoading({
+	label = 'Loading chart',
+	className,
+	style
+}: {
+	label?: string
+	className?: string
+	style?: CSSProperties
+}) {
+	return (
+		<ChartPanelBodyFallback role="status" aria-live="polite" className={className} style={style}>
+			<LoadingIndicator label={label} />
+		</ChartPanelBodyFallback>
+	)
+}
+
 /** A chart's failed read, in the body's place. Its Try again waits while the query refetches; when the chart replaces
-    it, focus moves to the page content rather than dropping to the document. `style` takes the loading state's height
-    where the chart sets its own, so the page does not jump when the error replaces it. */
+    it, focus moves to the page content rather than dropping to the document. `className` and `style` take the loading
+    state's size where the chart sets its own, so the page does not jump when the error replaces it. */
 export function ChartPanelBodyError({
 	children,
 	retry,
+	className,
 	style
 }: {
 	children: ReactNode
 	retry?: QueryRetry
+	className?: string
 	style?: CSSProperties
 }) {
 	return (
-		<ChartPanelBodyFallback className="flex-col gap-2 p-4 text-center" style={style}>
+		<ChartPanelBodyFallback className={`flex-col gap-2 p-4 text-center ${className ?? ''}`} style={style}>
 			<p role="alert" className="body-sm text-error">
 				{children}
 			</p>

@@ -799,20 +799,8 @@ export function ChartBuilderTab({
 						className="relative flex flex-1 items-center justify-center rounded-md border border-subtle bg-surface"
 						style={{ minHeight: '450px' }}
 					>
-						{queryReadFailed(preview) && !previewData ? (
-							<InlineStatus
-								variant="error"
-								action={
-									<Button
-										size="sm"
-										pendingLabel="Retrying…"
-										pending={preview.isFetching}
-										onClick={() => void preview.refetch()}
-									>
-										Try again
-									</Button>
-								}
-							>
+						{queryReadFailed(preview) ? (
+							<InlineStatus variant="error" retry={preview}>
 								Couldn't load the preview.
 							</InlineStatus>
 						) : previewLoading ? (

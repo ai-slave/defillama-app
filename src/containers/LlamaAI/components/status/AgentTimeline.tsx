@@ -18,6 +18,7 @@ import { getToolLabel, TOOL_ICONS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/
 import type { AgentStep, SpawnAgentStatus, ToolExecution } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { Icon } from '~/ui/Icon'
+import { ErrorLine } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { formatNumber, formatUsd } from '~/utils/numberFormat'
 
@@ -477,11 +478,7 @@ function keyedRows(rows: Array<Record<string, unknown>>) {
 function ToolExecutionDetails({ execution, showToolDetails }: { execution: ToolExecution; showToolDetails: boolean }) {
 	return (
 		<>
-			{execution.error ? (
-				<p role="alert" className="m-0 body-sm text-error">
-					{execution.error}
-				</p>
-			) : null}
+			{execution.error ? <ErrorLine inset="none">{execution.error}</ErrorLine> : null}
 			{execution.resultCount != null ? (
 				<p className="m-0 body-sm text-tertiary">{execution.resultCount} results</p>
 			) : null}

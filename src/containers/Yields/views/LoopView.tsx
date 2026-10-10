@@ -1,6 +1,7 @@
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { YIELD_LOOPS_DATASET_API } from '../constants'
 import type { LoopTableRow, TokenOption } from '../data/types'
 import { prepareLoopsCsv } from '../domain/loopCsv'
@@ -103,10 +104,12 @@ function LoopView({
 				prepareCsv={prepareCsv}
 			/>
 
-			{isLoading ? (
+			{queryReadFailed(rowsQuery) ? (
+				<PanelStatus variant="error" retry={rowsQuery}>
+					Couldn't load looping strategies.
+				</PanelStatus>
+			) : isLoading ? (
 				<PanelLoadingStatus label="Loading looping strategies" />
-			) : rowsQuery.isError && !rowsQuery.data ? (
-				<PanelStatus variant="error">Couldn't load looping strategies.</PanelStatus>
 			) : rows.length > 0 ? (
 				<PaginatedLoopsTable data={rows} {...tableProps} />
 			) : (

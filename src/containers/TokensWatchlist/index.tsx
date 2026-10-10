@@ -38,7 +38,7 @@ import { Icon } from '~/ui/Icon'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { mergeMarketsSummary } from './marketsMerge'
 
 const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
@@ -101,7 +101,6 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 
 	const tokensQuery = useWatchlistTokensTable(savedTokenIds)
 	const { data, isLoading, isFetching, refetch } = tokensQuery
-	const failed = queryReadFailed(tokensQuery)
 	const { data: marketsList } = useQuery({
 		queryKey: ['tokens-markets-summary'],
 		queryFn: () => fetchJson<TokenMarketsListResponse>('/api/public/markets/tokens'),
@@ -156,7 +155,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 			<WatchListTabs />
 			<div className="flex flex-col gap-2">
 				<TokensPortfolioSelection />
-				{hasSavedTokens && data && failed ? (
+				{hasSavedTokens && queryRefreshFailed(tokensQuery) ? (
 					<InlineStatus variant="error">Unable to refresh token data. Showing the last available data.</InlineStatus>
 				) : null}
 				{data ? (
@@ -182,7 +181,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							size="md"
 						/>
 					</TableToolbar>
-					{hasSavedTokens && !data && failed ? (
+					{hasSavedTokens && queryReadFailed(tokensQuery) ? (
 						<SurfaceBodyStatus variant="error" className="p-2">
 							<p>Token data is unavailable. Your saved tokens are unchanged.</p>
 							<Button

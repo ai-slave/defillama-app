@@ -10,13 +10,12 @@ import { GenericCard } from '~/containers/Articles/landing/GenericCard'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import { ArticleBannerStrip } from '~/containers/Articles/renderer/ArticleBannerStrip'
-import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { EmptyState, PanelStatus } from '~/ui/Status'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -144,7 +143,9 @@ function SectionLandingContent({
 		)
 	}
 
-	if (articlesQuery.isLoading) return <ResearchLoader />
+	if (articlesQuery.isLoading) {
+		return <PanelLoadingStatus label="Loading research" className="mx-auto w-full max-w-[1180px]" />
+	}
 
 	const { data } = articlesQuery
 	const items = data?.items ?? []

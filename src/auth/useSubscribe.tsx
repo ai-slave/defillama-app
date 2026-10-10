@@ -10,7 +10,7 @@ import { holdEndTrial } from '~/containers/Account/endTrialHold'
 import { scheduleConfirmationReads } from '~/containers/Account/utils'
 import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 interface SubscriptionRequest {
 	redirectUrl: string
@@ -220,8 +220,10 @@ export const useSubscribe = () => {
 
 	const llamafeedSubscription = subscriptionData?.type === 'llamafeed' ? subscriptionData : defaultInactiveSubscription
 
-	// Attempt times keep a failure, not a loading state, on screen while its retry runs.
-	const isSubscriptionError = isAuthenticated && queryReadFailed(subscriptionQuery)
+	// Attempt times keep a failure, not a loading state, on screen while its retry runs. Billing state from before a
+	// failed refetch may predate a change the reader just made (a cancellation), so any failed read is an error here.
+	const isSubscriptionError =
+		isAuthenticated && (queryReadFailed(subscriptionQuery) || queryRefreshFailed(subscriptionQuery))
 	const isSubscriptionLoading = isAuthenticated && subscriptionQuery.data === undefined && !isSubscriptionError
 
 	const trialAvailabilityQuery = useQuery({
@@ -499,7 +501,11 @@ export const useSubscribe = () => {
 		isSubscriptionError,
 		isSubscriptionRetrying: subscriptionQuery.isFetching,
 		refetchSubscription: subscriptionQuery.refetch,
-		isPastDueError: queryReadFailed(pastDueSubscriptionQuery) && pastDueSubscriptionQuery.data == null,
+		// No past-due subscription (null) is what a failed check cannot confirm: the notice exists so a failure never
+		// reads as "no payment problems".
+		isPastDueError:
+			queryReadFailed(pastDueSubscriptionQuery) ||
+			(pastDueSubscriptionQuery.data === null && queryRefreshFailed(pastDueSubscriptionQuery)),
 		isPastDueRetrying: pastDueSubscriptionQuery.isFetching,
 		refetchPastDueSubscription: pastDueSubscriptionQuery.refetch,
 		apiKey,
@@ -513,9 +519,7 @@ export const useSubscribe = () => {
 		apiSubscription,
 		llamafeedSubscription,
 		isTrialAvailable: isAuthenticated ? (trialAvailabilityQuery.data?.trialAvailable ?? false) : true,
-		usageStats: usageStatsQuery.data ?? null,
-		isUsageStatsLoading: usageStatsQuery.isLoading,
-		isUsageStatsError: usageStatsQuery.isError,
+		usageStatsQuery,
 		pastDueSubscription: pastDueSubscriptionQuery.data ?? null
 	}
 }

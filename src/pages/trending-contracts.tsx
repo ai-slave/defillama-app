@@ -9,11 +9,12 @@ import { Change } from '~/ui/Change'
 import { CopyHelper } from '~/ui/Copy'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { truncateAddress } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 
 const valueToFilter = {
 	'1d': 'day',
@@ -84,13 +85,14 @@ export default function TrendingContracts() {
 
 	const activeChain = typeof chain === 'string' ? chain.toLowerCase() : 'ethereum'
 
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: ['trending-contracts', time, activeChain],
 		queryFn: () => getContracts(activeChain, time),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0
 	})
+	const { data } = query
 
 	const { data: blockExplorers = [] } = useBlockExplorers()
 
@@ -128,12 +130,14 @@ export default function TrendingContracts() {
 						values={CHAIN_VALUES}
 					/>
 				</PanelHeader>
-				{isLoading ? (
-					<SurfaceBodyLoadingStatus className="p-2" />
-				) : error ? (
-					<SurfaceBodyStatus variant="error" className="p-2">
-						Sorry, couldn't fetch trending contracts.
-					</SurfaceBodyStatus>
+				{queryReadFailed(query) ? (
+					<div className="flex min-h-[360px] flex-1 items-center justify-center p-2">
+						<InlineStatus variant="error" retry={query}>
+							Couldn't load trending contracts.
+						</InlineStatus>
+					</div>
+				) : query.isLoading ? (
+					<SurfaceBodyLoadingStatus label="Loading trending contracts" className="p-2" />
 				) : results.length === 0 ? (
 					<SurfaceBodyStatus variant="empty" className="p-2">
 						No trending contracts found for this chain and time range.

@@ -30,8 +30,9 @@ import {
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import {
@@ -167,7 +168,7 @@ function useEquitiesCompaniesTableData() {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 
-	const { data, isLoading, error } = useQuery({
+	const query = useQuery({
 		queryKey: PRO_EQUITIES_COMPANIES_QUERY_KEY,
 		queryFn: () => {
 			if (!authToken) throw new Error('Missing Pro dashboard proxy auth token')
@@ -178,7 +179,7 @@ function useEquitiesCompaniesTableData() {
 		refetchOnWindowFocus: false,
 		retry: 1
 	})
-	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
+	return { query, isLoading: query.isLoading || (!streamDone && query.data === undefined) }
 }
 
 const EMPTY_DATA: Array<IEquitiesCompanyApiItem> = []
@@ -193,7 +194,8 @@ export function EquitiesCompaniesDataset() {
 		pageSize: 10
 	})
 
-	const { data, isLoading, error } = useEquitiesCompaniesTableData()
+	const { query: companiesQuery, isLoading } = useEquitiesCompaniesTableData()
+	const { data } = companiesQuery
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
@@ -217,21 +219,21 @@ export function EquitiesCompaniesDataset() {
 
 	const [_searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'name' })
 
-	if (isLoading) {
+	if (queryReadFailed(companiesQuery)) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading equities data…" />
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load equities data" retry={companiesQuery} />
 				</div>
 			</div>
 		)
 	}
 
-	if (error) {
+	if (isLoading) {
 		return (
 			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">Failed to load equities data</div>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading equities data" />
 				</div>
 			</div>
 		)
@@ -282,6 +284,7 @@ export function EquitiesCompaniesDataset() {
 					</div>
 				</div>
 			</div>
+			{queryRefreshFailed(companiesQuery) ? <ProCardRefreshFailed retry={companiesQuery} /> : null}
 			<TableBody table={instance} />
 			<TablePagination
 				pageSize={pagination.pageSize}

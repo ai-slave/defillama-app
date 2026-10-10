@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
@@ -34,13 +34,7 @@ export function HBarChartAdapter({ config, result, classified, onReady, height }
 	)
 
 	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center" style={{ height }}>
-					<LoadingSpinner size={18} />
-				</div>
-			}
-		>
+		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
 			<HBarChart
 				categories={categories}
 				values={values}

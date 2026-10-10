@@ -20,6 +20,7 @@ import { sluggifyProtocol } from '~/utils/cache-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatNumber } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
+import { queryReadFailed } from '~/utils/query'
 import { canonicalRouteRedirect } from '~/utils/route'
 
 const EMPTY_TOGGLE_OPTIONS = []
@@ -212,10 +213,12 @@ function ProtocolYieldsTab({
 					pathname={resolvedPathname}
 				/>
 			</div>
-			{isLoading ? (
+			{queryReadFailed(rowsQuery) ? (
+				<PanelStatus variant="error" retry={rowsQuery}>
+					Couldn't load pools.
+				</PanelStatus>
+			) : isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />
-			) : rowsQuery.isError && !rowsQuery.data ? (
-				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsPoolTable data={poolsData} defaultColumns={defaultColumns} {...tableProps} />
 			) : (

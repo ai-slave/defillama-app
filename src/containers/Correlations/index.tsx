@@ -16,7 +16,7 @@ import { Card } from '~/ui/Card'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatRatio } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -298,9 +298,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 
 			<Card padding="md" className="flex flex-col items-center gap-6">
 				{!showContent ? (
-					<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
-						<LoadingIndicator />
-					</div>
+					<SurfaceBodyLoadingStatus label="Loading correlations" className="min-h-[300px]" />
 				) : (
 					<div className="flex flex-col sm:flex-row">
 						<div className="flex scrollbar-none w-40 shrink-0 flex-col overflow-auto sm:mr-6">

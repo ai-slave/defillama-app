@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { EmptyState } from '~/ui/Status'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
@@ -43,13 +43,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady, heigh
 		)
 
 	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center" style={{ height }}>
-					<LoadingSpinner size={18} />
-				</div>
-			}
-		>
+		<Suspense fallback={<ChartPanelBodyLoading className="min-h-0 w-full" style={{ height }} />}>
 			<TreemapChart
 				treeData={treeData}
 				variant="narrative"

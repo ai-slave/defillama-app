@@ -8,6 +8,7 @@ import type { FieldControlProps } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -83,9 +84,7 @@ export function SponsorEntityPicker({
 					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
 					{query.length === 0 ? <p className="p-3 body-sm text-tertiary">Type a page name to search.</p> : null}
-					{query.length > 0 && isFetching && items.length === 0 ? (
-						<p className="p-3 body-sm text-tertiary">Searching…</p>
-					) : null}
+					{query.length > 0 && isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
 					{query.length > 0 && !isFetching && items.length === 0 ? (
 						<p className="p-3 body-sm text-tertiary">No matching protocol, chain, or CEX page.</p>
 					) : null}

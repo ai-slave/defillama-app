@@ -30,7 +30,6 @@ import { AlertsModal } from '~/containers/LlamaAI/components/AlertsModal'
 import { ChatSurface, type LandingOverrideApi } from '~/containers/LlamaAI/components/ChatSurface'
 import {
 	EmptyConversationErrorState,
-	LoadingConversationState,
 	type ConversationViewModel
 } from '~/containers/LlamaAI/components/ConversationView'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
@@ -131,6 +130,7 @@ import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { getABSeedFromCookie } from '~/utils/abTesting'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -830,7 +830,7 @@ export function AgenticChat({
 				.catch(() => null)
 			if (!operation.isCurrent()) return
 			if (!result) {
-				setPaginationError('Failed to load older messages')
+				setPaginationError("Couldn't load older messages.")
 				return
 			}
 			const older = mapPersistedMessages(result.messages)
@@ -850,7 +850,7 @@ export function AgenticChat({
 				.catch(() => null)
 			if (!operation.isCurrent()) return
 			if (!result) {
-				setPaginationError('Failed to load newer messages')
+				setPaginationError("Couldn't load newer messages.")
 				return
 			}
 			const newer = mapPersistedMessages(result.messages)
@@ -1547,7 +1547,7 @@ export function AgenticChat({
 				!options?.around
 			)
 				return
-			setRestoreFailure(null)
+			// The failure stays until this attempt settles, so a retry keeps the error and its waiting Try again.
 			setRestoringSessionId(selectedSessionId)
 			abortActiveRequest()
 			abortQueueCommands()
@@ -1562,7 +1562,7 @@ export function AgenticChat({
 			if (routeSessionIdRef.current !== selectedSessionId) return
 			if (restoreResult.status === 'aborted') return
 			if (restoreResult.status === 'failed') {
-				setRestoreFailure({ sessionId: selectedSessionId, message: 'Failed to restore session' })
+				setRestoreFailure({ sessionId: selectedSessionId, message: "Couldn't restore this chat." })
 				setRestoringSessionId(null)
 				return
 			}
@@ -3021,14 +3021,17 @@ export function AgenticChat({
 											</div>
 										) : null}
 										{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
-											<LoadingConversationState />
+											<SurfaceBodyLoadingStatus label="Loading conversation" className="min-h-0" />
 										) : !hasMessages && visibleError ? (
 											<EmptyConversationErrorState
 												onNewChat={() => void router.push(withTerminalView('/ai/chat'))}
 												message={visibleError}
-												onRetry={
+												retry={
 													isRouteSessionPending && routeSessionId
-														? () => void handleSessionSelect(routeSessionId)
+														? {
+																refetch: () => void handleSessionSelect(routeSessionId),
+																isFetching: restoringSessionId === routeSessionId
+															}
 														: undefined
 												}
 											/>

@@ -20,17 +20,20 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { deriveLegacyChartType, deriveLegacyEntities, validateArticleChartConfig } from '../chartAdapters'
 import type {
@@ -90,14 +93,12 @@ function MultiPreview({
 	series,
 	range,
 	logScale,
-	annotations,
-	height
+	annotations
 }: {
 	series: Array<ArticleChartSeries>
 	range: ArticleChartRange
 	logScale: boolean
 	annotations: Array<ArticleChartAnnotation>
-	height: number
 }) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { data: catalog } = useProtocolsAndChains()
@@ -130,7 +131,9 @@ function MultiPreview({
 	})
 
 	const isLoading = queries.some((q) => q.isLoading)
-	const isError = queries.length > 0 && queries.every((q) => q.isError)
+	// A preview with some series loaded draws those; only one whose every read failed shows the error.
+	const allFailed = queries.length > 0 && queries.every((q) => queryReadFailed(q))
+	const failedReads = mergeFailedReads(queries.map((q) => (queryReadFailed(q) ? q : null)))
 
 	const chartModel = useMemo(() => {
 		const chartSeries = series
@@ -168,23 +171,21 @@ function MultiPreview({
 		[logScale]
 	)
 
-	const heightPx = `${height}px`
-
-	const loading = (
-		<div role="status" aria-live="polite" className="flex items-center justify-center" style={{ height: heightPx }}>
-			<LoadingIndicator label="Loading chart" />
-		</div>
-	)
-	if (isLoading) return loading
-	if (isError || chartModel.charts.length === 0) {
+	// The preview is 300px tall, under the fallback's 360px default minimum.
+	if (allFailed) {
 		return (
-			<p
-				role={isError ? 'alert' : 'status'}
-				className={`flex items-center justify-center body-sm ${isError ? 'text-error' : 'text-tertiary'}`}
-				style={{ height: heightPx }}
-			>
-				{isError ? 'Could not load chart data' : 'No data available'}
-			</p>
+			<ChartPanelBodyError retry={failedReads} className="h-[300px] min-h-0">
+				Couldn&apos;t load chart data.
+			</ChartPanelBodyError>
+		)
+	}
+	const loading = <ChartPanelBodyLoading className="h-[300px] min-h-0" />
+	if (isLoading) return loading
+	if (chartModel.charts.length === 0) {
+		return (
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="h-[300px] min-h-0 body-sm text-tertiary">
+				No data available
+			</ChartPanelBodyFallback>
 		)
 	}
 	return (
@@ -197,7 +198,7 @@ function MultiPreview({
 				showLegend
 				exportButtons="hidden"
 				hideDataZoom
-				height={heightPx}
+				height="300px"
 				chartOptions={chartOptions}
 			/>
 		</Suspense>
@@ -457,12 +458,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					</div>
 					<ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
 						{catalogLoading ? (
-							<li role="status" aria-live="polite" className="flex justify-center px-3 py-6">
-								<LoadingIndicator />
+							<li>
+								<ListLoading label={tab === 'protocol' ? 'Loading protocols' : 'Loading chains'} />
 							</li>
 						) : filteredEntities.length === 0 ? (
-							<li role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
-								No results
+							<li>
+								<NoResults>No results</NoResults>
 							</li>
 						) : (
 							filteredEntities.map((entity) => {
@@ -599,13 +600,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 									</span>
 								</div>
 								<div className="px-3 pt-2 pb-3">
-									<MultiPreview
-										series={series}
-										range={range}
-										logScale={logScale}
-										annotations={annotations}
-										height={300}
-									/>
+									<MultiPreview series={series} range={range} logScale={logScale} annotations={annotations} />
 								</div>
 							</div>
 

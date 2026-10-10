@@ -9,6 +9,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -109,12 +110,8 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					sameWidth
 					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
-					{isFetching && items.length === 0 ? (
-						<p className="p-3 text-center body-sm text-tertiary">Searching…</p>
-					) : null}
-					{!isFetching && items.length === 0 ? (
-						<p className="p-3 text-center body-sm text-tertiary">No results</p>
-					) : null}
+					{isFetching && items.length === 0 ? <ListLoading label="Searching" /> : null}
+					{!isFetching && items.length === 0 ? <NoResults>No results</NoResults> : null}
 					{items.map((article) => {
 						const selected = value.includes(article.id)
 						return (

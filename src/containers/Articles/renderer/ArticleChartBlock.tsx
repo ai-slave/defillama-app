@@ -11,8 +11,10 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { getArticleEntityRoute } from '../entityLinks'
 import type { ArticleChartConfig, ArticleChartEntityType, ArticleChartRange, ArticleChartSeries } from '../types'
@@ -87,7 +89,9 @@ export function ArticleChartBlock({
 	})
 
 	const isLoading = queries.some((q) => q.isLoading)
-	const isError = queries.length > 0 && queries.every((q) => q.isError)
+	// A chart with some series loaded draws those; only a chart whose every read failed shows the error.
+	const allFailed = queries.length > 0 && queries.every((q) => queryReadFailed(q))
+	const failedReads = mergeFailedReads(queries.map((q) => (queryReadFailed(q) ? q : null)))
 
 	const chartModel = useMemo(
 		() =>
@@ -192,12 +196,16 @@ export function ArticleChartBlock({
 
 			<div className="article-chart-body relative">
 				<div className="h-[380px] w-full">
-					{isLoading ? (
-						<div className="flex h-full items-center justify-center body-sm text-tertiary">Loading chart…</div>
-					) : isError || chartModel.charts.length === 0 ? (
-						<div className="flex h-full items-center justify-center body-sm text-tertiary">No data available</div>
+					{allFailed ? (
+						<ChartPanelBodyError retry={failedReads}>Couldn&apos;t load this chart.</ChartPanelBodyError>
+					) : isLoading ? (
+						<ChartPanelBodyLoading className="h-full" />
+					) : chartModel.charts.length === 0 ? (
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="h-full body-sm text-tertiary">
+							No data available
+						</ChartPanelBodyFallback>
 					) : (
-						<Suspense fallback={<div className="flex h-full items-center justify-center body-sm text-tertiary">…</div>}>
+						<Suspense fallback={<ChartPanelBodyLoading className="h-full" />}>
 							<MultiSeriesChart
 								dataset={chartModel.dataset}
 								charts={charts}

@@ -76,13 +76,13 @@ import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine, InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { RetryNotice } from './RetryNotice'
 
 const NO_EDITED_ALERTS: ReadonlySet<string> = new Set()
@@ -150,7 +150,9 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 	})
 
 	const { data: alerts, isFetching: isFetchingAlerts, refetch: refetchAlerts } = alertsQuery
-	const alertsFailed = queryReadFailed(alertsQuery)
+	// Checked after the list: an empty list whose refetch failed may predate an alert just created, so it shows the
+	// error rather than the empty state.
+	const alertsFailed = queryReadFailed(alertsQuery) || queryRefreshFailed(alertsQuery)
 
 	const view =
 		accessState !== 'ready'
@@ -201,7 +203,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 					) : view === 'list' ? (
 						<DialogBody kind="list">
 							<div className="flex flex-col gap-2">
-								{alertsFailed ? (
+								{queryRefreshFailed(alertsQuery) ? (
 									<RetryNotice
 										message="Couldn't load alerts."
 										retrying={isFetchingAlerts}
@@ -502,7 +504,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								{` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
 							</p>
 							{alert.last_run_status === 'error' && alert.last_error ? (
-								<p className="mt-1 body-sm text-error">{alert.last_error}</p>
+								<div className="mt-1">
+									<ErrorLine inset="none">{alert.last_error}</ErrorLine>
+								</div>
 							) : null}
 						</div>
 					</div>

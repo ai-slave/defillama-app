@@ -1,14 +1,6 @@
 import { useInvestorsSite } from './SiteContext'
 
-export function Logo({
-	animate = false,
-	size = 'default',
-	href
-}: {
-	animate?: boolean
-	size?: 'default' | 'sm'
-	href?: string
-}) {
+export function Logo({ size = 'default', href }: { size?: 'default' | 'sm'; href?: string }) {
 	const site = useInvestorsSite()
 	const isEnterprise = site?.id === 'enterprise'
 	const subtitle = isEnterprise ? 'Enterprise' : 'Investor Relations'
@@ -42,7 +34,7 @@ export function Logo({
 		</>
 	)
 
-	const cls = `flex select-none ${sm ? 'items-center gap-2' : 'flex-col items-center gap-2.5'}${animate ? ' sl-loader' : ''}`
+	const cls = `flex select-none ${sm ? 'items-center gap-2' : 'flex-col items-center gap-2.5'}`
 
 	if (href) {
 		return (
@@ -53,31 +45,4 @@ export function Logo({
 	}
 
 	return <div className={cls}>{content}</div>
-}
-
-export function TextLoader() {
-	const site = useInvestorsSite()
-	if (site?.id === 'enterprise') {
-		return (
-			<div className="sl-loader text-center leading-none select-none">
-				<span
-					className="block heading-lg tracking-[0.08em] text-transparent"
-					style={{ WebkitTextStroke: '1px var(--sl-stroke-brand)' }}
-				>
-					ENTERPRISE
-				</span>
-			</div>
-		)
-	}
-	return (
-		<div className="sl-loader text-center leading-none select-none">
-			<span className="block label-md tracking-[0.4em] text-tertiary">INVESTOR</span>
-			<span
-				className="block heading-lg tracking-[0.08em] text-transparent"
-				style={{ WebkitTextStroke: '1px var(--sl-stroke-brand)' }}
-			>
-				RELATIONS
-			</span>
-		</div>
-	)
 }

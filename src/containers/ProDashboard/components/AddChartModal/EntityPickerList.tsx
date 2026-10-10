@@ -8,7 +8,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
-import { LoadingIndicator } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getItemIconUrl } from '../../utils'
 
 interface EntityOption {
@@ -96,12 +96,11 @@ export function EntityPickerList({
 
 	if (isLoading) {
 		return (
-			<div
-				role="status"
-				aria-live="polite"
-				className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-subtle bg-surface"
-			>
-				<LoadingIndicator />
+			<div className="flex h-full rounded-lg border border-subtle bg-surface">
+				<SurfaceBodyLoadingStatus
+					label={mode === 'chain' ? 'Loading chains' : 'Loading protocols'}
+					className="min-h-[200px]"
+				/>
 			</div>
 		)
 	}

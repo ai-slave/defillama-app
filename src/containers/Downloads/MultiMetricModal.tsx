@@ -667,13 +667,13 @@ export function MultiMetricModal({
 							) : !activeMetric ? (
 								<EmptyState size="md" icon="search" title="Pick a metric to preview" />
 							) : activeLoading ? (
-								<SurfaceBodyLoadingStatus label="Fetching data" className="min-h-0" />
+								<SurfaceBodyLoadingStatus label="Loading data" className="min-h-0" />
 							) : activeFailed ? (
-								<CenteredError
-									error={activeQuery!.error}
-									retrying={activeQuery!.isFetching}
-									onRetry={() => void activeQuery!.refetch()}
-								/>
+								<div className="flex flex-1 items-center justify-center p-4">
+									<InlineStatus variant="error" retry={activeQuery!}>
+										Couldn&apos;t load this metric.
+									</InlineStatus>
+								</div>
 							) : !parsedActive || parsedActive.rows.length === 0 ? (
 								<EmptyState size="md" icon="eye-off" title="No data" />
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
@@ -843,23 +843,6 @@ function SelectMetricsEmpty({
 				? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
 				: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
 		</EmptyState>
-	)
-}
-
-function CenteredError({ error, retrying, onRetry }: { error: unknown; retrying: boolean; onRetry: () => void }) {
-	return (
-		<div className="flex flex-1 items-center justify-center p-4">
-			<InlineStatus
-				variant="error"
-				action={
-					<Button size="sm" pendingLabel="Retrying…" pending={retrying} onClick={onRetry}>
-						Try again
-					</Button>
-				}
-			>
-				{error instanceof Error ? error.message : 'Failed to fetch data'}
-			</InlineStatus>
-		</div>
 	)
 }
 

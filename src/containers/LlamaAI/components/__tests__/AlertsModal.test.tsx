@@ -447,6 +447,21 @@ test('an edit that fails after the Alerts dialog closes says so in a toast', asy
 	await act(async () => toasts.unmount())
 })
 
+test('an empty list whose refresh fails shows the error, not the empty state, since an alert may have just been created', async () => {
+	let online = false
+	session.serve({
+		[ALERTS_URL]: () => (online ? Response.json({ alerts: [alert] }) : new Response('offline', { status: 503 }))
+	})
+	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [])
+	await render()
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	expect(document.body.textContent).not.toContain('Get pinged when things move')
+	online = true
+	await press(buttonNamed(document, 'Try again'))
+	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
 test('a retry that clears the list notice leaves focus in the dialog', async () => {
 	let online = false
 	session.serve({

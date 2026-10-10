@@ -6,6 +6,7 @@ import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestion
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '../constants'
 import type { EarnPageMeta } from '../data/earnMeta.server'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
@@ -242,10 +243,12 @@ function EarnView({
 
 			<VerifiedApyAnnouncement hasAccess={effectiveVerifiedAccess} />
 
-			{isLoading ? (
+			{queryReadFailed(rowsQuery) ? (
+				<PanelStatus variant="error" retry={rowsQuery}>
+					Couldn't load pools.
+				</PanelStatus>
+			) : isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />
-			) : rowsQuery.isError && !data ? (
-				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsPoolTable
 					data={poolsData}

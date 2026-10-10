@@ -432,7 +432,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				) : null}
 
 				{isPrimaryLoading ? (
-					<ProCardLoading label="Loading charts…" />
+					<ProCardLoading label="Loading charts" />
 				) : !hasAnyData ? (
 					failedItemRetries.length > 0 ? (
 						<ProCardError

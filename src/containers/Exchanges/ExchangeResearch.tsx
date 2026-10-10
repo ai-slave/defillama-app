@@ -163,7 +163,7 @@ function ResearchChartCard({
 
 	return (
 		<div ref={ref} className="flex flex-col">
-			{queryReadFailed(query) || !query.data || !selectedView ? (
+			{!selectedView ? (
 				<ResearchChartStatus
 					presentation={getResearchPresentation(part, resolvedView)}
 					toolbar={toolbar}

@@ -10,7 +10,6 @@ vi.mock('~/utils/async', async (importOriginal) => ({
 }))
 
 // Heavy page children; these tests assert only getStaticProps results.
-vi.mock('~/components/TemporarilyDisabledPage', () => ({ TemporarilyDisabledPage: () => null }))
 vi.mock('~/containers/Bridges/BridgesOverviewByChain', () => ({ BridgesOverviewByChain: () => null }))
 vi.mock('~/containers/Bridges/BridgeProtocolOverview', () => ({ BridgeProtocolOverview: () => null }))
 vi.mock('~/layout', () => ({ default: () => null }))

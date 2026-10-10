@@ -348,10 +348,7 @@ export function DashboardDiscovery({
 					{...(initialCategories !== undefined ? { initialCategories } : {})}
 				/>
 			) : isLoading ? (
-				<>
-					<p className="-mb-2 body-sm text-secondary">Loading dashboards…</p>
-					<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
-				</>
+				<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
 			) : dashboards.length === 0 ? (
 				<EmptyState
 					size="lg"

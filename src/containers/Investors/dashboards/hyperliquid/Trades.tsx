@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	pushBounded,
@@ -117,9 +118,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 			</div>
 
 			{bids.length === 0 && asks.length === 0 ? (
-				<div className="flex flex-1 items-center justify-center py-10 body-md text-secondary">
-					Waiting for order book data…
-				</div>
+				<SurfaceBodyLoadingStatus label="Waiting for order book data" className="min-h-[100px]" />
 			) : null}
 		</div>
 	)
@@ -154,9 +153,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 						</div>
 					)
 				})}
-				{trades.length === 0 ? (
-					<div className="flex items-center justify-center py-10 body-md text-secondary">Waiting for trades…</div>
-				) : null}
+				{trades.length === 0 ? <SurfaceBodyLoadingStatus label="Waiting for trades" className="min-h-[100px]" /> : null}
 			</div>
 		</div>
 	)

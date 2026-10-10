@@ -62,8 +62,16 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	)
 
 	const chartRead = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
-	const { presentation, stablecoinName, stablecoinSymbol, isInactive, prepareCsvDataset, isLoading, readFailed } =
-		chartRead
+	const {
+		presentation,
+		stablecoinName,
+		stablecoinSymbol,
+		isInactive,
+		prepareCsvDataset,
+		isLoading,
+		readFailed,
+		refreshFailed
+	} = chartRead
 
 	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
@@ -181,7 +189,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		</div>
 	)
 
-	if (readFailed && !hasChartData) {
+	if (readFailed) {
 		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
@@ -287,7 +295,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
+			{refreshFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

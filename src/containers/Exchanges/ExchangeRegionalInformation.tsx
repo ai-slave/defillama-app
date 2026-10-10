@@ -4,7 +4,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
@@ -47,6 +47,7 @@ export function resolveProfileCountryView(
 	country: string | null,
 	query: {
 		data?: ExchangeRegionalMetadataModel | undefined
+		isPlaceholderData: boolean
 		isFetching: boolean
 		errorUpdatedAt: number
 		dataUpdatedAt: number
@@ -132,9 +133,9 @@ export function ProfileCountryCard({
 			</div>
 
 			{view.status === 'loading' ? (
-				<p className="body-sm text-tertiary" role="status">
-					Loading information for {countryLabel(view.country)}...
-				</p>
+				<div role="status" aria-live="polite">
+					<LoadingIndicator label={`Loading information for ${countryLabel(view.country)}`} />
+				</div>
 			) : view.status === 'error' ? (
 				<InlineStatus
 					variant="error"
@@ -171,8 +172,8 @@ export function ExchangeRegionalInformation({
 }) {
 	if (view.status === 'loading') {
 		return (
-			<Card padding="sm" role="status" className="body-sm text-tertiary">
-				Loading information for {countryLabel(view.country)}...
+			<Card padding="sm">
+				<SurfaceBodyLoadingStatus label={`Loading information for ${countryLabel(view.country)}`} className="min-h-0" />
 			</Card>
 		)
 	}

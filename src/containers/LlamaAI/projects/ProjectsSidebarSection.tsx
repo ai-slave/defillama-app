@@ -12,7 +12,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { useProjectList } from './hooks'
 import { ProjectSidebarRow } from './ProjectSidebarRow'
@@ -55,7 +55,8 @@ export function ProjectsSidebarSection({
 	const createButtonRef = useRef<HTMLButtonElement>(null)
 	const projectList = useProjectList(!isLocked)
 	const { data, isFetching, refetch } = projectList
-	const failed = queryReadFailed(projectList)
+	// The notice sits above the projects it kept, so a failed refresh counts too.
+	const failed = queryReadFailed(projectList) || queryRefreshFailed(projectList)
 	const projects = data ?? EMPTY_PROJECTS
 	const visible = useMemo(() => {
 		const next = projects.slice(0, VISIBLE_LIMIT)

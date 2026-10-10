@@ -12,6 +12,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { getMyDashboardAuthorProfile, TOP_AUTHORS_QUERY_KEY, updateMyDashboardAuthorProfile } from './api'
 import { avatarColorStyle } from './avatarColor'
 import { DEFAULT_AUTHOR_NAME_RE, DEFAULT_AUTHOR_SLUG_RE } from './profileDefaults'
@@ -192,22 +193,25 @@ function profileErrors(state: FormState): Record<string, string> {
 
 export function DashboardAuthorProfileCard() {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
-	const { data: loadedProfile, error: profileError } = useQuery({
+	const profileQuery = useQuery({
 		queryKey: ['dashboard-author-profile'],
 		queryFn: () => getMyDashboardAuthorProfile(authorizedFetch),
 		enabled: isAuthenticated && !loaders.userLoading,
 		retry: false,
 		refetchOnWindowFocus: false
 	})
+	const loadedProfile = profileQuery.data
 
 	// Only a load that produced nothing gets the error card. A failed background refetch keeps the last
 	// profile in the cache, and unmounting the editor over it would throw away an unsaved draft.
-	if (!loadedProfile) {
-		if (profileError) {
-			return <PanelStatus variant="error">Profile could not be loaded.</PanelStatus>
-		}
-		return <PanelLoadingStatus label="Loading profile" />
+	if (queryReadFailed(profileQuery)) {
+		return (
+			<PanelStatus variant="error" retry={profileQuery}>
+				Couldn't load your profile.
+			</PanelStatus>
+		)
 	}
+	if (!loadedProfile) return <PanelLoadingStatus label="Loading profile" />
 
 	// Keyed by the saved profile: a successful save writes the new one into the cache, which rebuilds the
 	// form on the saved values rather than re-seeding the fields by hand.

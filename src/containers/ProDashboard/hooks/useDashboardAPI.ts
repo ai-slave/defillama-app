@@ -11,7 +11,7 @@ import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { Dashboard } from '../dashboardTypes'
 import {
 	DashboardError,
@@ -76,7 +76,8 @@ export function useGetLiteDashboards() {
 		enabled: isAuthenticated && !!user?.id
 	})
 	const { isLoading, isFetching, refetch } = liteQuery
-	const failed = queryReadFailed(liteQuery)
+	// Storage, not the query, holds the list on screen, so any failed attempt counts, a refetch after a success too.
+	const failed = queryReadFailed(liteQuery) || queryRefreshFailed(liteQuery)
 
 	return {
 		data: liteDashboards,

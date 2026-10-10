@@ -395,8 +395,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 						</ChartPanelToolbar>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							{/* A failed refresh of a chart already drawn keeps the chart. */}
-							{queryReadFailed(priceHistory) && !activePriceHistoryChart ? (
+							{queryReadFailed(priceHistory) ? (
 								<ChartPanelBodyError retry={priceHistory}>Failed to load price history.</ChartPanelBodyError>
 							) : priceHistory.isPending ? (
 								<ChartPanelBodyFallback role="status" aria-label="Loading price history">

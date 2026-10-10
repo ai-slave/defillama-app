@@ -3,7 +3,7 @@ import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export type MetricType =
 	| 'tvl'
@@ -169,7 +169,9 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		preferences,
 		isLoading,
 		isFetching,
-		readFailed: queryReadFailed(preferencesQuery),
+		// Unknown, not "none" or the shown state: the card blocks setup and delete on it, and Enable/Disable only
+		// invalidates, so a failed refetch after one may be hiding the change.
+		readFailed: queryReadFailed(preferencesQuery) || queryRefreshFailed(preferencesQuery),
 		refetch,
 		savePreferences,
 		updateStatus,

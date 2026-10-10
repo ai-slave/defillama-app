@@ -1,6 +1,7 @@
 import { type MouseEvent, useId } from 'react'
 import { Button } from '~/ui/Button'
 import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
+import { ErrorLine } from '~/ui/Status'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { ProMeta } from '../../ui'
 import { type PickListLoad, resolveSubmitGate } from './submitBlocker'
@@ -35,13 +36,7 @@ export function SubmitButton({ editItem, state, onSubmit, submitError, pickList 
 		<DialogFooter
 			leading={
 				<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
-					{submitError ? (
-						<p role="alert" className="body-sm text-error">
-							{submitError}
-						</p>
-					) : (
-						<ProMeta items={[gate]} />
-					)}
+					{submitError ? <ErrorLine inset="none">{submitError}</ErrorLine> : <ProMeta items={[gate]} />}
 				</div>
 			}
 			dismiss={<DialogCancelButton />}

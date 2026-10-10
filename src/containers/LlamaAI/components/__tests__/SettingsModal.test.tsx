@@ -517,9 +517,7 @@ describe('SettingsModal instructions', () => {
 		)
 		await act(async () => appTab?.click())
 
-		expect(document.querySelector('[role="status"]')?.textContent).toContain(
-			'Loading your mobile notification preference'
-		)
+		expect(document.querySelector('[role="status"]')?.textContent).toContain('Loading your preference')
 		const mobileToggle = Array.from(document.querySelectorAll('input[role="switch"]')).find((input) =>
 			input.closest('label')?.textContent?.includes('Mobile notifications')
 		)
@@ -527,9 +525,9 @@ describe('SettingsModal instructions', () => {
 	})
 
 	test('shows an inline retry when the preference query fails', async () => {
-		const retry = vi.fn()
+		const refetch = vi.fn()
 		await act(async () =>
-			root.render(<Harness mobileNotificationPreference={{ kind: 'error', message: 'Network unavailable', retry }} />)
+			root.render(<Harness mobileNotificationPreference={{ kind: 'error', retry: { refetch, isFetching: false } }} />)
 		)
 		const appTab = Array.from(document.querySelectorAll('button')).find(
 			(button) => button.textContent?.trim() === 'App'
@@ -540,16 +538,16 @@ describe('SettingsModal instructions', () => {
 		expect(alert?.textContent).toContain("Couldn't load mobile notifications")
 		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
 		const retryButton = Array.from(alert?.querySelectorAll('button') ?? []).find(
-			(button) => button.textContent === 'Try again'
+			(button) => accessibleName(button) === 'Try again'
 		)
 		await act(async () => retryButton?.click())
-		expect(retry).toHaveBeenCalledOnce()
+		expect(refetch).toHaveBeenCalledOnce()
 	})
 
 	test('the mobile notification row that replaces a retried error takes focus', async () => {
 		await act(async () =>
 			root.render(
-				<Harness mobileNotificationPreference={{ kind: 'error', message: 'Network unavailable', retry: () => {} }} />
+				<Harness mobileNotificationPreference={{ kind: 'error', retry: { refetch: () => {}, isFetching: false } }} />
 			)
 		)
 		await act(async () =>

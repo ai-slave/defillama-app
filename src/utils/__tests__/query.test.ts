@@ -1,6 +1,6 @@
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { mergeFailedReads, queryReadFailed } from '../query'
+import { mergeFailedReads, queryReadFailed, queryRefreshFailed } from '../query'
 
 describe('queryReadFailed', () => {
 	afterEach(() => {
@@ -36,7 +36,7 @@ describe('queryReadFailed', () => {
 		client.clear()
 	})
 
-	test('reports a failed refresh while the last loaded data stays', async () => {
+	test('a failed refresh keeps the loaded data: a refresh failure, not a read failure', async () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		let fail = false
 		const observer = new QueryObserver(client, {
@@ -53,7 +53,34 @@ describe('queryReadFailed', () => {
 		fail = true
 		await observer.refetch()
 		const refreshed = observer.getCurrentResult()
-		expect([refreshed.data, queryReadFailed(refreshed)]).toEqual(['loaded', true])
+		expect([refreshed.data, queryReadFailed(refreshed), queryRefreshFailed(refreshed)]).toEqual(['loaded', false, true])
+
+		fail = false
+		vi.setSystemTime(Date.now() + 1000)
+		await observer.refetch()
+		expect(queryRefreshFailed(observer.getCurrentResult())).toBe(false)
+		unsubscribe()
+		client.clear()
+	})
+
+	test('a placeholder shown during the retry is nothing to show, so the read failure stays', async () => {
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		let attempt = 0
+		const observer = new QueryObserver(client, {
+			queryKey: ['page', 2],
+			queryFn: () => {
+				attempt += 1
+				return attempt === 1 ? Promise.reject(new Error('down')) : new Promise<string>(() => {})
+			},
+			placeholderData: 'page 1'
+		})
+		const unsubscribe = observer.subscribe(() => {})
+		await expect.poll(() => observer.getCurrentResult().status).toBe('error')
+
+		void observer.refetch()
+		const retrying = observer.getCurrentResult()
+		expect([retrying.data, retrying.isPlaceholderData]).toEqual(['page 1', true])
+		expect([queryReadFailed(retrying), queryRefreshFailed(retrying)]).toEqual([true, false])
 		unsubscribe()
 		client.clear()
 	})

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useDeferredValue, useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { StreamDoneContext } from '../../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../../queryPolicy'
@@ -62,7 +62,6 @@ export function useUnifiedTableReadModel({
 	})
 
 	const { data, dataUpdatedAt, isLoading, isFetching, refetch } = rowsQuery
-	const readFailed = queryReadFailed(rowsQuery)
 	const deferredSearchTerm = useDeferredValue(searchTerm)
 
 	const parentMetrics = data?.parentMetrics ?? EMPTY_PARENT_METRICS
@@ -120,7 +119,11 @@ export function useUnifiedTableReadModel({
 		leaves: readModel.leaves,
 		isLoading: isLoading || (!streamDone && data === undefined),
 		// A failed refetch keeps the cached rows, so it is a refresh failure, not an empty table.
-		loadError: !readFailed ? null : data === undefined ? ('initial' as const) : ('refresh' as const),
+		loadError: queryReadFailed(rowsQuery)
+			? ('initial' as const)
+			: queryRefreshFailed(rowsQuery)
+				? ('refresh' as const)
+				: null,
 		isFetching,
 		refetch
 	}

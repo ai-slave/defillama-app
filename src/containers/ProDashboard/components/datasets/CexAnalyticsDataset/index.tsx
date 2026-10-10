@@ -1,3 +1,4 @@
+import type { UseQueryResult } from '@tanstack/react-query'
 import {
 	createPaginatedRowModel,
 	rowPaginationFeature,
@@ -41,9 +42,10 @@ import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { scaledPx, useCardHeightScale } from '../../cardHeightContext'
 import { CSVExportButton } from '../../CSVExportButton'
-import { ProCardLoading } from '../../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { cexAnalyticsColumns } from './columns'
@@ -111,37 +113,42 @@ type CexAnalyticsDatasetProps = {
 }
 
 function DatasetState({
-	isLoading,
-	isError,
-	errorMessage,
+	query,
+	errorTitle,
 	children
 }: {
-	isLoading: boolean
-	isError: boolean
-	errorMessage: string
+	query: UseQueryResult<unknown>
+	errorTitle: string
 	children: ReactNode
 }) {
-	if (isLoading) {
+	const streamDone = useContext(StreamDoneContext)
+
+	if (queryReadFailed(query)) {
+		return (
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title={errorTitle} retry={query} />
+				</div>
+			</div>
+		)
+	}
+
+	if (query.isLoading || (!streamDone && query.data === undefined)) {
 		return (
 			<div className="flex h-full w-full flex-col">
 				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading CEX analytics…" />
+					<ProCardLoading variant="table" label="Loading CEX analytics" />
 				</div>
 			</div>
 		)
 	}
 
-	if (isError) {
-		return (
-			<div className="flex h-full w-full flex-col">
-				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-secondary">{errorMessage}</div>
-				</div>
-			</div>
-		)
-	}
-
-	return <>{children}</>
+	return (
+		<>
+			{queryRefreshFailed(query) ? <ProCardRefreshFailed retry={query} /> : null}
+			{children}
+		</>
+	)
 }
 
 function filterTimeSeriesRows<T extends { date: number }>(
@@ -526,11 +533,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 
 	if (view === 'summary') {
 		return (
-			<DatasetState
-				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
-				isError={Boolean(snapshotQuery.error)}
-				errorMessage="Failed to load CEX summary"
-			>
+			<DatasetState query={snapshotQuery} errorTitle="Couldn't load CEX summary">
 				{snapshotQuery.data ? <SummaryCards data={snapshotQuery.data} /> : null}
 			</DatasetState>
 		)
@@ -538,11 +541,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 
 	if (view === 'comparison') {
 		return (
-			<DatasetState
-				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
-				isError={Boolean(snapshotQuery.error)}
-				errorMessage="Failed to load CEX comparison data"
-			>
+			<DatasetState query={snapshotQuery} errorTitle="Couldn't load CEX comparison data">
 				{snapshotQuery.data ? <VenueComparisonTable data={snapshotQuery.data} /> : null}
 			</DatasetState>
 		)
@@ -550,11 +549,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 
 	if (view === 'spot-vs-derivatives') {
 		return (
-			<DatasetState
-				isLoading={totalsQuery.isLoading || (!streamDone && totalsQuery.data === undefined)}
-				isError={Boolean(totalsQuery.error)}
-				errorMessage="Failed to load CEX volume history"
-			>
+			<DatasetState query={totalsQuery} errorTitle="Couldn't load CEX volume history">
 				{totalsQuery.data ? <SpotVsDerivativesChart data={totalsQuery.data} /> : null}
 			</DatasetState>
 		)
@@ -562,11 +557,7 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 
 	if (view === 'market-share') {
 		return (
-			<DatasetState
-				isLoading={shareQuery.isLoading || (!streamDone && shareQuery.data === undefined)}
-				isError={Boolean(shareQuery.error)}
-				errorMessage="Failed to load CEX market share"
-			>
+			<DatasetState query={shareQuery} errorTitle="Couldn't load CEX market share">
 				{shareQuery.data ? (
 					<VenueMarketShareChart
 						data={shareQuery.data}

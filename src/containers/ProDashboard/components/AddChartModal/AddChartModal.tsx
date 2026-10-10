@@ -77,7 +77,7 @@ export function AddChartModal({
 			? 'preview'
 			: 'configure'
 	// The yield pool list belongs to its form; read here too (one shared query) so Add waits while it loads.
-	const yieldPools = useYieldsData(
+	const { query: yieldPools, isLoading: yieldPoolsLoading } = useYieldsData(
 		[],
 		state.selectedMainTab === 'charts' &&
 			state.chartMode === 'manual' &&
@@ -86,7 +86,7 @@ export function AddChartModal({
 	)
 	const pickList = resolvePickListLoad(state, {
 		protocolsLoading: computed.protocolsLoading,
-		yieldPools: queryReadFailed(yieldPools) && !yieldPools.data ? 'failed' : yieldPools.isLoading ? 'loading' : null
+		yieldPools: queryReadFailed(yieldPools) ? 'failed' : yieldPoolsLoading ? 'loading' : null
 	})
 	// The dialog is the scope showFieldErrors searches. The tabs sit in no form, so Enter in a tab's search or name
 	// field never adds the card.

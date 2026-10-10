@@ -29,18 +29,22 @@ A dialog records the control that opened it, and a click inside a dialog focuses
 
 ## Errors and retries
 
-| When                                                 | Use                                                                                                                                    | Example                                                                        |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| A read fails                                         | `queryReadFailed(query)` checked before loading, so a retry from an error keeps the error and its button on screen                     | `src/utils/query.ts`, `src/auth/useSubscribe.tsx`                              |
-| Its Try again runs                                   | The same button with `pendingLabel="Retrying…" pending={query.isFetching}`                                                             | `ProCardStatus.tsx`                                                            |
-| An action fails                                      | One nullable error state, set in `onError` and cleared on success or an edit; never `mutation.error`, which clears when a retry starts | `src/containers/Account/CancelSubscriptionModal.tsx`                           |
-| A confirm runs an action                             | `ConfirmActionDialog`: it owns the error and keeps it through a retry                                                                  | `src/ui/ConfirmActionDialog.tsx`                                               |
-| An accepted action changes data (remove, save local) | The mutation's own `onSuccess`, which runs after the view unmounts                                                                     | `deletePortfolioWithNotifications` in `src/containers/DeFiWatchlist/index.tsx` |
-| The dialog is gone when the request settles          | A toast, only then (`if (!ref.current?.isConnected) toast…`)                                                                           | `src/components/ReportIncorrectData/index.tsx`                                 |
+| When                                                 | Use                                                                                                                                         | Example                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A read fails with nothing to show                    | `queryReadFailed(query)` checked before loading, so a retry from an error keeps the error and its button on screen                          | `src/utils/query.ts`, `src/auth/useSubscribe.tsx`                              |
+| A refetch fails with data on screen                  | `queryRefreshFailed(query)`: keep the data and add a quiet notice with its Try again (`ProCardRefreshFailed`), never the error in its place | `src/utils/query.ts`, `ProCardStatus.tsx`                                      |
+| A mutation on the page invalidates a list            | `queryRefreshFailed(query)` notice above the list (`InlineStatus` with `retry`): its rows may predate the change the reader just made       | `BannersListView.tsx`, `TrustedByAdminView.tsx`                                |
+| Its Try again runs                                   | The same button with `pendingLabel="Retrying…" pending={query.isFetching}`                                                                  | `ProCardStatus.tsx`                                                            |
+| An action fails                                      | One nullable error state, set in `onError` and cleared on success or an edit; never `mutation.error`, which clears when a retry starts      | `src/containers/Account/CancelSubscriptionModal.tsx`                           |
+| A confirm runs an action                             | `ConfirmActionDialog`: it owns the error and keeps it through a retry                                                                       | `src/ui/ConfirmActionDialog.tsx`                                               |
+| An accepted action changes data (remove, save local) | The mutation's own `onSuccess`, which runs after the view unmounts                                                                          | `deletePortfolioWithNotifications` in `src/containers/DeFiWatchlist/index.tsx` |
+| The dialog is gone when the request settles          | A toast, only then (`if (!ref.current?.isConnected) toast…`)                                                                                | `src/components/ReportIncorrectData/index.tsx`                                 |
 
 Never call `mutation.reset()` while a newer request may be pending: it detaches the running request and unlocks a pending dialog.
 
 A retry that hides its error removes the button that has focus, never shows its pending label, and moves the layout twice. Keep the error until the retry succeeds.
+
+`scripts/policies/check-status-parts.ts` fails a retry gated on a query's `isError`, `isLoadingError` or `error`, and a loading test of the same query placed before its failed read.
 
 `ConfirmActionDialog`'s `onSuccess` and a `mutate()` call's own callbacks are skipped once the dialog or component has gone. Put only view work there: closing, focus, a redirect that only makes sense while the page is open. Work that belongs to the accepted action goes in the mutation's `onSuccess`, and it names its entity from the mutation's variables, never from state read at settle time.
 

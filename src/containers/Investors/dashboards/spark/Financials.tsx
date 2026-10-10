@@ -572,7 +572,7 @@ export default function Financials() {
 	const data = query.data
 
 	// A failed refresh of data already shown keeps it; the error and its Try again replace the tab only before data loads.
-	if (queryReadFailed(query) && !query.data)
+	if (queryReadFailed(query))
 		return (
 			<PanelStatus variant="error" retry={query}>
 				Couldn't load Spark financials.

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
 import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -18,6 +19,7 @@ import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
+import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
@@ -119,31 +121,31 @@ export function SocialMentionForm({ mentionId }: Props) {
 	const update = (patch: Partial<FormState>) => setState((prev) => ({ ...prev, ...patch }))
 
 	// A failed list read is not a missing mention: say so and offer the retry.
-	if (mentionId && queryReadFailed(mentionsQuery) && !mentionsQuery.data) {
+	if (mentionId && queryReadFailed(mentionsQuery)) {
 		return (
-			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't load the mentions</h1>
-				<Button
-					size="sm"
-					onClick={() => void mentionsQuery.refetch()}
-					pendingLabel="Retrying…"
-					pending={mentionsQuery.isFetching}
-				>
-					Try again
-				</Button>
-			</div>
+			<PanelStatus variant="error" retry={mentionsQuery} className="mx-auto w-full max-w-2xl">
+				Couldn&apos;t load the mentions.
+			</PanelStatus>
 		)
 	}
 
 	if (mentionId && mentionsQuery.isLoading) {
-		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
+		return <PanelLoadingStatus label="Loading mention" className="mx-auto w-full max-w-2xl" />
 	}
 
+	// The page header holds the h1 ("Edit mention"), so the empty state's title is the next level down.
 	if (mentionId && !mention) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error-muted bg-error-faint p-6">
-				<h1 className="heading-sm text-primary">Couldn't find this mention</h1>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h2"
+				title="Mention not found"
+				actions={
+					<Button as={BasicLink} href="/research/admin/trusted-by" size="md">
+						Back to Trusted By
+					</Button>
+				}
+			/>
 		)
 	}
 

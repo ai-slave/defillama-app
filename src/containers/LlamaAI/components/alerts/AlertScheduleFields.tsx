@@ -6,6 +6,7 @@ import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import type { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { FieldGroup } from '~/ui/Field'
 import { takeLostFocus } from '~/ui/focus'
+import { LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
 /* ----------------------------------------------------------------------------
@@ -136,7 +137,9 @@ export function SlackTargetPickers({
 	return (
 		<>
 			{workspacesLoading ? (
-				<span className="body-sm text-tertiary">Loading workspaces…</span>
+				<span role="status" aria-live="polite">
+					<LoadingIndicator label="Loading workspaces" />
+				</span>
 			) : workspaces.length > 0 ? (
 				<Select
 					heading="Slack workspace"
@@ -167,7 +170,9 @@ export function SlackTargetPickers({
 						onRetry={() => void channelsQuery.refetch()}
 					/>
 				) : channelsQuery.isLoading ? (
-					<span className="body-sm text-tertiary">Loading channels…</span>
+					<span role="status" aria-live="polite">
+						<LoadingIndicator label="Loading channels" />
+					</span>
 				) : (
 					<Select
 						heading="Slack channel"

@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 interface AiBalance {
 	freeRemaining: string
@@ -51,7 +51,9 @@ export const useAiBalance = () => {
 	const { data: balance, isLoading, isFetching, refetch } = balanceQuery
 	const totalAvailable = balance ? parseFloat(balance.freeRemaining) + parseFloat(balance.toppedUpBalance) : 0
 
-	return { balance, totalAvailable, isLoading, isFetching, readFailed: queryReadFailed(balanceQuery), refetch }
+	// A top-up return polls and refreshes over a loaded balance: a failed check leaves the balance unknown, not unchanged.
+	const readFailed = queryReadFailed(balanceQuery) || queryRefreshFailed(balanceQuery)
+	return { balance, totalAvailable, isLoading, isFetching, readFailed, refetch }
 }
 
 /** `isErrorShown` says whether the form that started the top-up still shows its error inline. */

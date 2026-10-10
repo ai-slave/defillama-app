@@ -35,7 +35,7 @@ import {
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -234,13 +234,15 @@ export function ResearchSponsorsAdminView() {
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
 	const [submitted, setSubmitted] = useState(false)
-	const { data, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } = useQuery({
+	const { data, isPlaceholderData, isLoading, error, errorUpdatedAt, dataUpdatedAt, refetch, isFetching } = useQuery({
 		queryKey: SPONSORS_QUERY_KEY,
 		queryFn: () => listResearchSponsors(authorizedFetch),
 		retry: false
 	})
 	// A retry from an error clears `error` while it runs; the failed flag keeps the error and its Try again on screen.
-	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
+	// The clients render below the error, so a failed refresh shows it above the list it kept.
+	const read = { data, isPlaceholderData, errorUpdatedAt, dataUpdatedAt }
+	const failed = queryReadFailed(read) || queryRefreshFailed(read)
 	const createMutation = useMutation({
 		mutationFn: (entity: SponsorEntitySelection) => createResearchSponsor(payloadFromEntity(entity), authorizedFetch),
 		onSuccess: () => {

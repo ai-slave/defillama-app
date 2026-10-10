@@ -10,7 +10,7 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -110,7 +110,7 @@ export function AggregateTreemap({
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody className="min-h-[420px]">
-				<Suspense fallback={<ChartPanelBodyFallback className="min-h-[420px]">Loading chart…</ChartPanelBodyFallback>}>
+				<Suspense fallback={<ChartPanelBodyLoading className="min-h-[420px]" />}>
 					<TreemapChart
 						treeData={nodes}
 						variant="rwa"

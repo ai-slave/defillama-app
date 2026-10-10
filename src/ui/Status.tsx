@@ -13,12 +13,15 @@ import { Panel } from './Panel'
    | ----------------------------------------- | ------------------------------------------- |
    | A whole panel is the state                | PanelStatus, PanelLoadingStatus             |
    | Inside a rendered Panel or Card body      | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
-   | Inside a ChartPanelBody                   | ChartPanelBodyFallback (./ChartPanel.tsx)   |
+   | A chart's slot: empty or a short note     | ChartPanelBodyFallback (./ChartPanel.tsx)   |
    | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
    | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
    | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
    | Nothing here yet, or nothing matched      | EmptyState (icon, title, hint, actions)     |
    | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
+   | Loading rows in a list or popover         | ListLoading (./NoResults.tsx)               |
+   | A chart loading in its slot               | ChartPanelBodyLoading (./ChartPanel.tsx)    |
+   | Loading inline in a row, field or line    | LoadingIndicator inside a role=status node  |
    | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
 
    - Loading always shows on the surface that holds the content, through
@@ -33,9 +36,14 @@ import { Panel } from './Panel'
      a caller's min-h-* always wins.
    - A request's error renders where its data would be, as one of these
      states, never as a toast from an effect watching `.error`. Read it with
-     `queryReadFailed` from src/utils/query.ts and check it before loading;
-     PanelStatus and ChartPanelBodyError take the query as `retry` and draw
-     its Try again. See docs/focus-and-errors.md for retries.
+     `queryReadFailed` from src/utils/query.ts (nothing to show and it failed)
+     and check it before loading; a refetch that fails over data on screen is
+     `queryRefreshFailed`, a notice beside the data, never the error in its place;
+     PanelStatus, ChartPanelBodyError and InlineStatus take the query as
+     `retry` and draw its Try again. See docs/focus-and-errors.md for retries.
+   - scripts/policies/check-status-parts.ts refuses hand-built loading text,
+     LoadingDots, a lone spinner as a region's loading state, error boxes,
+     alert lines and a retry gated on isError instead of queryReadFailed.
 ---------------------------------------------------------------------------- */
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
@@ -121,26 +129,43 @@ const INLINE_STATUS = {
     their tinted box and status icon, so the two never differ by colour alone; the message stays primary text. The
     icon sits centred on the first line (`h-lh`), so a wrapped message keeps it beside its opening words. `action` is
     the one sm Button that answers it (Try again, Renew); with it, icon and text centre on that button's 24px row.
+    A failed read passes its query as `retry` instead: the part draws that Try again, waiting while the read runs again
+    and handing focus to the region around it when what loads replaces the notice (a dialog's own net catches it there).
     A field's own error is never an InlineStatus: Field draws it under the field. Where the failed part already draws
     its own error (the Turnstile widget), the line under it is a body-sm text-secondary hint instead of a second box. */
 export function InlineStatus({
 	children,
 	variant,
-	action
+	action,
+	retry
 }: {
 	children: ReactNode
 	variant: 'empty' | 'error' | 'warning' | 'info'
 	action?: ReactNode
+	retry?: QueryRetry
 }) {
+	const shownAction = retry ? (
+		<Button
+			ref={focusRegionOnLeave}
+			size="sm"
+			onClick={() => void retry.refetch()}
+			pendingLabel="Retrying…"
+			pending={retry.isFetching}
+		>
+			Try again
+		</Button>
+	) : (
+		action
+	)
 	const { box, icon, iconColor } = INLINE_STATUS[variant]
 	// The first line drops by half of what the 24px action row adds over one line of text.
-	const firstLine = action ? 'mt-[calc((1.5rem_-_1lh)/2)]' : ''
+	const firstLine = shownAction ? 'mt-[calc((1.5rem_-_1lh)/2)]' : ''
 	return (
 		<div
 			// Attached only while the status is an error, so a status that turns into one in place scrolls too.
 			ref={variant === 'error' ? bringDialogErrorIntoView : undefined}
 			role={variant === 'error' ? 'alert' : 'status'}
-			className={`flex gap-2 rounded-lg border px-3 body-sm ${action ? 'py-1.5' : 'py-2'} ${box}`}
+			className={`flex gap-2 rounded-lg border px-3 body-sm ${shownAction ? 'py-1.5' : 'py-2'} ${box}`}
 		>
 			{icon ? (
 				<span className={`flex h-lh shrink-0 items-center ${firstLine}`}>
@@ -149,7 +174,7 @@ export function InlineStatus({
 			) : null}
 			<div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-1">
 				<div className={`min-w-0 ${firstLine}`}>{children}</div>
-				{action}
+				{shownAction}
 			</div>
 		</div>
 	)

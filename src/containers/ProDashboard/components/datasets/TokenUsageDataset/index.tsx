@@ -83,8 +83,8 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
 
-	const usageQuery = useTokenUsageData(tokenSymbols, includeCex)
-	const { data: rawDataResponse, isLoading } = usageQuery
+	const { query: usageQuery, isLoading } = useTokenUsageData(tokenSymbols, includeCex)
+	const { data: rawDataResponse } = usageQuery
 
 	const rawData = rawDataResponse ?? EMPTY_USAGE_DATA
 	const deferredSearch = useDeferredValue(search)
@@ -165,7 +165,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 	}
 
 	// A retry from an error moves the query back to loading; the error and its waiting Try again stay until it succeeds.
-	if (queryReadFailed(usageQuery) && !rawDataResponse) {
+	if (queryReadFailed(usageQuery)) {
 		return (
 			<div className="flex size-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
@@ -179,7 +179,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 		return (
 			<div className="flex size-full flex-col">
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading token usage data…" />
+					<ProCardLoading variant="table" label="Loading token usage data" />
 				</div>
 			</div>
 		)

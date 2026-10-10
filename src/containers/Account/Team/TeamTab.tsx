@@ -3,7 +3,8 @@ import { useEffect, useRef, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { focusRegionOnLeave } from '~/ui/focus'
+import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { CreateTeamCard } from './CreateTeamCard'
 import { TeamFaqCard } from './TeamFaqCard'
@@ -63,44 +64,44 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 
 	if ((inviteAcceptance.isFetching || (membershipConfirmed && inviteAccount.isPending)) && token) {
 		return (
-			<div role="status" aria-live="polite" className="flex justify-center py-16">
-				<LoadingIndicator label={membershipConfirmed ? 'Invite accepted. Loading your account' : 'Accepting invite'} />
-			</div>
+			<PanelLoadingStatus
+				label={membershipConfirmed ? 'Invite accepted. Loading your account' : 'Accepting invite'}
+				className="min-h-64"
+			/>
 		)
 	}
 
 	if (inviteAcceptance.isError && token && !isTeamLoading && !membershipConfirmed) {
 		return (
-			<div className="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
-				<h2 className="heading-xs text-primary">Check your invitation</h2>
-				<p className="body-sm text-secondary">
-					{inviteAcceptance.error?.message || 'The invite may have expired or already been used.'}
-				</p>
-				<p className="body-sm text-secondary">
-					Make sure you&apos;re signed in with the email address the invite was sent to. If the connection dropped,
-					check whether you already joined.
-				</p>
-				{isTeamError ? <InlineStatus variant="error">Could not check membership.</InlineStatus> : null}
-				<Button
-					type="button"
-					size="md"
-					className="mt-2"
-					onClick={() => void refetchTeam()}
-					pendingLabel="Checking membership…"
-					pending={isTeamRetrying}
-				>
-					Check membership
-				</Button>
-			</div>
+			<EmptyState
+				size="lg"
+				headingAs="h2"
+				title="Check your invitation"
+				actions={
+					<div className="flex flex-col items-center gap-3">
+						{isTeamError ? <InlineStatus variant="error">Couldn&apos;t check membership.</InlineStatus> : null}
+						<Button
+							ref={focusRegionOnLeave}
+							type="button"
+							size="md"
+							onClick={() => void refetchTeam()}
+							pendingLabel="Checking membership…"
+							pending={isTeamRetrying}
+						>
+							Check membership
+						</Button>
+					</div>
+				}
+			>
+				{inviteAcceptance.error?.message || 'The invite may have expired or already been used.'} Make sure you&apos;re
+				signed in with the email address the invite was sent to. If the connection dropped, check whether you already
+				joined.
+			</EmptyState>
 		)
 	}
 
 	if (isTeamLoading) {
-		return (
-			<div role="status" aria-live="polite" className="flex h-64 items-center justify-center">
-				<LoadingIndicator />
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading team" className="min-h-64" />
 	}
 
 	// A failed team read is unknown, not "no team": don't offer Create team.

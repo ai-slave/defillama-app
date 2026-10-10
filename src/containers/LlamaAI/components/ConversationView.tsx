@@ -37,6 +37,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import type { QueryRetry } from '~/utils/query'
 import styles from '../LlamaAIChat.module.css'
 import { ComposerTray } from './ComposerTray'
 import { ChatStatusLine } from './status/ChatStatusLine'
@@ -759,8 +760,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 								})}
 
 								{paginationState.isLoadingNewer ? (
-									<div className="flex justify-center py-2">
-										<p className="m-0 body-sm text-tertiary">Loading newer messages&hellip;</p>
+									<div role="status" aria-live="polite" className="flex justify-center py-2">
+										<LoadingIndicator label="Loading newer messages" />
 									</div>
 								) : null}
 
@@ -968,42 +969,23 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	)
 }
 
-export function LoadingConversationState() {
-	return (
-		<div role="status" aria-live="polite" className="flex flex-1 items-center justify-center">
-			<LoadingIndicator />
-		</div>
-	)
-}
-
 export function EmptyConversationErrorState({
 	message,
-	onRetry,
+	retry,
 	onNewChat
 }: {
 	message: string
-	onRetry?: () => void
+	retry?: QueryRetry
 	onNewChat: () => void
 }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<InlineStatus
-				variant="error"
-				action={
-					onRetry ? (
-						<Button type="button" size="sm" onClick={onRetry}>
-							Try again
-						</Button>
-					) : null
-				}
-			>
+			<InlineStatus variant="error" retry={retry}>
 				{message}
 			</InlineStatus>
-			<div className="flex items-center gap-2">
-				<Button type="button" size="md" variant="ghost" onClick={onNewChat}>
-					Start a new chat
-				</Button>
-			</div>
+			<Button type="button" size="md" variant="ghost" onClick={onNewChat}>
+				Start a new chat
+			</Button>
 		</div>
 	)
 }

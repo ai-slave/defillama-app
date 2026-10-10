@@ -12,7 +12,7 @@ import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
-import { queryReadFailed } from '~/utils/query'
+import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { useProjectSessions } from './hooks'
@@ -58,7 +58,8 @@ export function ProjectSidebarRow({
 	}, [isActive])
 	const router = useRouter()
 	const projectSessions = useProjectSessions(isExpanded ? project.id : null)
-	const sessionsFailed = queryReadFailed(projectSessions)
+	// The notice sits above the chats it kept, so a failed refresh counts too.
+	const sessionsFailed = queryReadFailed(projectSessions) || queryRefreshFailed(projectSessions)
 	const activeProjectSessions = projectSessions.data
 	const visibleProjectSessions = useMemo(
 		() => orderVisibleProjectSessions(activeProjectSessions, currentSessionId ?? null, 5),

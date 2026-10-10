@@ -22,7 +22,6 @@ import {
 	MY_DASHBOARDS_FILTERED_PAGE_SIZE
 } from '~/containers/ProDashboard/components/myDashboardsControls.utils'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
-import { ProCardError } from '~/containers/ProDashboard/components/ProCardStatus'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import {
@@ -41,12 +40,13 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import { ProButton, ProDialogFallback, ProMeta, proPanelStyles, proTabStyles } from '~/containers/ProDashboard/ui'
+import { ProButton, ProDialogFallback, ProMeta, proTabStyles } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { PanelStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -314,9 +314,6 @@ function ProContent({
 		limit: 20,
 		enabled: isAuthenticated && !!myTeam
 	})
-	// A failed list load is not an empty list: without this the page offers "Create your first dashboard".
-	const myDashboardsFailed = myDashboardsReadFailed && myDashboards.length === 0
-	const teamDashboardsFailed = teamDashboardsReadFailed && teamDashboards.length === 0
 
 	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
 	// so these are the values that actually change.
@@ -438,7 +435,7 @@ function ProContent({
 							onVisibilityChange={(visibility) => setMyDashboardsControls((previous) => ({ ...previous, visibility }))}
 						/>
 
-						{!isLoadingMyDashboards && !myDashboardsFailed ? (
+						{!isLoadingMyDashboards && !myDashboardsReadFailed ? (
 							<ProMeta
 								items={[
 									myDashboardsControlsActive
@@ -451,13 +448,10 @@ function ProContent({
 							/>
 						) : null}
 
-						{myDashboardsFailed ? (
-							<div className={`${proPanelStyles} flex flex-col py-12`}>
-								<ProCardError
-									title="Couldn't load your dashboards."
-									retry={{ refetch: refetchMyDashboards, isFetching: isFetchingMyDashboards }}
-								/>
-							</div>
+						{myDashboardsReadFailed ? (
+							<PanelStatus variant="error" retry={{ refetch: refetchMyDashboards, isFetching: isFetchingMyDashboards }}>
+								Couldn&apos;t load your dashboards.
+							</PanelStatus>
 						) : (
 							<DashboardList
 								dashboards={visibleMyDashboards}
@@ -573,7 +567,7 @@ function ProContent({
 
 				{isAuthenticated && myTeam ? (
 					<TabPanel value="team" className="flex flex-col gap-4">
-						{!isLoadingTeamDashboards && !teamDashboardsFailed ? (
+						{!isLoadingTeamDashboards && !teamDashboardsReadFailed ? (
 							<ProMeta
 								items={[
 									`Shared with ${myTeam.name}`,
@@ -582,13 +576,13 @@ function ProContent({
 							/>
 						) : null}
 
-						{teamDashboardsFailed ? (
-							<div className={`${proPanelStyles} flex flex-col py-12`}>
-								<ProCardError
-									title="Couldn't load team dashboards"
-									retry={{ refetch: refetchTeamDashboards, isFetching: isFetchingTeamDashboards }}
-								/>
-							</div>
+						{teamDashboardsReadFailed ? (
+							<PanelStatus
+								variant="error"
+								retry={{ refetch: refetchTeamDashboards, isFetching: isFetchingTeamDashboards }}
+							>
+								Couldn&apos;t load team dashboards.
+							</PanelStatus>
 						) : (
 							<DashboardList
 								dashboards={teamDashboards}
