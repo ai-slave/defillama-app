@@ -2,6 +2,7 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -202,11 +203,7 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 										<span className="text-primary">{a.firm}</span>
 									)}
 									<span>· {formatVerified(a.date)}</span>
-									{formal ? (
-										<span className="rounded-full border border-success-muted bg-success-tint px-1.5 py-px label-xs text-primary">
-											formal verification
-										</span>
-									) : null}
+									{formal ? <StatusBadge status="good">formal verification</StatusBadge> : null}
 								</span>
 								{a.report?.value ? <ExternalLink href={a.report.value}>report</ExternalLink> : null}
 							</li>

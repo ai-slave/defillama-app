@@ -9,6 +9,7 @@ import { useCustomServerData } from '~/containers/Investors/CustomServerDataCont
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -113,13 +114,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 				<h3 className="title-md text-primary">Fee Switch</h3>
-				<span
-					className={`rounded-full px-2 py-0.5 label-sm ${
-						isActive ? 'bg-success-tint-strong text-success' : 'bg-surface-elevated-1 text-tertiary'
-					}`}
-				>
-					{feeSwitch.status}
-				</span>
+				<StatusBadge status={isActive ? 'good' : 'neutral'}>{feeSwitch.status}</StatusBadge>
 				<p className="body-sm text-tertiary">{feeSwitch.mechanism}</p>
 			</div>
 			<div className="flex flex-wrap gap-y-4">

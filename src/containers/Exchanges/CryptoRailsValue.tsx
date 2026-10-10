@@ -72,7 +72,7 @@ export function CryptoRailsValue({ name, rails }: { name: string; rails: CryptoR
 	if (rails === null) return <span className="text-tertiary">–</span>
 	return (
 		<ValueBadge
-			tone="info"
+			status="neutral"
 			ariaLabel={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
 			contentClassName="w-[760px] p-3"
 			content={

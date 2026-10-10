@@ -7,6 +7,7 @@ import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { categoryLabel } from './format'
@@ -15,15 +16,6 @@ import type { DetailChain, DetailProtocol } from './types'
 
 function shortAddress(a: string): string {
 	return a.length <= 13 ? a : `${a.slice(0, 6)}…${a.slice(-4)}`
-}
-
-function AuditPill({ audited }: { audited: boolean }) {
-	return (
-		<span className="inline-flex items-center gap-1 rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 label-sm text-primary">
-			<span className={`size-1.5 rounded-full ${audited ? 'bg-success' : 'bg-warning'}`} aria-hidden />
-			{audited ? 'Yes' : 'No'}
-		</span>
-	)
 }
 
 export function PoolHeader({
@@ -158,7 +150,9 @@ export function PoolMetaInfo({
 							</span>
 						}
 					>
-						<AuditPill audited={protocol.has_audit} />
+						<StatusBadge status={protocol.has_audit ? 'good' : 'caution'}>
+							{protocol.has_audit ? 'Yes' : 'No'}
+						</StatusBadge>
 					</Fact>
 				) : null}
 				<Fact label="Pool id">

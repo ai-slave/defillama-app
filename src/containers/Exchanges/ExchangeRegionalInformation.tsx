@@ -5,6 +5,7 @@ import { Card } from '~/ui/Card'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
 import { fetchExchangeRegionalMetadata } from './master.api'
@@ -35,10 +36,10 @@ export type ProfileCountryView =
 	| { status: 'loading'; country: string }
 	| { status: 'error'; country: string; retry: () => void; retrying: boolean }
 	| {
-			[Status in ExchangeRegionStatus]: {
-				status: Status
+			[Availability in ExchangeRegionStatus]: {
+				status: Availability
 				country: string
-				regional: Extract<ExchangeRegionalMetadataModel, { availability: Status }>
+				regional: Extract<ExchangeRegionalMetadataModel, { availability: Availability }>
 			}
 	  }[ExchangeRegionStatus]
 
@@ -81,26 +82,26 @@ export function profileInformationMetadata(
 
 const STATUS_PRESENTATION: Record<
 	ExchangeRegionStatus,
-	{ label: string; chipClassName: string; sentence: (exchange: string, country: string) => string }
+	{ label: string; status: Status; sentence: (exchange: string, country: string) => string }
 > = {
 	available: {
 		label: 'Available',
-		chipClassName: 'border-success bg-success-tint text-success',
+		status: 'good',
 		sentence: (exchange, country) => `${exchange} is available in ${country}.`
 	},
 	restricted: {
 		label: 'Restricted',
-		chipClassName: 'border-warning bg-warning-tint text-warning',
+		status: 'caution',
 		sentence: (exchange, country) => `${exchange} has restrictions in ${country}.`
 	},
 	leaving: {
 		label: 'Leaving',
-		chipClassName: 'border-warning bg-warning-tint text-warning',
+		status: 'caution',
 		sentence: (exchange, country) => `${exchange} is leaving ${country}.`
 	},
 	unavailable: {
 		label: 'Unavailable',
-		chipClassName: 'border-error bg-error-tint text-error',
+		status: 'bad',
 		sentence: (exchange, country) => `${exchange} is not available in ${country}.`
 	}
 }
@@ -251,9 +252,7 @@ function RegionalAvailability({
 	return (
 		<div className="flex flex-col gap-1.5" role="status">
 			<div className="flex flex-wrap items-center gap-2">
-				<span className={`rounded-md border px-2 py-0.5 label-sm ${presentation.chipClassName}`}>
-					{presentation.label}
-				</span>
+				<StatusBadge status={presentation.status}>{presentation.label}</StatusBadge>
 				<p className="label-md">{regional.note ?? presentation.sentence(profileName, country)}</p>
 			</div>
 			<p className="body-sm text-tertiary">

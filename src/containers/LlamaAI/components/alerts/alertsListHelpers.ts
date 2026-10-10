@@ -1,5 +1,7 @@
 import { DAYS_OF_WEEK } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { Alert, AlertsUsage, PriceTrigger, UpdateAlertInput } from '~/containers/LlamaAI/components/alerts/types'
+import type { Status } from '~/ui/StatusBadge'
+import { capitalizeFirstLetter } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 
 export function isAlertsUpsellActive(usage: AlertsUsage | null | undefined): boolean {
@@ -101,12 +103,12 @@ export function formatTokenLabel(tokenNk: string): string {
 	return raw.replace(/-/g, ' ').toUpperCase()
 }
 
-export function execChipTone(status: string, hasError: boolean): 'success' | 'error' {
-	if (status === 'success' || status === 'test') return 'success'
-	if (status === 'delivery_test') return hasError ? 'error' : 'success'
-	return 'error'
+export function execBadgeStatus(status: string, hasError: boolean): Status {
+	if (status === 'success' || status === 'test') return 'good'
+	if (status === 'delivery_test') return hasError ? 'bad' : 'good'
+	return 'bad'
 }
 
-export function execChipLabel(status: string): string {
-	return status === 'delivery_test' ? 'test ping' : status
+export function execBadgeLabel(status: string): string {
+	return status === 'delivery_test' ? 'Test ping' : capitalizeFirstLetter(status)
 }

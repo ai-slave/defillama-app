@@ -9,13 +9,14 @@ import { neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tag, TagButton } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
 import { countDashboardWidgets } from '../dashboardWidgets'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProBadge, ProMeta, proCardShellStyles } from '../ui'
+import { ProMeta, proCardShellStyles } from '../ui'
 import { CardLikeButton } from './CardLikeButton'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 import { DashboardPreview } from './DashboardPreview'
@@ -153,9 +154,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 				<DashboardAuthorLink author={dashboard.author} />
 			</div>
 			{isPrivate ? (
-				<ProBadge tone="neutral" icon={<Icon name="key" height={12} width={12} />}>
-					Private
-				</ProBadge>
+				<StatusBadge status="neutral">Private</StatusBadge>
 			) : (
 				<CardLikeButton
 					dashboardId={dashboard.id}

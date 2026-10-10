@@ -4,10 +4,11 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
-import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
+import { stabilityStatus, YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { MeasuredColumnHint, MeasuredExitColumnHint } from './Measured'
 import { NameYield, PoolNameLockup } from './Name'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
@@ -16,12 +17,6 @@ import { hasSparkline } from './sparklineModel'
 import { TruncatedText } from './TruncatedText'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
 import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
-
-const STABILITY_RATING_STYLES: Record<string, string> = {
-	stable: 'bg-data-up-tint text-data-up',
-	mixed: 'bg-surface-elevated-1 text-secondary',
-	volatile: 'bg-data-down-tint text-data-down'
-}
 
 function ApyStabilityIndicator({
 	score,
@@ -33,22 +28,8 @@ function ApyStabilityIndicator({
 	avg30d?: number | null
 }) {
 	if (rating == null) return <EmptyCell />
-	const className = STABILITY_RATING_STYLES[rating] ?? 'bg-surface-elevated-1 text-secondary'
 	const label = rating.charAt(0).toUpperCase() + rating.slice(1)
-	// Math.round matches stabilityRatingFromScore's bucketing input.
-	const scoreStr = score != null ? String(Math.round(score * 100)) : null
-	// The td centers via text-align, so the bare pill must stay inline-flex; inside
-	// the block-level Tooltip anchor, justify-center re-centers it.
-	const hasTooltip = score != null
-	const pill = (
-		<span className={`inline-flex items-center rounded-full px-2 py-0.5 label-sm ${className}`}>
-			<span className={hasTooltip ? 'underline decoration-secondary decoration-dotted' : undefined}>
-				{label}
-				{scoreStr != null ? <span className="text-secondary">{` ${scoreStr}`}</span> : null}
-			</span>
-		</span>
-	)
-	if (!hasTooltip) return pill
+	if (score == null) return <StatusBadge status={stabilityStatus(rating)}>{label}</StatusBadge>
 
 	// σ derived from score and avg (score = 1 / (1 + σ/|avg|)), keeping the displayed
 	// numbers mutually consistent.
@@ -70,10 +51,11 @@ function ApyStabilityIndicator({
 			<span className="body-xs text-tertiary">Score = 100 / (1 + σ/avg)</span>
 		</span>
 	)
+	// Math.round matches stabilityRatingFromScore's bucketing input.
 	return (
-		<Tooltip content={content} className="justify-center">
-			{pill}
-		</Tooltip>
+		<StatusBadge status={stabilityStatus(rating)} tooltip={content}>
+			{`${label} ${Math.round(score * 100)}`}
+		</StatusBadge>
 	)
 }
 

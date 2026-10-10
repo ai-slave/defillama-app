@@ -8,11 +8,18 @@ import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import { TokenRightsChip, TokenRightsChipList, type TokenRightsChipTone } from './TokenRightsChips'
+import {
+	equityCaptureBadgeStatus,
+	feeSwitchBadgeStatus,
+	TokenRightsChipList,
+	TokenRightsTagList
+} from './TokenRightsChips'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
 import {
@@ -111,17 +118,17 @@ export function TokenRightsByProtocol({
 						<dl className="empty:hidden">
 							{overview.identityTokens.length > 0 ? (
 								<KeyValueRow label="Token(s)">
-									<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="details" />
+									<TokenRightsTagList items={overview.identityTokens} />
 								</KeyValueRow>
 							) : null}
 							{overview.tokenTypes.length > 0 ? (
 								<KeyValueRow label="Token Type">
-									<TokenRightsChipList items={overview.tokenTypes} tone="neutral" variant="details" />
+									<TokenRightsTagList items={overview.tokenTypes} />
 								</KeyValueRow>
 							) : null}
 							{overview.utilityItems.length > 0 ? (
 								<KeyValueRow label="Utility">
-									<TokenRightsChipList items={overview.utilityItems} tone="neutral" variant="details" />
+									<TokenRightsTagList items={overview.utilityItems} />
 								</KeyValueRow>
 							) : null}
 						</dl>
@@ -153,11 +160,9 @@ export function TokenRightsByProtocol({
 							<DetailsTokenList display={decisions.revenue} />
 						</RightsRow>
 						<RightsRow label="Fee Switch" tooltip={TOOLTIPS['Fee Switch']} details={economic.feeSwitchDetails}>
-							<TokenRightsChip
-								label={economic.feeSwitchStatus}
-								tone={feeSwitchTone(economic.feeSwitchStatus)}
-								variant="details"
-							/>
+							<StatusBadge status={feeSwitchBadgeStatus(economic.feeSwitchStatus)}>
+								{economic.feeSwitchStatus}
+							</StatusBadge>
 						</RightsRow>
 						<InlineLinks links={governance.links} />
 					</SectionCard>
@@ -253,11 +258,9 @@ export function TokenRightsByProtocol({
 							<DetailsTokenList display={valueAccrual.dividends} />
 						</RightsRow>
 						<RightsRow label="Burns" tooltip={TOOLTIPS['Burns']} details={valueAccrual.burns.details}>
-							<TokenRightsChip
-								label={valueAccrual.burns.status}
-								tone={valueAccrual.burns.isActive ? 'positive' : 'neutral'}
-								variant="details"
-							/>
+							<StatusBadge status={valueAccrual.burns.isActive ? 'good' : 'neutral'}>
+								{valueAccrual.burns.status}
+							</StatusBadge>
 						</RightsRow>
 						<InlineLinks links={economic.links} />
 					</SectionCard>
@@ -271,31 +274,29 @@ export function TokenRightsByProtocol({
 							<dl className="empty:hidden">
 								{alignment.fundraising.length > 0 ? (
 									<KeyValueRow label="Fundraising" tooltip={TOOLTIPS['Fundraising']}>
-										<TokenRightsChipList items={alignment.fundraising} tone="neutral" variant="details" />
+										<TokenRightsTagList items={alignment.fundraising} />
 									</KeyValueRow>
 								) : null}
 								{alignment.equityRevenueCapture !== null ? (
 									<KeyValueRow label="Equity Revenue Capture" tooltip={TOOLTIPS['Equity Revenue Capture']}>
-										<TokenRightsChip
-											label={alignment.equityRevenueCapture}
-											tone={equityCaptureTone(alignment.equityRevenueCapture)}
-											variant="details"
-										/>
+										<StatusBadge status={equityCaptureBadgeStatus(alignment.equityRevenueCapture)}>
+											{alignment.equityRevenueCapture}
+										</StatusBadge>
 									</KeyValueRow>
 								) : null}
 								{alignment.associatedEntities.length > 0 ? (
 									<KeyValueRow label="Associated Entities" tooltip={TOOLTIPS['Associated Entities']}>
-										<TokenRightsChipList items={alignment.associatedEntities} tone="neutral" variant="details" />
+										<TokenRightsTagList items={alignment.associatedEntities} />
 									</KeyValueRow>
 								) : null}
 								{alignment.ipAndBrand !== null ? (
 									<KeyValueRow label="IP & Brand" tooltip={TOOLTIPS['IP & Brand']}>
-										<TokenRightsChipList items={[alignment.ipAndBrand]} tone="neutral" variant="details" />
+										<TokenRightsTagList items={[alignment.ipAndBrand]} />
 									</KeyValueRow>
 								) : null}
 								{alignment.domain !== null ? (
 									<KeyValueRow label="Domain" tooltip={TOOLTIPS['Domain']}>
-										<TokenRightsChipList items={[alignment.domain]} tone="neutral" variant="details" />
+										<TokenRightsTagList items={[alignment.domain]} />
 									</KeyValueRow>
 								) : null}
 							</dl>
@@ -336,9 +337,7 @@ export function TokenRightsByProtocol({
 						<Card as="header" padding="sm" className="flex flex-wrap items-center gap-2">
 							<TokenLogo name={name} kind="token" size={24} alt={`Logo of ${name}`} />
 							<h1 className="heading-xs">{symbol ? `$${symbol}` : name} Token Rights</h1>
-							{overview.identityTokens.length > 0 ? (
-								<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
-							) : null}
+							{overview.identityTokens.length > 0 ? <TokenRightsTagList items={overview.identityTokens} /> : null}
 							<TokenRightsHeaderControls updatedLabel={overview.lastUpdatedLabel} />
 						</Card>
 					)
@@ -403,7 +402,7 @@ function TokenRightsOverviewView({
 			value: (
 				<TokenRightsToneText
 					label={formatFeeSwitchStatus(economic.feeSwitchStatus)}
-					tone={feeSwitchTone(economic.feeSwitchStatus)}
+					status={feeSwitchBadgeStatus(economic.feeSwitchStatus)}
 				/>
 			)
 		},
@@ -413,7 +412,7 @@ function TokenRightsOverviewView({
 				<OverviewTokenValue
 					display={valueAccrual.buybacks}
 					inactiveLabel="None"
-					inactiveTone={hasValueAccrual ? 'neutral' : 'negative'}
+					inactiveStatus={hasValueAccrual ? 'neutral' : 'bad'}
 				/>
 			)
 		},
@@ -423,7 +422,7 @@ function TokenRightsOverviewView({
 				<OverviewTokenValue
 					display={valueAccrual.dividends}
 					inactiveLabel="None"
-					inactiveTone={hasValueAccrual ? 'neutral' : 'negative'}
+					inactiveStatus={hasValueAccrual ? 'neutral' : 'bad'}
 				/>
 			)
 		},
@@ -445,7 +444,7 @@ function TokenRightsOverviewView({
 					{overview.utilityItems.length > 0 ? (
 						<div className="flex w-full flex-col items-center gap-2">
 							<div className="label-sm text-secondary uppercase">Utility</div>
-							<TokenRightsChipList items={overview.utilityItems} tone="neutral" variant="overview" wrap />
+							<TokenRightsTagList items={overview.utilityItems} />
 						</div>
 					) : null}
 				</div>
@@ -454,9 +453,7 @@ function TokenRightsOverviewView({
 					{showIdentity ? (
 						<div className="flex flex-wrap items-center gap-2">
 							<h3 className="heading-xs">{displayName}</h3>
-							{overview.identityTokens.length > 0 ? (
-								<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
-							) : null}
+							{overview.identityTokens.length > 0 ? <TokenRightsTagList items={overview.identityTokens} /> : null}
 						</div>
 					) : null}
 
@@ -489,13 +486,13 @@ function TokenRightsOverviewView({
 							{alignment.fundraisingLabel ? (
 								<div className="flex min-w-max flex-col gap-1.5">
 									<div className="label-sm text-secondary uppercase">Fundraising</div>
-									<TokenRightsToneText label={alignment.fundraisingLabel} tone="neutral" />
+									<TokenRightsToneText label={alignment.fundraisingLabel} status="neutral" />
 								</div>
 							) : null}
 							{alignment.associatedEntities.length > 0 ? (
 								<div className="flex min-w-0 flex-col gap-1.5">
 									<div className="label-sm text-secondary uppercase">Entities</div>
-									<TokenRightsChipList items={alignment.associatedEntities} tone="neutral" variant="overview" wrap />
+									<TokenRightsTagList items={alignment.associatedEntities} />
 								</div>
 							) : null}
 						</div>
@@ -509,44 +506,44 @@ function TokenRightsOverviewView({
 function OverviewTokenValue({
 	display,
 	inactiveLabel,
-	inactiveTone = 'negative'
+	inactiveStatus = 'bad'
 }: {
 	display: ITokenRightsTokenDisplay
 	inactiveLabel: string
-	inactiveTone?: TokenRightsChipTone
+	inactiveStatus?: Status
 }) {
 	if (display.displayTokens.length === 0) {
-		return <TokenRightsToneText label={inactiveLabel} tone={inactiveTone} />
+		return <TokenRightsToneText label={inactiveLabel} status={inactiveStatus} />
 	}
-	return <TokenRightsChipList items={display.displayTokens} tone="positive" variant="overview" />
+	return <TokenRightsChipList items={display.displayTokens} variant="overview" />
 }
 
 function OverviewBurnsValue({ status, isActive }: { status: string; isActive: boolean }) {
 	if (isActive) {
-		return <TokenRightsChip label={status} tone="positive" variant="overview" />
+		return <StatusBadge status="good">{status}</StatusBadge>
 	}
-	return <TokenRightsToneText label="None" tone="negative" />
+	return <TokenRightsToneText label="None" status="bad" />
 }
 
 function OverviewEquityCaptureValue({ value }: { value: string | null }) {
-	if (value === 'Yes') return <TokenRightsToneText label={value} tone="negative" />
-	if (value === 'Partial') return <TokenRightsToneText label={value} tone="warning" />
-	return <TokenRightsToneText label={value ?? 'Unknown'} tone="neutral" />
+	if (value === 'Yes') return <TokenRightsToneText label={value} status="bad" />
+	if (value === 'Partial') return <TokenRightsToneText label={value} status="caution" />
+	return <TokenRightsToneText label={value ?? 'Unknown'} status="neutral" />
 }
 
 // ---------------------------------------------------------------------------
 // Shared primitives
 // ---------------------------------------------------------------------------
 
-const TEXT_TONE_CLASSES: Record<TokenRightsChipTone, string> = {
-	positive: 'text-success',
-	negative: 'text-error',
-	warning: 'text-warning dark:text-warning',
+const STATUS_TEXT_CLASSES: Record<Status, string> = {
+	good: 'text-success',
+	bad: 'text-error',
+	caution: 'text-warning dark:text-warning',
 	neutral: 'text-secondary'
 }
 
-function TokenRightsToneText({ label, tone }: { label: string; tone: TokenRightsChipTone }) {
-	return <span className={`label-md whitespace-nowrap ${TEXT_TONE_CLASSES[tone]}`}>{label}</span>
+function TokenRightsToneText({ label, status }: { label: string; status: Status }) {
+	return <span className={`label-md whitespace-nowrap ${STATUS_TEXT_CLASSES[status]}`}>{label}</span>
 }
 
 function SectionCard({ title, badge, children }: { title: string; badge?: string; children: ReactNode }) {
@@ -617,10 +614,10 @@ function InlineLinks({ links }: { links: Array<ITokenRightsParsedLink> }) {
 
 function DetailsTokenList({ display }: { display: ITokenRightsTokenDisplay }) {
 	if (display.displayTokens.length > 0) {
-		return <TokenRightsChipList items={display.displayTokens} tone="positive" variant="details" />
+		return <TokenRightsChipList items={display.displayTokens} variant="details" />
 	}
 
-	return <TokenRightsChip label={display.fallbackToken} tone="neutral" variant="details" />
+	return <Tag>{display.fallbackToken}</Tag>
 }
 
 function RightsRow({
@@ -721,31 +718,5 @@ function tryHostname(url: string): string {
 		return new URL(url).hostname
 	} catch {
 		return url
-	}
-}
-
-function feeSwitchTone(status: string): TokenRightsChipTone {
-	switch (status) {
-		case 'ON':
-			return 'positive'
-		case 'PENDING':
-			return 'warning'
-		case 'OFF':
-			return 'negative'
-		default:
-			return 'neutral'
-	}
-}
-
-function equityCaptureTone(val: string): TokenRightsChipTone {
-	switch (val) {
-		case 'Yes':
-			return 'negative'
-		case 'Partial':
-			return 'warning'
-		case 'No':
-			return 'positive'
-		default:
-			return 'neutral'
 	}
 }

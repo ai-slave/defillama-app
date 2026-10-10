@@ -4,6 +4,7 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { MethodologyLink } from './docsLinks'
@@ -212,12 +213,12 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 					BTC perp book
 				</Tooltip>
 				{feed.degraded ? (
-					<Tooltip
-						content="Outside the venue's normal range, which can also mean a capture problem on our side. Feed speed never affects the REAL score."
-						className="w-fit"
+					<StatusBadge
+						status="caution"
+						tooltip="Outside the venue's normal range, which can also mean a capture problem on our side. Feed speed never affects the REAL score."
 					>
-						<span className="rounded-sm border border-current px-1.5 py-0.5 label-sm text-warning">degraded day</span>
-					</Tooltip>
+						degraded day
+					</StatusBadge>
 				) : null}
 			</div>
 			<div className="grid grid-cols-2 gap-3 md:grid-cols-4">

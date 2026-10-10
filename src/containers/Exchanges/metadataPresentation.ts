@@ -1,7 +1,8 @@
 import type { ComponentProps } from 'react'
 import type { Icon } from '~/ui/Icon'
+import type { Status } from '~/ui/StatusBadge'
 import { formatMonthYear } from '~/utils/dateFormat'
-import type { ExchangeMetadataGroupKey, ExchangeMetadataTone } from './models'
+import type { ExchangeMetadataGroupKey } from './models'
 
 type IconName = ComponentProps<typeof Icon>['name']
 
@@ -108,8 +109,8 @@ export function metadataLinkIcon(label: string): IconName | undefined {
 	return undefined
 }
 
-export function metadataStatusTone(value: string): ExchangeMetadataTone {
-	if (value === 'available' || value === 'active') return 'positive'
+export function metadataStatus(value: string): Status {
+	if (value === 'available' || value === 'active') return 'good'
 	if (value === 'in-progress') return 'caution'
 	return 'neutral'
 }

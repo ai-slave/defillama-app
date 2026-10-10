@@ -1062,18 +1062,13 @@ const RULES = [
 				'earnings coloured as a profit or a loss, a level, not a movement',
 			'src/containers/RWA/table/columns/perps.tsx':
 				'funding and premium coloured by what they cost a long, so positive is red',
-			'src/containers/Yields/Tables/Pools.tsx': 'the stable or volatile rating pill',
 			'src/components/ECharts/shared/chartTheme.ts': 'maps the tokens to the colours ECharts draws with',
 			'src/containers/Yields/Tables/YieldsCells.tsx': 'a signed APY is a rate that can go negative, not a movement',
-			'src/containers/Yields/poolDetail/AnswerStrip.tsx': 'the stable or volatile rating',
 			'src/containers/Yields/poolDetail/ExitReliabilityPanel.tsx':
-				'exit statuses (full, queued, blocked), not movements',
+				'the no-interruptions note, set in the positive hue of the measured-on-chain well',
 			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx': 'an unrecovered drawdown, a status beside the figures',
-			'src/containers/Yields/poolDetail/PoolLiquidityChart.tsx': 'reverted days or no interruptions, a status',
-			'src/containers/Yields/VaultRisk/components/HistoryStrip.tsx':
-				'incident outcomes (made whole, not recovered), statuses',
-			'src/containers/Yields/VaultRisk/components/ScenarioDetailPanel.tsx': 'a made-whole outcome, a status',
-			'src/containers/Yields/VaultRisk/kindMeta.ts': 'incident kinds tinted as a loss or a recovery, statuses'
+			'src/containers/Yields/VaultRisk/kindMeta.ts':
+				'the good and danger text tones of the risk report (no bad debt, none appointed), statuses'
 		},
 		description:
 			'a movement coloured by hand with text-data-up/down — render Change from src/ui/Change.tsx (unit percent, usd, count or pp), or pass `change` data to SummaryChange, StatTile, InlineStatStrip or SmolStatCard; Change owns the sign, the format and the zero colour',
@@ -1082,6 +1077,40 @@ const RULES = [
 			withoutComments(content).match(
 				/(?:(?<![\w-])text-data-(?:up|down)|--(?:text-|color-)?data-(?:up|down)|--yield-(?:positive|negative)-text)(?![\w-])/g
 			),
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'hand-built-status-badge',
+		exceptions: {
+			'src/containers/Articles/editor/ArticleEditorHeader.tsx':
+				'the save-state button, tinted while a save fails or waits',
+			'src/containers/Articles/editor/RevisionHistoryDrawer.tsx': 'added and removed text in a revision diff',
+			'src/containers/Downloads/sql/ErrorBanner.tsx': "a failed query's message box and the code it names",
+			'src/containers/Downloads/sql/TableChipRail.tsx':
+				'a table still loading into the console: dashed until it registers, red if it failed',
+			'src/containers/Downloads/sql/UpsellGate.tsx': "a notebook cell's kind, tinted by kind",
+			'src/containers/Downloads/sql/notebook/NotebookCell.tsx': "a notebook cell's kind, tinted by kind",
+			'src/containers/Downloads/sql/notebook/NotebookView.tsx': 'a warning message box above the notebook',
+			'src/containers/Exchanges/ExchangeRegionalInformation.tsx': 'an icon tile beside the not-available heading',
+			'src/containers/LlamaAI/components/AlertArtifact.tsx': "an alert's icon tile",
+			'src/containers/LlamaAI/components/FeedbackForm.tsx': 'the picked thumbs-up or thumbs-down button',
+			'src/containers/LlamaAI/components/alerts/EmptyAlertsState.tsx': 'the empty state icon tile',
+			'src/containers/LlamaAI/components/alerts/ui.tsx': "an alert's icon tile",
+			'src/containers/LlamaAI/components/input/EntityCombobox.tsx': "an entity's type, tinted by type"
+		},
+		description:
+			'a status coloured by hand with a success, warning or error tint and its text colour — render StatusBadge from src/ui/StatusBadge.tsx with status good, caution, bad or neutral; map the product value to a status, never to classes',
+		// One class string that pairs a status tint at rest with that status's text colour is a status pill drawn by hand. A
+		// tint behind a state variant (hover:bg-error-tint) is a wash, not a status.
+		match: (content) => {
+			const found = []
+			for (const [literal] of withoutComments(content).matchAll(STRING_LITERAL)) {
+				const tone = literal.match(/(?<![\w:-])bg-(success|warning|error)-(?:faint|tint|tint-strong)(?![\w-])/)
+				if (tone && new RegExp(`(?<![\\w-])text-${tone[1]}(?![\\w-])`).test(literal)) found.push(tone[0])
+			}
+			return found.length > 0 ? found : null
+		},
 		uiOwned: true,
 		skipTests: true
 	},

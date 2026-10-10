@@ -1,4 +1,5 @@
 import { Hovercard } from '~/ui/Hovercard'
+import { type Status, StatusBadge, statusBadgeStyles } from '~/ui/StatusBadge'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface MakerTakerFee {
@@ -7,44 +8,28 @@ export interface MakerTakerFee {
 }
 
 export type FeeKind = 'spot' | 'perp'
-export type FeeTone = 'low' | 'medium' | 'high'
+type FeeTone = 'low' | 'medium' | 'high'
 
 const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
 // ponytail: heuristic perp tiers (~10x tighter than spot); tune if fee data says otherwise
 const PERP_FEE_TIER_LIMITS = { low: 0.0003, medium: 0.0006 }
 
-export const FEE_TONE_CLASS: Record<FeeTone, string> = {
-	low: 'border-success bg-success-tint text-success',
-	medium: 'border-warning bg-warning-tint text-warning',
-	high: 'border-error bg-surface text-error'
+const FEE_TONE: Record<FeeTone, { label: string; status: Status }> = {
+	low: { label: 'Low fee', status: 'good' },
+	medium: { label: 'Medium fee', status: 'caution' },
+	high: { label: 'High fee', status: 'bad' }
 }
 
-/** Compliance statuses (EU availability, MiCA license) share the badge with fees. */
-export type ValueTone = FeeTone | 'positive' | 'caution' | 'negative'
-
-const VALUE_TONE_CLASS: Record<ValueTone, string> = {
-	...FEE_TONE_CLASS,
-	positive: 'border-success bg-success-tint text-success',
-	caution: 'border-warning bg-warning-tint text-warning',
-	negative: 'border-error bg-error-tint text-error'
-}
-
-/** The badge box every Exchanges value cell shares, so a row of fees, statuses and requirement chips lines up. */
-export function valueBadgeClass(tone: ValueTone | 'info' | null) {
-	return `inline-flex items-center gap-1 rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone === 'info' ? 'border-subtle text-link' : tone ? VALUE_TONE_CLASS[tone] : 'border-subtle text-primary'}`
-}
-
-/** A value cell whose breakdown opens in a Hovercard: a fee or status badge takes its tone, any other value (routes,
- *  authored fiat fees, a fee with no tone) the neutral link look. Every Exchanges table cell with details uses it. */
+/** A value cell whose breakdown opens in a Hovercard, drawn as a status badge: a fee or compliance state takes its
+ *  status, any other value (route counts, a fee with no tier) neutral. Every Exchanges table cell with details uses it. */
 export function ValueBadge({
-	tone,
+	status,
 	ariaLabel,
 	contentClassName,
 	content,
 	children
 }: {
-	/** A fee's or status's tone; `info` for route counts, which carry no fee; null when the fee is unknown. */
-	tone: ValueTone | 'info' | null
+	status: Status
 	ariaLabel: string
 	contentClassName: string
 	content: React.ReactNode
@@ -53,19 +38,19 @@ export function ValueBadge({
 	return (
 		<Hovercard
 			placement="left-start"
-			render={<button type="button" aria-label={ariaLabel} className={`hover-wash ${valueBadgeClass(tone)}`} />}
+			render={
+				<button
+					type="button"
+					aria-label={ariaLabel}
+					className={`hover-wash inline-flex ${statusBadgeStyles(status)}`}
+				/>
+			}
 			contentClassName={contentClassName}
 			content={content}
 		>
 			{children}
 		</Hovercard>
 	)
-}
-
-const FEE_TONE_LABEL: Record<FeeTone, string> = {
-	low: 'Low fee',
-	medium: 'Medium fee',
-	high: 'High fee'
 }
 
 export function feeLabel(fee: MakerTakerFee | null): string {
@@ -83,18 +68,15 @@ function feeTone(fee: MakerTakerFee, limits: { low: number; medium: number }): F
 	return 'high'
 }
 
-/** Maker / taker fee cell with a low/medium/high tone badge (spot and perp use their own tiers). */
+/** Maker / taker fee cell with a low/medium/high status badge (spot and perp use their own tiers). */
 export function FeeValue({ fee, kind }: { fee: MakerTakerFee | null | undefined; kind: FeeKind }) {
 	if (!fee) return <span className="text-tertiary">–</span>
 	const label = feeLabel(fee)
 	if (label === '–') return <span className="text-tertiary">–</span>
 	const tone = feeTone(fee, kind === 'spot' ? SPOT_FEE_TIER_LIMITS : PERP_FEE_TIER_LIMITS)
 	return (
-		<span
-			className={valueBadgeClass(tone)}
-			aria-label={tone ? `${label}. ${FEE_TONE_LABEL[tone]}; lower fees are better.` : label}
-		>
-			{label}
+		<span aria-label={tone ? `${label}. ${FEE_TONE[tone].label}; lower fees are better.` : label}>
+			<StatusBadge status={tone ? FEE_TONE[tone].status : 'neutral'}>{label}</StatusBadge>
 		</span>
 	)
 }

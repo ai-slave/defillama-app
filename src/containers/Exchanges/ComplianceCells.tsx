@@ -1,8 +1,9 @@
 import type { ComponentProps } from 'react'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
-import { ValueBadge, valueBadgeClass } from './feePresentation'
+import { ValueBadge } from './feePresentation'
 import {
 	EXCHANGE_SEGMENT_LABELS,
 	type ExchangeEeaOrderbookOwnership,
@@ -13,40 +14,32 @@ import {
 /* KYC requirement chips give each requirement type its own stock hue (ID sky, selfie violet, proof of address amber,
    income profile teal, knowledge quiz indigo), a listed exception in scripts/policies/check-design-tokens.mjs. The
    hue marks a category, not a state; the icon and tooltip carry the meaning. Keep the palette in
-   KYC_REQUIREMENT_BY_TOKEN and never use it for status: compliance status badges use the success, warning and error
-   tones of ValueBadge. */
-
-type ComplianceTone = 'positive' | 'caution' | 'negative'
+   KYC_REQUIREMENT_BY_TOKEN and never use it for status: compliance statuses are StatusBadge statuses. */
 
 interface StatusPresentation {
 	label: string
-	tone: ComplianceTone
-	icon: ComponentProps<typeof Icon>['name']
+	status: Status
 }
 
 const EU_STATUS_PRESENTATION: Record<ExchangeEuStatus, StatusPresentation & { description: string }> = {
 	available: {
 		label: 'Available',
-		tone: 'positive',
-		icon: 'check-circle',
+		status: 'good',
 		description: 'Currently available to EU users.'
 	},
 	leaving: {
 		label: 'Leaving',
-		tone: 'caution',
-		icon: 'clock',
+		status: 'caution',
 		description: 'Currently leaving the EU market.'
 	},
 	restricted: {
 		label: 'Restricted',
-		tone: 'caution',
-		icon: 'alert-triangle',
+		status: 'caution',
 		description: 'Use is restricted for EU users.'
 	},
 	unavailable: {
 		label: 'Unavailable',
-		tone: 'negative',
-		icon: 'circle-x',
+		status: 'bad',
 		description: 'Not currently available to EU users.'
 	}
 }
@@ -129,9 +122,9 @@ export function getEuStatusPresentation(status: ExchangeEuStatus) {
 
 export function getMicaLicensePresentation(mica: MicaLicenseValueModel): StatusPresentation | null {
 	if (mica.licensed === null) return null
-	if (mica.licensed) return { label: 'Licensed', tone: 'positive', icon: 'check-circle' }
-	if (mica.status === 'in-progress') return { label: 'In progress', tone: 'caution', icon: 'clock' }
-	return { label: 'Not licensed', tone: 'negative', icon: 'circle-x' }
+	if (mica.licensed) return { label: 'Licensed', status: 'good' }
+	if (mica.status === 'in-progress') return { label: 'In progress', status: 'caution' }
+	return { label: 'Not licensed', status: 'bad' }
 }
 
 export function getKycRequirementIndicators(kycShort: string): Array<KycRequirementIndicator> {
@@ -156,15 +149,6 @@ export function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | n
 	].join(' ')
 }
 
-function StatusLabel({ presentation }: { presentation: StatusPresentation }) {
-	return (
-		<>
-			<Icon name={presentation.icon} className="size-3.5" aria-hidden="true" />
-			{presentation.label}
-		</>
-	)
-}
-
 export function EuAvailabilityValue({
 	status,
 	eeaOrderbookOwnership
@@ -177,11 +161,9 @@ export function EuAvailabilityValue({
 	const orderbook = eeaOrderbookTooltip(eeaOrderbookOwnership)
 	const detail = [presentation.description, orderbook].filter(Boolean).join('\n')
 	return (
-		<Tooltip content={detail}>
-			<span className={valueBadgeClass(presentation.tone)}>
-				<StatusLabel presentation={presentation} />
-			</span>
-		</Tooltip>
+		<StatusBadge status={presentation.status} tooltip={detail}>
+			{presentation.label}
+		</StatusBadge>
 	)
 }
 
@@ -200,7 +182,7 @@ export function MicaLicenseValue({
 
 	return (
 		<ValueBadge
-			tone={presentation.tone}
+			status={presentation.status}
 			ariaLabel={`${presentation.label} MiCA details for ${name}`}
 			contentClassName="w-72 p-3 text-primary"
 			content={
@@ -230,13 +212,13 @@ export function MicaLicenseValue({
 				</dl>
 			}
 		>
-			<StatusLabel presentation={presentation} />
+			{presentation.label}
 		</ValueBadge>
 	)
 }
 
-/** A 16px icon in a 22px box: the height of the ValueBadge cells beside it, so KYC rows line up with the rest. */
-const KYC_CHIP_BOX = 'inline-flex items-center justify-center rounded-md p-0.5'
+/** A 16px icon in a 20px box: the height of the status badges beside it, so KYC rows line up with the rest. */
+const KYC_CHIP_BOX = 'inline-flex items-center justify-center rounded-md p-px'
 
 function KycSummaryHovercard({ summary, name }: { summary: string; name: string }) {
 	return (

@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react'
+import type { Status } from '~/ui/StatusBadge'
 import type { CompositeGrade } from './format'
 
-const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
-	full: 'border-success bg-success-tint text-success',
-	partial: 'border-warning bg-warning-tint text-warning',
-	none: 'border-error bg-error-tint text-error'
+const INTEGRATION_STATUS: Record<string, Status> = {
+	full: 'good',
+	partial: 'caution',
+	none: 'bad'
+}
+
+/** The integration level as a badge status; a level outside full, partial and none reads as neutral. */
+export function integrationStatus(level: string): Status {
+	return INTEGRATION_STATUS[level] ?? 'neutral'
 }
 
 export function AccentBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -30,21 +36,4 @@ export function SecondaryBadge({ children, className = '' }: { children: ReactNo
 export function GradeBadge({ grade, className = '' }: { grade: CompositeGrade | null; className?: string }) {
 	if (grade == null) return <span className="text-tertiary">N/A</span>
 	return <span className={`font-medium ${grade.colorClassName} ${className}`}>{grade.label}</span>
-}
-
-export function StatusBadge({
-	status,
-	label,
-	className = ''
-}: {
-	status: string
-	label: ReactNode
-	className?: string
-}) {
-	const style = STATUS_STYLES[status as 'full' | 'partial' | 'none'] ?? 'border-subtle text-tertiary'
-	return (
-		<span className={`inline-flex items-center justify-center rounded-full border label-sm ${style} ${className}`}>
-			{label}
-		</span>
-	)
 }

@@ -19,6 +19,7 @@ import { PdfUploadButton } from '~/containers/Articles/upload/PdfUploadButton'
 import { Button } from '~/ui/Button'
 import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { StatusBadge } from '~/ui/StatusBadge'
 
 function articleEditHref(article: ArticleDocument): string {
 	return `/research/edit/${encodeURIComponent(article.id)}`
@@ -111,19 +112,8 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
-						<span
-							className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-xs tracking-[0.18em] uppercase ${
-								isPublished ? 'bg-success-tint text-success' : 'bg-surface-elevated-1 text-tertiary'
-							}`}
-						>
-							<span aria-hidden className="size-1 rounded-full bg-current" />
-							{isPublished ? 'Live' : 'Draft'}
-						</span>
-						{hasPending ? (
-							<span className="inline-flex items-center rounded-full bg-warning-tint px-2 py-0.5 label-xs tracking-[0.18em] text-warning uppercase">
-								Pending edits
-							</span>
-						) : null}
+						<StatusBadge status={isPublished ? 'good' : 'neutral'}>{isPublished ? 'Live' : 'Draft'}</StatusBadge>
+						{hasPending ? <StatusBadge status="caution">Pending edits</StatusBadge> : null}
 					</div>
 					<Link href={articleEditHref(article)} className="mt-1 block truncate title-lg text-primary hover:text-link">
 						{article.title}

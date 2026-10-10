@@ -10,6 +10,7 @@ import type {
 } from '~/containers/Subscription/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { CoveragePricingContent } from './sections/SubscriptionCoverage'
@@ -422,9 +423,7 @@ export function PricingCardContent({
 						</div>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<div className="mt-1 flex items-center gap-1.5">
-								<span className="inline-flex items-center rounded-full bg-success-tint px-2.5 py-0.5 title-sm text-success ring-1 ring-(--border-success-muted)">
-									7-day free trial available
-								</span>
+								<PromoBadge>7-day free trial available</PromoBadge>
 							</div>
 						) : card.priceSecondary ? (
 							<p className="body-xl text-tertiary sm:body-lg">{card.priceSecondary}</p>

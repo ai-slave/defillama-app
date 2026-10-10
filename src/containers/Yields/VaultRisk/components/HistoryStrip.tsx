@@ -255,9 +255,9 @@ const INCIDENT_TONE: Record<IncidentPoint['tone'], string> = {
 }
 
 const INCIDENT_TONE_TEXT: Record<IncidentPoint['tone'], { label: string; className: string }> = {
-	loss: { label: 'not recovered', className: 'text-(--yield-negative-text)' },
-	'made-whole': { label: 'made whole', className: 'text-(--yield-positive-text)' },
-	averted: { label: 'averted', className: 'text-(--yield-positive-text)' }
+	loss: { label: 'not recovered', className: 'text-error' },
+	'made-whole': { label: 'made whole', className: 'text-success' },
+	averted: { label: 'averted', className: 'text-success' }
 }
 
 function IncidentDot({ p, selected, onToggle }: { p: IncidentPoint; selected: boolean; onToggle: () => void }) {

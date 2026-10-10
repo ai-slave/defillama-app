@@ -12,6 +12,7 @@ import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from 
 import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
+import { StatusBadge } from '~/ui/StatusBadge'
 
 export function BannersListView() {
 	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
@@ -139,14 +140,9 @@ export function BannersListView() {
 									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-[0.12em] text-secondary uppercase">
 										{bannerAudienceLabel(banner.targetCountries)}
 									</span>
-									<span
-										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-xs tracking-[0.18em] uppercase ${
-											banner.enabled ? 'bg-success-tint text-success' : 'bg-surface-elevated-1 text-tertiary'
-										}`}
-									>
-										<span aria-hidden className="size-1 rounded-full bg-current" />
+									<StatusBadge status={banner.enabled ? 'good' : 'neutral'}>
 										{banner.enabled ? 'Live' : 'Disabled'}
-									</span>
+									</StatusBadge>
 								</div>
 								{banner.type === 'text' ? (
 									<>

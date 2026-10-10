@@ -6,7 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { TokenRightsUtrSummary } from './badge'
 import { TokenCardHeader, TokenCardLink } from './TokenCardHeader'
-import { TokenRightsChipList } from './TokenRightsChips'
+import { TokenRightsTagList } from './TokenRightsChips'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { TokenRightsPreview } from './types'
 import { getTokenRightsPieTones } from './utils'
@@ -89,7 +89,7 @@ export function TokenRightsPopover({
 				{rights.utilityItems.length > 0 ? (
 					<div className="flex flex-col items-center gap-1.5">
 						<div className="label-sm tracking-wider text-secondary uppercase">Utility</div>
-						<TokenRightsChipList items={rights.utilityItems} tone="neutral" variant="overview" wrap />
+						<TokenRightsTagList items={rights.utilityItems} />
 					</div>
 				) : null}
 

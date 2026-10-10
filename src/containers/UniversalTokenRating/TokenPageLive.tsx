@@ -6,13 +6,14 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, UTR_METRIC_COLORS } from '~/constants/colors'
-import { AccentBadge, SecondaryBadge, StatusBadge } from '~/containers/MarketMakers/badges'
+import { AccentBadge, SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -545,7 +546,7 @@ export function TokenPageLive({
 							Status: {asset.tgeStatus === 'post' ? 'Listed' : 'Pre-TGE'}
 						</SecondaryBadge>
 						{asset.sector ? <SecondaryBadge className="h-8 px-3">{asset.sector}</SecondaryBadge> : null}
-						{asset.dataStatus === 'stale' ? <AccentBadge className="h-8 px-3">Stale data</AccentBadge> : null}
+						{asset.dataStatus === 'stale' ? <StatusBadge status="caution">Stale data</StatusBadge> : null}
 					</div>
 				</div>
 				<div className="flex items-center gap-2 max-lg:w-full">
@@ -1051,20 +1052,9 @@ export function TokenPageLive({
 												{TIER1_EXCHANGE_IDS.map((exchange) => {
 													const covered = tier1Covered.includes(exchange)
 													return (
-														<StatusBadge
-															key={exchange}
-															status={covered ? 'full' : 'not-listed'}
-															className="gap-1.5 px-2.5 py-1"
-															label={
-																<>
-																	<span className={covered ? 'flex' : 'flex opacity-50 grayscale'}>
-																		<TokenLogo name={exchangeIconSlug(exchange)} kind="exchange" size={14} />
-																	</span>
-																	{exchangeLabel(exchange)}
-																	{covered ? <Icon name="check-circle" height={12} width={12} /> : null}
-																</>
-															}
-														/>
+														<StatusBadge key={exchange} status={covered ? 'good' : 'neutral'}>
+															{exchangeLabel(exchange)}
+														</StatusBadge>
 													)
 												})}
 											</span>
@@ -1159,7 +1149,7 @@ export function TokenPageLive({
 							<div className="flex flex-wrap items-center gap-2">
 								<h2 className="heading-sm">Performance Overview: Tokenomics</h2>
 								{metrics?.undisclosedUnlockDetected ? (
-									<StatusBadge status="none" label="Undisclosed unlock detected" className="px-2.5 py-0.5" />
+									<StatusBadge status="bad">Undisclosed unlock detected</StatusBadge>
 								) : null}
 							</div>
 							{hasVestingData ? (

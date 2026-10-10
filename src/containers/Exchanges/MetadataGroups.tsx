@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -13,7 +14,7 @@ import {
 	METADATA_GROUP_ORDER,
 	METADATA_GROUP_PRESENTATION,
 	metadataLinkIcon,
-	metadataStatusTone,
+	metadataStatus,
 	metadataValueLabel
 } from './metadataPresentation'
 import type {
@@ -47,21 +48,11 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 	)
 }
 
-const TONE_CLASSES: Record<ExchangeMetadataTone, string> = {
-	positive: 'border-success bg-success-tint text-success',
-	caution: 'border-warning bg-warning-tint text-warning',
-	negative: 'border-error bg-error-tint text-error',
-	neutral: 'border-subtle bg-surface-elevated-1 text-secondary'
-}
-
-function MetadataBadge({ value, tone = 'neutral' }: { value: string; tone?: ExchangeMetadataTone }) {
-	const icon = tone === 'positive' ? 'check-circle' : tone === 'negative' ? 'circle-x' : null
-	return (
-		<span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 label-sm ${TONE_CLASSES[tone]}`}>
-			{icon ? <Icon name={icon} height={12} width={12} /> : null}
-			{metadataValueLabel(value)}
-		</span>
-	)
+const TONE_STATUS: Record<ExchangeMetadataTone, Status> = {
+	positive: 'good',
+	caution: 'caution',
+	negative: 'bad',
+	neutral: 'neutral'
 }
 
 function MetadataPills({ values }: { values: Array<string> }) {
@@ -91,7 +82,11 @@ function ExternalMetadataLink({ value }: { value: { label: string; url: string }
 function formatScalar(value: ExchangeMetadataCell | undefined, type: ExchangeMetadataScalarFormat): React.ReactNode {
 	if (value == null || value === '') return <span className="text-tertiary">–</span>
 	if (type === 'bool') {
-		return value === true ? <MetadataBadge value="Yes" tone="positive" /> : <MetadataBadge value="No" />
+		return value === true ? (
+			<StatusBadge status="good">Yes</StatusBadge>
+		) : (
+			<StatusBadge status="neutral">No</StatusBadge>
+		)
 	}
 	if (type === 'usd' && typeof value === 'number')
 		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -159,7 +154,11 @@ export function MetadataFieldValue({
 	}
 	if (field.type === 'link') return <ExternalMetadataLink value={field.value} />
 	if (field.type === 'badge') {
-		return <MetadataBadge value={field.value} {...(field.tone ? { tone: field.tone } : null)} />
+		return (
+			<StatusBadge status={field.tone ? TONE_STATUS[field.tone] : 'neutral'}>
+				{metadataValueLabel(field.value)}
+			</StatusBadge>
+		)
 	}
 	if (field.type === 'table') return <MetadataTable field={field} />
 	return <>{formatScalar(field.value, field.type)}</>
@@ -175,10 +174,10 @@ function MetadataTableCell({
 	format?: ExchangeMetadataScalarFormat
 }) {
 	if (columnKey === 'status' && typeof value === 'string') {
-		return <MetadataBadge value={value} tone={metadataStatusTone(value)} />
+		return <StatusBadge status={metadataStatus(value)}>{metadataValueLabel(value)}</StatusBadge>
 	}
 	if (columnKey === 'type' && typeof value === 'string' && ['both', 'deposit', 'withdraw'].includes(value)) {
-		return <MetadataBadge value={value} />
+		return <Tag>{metadataValueLabel(value)}</Tag>
 	}
 	return <>{formatScalar(value, format)}</>
 }
@@ -373,11 +372,7 @@ function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {
 				<Icon name={presentation.icon} height={17} width={17} />
 			</span>
 			<h2 className="label-lg">{presentation.title}</h2>
-			{group.fromProofOfReserves ? (
-				<span className="rounded-md border border-success bg-success-tint px-2 py-0.5 label-sm text-success">
-					Live reserves data
-				</span>
-			) : null}
+			{group.fromProofOfReserves ? <StatusBadge status="good">Live reserves data</StatusBadge> : null}
 			<span className="ml-auto">
 				<MetadataSource source={group.source} />
 			</span>

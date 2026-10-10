@@ -7,6 +7,7 @@ import {
 } from '~/components/Table/helpers'
 import { ChartPanel } from '~/ui/ChartPanel'
 import { keepFocus } from '~/ui/focus'
+import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -38,25 +39,15 @@ const RECEIPT_SHARE = {
 } as const
 
 // A revert is a failure, a partial fill is a shortfall, and an unmeasured day is a hole in our own
-// coverage. Three different claims, so three different tones — never one "bad" red.
-const INCIDENT_TONE: Record<ExitStripKind, string> = {
-	full: 'text-secondary',
-	queued: 'text-secondary',
-	partial: 'text-warning',
-	liquidity: 'text-(--yield-negative-text)',
-	blocked: 'text-(--yield-negative-text)',
-	no_exit: 'text-tertiary',
-	unmeasured: 'text-tertiary'
-}
-
-const INCIDENT_DOT: Record<ExitStripKind, string> = {
-	full: 'bg-(--yield-positive-text)',
-	queued: 'bg-(--yield-positive-text)',
-	partial: 'bg-(--yield-warning-text)',
-	liquidity: 'bg-(--yield-negative-text)',
-	blocked: 'bg-(--yield-negative-text)',
-	no_exit: 'bg-(--text-tertiary) opacity-60',
-	unmeasured: 'bg-(--text-tertiary) opacity-60'
+// coverage. Three different claims, so three different statuses — never one "bad" red.
+const INCIDENT_STATUS: Record<ExitStripKind, Status> = {
+	full: 'good',
+	queued: 'good',
+	partial: 'caution',
+	liquidity: 'bad',
+	blocked: 'bad',
+	no_exit: 'neutral',
+	unmeasured: 'neutral'
 }
 
 // Past ten rows the table reads as a log, so the rest folds; the count stays visible.
@@ -236,12 +227,9 @@ function IncidentRow({ incident }: { incident: ExitIncident }) {
 				</span>
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell>
-				<span className="flex items-center gap-2">
-					<span className={`size-[7px] shrink-0 rounded-full ${INCIDENT_DOT[incident.kind]}`} aria-hidden />
-					<span className={INCIDENT_TONE[incident.kind]}>
-						{incident.outcome ? EXIT_OUTCOME_LABELS[incident.outcome] : 'Not measured'}
-					</span>
-				</span>
+				<StatusBadge status={INCIDENT_STATUS[incident.kind]}>
+					{incident.outcome ? EXIT_OUTCOME_LABELS[incident.outcome] : 'Not measured'}
+				</StatusBadge>
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell textAlign="end">
 				<span className="text-primary">

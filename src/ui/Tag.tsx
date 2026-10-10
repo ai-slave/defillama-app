@@ -10,7 +10,8 @@ import type { ComponentPropsWithoutRef } from 'react'
  * card's tag that filters by it): one look in a row of tags, plus a hover wash.
  *
  * Not a filter chip and not a selection pill — those are Button `filter`/`toggle`
- * and `MetricChip`, which own their brand active states. `className` is for
+ * and `MetricChip`, which own their brand active states. A state coloured by
+ * whether it is good (Live, Failed) is `StatusBadge`. `className` is for
  * layout placement only, never colors, radius, or type styles.
  */
 const TAG_CLASSES =

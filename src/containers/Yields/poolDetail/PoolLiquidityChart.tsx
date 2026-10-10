@@ -432,11 +432,11 @@ function LiquidityReadout({
 									</span>
 								) : null}
 								{revertedDays > 0 ? (
-									<span className="text-(--yield-negative-text)">{formatNumber(revertedDays)} days reverted</span>
+									<span className="text-error">{formatNumber(revertedDays)} days reverted</span>
 								) : null}
 							</>
 						) : (
-							<span className="text-(--yield-positive-text)">No interruptions</span>
+							<span className="text-success">No interruptions</span>
 						)}
 					</span>
 				</ReadoutCell>

@@ -9,6 +9,7 @@ import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -446,13 +447,9 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 													{formatPercent(entry.performance?.avgUptime, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 												</td>
 												<td className="px-4 py-2.5 text-right">
-													<span
-														className={`rounded-full px-2 py-1 body-xs ${
-															achieved ? 'bg-success-tint-strong text-success' : 'bg-error-tint-strong text-error'
-														}`}
-													>
+													<StatusBadge status={achieved ? 'good' : 'bad'}>
 														{achieved ? 'Achieved' : 'Lagging'}
-													</span>
+													</StatusBadge>
 												</td>
 											</tr>
 										)

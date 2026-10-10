@@ -7,9 +7,10 @@ import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
-import { AccentBadge, SecondaryBadge, StatusBadge } from './badges'
+import { AccentBadge, integrationStatus, SecondaryBadge } from './badges'
 import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
 import {
@@ -305,8 +306,8 @@ function DrawerBody({
 				</div>
 				<p className="body-sm text-secondary">{description}</p>
 				<div className="flex flex-wrap items-center gap-2">
-					{/* Chips and a small link level at 24px; a 32px pin broke once md buttons grew in phone sheets. */}
-					<StatusBadge status={status ?? 'none'} label={integrationLabel(status)} className="min-h-6 px-2.5" />
+					{/* The HQ chip and a small link level at 24px; a 32px pin broke once md buttons grew in phone sheets. */}
+					<StatusBadge status={integrationStatus(status ?? 'none')}>{integrationLabel(status)}</StatusBadge>
 					{country ? (
 						<SecondaryBadge className="min-h-6">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge>
 					) : null}

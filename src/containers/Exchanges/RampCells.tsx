@@ -1,6 +1,7 @@
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
-import { FEE_TONE_CLASS, type FeeTone, ValueBadge } from './feePresentation'
+import { ValueBadge } from './feePresentation'
 import type { RampRowModel } from './rampPresentation'
 
 const USD_FIXED_OPTIONS = { currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
@@ -11,11 +12,11 @@ const DASH = <span className="text-tertiary">–</span>
 export const LEG_TONE_LIMITS = { low: 0.005, medium: 0.01 }
 const ROUND_TRIP_TONE_LIMITS = { low: 0.01, medium: 0.02 }
 
-function tone(fraction: number | null, limits: { low: number; medium: number }): FeeTone | null {
-	if (fraction == null) return null
-	if (fraction <= limits.low) return 'low'
-	if (fraction <= limits.medium) return 'medium'
-	return 'high'
+function costStatus(fraction: number | null, limits: { low: number; medium: number }): Status {
+	if (fraction == null) return 'neutral'
+	if (fraction <= limits.low) return 'good'
+	if (fraction <= limits.medium) return 'caution'
+	return 'bad'
 }
 
 /** Shared with the /mica ramp columns. */
@@ -38,7 +39,7 @@ export function CostBadge({
 }) {
 	return (
 		<ValueBadge
-			tone={tone(fraction, limits)}
+			status={costStatus(fraction, limits)}
 			ariaLabel={ariaLabel}
 			contentClassName="w-80 p-3 text-primary"
 			content={children}
@@ -195,17 +196,17 @@ export function RampCurrenciesValue({ row, currency }: { row: RampRowModel; curr
 	)
 }
 
-const ACCESS_LABEL: Record<RampRowModel['status'], { label: string; tone: FeeTone; description: string }> = {
-	available: { label: 'Available', tone: 'low', description: 'Open to users in the selected country.' },
+const ACCESS_LABEL: Record<RampRowModel['status'], { label: string; status: Status; description: string }> = {
+	available: { label: 'Available', status: 'good', description: 'Open to users in the selected country.' },
 	restricted: {
 		label: 'Restricted',
-		tone: 'medium',
+		status: 'caution',
 		description: 'Declared restrictions apply in the selected country.'
 	},
-	leaving: { label: 'Leaving', tone: 'medium', description: 'The venue is winding down service in this market.' },
+	leaving: { label: 'Leaving', status: 'caution', description: 'The venue is winding down service in this market.' },
 	unavailable: {
 		label: 'Unavailable',
-		tone: 'high',
+		status: 'bad',
 		description: 'The venue’s own terms or geo-gate exclude this country.'
 	}
 }
@@ -222,12 +223,8 @@ export function RampAccessValue({ row, country }: { row: RampRowModel; country: 
 		.filter(Boolean)
 		.join('\n')
 	return (
-		<Tooltip content={detail}>
-			<span
-				className={`inline-flex h-[18px] items-center rounded-sm border px-1.5 label-sm ${FEE_TONE_CLASS[presentation.tone]}`}
-			>
-				{presentation.label}
-			</span>
-		</Tooltip>
+		<StatusBadge status={presentation.status} tooltip={detail}>
+			{presentation.label}
+		</StatusBadge>
 	)
 }

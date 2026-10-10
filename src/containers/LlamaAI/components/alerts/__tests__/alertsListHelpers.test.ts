@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
-	execChipLabel,
-	execChipTone,
+	execBadgeLabel,
+	execBadgeStatus,
 	applyAlertUpdateToList,
 	formatPriceAlertSummary,
 	formatTokenLabel,
@@ -237,20 +237,20 @@ describe('applyAlertUpdateToList', () => {
 	})
 })
 
-describe('execChipTone / execChipLabel', () => {
-	test('keeps success and legacy test rows green', () => {
-		expect(execChipTone('success', false)).toBe('success')
-		expect(execChipTone('test', false)).toBe('success')
+describe('execBadgeStatus / execBadgeLabel', () => {
+	test('marks success and legacy test rows good', () => {
+		expect(execBadgeStatus('success', false)).toBe('good')
+		expect(execBadgeStatus('test', false)).toBe('good')
 	})
 
-	test('colors delivery_test by whether it actually delivered', () => {
-		expect(execChipTone('delivery_test', false)).toBe('success')
-		expect(execChipTone('delivery_test', true)).toBe('error')
+	test('marks delivery_test by whether it actually delivered', () => {
+		expect(execBadgeStatus('delivery_test', false)).toBe('good')
+		expect(execBadgeStatus('delivery_test', true)).toBe('bad')
 	})
 
-	test('keeps real failures red and labels test pings in user language', () => {
-		expect(execChipTone('error', true)).toBe('error')
-		expect(execChipLabel('delivery_test')).toBe('test ping')
-		expect(execChipLabel('success')).toBe('success')
+	test('marks real failures bad and labels test pings in user language', () => {
+		expect(execBadgeStatus('error', true)).toBe('bad')
+		expect(execBadgeLabel('delivery_test')).toBe('Test ping')
+		expect(execBadgeLabel('success')).toBe('Success')
 	})
 })

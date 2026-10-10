@@ -4,9 +4,10 @@ import type { SortedTableFeatures } from '~/components/Table/features/sorting'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
-import { GradeBadge, StatusBadge } from '../badges'
+import { GradeBadge, integrationStatus } from '../badges'
 import { formatComposite, resolveGrade } from '../format'
 import { GRADE_SCALE_SUMMARY } from '../gradeBands'
 import type { IntegrationStatus, PerformanceRow } from './types'
@@ -166,5 +167,10 @@ const STATUS_LABELS: Record<'full' | 'partial' | 'none', string> = {
 
 function renderStatusBadge(status: IntegrationStatus) {
 	const label = STATUS_LABELS[status as 'full' | 'partial' | 'none'] ?? String(status)
-	return <StatusBadge status={status} label={label} className="h-6 w-[92px]" />
+	// The fixed slot keeps the Details buttons in one column whatever the label's width.
+	return (
+		<span className="w-[92px] shrink-0">
+			<StatusBadge status={integrationStatus(status)}>{label}</StatusBadge>
+		</span>
+	)
 }

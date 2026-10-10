@@ -2,6 +2,7 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
@@ -298,7 +299,6 @@ export function CollateralRow({
 	markets: Array<MarketOracle>
 }) {
 	const badge = oracleBadge(c.oracleType)
-	const tone = toneClasses(badge.tone)
 	const vendor = oracleVendorLabel(c)
 	// On a one-collateral market the dollar figure is the whole story, so the share is dropped.
 	const breakLossUsd = collateralMarketBreakLossUsd(c)
@@ -359,12 +359,9 @@ export function CollateralRow({
 						<BasicLink href={`/token/${slug(c.symbol)}`} className="truncate label-md text-primary hover:underline">
 							{c.symbol}
 						</BasicLink>
-						<Tooltip content={c.oracleMechanism ?? badge.story} className="shrink-0">
-							<span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 label-xs ${tone.chip}`}>
-								<span className={`size-1.5 rounded-full ${tone.bar}`} aria-hidden />
-								{badge.label}
-							</span>
-						</Tooltip>
+						<StatusBadge status={badge.status} tooltip={c.oracleMechanism ?? badge.story}>
+							{badge.label}
+						</StatusBadge>
 						{c.ptPricing ? <PtPricingChip pricing={c.ptPricing} /> : null}
 						{vendor ? <span className="hidden shrink-0 body-sm text-tertiary sm:inline">{vendor}</span> : null}
 					</span>

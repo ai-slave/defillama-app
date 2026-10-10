@@ -13,6 +13,7 @@ import {
 } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -371,9 +372,7 @@ export default function Tokenomics() {
 								</ChartPanelTitle>
 							}
 						>
-							<span className="rounded-full border border-medium px-2.5 py-0.5 label-xs tracking-wide text-success uppercase">
-								Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}
-							</span>
+							<StatusBadge status="good">Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}</StatusBadge>
 							<ChartExportButtons
 								chartInstance={fireExport.chartInstance}
 								filename="flare-fire-fees"

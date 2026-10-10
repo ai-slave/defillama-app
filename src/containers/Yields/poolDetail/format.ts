@@ -1,5 +1,6 @@
 // Shared display policies for the /yields/pool detail page. Callers use the
 // canonical formatters directly so the unit and input semantics stay visible.
+import type { Status } from '~/ui/StatusBadge'
 import { formatNumber } from '~/utils/numberFormat'
 
 export const YIELD_PERCENT_OPTIONS = {
@@ -9,6 +10,18 @@ export const YIELD_PERCENT_OPTIONS = {
 	useGrouping: false,
 	smallValueDisplay: 'threshold'
 } as const
+
+// A steady supply APY is good for the depositor; a volatile one is the risk.
+const STABILITY_STATUS: Record<string, Status> = {
+	stable: 'good',
+	mixed: 'neutral',
+	volatile: 'bad'
+}
+
+/** The 30d stability rating as a badge status; a rating outside stable, mixed and volatile reads as neutral. */
+export function stabilityStatus(rating: string): Status {
+	return STABILITY_STATUS[rating] ?? 'neutral'
+}
 
 export function scoreValue(s: number | null | undefined): string {
 	if (s == null) return '—'

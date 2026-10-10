@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
@@ -126,27 +126,5 @@ export function SegmentedToggle<T extends string>({
 				))}
 			</Ariakit.RadioGroup>
 		</Ariakit.RadioProvider>
-	)
-}
-
-export function StatusChip({
-	tone,
-	children
-}: {
-	tone: 'success' | 'error' | 'neutral' | 'warning'
-	children: ReactNode
-}) {
-	const toneClass =
-		tone === 'success'
-			? 'bg-success-tint text-success'
-			: tone === 'error'
-				? 'bg-error-tint text-error'
-				: tone === 'warning'
-					? 'bg-warning-tint text-warning'
-					: 'bg-surface-elevated-2 text-tertiary'
-	return (
-		<span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 label-xs capitalize ${toneClass}`}>
-			{children}
-		</span>
 	)
 }

@@ -11,15 +11,20 @@ import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
+import {
+	equityCaptureBadgeStatus,
+	feeSwitchBadgeStatus,
+	TokenRightsTagList
+} from '~/containers/TokenRights/TokenRightsChips'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
-import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
@@ -635,7 +640,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor('tokens', {
 		header: 'Token',
 		enableSorting: false,
-		cell: ({ getValue }) => <TokenPills tokens={getValue()} />,
+		cell: ({ getValue }) => <TokenRightsTagList items={getValue()} />,
 		meta: { headerClassName: 'w-[280px]' }
 	}),
 	columnHelper.accessor((row) => row.holdersRevenue24h ?? undefined, {
@@ -694,12 +699,12 @@ const columns = columnHelper.columns([
 		cell: ({ getValue, row }) => {
 			const value = getValue()
 			return value && value !== 'N/A' ? (
-				<TooltipStatusPill
-					label={value}
-					tone="positive"
+				<StatusBadge
+					status="good"
 					tooltip={row.original.valueAccrualDetails ?? TOKEN_RIGHTS_PILL_TOOLTIPS.valueAccrual}
-					className="whitespace-nowrap"
-				/>
+				>
+					{value}
+				</StatusBadge>
 			) : (
 				<span className="text-tertiary">-</span>
 			)
@@ -722,21 +727,6 @@ const columns = columnHelper.columns([
 		}
 	})
 ])
-
-function TokenPills({ tokens }: { tokens: Array<string> }) {
-	return (
-		<div className="flex flex-wrap gap-1.5">
-			{tokens.map((token) => (
-				<span
-					key={token}
-					className="rounded-md border border-success-muted bg-success-tint px-2 py-0.5 label-sm text-success"
-				>
-					{token}
-				</span>
-			))}
-		</div>
-	)
-}
 
 function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; labels: [string, string, string] }) {
 	const content = (
@@ -778,80 +768,23 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 
 function FeeSwitchBadge({ status, details }: { status: TokenRightsFeeSwitchStatus; details: string | null }) {
 	if (status === 'UNKNOWN') return <span className="text-tertiary">-</span>
-	const tooltip = details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.feeSwitch
-	if (status === 'ON') {
-		return <TooltipStatusPill label="ON" tone="positive" tooltip={tooltip} />
-	}
-	if (status === 'PENDING') {
-		return <TooltipStatusPill label="PENDING" tone="pending" tooltip={tooltip} />
-	}
-	return <TooltipStatusPill label="OFF" tone="negative" tooltip={tooltip} />
+	return (
+		<StatusBadge status={feeSwitchBadgeStatus(status)} tooltip={details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.feeSwitch}>
+			{status}
+		</StatusBadge>
+	)
 }
 
 function EquityCaptureBadge({ value, details }: { value: string | null; details: string | null }) {
 	if (!value) return <span className="text-tertiary">-</span>
-	const tooltip = details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.equityRevenueCapture
-	if (value === 'No') {
-		return <TooltipStatusPill label="No" tone="positive" tooltip={tooltip} />
-	}
-	if (value === 'Yes') {
-		return <TooltipStatusPill label="Yes" tone="negative" tooltip={tooltip} />
-	}
-	if (value === 'Partial') {
-		return <TooltipStatusPill label="Partial" tone="pending" tooltip={tooltip} />
-	}
-	return <TooltipStatusPill label={value} tone="neutral" tooltip={tooltip} />
-}
-
-type StatusPillTone = 'positive' | 'negative' | 'pending' | 'neutral'
-
-function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
-	const toneClassName =
-		tone === 'positive'
-			? 'border-success-muted bg-success-tint text-success'
-			: tone === 'negative'
-				? 'border-error-muted bg-error-tint text-error'
-				: tone === 'pending'
-					? 'border-warning-muted bg-warning-tint text-warning'
-					: 'border-medium bg-page text-secondary'
-
-	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 label-sm ${toneClassName} ${extraClassName}`
-}
-
-function TooltipStatusPill({
-	label,
-	tone,
-	tooltip,
-	className: extraClassName = ''
-}: {
-	label: string
-	tone: StatusPillTone
-	tooltip: string
-	className?: string
-}) {
 	return (
-		<Tooltip
-			content={tooltip}
-			// A status label, not an action: focusable so keyboard readers can open its explanation.
-			render={<span />}
-			tabIndex={0}
-			className={getStatusPillClassName(tone, extraClassName)}
+		<StatusBadge
+			status={equityCaptureBadgeStatus(value)}
+			tooltip={details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.equityRevenueCapture}
 		>
-			{label}
-		</Tooltip>
+			{value}
+		</StatusBadge>
 	)
-}
-
-function StatusPill({
-	label,
-	tone,
-	className: extraClassName = ''
-}: {
-	label: string
-	tone: StatusPillTone
-	className?: string
-}) {
-	return <span className={getStatusPillClassName(tone, extraClassName)}>{label}</span>
 }
 
 function TokenRightsLegend() {
@@ -867,15 +800,15 @@ function TokenRightsLegend() {
 				Inactive
 			</span>
 			<span className="inline-flex items-center gap-2">
-				<StatusPill label="ON" tone="positive" />
+				<StatusBadge status="good">ON</StatusBadge>
 				Fee Switch ON
 			</span>
 			<span className="inline-flex items-center gap-2">
-				<StatusPill label="OFF" tone="negative" />
+				<StatusBadge status="bad">OFF</StatusBadge>
 				Fee Switch OFF
 			</span>
 			<span className="inline-flex items-center gap-2">
-				<StatusPill label="PENDING" tone="pending" />
+				<StatusBadge status="caution">PENDING</StatusBadge>
 				Fee Switch Pending
 			</span>
 		</div>

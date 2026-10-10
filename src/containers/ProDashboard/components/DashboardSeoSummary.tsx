@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import type { DashboardSeo, DashboardSeoPublicDashboard } from '../utils/seo'
@@ -44,10 +45,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 						<h1 id="dashboard-title" className="heading-lg text-primary">
 							{dashboard.data.dashboardName || 'Untitled Dashboard'}
 						</h1>
-						<p className="inline-flex items-center gap-1.5 rounded-md border border-success-muted bg-success-tint px-2 py-1 label-sm text-success">
-							<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-							Public
-						</p>
+						<StatusBadge status="good">Public</StatusBadge>
 					</div>
 					{dashboard.author ? (
 						<BasicLink

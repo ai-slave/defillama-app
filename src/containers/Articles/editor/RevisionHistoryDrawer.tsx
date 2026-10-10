@@ -9,6 +9,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { tw } from '~/ui/tw'
 import { queryReadFailed } from '~/utils/query'
 import {
@@ -202,22 +203,6 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 			) : (
 				<span className={`size-2 rounded-full ring-1 ring-inset ${tone.replace('text-', 'ring-')}`} />
 			)}
-		</span>
-	)
-}
-
-function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' }) {
-	const styles =
-		tone === 'live'
-			? 'border-success-muted bg-success-tint text-success'
-			: 'border-warning-muted bg-warning-tint text-warning'
-	return (
-		<span className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px label-xs ${styles}`}>
-			<span
-				aria-hidden
-				className={`size-1 rounded-full ${tone === 'live' ? 'bg-success' : 'bg-warning motion-safe:animate-pulse'}`}
-			/>
-			{label}
 		</span>
 	)
 }
@@ -617,9 +602,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 																		<span className="label-md text-primary">
 																			{EVENT_LABELS[entry.eventType] ?? entry.eventType}
 																		</span>
-																		{entry.id === liveAnchorId ? <StatusBadge label="Live" tone="live" /> : null}
+																		{entry.id === liveAnchorId ? <StatusBadge status="good">Live</StatusBadge> : null}
 																		{entry.id === pendingAnchorId ? (
-																			<StatusBadge label="Pending" tone="pending" />
+																			<StatusBadge status="caution">Pending</StatusBadge>
 																		) : null}
 																	</div>
 																	<p className="mt-0.5 body-sm text-secondary tabular-nums">
@@ -821,8 +806,8 @@ function PreviewSpecimenHeader({
 							{revision ? <EventGlyph type={eventType} active={false} /> : null}
 							{revision ? EVENT_LABELS[eventType] : '—'}
 						</span>
-						{isLive ? <StatusBadge label="Currently live" tone="live" /> : null}
-						{isPendingAnchor ? <StatusBadge label="Currently pending" tone="pending" /> : null}
+						{isLive ? <StatusBadge status="good">Currently live</StatusBadge> : null}
+						{isPendingAnchor ? <StatusBadge status="caution">Currently pending</StatusBadge> : null}
 						{status ? <span className="label-sm text-tertiary capitalize">{status}</span> : null}
 					</div>
 					<h3

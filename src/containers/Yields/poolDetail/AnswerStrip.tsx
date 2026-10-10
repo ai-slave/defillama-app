@@ -2,11 +2,12 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
 import { SealGlyph } from '../Tables/Measured'
-import { YIELD_PERCENT_OPTIONS } from './format'
+import { stabilityStatus, YIELD_PERCENT_OPTIONS } from './format'
 import type { ApyBreakdown, PoolSide, StabilityInfo } from './PoolDetailView'
 import type { DetailHolders } from './types'
 import { HOW_WE_VERIFY_ID } from './VerifiedApyPanel'
@@ -179,13 +180,6 @@ export function AnswerStrip({
 
 	const borrowParts = borrow && hasPart(borrow.apy.reward) ? apyParts(borrow.apy, 'borrow') : []
 
-	const stabilityColor =
-		stability?.rating === 'stable'
-			? 'text-(--yield-positive-text)'
-			: stability?.rating === 'volatile'
-				? 'text-(--yield-negative-text)'
-				: ''
-
 	const holderCount = holders?.count ?? null
 
 	return (
@@ -259,8 +253,11 @@ export function AnswerStrip({
 					<Tile
 						label="30d Stability"
 						tooltip="How steady this pool's supply APY has been over the last 30 days."
-						value={<span className="capitalize">{stability.rating}</span>}
-						valueClassName={stabilityColor}
+						value={
+							<StatusBadge status={stabilityStatus(stability.rating)}>
+								{stability.rating.charAt(0).toUpperCase() + stability.rating.slice(1)}
+							</StatusBadge>
+						}
 					/>
 				) : null}
 

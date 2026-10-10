@@ -336,7 +336,7 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 								{recovered !== null && recovered > 0 ? (
 									<>
 										{' · '}
-										<span className={madeWhole ? 'text-(--yield-positive-text)' : undefined}>
+										<span className={madeWhole ? 'text-success' : undefined}>
 											{formatUsd(recovered, {
 												compact: true,
 												minimumCompactValue: 1_000_000,

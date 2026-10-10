@@ -12,8 +12,8 @@ import {
 } from '~/containers/LlamaAI/components/alerts/AlertScheduleFields'
 import {
 	applyAlertUpdateToList,
-	execChipLabel,
-	execChipTone,
+	execBadgeLabel,
+	execBadgeStatus,
 	formatPriceAlertSummary,
 	formatTokenLabel,
 	getAlertsAccessState,
@@ -56,7 +56,6 @@ import {
 	AlertsHeaderIcon,
 	SegmentedToggle,
 	DELIVERY_OPTIONS,
-	StatusChip,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
@@ -78,6 +77,7 @@ import { ListRow } from '~/ui/ListRow'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -425,9 +425,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 			</span>
 			<div className="flex items-center justify-between">
 				<span className="mono-sm text-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
-				<StatusChip tone={execChipTone(selectedExec.status, !!selectedExec.error_message)}>
-					{execChipLabel(selectedExec.status)}
-				</StatusChip>
+				<StatusBadge status={execBadgeStatus(selectedExec.status, !!selectedExec.error_message)}>
+					{execBadgeLabel(selectedExec.status)}
+				</StatusBadge>
 			</div>
 			{selectedExec.generated_summary ? (
 				<div className="[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-lg">
@@ -479,9 +479,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 						<div className="min-w-0 flex-1">
 							<div className="flex flex-wrap items-center gap-2">
 								<h3 className="min-w-0 label-md break-words text-primary">{alert.title}</h3>
-								{alert.last_run_status === 'error' ? <StatusChip tone="error">Error</StatusChip> : null}
+								{alert.last_run_status === 'error' ? <StatusBadge status="bad">Error</StatusBadge> : null}
 								{!alert.enabled && !isFiredOneTimePriceAlert(alert) ? (
-									<StatusChip tone="neutral">Paused</StatusChip>
+									<StatusBadge status="neutral">Paused</StatusBadge>
 								) : null}
 							</div>
 							<p className="mt-1 body-md text-secondary">
@@ -682,9 +682,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 											<span className="mono-sm text-primary">{formatExecDate(exec.executed_at)}</span>
 											<span className="label-xs text-tertiary">{formatDuration(exec.duration_ms)}</span>
 										</div>
-										<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>
-											{execChipLabel(exec.status)}
-										</StatusChip>
+										<StatusBadge status={execBadgeStatus(exec.status, !!exec.error_message)}>
+											{execBadgeLabel(exec.status)}
+										</StatusBadge>
 									</ListRow>
 								))}
 							</div>

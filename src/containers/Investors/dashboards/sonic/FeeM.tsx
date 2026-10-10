@@ -14,6 +14,7 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { lastNDaysZoom } from './chartDefaults'
@@ -85,11 +86,7 @@ const columns = columnHelper.columns([
 						</span>
 					)}
 					<span className="truncate font-medium">{displayName}</span>
-					{!row.isActive && (
-						<span className="shrink-0 rounded-sm bg-warning-tint-strong px-1.5 py-0.5 label-xs text-warning">
-							Inactive
-						</span>
-					)}
+					{!row.isActive && <StatusBadge status="caution">Inactive</StatusBadge>}
 				</div>
 			)
 			if (row.websiteUrl) {

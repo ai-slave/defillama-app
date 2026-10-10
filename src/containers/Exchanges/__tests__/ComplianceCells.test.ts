@@ -8,21 +8,21 @@ import {
 
 describe('exchange compliance presentation', () => {
 	test('colors each EU availability state by how usable the exchange is', () => {
-		expect(getEuStatusPresentation('available').tone).toBe('positive')
-		expect(getEuStatusPresentation('leaving').tone).toBe('caution')
-		expect(getEuStatusPresentation('restricted').tone).toBe('caution')
-		expect(getEuStatusPresentation('unavailable').tone).toBe('negative')
+		expect(getEuStatusPresentation('available').status).toBe('good')
+		expect(getEuStatusPresentation('leaving').status).toBe('caution')
+		expect(getEuStatusPresentation('restricted').status).toBe('caution')
+		expect(getEuStatusPresentation('unavailable').status).toBe('bad')
 	})
 
 	test('presents MiCA authorization rather than exposing the record status', () => {
 		const details = { memberState: 'Austria', regulator: 'FMA' }
 		expect(getMicaLicensePresentation({ status: 'active', licensed: true, ...details })).toMatchObject({
 			label: 'Licensed',
-			tone: 'positive'
+			status: 'good'
 		})
 		expect(getMicaLicensePresentation({ status: 'in-progress', licensed: false, ...details })).toMatchObject({
 			label: 'In progress',
-			tone: 'caution'
+			status: 'caution'
 		})
 		expect(getMicaLicensePresentation({ status: 'active', licensed: null, ...details })).toBeNull()
 	})

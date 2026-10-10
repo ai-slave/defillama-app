@@ -1,4 +1,5 @@
 import type { IIcon } from '~/ui/Icon'
+import type { Status } from '~/ui/StatusBadge'
 import type { OracleType, RiskKind } from './types'
 
 // Small tone enum so the colour language stays consistent across the section.
@@ -28,34 +29,34 @@ export function kindMeta(kind: RiskKind): KindMeta {
 // Oracle type → the depeg story. `unknown` is a valid long-tail value, NOT an error.
 interface OracleBadge {
 	label: string
-	tone: Tone
+	status: Status
 	story: string
 }
 
 const ORACLE_BADGE = {
 	market: {
 		label: 'Market',
-		tone: 'neutral',
+		status: 'neutral',
 		story: 'Priced off live market data — a depeg moves the price and can liquidate positions.'
 	},
 	aum: {
 		label: 'AUM / rate',
-		tone: 'warning',
+		status: 'caution',
 		story: 'Priced off an exchange rate / AUM — insulated from spot depegs, but exposed to rate-provider corruption.'
 	},
 	hardcoded: {
 		label: 'Hardcoded',
-		tone: 'danger',
+		status: 'bad',
 		story: "Price is fixed and won't move on a real depeg — divergence accrues as bad debt."
 	},
 	hybrid: {
 		label: 'Hybrid',
-		tone: 'warning',
+		status: 'caution',
 		story: 'Mixes market and exchange-rate inputs — partial depeg insulation, partial market exposure.'
 	},
 	unknown: {
 		label: 'Unclassified',
-		tone: 'muted',
+		status: 'neutral',
 		story: 'Oracle design not classified (long-tail market).'
 	}
 } satisfies Record<OracleType, OracleBadge>

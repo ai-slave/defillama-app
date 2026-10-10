@@ -19,6 +19,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { isMacPlatform } from '~/utils/platform'
@@ -709,18 +710,12 @@ function ProDashboardContent() {
 					)}
 				</h1>
 				{dashboardVisibility === 'public' ? (
-					<ProBadge
-						key={dashboardVisibility}
-						tone="success"
-						icon={<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />}
-						{...(justPublished ? { className: 'animate-pro-pop' } : {})}
-					>
-						Public
-					</ProBadge>
+					// The wrapper carries the pop that marks a publish; the badge owns its look.
+					<span className={justPublished ? 'inline-flex animate-pro-pop' : 'inline-flex'}>
+						<StatusBadge status="good">Public</StatusBadge>
+					</span>
 				) : (
-					<ProBadge tone="neutral" icon={<Icon name="key" height={12} width={12} />}>
-						Private
-					</ProBadge>
+					<StatusBadge status="neutral">Private</StatusBadge>
 				)}
 				{dashboardTeam ? (
 					<ProBadge tone="info" icon={<Icon name="users" height={12} width={12} />}>

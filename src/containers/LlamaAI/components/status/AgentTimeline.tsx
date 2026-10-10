@@ -18,6 +18,7 @@ import { getToolLabel, TOOL_ICONS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/
 import type { AgentStep, SpawnAgentStatus, ToolExecution } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { Icon } from '~/ui/Icon'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { formatNumber, formatUsd } from '~/utils/numberFormat'
 
 type ToolStep = Extract<AgentStep, { kind: 'tool' }>
@@ -416,9 +417,9 @@ function ToolRow({
 				) : null}
 			</span>
 			{step.isPremium || execution?.costUsd ? (
-				<span className="shrink-0 rounded-full bg-warning-tint px-1.5 py-px label-xs text-warning">
+				<StatusBadge status="caution">
 					Premium{Number.isFinite(parsedCost) ? ` ${formatStepCost(parsedCost)}` : ''}
-				</span>
+				</StatusBadge>
 			) : null}
 			<span className="shrink-0 mono-sm text-tertiary tabular-nums">
 				{step.status === 'running'

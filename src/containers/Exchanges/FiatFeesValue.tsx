@@ -70,7 +70,7 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 	const summary = fiatFeeSummary(fees)
 	return (
 		<ValueBadge
-			tone="info"
+			status="neutral"
 			ariaLabel={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
 			contentClassName="w-[900px] p-3"
 			content={
