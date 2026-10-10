@@ -230,7 +230,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 					<span className="label-lg text-secondary">/mo</span>
 				</div>
 				<span className="body-sm text-tertiary">
-					or <span className="font-mono text-secondary tabular-nums">$3,000</span> billed yearly
+					or <span className="text-secondary">$3,000</span> billed yearly
 				</span>
 			</div>
 
@@ -463,8 +463,8 @@ function SqlNotebookCell() {
 				</pre>
 
 				<div className="mt-2.5 flex items-center justify-between gap-2 body-xs">
-					<span className="font-mono text-tertiary tabular-nums">7 rows · 5 cols · 412ms</span>
-					<span className="flex items-center gap-1.5 font-mono text-success">
+					<span className="text-tertiary">7 rows · 5 cols · 412ms</span>
+					<span className="flex items-center gap-1.5 text-success">
 						<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
 						<span className="tracking-[0.12em] uppercase">cached</span>
 					</span>
@@ -567,7 +567,7 @@ function AddCellChip({ dot, label }: { dot: string; label: string }) {
 	return (
 		<span className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5">
 			<span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
-			<span className="font-mono">{label}</span>
+			<span>{label}</span>
 		</span>
 	)
 }
@@ -582,11 +582,11 @@ function QueryBody() {
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
 					<span aria-hidden className="inline-block size-1.5 rounded-full bg-success" />
-					<span className="font-mono tracking-[0.12em] text-success uppercase">ready</span>
+					<span className="label-xs tracking-[0.12em] text-success uppercase">ready</span>
 					<span aria-hidden className="text-tertiary">
 						·
 					</span>
-					<span className="font-mono text-tertiary tabular-nums">412ms</span>
+					<span className="text-tertiary">412ms</span>
 					<span aria-hidden className="hidden text-tertiary sm:inline">
 						·
 					</span>
@@ -652,7 +652,7 @@ function AltQueryBody() {
 					<span className="label-xs tracking-[0.12em] text-warning uppercase">unsaved</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
-					<span className="font-mono text-tertiary tabular-nums">86ms</span>
+					<span className="text-tertiary">86ms</span>
 				</span>
 			</div>
 
@@ -702,7 +702,7 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-bold text-primary">{col.name}</span>
+									<span className="truncate mono-sm-bold text-primary">{col.name}</span>
 								</div>
 								<span className="truncate mono-sm tracking-tight text-tertiary">{col.type}</span>
 							</div>

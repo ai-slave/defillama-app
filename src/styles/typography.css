@@ -30,19 +30,19 @@
 ---------------------------------------------------------------------------- */
 
 @utility heading-lg {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 2rem;
 	line-height: calc(40 / 32);
 	font-weight: 600;
 }
 @utility heading-sm {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1.25rem;
 	line-height: calc(24 / 20);
 	font-weight: 600;
 }
 @utility heading-xs {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1.125rem;
 	line-height: calc(22 / 18);
 	font-weight: 600;
@@ -53,19 +53,19 @@
    text-* size it replaces (text-base 16/24, text-sm 14/20, text-xs 12/16), so moving a title
    onto the style keeps its row height. */
 @utility title-lg {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1rem;
 	line-height: calc(24 / 16);
 	font-weight: 600;
 }
 @utility title-md {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.875rem;
 	line-height: calc(20 / 14);
 	font-weight: 600;
 }
 @utility title-sm {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.75rem;
 	line-height: calc(16 / 12);
 	font-weight: 600;
@@ -74,106 +74,106 @@
 /* The table header contract: label-md's weight on the table's 14/20 line box,
    so a header row stays as tall as the body text it heads. */
 @utility table-header {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.875rem;
 	line-height: calc(20 / 14);
 	font-weight: 500;
 }
 
 @utility label-xl {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1.125rem;
 	line-height: calc(22 / 18);
 	font-weight: 500;
 }
 @utility label-lg {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1rem;
 	line-height: calc(20 / 16);
 	font-weight: 500;
 }
 @utility label-md {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.875rem;
 	line-height: calc(17 / 14);
 	font-weight: 500;
 }
 @utility label-sm {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.75rem;
 	line-height: calc(16 / 12);
 	font-weight: 500;
 }
 @utility label-xs {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.625rem;
 	line-height: calc(12 / 10);
 	font-weight: 500;
 }
 
 @utility body-xl {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1.125rem;
 	line-height: calc(27 / 18);
 	font-weight: 400;
 }
 @utility body-lg {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 1rem;
 	line-height: calc(24 / 16);
 	font-weight: 400;
 }
 @utility body-md {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.875rem;
 	line-height: calc(21 / 14);
 	font-weight: 400;
 }
 @utility body-sm {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.75rem;
 	line-height: calc(16 / 12);
 	font-weight: 400;
 }
 @utility body-xs {
-	font-family: var(--font-inter);
+	font-family: var(--font-sans);
 	font-size: 0.625rem;
 	line-height: calc(14 / 10);
 	font-weight: 400;
 }
 
 @utility mono-xl {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 1.5rem;
 	line-height: calc(32 / 24);
 	font-weight: 700;
 }
 @utility mono-lg {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 1.25rem;
 	line-height: calc(28 / 20); /* matches text-xl */
 	font-weight: 700;
 }
 @utility mono-md {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 0.875rem;
 	line-height: calc(19 / 14);
 	font-weight: 400;
 }
 @utility mono-md-bold {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 0.875rem;
 	line-height: calc(19 / 14);
 	font-weight: 700;
 }
 @utility mono-sm {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 0.75rem;
 	line-height: calc(16 / 12);
 	font-weight: 400;
 }
 @utility mono-sm-bold {
-	font-family: var(--font-jetbrains);
+	font-family: var(--font-mono);
 	font-size: 0.75rem;
 	line-height: calc(16 / 12);
 	font-weight: 700;

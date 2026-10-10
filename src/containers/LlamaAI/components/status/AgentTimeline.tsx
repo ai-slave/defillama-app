@@ -119,7 +119,7 @@ export function AgentTimeline({
 	}
 	const last = steps[steps.length - 1]
 	const showTrailingThinking = streaming && (!last || (last.kind === 'tool' && last.status !== 'running'))
-	const text = hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-secondary'
+	const text = hackerMode ? 'text-ai-terminal drop-shadow-ai-terminal' : 'text-secondary'
 	const rows = expanded ? (
 		<TimelineRows
 			steps={steps}
@@ -161,7 +161,7 @@ export function AgentTimeline({
 						onClick={() => setToggled(!expanded)}
 						aria-expanded={expanded}
 						aria-label={expanded ? 'Hide steps' : 'Show steps'}
-						className={`flex w-full items-center gap-2 text-left label-md ${text}`}
+						className={`flex w-full items-center gap-2 text-left ${hackerMode ? 'mono-md' : 'label-md'} ${text}`}
 					>
 						<span className="min-w-0 flex-1 truncate">{phrase}&hellip;</span>
 						<ElapsedTimeLabel startedAt={executionStartedAt} />
@@ -185,7 +185,7 @@ export function AgentTimeline({
 				type="button"
 				onClick={() => setToggled(!expanded)}
 				aria-expanded={expanded}
-				className={`flex w-full items-center gap-2 rounded-md py-1 text-left label-sm not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
+				className={`flex w-full items-center gap-2 rounded-md py-1 text-left ${hackerMode ? 'mono-sm' : 'label-sm'} not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
 			>
 				<Icon
 					name="check"

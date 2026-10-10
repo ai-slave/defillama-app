@@ -511,7 +511,7 @@ function CreateAlertModalForm({
 										className="self-start text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:text-link"
 									>
 										{priceToken.symbol.toUpperCase()} is trading around{' '}
-										<span className="font-mono text-primary">{formatPriceLabel(currentPrice)}</span> — tap to use
+										<span className="text-primary">{formatPriceLabel(currentPrice)}</span> — tap to use
 									</button>
 								) : (
 									<p className="body-sm text-secondary">

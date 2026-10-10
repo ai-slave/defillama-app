@@ -702,7 +702,7 @@ export const SettingsModal = memo(function SettingsModal({
 													>
 														{(control) => (
 															<div className="relative">
-																<span className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto flex items-center font-mono text-tertiary">
+																<span className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto flex items-center text-tertiary">
 																	$
 																</span>
 																<Input
@@ -712,7 +712,8 @@ export const SettingsModal = memo(function SettingsModal({
 																	value={spendCapValue}
 																	onChange={(e) => setSpendCapEdit(e.target.value)}
 																	onBlur={(e) => commitSpendCap(e.target.value)}
-																	className="w-full pl-7 font-mono"
+																	variant="code"
+																	className="w-full pl-7"
 																/>
 															</div>
 														)}
@@ -1050,8 +1051,10 @@ export const SettingsModal = memo(function SettingsModal({
 											<img src="/assets/llamaai/hackerllama.webp" alt="" className="size-11 rounded-lg" />
 											<div className="flex flex-col gap-0.5">
 												<p
-													className={`m-0 label-md ${
-														settings.hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-primary'
+													className={`m-0 ${
+														settings.hackerMode
+															? 'mono-md text-ai-terminal drop-shadow-ai-terminal'
+															: 'label-md text-primary'
 													}`}
 												>
 													{settings.hackerMode ? '> hacker_mode --active' : 'Hacker mode'}

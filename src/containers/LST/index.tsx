@@ -366,7 +366,7 @@ export function LSTOverview({
 		<>
 			<Card as="header" padding="sm" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Total Value Locked ETH LSTs</h1>
-				<span className="font-jetbrains">
+				<span className="mono-md">
 					{formatCompactNumber(stakedEthSum, {
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'

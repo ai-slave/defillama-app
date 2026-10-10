@@ -855,7 +855,7 @@ export function ColumnManager({
 							<div className="rounded-md border border-success-muted bg-success-faint p-2 body-sm">
 								<div className="flex items-center justify-between">
 									<span className="text-secondary">Result:</span>
-									<span className="font-mono font-bold text-success">{preview}</span>
+									<span className="mono-sm-bold text-success">{preview}</span>
 								</div>
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success-muted pt-1">

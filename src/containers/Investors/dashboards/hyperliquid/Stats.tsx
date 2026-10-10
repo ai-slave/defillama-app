@@ -73,7 +73,7 @@ const renderItem = (coin: string, i: number) => (
 		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-subtle px-4 label-sm text-primary transition-colors duration-300"
 	>
 		<span className="shrink-0 text-secondary">{coin}</span>
-		<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
+		<span data-price className="shrink-0 overflow-hidden mono-sm whitespace-nowrap tabular-nums">
 			--
 		</span>
 	</span>

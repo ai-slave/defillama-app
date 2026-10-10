@@ -17,6 +17,7 @@ import { RaisesFilters } from '~/containers/Raises/Filters'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -144,28 +145,11 @@ export function InvestorContainer({
 				<SummaryStatsCard>
 					<h1 className="heading-sm">{investorName}</h1>
 
-					<details className="group body-lg">
-						<summary>
-							<Icon
-								name="chevron-right"
-								height={20}
-								width={20}
-								className="-mb-5 -ml-5 transition-transform duration-100 group-open:rotate-90"
-							/>
-
-							<span className="flex flex-wrap items-center justify-between gap-2">
-								<span className="text-secondary">Total Investments</span>
-								<span className="font-jetbrains">{filteredRaisesList.length}</span>
-							</span>
-						</summary>
-
+					<MetricSection label="Total Investments" value={filteredRaisesList.length}>
 						{raisesByCategory.map(({ name, value }) => (
-							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={name}>
-								<span className="text-secondary">{name}</span>
-								<span className="font-jetbrains">{value}</span>
-							</p>
+							<SubMetricRow key={name} label={name} value={value} />
 						))}
-					</details>
+					</MetricSection>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>

@@ -18,7 +18,7 @@ export default function MCP() {
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 			</Head>
 			<LinkPreviewCard />
-			<div className="col-span-full flex min-h-screen w-full flex-col bg-page font-inter text-primary">
+			<div className="col-span-full flex min-h-screen w-full flex-col bg-page font-sans text-primary">
 				<header className="sticky top-0 z-50 border-b border-subtle bg-page-glass backdrop-blur-md">
 					<div className="mx-auto flex h-14 max-w-[1100px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">

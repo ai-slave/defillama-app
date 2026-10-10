@@ -94,7 +94,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 										value={name}
 										onChange={(e) => setName(e.target.value)}
 										placeholder="notes.md"
-										className="font-mono"
+										variant="code"
 									/>
 								}
 							/>

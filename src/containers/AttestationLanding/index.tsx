@@ -664,7 +664,7 @@ function ReconciliationLedger() {
 				>
 					<div className="min-w-0 text-left">
 						<p className="label-xs text-tertiary">Assets</p>
-						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-primary tabular-nums">
+						<p className="attn-equation-value mt-1 truncate font-mono font-bold text-primary tabular-nums">
 							<AuditValue
 								key={`assets-${run}`}
 								prefix="$"
@@ -683,7 +683,7 @@ function ReconciliationLedger() {
 					</span>
 					<div className="min-w-0">
 						<p className="label-xs text-tertiary">Liabilities</p>
-						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-primary tabular-nums">
+						<p className="attn-equation-value mt-1 truncate font-mono font-bold text-primary tabular-nums">
 							<AuditValue
 								key={`liabilities-${run}`}
 								prefix="$"
@@ -702,7 +702,7 @@ function ReconciliationLedger() {
 					</span>
 					<div className="min-w-0 text-right">
 						<p className="label-xs text-tertiary">Verified surplus</p>
-						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-success tabular-nums">
+						<p className="attn-equation-value mt-1 truncate font-mono font-bold text-success tabular-nums">
 							<AuditValue
 								key={`surplus-${run}`}
 								prefix="+$"
@@ -720,7 +720,7 @@ function ReconciliationLedger() {
 				>
 					<div>
 						<p className="label-xs tracking-[0.08em] text-tertiary uppercase">Coverage</p>
-						<p className="mt-1 font-jetbrains text-3xl font-bold text-primary tabular-nums" aria-hidden>
+						<p className="mt-1 font-mono text-3xl font-bold text-primary tabular-nums" aria-hidden>
 							{coverageLabel}
 						</p>
 						<span className="sr-only">167 percent coverage</span>
@@ -1319,7 +1319,7 @@ export default function VerifiedLanding() {
 			</Head>
 			{/* eslint-disable-next-line react/no-danger -- pageCss is a local constant, not input */}
 			<style dangerouslySetInnerHTML={{ __html: pageCss }} />
-			<div className="col-span-full flex min-h-screen w-full flex-col bg-surface font-inter text-primary">
+			<div className="col-span-full flex min-h-screen w-full flex-col bg-surface font-sans text-primary">
 				<div className="relative flex grow flex-col">
 					<SiteHeader />
 

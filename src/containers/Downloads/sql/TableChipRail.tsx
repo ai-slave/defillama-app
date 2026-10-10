@@ -108,7 +108,7 @@ function TableChip({
 					name="chevron-right"
 					className={`size-3.5 shrink-0 text-tertiary transition-transform ${open ? 'rotate-90' : ''}`}
 				/>
-				<span className="max-w-[180px] truncate font-mono">{table.name}</span>
+				<span className="max-w-[180px] truncate mono-sm">{table.name}</span>
 				<span className="text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>
 			</Button>
 			<Tooltip
@@ -164,7 +164,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 					<span className="size-1.5 rounded-full bg-(--text-tertiary)" />
 				)}
 			</span>
-			<span className="max-w-[180px] truncate font-mono">{table.name}</span>
+			<span className="max-w-[180px] truncate mono-sm">{table.name}</span>
 			<span className={`body-xs tracking-wide uppercase tabular-nums ${failed ? 'text-error' : 'text-tertiary'}`}>
 				{failed ? 'failed' : loading ? 'loading' : 'queued'}
 			</span>
@@ -177,7 +177,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 		<div className="rounded-md border border-subtle bg-surface px-3 py-2.5">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 body-sm">
-					<span className="font-mono font-bold text-primary">{table.name}</span>
+					<span className="mono-sm-bold text-primary">{table.name}</span>
 					<span className="text-tertiary">
 						{table.columns.length} cols · {prettyLabelForSource(table.source)}
 					</span>
@@ -211,7 +211,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 						title={c.type ? `${c.name} · ${c.type}` : c.name}
 					>
 						<TypeBadge kind={inferFineKindFromArrowType(c.type)} />
-						<span className="truncate font-mono text-primary">{c.name}</span>
+						<span className="truncate mono-sm text-primary">{c.name}</span>
 					</li>
 				))}
 			</ul>

@@ -186,7 +186,7 @@ export default function Tokens() {
 						<div className="mr-auto flex flex-col">
 							<h2 className="heading-xs">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
 							<p className="flex items-center gap-1 body-sm" title="Sum of amounts for currently selected protocols">
-								<span className="font-jetbrains font-bold">
+								<span className="mono-sm-bold">
 									{formatUsd(totalTrackedUsd, {
 										compact: true,
 										minimumCompactValue: 1_000_000,

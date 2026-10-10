@@ -49,13 +49,13 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 								href={explorer.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-1 font-mono text-tertiary hover:underline"
+								className="flex items-center gap-1 mono-md text-tertiary hover:underline"
 							>
 								{shortAddress}
 								<Icon name="external-link" height={10} width={10} />
 							</a>
 						) : (
-							<span className="font-mono text-tertiary">{shortAddress}</span>
+							<span className="mono-md text-tertiary">{shortAddress}</span>
 						)}
 					</span>
 				)

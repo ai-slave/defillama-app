@@ -73,10 +73,11 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 
 /* ----------------------------- Theme Tokens ----------------------------- */
 @theme {
-	--font-inter: Inter var, 'Inter-fallback', sans-serif;
-	--font-jetbrains: JetBrains Mono, monospace;
-	/* One mono font: Tailwind's font-mono would otherwise fall back to the system monospace (SF Mono, Consolas). */
-	--font-mono: var(--font-jetbrains);
+	/* One name per family, on Tailwind's own keys: its defaults are the system fonts (SF Pro, SF Mono, Segoe UI), so
+	   any other name leaves font-sans and font-mono rendering those. Text takes a family through the named styles in
+	   typography.css; mono text never takes a bare font-mono (`raw-mono-family`). */
+	--font-sans: Inter var, 'Inter-fallback', sans-serif;
+	--font-mono: JetBrains Mono, monospace;
 
 	/* Repository-owned application radius contracts. */
 	--radius-lg: 0.5rem; /* 8px at the standard root: cards, panels, inputs, medium controls */
@@ -505,7 +506,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	}
 
 	body {
-		@apply bg-page font-inter text-sm text-primary;
+		@apply bg-page font-sans text-sm text-primary;
 	}
 
 	#__next,

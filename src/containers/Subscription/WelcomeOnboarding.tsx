@@ -388,7 +388,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<span className="label-md text-primary">LlamaAI is ready in Slack</span>
 						<span className="body-sm text-tertiary">
-							Mention <span className="font-mono text-secondary">@LlamaAI</span> in any channel, or DM the bot directly.
+							Mention <span className="mono-sm text-secondary">@LlamaAI</span> in any channel, or DM the bot directly.
 						</span>
 					</div>
 				</div>

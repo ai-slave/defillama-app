@@ -326,7 +326,7 @@ type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number
 type MockRow = { num: string; cells: Array<MockCell> }
 
 const cellClass = (variant?: 'value' | 'formula') =>
-	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? 'font-mono' : 'text-secondary'
+	variant === 'value' ? 'title-sm text-sub-live' : variant === 'formula' ? 'mono-sm' : 'body-sm text-secondary'
 
 function MockTable({
 	formulaBar,
@@ -390,7 +390,7 @@ function MockTable({
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-subtle' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-subtle' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -407,7 +407,7 @@ function MockTable({
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-subtle' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-subtle' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}

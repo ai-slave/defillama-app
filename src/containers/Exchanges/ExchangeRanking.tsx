@@ -264,7 +264,7 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 		<Card as="section" padding="md" className="flex flex-col gap-4" id={`pillar-${pillar.key}`}>
 			<div className="flex flex-wrap items-baseline gap-3">
 				<h3 className="heading-xs">
-					<span className="pr-2 font-jetbrains font-bold text-tertiary">{pillar.key}</span>
+					<span className="pr-2 text-tertiary">{pillar.key}</span>
 					{pillar.label}
 				</h3>
 				<span className="rounded-sm bg-brand-muted px-2 py-0.5 mono-sm-bold text-primary">{pillar.weight} points</span>

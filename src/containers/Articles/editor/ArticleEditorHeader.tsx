@@ -159,7 +159,7 @@ export function ArticleEditorHeader({
 						className="group"
 					>
 						<span
-							className={`truncate font-jetbrains tracking-tight ${
+							className={`truncate mono-sm tracking-tight ${
 								hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
 							}`}
 						>

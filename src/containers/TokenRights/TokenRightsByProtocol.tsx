@@ -186,7 +186,7 @@ export function TokenRightsByProtocol({
 													</a>
 												) : (
 													<div className="flex items-center justify-between gap-4">
-														<span className="truncate font-mono text-secondary">{a.value}</span>
+														<span className="truncate mono-sm text-secondary">{a.value}</span>
 														<CopyHelper toCopy={a.value} />
 													</div>
 												)}

@@ -419,7 +419,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							{yearsLabel ? (
 								<>
 									<span aria-hidden>/</span>
-									<span className="font-jetbrains">{yearsLabel}</span>
+									<span>{yearsLabel}</span>
 								</>
 							) : null}
 							{totalMinutes > 0 ? (
@@ -457,7 +457,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
 										<div className="flex items-center gap-2 body-sm tracking-wide text-tertiary uppercase">
-											<span className="font-jetbrains">Latest</span>
+											<span>Latest</span>
 											<span aria-hidden>/</span>
 											<span>{formatDate(lead.displayDate ?? lead.publishedAt)}</span>
 											<span aria-hidden>/</span>
@@ -543,7 +543,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 													{article.tags && article.tags.length > 0 ? (
 														<>
 															<span aria-hidden>/</span>
-															<span className="font-jetbrains">{article.tags[0]}</span>
+															<span>{article.tags[0]}</span>
 														</>
 													) : null}
 												</div>

@@ -58,7 +58,7 @@ function scoreRow(label: string, value: number | null, hex: string, max: number)
 	const pct = value == null ? 0 : Math.min(100, (value / max) * 100)
 	return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:4px;">
 		<span>${label}</span>
-		<span style="display:flex;align-items:center;gap:8px;font-family:var(--font-jetbrains,monospace);">
+		<span style="display:flex;align-items:center;gap:8px;">
 			${value == null ? 'N/A' : formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}
 			<span style="display:inline-block;width:44px;height:8px;border-radius:999px;background:rgba(128,128,128,0.25);overflow:hidden;">
 				<span style="display:block;height:100%;border-radius:999px;width:${pct}%;background:${hex};"></span>
@@ -85,7 +85,7 @@ export function formatMatrixTooltip(row: UtrLeaderboardRow, grading: UtrGradingC
 		${scoreRow('Overall Score', row.scores.overall, overallHex, 100)}
 		${scoreRow('Disclosure Score', row.scores.disclosure, disclosureHex, 10)}
 		${scoreRow('Performance Score', row.scores.performance, performanceHex, 10)}
-		<div style="display:flex;justify-content:space-between;gap:16px;margin-top:4px;"><span>FDV</span><span style="font-family:var(--font-jetbrains,monospace);">${row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}</span></div>
+		<div style="display:flex;justify-content:space-between;gap:16px;margin-top:4px;"><span>FDV</span><span>${row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}</span></div>
 		${
 			row.claimed
 				? ''

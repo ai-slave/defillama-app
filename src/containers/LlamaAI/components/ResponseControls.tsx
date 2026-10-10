@@ -248,7 +248,7 @@ export function ResponseControls({
 							<PopoverSurface variant="panel" heading="Response details" gutter={8}>
 								<div className="flex justify-between gap-4 p-3 body-sm text-primary">
 									<span className="text-tertiary">Output</span>
-									<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
+									<span className="tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
 								</div>
 							</PopoverSurface>
 						</Ariakit.PopoverProvider>

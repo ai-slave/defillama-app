@@ -143,7 +143,7 @@
 	background: transparent;
 	padding: 0;
 	color: var(--text-primary);
-	font-family: var(--font-jetbrains, ui-monospace, SFMono-Regular, Menlo, monospace);
+	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 }
 .root :global(.hljs-comment),
 .root :global(.hljs-quote) {
@@ -324,7 +324,7 @@
 	content: 'Q · ' counter(qa-counter, decimal-leading-zero);
 	display: block;
 	margin-bottom: 1.125rem;
-	font-family: var(--font-jetbrains, ui-monospace, monospace);
+	font-family: var(--font-mono, ui-monospace, monospace);
 	font-size: 0.6875rem;
 	font-weight: 600;
 	letter-spacing: 0.22em;
@@ -346,7 +346,7 @@
 	align-items: center;
 	width: fit-content;
 	margin-bottom: 1.125rem;
-	font-family: var(--font-jetbrains, ui-monospace, monospace);
+	font-family: var(--font-mono, ui-monospace, monospace);
 	font-size: 0.6875rem;
 	font-weight: 600;
 	line-height: 1.4;

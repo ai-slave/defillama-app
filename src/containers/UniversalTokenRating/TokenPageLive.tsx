@@ -571,7 +571,7 @@ export function TokenPageLive({
 						<div className="flex flex-col">
 							<span className="label-md">
 								Overall Score:{' '}
-								<span className="font-jetbrains tabular-nums">
+								<span className="tabular-nums">
 									{asset.overallScore == null ? 'N/A' : formatNumber(asset.overallScore, NUMBER_OPTIONS)}
 								</span>
 								<span className="text-tertiary"> /100</span>

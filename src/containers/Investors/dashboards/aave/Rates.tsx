@@ -338,17 +338,17 @@ export default function Rates() {
 					>
 						{kpis?.optimalUtil && (
 							<span className="body-sm text-tertiary">
-								Optimal <span className="font-jetbrains font-bold text-secondary">{kpis.optimalUtil}</span>
+								Optimal <span className="mono-sm-bold text-secondary">{kpis.optimalUtil}</span>
 							</span>
 						)}
 						{kpis?.slope1 && (
 							<span className="body-sm text-tertiary">
-								Slope 1 <span className="font-jetbrains font-bold text-secondary">{kpis.slope1}</span>
+								Slope 1 <span className="mono-sm-bold text-secondary">{kpis.slope1}</span>
 							</span>
 						)}
 						{kpis?.slope2 && (
 							<span className="body-sm text-tertiary">
-								Slope 2 <span className="font-jetbrains font-bold text-secondary">{kpis.slope2}</span>
+								Slope 2 <span className="mono-sm-bold text-secondary">{kpis.slope2}</span>
 							</span>
 						)}
 						<ChartExportButtons

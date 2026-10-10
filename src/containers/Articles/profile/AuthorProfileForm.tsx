@@ -396,7 +396,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						slugChanged && !shownSlugError ? (
 							<span className="inline-flex items-center gap-1.5 text-warning">
 								<span aria-hidden className="size-1.5 rounded-full bg-warning" />
-								Old links to <span className="font-jetbrains">/research/authors/{initial.slug}</span> will 404.
+								Old links to <span className="mono-sm">/research/authors/{initial.slug}</span> will 404.
 							</span>
 						) : null
 					}

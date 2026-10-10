@@ -242,7 +242,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-brand-muted font-jetbrains text-link"
+			className="grid shrink-0 place-items-center rounded-full bg-brand-muted text-link"
 		>
 			{initials || '·'}
 		</span>

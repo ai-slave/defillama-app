@@ -320,7 +320,7 @@ export function AlertArtifact({
 					<div className="flex flex-col gap-1.5 rounded-lg bg-surface-elevated-1 px-3 py-2.5">
 						<p className="m-0 flex items-center gap-2 body-sm text-tertiary">
 							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-tertiary" />
-							<span className="truncate font-mono">
+							<span className="truncate">
 								{isPriceAlert && editedTrigger
 									? formatPriceAlertSummary(editedTrigger, true, undefined, 0)
 									: scheduleSummary}

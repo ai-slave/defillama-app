@@ -46,7 +46,7 @@ export function GradeFooter({
 			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
 				Percentile
 				<span className="flex items-center gap-2">
-					<span className="font-jetbrains text-primary tabular-nums">{percentileLabel}</span>
+					<span className="text-primary tabular-nums">{percentileLabel}</span>
 					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
 					</span>

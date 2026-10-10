@@ -347,7 +347,7 @@ function CustomColumnForm({
 							{AVAILABLE_FIELDS.map((f) => (
 								<li key={f}>
 									<Button size="sm" onClick={() => handleSuggestionClick({ name: f, type: 'field' })}>
-										<span className="font-mono">{f}</span>
+										<span className="mono-sm">{f}</span>
 									</Button>
 								</li>
 							))}

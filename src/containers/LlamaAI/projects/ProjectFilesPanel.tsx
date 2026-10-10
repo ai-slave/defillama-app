@@ -165,7 +165,7 @@ export function ProjectFilesPanel({
 								className="group flex items-center gap-2 rounded-md border border-subtle bg-surface px-2.5 py-1.5 body-sm text-primary"
 							>
 								<Icon name="github" height={14} width={14} className="shrink-0 text-secondary" />
-								<span className="min-w-0 flex-1 truncate font-mono">
+								<span className="min-w-0 flex-1 truncate mono-sm">
 									{owner}/{repo}
 								</span>
 								<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary">
@@ -236,7 +236,7 @@ export function ProjectFilesPanel({
 									className="group flex items-center gap-2 border-b border-subtle px-2.5 py-1.5 body-sm text-primary last:border-b-0 not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
 									<Icon name="file-text" height={14} width={14} className="shrink-0 text-secondary" />
-									<span title={file.path} className="min-w-0 flex-1 truncate font-mono">
+									<span title={file.path} className="min-w-0 flex-1 truncate mono-sm">
 										{file.path}
 									</span>
 									{source ? (

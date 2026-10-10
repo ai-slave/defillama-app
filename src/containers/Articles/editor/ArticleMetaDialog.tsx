@@ -299,7 +299,7 @@ function MetaSheet({
 								hint={
 									<>
 										Required. Drives the URL path:{' '}
-										<span className="font-mono text-secondary">
+										<span className="mono-sm text-secondary">
 											/research/{article.section ?? '…'}/{article.slug || '…'}
 										</span>
 									</>
@@ -521,7 +521,7 @@ function MetaSheet({
 							<Field
 								label="Slug"
 								hint={
-									<span className="block truncate font-mono">
+									<span className="block truncate mono-sm">
 										defillama.com/research/{article.section ? `${ARTICLE_SECTION_SLUGS[article.section]}/` : ''}
 										<span className="text-secondary">{article.slug}</span>
 									</span>
@@ -533,7 +533,8 @@ function MetaSheet({
 											{...control}
 											value={article.slug}
 											onChange={(event) => updateArticle('slug', event.target.value)}
-											className="min-w-0 flex-1 font-mono"
+											variant="code"
+											className="min-w-0 flex-1"
 										/>
 										{/* Offered only when the title gives a different slug, so it never sits disabled. */}
 										{article.title.trim() && slugCandidate !== article.slug ? (

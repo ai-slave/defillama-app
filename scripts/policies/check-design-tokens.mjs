@@ -272,7 +272,7 @@ const NAMED_TYPOGRAPHY_UTILITY =
 // text-[…] counts as typography only when the arbitrary value is not a color
 // (text-[#999], text-[rgba(…)], text-[var(--x)] set color, not size).
 const RAW_TYPOGRAPHY_UTILITY =
-	/^(?:text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?!#|rgba?\(|hsla?\(|oklch\(|var\(|--|color)[^\]]+\])|font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|jetbrains|inter|\[[^\]]+\])|leading-.+)$/
+	/^(?:text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?!#|rgba?\(|hsla?\(|oklch\(|var\(|--|color)[^\]]+\])|font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|sans|mono|\[[^\]]+\])|leading-.+)$/
 const VARIANT_UTILITY = /^((?:[\w[\]()&>~.*-]+:)*)((?:[^\s:]+))$/
 
 // A named typography utility owns family (where applicable), size, line-height,
@@ -1120,6 +1120,20 @@ const RULES = [
 		description:
 			'mono uses two weights: 400 for figures, 700 for the headline number; use mono-* (mono-xl, mono-lg, mono-*-bold) or font-bold, never medium, semibold or extrabold',
 		match: matchOffScaleMonoWeight
+	},
+	{
+		id: 'raw-mono-family',
+		exceptions: {
+			'src/containers/AttestationLanding/index.tsx':
+				'the animated equation sizes its figures to its container (attn-equation-value), which no named style can'
+		},
+		description:
+			"font-mono picks the family and leaves size, weight and line height to whatever it sits in; use mono-md or mono-sm for figures, code, addresses and hashes, mono-*-bold for the number a block exists to show, and the sentence's own Inter for a number or word inside a sentence (design.md → Typography)",
+		// font-jetbrains is no longer a utility, so it would render as Inter without a warning.
+		match: (content) =>
+			withoutComments(content).match(/(?<![\w-])font-(?:mono|jetbrains)(?![\w-])|var\(--font-(?:mono|jetbrains)\b/g),
+		uiOwned: true,
+		skipTests: true
 	},
 	{
 		id: 'raw-type-pair',

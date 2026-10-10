@@ -119,7 +119,7 @@ export function RWAFlowSummaryTooltip({
 					{chains.map(([chain, chainSummary]) => (
 						<span key={chain} className="flex justify-between gap-4">
 							<span>{chain}</span>
-							<span className="font-jetbrains">{formatRWAChainFlowSummary(chainSummary)}</span>
+							<span>{formatRWAChainFlowSummary(chainSummary)}</span>
 						</span>
 					))}
 				</span>
@@ -148,9 +148,7 @@ function FlowVsPriceStat({
 				{breakdown.map((asset) => (
 					<span key={asset.key} className="flex justify-between gap-4">
 						<span>{asset.label}</span>
-						<span className="font-jetbrains">
-							<Change value={asset.summary[valueKey]} unit="usd" />
-						</span>
+						<Change value={asset.summary[valueKey]} unit="usd" />
 					</span>
 				))}
 			</span>

@@ -555,7 +555,7 @@ function ColumnChips({
 				const content = (
 					<>
 						{c.type ? <TypeBadge kind={inferFineKindFromArrowType(c.type)} /> : null}
-						<span className="font-mono">{c.name}</span>
+						<span className="mono-sm">{c.name}</span>
 					</>
 				)
 				return (

@@ -778,7 +778,7 @@ export function RWAAssetPage({
 									>
 										{definitions.isin.label}
 									</Tooltip>
-									<span className="font-mono">{asset.isin}</span>
+									<span className="mono-md">{asset.isin}</span>
 								</p>
 							) : null}
 							{asset.issuerRegistryInfo && asset.issuerRegistryInfo.length > 0 ? (

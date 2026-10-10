@@ -28,7 +28,7 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 		],
 		[
 			'MoM Change',
-			<span key="mom" className="font-jetbrains tabular-nums">
+			<span key="mom" className="mono-sm">
 				{row.scores.overallMomChangePct == null ? 'N/A' : <Change value={row.scores.overallMomChangePct} />}
 			</span>
 		],
@@ -54,7 +54,7 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 		],
 		[
 			'FDV',
-			<span key="fdv" className="font-jetbrains tabular-nums">
+			<span key="fdv" className="mono-sm">
 				{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
 			</span>
 		]

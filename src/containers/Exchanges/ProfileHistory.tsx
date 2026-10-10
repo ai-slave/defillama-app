@@ -53,7 +53,7 @@ function HistoryRecord({ details, amount }: { details: ReactNode; amount: ReactN
 	return (
 		<div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 p-3 hover:bg-hover-row">
 			<div className="min-w-0">{details}</div>
-			<div className="text-right font-jetbrains font-bold">{amount}</div>
+			<div className="text-right mono-md-bold">{amount}</div>
 		</div>
 	)
 }
