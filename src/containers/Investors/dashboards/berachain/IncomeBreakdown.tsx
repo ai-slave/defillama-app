@@ -114,10 +114,6 @@ const BEND_REVENUE_CHART = [
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
 const STACKED_DOLLAR_CHART_OPTIONS = createChartOptions('$', true)
 
-function SectionHeader({ title }: { title: string }) {
-	return <h2 className="heading-xs tracking-tight text-primary">{title}</h2>
-}
-
 function getCumulativeTotal(dataset: MultiSeriesChartDataset, key: string) {
 	const dimensionIndex = dataset.dimensions.indexOf(key)
 	if (dimensionIndex < 0 || dataset.source.length === 0) return null
@@ -147,7 +143,7 @@ export default function IncomeBreakdown() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* HONEY Revenue Section */}
-			<SectionHeader title="HONEY Backing Yield Revenue" />
+			<h2 className="heading-xs">HONEY Backing Yield Revenue</h2>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
 				{isHoneyLoading || !honeyRevenue ? (
 					<>
@@ -194,7 +190,7 @@ export default function IncomeBreakdown() {
 				)}
 			</div>
 
-			<SectionHeader title="Chain Fees" />
+			<h2 className="heading-xs">Chain Fees</h2>
 			<div className="grid grid-cols-1 gap-4">
 				{kpis ? (
 					<StatTile label="Total Chain Fees" value={kpis.chainFees ?? '—'} />
@@ -263,7 +259,7 @@ export default function IncomeBreakdown() {
 			)}
 
 			{/* BEX Section */}
-			<SectionHeader title="BEX" />
+			<h2 className="heading-xs">BEX</h2>
 			<div className="grid grid-cols-2 gap-4">
 				{kpis ? (
 					<>
@@ -317,7 +313,7 @@ export default function IncomeBreakdown() {
 			)}
 
 			{/* Bend Section */}
-			<SectionHeader title="Bend" />
+			<h2 className="heading-xs">Bend</h2>
 			<div className="grid grid-cols-2 gap-4">
 				{kpis ? (
 					<>

@@ -3,7 +3,7 @@ import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { ApiTrendChart } from './ChainBreakdownChart'
 import type { ThorchainUnlocks } from './serverData'
 import type { Chart, Kpi as KpiT } from './transform'
-import { Kpi, SectionHeader, useThorchainData } from './ui'
+import { Kpi, useThorchainData } from './ui'
 
 // RUNE token unlocks — rendered with the same EmissionsByProtocol component as /unlocks/thorchain-dex,
 // fed by server-side data (keyed pro API) via the customServerData pipeline. Server keying is required:
@@ -20,7 +20,7 @@ export default function Unlocks() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<SectionHeader>RUNE Token Unlocks</SectionHeader>
+			<h2 className="heading-xs">RUNE Token Unlocks</h2>
 			{data?.emissions ? (
 				<EmissionsByProtocol
 					data={data.emissions}
@@ -38,7 +38,7 @@ export default function Unlocks() {
 
 			{history?.unlockChart && (
 				<>
-					<SectionHeader>Historical Unlock Schedule</SectionHeader>
+					<h2 className="heading-xs">Historical Unlock Schedule</h2>
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 						<Kpi kpi={history.kpis.totalUnlocked} label="Unlocked (Allocations)" />
 						<Kpi kpi={history.kpis.unlockedPct} label="Unlocked %" />

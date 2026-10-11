@@ -7,7 +7,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
-import { NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -40,7 +40,7 @@ export default function Staking() {
 		<div className="flex flex-col gap-6">
 			{query.data.narrative && <NarrativeCallout>{query.data.narrative}</NarrativeCallout>}
 
-			<SectionHeader>Staking &amp; Delegation</SectionHeader>
+			<h2 className="heading-xs">Staking &amp; Delegation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile
 					label="% of Circ. Supply Staked or Delegated"

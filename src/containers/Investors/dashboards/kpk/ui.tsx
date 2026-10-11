@@ -272,19 +272,6 @@ export function LedgerTile({
 }
 
 /**
- * Section headings are sentence case at 13px — the mockup reserves uppercase tracking
- * for the small tile and column labels, so a heading set that way reads as a label.
- */
-export function SectionHeader({ title, children }: { title: string; children?: React.ReactNode }) {
-	return (
-		<div className="flex flex-wrap items-center justify-between gap-3">
-			<h2 className="title-md text-primary">{title}</h2>
-			{children}
-		</div>
-	)
-}
-
-/**
  * `min-w-0` is load-bearing: a flex or grid item's automatic minimum width is its
  * min-content, so without it a card holding a wide `nowrap` table grows to the table's
  * full width, the layout overflows sideways, and the table's own scroll container never
@@ -310,7 +297,7 @@ export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 export function Disclaimer({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="border-t border-subtle pt-4">
-			<h3 className="mb-1.5 label-xs tracking-wider text-secondary uppercase">{title}</h3>
+			<h3 className="mb-1.5 heading-xs">{title}</h3>
 			<p className="body-sm text-tertiary">{children}</p>
 		</div>
 	)

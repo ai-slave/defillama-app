@@ -1,61 +1,49 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { queryReadFailed } from '~/utils/query'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
 const EMPTY_DASHBOARDS: Array<Dashboard> = []
+const LIMIT = 20
 
 export function useLikedDashboards() {
-	const { authorizedFetch, isAuthenticated } = useAuthContext()
+	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const [page, setPage] = useState(1)
-	const [limit] = useState(20)
 
-	const { data, isLoading, error, refetch } = useQuery({
-		queryKey: ['pro-dashboard', 'liked-dashboards', page, limit],
+	const likedQuery = useQuery({
+		queryKey: ['pro-dashboard', 'liked-dashboards', user?.id, page, LIMIT],
 		queryFn: async () => {
 			if (!isAuthenticated) {
 				return {
 					items: EMPTY_DASHBOARDS,
 					page: 1,
-					perPage: limit,
+					perPage: LIMIT,
 					totalItems: 0,
 					totalPages: 0
 				}
 			}
-			return await dashboardAPI.getLikedDashboards({ page, limit }, authorizedFetch)
+			return await dashboardAPI.getLikedDashboards({ page, limit: LIMIT }, authorizedFetch)
+		},
+		// The pager stays mounted, with focus on it, while the next page loads; never another account's list.
+		placeholderData: (previousData, previousQuery) => {
+			if (previousQuery && previousQuery.queryKey[2] === user?.id) return previousData
 		},
 		staleTime: 1000 * 60 * 5,
 		enabled: isAuthenticated
 	})
 
-	const goToPage = (newPage: number) => {
-		setPage(newPage)
-	}
-
-	const nextPage = useCallback(() => {
-		if (data && page < data.totalPages) {
-			setPage(page + 1)
-		}
-	}, [data, page])
-
-	const prevPage = useCallback(() => {
-		if (page > 1) {
-			setPage(page - 1)
-		}
-	}, [page])
+	const { data, isLoading, isFetching, refetch } = likedQuery
 
 	return {
 		dashboards: data?.items ?? EMPTY_DASHBOARDS,
 		isLoading,
-		error: error as Error | null,
+		isFetching,
+		readFailed: queryReadFailed(likedQuery),
 		page,
 		totalPages: data?.totalPages || 1,
-		totalItems: data?.totalItems || 0,
-		perPage: data?.perPage || limit,
-		goToPage,
-		nextPage,
-		prevPage,
-		refetch
+		refetch,
+		goToPage: setPage
 	}
 }

@@ -1007,6 +1007,13 @@ const RULES = [
 		pattern: /[A-Za-z]\.\.\.(?=['"`<{}]|[ \t]*\n)/g
 	},
 	{
+		id: 'eyebrow-section-heading',
+		description:
+			'an uppercase eyebrow set as a section heading (an <h2>-<h4> with `uppercase`) — write the heading in sentence case with className="heading-xs", as the rest of the app does; a small label above a figure is a <p> or <span>, not a heading',
+		pattern: /<h[2-4]\b[^>]*?className="[^"]*(?<![\w-])uppercase(?![\w-])/g,
+		uiOwned: true
+	},
+	{
 		id: 'raw-scope-note',
 		description:
 			'hand-rolled scope or failed-data note (a `px-* pt-* body-sm text-tertiary|text-data-down` paragraph) — render ScopeNote or FailedDataNote from src/ui/ScopeNote under the chart toolbar',

@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -13,10 +13,6 @@ import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
 
 const columnHelper = createColumnHelper<typeof paginatedTableFeatures, YieldPool>()
 
@@ -87,7 +83,7 @@ export default function YieldsEmissions() {
 		<div className="flex flex-col gap-6">
 			{/* Emissions */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>S Token Emissions</SectionHeader>
+				<h2 className="heading-xs">S Token Emissions</h2>
 				<ChartPanel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
@@ -109,7 +105,7 @@ export default function YieldsEmissions() {
 			{data.burn && (
 				<div className="flex flex-col gap-4">
 					<div className="flex items-center justify-between">
-						<SectionHeader>S Token Burns</SectionHeader>
+						<h2 className="heading-xs">S Token Burns</h2>
 						<a
 							href="https://burn.soniclabs.com"
 							target="_blank"
@@ -133,7 +129,7 @@ export default function YieldsEmissions() {
 
 			{/* Yield Pools */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Yield Pools</SectionHeader>
+				<h2 className="heading-xs">Yield Pools</h2>
 				<div className="grid grid-cols-3 gap-4">
 					<StatTile label="Total Pools" value={data.yields.kpis.totalPools.formatted} />
 					<StatTile label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
@@ -180,15 +176,9 @@ export default function YieldsEmissions() {
 					</table>
 					{table.getPageCount() > 1 && (
 						<TablePager
-							label={
-								<>
-									Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
-								</>
-							}
-							canPrevious={table.getCanPreviousPage()}
-							canNext={table.getCanNextPage()}
-							onPrevious={() => table.previousPage()}
-							onNext={() => table.nextPage()}
+							pageIndex={table.state.pagination.pageIndex}
+							pageCount={table.getPageCount()}
+							onPageChange={(index) => table.setPageIndex(index)}
 							className="border-t border-subtle px-4 py-3"
 						/>
 					)}

@@ -1,10 +1,10 @@
 import * as React from 'react'
+import { TablePager } from '~/components/Table/TablePager'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import type { ProYieldRow } from '../../../yieldData'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 import { useYieldsData } from './useYieldsData'
 import { useYieldsTable } from './useYieldsTable'
 import { YieldsColumnManagementPanel } from './YieldsColumnManagementPanel'
@@ -41,10 +41,7 @@ export function YieldsDataset({
 		pageIndex,
 		pageSize,
 		pageCount,
-		canPreviousPage,
-		canNextPage,
-		previousPage,
-		nextPage,
+		setPageIndex,
 		setPageSize,
 		rowCount,
 		showColumnPanel,
@@ -142,16 +139,12 @@ export function YieldsDataset({
 
 					{queryRefreshFailed(yieldsQuery) ? <ProCardRefreshFailed retry={yieldsQuery} /> : null}
 					<TableBody table={table} />
-					<TablePagination
-						pageSize={pageSize}
+					<TablePager
 						pageIndex={pageIndex}
 						pageCount={pageCount}
-						canPreviousPage={canPreviousPage}
-						canNextPage={canNextPage}
-						previousPage={previousPage}
-						nextPage={nextPage}
-						setPageSize={setPageSize}
-						showPageSizes={rowCount > 10}
+						onPageChange={setPageIndex}
+						pageSize={rowCount > 10 ? { value: pageSize, options: TABLE_PAGE_SIZES, onChange: setPageSize } : undefined}
+						className="mt-2 justify-between"
 					/>
 				</>
 			)}

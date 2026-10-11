@@ -12,7 +12,7 @@ import {
 	type MorphoMarketHistory,
 	type TvlResponse
 } from './api'
-import { ChartCard, SectionHeader, SimpleTable, UtilBar, fmtUsd } from './ui'
+import { ChartCard, SimpleTable, UtilBar, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -194,7 +194,7 @@ export default function Tvl() {
 				)}
 			</div>
 
-			<SectionHeader>Total Ecosystem TVL</SectionHeader>
+			<h2 className="heading-xs">Total Ecosystem TVL</h2>
 			<ChartPanel>
 				<ChartPanelToolbar
 					leading={
@@ -220,7 +220,7 @@ export default function Tvl() {
 				)}
 			</ChartPanel>
 
-			<SectionHeader>TVL vs ETH Price</SectionHeader>
+			<h2 className="heading-xs">TVL vs ETH Price</h2>
 			<ChartPanel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
@@ -242,7 +242,7 @@ export default function Tvl() {
 				)}
 			</ChartPanel>
 
-			<SectionHeader>TVL by Chain</SectionHeader>
+			<h2 className="heading-xs">TVL by Chain</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
@@ -268,7 +268,7 @@ export default function Tvl() {
 
 			{u && (
 				<>
-					<SectionHeader>Morpho Borrow Markets · Utilization</SectionHeader>
+					<h2 className="heading-xs">Morpho Borrow Markets · Utilization</h2>
 					<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 						<StatTile label="Total Supply" value={uk.supply?.formatted ?? '—'} />
 						<StatTile label="Total Borrows" value={uk.borrows?.formatted ?? '—'} />
@@ -355,9 +355,9 @@ export default function Tvl() {
 
 			{morphoHistoryModels.length > 0 ? (
 				<>
-					<SectionHeader>
+					<h2 className="heading-xs">
 						{data.morphoMarketHistory.title || 'Morpho Market · Supply / Borrow / Utilization'}
-					</SectionHeader>
+					</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoHistoryModels.map(({ market, model }) => {
 							return (
@@ -386,7 +386,7 @@ export default function Tvl() {
 				</>
 			) : null}
 
-			<SectionHeader>Ecosystem DEX LP TVL</SectionHeader>
+			<h2 className="heading-xs">Ecosystem DEX LP TVL</h2>
 			<ChartCard title={data?.synthLpTvl?.title || 'Ecosystem Liquidity Pools'} subtitle={data?.synthLpTvl?.subtitle}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.venue, row.chain, row.pool])}
@@ -401,7 +401,7 @@ export default function Tvl() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>MetBasis LP TVL</SectionHeader>
+			<h2 className="heading-xs">MetBasis LP TVL</h2>
 			<ChartCard
 				title={data?.metbasis?.title || 'MetBasis LP TVL'}
 				subtitle={data?.metbasis?.totalFormatted ? `Total ${data.metbasis.totalFormatted}` : undefined}

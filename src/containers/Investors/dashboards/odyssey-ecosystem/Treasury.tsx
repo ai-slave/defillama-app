@@ -1,7 +1,7 @@
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
 import { useTab, type TreasuryResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SimpleTable, fmtUsd } from './ui'
 
 export default function Treasury() {
 	const { data } = useTab<TreasuryResponse>('treasury')
@@ -38,7 +38,7 @@ export default function Treasury() {
 				)}
 			</div>
 
-			<SectionHeader>Treasury LP Positions</SectionHeader>
+			<h2 className="heading-xs">Treasury LP Positions</h2>
 			<ChartCard
 				title="LP Positions (all chains)"
 				subtitle={`${tlp?.rows?.length ?? 0} positions across Base, Optimism, Plasma`}
@@ -58,7 +58,7 @@ export default function Treasury() {
 
 			{eth?.rows?.length ? (
 				<>
-					<SectionHeader>Ethereum UniV3 Positions</SectionHeader>
+					<h2 className="heading-xs">Ethereum UniV3 Positions</h2>
 					<ChartCard title="Ethereum positions">
 						<SimpleTable
 							getOccurrenceKey={(row) => row.pool}
@@ -73,7 +73,7 @@ export default function Treasury() {
 				</>
 			) : null}
 
-			<SectionHeader>Plasma UniV3 Unclaimed Fees</SectionHeader>
+			<h2 className="heading-xs">Plasma UniV3 Unclaimed Fees</h2>
 			<ChartCard title="Plasma positions" subtitle="One row per NFT">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
@@ -86,7 +86,7 @@ export default function Treasury() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Convex vlCVX Locks</SectionHeader>
+			<h2 className="heading-xs">Convex vlCVX Locks</h2>
 			<ChartCard title="vlCVX">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
@@ -100,7 +100,7 @@ export default function Treasury() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>veAERO NFTs</SectionHeader>
+			<h2 className="heading-xs">veAERO NFTs</h2>
 			<ChartCard title="veAERO holdings">
 				<SimpleTable
 					getOccurrenceKey={(row) => String(row.nft)}
@@ -116,7 +116,7 @@ export default function Treasury() {
 
 			{gov?.rows?.length ? (
 				<>
-					<SectionHeader>{gov.title || 'Locked Governance Tokens'}</SectionHeader>
+					<h2 className="heading-xs">{gov.title || 'Locked Governance Tokens'}</h2>
 					<ChartCard title="esMET / esVSP">
 						<SimpleTable
 							getOccurrenceKey={(row) => row.token}
@@ -155,7 +155,7 @@ export default function Treasury() {
 				</>
 			) : null}
 
-			<SectionHeader>TVL Allocation by Bucket</SectionHeader>
+			<h2 className="heading-xs">TVL Allocation by Bucket</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title={met?.title || 'Metronome Allocation'}>
 					<SimpleTable

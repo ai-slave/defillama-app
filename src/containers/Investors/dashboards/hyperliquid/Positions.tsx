@@ -14,7 +14,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
@@ -80,15 +80,10 @@ function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesC
 
 	return (
 		<TablePager
-			label={
-				<>
-					{from}–{to} of {total}
-				</>
-			}
-			canPrevious={table.getCanPreviousPage()}
-			canNext={table.getCanNextPage()}
-			onPrevious={() => table.previousPage()}
-			onNext={() => table.nextPage()}
+			pageIndex={pageIndex}
+			pageCount={table.getPageCount()}
+			onPageChange={(index) => table.setPageIndex(index)}
+			range={{ from, to, total }}
 			className="pt-3"
 		/>
 	)

@@ -15,6 +15,7 @@ import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
+import { TablePager } from '~/components/Table/TablePager'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
@@ -35,8 +36,7 @@ import { downloadCSV } from '~/utils/download'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 
 const tableFeaturesConfig = tableFeatures({
 	...orderedFilteredTableFeatures,
@@ -271,16 +271,16 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 			</div>
 			{queryRefreshFailed(filingsQuery) ? <ProCardRefreshFailed retry={filingsQuery} /> : null}
 			<TableBody table={instance} />
-			<TablePagination
-				pageSize={pagination.pageSize}
+			<TablePager
 				pageIndex={pagination.pageIndex}
 				pageCount={instance.getPageCount()}
-				canPreviousPage={instance.getCanPreviousPage()}
-				canNextPage={instance.getCanNextPage()}
-				previousPage={instance.previousPage}
-				nextPage={instance.nextPage}
-				setPageSize={instance.setPageSize}
-				showPageSizes={instance.getRowCount() > 10}
+				onPageChange={instance.setPageIndex}
+				pageSize={
+					instance.getRowCount() > 10
+						? { value: pagination.pageSize, options: TABLE_PAGE_SIZES, onChange: instance.setPageSize }
+						: undefined
+				}
+				className="mt-2 justify-between"
 			/>
 		</div>
 	)

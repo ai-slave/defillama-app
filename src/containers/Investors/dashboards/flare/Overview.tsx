@@ -7,7 +7,6 @@ import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareOverviewData, type OverviewAPIResponse } from './data'
-import { SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -36,7 +35,7 @@ export default function Overview() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<SectionHeader>Chain Ecosystem</SectionHeader>
+			<h2 className="heading-xs">Chain Ecosystem</h2>
 			<div className="grid grid-cols-2 gap-4">
 				<StatTile label="Chain TVL" value={tvl.currentFormatted} />
 				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
@@ -60,7 +59,7 @@ export default function Overview() {
 
 			{protocolRankings.length > 0 && (
 				<>
-					<SectionHeader>Protocol Rankings</SectionHeader>
+					<h2 className="heading-xs">Protocol Rankings</h2>
 					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full text-left body-md">
 							<thead>
@@ -104,7 +103,7 @@ export default function Overview() {
 
 			{fxrp && (
 				<>
-					<SectionHeader>FXRP</SectionHeader>
+					<h2 className="heading-xs">FXRP</h2>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 						<StatTile label="Total FXRP Supply" value={fxrp.totalFxrpSupply} />
 						<StatTile
@@ -123,7 +122,7 @@ export default function Overview() {
 				</>
 			)}
 
-			<SectionHeader>Stablecoins</SectionHeader>
+			<h2 className="heading-xs">Stablecoins</h2>
 			<div className="grid grid-cols-3 gap-4">
 				<StatTile label="Total" value={stables.kpis.total} />
 				<StatTile label="Native Minted" value={stables.kpis.native} />

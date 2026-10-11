@@ -3,7 +3,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
-import { Kpi, KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, TimeBarCard, useThorchainData } from './ui'
+import { Kpi, KpiGrid, PlaceholderCard, TimeAreaCard, TimeBarCard, useThorchainData } from './ui'
 
 // Each granularity is its OWN distinct-count dataset from raynalytics — the toggle
 // switches datasets, it never aggregates (summing daily uniques would double-count
@@ -64,7 +64,7 @@ export default function Volume() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<SectionHeader>Swap Volume</SectionHeader>
+			<h2 className="heading-xs">Swap Volume</h2>
 			<KpiGrid kpis={data.kpis} items={VOLUME_KPIS} cols={3} />
 			{data.volumeByChainChart?.series?.length ? (
 				<ApiTrendChart chart={data.volumeByChainChart} subtitle="Swap volume per source chain." />
@@ -76,7 +76,7 @@ export default function Volume() {
 				/>
 			)}
 
-			<SectionHeader>Unique Wallets</SectionHeader>
+			<h2 className="heading-xs">Unique Wallets</h2>
 			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 				<Kpi kpi={data.kpis.uniqueWalletsLifetime} label="Unique Wallets (Lifetime)" note="unique-wallets feed" />
 				<Kpi
@@ -118,11 +118,11 @@ export default function Volume() {
 				/>
 			)}
 
-			<SectionHeader>Swaps</SectionHeader>
+			<h2 className="heading-xs">Swaps</h2>
 			<KpiGrid kpis={data.kpis} items={SWAP_KPIS} cols={3} />
 			<ApiTrendChart chart={data.swapCountChart} valueSymbol="" />
 
-			<SectionHeader>Swap Types</SectionHeader>
+			<h2 className="heading-xs">Swap Types</h2>
 			<KpiGrid kpis={data.kpis} items={TYPE_KPIS} cols={3} />
 			<ApiTrendChart chart={data.volumeChart} subtitle="Split by swap type." />
 		</div>

@@ -3,6 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
+import { TablePager } from '~/components/Table/TablePager'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
@@ -15,8 +16,7 @@ import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardError, ProCardLoading } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 import { getColumns } from './columns'
 import { buildTokenUsageSummary } from './summary'
 import { type TokenOption, useTokenSearch } from './useTokenSearch'
@@ -374,16 +374,16 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 			</div>
 
 			<TableBody table={table} isLoading={isLoading} />
-			<TablePagination
-				pageSize={pagination.pageSize}
+			<TablePager
 				pageIndex={pagination.pageIndex}
 				pageCount={table.getPageCount()}
-				canPreviousPage={table.getCanPreviousPage()}
-				canNextPage={table.getCanNextPage()}
-				previousPage={table.previousPage}
-				nextPage={table.nextPage}
-				setPageSize={table.setPageSize}
-				showPageSizes={filteredData.length > 10}
+				onPageChange={table.setPageIndex}
+				pageSize={
+					filteredData.length > 10
+						? { value: pagination.pageSize, options: TABLE_PAGE_SIZES, onChange: table.setPageSize }
+						: undefined
+				}
+				className="mt-2 justify-between"
 			/>
 		</div>
 	)

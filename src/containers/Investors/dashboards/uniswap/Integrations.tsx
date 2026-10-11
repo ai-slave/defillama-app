@@ -2,7 +2,7 @@ import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, groupTopN, SeriesTrendChart } from './TrendChart'
-import { BarListCard, ChartCard, MiniTable, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, ChartCard, MiniTable, TimeAreaCard, useUniswapData } from './ui'
 
 const PERCENT_OPTIONS = {
 	input: 'percent',
@@ -85,7 +85,7 @@ export default function Integrations() {
 		<div className="flex flex-col gap-10">
 			{/* No KPI stat cards on this tab. */}
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Market Share</SectionHeader>
+				<h2 className="heading-xs">Market Share</h2>
 				{/* Open on the last ~2 years: the full weekly history back to 2018 is unreadable
 				    as a default view (the zoom slider still reaches it). */}
 				<TimeAreaCard
@@ -118,7 +118,7 @@ export default function Integrations() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Order Flow</SectionHeader>
+				<h2 className="heading-xs">Order Flow</h2>
 				<SeriesTrendChart
 					title="Entity-Driven Protocol Order Flow"
 					subtitle="Weekly volume by the third-party integrator or aggregator that routed the swap (tx_to labeling); top 12 entities plus Others."
@@ -180,7 +180,7 @@ export default function Integrations() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>v4 Hooks</SectionHeader>
+				<h2 className="heading-xs">v4 Hooks</h2>
 				<TimeAreaCard
 					chart={data.hooks.adoption}
 					valueSymbol="%"

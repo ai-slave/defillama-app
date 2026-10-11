@@ -8,7 +8,6 @@ import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
-import { SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -38,7 +37,7 @@ export default function Network() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<SectionHeader>Network Stats</SectionHeader>
+			<h2 className="heading-xs">Network Stats</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Total Txns" value={k.totalTransactions} />
 				<StatTile label="24h Txns" value={k.transactions24h} />

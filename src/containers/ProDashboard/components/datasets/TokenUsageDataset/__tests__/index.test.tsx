@@ -14,7 +14,6 @@ import type { TokenUsageDatasetTableConfig } from '../../../../types'
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {} }) }))
 const http = installSubscriberSession('u1', { resolved: true })
 const downloads = installDownloadSink()
-vi.mock('../../../Table/TablePagination', () => ({ TablePagination: () => null }))
 
 import { TokenUsageDataset } from '../index'
 

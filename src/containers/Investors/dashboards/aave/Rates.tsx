@@ -30,8 +30,7 @@ import {
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
 	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
-	InvestorsTable,
-	SectionHeader
+	InvestorsTable
 } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -139,7 +138,7 @@ function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
-			<SectionHeader title="Rate Comparison Across Chains" />
+			<h3 className="heading-xs">Rate Comparison Across Chains</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>

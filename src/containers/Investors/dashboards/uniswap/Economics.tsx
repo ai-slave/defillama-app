@@ -29,7 +29,6 @@ import {
 	KpiGrid,
 	PROTOCOL,
 	QUERY_OPTS,
-	SectionHeader,
 	TimeAreaCard,
 	usdKpi,
 	useProtocolMetrics,
@@ -410,7 +409,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Protocol Fees</SectionHeader>
+				<h2 className="heading-xs">Protocol Fees</h2>
 				<FeeMechanics />
 				{/* With a single month of history a time axis renders one giant block, so show
 				    that month as ranked category bars until the backfill grows. */}
@@ -442,7 +441,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>LP Fees (Supply-Side Revenue)</SectionHeader>
+				<h2 className="heading-xs">LP Fees (Supply-Side Revenue)</h2>
 				<SeriesTrendChart
 					title="LP Fees (Supply-Side Revenue)"
 					subtitle="Swap fees accruing to liquidity providers: total fees minus the protocol fee."
@@ -468,7 +467,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Protocol Fees & UNI Burn</SectionHeader>
+				<h2 className="heading-xs">Protocol Fees & UNI Burn</h2>
 				<SeriesTrendChart
 					title="Protocol Fees (Holders Revenue)"
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, collected in the TokenJar and burned as UNI."
@@ -501,7 +500,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>UNI Token Unlocks</SectionHeader>
+				<h2 className="heading-xs">UNI Token Unlocks</h2>
 				{unlockedKpi && (
 					<KpiGrid
 						kpis={{ supplyUnlocked: unlockedKpi }}

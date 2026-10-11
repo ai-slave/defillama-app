@@ -175,10 +175,6 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	)
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className="heading-xs tracking-tight text-primary">{children}</h2>
-}
-
 export default function Ecosystem() {
 	const { data, isLoading } = useEcosystemData()
 
@@ -232,7 +228,7 @@ export default function Ecosystem() {
 
 			{/* NEAR Intents */}
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<SectionTitle>NEAR Intents</SectionTitle>
+				<h2 className="heading-xs">NEAR Intents</h2>
 				<HeadlinePill label="Total Intent Fees" value={intents?.kpis.totalIntentFees.formatted} />
 			</div>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -391,7 +387,7 @@ export default function Ecosystem() {
 			</ChartPanel>
 
 			{/* Base-Chain Activity */}
-			<SectionTitle>Base-Chain Activity</SectionTitle>
+			<h2 className="heading-xs">Base-Chain Activity</h2>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
 				{eco ? (
 					<>
@@ -497,7 +493,7 @@ export default function Ecosystem() {
 			</div>
 
 			{/* Token Overview */}
-			<SectionTitle>Token Overview</SectionTitle>
+			<h2 className="heading-xs">Token Overview</h2>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
 				{token ? (
 					<>
@@ -555,7 +551,7 @@ export default function Ecosystem() {
 			</ChartPanel>
 
 			{/* Protocol */}
-			<SectionTitle>Protocol</SectionTitle>
+			<h2 className="heading-xs">Protocol</h2>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
 				{PROTOCOL_STATS.map((stat) => (
 					<StatTile key={stat.label} label={stat.label} value={stat.value} sub={stat.description} />

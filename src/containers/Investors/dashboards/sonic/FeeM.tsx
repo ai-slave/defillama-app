@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -24,10 +24,6 @@ import { SonicIcon } from './SonicIcon'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
 
 function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry> }) {
 	const treeData: Array<TreemapNode> = []
@@ -164,7 +160,7 @@ export default function FeeM() {
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 title-sm tracking-wider text-secondary uppercase">Fee Distribution</h3>
+				<h3 className="mt-4 heading-xs">Fee Distribution</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
 						<span className="title-md text-on-brand">90%</span>
@@ -195,7 +191,7 @@ export default function FeeM() {
 
 			{/* Daily Stats Chart */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Daily Activity</SectionHeader>
+				<h2 className="heading-xs">Daily Activity</h2>
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
 					<Suspense fallback={<ChartPanelBodyLoading />}>
@@ -214,7 +210,7 @@ export default function FeeM() {
 
 			{/* Rewards Treemap */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Rewards Distribution</SectionHeader>
+				<h2 className="heading-xs">Rewards Distribution</h2>
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by Protocol</ChartPanelTitle>} />
 					<FeeMTreemap leaderboard={data.leaderboard} />
@@ -223,7 +219,7 @@ export default function FeeM() {
 
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>FeeM Leaderboard</SectionHeader>
+				<h2 className="heading-xs">FeeM Leaderboard</h2>
 				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 					<table className="w-full">
 						<thead>
@@ -267,15 +263,9 @@ export default function FeeM() {
 					{/* Pagination */}
 					{table.getPageCount() > 1 && (
 						<TablePager
-							label={
-								<>
-									Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
-								</>
-							}
-							canPrevious={table.getCanPreviousPage()}
-							canNext={table.getCanNextPage()}
-							onPrevious={() => table.previousPage()}
-							onNext={() => table.nextPage()}
+							pageIndex={table.state.pagination.pageIndex}
+							pageCount={table.getPageCount()}
+							onPageChange={(index) => table.setPageIndex(index)}
 							className="border-t border-subtle px-4 py-3"
 						/>
 					)}

@@ -12,10 +12,6 @@ import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './cha
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-function SectionHeader({ title }: { title: string }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{title}</h2>
-}
-
 const TRANSACTIONS_CHART = [
 	{
 		type: 'bar',
@@ -146,7 +142,7 @@ export default function Blockchain() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Chain Activity */}
-			<SectionHeader title="Chain Activity" />
+			<h2 className="heading-xs">Chain Activity</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile label="Latest Daily Txs" value={data.activityKpis.latestTxCount.formatted} />
 				<StatTile label="Active Addresses" value={data.activityKpis.latestActiveAddresses.formatted} />
@@ -185,7 +181,7 @@ export default function Blockchain() {
 			</ChartPanel>
 
 			{/* Gas & Fee Economics */}
-			<SectionHeader title="Gas & Fee Economics" />
+			<h2 className="heading-xs">Gas & Fee Economics</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile label="Fees (7d)" value={data.gasKpis.totalFees7d.formatted} />
 				<StatTile label="Fees (30d)" value={data.gasKpis.totalFees30d.formatted} />
@@ -224,7 +220,7 @@ export default function Blockchain() {
 			</ChartPanel>
 
 			{/* Contract Deployments */}
-			<SectionHeader title="Contract Deployments" />
+			<h2 className="heading-xs">Contract Deployments</h2>
 			<ChartPanel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
@@ -241,7 +237,7 @@ export default function Blockchain() {
 			</ChartPanel>
 
 			{/* Token Transfers */}
-			<SectionHeader title="Token Transfers" />
+			<h2 className="heading-xs">Token Transfers</h2>
 			<ChartPanel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
@@ -259,7 +255,7 @@ export default function Blockchain() {
 
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader title="Top Tokens by 30d Transfer Volume" />
+					<h2 className="heading-xs">Top Tokens by 30d Transfer Volume</h2>
 					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full">
 							<thead>

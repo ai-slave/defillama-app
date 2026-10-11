@@ -12,13 +12,13 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
+import { TablePager } from '~/components/Table/TablePager'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 import { buildChainShareTotals, CHAIN_SHARE_METRICS, getChainMetricShare } from './chainShares'
 import { ChainsTableHeader } from './ChainsTableHeader'
 import { ColumnManagementPanel } from './ColumnManagementPanel'
@@ -340,16 +340,16 @@ export function ChainsDataset({
 						<TableBody table={instance} />
 					</div>
 
-					<TablePagination
-						pageSize={pagination.pageSize}
+					<TablePager
 						pageIndex={pagination.pageIndex}
 						pageCount={instance.getPageCount()}
-						canPreviousPage={instance.getCanPreviousPage()}
-						canNextPage={instance.getCanNextPage()}
-						previousPage={instance.previousPage}
-						nextPage={instance.nextPage}
-						setPageSize={instance.setPageSize}
-						showPageSizes={(data?.length ?? 0) > 10}
+						onPageChange={instance.setPageIndex}
+						pageSize={
+							(data?.length ?? 0) > 10
+								? { value: pagination.pageSize, options: TABLE_PAGE_SIZES, onChange: instance.setPageSize }
+								: undefined
+						}
+						className="mt-2 justify-between"
 					/>
 				</>
 			)}

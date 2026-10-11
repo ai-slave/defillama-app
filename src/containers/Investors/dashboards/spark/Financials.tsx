@@ -30,10 +30,6 @@ function sparkExportTitle(title: string) {
 	return lowerTitle.includes('spark') || title.startsWith('SPK') ? title : `Spark ${title}`
 }
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
-
 type AADimension = 'byProtocol' | 'byNetwork' | 'byAsset'
 
 const AA_VIEW_OPTIONS = [
@@ -87,7 +83,7 @@ function AllocatedAssetsSection({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>SLL Allocated Assets</SectionHeader>
+			<h2 className="heading-xs">SLL Allocated Assets</h2>
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{allocatedAssets.title}</ChartPanelTitle>}>
 					<SegmentedControl<typeof view>
@@ -214,7 +210,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>Monthly Returns</SectionHeader>
+			<h2 className="heading-xs">Monthly Returns</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyGross.title}</ChartPanelTitle>}>
@@ -271,7 +267,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>sUSDS Distribution</SectionHeader>
+			<h2 className="heading-xs">sUSDS Distribution</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Spark-distributed USDS</ChartPanelTitle>}>
@@ -328,7 +324,7 @@ function TvlSection({ data }: { data: FinData }) {
 	const tvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>Total Value Locked</SectionHeader>
+			<h2 className="heading-xs">Total Value Locked</h2>
 			<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.tvl.title}</ChartPanelTitle>}>
@@ -362,7 +358,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 	const borrows = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>SparkLend Deposits &amp; Borrows</SectionHeader>
+			<h2 className="heading-xs">SparkLend Deposits &amp; Borrows</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.deposits.title}</ChartPanelTitle>}>
@@ -415,7 +411,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 	const sllTvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>SLL TVL by Chain</SectionHeader>
+			<h2 className="heading-xs">SLL TVL by Chain</h2>
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.sllTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
@@ -447,7 +443,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 	const savingsTvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>Spark Savings TVL by Chain</SectionHeader>
+			<h2 className="heading-xs">Spark Savings TVL by Chain</h2>
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{data.savingsTvl.title}</ChartPanelTitle>}>
 					<ChartPngExportButton
@@ -480,7 +476,7 @@ function TreasurySection({ data }: { data: FinData }) {
 	const buybacks = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<SectionHeader>Treasury &amp; Buybacks</SectionHeader>
+			<h2 className="heading-xs">Treasury &amp; Buybacks</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="rounded-lg border border-subtle bg-surface p-4">
 					<h3 className="mb-3 label-md text-secondary">Treasury</h3>
@@ -591,7 +587,7 @@ export default function Financials() {
 
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Projected Returns Breakdown</SectionHeader>
+				<h2 className="heading-xs">Projected Returns Breakdown</h2>
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>} />
 					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}
@@ -661,7 +657,7 @@ export default function Financials() {
 			{/* Section 11: Quarterly Reports */}
 			{data.quarterlyReports && data.quarterlyReports.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader>Quarterly Reports</SectionHeader>
+					<h2 className="heading-xs">Quarterly Reports</h2>
 					<div className="rounded-lg border border-subtle bg-surface p-4">
 						<div className="flex flex-col">
 							{data.quarterlyReports.map((report) => (

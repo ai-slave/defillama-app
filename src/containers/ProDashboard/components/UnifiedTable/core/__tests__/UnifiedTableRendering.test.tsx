@@ -4,13 +4,14 @@ import { type ColumnDef, type PaginationState, type SortingState, useTable } fro
 import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { TablePager } from '~/components/Table/TablePager'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { UnifiedTableConfig } from '../../../../unifiedTable/config/current'
 import type { ProtocolsUnifiedTableResponse } from '../../../../unifiedTable/contracts'
-import { TablePagination } from '../../../Table/TablePagination'
 import UnifiedTable from '../../index'
 import type { ProtocolTableLeafRow, ProtocolTableRow } from '../../types'
 import type { ActiveFilterChip } from '../../utils/filterChips'
@@ -214,16 +215,13 @@ function TableHarness() {
 				pageIndex={pagination.pageIndex}
 				pageSize={pagination.pageSize}
 			/>
-			<TablePagination
-				pageSize={pagination.pageSize}
+			<button type="button" onClick={() => table.setPageSize(30)}>
+				Show 30 rows
+			</button>
+			<TablePager
 				pageIndex={pagination.pageIndex}
 				pageCount={table.getPageCount()}
-				canPreviousPage={table.getCanPreviousPage()}
-				canNextPage={table.getCanNextPage()}
-				previousPage={table.previousPage}
-				nextPage={table.nextPage}
-				setPageSize={table.setPageSize}
-				showPageSizes
+				onPageChange={(index) => table.setPageIndex(index)}
 			/>
 		</>
 	)
@@ -237,7 +235,7 @@ describe('UnifiedTable rendering', () => {
 		Array.from(container.querySelectorAll('[data-testid="row-name"]'), (element) => element.textContent)
 
 	const button = (label: string) => {
-		const match = Array.from(container.querySelectorAll('button')).find((element) => element.textContent === label)
+		const match = Array.from(container.querySelectorAll('button')).find((element) => accessibleName(element) === label)
 		if (!match) throw new Error(`Expected button: ${label}`)
 		return match
 	}
@@ -290,11 +288,11 @@ describe('UnifiedTable rendering', () => {
 		await act(async () => root.render(<TableHarness />))
 
 		virtualizer.scrollToOffset.mockClear()
-		await act(async () => button('Next').click())
+		await act(async () => button('Go to next page').click())
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 
 		virtualizer.scrollToOffset.mockClear()
-		await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="30"]')!.click())
+		await act(async () => button('Show 30 rows').click())
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 	})
 

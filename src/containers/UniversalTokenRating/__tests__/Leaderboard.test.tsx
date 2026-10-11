@@ -141,7 +141,7 @@ describe('Leaderboard', () => {
 		await render({ asset: 'asset-150', nonce: 1 })
 		expect(onPage('asset-150')).toBe(true)
 		expect(onPage('asset-0')).toBe(false)
-		await act(async () => container!.querySelector<HTMLButtonElement>('[aria-label="Next page"]')!.click())
+		await act(async () => container!.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')!.click())
 		expect(onPage('asset-204')).toBe(true)
 		expect(container.textContent).toContain('Page 3 of 3')
 	})

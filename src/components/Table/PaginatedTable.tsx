@@ -23,7 +23,6 @@ import {
 	type CSSProperties,
 	type ReactNode
 } from 'react'
-import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -31,8 +30,6 @@ import {
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type {
@@ -44,6 +41,7 @@ import type {
 import { getPaginationControls } from './paginationControls'
 import { TableColumnGroup } from './TableColumnGroup'
 import { TableEmptyRow } from './TableEmptyRow'
+import { TablePager } from './TablePager'
 import { useTableCells } from './useTableCells'
 
 interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & VisibilityFeatures, T extends RowData> {
@@ -138,29 +136,25 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 	emptyMessage,
 	renderSubComponent
 }: PaginatedTableProps<F, T>) {
-	const { rows, rowCount, visibleLeafColumns, headerGroups, pagination, pageCount, canPreviousPage, canNextPage } =
-		useSelector(
-			table.store,
-			() => ({
-				rows: table.getRowModel().rows,
-				rowCount: table.getRowCount(),
-				visibleLeafColumns: table.getVisibleLeafColumns(),
-				headerGroups: table.getHeaderGroups(),
-				pagination: table.atoms.pagination.get(),
-				pageCount: table.getPageCount(),
-				canPreviousPage: table.getCanPreviousPage(),
-				canNextPage: table.getCanNextPage()
-			}),
-			{ compare: shallow }
-		)
+	const { rows, rowCount, visibleLeafColumns, headerGroups, pagination, pageCount } = useSelector(
+		table.store,
+		() => ({
+			rows: table.getRowModel().rows,
+			rowCount: table.getRowCount(),
+			visibleLeafColumns: table.getVisibleLeafColumns(),
+			headerGroups: table.getHeaderGroups(),
+			pagination: table.atoms.pagination.get(),
+			pageCount: table.getPageCount()
+		}),
+		{ compare: shallow }
+	)
 	const cellsByRow = useTableCells(rows, visibleLeafColumns)
 	const { pageIndex, pageSize } = pagination
 	const {
 		showNavigation: shouldShowPaginationControls,
 		showPageSizeSelector: shouldShowPageSizeSelector,
-		pageLabel,
 		pageSizeOptions: availablePageSizeOptions
-	} = getPaginationControls({ rowCount, pageCount, pageIndex, pageSize, pageSizeOptions })
+	} = getPaginationControls({ rowCount, pageCount, pageSize, pageSizeOptions })
 	const stickyHeaderContentRef = useRef<HTMLDivElement>(null)
 	const handleTableScroll = (event: React.UIEvent<HTMLDivElement>) => {
 		if (!stickyHeaderContentRef.current) return
@@ -351,103 +345,25 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 				{tableContent}
 
 				{shouldShowPaginationControls || shouldShowPageSizeSelector ? (
-					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle p-2">
-						<div className="flex items-center gap-2">
-							{shouldShowPaginationControls ? (
-								<>
-									{/* Each pager button disables itself at the end it moves to, so it keeps focus while disabled. */}
-									<Tooltip
-										content="Go to first page"
-										render={
-											<Button
-												type="button"
-												aria-label="Go to first page"
-												onClick={() => startTransition(() => table.setPageIndex(0))}
-												disabled={interactionDisabled || !canPreviousPage}
-												accessibleWhenDisabled
-												variant="secondary"
-												size="md"
-												square
-											/>
-										}
-									>
-										<Icon name="chevrons-left" className="size-4" />
-									</Tooltip>
-									<Tooltip
-										content="Go to previous page"
-										render={
-											<Button
-												type="button"
-												aria-label="Go to previous page"
-												onClick={() => startTransition(() => table.previousPage())}
-												disabled={interactionDisabled || !canPreviousPage}
-												accessibleWhenDisabled
-												variant="secondary"
-												size="md"
-												square
-											/>
-										}
-									>
-										<Icon name="chevron-left" className="size-4" />
-									</Tooltip>
-									<span className="body-sm text-secondary">{pageLabel}</span>
-									<Tooltip
-										content="Go to next page"
-										render={
-											<Button
-												type="button"
-												aria-label="Go to next page"
-												onClick={() => startTransition(() => table.nextPage())}
-												disabled={interactionDisabled || !canNextPage}
-												accessibleWhenDisabled
-												variant="secondary"
-												size="md"
-												square
-											/>
-										}
-									>
-										<Icon name="chevron-right" className="size-4" />
-									</Tooltip>
-									<Tooltip
-										content="Go to last page"
-										render={
-											<Button
-												type="button"
-												aria-label="Go to last page"
-												onClick={() => startTransition(() => table.setPageIndex(Math.max(0, table.getPageCount() - 1)))}
-												disabled={interactionDisabled || !canNextPage}
-												accessibleWhenDisabled
-												variant="secondary"
-												size="md"
-												square
-											/>
-										}
-									>
-										<Icon name="chevrons-right" className="size-4" />
-									</Tooltip>
-								</>
-							) : null}
-						</div>
-
-						{shouldShowPageSizeSelector ? (
-							<Select
-								allValues={availablePageSizeOptions.map(String)}
-								selectedValues={String(pageSize)}
-								setSelectedValues={(value) => {
-									startTransition(() => {
-										table.setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: Number(value) }))
-									})
-								}}
-								label="Rows per page"
-								labelType="regular"
-								variant="filter"
-								size="md"
-								placement="top-end"
-								className="ml-auto"
-								triggerProps={{ disabled: interactionDisabled }}
-							/>
-						) : null}
-					</div>
+					<TablePager
+						pageIndex={pageIndex}
+						pageCount={shouldShowPaginationControls ? pageCount : 1}
+						onPageChange={(nextPageIndex) => startTransition(() => table.setPageIndex(nextPageIndex))}
+						pageSize={
+							shouldShowPageSizeSelector
+								? {
+										value: pageSize,
+										options: availablePageSizeOptions,
+										onChange: (nextPageSize) =>
+											startTransition(() =>
+												table.setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: nextPageSize }))
+											)
+									}
+								: undefined
+						}
+						disabled={interactionDisabled}
+						className="justify-between border-t border-subtle p-2"
+					/>
 				) : null}
 			</div>
 		</DisplayRowNumbersContext.Provider>

@@ -1,7 +1,7 @@
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, type YieldsResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable } from './ui'
+import { ChartCard, SimpleTable } from './ui'
 
 export default function Yields() {
 	const { data } = useTab<YieldsResponse>('yields')
@@ -35,7 +35,7 @@ export default function Yields() {
 				)}
 			</div>
 
-			<SectionHeader>Odyssey Loopr · Max APY by Chain</SectionHeader>
+			<h2 className="heading-xs">Odyssey Loopr · Max APY by Chain</h2>
 			<ChartCard title="Aggregated APY per chain" subtitle="At max leverage, across all live Looper strategies">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.chain}
@@ -54,7 +54,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Odyssey Loopr · Per-Strategy Max APY</SectionHeader>
+			<h2 className="heading-xs">Odyssey Loopr · Per-Strategy Max APY</h2>
 			<ChartCard title="Live strategies" subtitle="Collateral / borrow APY per pool (snapshot)">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.name, row.chain, row.collateral, row.borrow])}
@@ -89,7 +89,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Vesper Pools · Net APY</SectionHeader>
+			<h2 className="heading-xs">Vesper Pools · Net APY</h2>
 			<ChartCard title="All Vesper pools" subtitle="Current snapshot across Ethereum, Optimism and Base">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.pool, row.chain, row.asset])}
@@ -110,7 +110,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Synth LP Pools · Current APY</SectionHeader>
+			<h2 className="heading-xs">Synth LP Pools · Current APY</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{Object.entries(data?.lpApyHistory || {}).map(([key, venue]) => (
 					<ChartCard key={key} title={venue.venue} subtitle="Latest APY per pool">
@@ -132,7 +132,7 @@ export default function Yields() {
 				))}
 			</div>
 
-			<SectionHeader>All Synth LP Pools</SectionHeader>
+			<h2 className="heading-xs">All Synth LP Pools</h2>
 			<ChartCard title="LP pools snapshot" subtitle="Live across Aerodrome, Velodrome, Curve, Lithos">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.venue, row.chain, row.pool])}

@@ -20,10 +20,6 @@ export function ChartCard({
 	)
 }
 
-export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
-
 export interface Col<Row> {
 	key: string
 	label: string

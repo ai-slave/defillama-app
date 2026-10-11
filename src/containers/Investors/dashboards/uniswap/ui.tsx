@@ -275,10 +275,6 @@ export function KpiGrid({
 	)
 }
 
-export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-tertiary uppercase">{children}</h2>
-}
-
 // A chart panel with an "awaiting data" body + the awaited API field, so the target
 // layout is visible before the backend ships the data.
 export function PlaceholderCard({

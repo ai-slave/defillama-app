@@ -10,6 +10,8 @@ import type { SortingFeatures, VisibilityFeatures } from '~/components/Table/fea
 import { SortIcon } from '~/components/Table/SortIcon'
 import { ProCardLoading } from '../ProCardStatus'
 
+export const TABLE_PAGE_SIZES = [10, 30, 50]
+
 interface TableBodyProps<F extends SortingFeatures & VisibilityFeatures, TData extends RowData> {
 	table: Table<F, TData>
 	isLoading?: boolean

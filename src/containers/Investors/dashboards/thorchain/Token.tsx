@@ -1,7 +1,7 @@
 import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart, DualAxisChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
-import { Kpi, KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
+import { Kpi, KpiGrid, PlaceholderCard, TimeAreaCard, useThorchainData } from './ui'
 
 interface TokenData {
 	rune: { kpis: Record<string, KpiT | undefined> }
@@ -48,7 +48,7 @@ export default function Token() {
 	return (
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
-				<SectionHeader>RUNE</SectionHeader>
+				<h2 className="heading-xs">RUNE</h2>
 				<KpiGrid kpis={data.rune.kpis} items={RUNE_KPIS} cols={3} />
 				{runePriceChart && (
 					<TimeAreaCard
@@ -73,7 +73,7 @@ export default function Token() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>TCY</SectionHeader>
+				<h2 className="heading-xs">TCY</h2>
 				<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 					<Kpi kpi={tcy.tcyMarketCap} label="Market Cap" />
 					<Kpi kpi={tcy.tcyFdv} label="FDV" />
@@ -123,7 +123,7 @@ export default function Token() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>RUNE Burn</SectionHeader>
+				<h2 className="heading-xs">RUNE Burn</h2>
 				<KpiGrid kpis={data.burn.kpis} items={BURN_KPIS} cols={3} />
 				<ApiTrendChart
 					chart={data.burn.burnChart}

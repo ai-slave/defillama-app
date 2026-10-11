@@ -18,6 +18,7 @@ import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
+import { TablePager } from '~/components/Table/TablePager'
 import { useTableSearch } from '~/components/Table/utils'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type {
@@ -46,8 +47,7 @@ import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { scaledPx, useCardHeightScale } from '../../cardHeightContext'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 import { cexAnalyticsColumns } from './columns'
 import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTotals } from './useCexAnalyticsData'
 
@@ -335,16 +335,16 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 				</div>
 			</div>
 			<TableBody table={instance} />
-			<TablePagination
-				pageSize={pagination.pageSize}
+			<TablePager
 				pageIndex={pagination.pageIndex}
 				pageCount={instance.getPageCount()}
-				canPreviousPage={instance.getCanPreviousPage()}
-				canNextPage={instance.getCanNextPage()}
-				previousPage={instance.previousPage}
-				nextPage={instance.nextPage}
-				setPageSize={instance.setPageSize}
-				showPageSizes={instance.getRowCount() > 10}
+				onPageChange={instance.setPageIndex}
+				pageSize={
+					instance.getRowCount() > 10
+						? { value: pagination.pageSize, options: TABLE_PAGE_SIZES, onChange: instance.setPageSize }
+						: undefined
+				}
+				className="mt-2 justify-between"
 			/>
 		</div>
 	)

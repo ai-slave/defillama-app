@@ -5,7 +5,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import { BarListCard, CardTitle, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, CardTitle, KpiGrid, TimeAreaCard, useUniswapData } from './ui'
 
 interface TopPoolRow {
 	pool: string
@@ -207,7 +207,7 @@ export default function Liquidity() {
 			/>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>TVL</SectionHeader>
+				<h2 className="heading-xs">TVL</h2>
 				<TimeAreaCard
 					title="TVL"
 					chart={tvlView === 'total' ? data.tvlTotal : data.tvlByChain}
@@ -234,7 +234,7 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Liquidity Providers</SectionHeader>
+				<h2 className="heading-xs">Liquidity Providers</h2>
 				{lpOptions.length > 1 && <p className="-mt-3 body-sm text-tertiary">{LP_OVERLAP_NOTE}</p>}
 				<TimeAreaCard
 					chart={lpCharts[resolvedLpView] ?? data.activeLps}
@@ -281,7 +281,7 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>TVL by Token Segment</SectionHeader>
+				<h2 className="heading-xs">TVL by Token Segment</h2>
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
 						title="TVL by Token Segment"
@@ -303,7 +303,7 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Top Pools</SectionHeader>
+				<h2 className="heading-xs">Top Pools</h2>
 				{/* A concentration metric, not a leaderboard: the ten largest pools as a share of TVL. */}
 				<BarListCard
 					title="Top 10 Pools as % of TVL"

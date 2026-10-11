@@ -54,7 +54,6 @@ const controls = (overrides: Partial<Parameters<typeof getPaginationControls>[0]
 	getPaginationControls({
 		rowCount: 11,
 		pageCount: 2,
-		pageIndex: 0,
 		pageSize: 10,
 		pageSizeOptions: [10, 20],
 		...overrides
@@ -69,18 +68,12 @@ describe('pagination controls', () => {
 		expect(controls({})).toEqual({
 			showNavigation: true,
 			showPageSizeSelector: true,
-			pageLabel: 'Page 1 of 2',
 			pageSizeOptions: [10, 20]
 		})
 	})
 
 	test('keeps a current page size outside the configured options selectable in order', () => {
 		expect(controls({ pageSize: 15 }).pageSizeOptions).toEqual([10, 15, 20])
-	})
-
-	test('clamps the page label to the last page and shows one page for an empty server total', () => {
-		expect(controls({ pageIndex: 7, pageCount: 3 }).pageLabel).toBe('Page 3 of 3')
-		expect(controls({ pageIndex: 2, pageCount: 0 }).pageLabel).toBe('Page 1 of 1')
 	})
 })
 

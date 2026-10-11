@@ -13,7 +13,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -43,10 +43,6 @@ const tableFeaturesConfig = tableFeatures({
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
 
 const protocolColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopProtocolEntry>()
 
@@ -173,15 +169,9 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 			</table>
 			{table.getPageCount() > 1 && (
 				<TablePager
-					label={
-						<>
-							Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
-						</>
-					}
-					canPrevious={table.getCanPreviousPage()}
-					canNext={table.getCanNextPage()}
-					onPrevious={() => table.previousPage()}
-					onNext={() => table.nextPage()}
+					pageIndex={table.state.pagination.pageIndex}
+					pageCount={table.getPageCount()}
+					onPageChange={(index) => table.setPageIndex(index)}
 					className="border-t border-subtle px-4 py-3"
 				/>
 			)}
@@ -306,7 +296,7 @@ export default function Ecosystem() {
 		<div className="flex flex-col gap-6">
 			{/* TVL */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Total Value Locked</SectionHeader>
+				<h2 className="heading-xs">Total Value Locked</h2>
 				<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartPanel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
@@ -325,7 +315,7 @@ export default function Ecosystem() {
 
 			{/* Fees */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Protocol Fees</SectionHeader>
+				<h2 className="heading-xs">Protocol Fees</h2>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					<StatTile
 						label="24h Fees"
@@ -352,13 +342,13 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</ChartPanel>
-				<SectionHeader>Top Protocols by Fees</SectionHeader>
+				<h2 className="heading-xs">Top Protocols by Fees</h2>
 				<ProtocolTable data={data.fees.topProtocols} valueLabel="Fees" />
 			</div>
 
 			{/* DEX Volume */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>DEX Volume</SectionHeader>
+				<h2 className="heading-xs">DEX Volume</h2>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					<StatTile
 						label="24h Volume"
@@ -385,13 +375,13 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</ChartPanel>
-				<SectionHeader>Top DEXes by Volume</SectionHeader>
+				<h2 className="heading-xs">Top DEXes by Volume</h2>
 				<ProtocolTable data={data.dexVolume.topDexes} valueLabel="Volume" />
 			</div>
 
 			{/* Stablecoins */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Stablecoins</SectionHeader>
+				<h2 className="heading-xs">Stablecoins</h2>
 				<div className="grid grid-cols-3 gap-4">
 					<StatTile label="Circulating" value={data.stablecoins.kpis.currentCirculating.formatted} />
 					<StatTile label="Minted (Native)" value={data.stablecoins.kpis.currentMinted.formatted} />
@@ -460,7 +450,7 @@ export default function Ecosystem() {
 
 			{/* Chain Assets */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Chain Assets</SectionHeader>
+				<h2 className="heading-xs">Chain Assets</h2>
 				<AssetBreakdownSection
 					categories={data.chainAssets.categories}
 					pieColors={data.chainAssets.pieColors}

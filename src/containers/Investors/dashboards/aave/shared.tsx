@@ -18,7 +18,7 @@ import type {
 	VisibilityFeatures
 } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
@@ -105,18 +105,8 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 export function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
-			<h3 className="mb-4 title-sm tracking-wider text-tertiary uppercase">{title}</h3>
+			<h3 className="mb-4 heading-xs">{title}</h3>
 			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
-		</div>
-	)
-}
-
-/** Section wrapper with uppercase label and optional right-side actions */
-export function SectionHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
-	return (
-		<div className="flex items-center justify-between">
-			<h3 className="title-sm tracking-wider text-tertiary uppercase">{title}</h3>
-			{actions}
 		</div>
 	)
 }
@@ -131,15 +121,10 @@ export function Pagination<F extends PaginationFeatures, T extends TableRowData>
 
 	return (
 		<TablePager
-			label={
-				<>
-					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-				</>
-			}
-			canPrevious={table.getCanPreviousPage()}
-			canNext={table.getCanNextPage()}
-			onPrevious={() => table.previousPage()}
-			onNext={() => table.nextPage()}
+			pageIndex={pageIndex}
+			pageCount={table.getPageCount()}
+			onPageChange={(index) => table.setPageIndex(index)}
+			range={{ from: pageIndex * pageSize + 1, to: Math.min((pageIndex + 1) * pageSize, total), total }}
 			className="mt-3 border-t border-subtle pt-3"
 		/>
 	)

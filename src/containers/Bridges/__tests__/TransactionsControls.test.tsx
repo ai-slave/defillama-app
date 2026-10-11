@@ -79,26 +79,25 @@ test('Fetch keeps focus while transactions load, and the pager stays focusable a
 	await act(async () =>
 		page.resolve({
 			hasMore: false,
-			rows: [
-				{
-					tx_hash: '0x1',
-					ts,
-					tx_block: 1,
-					tx_from: '0xa',
-					tx_to: '0xb',
-					token: '0xc',
-					amount: '1',
-					is_deposit: true,
-					is_usd_volume: true,
-					chain: 'ethereum',
-					bridge_name: 'portal',
-					usd_value: '10'
-				}
-			]
+			// Two pages, so the pager has somewhere to go.
+			rows: Array.from({ length: 101 }, (_, index) => ({
+				tx_hash: `0x${index}`,
+				ts,
+				tx_block: 1,
+				tx_from: '0xa',
+				tx_to: '0xb',
+				token: '0xc',
+				amount: '1',
+				is_deposit: true,
+				is_usd_volume: true,
+				chain: 'ethereum',
+				bridge_name: 'portal',
+				usd_value: '10'
+			}))
 		})
 	)
 	const first = await waitForUi(() => {
-		const found = button('First page')
+		const found = button('Go to first page')
 		expect(found).toBeDefined()
 		return found
 	})

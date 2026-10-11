@@ -3,7 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
@@ -19,8 +19,7 @@ import {
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
-	InvestorsTable,
-	SectionHeader
+	InvestorsTable
 } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -170,21 +169,20 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
-			<SectionHeader title="All Reserves" />
+			<h3 className="heading-xs">All Reserves</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />
 			</div>
 			{totalPages > 1 && (
 				<TablePager
-					label={
-						<>
-							{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allRows.length)} of {allRows.length}
-						</>
-					}
-					canPrevious={page > 0}
-					canNext={page < totalPages - 1}
-					onPrevious={() => setPage((p) => p - 1)}
-					onNext={() => setPage((p) => p + 1)}
+					pageIndex={page}
+					pageCount={totalPages}
+					onPageChange={setPage}
+					range={{
+						from: page * PAGE_SIZE + 1,
+						to: Math.min((page + 1) * PAGE_SIZE, allRows.length),
+						total: allRows.length
+					}}
 					className="mt-3 border-t border-subtle pt-3"
 				/>
 			)}

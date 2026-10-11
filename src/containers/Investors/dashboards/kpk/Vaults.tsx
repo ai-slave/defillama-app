@@ -19,7 +19,6 @@ import {
 	REBALANCING_REF,
 	RefLinks,
 	RowLink,
-	SectionHeader,
 	Spark,
 	signClass,
 	signedBps,
@@ -114,7 +113,8 @@ export default function Vaults() {
 			/>
 
 			<section className="flex flex-col gap-3">
-				<SectionHeader title="Vaults">
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<h2 className="heading-xs">Vaults</h2>
 					<SegmentedControl
 						variant="default"
 						size="md"
@@ -123,7 +123,7 @@ export default function Vaults() {
 						value={venue}
 						onValueChange={setVenue}
 					/>
-				</SectionHeader>
+				</div>
 				<Card>
 					<DataTable<KpkVault>
 						getOccurrenceKey={(row) => JSON.stringify([row.chain, row.venue, row.name, row.asset])}

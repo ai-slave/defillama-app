@@ -3,7 +3,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { formatDateTime } from '~/utils/dateFormat'
 import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { useTab, type PegRow, type PegSupplyCap, type PegsResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
+import { ChartCard, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
@@ -79,7 +79,7 @@ export default function Pegs() {
 				</p>
 			)}
 
-			<SectionHeader>Spot Peg · Headline</SectionHeader>
+			<h2 className="heading-xs">Spot Peg · Headline</h2>
 			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 				{data ? (
 					<>
@@ -118,7 +118,7 @@ export default function Pegs() {
 				)}
 			</div>
 
-			<SectionHeader>msUSD · Peg Depth</SectionHeader>
+			<h2 className="heading-xs">msUSD · Peg Depth</h2>
 			<ChartCard
 				title="msUSD across chains"
 				subtitle="Effective peg at 5 trade sizes (DefiLlama coins · KyberSwap on supported chains)"
@@ -126,12 +126,12 @@ export default function Pegs() {
 				<SynthTable rows={msUSD} />
 			</ChartCard>
 
-			<SectionHeader>msETH · Peg Depth</SectionHeader>
+			<h2 className="heading-xs">msETH · Peg Depth</h2>
 			<ChartCard title="msETH across chains" subtitle="Effective peg at 5 trade sizes">
 				<SynthTable rows={msETH} />
 			</ChartCard>
 
-			<SectionHeader>Supply Caps · On-chain + Bridges</SectionHeader>
+			<h2 className="heading-xs">Supply Caps · On-chain + Bridges</h2>
 			{(() => {
 				const capCols: Array<Col<PegSupplyCap>> = [
 					{ key: 'chain', label: 'Chain' },

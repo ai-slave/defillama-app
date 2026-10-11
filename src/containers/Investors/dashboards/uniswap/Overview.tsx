@@ -14,7 +14,6 @@ import {
 	KpiGrid,
 	PROTOCOL,
 	QUERY_OPTS,
-	SectionHeader,
 	TimeAreaCard,
 	usdKpi,
 	useProtocolMetrics,
@@ -183,7 +182,7 @@ export default function Overview() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Volume</SectionHeader>
+				<h2 className="heading-xs">Volume</h2>
 				<SeriesTrendChart
 					title="Total Volume by Chain"
 					subtitle="Swap volume across all versions, split by chain (top chains plus Others)."
@@ -206,7 +205,7 @@ export default function Overview() {
 
 			{liquidity.data?.tvlTotal && (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>TVL</SectionHeader>
+					<h2 className="heading-xs">TVL</h2>
 					<TimeAreaCard
 						chart={liquidity.data.tvlTotal}
 						title="Total Value Locked"
@@ -218,7 +217,7 @@ export default function Overview() {
 			)}
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Fees</SectionHeader>
+				<h2 className="heading-xs">Fees</h2>
 				<SeriesTrendChart
 					title="Fees Paid by Users, by Version"
 					subtitle="Swap fees paid by users, split by protocol version."
@@ -241,7 +240,7 @@ export default function Overview() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Activity</SectionHeader>
+				<h2 className="heading-xs">Activity</h2>
 				{/* Weekly unique counts must not be re-summed into coarser periods (a monthly sum of
 				    weekly uniques double-counts returning wallets), so these render as plain weekly
 				    lines instead of getting the aggregation toggle. Titles are fixed here so the tab

@@ -13,7 +13,7 @@ import { PanelLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import { BarListCard, CardTitle, ChartCard, KpiGrid, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import { BarListCard, CardTitle, ChartCard, KpiGrid, TimeAreaCard, useUniswapData } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -223,7 +223,7 @@ export default function Security() {
 	return (
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Track Record</SectionHeader>
+				<h2 className="heading-xs">Track Record</h2>
 				{/* Terse values, labels carry the words; cols=3 spreads the row out. */}
 				<KpiGrid
 					kpis={kpis}
@@ -238,7 +238,7 @@ export default function Security() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Audits</SectionHeader>
+				<h2 className="heading-xs">Audits</h2>
 				<KpiGrid
 					kpis={kpis}
 					cols={3}
@@ -270,7 +270,7 @@ export default function Security() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Governance</SectionHeader>
+				<h2 className="heading-xs">Governance</h2>
 				<KpiGrid
 					kpis={kpis}
 					cols={3}

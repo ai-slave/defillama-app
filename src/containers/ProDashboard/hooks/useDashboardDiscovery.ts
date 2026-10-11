@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { httpErrorMessage, ReaderError } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
@@ -97,7 +98,9 @@ export function useDashboardDiscovery(params: SearchParams) {
 	return {
 		dashboards: data?.items ?? EMPTY_DASHBOARDS,
 		isLoading: activeQuery.isLoading,
-		error: activeQuery.error as Error | null,
+		isFetching: activeQuery.isFetching,
+		readFailed: queryReadFailed(activeQuery),
+		refetch: activeQuery.refetch,
 		totalPages: data?.totalPages || 1,
 		totalItems: data?.totalItems || 0,
 		currentPage: data?.page || 1,

@@ -1,13 +1,13 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { TablePager } from '~/components/Table/TablePager'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
@@ -455,43 +455,7 @@ export function Leaderboard({
 			</table>
 			{pageCount > 1 ? (
 				<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2.5">
-					<span className="flex items-center gap-1.5">
-						<Tooltip
-							content="Previous page"
-							render={
-								<Button
-									type="button"
-									size="sm"
-									square
-									disabled={currentPage === 0}
-									accessibleWhenDisabled
-									onClick={() => setPage(currentPage - 1)}
-									aria-label="Previous page"
-								/>
-							}
-						>
-							<Icon name="arrow-left" className="size-4" />
-						</Tooltip>
-						<Tooltip
-							content="Next page"
-							render={
-								<Button
-									type="button"
-									size="sm"
-									square
-									disabled={currentPage + 1 >= pageCount}
-									accessibleWhenDisabled
-									onClick={() => setPage(currentPage + 1)}
-									aria-label="Next page"
-								/>
-							}
-						>
-							<Icon name="arrow-right" className="size-4" />
-						</Tooltip>
-						<span className="body-sm text-secondary">
-							Page <strong className="text-primary">{currentPage + 1}</strong> of {pageCount}
-						</span>
-					</span>
+					<TablePager pageIndex={currentPage} pageCount={pageCount} onPageChange={setPage} />
 					<span className="body-sm text-secondary">{sortedRows.length} tokens</span>
 				</div>
 			) : null}

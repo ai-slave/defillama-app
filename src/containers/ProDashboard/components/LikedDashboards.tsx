@@ -1,16 +1,23 @@
 import { BasicLink } from '~/components/Link'
+import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
-import { EmptyState } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
+import { EmptyState, PanelStatus } from '~/ui/Status'
 import { useLikedDashboards } from '../hooks/useLikedDashboards'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSkeleton } from './LoadingSkeleton'
 
 export function LikedDashboards() {
-	const { dashboards, isLoading, page, totalPages, goToPage } = useLikedDashboards()
+	const { dashboards, isLoading, isFetching, readFailed, page, totalPages, refetch, goToPage } = useLikedDashboards()
 
-	if (isLoading && dashboards.length === 0) {
+	if (readFailed) {
+		return (
+			<PanelStatus variant="error" retry={{ refetch, isFetching }}>
+				Couldn&apos;t load your starred dashboards.
+			</PanelStatus>
+		)
+	}
+
+	if (isLoading) {
 		return <LoadingSkeleton viewMode="grid" items={8} />
 	}
 
@@ -41,68 +48,12 @@ export function LikedDashboards() {
 				))}
 			</div>
 
-			{totalPages > 1 ? (
-				<div className="mt-8 flex items-center justify-center gap-1">
-					<Tooltip
-						content="Previous page"
-						render={
-							<Button
-								size="md"
-								type="button"
-								square
-								variant="ghost"
-								aria-label="Previous page"
-								onClick={() => goToPage(Math.max(1, page - 1))}
-								disabled={page === 1}
-								accessibleWhenDisabled
-							/>
-						}
-					>
-						<Icon name="chevron-left" className="size-4" />
-					</Tooltip>
-
-					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-						let pageNum = i + 1
-						if (totalPages > 5 && page > 3) {
-							pageNum = page - 2 + i
-							if (pageNum > totalPages) {
-								pageNum = totalPages - 4 + i
-							}
-						}
-						return (
-							<Button
-								size="md"
-								type="button"
-								variant="ghost"
-								data-active={page === pageNum}
-								key={pageNum}
-								onClick={() => goToPage(pageNum)}
-								{...(page === pageNum ? { 'aria-current': 'page' as const } : {})}
-							>
-								{pageNum}
-							</Button>
-						)
-					})}
-
-					<Tooltip
-						content="Next page"
-						render={
-							<Button
-								size="md"
-								type="button"
-								square
-								variant="ghost"
-								aria-label="Next page"
-								onClick={() => goToPage(Math.min(totalPages, page + 1))}
-								disabled={page === totalPages}
-								accessibleWhenDisabled
-							/>
-						}
-					>
-						<Icon name="chevron-right" className="size-4" />
-					</Tooltip>
-				</div>
-			) : null}
+			<TablePager
+				pageIndex={page - 1}
+				pageCount={totalPages}
+				onPageChange={(pageIndex) => goToPage(pageIndex + 1)}
+				className="mt-8 justify-center"
+			/>
 		</div>
 	)
 }

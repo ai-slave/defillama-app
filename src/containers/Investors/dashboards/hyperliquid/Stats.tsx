@@ -16,7 +16,7 @@ import type { IScatterChartProps, ScatterChartPoint } from '~/components/ECharts
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -242,15 +242,10 @@ function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesC
 
 	return (
 		<TablePager
-			label={
-				<>
-					{from}–{to} of {total}
-				</>
-			}
-			canPrevious={table.getCanPreviousPage()}
-			canNext={table.getCanNextPage()}
-			onPrevious={() => table.previousPage()}
-			onNext={() => table.nextPage()}
+			pageIndex={pageIndex}
+			pageCount={table.getPageCount()}
+			onPageChange={(index) => table.setPageIndex(index)}
+			range={{ from, to, total }}
 			className="pt-3"
 		/>
 	)

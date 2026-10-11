@@ -14,6 +14,7 @@ import {
 import * as React from 'react'
 import { useContext } from 'react'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
+import { TablePager } from '~/components/Table/TablePager'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
@@ -33,8 +34,7 @@ import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
-import { TableBody } from '../../Table/TableBody'
-import { TablePagination } from '../../Table/TablePagination'
+import { TABLE_PAGE_SIZES, TableBody } from '../../Table/TableBody'
 
 const tableFeaturesConfig = tableFeatures({
 	...orderedFilteredTableFeatures,
@@ -260,16 +260,16 @@ export function RWAChainsDataset() {
 			</div>
 			{queryRefreshFailed(chainsQuery) ? <ProCardRefreshFailed retry={chainsQuery} /> : null}
 			<TableBody table={instance} />
-			<TablePagination
-				pageSize={pagination.pageSize}
+			<TablePager
 				pageIndex={pagination.pageIndex}
 				pageCount={instance.getPageCount()}
-				canPreviousPage={instance.getCanPreviousPage()}
-				canNextPage={instance.getCanNextPage()}
-				previousPage={instance.previousPage}
-				nextPage={instance.nextPage}
-				setPageSize={instance.setPageSize}
-				showPageSizes={instance.getRowCount() > 10}
+				onPageChange={instance.setPageIndex}
+				pageSize={
+					instance.getRowCount() > 10
+						? { value: pagination.pageSize, options: TABLE_PAGE_SIZES, onChange: instance.setPageSize }
+						: undefined
+				}
+				className="mt-2 justify-between"
 			/>
 		</div>
 	)

@@ -3,7 +3,7 @@ import type { RowData as TableRowData } from '@tanstack/react-table'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
@@ -32,15 +32,10 @@ export function Pagination<F extends PaginationFeatures, T extends TableRowData>
 
 	return (
 		<TablePager
-			label={
-				<>
-					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-				</>
-			}
-			canPrevious={table.getCanPreviousPage()}
-			canNext={table.getCanNextPage()}
-			onPrevious={() => table.previousPage()}
-			onNext={() => table.nextPage()}
+			pageIndex={pageIndex}
+			pageCount={table.getPageCount()}
+			onPageChange={(index) => table.setPageIndex(index)}
+			range={{ from: pageIndex * pageSize + 1, to: Math.min((pageIndex + 1) * pageSize, total), total }}
 			className="mt-2"
 		/>
 	)

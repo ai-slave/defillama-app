@@ -12,9 +12,9 @@ import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
-import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
+import { TablePager } from '~/components/Table/TablePager'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { dateRangeErrors, useDateRangeValidation } from '~/hooks/useDateRangeValidation'
@@ -860,97 +860,22 @@ function TransactionsTable({
 
 			<VirtualTable table={instance} rowSize={48} />
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle p-2 label-sm text-secondary">
-				<span>
-					{filteredCount === 0
-						? 'No rows'
-						: `${formatCompactNumber(pageStart, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}–${formatCompactNumber(pageEnd, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of ${formatCompactNumber(filteredCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
-				</span>
-
-				<div className="flex items-center gap-1">
-					<PagerButton
-						aria-label="First page"
-						onClick={() => React.startTransition(() => instance.setPageIndex(0))}
-						disabled={!instance.getCanPreviousPage()}
-					>
-						<Icon name="chevrons-left" className="size-4" />
-					</PagerButton>
-					<PagerButton
-						aria-label="Previous page"
-						onClick={() => React.startTransition(() => instance.previousPage())}
-						disabled={!instance.getCanPreviousPage()}
-					>
-						<Icon name="chevron-left" className="size-4" />
-					</PagerButton>
-					<span className="px-2 font-medium text-primary">
-						{pageCount === 0 ? '0 / 0' : `${pageIndex + 1} / ${pageCount}`}
-					</span>
-					<PagerButton
-						aria-label="Next page"
-						onClick={() => React.startTransition(() => instance.nextPage())}
-						disabled={!instance.getCanNextPage()}
-					>
-						<Icon name="chevron-right" className="size-4" />
-					</PagerButton>
-					<PagerButton
-						aria-label="Last page"
-						onClick={() => React.startTransition(() => instance.setPageIndex(Math.max(0, pageCount - 1)))}
-						disabled={!instance.getCanNextPage()}
-					>
-						<Icon name="chevrons-right" className="size-4" />
-					</PagerButton>
-				</div>
-
-				<Select
-					allValues={PAGE_SIZE_OPTIONS.map(String)}
-					selectedValues={String(pageSize)}
-					setSelectedValues={(value) =>
+			<TablePager
+				pageIndex={pageIndex}
+				pageCount={pageCount}
+				onPageChange={(index) => React.startTransition(() => instance.setPageIndex(index))}
+				range={{ from: pageStart, to: pageEnd, total: filteredCount }}
+				pageSize={{
+					value: pageSize,
+					options: PAGE_SIZE_OPTIONS,
+					onChange: (value) =>
 						React.startTransition(() => {
-							instance.setPageSize(Number(value))
+							instance.setPageSize(value)
 							instance.setPageIndex(0)
 						})
-					}
-					label="Rows per page"
-					labelType="regular"
-					variant="filter"
-					size="md"
-					placement="top-end"
-					className="ml-auto"
-				/>
-			</div>
+				}}
+				className="justify-between border-t border-subtle p-2"
+			/>
 		</Panel>
-	)
-}
-
-function PagerButton({
-	children,
-	disabled,
-	onClick,
-	'aria-label': ariaLabel
-}: {
-	children: React.ReactNode
-	disabled: boolean
-	onClick: React.MouseEventHandler<HTMLButtonElement>
-	'aria-label': string
-}) {
-	// A pager button disables itself at the first or last page; it stays focusable so focus does not drop to the page.
-	return (
-		<Tooltip
-			content={ariaLabel}
-			render={
-				<Button
-					type="button"
-					variant="secondary"
-					size="md"
-					square
-					accessibleWhenDisabled
-					disabled={disabled}
-					onClick={onClick}
-					aria-label={ariaLabel}
-				/>
-			}
-		>
-			{children}
-		</Tooltip>
 	)
 }

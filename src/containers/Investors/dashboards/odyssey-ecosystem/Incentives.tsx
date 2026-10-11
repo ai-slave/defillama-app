@@ -13,7 +13,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatRatio } from '~/utils/numberFormat'
 import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
+import { ChartCard, SimpleTable, fmtUsd, type Col } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -178,7 +178,7 @@ export default function Incentives() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Weekly Spend per Pool</SectionHeader>
+			<h2 className="heading-xs">Weekly Spend per Pool</h2>
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Per-pool weekly spend</ChartPanelTitle>}>
 					<SegmentedControl<VenueId>
@@ -212,7 +212,7 @@ export default function Incentives() {
 				)}
 			</ChartPanel>
 
-			<SectionHeader>Epochs & Spend</SectionHeader>
+			<h2 className="heading-xs">Epochs & Spend</h2>
 			<ChartCard title="Epoch breakdown">
 				<SegmentedControl<VenueId>
 					variant="default"
@@ -234,7 +234,7 @@ export default function Incentives() {
 
 			{data?.nonSpendIncentives && (
 				<>
-					<SectionHeader>{data.nonSpendIncentives.title || 'Incentives not paid out of pocket'}</SectionHeader>
+					<h2 className="heading-xs">{data.nonSpendIncentives.title || 'Incentives not paid out of pocket'}</h2>
 					{data.nonSpendIncentives.feesRolledIntoIncentives && (
 						<ChartCard
 							title={
@@ -311,7 +311,7 @@ export default function Incentives() {
 				</>
 			)}
 
-			<SectionHeader>Gauges</SectionHeader>
+			<h2 className="heading-xs">Gauges</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title="Aerodrome (Base)">
 					<SimpleTable
@@ -348,7 +348,7 @@ export default function Incentives() {
 				/>
 			</ChartCard>
 
-			<SectionHeader>Curve Pools</SectionHeader>
+			<h2 className="heading-xs">Curve Pools</h2>
 			<ChartCard title="Curve Pools">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}

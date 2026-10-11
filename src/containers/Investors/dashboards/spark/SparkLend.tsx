@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
-import { TablePager } from '~/containers/Investors/TablePager'
+import { TablePager } from '~/components/Table/TablePager'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -158,15 +158,10 @@ function Pagination({ table }: { table: ReturnType<typeof useTable<typeof tableF
 
 	return (
 		<TablePager
-			label={
-				<>
-					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-				</>
-			}
-			canPrevious={table.getCanPreviousPage()}
-			canNext={table.getCanNextPage()}
-			onPrevious={() => table.previousPage()}
-			onNext={() => table.nextPage()}
+			pageIndex={pageIndex}
+			pageCount={table.getPageCount()}
+			onPageChange={(index) => table.setPageIndex(index)}
+			range={{ from: pageIndex * pageSize + 1, to: Math.min((pageIndex + 1) * pageSize, total), total }}
 			className="mt-2"
 		/>
 	)

@@ -14,7 +14,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -282,7 +282,7 @@ export default function Growth() {
 				)}
 			</div>
 
-			<SectionHeader>Loopr · Daily Activity (Combined)</SectionHeader>
+			<h2 className="heading-xs">Loopr · Daily Activity (Combined)</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartPanel>
 					{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
@@ -322,7 +322,7 @@ export default function Growth() {
 				</ChartPanel>
 			</div>
 
-			<SectionHeader>Loopr · Cumulative Onboarding</SectionHeader>
+			<h2 className="heading-xs">Loopr · Cumulative Onboarding</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartPanel>
 					{isLoading ? (
@@ -362,7 +362,7 @@ export default function Growth() {
 				</ChartPanel>
 			</div>
 
-			<SectionHeader>Loopr · Per-Chain Activity</SectionHeader>
+			<h2 className="heading-xs">Loopr · Per-Chain Activity</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
 					<ChartPanel>
@@ -398,7 +398,7 @@ export default function Growth() {
 
 			{depositsModel && (
 				<>
-					<SectionHeader>Loopr · Deposits by Chain</SectionHeader>
+					<h2 className="heading-xs">Loopr · Deposits by Chain</h2>
 					<ChartPanel>
 						<ChartPanelToolbar
 							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
@@ -419,7 +419,7 @@ export default function Growth() {
 
 			{loopr?.byStrategy?.length ? (
 				<>
-					<SectionHeader>Loopr · By Strategy</SectionHeader>
+					<h2 className="heading-xs">Loopr · By Strategy</h2>
 					<ChartCard title="Active strategies" subtitle="Deposits, users and performance fee per strategy">
 						<SimpleTable
 							getOccurrenceKey={(row) => JSON.stringify([row.strategyId, row.asset])}
@@ -455,7 +455,7 @@ export default function Growth() {
 				</>
 			) : null}
 
-			<SectionHeader>Token Prices</SectionHeader>
+			<h2 className="heading-xs">Token Prices</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<ChartPanel>
@@ -493,7 +493,7 @@ export default function Growth() {
 
 			{marketComboModel && (
 				<>
-					<SectionHeader>Ecosystem TVL Change vs ETH (cumulative)</SectionHeader>
+					<h2 className="heading-xs">Ecosystem TVL Change vs ETH (cumulative)</h2>
 					<ChartPanel>
 						<ChartPanelToolbar
 							leading={
@@ -518,7 +518,7 @@ export default function Growth() {
 
 			{morphoMarketModel && (
 				<>
-					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
+					<h2 className="heading-xs">Morpho Market · Supply / Borrow / Utilization</h2>
 					<ChartPanel>
 						<ChartPanelToolbar
 							leading={
@@ -541,7 +541,7 @@ export default function Growth() {
 
 			{morphoMarkets.length > 0 && (
 				<>
-					<SectionHeader>Metronome Morpho Markets</SectionHeader>
+					<h2 className="heading-xs">Metronome Morpho Markets</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoMarkets.map(({ market, model }) => {
 							return (
@@ -572,7 +572,7 @@ export default function Growth() {
 
 			{spendVsTvl && (
 				<>
-					<SectionHeader>Incentive Spend vs Pool TVL · Efficiency</SectionHeader>
+					<h2 className="heading-xs">Incentive Spend vs Pool TVL · Efficiency</h2>
 					<ChartPanel>
 						<ChartPanelToolbar
 							leading={

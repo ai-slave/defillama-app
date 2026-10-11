@@ -25,7 +25,6 @@ import {
 	KpiBand,
 	networkFeeQuery,
 	PlaceholderCard,
-	SectionHeader,
 	useAdapterSeries,
 	useThorchainData,
 	useThorchainDefs,
@@ -146,7 +145,7 @@ export default function Financials() {
 	return (
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Fees & Revenue</SectionHeader>
+				<h2 className="heading-xs">Fees & Revenue</h2>
 
 				<KpiBand label="Fees">
 					<Kpi kpi={fees.data?.lifetime} label="Lifetime" def={defWithNetworkFee(defs.fees)} />
@@ -191,7 +190,7 @@ export default function Financials() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Income Statement</SectionHeader>
+				<h2 className="heading-xs">Income Statement</h2>
 				<ThorchainIncomeStatement
 					title="THORChain Income Statement"
 					subtitle="Fees & protocol revenue, including the native network fee."
@@ -200,7 +199,7 @@ export default function Financials() {
 
 			{!affiliate && (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>Affiliate Fees</SectionHeader>
+					<h2 className="heading-xs">Affiliate Fees</h2>
 					<PlaceholderCard
 						title="Affiliate Fees"
 						subtitle="Affiliate fee feed unavailable."
@@ -210,7 +209,7 @@ export default function Financials() {
 			)}
 			{affiliate && (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>Affiliate Fees</SectionHeader>
+					<h2 className="heading-xs">Affiliate Fees</h2>
 					{/* "Included in total fees" lives in the (i) tooltip, not a second header. */}
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 						<Kpi kpi={affiliate.kpis.affiliateLifetime} label="Lifetime" def={defs.affiliateFees} />

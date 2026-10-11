@@ -160,7 +160,7 @@ describe('RecentlyListedProtocolsTable', () => {
 		expect(requestedUrl().searchParams.get('chain')).toBe('Base')
 		await act(async () => pending.shift()!(new Response('', { status: 500 })))
 		// The footer reports a failed page as a status beside its Try again, not as an alert.
-		const retry = Array.from(container.querySelectorAll('[role="status"] button')).find(
+		const retry = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="status"] button')).find(
 			(button) => accessibleName(button) === 'Try again'
 		)
 		expect(retry).toBeInstanceOf(HTMLButtonElement)

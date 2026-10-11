@@ -167,10 +167,7 @@ export function useUnifiedTable({
 		pageIndex: pagination.pageIndex,
 		pageSize: pagination.pageSize,
 		pageCount: table.getPageCount(),
-		canPreviousPage: table.getCanPreviousPage(),
-		canNextPage: table.getCanNextPage(),
-		previousPage: table.previousPage,
-		nextPage: table.nextPage,
+		setPageIndex: table.setPageIndex,
 		setPageSize: table.setPageSize
 	}
 }

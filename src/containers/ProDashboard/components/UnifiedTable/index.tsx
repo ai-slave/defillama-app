@@ -1,5 +1,6 @@
 import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
+import { TablePager } from '~/components/Table/TablePager'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { downloadCSV } from '~/utils/download'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
@@ -16,7 +17,7 @@ import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unified
 import { toastRefusal } from '../../useDashboardActions'
 import { BoundParameterBadge } from '../BoundParameterBadge'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../ProCardStatus'
-import { TablePagination } from '../Table/TablePagination'
+import { TABLE_PAGE_SIZES } from '../Table/TableBody'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
 import type { CsvExportLevel } from './core/csvExportLevels'
 import { UnifiedTableHeader } from './core/UnifiedTableHeader'
@@ -468,16 +469,17 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 						) : null}
 					</div>
 				)}
-				<TablePagination
-					pageSize={unifiedTable.pageSize}
+				<TablePager
 					pageIndex={unifiedTable.pageIndex}
 					pageCount={unifiedTable.pageCount}
-					canPreviousPage={unifiedTable.canPreviousPage}
-					canNextPage={unifiedTable.canNextPage}
-					previousPage={unifiedTable.previousPage}
-					nextPage={unifiedTable.nextPage}
-					setPageSize={unifiedTable.setPageSize}
-					showPageSizes
+					onPageChange={unifiedTable.setPageIndex}
+					// No rows (loading, failed, filtered out) leaves nothing to size.
+					pageSize={
+						unifiedTable.pageCount > 0
+							? { value: unifiedTable.pageSize, options: TABLE_PAGE_SIZES, onChange: unifiedTable.setPageSize }
+							: undefined
+					}
+					className="mt-2 justify-between"
 				/>
 			</div>
 			<ConfirmDialog

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Select } from '~/components/Select/Select'
+import { TablePager } from '~/components/Table/TablePager'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
@@ -458,34 +459,13 @@ function MyArticlesContent() {
 					</ul>
 
 					{totalPages > 1 ? (
-						<div className="flex flex-wrap items-center justify-between gap-3 px-1 body-md text-tertiary">
-							<span className="mono-sm tabular-nums">
-								{rangeStart}–{rangeEnd} of {formatNumber(filtered.length)}
-							</span>
-							<div className="flex items-center gap-1">
-								<Button
-									variant="secondary"
-									size="md"
-									onClick={() => setPage((p) => Math.max(1, p - 1))}
-									disabled={safePage <= 1}
-									accessibleWhenDisabled
-								>
-									<span aria-hidden>←</span> Prev
-								</Button>
-								<span className="px-3 mono-sm tabular-nums">
-									{safePage} / {totalPages}
-								</span>
-								<Button
-									variant="secondary"
-									size="md"
-									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-									disabled={safePage >= totalPages}
-									accessibleWhenDisabled
-								>
-									Next <span aria-hidden>→</span>
-								</Button>
-							</div>
-						</div>
+						<TablePager
+							pageIndex={safePage - 1}
+							pageCount={totalPages}
+							onPageChange={(index) => setPage(index + 1)}
+							range={{ from: rangeStart, to: rangeEnd, total: filtered.length }}
+							className="px-1"
+						/>
 					) : null}
 				</>
 			)}

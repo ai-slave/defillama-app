@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { TablePager } from '~/components/Table/TablePager'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { AuthorProfileStrip } from '~/containers/ProDashboard/components/AuthorProfileStrip'
 import type { ComparisonPreset } from '~/containers/ProDashboard/components/ComparisonWizard/types'
@@ -43,12 +44,10 @@ import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import { ProButton, ProDialogFallback, ProMeta, proTabStyles } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
-import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
-import { Tooltip } from '~/ui/Tooltip'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({
@@ -210,19 +209,6 @@ function ProPageContent({ initialDiscoveryCategories }: ProPageProps) {
 const tabs = ['my-dashboards', 'team', 'discover', 'favorites', 'following', 'profile'] as const
 const publicTabs = ['discover'] as const
 type ProTab = (typeof tabs)[number]
-
-function getDashboardPagesToShow(selectedPage: number, totalPages: number): Array<number> {
-	if (totalPages < 1) return []
-	const clampedSelectedPage = Math.max(1, Math.min(selectedPage, totalPages))
-	const pagesToShow =
-		clampedSelectedPage === 1
-			? [1, 2, Math.min(3, totalPages)]
-			: clampedSelectedPage === totalPages
-				? [Math.max(1, totalPages - 2), Math.max(1, totalPages - 1), totalPages]
-				: [clampedSelectedPage - 1, clampedSelectedPage, clampedSelectedPage + 1]
-
-	return pagesToShow.filter((n, i, arr) => n >= 1 && n <= totalPages && arr.indexOf(n) === i)
-}
 
 function ProContent({
 	hasActiveSubscription,
@@ -471,96 +457,13 @@ function ProContent({
 							/>
 						)}
 
-						{!myDashboardsControlsActive && myDashboardsTotalPages > 1 ? (
-							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
-								<Tooltip
-									content="First page"
-									render={
-										<Button
-											type="button"
-											size="md"
-											square
-											variant="ghost"
-											aria-label="First page"
-											onClick={() => goToPage(1)}
-											disabled={selectedPage < 3}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevrons-left" className="size-4" />
-								</Tooltip>
-
-								<Tooltip
-									content="Previous page"
-									render={
-										<Button
-											type="button"
-											size="md"
-											square
-											variant="ghost"
-											aria-label="Previous page"
-											onClick={() => goToPage(Math.max(1, selectedPage - 1))}
-											disabled={selectedPage === 1}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevron-left" className="size-4" />
-								</Tooltip>
-
-								{getDashboardPagesToShow(selectedPage, myDashboardsTotalPages).map((pageNum) => {
-									const isActive = selectedPage === pageNum
-									return (
-										<Button
-											type="button"
-											variant="ghost"
-											size="md"
-											data-active={isActive}
-											key={`my-dashboard-page-${pageNum}`}
-											onClick={() => goToPage(pageNum)}
-											{...(isActive ? { 'aria-current': 'page' as const } : {})}
-										>
-											{pageNum}
-										</Button>
-									)
-								})}
-
-								<Tooltip
-									content="Next page"
-									render={
-										<Button
-											type="button"
-											size="md"
-											square
-											variant="ghost"
-											aria-label="Next page"
-											onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
-											disabled={selectedPage === myDashboardsTotalPages}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevron-right" className="size-4" />
-								</Tooltip>
-								<Tooltip
-									content="Last page"
-									render={
-										<Button
-											type="button"
-											size="md"
-											square
-											variant="ghost"
-											aria-label="Last page"
-											onClick={() => goToPage(myDashboardsTotalPages)}
-											disabled={selectedPage > myDashboardsTotalPages - 2}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevrons-right" className="size-4" />
-								</Tooltip>
-							</div>
+						{!myDashboardsControlsActive && !myDashboardsReadFailed ? (
+							<TablePager
+								pageIndex={selectedPage - 1}
+								pageCount={myDashboardsTotalPages}
+								onPageChange={(pageIndex) => goToPage(pageIndex + 1)}
+								className="justify-center"
+							/>
 						) : null}
 					</TabPanel>
 				) : null}
@@ -592,25 +495,13 @@ function ProContent({
 							/>
 						)}
 
-						{teamDashboardsTotalPages > 1 ? (
-							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
-								{getDashboardPagesToShow(selectedPage, teamDashboardsTotalPages).map((pageNum) => {
-									const isActive = selectedPage === pageNum
-									return (
-										<Button
-											type="button"
-											variant="ghost"
-											size="md"
-											data-active={isActive}
-											key={`team-dashboard-page-${pageNum}`}
-											onClick={() => goToTeamPage(pageNum)}
-											{...(isActive ? { 'aria-current': 'page' as const } : {})}
-										>
-											{pageNum}
-										</Button>
-									)
-								})}
-							</div>
+						{!teamDashboardsReadFailed ? (
+							<TablePager
+								pageIndex={selectedPage - 1}
+								pageCount={teamDashboardsTotalPages}
+								onPageChange={(pageIndex) => goToTeamPage(pageIndex + 1)}
+								className="justify-center"
+							/>
 						) : null}
 					</TabPanel>
 				) : null}

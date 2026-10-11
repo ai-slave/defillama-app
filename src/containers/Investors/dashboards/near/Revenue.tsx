@@ -51,10 +51,6 @@ const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
-
 const walletColumnHelper = createColumnHelper<typeof displayTableFeatures, WalletEntry>()
 
 const walletColumns = walletColumnHelper.columns([
@@ -191,7 +187,7 @@ export default function Revenue() {
 			</details>
 
 			<div className="flex items-center justify-between">
-				<SectionHeader>Dashboard Timeframe</SectionHeader>
+				<h2 className="heading-xs">Dashboard Timeframe</h2>
 				<SegmentedControl<Timeframe>
 					variant="default"
 					size="md"
@@ -211,7 +207,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Total Fees Generated</SectionHeader>
+				<h2 className="heading-xs">Total Fees Generated</h2>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<StatTile
 						label="All Time"
@@ -224,7 +220,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Revenue</SectionHeader>
+				<h2 className="heading-xs">Revenue</h2>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<StatTile
 						label="All Time"
@@ -237,7 +233,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex items-center justify-between">
-				<SectionHeader>Data Aggregation</SectionHeader>
+				<h2 className="heading-xs">Data Aggregation</h2>
 				<SegmentedControl<Aggregation>
 					variant="default"
 					size="md"
@@ -256,7 +252,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Total Fees Generated in NEAR</SectionHeader>
+				<h2 className="heading-xs">Total Fees Generated in NEAR</h2>
 				<ChartPanel>
 					<ChartPanelToolbar
 						leading={
@@ -283,7 +279,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Revenue Over Time</SectionHeader>
+				<h2 className="heading-xs">Revenue Over Time</h2>
 				<ChartPanel>
 					<ChartPanelToolbar
 						leading={
@@ -311,7 +307,7 @@ export default function Revenue() {
 
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
-					<SectionHeader>Revenue vs Emissions</SectionHeader>
+					<h2 className="heading-xs">Revenue vs Emissions</h2>
 					<SegmentedControl<typeof emissionsView>
 						variant="default"
 						size="md"
@@ -360,7 +356,7 @@ export default function Revenue() {
 
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader>Wallet Breakdown</SectionHeader>
+					<h2 className="heading-xs">Wallet Breakdown</h2>
 					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full">
 							<thead>
@@ -406,7 +402,7 @@ export default function Revenue() {
 
 			{data.metadata?.faq && data.metadata.faq.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader>Frequently Asked Questions</SectionHeader>
+					<h2 className="heading-xs">Frequently Asked Questions</h2>
 					<div className="flex flex-col gap-3">
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
 							<details key={key} className="group overflow-hidden rounded-lg border border-subtle bg-surface">

@@ -13,7 +13,6 @@ import {
 	Kpi,
 	KpiGrid,
 	PlaceholderCard,
-	SectionHeader,
 	TimeAreaCard,
 	useAdapterSeries,
 	useThorchainData,
@@ -109,7 +108,7 @@ export default function Overview() {
 				<LiquiditySection liquidity={net.liquidity} tvlChart={data.tvlChart} tvl={data.kpis.thorchain?.tvl} />
 			) : (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>Liquidity</SectionHeader>
+					<h2 className="heading-xs">Liquidity</h2>
 					<PlaceholderCard
 						title="Liquidity"
 						subtitle="Pool-level liquidity data unavailable."
@@ -158,7 +157,7 @@ function LiquiditySection({
 	}
 	return (
 		<section className="flex flex-col gap-6">
-			<SectionHeader>Liquidity</SectionHeader>
+			<h2 className="heading-xs">Liquidity</h2>
 			{/* 6 KPIs at 3-per-row on desktop: [TVL, Pools, Blockchains] / [Majors, Stables, Top Pool]. */}
 			<KpiGrid kpis={kpis} items={LIQUIDITY_KPIS} cols={3} />
 

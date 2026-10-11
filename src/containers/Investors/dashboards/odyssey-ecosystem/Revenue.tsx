@@ -19,7 +19,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { useTab, chartToModel, type RevenueResponse } from './api'
-import { ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
+import { ChartCard, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -52,7 +52,7 @@ function MetronomeIncomeStatement() {
 
 	return (
 		<>
-			<SectionHeader>Metronome · Income Statement</SectionHeader>
+			<h2 className="heading-xs">Metronome · Income Statement</h2>
 			<ChartCard title="Income Statement" subtitle={`${INCOME_STATEMENT_NAME} — fees & revenue`}>
 				<IncomeStatement
 					name={INCOME_STATEMENT_NAME}
@@ -246,7 +246,7 @@ export default function Revenue() {
 			</div>
 
 			{/* 1 · Claimed revenue */}
-			<SectionHeader>Claimed Revenue · Last 30 Days</SectionHeader>
+			<h2 className="heading-xs">Claimed Revenue · Last 30 Days</h2>
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
 				{data ? (
 					<>
@@ -350,7 +350,7 @@ export default function Revenue() {
 			{/* Metronome breakdown · canonical from financial-statement adapter */}
 			{mc && (
 				<>
-					<SectionHeader>Metronome Revenue Breakdown · {mc.monthLabel}</SectionHeader>
+					<h2 className="heading-xs">Metronome Revenue Breakdown · {mc.monthLabel}</h2>
 					<ChartCard title="Revenue by source" subtitle={`Total ${mc.claimedFormatted} this month`}>
 						{mc.hasBreakdown && mc.items?.length ? (
 							<SimpleTable
@@ -381,7 +381,7 @@ export default function Revenue() {
 			<MetronomeIncomeStatement />
 
 			{/* 3 · Unclaimed pipeline */}
-			<SectionHeader>Unclaimed Pipeline · Overview</SectionHeader>
+			<h2 className="heading-xs">Unclaimed Pipeline · Overview</h2>
 			<ChartPanel>
 				<ChartPanelToolbar
 					leading={
@@ -406,7 +406,7 @@ export default function Revenue() {
 				)}
 			</ChartPanel>
 
-			<SectionHeader>Treasury LP Positions · Pending Rewards</SectionHeader>
+			<h2 className="heading-xs">Treasury LP Positions · Pending Rewards</h2>
 			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
@@ -421,7 +421,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<SectionHeader>UniV3 Concentrated Liquidity · Unclaimed Fees</SectionHeader>
+			<h2 className="heading-xs">UniV3 Concentrated Liquidity · Unclaimed Fees</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SubSectionCard title="Ethereum UniV3" total={ethUniv3Total}>
 					<SimpleTable
@@ -449,7 +449,7 @@ export default function Revenue() {
 				</SubSectionCard>
 			</div>
 
-			<SectionHeader>Gauge & Lock Rewards</SectionHeader>
+			<h2 className="heading-xs">Gauge & Lock Rewards</h2>
 			<SubSectionCard title="veAERO Locks (Base)" total={veAeroTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => String(row.nft)}
@@ -464,7 +464,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<SectionHeader>Morpho AMO · Unrealised PnL</SectionHeader>
+			<h2 className="heading-xs">Morpho AMO · Unrealised PnL</h2>
 			<SubSectionCard title="AMO vault positions" total={amoTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.vaultName, row.asset])}
@@ -492,7 +492,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<SectionHeader>Convex vlCVX · Vote-locked Rewards</SectionHeader>
+			<h2 className="heading-xs">Convex vlCVX · Vote-locked Rewards</h2>
 			<SubSectionCard title="vlCVX claimable" subtitle={`Claimable rewards total ${fmtUsd(convexClaimable)}.`}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
@@ -507,7 +507,7 @@ export default function Revenue() {
 			</SubSectionCard>
 
 			{/* Synth interest — informational, not in pipeline total */}
-			<SectionHeader>Synth Interest · Borrower-side Accrual</SectionHeader>
+			<h2 className="heading-xs">Synth Interest · Borrower-side Accrual</h2>
 			<SubSectionCard
 				title="Outstanding synth debt"
 				subtitle={`Est. ${fmtUsd(synthDaily)} per day · ${fmtUsd(synthMonthly)} per month`}

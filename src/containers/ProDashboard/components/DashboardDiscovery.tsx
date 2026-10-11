@@ -2,13 +2,13 @@ import { useRouter } from 'next/router'
 import { useMemo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
+import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { SegmentedControlOption } from '~/ui/SegmentedControl'
-import { EmptyState } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
+import { EmptyState, PanelStatus } from '~/ui/Status'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDashboardDiscovery } from '../hooks/useDashboardDiscovery'
@@ -153,7 +153,7 @@ export function DashboardDiscovery({
 		}
 	}, [view, tagQuery, sortBy, query, pageQuery, limit, timeFrame])
 
-	const { dashboards, isLoading, totalPages, totalItems } = useDashboardDiscovery({
+	const { dashboards, isLoading, isFetching, readFailed, refetch, totalPages, totalItems } = useDashboardDiscovery({
 		query: searchQuery,
 		tags: selectedTags,
 		visibility: 'public',
@@ -183,18 +183,6 @@ export function DashboardDiscovery({
 		const newItemsPerPage = parseInt(value, 10)
 		pushProQuery({ page: undefined, limit: newItemsPerPage })
 	}
-
-	const pagesToShow = useMemo(() => {
-		let pages: Array<number>
-		if (selectedPage === 1) {
-			pages = [1, 2, 3]
-		} else if (selectedPage === totalPages) {
-			pages = [totalPages - 2, totalPages - 1, totalPages]
-		} else {
-			pages = [selectedPage - 1, selectedPage, selectedPage + 1]
-		}
-		return pages.filter((page) => page > 0 && page <= totalPages)
-	}, [totalPages, selectedPage])
 
 	return (
 		<>
@@ -347,6 +335,10 @@ export function DashboardDiscovery({
 					onTagClick={handleTagClick}
 					{...(initialCategories !== undefined ? { initialCategories } : {})}
 				/>
+			) : readFailed ? (
+				<PanelStatus variant="error" retry={{ refetch, isFetching }}>
+					Couldn&apos;t load dashboards.
+				</PanelStatus>
 			) : isLoading ? (
 				<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
 			) : dashboards.length === 0 ? (
@@ -399,94 +391,12 @@ export function DashboardDiscovery({
 						))}
 					</div>
 
-					{totalPages > 1 ? (
-						<div className="flex flex-col items-center gap-4">
-							<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
-								<Tooltip
-									content="First page"
-									render={
-										<Button
-											size="md"
-											variant="ghost"
-											square
-											aria-label="First page"
-											onClick={() => pushProQuery({ page: toPageQueryValue(1) })}
-											disabled={selectedPage < 3}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevrons-left" className="size-4" />
-								</Tooltip>
-								<Tooltip
-									content="Previous page"
-									render={
-										<Button
-											size="md"
-											variant="ghost"
-											square
-											aria-label="Previous page"
-											onClick={() => pushProQuery({ page: toPageQueryValue(Math.max(1, selectedPage - 1)) })}
-											disabled={selectedPage === 1}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevron-left" className="size-4" />
-								</Tooltip>
-								{pagesToShow.map((pageNum) => {
-									const isActive = selectedPage === pageNum
-									return (
-										<Button
-											size="md"
-											key={`page-to-navigate-to-${pageNum}`}
-											variant="ghost"
-											data-active={isActive}
-											aria-current={isActive ? 'page' : undefined}
-											onClick={() => pushProQuery({ page: toPageQueryValue(pageNum) })}
-										>
-											{pageNum}
-										</Button>
-									)
-								})}
-								<Tooltip
-									content="Next page"
-									render={
-										<Button
-											size="md"
-											variant="ghost"
-											square
-											aria-label="Next page"
-											onClick={() => pushProQuery({ page: toPageQueryValue(Math.min(totalPages, selectedPage + 1)) })}
-											disabled={selectedPage === totalPages}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevron-right" className="size-4" />
-								</Tooltip>
-								<Tooltip
-									content="Last page"
-									render={
-										<Button
-											size="md"
-											variant="ghost"
-											square
-											aria-label="Last page"
-											onClick={() => pushProQuery({ page: toPageQueryValue(totalPages) })}
-											disabled={selectedPage > totalPages - 2}
-											accessibleWhenDisabled
-										/>
-									}
-								>
-									<Icon name="chevrons-right" className="size-4" />
-								</Tooltip>
-							</div>
-							<p className="body-sm text-secondary">
-								Page {selectedPage} of {totalPages}
-							</p>
-						</div>
-					) : null}
+					<TablePager
+						pageIndex={selectedPage - 1}
+						pageCount={totalPages}
+						onPageChange={(pageIndex) => pushProQuery({ page: toPageQueryValue(pageIndex + 1) })}
+						className="justify-center"
+					/>
 				</>
 			)}
 		</>

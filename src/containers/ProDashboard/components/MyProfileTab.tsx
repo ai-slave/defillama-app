@@ -27,6 +27,10 @@ export function MyProfileTab() {
 		queryKey: ['author-page', slug, dashboardPage, dashboardSort, user?.id],
 		queryFn: () =>
 			getAuthorBySlug(slug!, { dashboardPage, dashboardLimit: DASHBOARD_LIMIT, dashboardSort }, authorizedFetch),
+		// The pager and sort stay mounted, with focus on them, while the next page loads; never another account's page.
+		placeholderData: (previousData, previousQuery) => {
+			if (previousQuery && previousQuery.queryKey[4] === user?.id) return previousData
+		},
 		enabled: !!slug && isAuthenticated,
 		staleTime: 60_000,
 		retry: false,

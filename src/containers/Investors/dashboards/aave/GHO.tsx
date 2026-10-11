@@ -15,7 +15,7 @@ import {
 } from '~/utils/numberFormat'
 import type { TimeWindow } from './api'
 import { num, pct, useAaveAPYHistory, useAaveGHOReserve, useAaveMarkets } from './api'
-import { AAVE_AREA_EXPORT, AAVE_PERCENT_TIME_CHART_OPTIONS, InvestorsTable, SectionHeader } from './shared'
+import { AAVE_AREA_EXPORT, AAVE_PERCENT_TIME_CHART_OPTIONS, InvestorsTable } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -108,7 +108,7 @@ function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-5">
-			<SectionHeader title="GHO Across Markets" />
+			<h3 className="heading-xs">GHO Across Markets</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>
@@ -197,7 +197,7 @@ export default function GHO() {
 			{/* Chart section with inline time window toggle */}
 			<div>
 				<div className="mb-4 flex items-center justify-between">
-					<SectionHeader title="GHO Borrow APY History" />
+					<h3 className="heading-xs">GHO Borrow APY History</h3>
 					<SegmentedControl<TimeWindow>
 						variant="default"
 						size="md"

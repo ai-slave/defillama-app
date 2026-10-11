@@ -14,7 +14,6 @@ import {
 	DashSwatch,
 	DataTable,
 	InfoTip,
-	SectionHeader,
 	usdCompact,
 	type FooterRow,
 	KPK_PERCENT_OPTIONS
@@ -132,7 +131,8 @@ export function CompositionSection({
 
 	return (
 		<section className="flex flex-col gap-3">
-			<SectionHeader title={title}>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<h2 className="heading-xs">{title}</h2>
 				{/* Omitted rather than rendered empty while the payload is still in flight. */}
 				{options.length > 0 && (
 					<SegmentedControl
@@ -155,7 +155,7 @@ export function CompositionSection({
 						onValueChange={setPickedRange}
 					/>
 				)}
-			</SectionHeader>
+			</div>
 			{subtitle && <p className="-mt-1 body-sm text-secondary">{subtitle}</p>}
 			{/* `minmax(0,…)` on both tracks: the default `auto` minimum is min-content, which lets
 			    the share table push the chart column off the page instead of scrolling itself.
@@ -192,7 +192,7 @@ export function CompositionSection({
 				<Card>
 					{/* The payload's own title, the same string the chip above carries. A hard space
 					    while it is in flight — a collapsed empty heading would jump the table below. */}
-					<h3 className="mb-2 label-sm tracking-wider text-secondary uppercase">{model?.title ?? ' '}</h3>
+					<h3 className="mb-2 heading-xs">{model?.title ?? ' '}</h3>
 					<DataTable
 						getOccurrenceKey={(row) => row.name}
 						rows={model?.rows}

@@ -2,7 +2,7 @@ import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, SeriesTrendChart } from './TrendChart'
-import { ChartCard, KpiGrid, MiniTable, SectionHeader, TimeAreaCard, useUniswapData, useUniswapDefs } from './ui'
+import { ChartCard, KpiGrid, MiniTable, TimeAreaCard, useUniswapData, useUniswapDefs } from './ui'
 
 interface AuctionRow {
 	token: string
@@ -113,7 +113,7 @@ export default function Assets() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Volume Composition</SectionHeader>
+				<h2 className="heading-xs">Volume Composition</h2>
 				<SeriesTrendChart
 					title={data.volumeByCategory.title ?? 'Volume by Asset Category'}
 					subtitle={data.volumeByCategory.note ?? defs.volumeByCategory}
@@ -131,7 +131,7 @@ export default function Assets() {
 
 			{data.rwa && (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>Real-World Assets</SectionHeader>
+					<h2 className="heading-xs">Real-World Assets</h2>
 					<KpiGrid
 						kpis={data.rwa.kpis ?? {}}
 						items={[
@@ -198,7 +198,7 @@ export default function Assets() {
 
 			{(data.tradedAssets || data.newTokens) && (
 				<section className="flex flex-col gap-6">
-					<SectionHeader>Token Breadth</SectionHeader>
+					<h2 className="heading-xs">Token Breadth</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{data.tradedAssets && (
 							<TimeAreaCard
@@ -220,7 +220,7 @@ export default function Assets() {
 			)}
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Continuous Clearing Auctions</SectionHeader>
+				<h2 className="heading-xs">Continuous Clearing Auctions</h2>
 				<KpiGrid
 					kpis={data.cca.kpis}
 					cols={3}

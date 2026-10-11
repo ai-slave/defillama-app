@@ -205,10 +205,6 @@ export function KpiGrid({
 	)
 }
 
-export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-tertiary uppercase">{children}</h2>
-}
-
 // Single KPI that degrades to a placeholder when the backend hasn't shipped the
 // field yet. `note` names the awaited API path so it's obvious what to wire later.
 export function Kpi({

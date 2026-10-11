@@ -113,10 +113,6 @@ function timeAgo(ts: number): string {
 	return `${Math.floor(diff / 3600)}h ago`
 }
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="title-sm tracking-wider text-secondary uppercase">{children}</h2>
-}
-
 function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: number | null }) {
 	const [displayValue, setDisplayValue] = useState(totalBurnedS)
 	const animRef = useRef<number>(0)
@@ -226,7 +222,7 @@ export default function NetworkStats() {
 
 			{/* Network Vitals */}
 			<div className="flex flex-col gap-4">
-				<SectionHeader>Network</SectionHeader>
+				<h2 className="heading-xs">Network</h2>
 				<div className="grid grid-cols-3 gap-4">
 					<StatTile label="Latest Block" value={liveBlock ? formatNumber(liveBlock) : '—'} />
 					{data.network.gasPrice && <StatTile label="Gas Price" value={data.network.gasPrice.formatted} />}
@@ -237,7 +233,7 @@ export default function NetworkStats() {
 			{/* Recent Blocks */}
 			{stream.recentBlocks.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader>Recent Blocks</SectionHeader>
+					<h2 className="heading-xs">Recent Blocks</h2>
 					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 						<table className="w-full">
 							<thead>
@@ -280,7 +276,7 @@ export default function NetworkStats() {
 			{/* Fees & Epoch */}
 			{(data.fees || data.epoch) && (
 				<div className="flex flex-col gap-4">
-					<SectionHeader>Fees & Epoch</SectionHeader>
+					<h2 className="heading-xs">Fees & Epoch</h2>
 					<div className="rounded-lg border border-subtle bg-surface">
 						<div className="flex flex-col divide-y divide-(--border-subtle)">
 							{data.fees && (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import type { Chart, Kpi } from './transform'
-import { KpiGrid, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
+import { KpiGrid, PlaceholderCard, TimeAreaCard, useThorchainData } from './ui'
 
 type PolView = 'rune' | 'usd'
 
@@ -58,7 +58,7 @@ export default function Network() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<SectionHeader>Nodes & Bonding</SectionHeader>
+			<h2 className="heading-xs">Nodes & Bonding</h2>
 			<KpiGrid kpis={kpis} items={NODES_KPIS} cols={3} />
 			<KpiGrid kpis={kpis} items={BONDED_KPIS} />
 
@@ -77,7 +77,7 @@ export default function Network() {
 				/>
 			)}
 
-			<SectionHeader>Protocol-Owned Liquidity</SectionHeader>
+			<h2 className="heading-xs">Protocol-Owned Liquidity</h2>
 			<KpiGrid kpis={kpis} items={POL_KPIS} cols={3} />
 			{/* Mark-to-market POL value since POL genesis (May 2023), RUNE by default with a
 			    USD toggle — official raynalytics feed, cross-checked against THORNode state. */}

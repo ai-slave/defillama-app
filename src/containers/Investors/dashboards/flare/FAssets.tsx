@@ -15,7 +15,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareFAssetsData, type FAssetsAPIResponse } from './data'
-import { NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -48,7 +48,7 @@ export default function FAssets() {
 		<div className="flex flex-col gap-6">
 			{query.data.narrative && <NarrativeCallout>{query.data.narrative}</NarrativeCallout>}
 
-			<SectionHeader>FXRP</SectionHeader>
+			<h2 className="heading-xs">FXRP</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile label="Total FXRP Supply" value={k.totalFxrpSupply} />
 				<StatTile
@@ -148,7 +148,7 @@ export default function FAssets() {
 				)}
 			</div>
 
-			<SectionHeader>Activity</SectionHeader>
+			<h2 className="heading-xs">Activity</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Total DeFi Txns" value={k.totalDefiTransactions} />
 				<StatTile

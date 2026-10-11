@@ -27,7 +27,6 @@ import {
 	RefLinks,
 	RowLink,
 	scopeLine,
-	SectionHeader,
 	signClass,
 	signedBps,
 	signedInt,
@@ -129,7 +128,8 @@ export default function Mandates() {
 
 			{showPerf && (
 				<section className="flex flex-col gap-3">
-					<SectionHeader title="Performance vs benchmark">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<h2 className="heading-xs">Performance vs benchmark</h2>
 						{denomOptions.length > 0 && activeDenom && (
 							<SegmentedControl
 								variant="default"
@@ -140,7 +140,7 @@ export default function Mandates() {
 								onValueChange={setSelectedDenom}
 							/>
 						)}
-					</SectionHeader>
+					</div>
 					{data?.yieldAsOf && (
 						<p className="-mt-1 body-sm text-secondary">
 							Positions report as of {formatDate(data.yieldAsOf)}
@@ -236,7 +236,7 @@ export default function Mandates() {
 			)}
 
 			<section className="flex flex-col gap-3">
-				<SectionHeader title="Per-client breakdown" />
+				<h2 className="heading-xs">Per-client breakdown</h2>
 				<Card>
 					{/* The client column stays put, so a narrow screen scrolling through the
 					    sleeve columns still shows whose row it is reading. */}

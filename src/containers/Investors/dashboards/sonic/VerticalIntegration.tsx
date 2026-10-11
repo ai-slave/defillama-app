@@ -30,7 +30,7 @@ export default function VerticalIntegration() {
 			</div>
 
 			<div className="flex flex-1 flex-col gap-4">
-				<h3 className="title-sm tracking-wider text-secondary uppercase">Product Breakdown</h3>
+				<h3 className="heading-xs">Product Breakdown</h3>
 				<div className="flex flex-wrap items-center gap-2">
 					{PRODUCTS.map((name) => (
 						<span key={name} className="rounded-md border border-medium bg-surface px-3 py-1.5 body-md text-secondary">

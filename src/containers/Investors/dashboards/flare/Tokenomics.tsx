@@ -20,7 +20,7 @@ import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
-import { NarrativeCallout, SectionHeader } from './ui'
+import { NarrativeCallout } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -119,7 +119,7 @@ export default function Tokenomics() {
 
 			{inf && (
 				<>
-					<SectionHeader>Inflation & Supply</SectionHeader>
+					<h2 className="heading-xs">Inflation & Supply</h2>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 						<StatTile label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
 						<StatTile label="Circulating Supply" value={inf.kpis.circulatingSupply} />
@@ -210,7 +210,7 @@ export default function Tokenomics() {
 				</>
 			)}
 
-			<SectionHeader>FLR Transaction Burn</SectionHeader>
+			<h2 className="heading-xs">FLR Transaction Burn</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Latest Daily" value={bk.latestDailyBurn} />
 				<StatTile label="Burn 7d" value={bk.burn7d} />
@@ -275,7 +275,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</ChartPanel>
 
-			<SectionHeader>FLR Emissions</SectionHeader>
+			<h2 className="heading-xs">FLR Emissions</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 				{maxSupplyQuery.data != null && <StatTile label="Max Supply" value={maxSupplyQuery.data} />}
 				<StatTile label="Latest Epoch Emit" value={ek.latestEpochEmit} />
@@ -299,7 +299,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</ChartPanel>
 
-			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
+			<h2 className="heading-xs">Burn vs. Emit & Net Inflation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile
 					label="Burn / Emit (latest)"
@@ -339,7 +339,7 @@ export default function Tokenomics() {
 			</ChartPanel>
 			{e.burnVsEmitSubtitle && <p className="body-sm text-secondary">{e.burnVsEmitSubtitle}</p>}
 
-			<SectionHeader>FIRE (FIP.16)</SectionHeader>
+			<h2 className="heading-xs">FIRE (FIP.16)</h2>
 			{fire ? (
 				<>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -438,7 +438,7 @@ export default function Tokenomics() {
 				</div>
 			)}
 
-			<SectionHeader>FAQ</SectionHeader>
+			<h2 className="heading-xs">FAQ</h2>
 			<div className="flex flex-col gap-3">
 				{FAQ_ITEMS.map((item) => (
 					<FaqItem key={item.q} q={item.q} a={item.a} />

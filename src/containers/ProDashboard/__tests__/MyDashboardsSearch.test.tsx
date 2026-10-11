@@ -141,7 +141,9 @@ test('Next page keeps the pager, and focus on it, while the next page loads', as
 		)
 	await renderPage()
 	await waitForUi(() => expect(container.textContent).toContain('Showing 1 of 21 dashboards'))
-	const next = container.querySelector<HTMLButtonElement>('[aria-label="Next page"]')!
+	const next = [...container.querySelectorAll('button')].find(
+		(candidate) => accessibleName(candidate) === 'Go to next page'
+	)!
 	await act(async () => next.focus())
 	router.query = { tab: 'my-dashboards', page: '2' }
 	onTestFinished(() => void (router.query = { tab: 'my-dashboards' }))
