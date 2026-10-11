@@ -227,7 +227,8 @@ export function buildPairColumns(
 						content={[`Band ±${formatPercent(nvol.band, PERCENT_OPTIONS) ?? '–'} of mid`, share]
 							.filter(Boolean)
 							.join(' · ')}
-						className="ms-auto w-fit"
+						className="ms-auto w-fit cursor-help"
+						tabIndex={0}
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
@@ -260,7 +261,8 @@ export function buildPairColumns(
 									}`
 								: ''
 						}`}
-						className="ms-auto w-fit"
+						className="ms-auto w-fit cursor-help"
+						tabIndex={0}
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
@@ -298,7 +300,8 @@ export function buildPairColumns(
 						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}${
 							nvol.cap === 'oi' ? ' · capped by open interest' : nvol.cap === 'depth' ? ' · capped by book depth' : ''
 						}`}
-						className="ms-auto w-fit"
+						className="ms-auto w-fit cursor-help"
+						tabIndex={0}
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
@@ -390,7 +393,8 @@ export function buildPairColumns(
 						return (
 							<Tooltip
 								content={`${value > 0 ? 'Longs pay shorts. ' : value < 0 ? 'Shorts pay longs. ' : ''}Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
-								className="ms-auto w-fit"
+								className="ms-auto w-fit cursor-help"
+								tabIndex={0}
 							>
 								<span className="underline decoration-dotted">
 									{formatPercent(value, {

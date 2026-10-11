@@ -209,7 +209,7 @@ export function QualityHover({
 
 function linkedMetric(value: React.ReactNode, note: string | undefined) {
 	return note ? (
-		<Tooltip content={note} className="ms-auto w-fit underline decoration-dotted">
+		<Tooltip content={note} className="ms-auto w-fit cursor-help underline decoration-dotted" tabIndex={0}>
 			{value}
 		</Tooltip>
 	) : (
@@ -628,7 +628,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				return (
 					<Tooltip
 						content={`Taker fee plus half the ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} effective spread, from ${execution?.hoursCovered ?? 'n/a'}h of fills.`}
-						className="ms-auto w-fit"
+						className="ms-auto w-fit cursor-help"
+						tabIndex={0}
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}
@@ -910,7 +911,8 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 				return nvol ? (
 					<Tooltip
 						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below reported · ${formatPercent(nvol.unverifiedFraction, PERCENT_OPTIONS) ?? '–'} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
-						className="ms-auto w-fit"
+						className="ms-auto w-fit cursor-help"
+						tabIndex={0}
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
@@ -1092,8 +1094,9 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 			cell: ({ row, getValue }) =>
 				getValue() > 0 ? (
 					<Tooltip
-						className="underline decoration-dotted"
+						className="cursor-help underline decoration-dotted"
 						content={row.original.warnings.map((warning) => warning.text).join(' · ')}
+						tabIndex={0}
 					>
 						{getValue()}
 					</Tooltip>

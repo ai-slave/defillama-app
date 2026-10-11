@@ -46,7 +46,8 @@ export function MetricRow({
 			{tooltip ? (
 				<Tooltip
 					content={tooltip}
-					render={<button type="button" className="body-md text-secondary underline decoration-dotted" />}
+					render={<span className="cursor-help body-md text-secondary underline decoration-dotted" />}
+					tabIndex={0}
 				>
 					<span data-metric-label>{label}</span>
 				</Tooltip>

@@ -92,7 +92,8 @@ function SubScoreRows({
 				<div key={sub.key} className="flex items-center justify-between gap-3">
 					<Tooltip
 						content={sub.what}
-						render={<span className="min-w-0 truncate body-sm underline decoration-dotted" />}
+						render={<span className="min-w-0 cursor-help truncate body-sm underline decoration-dotted" />}
+						tabIndex={0}
 					>
 						{sub.label} <span className="text-tertiary">{sub.weight}</span>
 					</Tooltip>
@@ -173,7 +174,8 @@ function RankingRow({
 							<div className="flex flex-col gap-1 pb-3">
 								<Tooltip
 									content={ranking.intraSpreadCheck?.what ?? ''}
-									className="w-fit label-sm underline decoration-dotted"
+									className="w-fit cursor-help label-sm underline decoration-dotted"
+									tabIndex={0}
 								>
 									Intra-spread volume
 								</Tooltip>
@@ -203,7 +205,8 @@ function RankingRow({
 										<div className="flex items-center justify-between gap-3">
 											<Tooltip
 												content="Did fills pay what the book promised at that size? 100 means at or better than quoted; a shortfall cuts Execution by up to 12%."
-												render={<span className="min-w-0 truncate body-sm underline decoration-dotted" />}
+												render={<span className="min-w-0 cursor-help truncate body-sm underline decoration-dotted" />}
+												tabIndex={0}
 											>
 												Delivery vs quote
 											</Tooltip>
@@ -363,7 +366,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 								<th className="pr-4 pb-1 font-normal">Score</th>
 								{pillars.map((pillar) => (
 									<th key={pillar.key} className="pr-4 pb-1 font-normal">
-										<Tooltip content={pillar.what}>
+										<Tooltip content={pillar.what} className="cursor-help" tabIndex={0}>
 											<span className="underline decoration-dotted">
 												{pillar.label} {pillar.weight}
 											</span>

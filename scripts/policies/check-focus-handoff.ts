@@ -40,6 +40,10 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 12. A row handoff built by hand: `neighbourRowControl` feeding `keepFocus`, `passFocusOnLeave` or `.focus()`. Put
  *    `focusNeighbourOnLeave(fallback)` on the control and `data-row` on its row. A neighbour read for another target
  *    (`neighbourRowControl(…)?.querySelector(…)`, a confirm's `finalFocus`) is not checked.
+ * 13. A definition anchor without `tabIndex` or `cursor-help`: a `Tooltip` whose anchor or text carries
+ *    `decoration-dotted` and whose anchor is not a control (CONTROL_TAGS, `summary`). Ariakit never makes the anchor
+ *    focusable, so without `tabIndex={0}` keyboard readers cannot open the definition; `cursor-help` tells mouse
+ *    readers a hover explains it. A control anchor keeps its own focus and cursor.
  *
  * "Pending flag" means the `disabled` expression names something pending or saving (isPending, pending, isSaving,
  * saving, submitting). Other reasons to disable are outside this check.
@@ -155,6 +159,21 @@ export function scanSource(relative: string, source: string): Array<string> {
 				violations.push(
 					`${at(opening)} sizes Tooltip's default span with className; pass the anchor as render with those classes`
 				)
+			}
+			const renderTag = render ? /^<([\w.]+)/.exec(expressionText(render))?.[1] : undefined
+			if (tag === 'Tooltip' && !(renderTag && (CONTROL_TAGS.has(renderTag) || renderTag === 'summary'))) {
+				const anchorStyles = `${attribute(opening, 'className')?.getText() ?? ''} ${render?.getText() ?? ''}`
+				const text = ts.isJsxElement(node) ? node.children.map((child) => child.getText()).join(' ') : ''
+				if (/\bdecoration-dotted\b/.test(`${anchorStyles} ${text}`)) {
+					if (!attribute(opening, 'tabIndex') && !/\btabIndex=/.test(render?.getText() ?? '')) {
+						violations.push(
+							`${at(opening)} underlines a definition keyboard readers cannot open; pass tabIndex={0} to the Tooltip`
+						)
+					}
+					if (!/\bcursor-help\b/.test(anchorStyles)) {
+						violations.push(`${at(opening)} underlines a definition without cursor-help on its anchor`)
+					}
+				}
 			}
 			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
 				for (const child of node.children) {
@@ -477,6 +496,36 @@ if (process.argv.includes('--self-test')) {
 			name: "a neighbour kept for a confirm's finalFocus",
 			source:
 				'export const F = () => <button onClick={(event) => setTarget({ neighbour: neighbourRowControl(event.currentTarget.closest("li")!, event.currentTarget) })}>Delete</button>',
+			violation: false
+		},
+		{
+			name: 'definition the keyboard cannot reach',
+			source:
+				'export const F = () => <Tooltip content="Sum of value" className="cursor-help underline decoration-dotted">TVL</Tooltip>',
+			violation: true
+		},
+		{
+			name: 'definition without the help cursor',
+			source:
+				'export const F = () => <Tooltip content="Sum of value" render={<h2 />} tabIndex={0} className="underline decoration-dotted">TVL</Tooltip>',
+			violation: true
+		},
+		{
+			name: 'definition on a focusable anchor',
+			source:
+				'export const F = () => <Tooltip content="Sum of value" render={<h2 />} tabIndex={0} className="cursor-help underline decoration-dotted">TVL</Tooltip>',
+			violation: false
+		},
+		{
+			name: 'definition underlined on its text',
+			source:
+				'export const F = () => <Tooltip content="Sum of value" tabIndex={0} className="cursor-help"><span className="underline decoration-dotted">TVL</span></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'definition on a control',
+			source:
+				'export const F = () => <Tooltip content="Sort by TVL" className="underline decoration-dotted" render={<button type="button" />}>TVL</Tooltip>',
 			violation: false
 		},
 		{

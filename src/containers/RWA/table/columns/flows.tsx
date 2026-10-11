@@ -47,7 +47,8 @@ export function createFlowsColumnGroup(status: RWAFlowStatus, period: RWAChangeP
 						return summary ? (
 							<Tooltip
 								content={<RWAFlowSummaryTooltip description={description} summary={summary} />}
-								className="justify-end underline decoration-dotted"
+								className="cursor-help justify-end underline decoration-dotted"
+								tabIndex={0}
 							>
 								{display}
 							</Tooltip>

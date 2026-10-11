@@ -561,7 +561,12 @@ function SectionCard({ title, badge, children }: { title: string; badge?: string
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
 		<section className="flex flex-col gap-2 rounded-lg border border-success-muted bg-success-tint p-2">
-			<Tooltip content={tooltip} render={<h2 />} className="w-fit label-lg text-success underline decoration-dotted">
+			<Tooltip
+				content={tooltip}
+				render={<h2 />}
+				className="w-fit cursor-help label-lg text-success underline decoration-dotted"
+				tabIndex={0}
+			>
 				{title}
 			</Tooltip>
 			{children}
@@ -576,7 +581,8 @@ function KeyValueRow({ label, tooltip, children }: { label: string; tooltip?: st
 				<Tooltip
 					content={tooltip}
 					render={<dt />}
-					className="shrink-0 body-md text-secondary underline decoration-dotted"
+					className="shrink-0 cursor-help body-md text-secondary underline decoration-dotted"
+					tabIndex={0}
 				>
 					{label}
 				</Tooltip>
@@ -635,7 +641,12 @@ function RightsRow({
 		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface-elevated-1 p-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{tooltip ? (
-					<Tooltip content={tooltip} render={<h3 />} className="label-md text-secondary underline decoration-dotted">
+					<Tooltip
+						content={tooltip}
+						render={<h3 />}
+						className="cursor-help label-md text-secondary underline decoration-dotted"
+						tabIndex={0}
+					>
 						{label}
 					</Tooltip>
 				) : (
@@ -653,7 +664,12 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 		<div className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
 				{tooltip ? (
-					<Tooltip content={tooltip} render={<h3 />} className="label-md underline decoration-dotted">
+					<Tooltip
+						content={tooltip}
+						render={<h3 />}
+						className="cursor-help label-md underline decoration-dotted"
+						tabIndex={0}
+					>
 						Raise History
 					</Tooltip>
 				) : (

@@ -898,7 +898,8 @@ function IncomeStatementByLabel({
 						{methodology ? (
 							<Tooltip
 								content={methodology}
-								className="flex items-center justify-start gap-1 underline decoration-current decoration-dotted"
+								className="flex cursor-help items-center justify-start gap-1 underline decoration-current decoration-dotted"
+								tabIndex={0}
 							>
 								{label}
 								<Icon name="help-circle" className="size-3.5 shrink-0" />
@@ -928,7 +929,8 @@ function IncomeStatementByLabel({
 											dataType={dataType}
 										/>
 									}
-									className={`justify-start underline decoration-dotted ${isEarnings ? (currentValue >= 0 ? 'decoration-(--border-data-up-muted)' : 'decoration-(--border-data-down-muted)') : 'decoration-current'}`}
+									className={`cursor-help justify-start underline decoration-dotted ${isEarnings ? (currentValue >= 0 ? 'decoration-(--border-data-up-muted)' : 'decoration-(--border-data-down-muted)') : 'decoration-current'}`}
+									tabIndex={0}
 								>
 									{formatUsd(currentValue, { compact: true })}
 								</Tooltip>
@@ -950,7 +952,8 @@ function IncomeStatementByLabel({
 								{breakdownMethodology[breakdownlabel] ? (
 									<Tooltip
 										content={breakdownMethodology[breakdownlabel]}
-										className="flex justify-start underline decoration-current decoration-dotted"
+										className="flex cursor-help justify-start underline decoration-current decoration-dotted"
+										tabIndex={0}
 									>
 										{breakdownlabel}
 									</Tooltip>
@@ -978,7 +981,8 @@ function IncomeStatementByLabel({
 													label={breakdownlabel}
 												/>
 											}
-											className="justify-start underline decoration-current decoration-dotted"
+											className="cursor-help justify-start underline decoration-current decoration-dotted"
+											tabIndex={0}
 										>
 											{formatUsd(getBreakdownValue(header, breakdownlabel), { compact: true })}
 										</Tooltip>
@@ -1001,7 +1005,8 @@ function IncomeStatementByLabel({
 									>
 										<Tooltip
 											content={explanation}
-											className="flex justify-start underline decoration-current decoration-dotted"
+											className="flex cursor-help justify-start underline decoration-current decoration-dotted"
+											tabIndex={0}
 										>
 											{unknownLabel}
 										</Tooltip>

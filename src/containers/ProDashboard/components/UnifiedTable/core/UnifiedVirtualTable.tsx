@@ -208,7 +208,7 @@ interface HeaderWithTooltipProps {
 function HeaderWithTooltip({ children, content }: HeaderWithTooltipProps) {
 	if (!content) return <>{children}</>
 	return (
-		<Tooltip content={content} className="underline decoration-dotted">
+		<Tooltip content={content} className="cursor-help underline decoration-dotted" tabIndex={0}>
 			{children}
 		</Tooltip>
 	)

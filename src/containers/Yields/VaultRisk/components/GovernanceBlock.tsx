@@ -176,7 +176,8 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 				<span className="mono-xl text-primary">{audits.length}</span>
 				<Tooltip
 					content={`Totals logged across all ${audits.length} audits. Audits surface issues so they get fixed — ${resolved} findings recorded resolved. Open each report for current status.`}
-					className="body-sm text-secondary underline decoration-dotted"
+					className="cursor-help body-sm text-secondary underline decoration-dotted"
+					tabIndex={0}
 				>
 					{critical} critical, {high} high findings logged
 				</Tooltip>
@@ -196,7 +197,11 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 							<li key={key} className="flex items-center justify-between gap-2 py-1.5 body-sm">
 								<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
 									{meta ? (
-										<Tooltip content={meta} className="text-primary underline decoration-dotted">
+										<Tooltip
+											content={meta}
+											className="cursor-help text-primary underline decoration-dotted"
+											tabIndex={0}
+										>
 											{a.firm}
 										</Tooltip>
 									) : (
@@ -314,7 +319,8 @@ export function GovernanceBlock({
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-1.5 gap-y-0.5">
 							<Tooltip
 								content="Voting power a proposal needs before it can execute — the bar a captured or concentrated voter base would have to clear."
-								className="justify-end underline decoration-dotted"
+								className="cursor-help justify-end underline decoration-dotted"
+								tabIndex={0}
 							>
 								<span>
 									{g.quorum_max != null && g.quorum_max !== g.quorum_min
@@ -349,7 +355,7 @@ export function GovernanceBlock({
 				{guardian ? (
 					<LabelValueRow label="Guardian">
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
-							<Tooltip content={guardian} className="underline decoration-dotted">
+							<Tooltip content={guardian} className="cursor-help underline decoration-dotted" tabIndex={0}>
 								can veto proposals
 							</Tooltip>
 							{guardianAddress ? (

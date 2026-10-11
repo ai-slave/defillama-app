@@ -58,7 +58,8 @@ function PillarRow({ pillar }: { pillar: ExchangeProfileQualityModel['components
 		<div className="flex items-center gap-3">
 			<Tooltip
 				content={measured ? pillar.what : `Not measured, never counted as zero. ${pillar.na}`}
-				className="w-40 shrink-0"
+				className="w-40 shrink-0 cursor-help"
+				tabIndex={0}
 			>
 				<span className="flex items-baseline gap-1.5 underline decoration-dotted">
 					<span className="label-sm">{pillar.label}</span>
@@ -113,8 +114,9 @@ function ExecSubRow({
 			<Tooltip
 				content={sub.what}
 				render={
-					<span className="flex min-w-0 items-baseline gap-1.5 underline decoration-dotted sm:w-[8.5rem] sm:shrink-0" />
+					<span className="flex min-w-0 cursor-help items-baseline gap-1.5 underline decoration-dotted sm:w-[8.5rem] sm:shrink-0" />
 				}
+				tabIndex={0}
 			>
 				<span className="body-sm">{sub.label}</span>
 				{share ? <span className="body-sm text-tertiary">{share}%</span> : null}

@@ -137,7 +137,7 @@ export function VerifiedApyPanel({
 					</span>
 				) : null}
 				{confidence ? (
-					<Tooltip content={CONFIDENCE_HINT[confidence]}>
+					<Tooltip content={CONFIDENCE_HINT[confidence]} className="cursor-help" tabIndex={0}>
 						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
 							<span
 								aria-hidden

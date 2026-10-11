@@ -208,7 +208,8 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 				<h3 className="label-md">Order book feed speed</h3>
 				<Tooltip
 					content={`Latest measured day: ${feed.date}.`}
-					className="w-fit body-sm text-secondary underline decoration-dotted"
+					className="w-fit cursor-help body-sm text-secondary underline decoration-dotted"
+					tabIndex={0}
 				>
 					BTC perp book
 				</Tooltip>
@@ -224,7 +225,11 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 			<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 				{stats.map((stat) => (
 					<div key={stat.label} className="flex flex-col gap-0.5">
-						<Tooltip content={stat.help} className="w-fit label-md text-secondary underline decoration-dotted">
+						<Tooltip
+							content={stat.help}
+							className="w-fit cursor-help label-md text-secondary underline decoration-dotted"
+							tabIndex={0}
+						>
 							{stat.label}
 						</Tooltip>
 						<span className="mono-xl">{stat.value}</span>
@@ -478,7 +483,8 @@ export function ProfileExecution({ profile }: { profile: ExchangeProfileModel })
 									>
 										<Tooltip
 											content={column.help}
-											className="ms-auto w-fit whitespace-nowrap underline decoration-dotted"
+											className="ms-auto w-fit cursor-help whitespace-nowrap underline decoration-dotted"
+											tabIndex={0}
 										>
 											{column.label}
 										</Tooltip>
@@ -495,7 +501,8 @@ export function ProfileExecution({ profile }: { profile: ExchangeProfileModel })
 									>
 										<Tooltip
 											content={`The venue's figure: its tokens' markets merged by volume, tokens weighted by cross-venue ${segment === 'spot' ? 'spot volume' : 'open interest'}, the same weights for every venue.`}
-											className="w-fit underline decoration-dotted"
+											className="w-fit cursor-help underline decoration-dotted"
+											tabIndex={0}
 										>
 											{`${profile.name} basket`}
 										</Tooltip>

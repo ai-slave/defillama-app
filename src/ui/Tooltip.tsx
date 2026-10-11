@@ -24,6 +24,12 @@ interface ITooltip extends Ariakit.TooltipOptions {
    A control is the anchor: pass it as `render` (`render={<Button … />}`), never as a child of the default span, so
    the tap logic above sees it and `aria-describedby` lands on it (policy: check-focus-handoff).
 
+   A definition on text (a label, a value, a heading) has a dotted underline, and its anchor takes `cursor-help` and
+   `tabIndex={0}`: Ariakit never makes an anchor focusable, so without the tab stop a keyboard reader cannot open the
+   definition. The anchor stays a span or the element it already is (`h2`, `dt`), never a button, which announces an
+   action that does not exist and keeps a tap from opening the tooltip. A control anchor keeps its own cursor and
+   focus (policy: check-focus-handoff).
+
    The default span is a trigger box (`flex shrink-0 items-center`): it centers an icon beside its text and a long
    sibling never squeezes it, so its `className` only places it (ms-auto, w-fit); classes that shrink, truncate or
    change its display belong on a `render` anchor (policy: check-focus-handoff). A `render` anchor keeps only its own

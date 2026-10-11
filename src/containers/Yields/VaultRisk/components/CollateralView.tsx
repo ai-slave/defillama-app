@@ -136,7 +136,8 @@ export function CollateralView({
 					{alloc ? (
 						<Tooltip
 							content="What the curator has deployed into this market — the pool's actual supplied position."
-							className="justify-self-end underline decoration-dotted"
+							className="cursor-help justify-self-end underline decoration-dotted"
+							tabIndex={0}
 						>
 							Allocation
 						</Tooltip>
@@ -147,13 +148,15 @@ export function CollateralView({
 								? 'Modeled bad-debt exposure if this collateral goes to zero. When attribution is missing, this falls back to the position cap.'
 								: 'Modeled bad-debt exposure if this collateral goes to zero. When attribution is missing, this falls back to the market and pool-size cap.'
 						}
-						className="justify-self-end underline decoration-dotted"
+						className="cursor-help justify-self-end underline decoration-dotted"
+						tabIndex={0}
 					>
 						Market Exposure
 					</Tooltip>
 					<Tooltip
 						content="Separate oracle-compromise path: drainable if the price feed is pushed to a fake value."
-						className="justify-self-end underline decoration-dotted"
+						className="cursor-help justify-self-end underline decoration-dotted"
+						tabIndex={0}
 					>
 						Oracle Exposure
 					</Tooltip>

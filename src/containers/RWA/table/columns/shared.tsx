@@ -56,7 +56,7 @@ export function UsdBreakdownCell({
 
 	if (!breakdown || breakdown.length === 0) {
 		return unavailableReason ? (
-			<Tooltip content={unavailableReason} className="underline decoration-dotted">
+			<Tooltip content={unavailableReason} className="cursor-help underline decoration-dotted" tabIndex={0}>
 				{formatted}
 			</Tooltip>
 		) : (

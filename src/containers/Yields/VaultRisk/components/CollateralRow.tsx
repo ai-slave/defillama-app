@@ -508,7 +508,11 @@ export function CollateralRow({
 							</span>
 						) : null}
 						<span className="flex flex-wrap items-baseline gap-x-1.5">
-							<Tooltip content={trustScopeTooltip(trustScope)} className="text-primary underline decoration-dotted">
+							<Tooltip
+								content={trustScopeTooltip(trustScope)}
+								className="cursor-help text-primary underline decoration-dotted"
+								tabIndex={0}
+							>
 								Aggregate Collateral Trust (ACT):
 							</Tooltip>
 							<span>{aggregateTrust ?? '—'}</span>

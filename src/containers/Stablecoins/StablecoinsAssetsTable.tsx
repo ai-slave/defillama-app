@@ -242,7 +242,8 @@ const stablecoinsColumns = columnHelper.columns([
 							? `No current market cap after ${info.row.original.deadFrom}`
 							: 'No current market cap for this delisted stablecoin'
 					}
-					className="w-full justify-end underline decoration-dotted"
+					className="w-full cursor-help justify-end underline decoration-dotted"
+					tabIndex={0}
 				>
 					N/A
 				</Tooltip>

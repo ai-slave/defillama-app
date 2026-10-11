@@ -117,7 +117,11 @@ function Stat({
 	return (
 		<span className="flex min-w-0 flex-col gap-1">
 			{tooltip ? (
-				<Tooltip content={tooltip} className="w-fit label-md text-secondary underline decoration-dotted">
+				<Tooltip
+					content={tooltip}
+					className="w-fit cursor-help label-md text-secondary underline decoration-dotted"
+					tabIndex={0}
+				>
 					{label}
 				</Tooltip>
 			) : (

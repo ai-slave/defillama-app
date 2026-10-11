@@ -57,7 +57,7 @@ export function ReadoutCell({
 	return (
 		<div className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`.trim()}>
 			{hint ? (
-				<Tooltip content={hint}>
+				<Tooltip content={hint} className="cursor-help" tabIndex={0}>
 					<span className="flex items-center gap-1.5 label-md text-secondary underline decoration-dotted">{label}</span>
 				</Tooltip>
 			) : (

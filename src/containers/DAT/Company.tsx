@@ -180,7 +180,8 @@ export function DATCompany(props: IDATCompanyPageProps) {
 													24h change: <Change value={props.priceChange24h} />
 												</>
 											}
-											className="underline decoration-dotted"
+											className="cursor-help underline decoration-dotted"
+											tabIndex={0}
 										>
 											${props.price}
 										</Tooltip>

@@ -106,7 +106,8 @@ export function UserActivity({
 			<h2 className="mr-auto heading-xs underline decoration-dotted">
 				<Tooltip
 					content="This only counts users that interact with protocol directly (so not through another contract, such as a DEX aggregator), and only on arbitrum, avax, bsc, ethereum, xdai, optimism, polygon."
-					className="mr-auto heading-xs underline decoration-dotted"
+					className="mr-auto cursor-help heading-xs underline decoration-dotted"
+					tabIndex={0}
 				>
 					User Activity
 				</Tooltip>

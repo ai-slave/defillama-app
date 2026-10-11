@@ -328,7 +328,7 @@ function createEarnColumns(
 						</span>
 					)
 				return (
-					<Tooltip content={content} className="justify-end">
+					<Tooltip content={content} className="cursor-help justify-end" tabIndex={0}>
 						<span className={content ? 'underline decoration-dotted' : undefined}>
 							{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
@@ -380,7 +380,7 @@ function createEarnColumns(
 				const riskLabel =
 					value >= 80 ? 'High concentration' : value >= 50 ? 'Medium concentration' : 'Low concentration'
 				return (
-					<Tooltip content={riskLabel} className="justify-end">
+					<Tooltip content={riskLabel} className="cursor-help justify-end" tabIndex={0}>
 						<span className="inline-flex items-center gap-1.5">
 							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
 							<span className="underline decoration-dotted">

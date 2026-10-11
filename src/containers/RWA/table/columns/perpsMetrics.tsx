@@ -50,7 +50,8 @@ function ChangeWithDropsCell({ change, group }: { change: RWAPerpsChange; group:
 	return (
 		<Tooltip
 			content={`Leaves out ${markets} that fell to zero in 24h: the value a day before cannot be rebuilt from zero.`}
-			className="justify-end underline decoration-dotted"
+			className="cursor-help justify-end underline decoration-dotted"
+			tabIndex={0}
 		>
 			<Change value={change.percent} />*
 		</Tooltip>
@@ -118,7 +119,7 @@ function PremiumCell({ row }: { row: RWATableRow }) {
 	if (formatted == null) return null
 	const detail = d.premium.description
 	return (
-		<Tooltip content={detail} className="justify-end underline decoration-dotted">
+		<Tooltip content={detail} className="cursor-help justify-end underline decoration-dotted" tabIndex={0}>
 			{formatted}
 		</Tooltip>
 	)
@@ -147,7 +148,7 @@ function FundingCell({ metrics }: { metrics: RWATableMetrics }) {
 	const payer = metrics.fundingRate > 0 ? ' Longs pay shorts.' : metrics.fundingRate < 0 ? ' Shorts pay longs.' : ''
 	const detail = formatFundingRateDetail(metrics.fundingRate, metrics.fundingIntervalHours) + payer
 	return (
-		<Tooltip content={detail} className="justify-end underline decoration-dotted">
+		<Tooltip content={detail} className="cursor-help justify-end underline decoration-dotted" tabIndex={0}>
 			{formatted}
 		</Tooltip>
 	)

@@ -96,7 +96,12 @@ export function StatItem({ label, value, tooltip, labelAs = 'span', className, t
 	return (
 		<Container className={`flex flex-col ${className ?? ''}`.trim()}>
 			{tooltip ? (
-				<Tooltip content={tooltip} render={<Label />} className="text-secondary underline decoration-dotted">
+				<Tooltip
+					content={tooltip}
+					render={<Label />}
+					className="cursor-help text-secondary underline decoration-dotted"
+					tabIndex={0}
+				>
 					{label}
 				</Tooltip>
 			) : (

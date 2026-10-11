@@ -31,7 +31,11 @@ function createPlatformColumn(kind: 'spot' | 'perps') {
 					const venues = original.distinct.platform
 					if (kind === 'perps' && venues.length > 1) {
 						return (
-							<Tooltip content={venues.join(', ')} className="justify-end underline decoration-dotted">
+							<Tooltip
+								content={venues.join(', ')}
+								className="cursor-help justify-end underline decoration-dotted"
+								tabIndex={0}
+							>
 								{`${venues.length} venues`}
 							</Tooltip>
 						)

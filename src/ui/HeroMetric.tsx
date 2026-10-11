@@ -23,7 +23,7 @@ export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: Her
 		return (
 			<p className="flex flex-col">
 				{tooltip ? (
-					<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
+					<Tooltip content={tooltip} className="cursor-help text-secondary underline decoration-dotted" tabIndex={0}>
 						{label}
 					</Tooltip>
 				) : (

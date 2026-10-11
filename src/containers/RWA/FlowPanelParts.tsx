@@ -19,7 +19,11 @@ export function RWAFlowValueShimmer({ label = 'Loading flow value' }: { label?: 
 
 export function RWAFlowValueUnavailable() {
 	return (
-		<Tooltip content="Couldn't load flow data." className="text-secondary underline decoration-dotted">
+		<Tooltip
+			content="Couldn't load flow data."
+			className="cursor-help text-secondary underline decoration-dotted"
+			tabIndex={0}
+		>
 			Unavailable
 		</Tooltip>
 	)
@@ -38,7 +42,8 @@ export function RWAFlowCoverageTag({ coverage }: { coverage: number }) {
 			content={`Flow data is available for ${pct} of days in the selected period. Days without data are excluded from flows${
 				isLow ? ', so totals likely understate real activity' : ''
 			}.`}
-			className={`body-sm underline decoration-dotted ${isLow ? 'text-warning' : 'text-tertiary'}`}
+			className={`cursor-help body-sm underline decoration-dotted ${isLow ? 'text-warning' : 'text-tertiary'}`}
+			tabIndex={0}
 		>
 			Data coverage: {pct}
 		</Tooltip>
@@ -158,7 +163,11 @@ function FlowVsPriceStat({
 	)
 
 	return (
-		<Tooltip content={content} render={<span className="inline-flex items-baseline gap-1 whitespace-nowrap" />}>
+		<Tooltip
+			content={content}
+			render={<span className="inline-flex cursor-help items-baseline gap-1 whitespace-nowrap" />}
+			tabIndex={0}
+		>
 			<span className="text-secondary underline decoration-dotted">{label}</span>
 			{value == null ? '-' : <Change value={value} unit="usd" />}
 		</Tooltip>
@@ -183,7 +192,11 @@ export function RWAFlowVsPriceStrip({
 		<p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2 pt-2 body-sm">
 			{flowDrivenCopy ? (
 				<>
-					<Tooltip content={flowDrivenCopy.tooltip} className="font-medium underline decoration-dotted">
+					<Tooltip
+						content={flowDrivenCopy.tooltip}
+						className="cursor-help font-medium underline decoration-dotted"
+						tabIndex={0}
+					>
 						{flowDrivenCopy.label}
 					</Tooltip>
 					<span aria-hidden className="text-tertiary">

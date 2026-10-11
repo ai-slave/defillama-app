@@ -211,7 +211,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 								24h change: <Change value={priceChange24h} />
 							</>
 						}
-						className="justify-end underline decoration-dotted"
+						className="cursor-help justify-end underline decoration-dotted"
+						tabIndex={0}
 					>
 						{formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					</Tooltip>

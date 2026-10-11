@@ -616,7 +616,8 @@ export function RWAAssetPage({
 							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.category.description}
-									className="text-secondary underline decoration-dotted"
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
 								>
 									{definitions.category.label}
 								</Tooltip>
@@ -641,7 +642,8 @@ export function RWAAssetPage({
 							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.assetClass.description}
-									className="text-secondary underline decoration-dotted"
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
 								>
 									{definitions.assetClass.label}
 								</Tooltip>
@@ -662,7 +664,11 @@ export function RWAAssetPage({
 								)}
 							</Card>
 							<Card padding="sm" className="flex flex-col gap-1">
-								<Tooltip content={definitions.type.description} className="text-secondary underline decoration-dotted">
+								<Tooltip
+									content={definitions.type.description}
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
+								>
 									{definitions.type.label}
 								</Tooltip>
 								<span className="font-medium">{asset.type || '-'}</span>
@@ -670,7 +676,8 @@ export function RWAAssetPage({
 							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.rwaClassification.description}
-									className="text-secondary underline decoration-dotted"
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
 								>
 									{definitions.rwaClassification.label}
 								</Tooltip>
@@ -684,7 +691,8 @@ export function RWAAssetPage({
 							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.accessModel.description}
-									className="text-secondary underline decoration-dotted"
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
 								>
 									{definitions.accessModel.label}
 								</Tooltip>
@@ -765,7 +773,8 @@ export function RWAAssetPage({
 							<p className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.issuer.description}
-									className="text-secondary underline decoration-dotted"
+									className="cursor-help text-secondary underline decoration-dotted"
+									tabIndex={0}
 								>
 									{definitions.issuer.label}
 								</Tooltip>
@@ -775,7 +784,8 @@ export function RWAAssetPage({
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.isin.description}
-										className="text-secondary underline decoration-dotted"
+										className="cursor-help text-secondary underline decoration-dotted"
+										tabIndex={0}
 									>
 										{definitions.isin.label}
 									</Tooltip>
@@ -786,7 +796,8 @@ export function RWAAssetPage({
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.registryInformation.description}
-										className="text-secondary underline decoration-dotted"
+										className="cursor-help text-secondary underline decoration-dotted"
+										tabIndex={0}
 									>
 										{definitions.registryInformation.label}
 									</Tooltip>
@@ -797,7 +808,8 @@ export function RWAAssetPage({
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.source.description}
-										className="text-secondary underline decoration-dotted"
+										className="cursor-help text-secondary underline decoration-dotted"
+										tabIndex={0}
 									>
 										{definitions.source.label}
 									</Tooltip>
@@ -903,7 +915,11 @@ export function RWAAssetPage({
 					{attestationLinks.length > 0 || asset.dateOfLastAttestation != null || attestationFrequency != null ? (
 						<SectionCard
 							title={
-								<Tooltip content={definitions.attestations.description} className="underline decoration-dotted">
+								<Tooltip
+									content={definitions.attestations.description}
+									className="cursor-help underline decoration-dotted"
+									tabIndex={0}
+								>
 									Attestations
 								</Tooltip>
 							}

@@ -26,13 +26,14 @@ describe('MetricPrimitives export markers', () => {
 		])
 	})
 
-	test('uses a keyboard-focusable trigger for ordinary metric help', () => {
+	test('puts metric help on a focusable label that is not a button', () => {
 		const html = renderToStaticMarkup(<MetricRow label="Reserves" tooltip="Assets, not liabilities" value="$1m" />)
 
 		const output = document.createElement('div')
 		output.innerHTML = html
-		const trigger = output.querySelector('button')!
+		const trigger = output.querySelector('[tabindex="0"]')!
+		expect(trigger.tagName).toBe('SPAN')
 		expect(trigger.textContent).toBe('Reserves')
-		expect(trigger.tabIndex).toBe(0)
+		expect(output.querySelector('button')).toBeNull()
 	})
 })

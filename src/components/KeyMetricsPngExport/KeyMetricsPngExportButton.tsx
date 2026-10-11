@@ -27,7 +27,7 @@ function getTrimmedText(el: Element | null | undefined): string {
 }
 
 function extractLabel(el: Element): string {
-	// Tooltip rows nest the label span inside a button, so search descendants
+	// Tooltip rows nest the label span inside the tooltip anchor, so search descendants
 	// before falling back to a bare span (which would otherwise match the value).
 	const label =
 		el.querySelector?.(METRIC_LABEL_SELECTOR) ??

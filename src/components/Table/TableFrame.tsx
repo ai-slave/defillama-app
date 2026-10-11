@@ -472,7 +472,7 @@ function HeaderWithTooltip({
 		<Tooltip
 			content={content}
 			// Not a control: a focusable span lets keyboard readers open the definition without announcing a button.
-			render={<span className="underline decoration-dotted" />}
+			render={<span className="cursor-help underline decoration-dotted" />}
 			tabIndex={tabIndex ?? 0}
 		>
 			{children}
