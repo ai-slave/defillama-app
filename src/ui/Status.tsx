@@ -39,8 +39,9 @@ import { Panel } from './Panel'
      `queryReadFailed` from src/utils/query.ts (nothing to show and it failed)
      and check it before loading; a refetch that fails over data on screen is
      `queryRefreshFailed`, a notice beside the data, never the error in its place;
-     PanelStatus, ChartPanelBodyError and InlineStatus take the query as
-     `retry` and draw its Try again. See docs/focus-and-errors.md for retries.
+     PanelStatus, SurfaceBodyStatus, ChartPanelBodyError and InlineStatus take
+     the query as `retry` and draw its Try again (RetryButton); never place
+     one by hand inside a status. See docs/focus-and-errors.md for retries.
    - scripts/policies/check-status-parts.ts refuses hand-built loading text,
      LoadingDots, a lone spinner as a region's loading state, error boxes,
      alert lines and a retry gated on isError instead of queryReadFailed.
@@ -81,18 +82,24 @@ export function PanelStatus({ children, variant, retry, className }: PanelStatus
 			>
 				{children}
 			</p>
-			{retry ? (
-				<Button
-					ref={focusRegionOnLeave}
-					size="sm"
-					onClick={() => void retry.refetch()}
-					pendingLabel="Retrying…"
-					pending={retry.isFetching}
-				>
-					Try again
-				</Button>
-			) : null}
+			{retry ? <RetryButton retry={retry} /> : null}
 		</Panel>
+	)
+}
+
+/** The Try again of a failed read, drawn by the status parts that take `retry`: it waits while the read runs again,
+    and hands focus to the region around it when what loads replaces the status. */
+export function RetryButton({ retry }: { retry: QueryRetry }) {
+	return (
+		<Button
+			ref={focusRegionOnLeave}
+			size="sm"
+			onClick={() => void retry.refetch()}
+			pendingLabel="Retrying…"
+			pending={retry.isFetching}
+		>
+			Try again
+		</Button>
 	)
 }
 
@@ -144,19 +151,7 @@ export function InlineStatus({
 	action?: ReactNode
 	retry?: QueryRetry
 }) {
-	const shownAction = retry ? (
-		<Button
-			ref={focusRegionOnLeave}
-			size="sm"
-			onClick={() => void retry.refetch()}
-			pendingLabel="Retrying…"
-			pending={retry.isFetching}
-		>
-			Try again
-		</Button>
-	) : (
-		action
-	)
+	const shownAction = retry ? <RetryButton retry={retry} /> : action
 	const { box, icon, iconColor } = INLINE_STATUS[variant]
 	// The first line drops by half of what the 24px action row adds over one line of text.
 	const firstLine = shownAction ? 'mt-[calc((1.5rem_-_1lh)/2)]' : ''
@@ -227,6 +222,8 @@ export function PanelLoadingStatus({ label = 'Loading', className }: { label?: s
 type SurfaceBodyStatusProps = {
 	children: ReactNode
 	variant: TextStatusVariant
+	/** The query whose failure this is, as on PanelStatus. */
+	retry?: QueryRetry
 	className?: string
 	contentClassName?: string
 	textClassName?: string
@@ -235,6 +232,7 @@ type SurfaceBodyStatusProps = {
 export function SurfaceBodyStatus({
 	children,
 	variant,
+	retry,
 	className,
 	contentClassName,
 	textClassName
@@ -243,7 +241,9 @@ export function SurfaceBodyStatus({
 	const statusTextClassName = textClassName ?? `body-sm ${STATUS_TEXT[variant]}`
 
 	return (
-		<div className={`flex flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}>
+		<div
+			className={`flex flex-1 flex-col items-center justify-center gap-2 initial:min-h-[360px] ${className ?? ''}`.trim()}
+		>
 			<div
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
@@ -251,6 +251,7 @@ export function SurfaceBodyStatus({
 			>
 				{children}
 			</div>
+			{retry ? <RetryButton retry={retry} /> : null}
 		</div>
 	)
 }

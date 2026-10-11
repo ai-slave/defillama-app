@@ -3,13 +3,12 @@ import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { ApiAccessCard } from './ApiAccessCard'
 import { CancelSubscriptionModal } from './CancelSubscriptionModal'
@@ -296,19 +295,9 @@ export function SubscriptionSection() {
 
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
-		<p className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
-			Couldn't check payment status.
-			<Button
-				variant="secondary"
-				size="sm"
-				ref={focusRegionOnLeave}
-				onClick={() => void refetchPastDueSubscription()}
-				pendingLabel="Retrying…"
-				pending={isPastDueRetrying}
-			>
-				Try again
-			</Button>
-		</p>
+		<InlineStatus variant="error" retry={{ refetch: refetchPastDueSubscription, isFetching: isPastDueRetrying }}>
+			Couldn&apos;t check payment status.
+		</InlineStatus>
 	) : null
 
 	const hasProSubscription = llamafeedSubscription?.status === 'active'
@@ -427,11 +416,9 @@ export function SubscriptionSection() {
 	// dialog's result is on screen.
 	if (isTeamError) {
 		body = (
-			<SubscriptionLoadError
-				isRetrying={isTeamRetrying}
-				onRetry={() => void refetchTeam()}
-				message="Couldn't load your team."
-			/>
+			<InlineStatus variant="error" retry={{ refetch: refetchTeam, isFetching: isTeamRetrying }}>
+				Couldn&apos;t load your team.
+			</InlineStatus>
 		)
 	} else if (isTeamLoading) {
 		body = null
@@ -460,7 +447,9 @@ export function SubscriptionSection() {
 		body = (
 			<>
 				{teamBanner}
-				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+				<InlineStatus variant="error" retry={{ refetch: refetchSubscription, isFetching: isSubscriptionRetrying }}>
+					Couldn&apos;t load your subscription.
+				</InlineStatus>
 			</>
 		)
 	} else if (isPastDue && pastDueSubscription) {

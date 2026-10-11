@@ -25,7 +25,7 @@
 | Draw a gold LlamaAI call to action       | `GoldCta` (Button sizes, no lift); never a hand-built gold gradient                          | `components/GoldCta.tsx`                    |
 | Pick an alert's schedule or Slack target | `AlertScheduleFields`, `SlackTargetPickers`; forms keep the values in state                  | `components/alerts/AlertScheduleFields.tsx` |
 | Show a file or dashboard in a message    | `ArtifactCard`, one height and fill for every attachment                                     | `components/messages/ArtifactCard.tsx`      |
-| Show a failed read with its retry        | `RetryNotice` (an `InlineStatus` with Try again)                                             | `components/RetryNotice.tsx`                |
+| Show a failed read with its retry        | `InlineStatus variant="error"` with the query as `retry`                                     | `projects/ProjectFilesPanel.tsx`            |
 
 ## Checks a table can't express
 

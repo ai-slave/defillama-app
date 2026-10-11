@@ -4,11 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { ViewTabs } from '~/components/ViewTabs'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
@@ -140,7 +138,9 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	if (access === 'unknown') {
 		return (
 			<div className="mx-auto w-full max-w-xl py-16">
-				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+				<InlineStatus variant="error" retry={{ refetch: refetchSubscription, isFetching: isSubscriptionRetrying }}>
+					Couldn&apos;t load your subscription.
+				</InlineStatus>
 			</div>
 		)
 	}
@@ -891,21 +891,7 @@ function SqlWorkspaceInner({
 				error={!!activeTab.runError || (activeTab.cells?.some((c) => !!c.runError) ?? false)}
 			/>
 			{duckdb.status === 'error' ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The notice leaves once the engine loads; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={() => void duckdb.retry.refetch()}
-							pendingLabel="Retrying…"
-							pending={duckdb.retry.isFetching}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={duckdb.retry}>
 					The SQL engine failed to load, so queries can&apos;t run.
 				</InlineStatus>
 			) : null}

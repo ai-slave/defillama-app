@@ -5,12 +5,11 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
-import { RetryNotice } from '../components/RetryNotice'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { formatProjectBytes } from './format'
@@ -89,11 +88,9 @@ export function ProjectFilesPanel({
 	const isInitialLoading = !filesFailed && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
 
 	const fileErrorNotice = filesFailed ? (
-		<RetryNotice
-			message="Couldn't load files."
-			retrying={filesQuery.isFetching}
-			onRetry={() => void filesQuery.refetch()}
-		/>
+		<InlineStatus variant="error" retry={filesQuery}>
+			Couldn&apos;t load files.
+		</InlineStatus>
 	) : null
 
 	return (
@@ -148,11 +145,9 @@ export function ProjectFilesPanel({
 
 			<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
 			{queryReadFailed(sourcesQuery) || queryRefreshFailed(sourcesQuery) ? (
-				<RetryNotice
-					message="Couldn't load connected sources."
-					retrying={sourcesQuery.isFetching}
-					onRetry={() => void sourcesQuery.refetch()}
-				/>
+				<InlineStatus variant="error" retry={sourcesQuery}>
+					Couldn&apos;t load connected sources.
+				</InlineStatus>
 			) : null}
 			{githubSources.length > 0 ? (
 				<ul className="flex flex-col gap-1">

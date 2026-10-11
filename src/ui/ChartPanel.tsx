@@ -1,10 +1,8 @@
 import type { ComponentProps, ComponentPropsWithoutRef, CSSProperties, ReactNode } from 'react'
 import type { QueryRetry } from '~/utils/query'
-import { Button } from './Button'
-import { focusRegionOnLeave } from './focus'
 import { Panel } from './Panel'
 import { QuestionHelper } from './QuestionHelper'
-import { LoadingIndicator } from './Status'
+import { LoadingIndicator, RetryButton } from './Status'
 
 /* ----------------------------------------------------------------------------
    ChartPanel — the chart shell: `Panel padding="none"`, an optional
@@ -148,17 +146,7 @@ export function ChartPanelBodyError({
 			<p role="alert" className="body-sm text-error">
 				{children}
 			</p>
-			{retry ? (
-				<Button
-					ref={focusRegionOnLeave}
-					size="sm"
-					onClick={() => void retry.refetch()}
-					pendingLabel="Retrying…"
-					pending={retry.isFetching}
-				>
-					Try again
-				</Button>
-			) : null}
+			{retry ? <RetryButton retry={retry} /> : null}
 		</ChartPanelBodyFallback>
 	)
 }

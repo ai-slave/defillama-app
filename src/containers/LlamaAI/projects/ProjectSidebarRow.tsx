@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
-import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SIDEBAR_ROW_SURFACE } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import type { ChatSession } from '~/containers/LlamaAI/types'
@@ -11,6 +10,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -157,11 +157,9 @@ export function ProjectSidebarRow({
 				</span>
 			</div>
 			{isExpanded && sessionsFailed ? (
-				<RetryNotice
-					message="Couldn't load project chats."
-					retrying={projectSessions.isFetching}
-					onRetry={() => void projectSessions.refetch()}
-				/>
+				<InlineStatus variant="error" retry={projectSessions}>
+					Couldn&apos;t load project chats.
+				</InlineStatus>
 			) : null}
 			{isExpanded && !sessionsFailed && projectSessions.isLoading ? (
 				<div role="status" aria-label="Loading project chats" className="py-2">

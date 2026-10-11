@@ -427,20 +427,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						) : null}
 
 						{duckdb.status === 'error' ? (
-							<InlineStatus
-								variant="error"
-								action={
-									<Button
-										type="button"
-										size="sm"
-										onClick={() => void duckdb.retry.refetch()}
-										pendingLabel="Retrying…"
-										pending={duckdb.retry.isFetching}
-									>
-										Try again
-									</Button>
-								}
-							>
+							<InlineStatus variant="error" retry={duckdb.retry}>
 								The SQL engine failed to load.
 							</InlineStatus>
 						) : null}

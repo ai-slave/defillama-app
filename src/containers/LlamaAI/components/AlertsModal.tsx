@@ -83,7 +83,6 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
-import { RetryNotice } from './RetryNotice'
 
 const NO_EDITED_ALERTS: ReadonlySet<string> = new Set()
 
@@ -149,7 +148,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 		enabled: isOpen && isAuthenticated && !!user
 	})
 
-	const { data: alerts, isFetching: isFetchingAlerts, refetch: refetchAlerts } = alertsQuery
+	const { data: alerts } = alertsQuery
 	// Checked after the list: an empty list whose refetch failed may predate an alert just created, so it shows the
 	// error rather than the empty state.
 	const alertsFailed = queryReadFailed(alertsQuery) || queryRefreshFailed(alertsQuery)
@@ -204,11 +203,9 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						<DialogBody kind="list">
 							<div className="flex flex-col gap-2">
 								{queryRefreshFailed(alertsQuery) ? (
-									<RetryNotice
-										message="Couldn't load alerts."
-										retrying={isFetchingAlerts}
-										onRetry={() => void refetchAlerts()}
-									/>
+									<InlineStatus variant="error" retry={alertsQuery}>
+										Couldn&apos;t load alerts.
+									</InlineStatus>
 								) : null}
 								{upsellActive ? (
 									<InlineStatus variant="warning">
@@ -231,11 +228,9 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 									Sign in to use alerts and manage their delivery from one place.
 								</p>
 							) : view === 'error' ? (
-								<RetryNotice
-									message="Couldn't load alerts."
-									retrying={isFetchingAlerts}
-									onRetry={() => void refetchAlerts()}
-								/>
+								<InlineStatus variant="error" retry={alertsQuery}>
+									Couldn&apos;t load alerts.
+								</InlineStatus>
 							) : (
 								<p className="body-sm text-secondary">
 									{getUpsellCopy(alertsUsage ?? null)}. Upgrade to Pro to create alerts.
@@ -659,11 +654,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 					<div className="mt-3 border-t border-subtle pt-3">
 						<p className="mb-2 label-xs tracking-wide text-tertiary uppercase">History</p>
 						{queryReadFailed(executionsQuery) ? (
-							<RetryNotice
-								message="Couldn't load alert history."
-								retrying={executionsQuery.isFetching}
-								onRetry={() => void executionsQuery.refetch()}
-							/>
+							<InlineStatus variant="error" retry={executionsQuery}>
+								Couldn&apos;t load alert history.
+							</InlineStatus>
 						) : executionsQuery.isLoading ? (
 							<div role="status" className="flex justify-center py-4">
 								<LoadingIndicator label="Loading history" />
@@ -694,11 +687,9 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 							</div>
 						)}
 						{queryReadFailed(execDetailQuery) ? (
-							<RetryNotice
-								message="Couldn't load this execution."
-								retrying={execDetailQuery.isFetching}
-								onRetry={() => void execDetailQuery.refetch()}
-							/>
+							<InlineStatus variant="error" retry={execDetailQuery}>
+								Couldn&apos;t load this execution.
+							</InlineStatus>
 						) : execDetailQuery.isLoading ? (
 							<div role="status" className="mt-2 flex justify-center">
 								<LoadingIndicator label="Loading run" />

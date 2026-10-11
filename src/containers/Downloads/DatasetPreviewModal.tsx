@@ -604,14 +604,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 							<SurfaceBodyLoadingStatus label="Fetching dataset" className="min-h-0" />
 						) : failed ? (
 							<div className="flex flex-1 items-center justify-center p-4">
-								<InlineStatus
-									variant="error"
-									action={
-										<Button size="sm" pendingLabel="Retrying…" pending={isFetching} onClick={() => void refetch()}>
-											Try again
-										</Button>
-									}
-								>
+								<InlineStatus variant="error" retry={{ refetch, isFetching }}>
 									{error instanceof Error ? error.message : 'Failed to fetch data'}
 								</InlineStatus>
 							</div>

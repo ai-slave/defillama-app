@@ -1,8 +1,8 @@
 import { type MouseEvent, useMemo, useState } from 'react'
 import type { VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Dialog, DialogDiscardGuard, DialogHeader } from '~/ui/Dialog'
 import { showFieldErrors } from '~/ui/focus'
+import { InlineStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { queryReadFailed } from '~/utils/query'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
@@ -229,7 +229,9 @@ export function AddChartModal({
 						{state.selectedMainTab === 'sql' ? (
 							isSqlAccessUnknown ? (
 								<div className="mx-auto w-full max-w-md py-8">
-									<SubscriptionLoadError isRetrying={isRetrying} onRetry={retry} />
+									<InlineStatus variant="error" retry={{ refetch: retry, isFetching: isRetrying }}>
+										Couldn&apos;t load your subscription.
+									</InlineStatus>
 								</div>
 							) : !isSqlAllowed || !onOpenSqlModal ? (
 								<SqlChartUpsell />

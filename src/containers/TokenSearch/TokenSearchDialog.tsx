@@ -6,7 +6,6 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useMedia } from '~/hooks/useMedia'
-import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { NoResults } from '~/ui/NoResults'
 import { popoverRowStyles, popoverSeeMoreStyles } from '~/ui/Popover'
@@ -143,20 +142,7 @@ function TokenSearch({
 						<LoadingIndicator />
 					</p>
 				) : failed ? (
-					<InlineStatus
-						variant="error"
-						action={
-							<Button
-								type="button"
-								size="sm"
-								pendingLabel="Retrying…"
-								pending={tokenSearch.isFetching}
-								onClick={() => void tokenSearch.refetch()}
-							>
-								Try again
-							</Button>
-						}
-					>
+					<InlineStatus variant="error" retry={tokenSearch}>
 						Couldn&rsquo;t search tokens.
 					</InlineStatus>
 				) : visibleTokens.length === 0 ? (

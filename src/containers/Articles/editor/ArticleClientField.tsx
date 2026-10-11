@@ -5,7 +5,6 @@ import { useAuthContext } from '~/auth'
 import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { selectTriggerStyles } from '~/components/Select/types'
-import { Button } from '~/ui/Button'
 import { ListLoading } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -110,21 +109,7 @@ export function ArticleClientField({
 				}}
 			/>
 			{error ? (
-				<InlineStatus
-					variant="error"
-					action={
-						save.error ? undefined : (
-							<Button
-								size="sm"
-								onClick={() => void sponsors.refetch()}
-								pendingLabel="Retrying…"
-								pending={sponsors.isFetching}
-							>
-								Try again
-							</Button>
-						)
-					}
-				>
+				<InlineStatus variant="error" retry={save.error ? undefined : sponsors}>
 					{error}
 				</InlineStatus>
 			) : (

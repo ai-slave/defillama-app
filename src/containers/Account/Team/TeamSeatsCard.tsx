@@ -2,11 +2,10 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator } from '~/ui/Status'
+import { LoadingIndicator, InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { clearPendingTeamCheckout } from './pendingTeamCheckout'
@@ -279,11 +278,9 @@ export function TeamSeatsCard() {
 			</div>
 
 			{isTeamRefreshError ? (
-				<SubscriptionLoadError
-					message="Couldn't refresh team billing. Refresh before making another change."
-					isRetrying={isTeamRetrying}
-					onRetry={() => void refetchTeam()}
-				/>
+				<InlineStatus variant="error" retry={{ refetch: refetchTeam, isFetching: isTeamRetrying }}>
+					Couldn&apos;t refresh team billing. Refresh before making another change.
+				</InlineStatus>
 			) : null}
 
 			{teamSubscriptions.length === 0 ? (

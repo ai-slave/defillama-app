@@ -77,16 +77,8 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	// A failed refresh keeps the loaded list (and an open delete confirm); only a list that never loaded shows the error.
 	if (queryReadFailed(savedCharts)) {
 		return (
-			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
-				The saved charts could not load.
-				<Button
-					size="sm"
-					pendingLabel="Retrying…"
-					pending={savedCharts.isFetching}
-					onClick={() => void savedCharts.refetch()}
-				>
-					Try again
-				</Button>
+			<SurfaceBodyStatus variant="error" retry={savedCharts}>
+				Couldn&apos;t load your saved charts.
 			</SurfaceBodyStatus>
 		)
 	}

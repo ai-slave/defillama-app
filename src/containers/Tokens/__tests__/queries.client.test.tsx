@@ -82,7 +82,7 @@ describe('Tokens watchlist', () => {
 			url === '/api/public/markets/tokens' ? { last_updated: '', tokens: [] } : { schemaVersion: 13, rows: [] }
 		)
 		await render(<TokensWatchlistContainer tokenUniverse={[]} />)
-		await expectShows('Token data is unavailable')
+		await expectShows("Couldn't load token data")
 		expect(element.textContent).not.toContain('No tokens in your watchlist')
 		fetchJson.mockResolvedValue(page)
 		const retry = Array.from(element.querySelectorAll('button')).find((button) => button.textContent === 'Try again')

@@ -24,14 +24,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
-import {
-	keepFocus,
-	neighbourRowControl,
-	pageContent,
-	passFocusOnLeave,
-	showFieldErrors,
-	focusRegionOnLeave
-} from '~/ui/focus'
+import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -306,21 +299,7 @@ export function ResearchSponsorsAdminView() {
 
 			{isLoading && !failed ? <PanelLoadingStatus label="Loading clients" className="min-h-40" /> : null}
 			{failed ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The retry leaves once the read succeeds; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={() => void refetch()}
-							pendingLabel="Retrying…"
-							pending={isFetching}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
 					Couldn't load clients. {mutationMessage(error, 'Try again in a moment.')}
 				</InlineStatus>
 			) : null}

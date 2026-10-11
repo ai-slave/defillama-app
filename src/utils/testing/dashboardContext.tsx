@@ -95,7 +95,7 @@ export function DashboardTestProvider({ children, ...state }: DashboardTestState
 												dashboardDescription: '',
 												isLoadingDashboard: false,
 												streamHasResolved: true,
-												loadError: null,
+												loadErrorStatus: null,
 												canUndo: false,
 												...state.dashboard
 											})}

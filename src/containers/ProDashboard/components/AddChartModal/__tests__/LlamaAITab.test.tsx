@@ -86,5 +86,5 @@ test('a failed refresh keeps the loaded charts and an open delete confirmation',
 
 	expect(deleteButton('Uniswap fees')).not.toBeNull()
 	expect(confirmation()?.textContent).toContain('Delete chart?')
-	expect(document.body.textContent).not.toContain('The saved charts could not load.')
+	expect(document.body.textContent).not.toContain("Couldn't load your saved charts.")
 })

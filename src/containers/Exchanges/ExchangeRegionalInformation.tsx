@@ -1,12 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { BasicLink } from '~/components/Link'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
-import { queryReadFailed } from '~/utils/query'
+import { type QueryRetry, queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
 import { fetchExchangeRegionalMetadata } from './master.api'
 import { MetadataGroups } from './MetadataGroups'
@@ -34,7 +32,7 @@ export function useExchangeRegionalMetadata(slug: string, country: string | null
 export type ProfileCountryView =
 	| { status: 'global' }
 	| { status: 'loading'; country: string }
-	| { status: 'error'; country: string; retry: () => void; retrying: boolean }
+	| { status: 'error'; country: string; query: QueryRetry }
 	| {
 			[Availability in ExchangeRegionStatus]: {
 				status: Availability
@@ -67,8 +65,7 @@ export function resolveProfileCountryView(
 				return { status: 'unavailable', country, regional: query.data }
 		}
 	}
-	if (queryReadFailed(query))
-		return { status: 'error', country, retry: () => void query.refetch(), retrying: query.isFetching }
+	if (queryReadFailed(query)) return { status: 'error', country, query }
 	return { status: 'loading', country }
 }
 
@@ -137,21 +134,7 @@ export function ProfileCountryCard({
 					<LoadingIndicator label={`Loading information for ${countryLabel(view.country)}`} />
 				</div>
 			) : view.status === 'error' ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The retry leaves once the read succeeds; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={view.retry}
-							pendingLabel="Retrying…"
-							pending={view.retrying}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={view.query}>
 					Country-specific information for {countryLabel(view.country)} could not be loaded. Showing global information.
 				</InlineStatus>
 			) : view.status !== 'global' && country ? (

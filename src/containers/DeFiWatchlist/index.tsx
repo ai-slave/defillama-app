@@ -30,7 +30,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { FieldGroup } from '~/ui/Field'
-import { focusRegionOnLeave, showFieldErrors } from '~/ui/focus'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -318,21 +318,7 @@ export function PortfolioNotifications({
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
 					{/* A failed read is unknown, not "none": offering setup would POST over the saved preferences. */}
 					{readFailed ? (
-						<InlineStatus
-							variant="error"
-							action={
-								<Button
-									ref={focusRegionOnLeave}
-									type="button"
-									size="sm"
-									pendingLabel="Retrying…"
-									pending={isFetching}
-									onClick={() => void refetch()}
-								>
-									Try again
-								</Button>
-							}
-						>
+						<InlineStatus variant="error" retry={{ refetch, isFetching }}>
 							Couldn&apos;t load the email notifications for the &quot;{selectedPortfolio}&quot; portfolio
 							{selectedPortfolio === DEFAULT_PORTFOLIO_NAME
 								? ", so they can't be changed yet."

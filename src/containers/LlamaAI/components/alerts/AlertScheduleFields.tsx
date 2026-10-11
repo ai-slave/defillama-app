@@ -2,11 +2,10 @@ import { Select } from '~/components/Select/Select'
 import type { SlackChannel, SlackLink } from '~/containers/LlamaAI/api/slack'
 import type { SlackTarget } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { DAYS_OF_WEEK, getTimezoneLabel, GMT_OFFSETS } from '~/containers/LlamaAI/components/alerts/schedule'
-import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import type { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { FieldGroup } from '~/ui/Field'
 import { takeLostFocus } from '~/ui/focus'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
 /* ----------------------------------------------------------------------------
@@ -164,11 +163,12 @@ export function SlackTargetPickers({
 			{target.teamId ? (
 				// A failed read keeps its notice through the retry, so the retry shows "Retrying…".
 				queryReadFailed(channelsQuery) ? (
-					<RetryNotice
-						message="Couldn't load Slack channels."
-						retrying={channelsQuery.isFetching}
-						onRetry={() => void channelsQuery.refetch()}
-					/>
+					// Its own line in the delivery row.
+					<div className="basis-full">
+						<InlineStatus variant="error" retry={channelsQuery}>
+							Couldn&apos;t load Slack channels.
+						</InlineStatus>
+					</div>
 				) : channelsQuery.isLoading ? (
 					<span role="status" aria-live="polite">
 						<LoadingIndicator label="Loading channels" />

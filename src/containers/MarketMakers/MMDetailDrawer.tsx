@@ -9,7 +9,7 @@ import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
-import { queryReadFailed } from '~/utils/query'
+import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import { AccentBadge, integrationStatus, SecondaryBadge } from './badges'
 import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
@@ -261,23 +261,13 @@ function DrawerBody({
 	const performance = useMarketMakerPerformance(marketMakerId, range, open)
 
 	// Any one of the three missing would show fallbacks and 0.00 scores as if they were this market maker's data.
-	const failedQueries = [detail, breakdown, performance].filter(queryReadFailed)
-	if (failedQueries.length > 0) {
-		const retry = () => {
-			for (const query of failedQueries) void query.refetch()
-		}
+	const failedReads = mergeFailedReads(
+		[detail, breakdown, performance].map((query) => (queryReadFailed(query) ? query : null))
+	)
+	if (failedReads) {
 		return (
-			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-3">
-				<p>Could not load this market maker.</p>
-				<Button
-					type="button"
-					size="sm"
-					onClick={retry}
-					pendingLabel="Retrying…"
-					pending={failedQueries.some((query) => query.isFetching)}
-				>
-					Try again
-				</Button>
+			<SurfaceBodyStatus variant="error" retry={failedReads}>
+				Couldn&apos;t load this market maker.
 			</SurfaceBodyStatus>
 		)
 	}

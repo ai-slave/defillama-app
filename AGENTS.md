@@ -41,6 +41,7 @@
 - Write a short constant list out entry by entry. Map a literal list only when the markup each entry repeats outweighs the list, and never to copy objects into the same shape or to index a parallel array.
 - In large-dataset transforms, make one pass with plain loops. Avoid chained array methods, `Object.*` enumeration and `reduce` with spreads there. Use `Map` or `Set` only when it reduces total work.
 - Before coding a bug fix or behavior change, state the clean behavior model: what is intentional and what is accidental, the invariants to keep, and the likely opposite-edge regression. Make the smallest cohesive change, and test the original bug plus the opposite edge when relevant.
+- When a fix gives up an edge to keep the model simple, write that in a comment at the decision: what the reader sees on that edge and why it is accepted. A fix that adds a state, prop or branch for an edge no real flow reaches is friction, not a fix.
 
 ## Before you change it, read
 

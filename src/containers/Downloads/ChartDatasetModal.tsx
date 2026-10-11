@@ -1111,19 +1111,7 @@ export function ChartDatasetModal({
 								<SurfaceBodyLoadingStatus label="Fetching chart data" className="min-h-0" />
 							) : dataFailed ? (
 								<div className="flex flex-1 items-center justify-center p-4">
-									<InlineStatus
-										variant="error"
-										action={
-											<Button
-												size="sm"
-												pendingLabel="Retrying…"
-												pending={(isCategoryMode ? breakdownQuery : activeQuery!).isFetching}
-												onClick={() => void (isCategoryMode ? breakdownQuery : activeQuery!).refetch()}
-											>
-												Try again
-											</Button>
-										}
-									>
+									<InlineStatus variant="error" retry={isCategoryMode ? breakdownQuery : activeQuery!}>
 										{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
 									</InlineStatus>
 								</div>

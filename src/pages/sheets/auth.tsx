@@ -5,7 +5,6 @@ import { useEffect } from 'react'
 import { AuthProvider, useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Toast } from '~/components/Toast'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -99,10 +98,12 @@ function AuthContent() {
 								</div>
 							) : isSubscriptionError ? (
 								<div className="mt-2 text-left">
-									<SubscriptionLoadError
-										isRetrying={isSubscriptionRetrying}
-										onRetry={() => void refetchSubscription()}
-									/>
+									<InlineStatus
+										variant="error"
+										retry={{ refetch: refetchSubscription, isFetching: isSubscriptionRetrying }}
+									>
+										Couldn&apos;t load your subscription.
+									</InlineStatus>
 								</div>
 							) : (
 								<p className="mt-2 body-md text-tertiary">

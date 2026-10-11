@@ -109,8 +109,8 @@ test('says the market maker failed to load instead of showing zero scores when a
 	http.serve({ '/api/public/market-makers/performance': fixtureStatus(404) })
 	await mount()
 	await waitForUi(() => {
-		expect(document.querySelector('[role="dialog"] [role="alert"] p')?.textContent).toBe(
-			'Could not load this market maker.'
+		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
+			"Couldn't load this market maker."
 		)
 	})
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('/10.00')

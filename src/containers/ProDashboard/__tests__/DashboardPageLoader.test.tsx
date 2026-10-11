@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { subscriptionStatusQueryKey } from '~/auth/subscriptionStatus'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -108,6 +109,31 @@ test('a dashboard that fails to load leaves the loader for its failure', async (
 	})
 	await open('private-dashboard')
 	await waitForUi(() => expect(heading()).toBe('Dashboard not found'))
+})
+
+test('Try again on a dashboard that failed to load keeps the failure on screen until the reload lands', async () => {
+	const reload = Promise.withResolvers<Response>()
+	session.serve({ '/api/dynamic/pro-dashboard/private-dashboard/stream': fixtureStatus(404, { message: 'Not found' }) })
+	session.serveInOrder(`${FEATURES_SERVER}/dashboards/private-dashboard`, [
+		() => {
+			throw new TypeError('Failed to fetch')
+		},
+		() => reload.promise
+	])
+	await open('private-dashboard')
+	const tryAgain = await waitForUi(() => {
+		const button = [...container.querySelectorAll('button')].find((node) => accessibleName(node) === 'Try again')
+		expect(button).toBeDefined()
+		return button!
+	})
+
+	await act(async () => tryAgain.click())
+	await waitForUi(() => expect(tryAgain.getAttribute('aria-busy')).toBe('true'))
+	expect(tryAgain.isConnected).toBe(true)
+	expect(container.textContent).toContain("Couldn't load this dashboard.")
+
+	await act(async () => reload.resolve(Response.json(privateDashboard)))
+	await waitForUi(() => expect(container.textContent).toBe('Dashboard body'))
 })
 
 test('a failed subscription read does not hold a public dashboard behind the loader', async () => {

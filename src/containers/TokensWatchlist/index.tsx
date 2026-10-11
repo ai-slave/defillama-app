@@ -33,7 +33,6 @@ import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -100,7 +99,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 	}
 
 	const tokensQuery = useWatchlistTokensTable(savedTokenIds)
-	const { data, isLoading, isFetching, refetch } = tokensQuery
+	const { data, isLoading, isFetching } = tokensQuery
 	const { data: marketsList } = useQuery({
 		queryKey: ['tokens-markets-summary'],
 		queryFn: () => fetchJson<TokenMarketsListResponse>('/api/public/markets/tokens'),
@@ -182,18 +181,8 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 						/>
 					</TableToolbar>
 					{hasSavedTokens && queryReadFailed(tokensQuery) ? (
-						<SurfaceBodyStatus variant="error" className="p-2">
-							<p>Token data is unavailable. Your saved tokens are unchanged.</p>
-							<Button
-								ref={focusRegionOnLeave}
-								size="sm"
-								className="mt-2"
-								pendingLabel="Retrying…"
-								pending={isFetching}
-								onClick={() => void refetch()}
-							>
-								Try again
-							</Button>
+						<SurfaceBodyStatus variant="error" retry={tokensQuery} className="p-2">
+							Couldn&apos;t load token data. Your saved tokens are unchanged.
 						</SurfaceBodyStatus>
 					) : hasSavedTokens && isLoading ? (
 						<SurfaceBodyLoadingStatus className="p-2" />

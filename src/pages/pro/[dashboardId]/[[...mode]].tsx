@@ -111,8 +111,8 @@ function DashboardPageContent({
 	const {
 		isLoadingDashboard,
 		streamHasResolved,
-		loadError,
-		reloadDashboard,
+		loadErrorStatus,
+		dashboardRetry,
 		dashboardVisibility,
 		currentDashboard,
 		dashboardName
@@ -172,8 +172,6 @@ function DashboardPageContent({
 	// keeps the shown dashboard and its open dialogs. A failed subscription read ends the wait in both.
 	const isAccountLoading = loaders.sessionLoading && (isEditing || !currentDashboard)
 	const isLoading = (isEditing && !isClient) || isAccountLoading || isValidating || isLoadingDashboard
-	// The loader takes over while a reload runs, so this Try again never shows as pending.
-	const dashboardRetry = { refetch: reloadDashboard, isFetching: isLoadingDashboard }
 	const initialSeoSummary =
 		!isEditing && initialDashboard && initialDashboard.visibility === 'public' && seo && !currentDashboard ? (
 			<DashboardSeoSummary dashboard={initialDashboard as PublicDashboardInitialRenderPayload} seo={seo} />
@@ -194,11 +192,11 @@ function DashboardPageContent({
 	}
 
 	if (isEditing && !currentDashboard) {
-		if (loadError?.status === 401) {
+		if (loadErrorStatus === 401) {
 			return <SignInRequired hint="Sign in to edit this dashboard." />
 		}
 
-		if (loadError && loadError.status >= 500) {
+		if (loadErrorStatus >= 500) {
 			return (
 				<PanelStatus variant="error" retry={dashboardRetry}>
 					Couldn&apos;t load this dashboard.
@@ -214,11 +212,11 @@ function DashboardPageContent({
 			return <DashboardNotFound hint="This dashboard does not exist." />
 		}
 
-		if (dashboardId !== 'new' && !currentDashboard && loadError?.status === 401) {
+		if (dashboardId !== 'new' && !currentDashboard && loadErrorStatus === 401) {
 			return <SignInRequired hint="Sign in to view this dashboard." />
 		}
 
-		if (dashboardId !== 'new' && !currentDashboard && loadError && loadError.status >= 500) {
+		if (dashboardId !== 'new' && !currentDashboard && loadErrorStatus >= 500) {
 			return (
 				<PanelStatus variant="error" retry={dashboardRetry}>
 					Couldn&apos;t load this dashboard.

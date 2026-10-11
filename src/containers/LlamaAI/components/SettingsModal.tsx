@@ -44,7 +44,6 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { BalanceSettings } from './BalanceSettings'
-import { RetryNotice } from './RetryNotice'
 import { RAIL_TAB } from './tabRailStyles'
 
 const MAX_LENGTH = 5000
@@ -844,11 +843,9 @@ export const SettingsModal = memo(function SettingsModal({
 							{activeTab === 'memory' && (
 								<div className="space-y-6">
 									{memoriesFailed ? (
-										<RetryNotice
-											message="Couldn't load memories."
-											retrying={agentHome.memories.isFetching}
-											onRetry={() => void agentHome.memories.refetch()}
-										/>
+										<InlineStatus variant="error" retry={agentHome.memories}>
+											Couldn&apos;t load memories.
+										</InlineStatus>
 									) : null}
 									{agentHome.memories.data?.available === false ? (
 										<SettingsCard>
@@ -910,21 +907,30 @@ export const SettingsModal = memo(function SettingsModal({
 													subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
 												/>
 												{skillsFailed ? (
-													<RetryNotice
-														message="Couldn't load skills."
-														retrying={agentHome.skills.isFetching}
-														onRetry={() => void agentHome.skills.refetch()}
-													/>
+													<InlineStatus variant="error" retry={agentHome.skills}>
+														Couldn&apos;t load skills.
+													</InlineStatus>
 												) : null}
 												{skillMoveError ? (
-													<RetryNotice
-														message={`Couldn't ${skillMoveError.action} this skill.`}
-														retrying={
-															skillMutations[skillMoveError.action].isPending &&
-															skillMutations[skillMoveError.action].variables === skillMoveError.name
+													<InlineStatus
+														variant="error"
+														action={
+															<Button
+																type="button"
+																size="sm"
+																pendingLabel="Retrying…"
+																pending={
+																	skillMutations[skillMoveError.action].isPending &&
+																	skillMutations[skillMoveError.action].variables === skillMoveError.name
+																}
+																onClick={() => moveSkill(skillMoveError.action, skillMoveError.name, null)}
+															>
+																Try again
+															</Button>
 														}
-														onRetry={() => moveSkill(skillMoveError.action, skillMoveError.name, null)}
-													/>
+													>
+														Couldn&apos;t {skillMoveError.action} this skill.
+													</InlineStatus>
 												) : null}
 												{!skillsFailed || (agentHome.skills.data?.active.length ?? 0) > 0 ? (
 													<SettingsCard>

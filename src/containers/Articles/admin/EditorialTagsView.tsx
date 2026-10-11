@@ -27,7 +27,7 @@ import {
 import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
-import { passFocusOnLeave, focusRegionOnLeave } from '~/ui/focus'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -181,21 +181,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				</InlineStatus>
 			) : null}
 			{failed ? (
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							// The retry leaves once the read succeeds; the region keeps focus.
-							ref={focusRegionOnLeave}
-							size="sm"
-							onClick={() => void refetch()}
-							pendingLabel="Retrying…"
-							pending={isFetching}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
 					{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}
 				</InlineStatus>
 			) : isLoading ? (

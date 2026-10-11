@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
-import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { SIDEBAR_ROW } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
@@ -12,6 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
+import { InlineStatus } from '~/ui/Status'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { useProjectList } from './hooks'
@@ -54,7 +54,7 @@ export function ProjectsSidebarSection({
 	const createStore = Ariakit.useDialogStore()
 	const createButtonRef = useRef<HTMLButtonElement>(null)
 	const projectList = useProjectList(!isLocked)
-	const { data, isFetching, refetch } = projectList
+	const { data } = projectList
 	// The notice sits above the projects it kept, so a failed refresh counts too.
 	const failed = queryReadFailed(projectList) || queryRefreshFailed(projectList)
 	const projects = data ?? EMPTY_PROJECTS
@@ -133,7 +133,9 @@ export function ProjectsSidebarSection({
 					</Ariakit.DialogDisclosure>
 
 					{failed ? (
-						<RetryNotice message="Couldn't load projects." retrying={isFetching} onRetry={() => void refetch()} />
+						<InlineStatus variant="error" retry={projectList}>
+							Couldn&apos;t load projects.
+						</InlineStatus>
 					) : null}
 					{projectList.isLoading && !failed ? (
 						<ul role="status" aria-label="Loading projects" className="flex flex-col">

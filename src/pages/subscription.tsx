@@ -27,13 +27,13 @@ import {
 	SubscriptionPricingSection,
 	SubscriptionTrustedBlock
 } from '~/containers/Subscription/sections'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
 import { planCheckoutBlock, readSubscribedPlan, useSubscriptionPageState } from '~/containers/Subscription/usePageState'
 import { applySlackAcquisitionFromQuery } from '~/containers/Subscription/utils/slackAcquisition'
 import { ClientOnly } from '~/layout/ClientOnly'
+import { InlineStatus } from '~/ui/Status'
 import pb from '~/utils/pocketbase'
 import { safeInternalPath } from '~/utils/routerQuery'
 
@@ -244,7 +244,9 @@ function SubscriptionContent() {
 			>
 				{isSubscriptionError ? (
 					<div className="mx-auto max-w-[600px] px-4 pt-10">
-						<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+						<InlineStatus variant="error" retry={{ refetch: refetchSubscription, isFetching: isSubscriptionRetrying }}>
+							Couldn&apos;t load your subscription.
+						</InlineStatus>
 					</div>
 				) : null}
 				<SubscriptionPricingSection

@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
@@ -245,11 +244,9 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 						</div>
 					) : null}
 					{isTeamRefreshError ? (
-						<SubscriptionLoadError
-							isRetrying={isTeamRetrying}
-							onRetry={() => void refetchTeam()}
-							message="Couldn't refresh team billing. Refresh before making another change."
-						/>
+						<InlineStatus variant="error" retry={{ refetch: refetchTeam, isFetching: isTeamRetrying }}>
+							Couldn&apos;t refresh team billing. Refresh before making another change.
+						</InlineStatus>
 					) : null}
 					{seatsError && !failedCancel ? <InlineStatus variant="error">{seatsError}</InlineStatus> : null}
 				</DialogBody>

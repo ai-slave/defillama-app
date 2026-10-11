@@ -429,20 +429,7 @@ function AddToDashboardDialog({
 						</div>
 
 						{dashboardsFailed ? (
-							<InlineStatus
-								variant="error"
-								action={
-									<Button
-										type="button"
-										size="sm"
-										onClick={() => void refetchDashboards()}
-										pendingLabel="Retrying…"
-										pending={isFetchingDashboards}
-									>
-										Try again
-									</Button>
-								}
-							>
+							<InlineStatus variant="error" retry={{ refetch: refetchDashboards, isFetching: isFetchingDashboards }}>
 								{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
 							</InlineStatus>
 						) : null}

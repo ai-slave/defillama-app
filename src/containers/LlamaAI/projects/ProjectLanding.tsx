@@ -14,7 +14,7 @@ import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
-import { focusRegionOnLeave, neighbourRowControl } from '~/ui/focus'
+import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -159,21 +159,7 @@ export function ProjectLanding({
 		}
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
-				<InlineStatus
-					variant="error"
-					action={
-						<Button
-							ref={focusRegionOnLeave}
-							variant="secondary"
-							size="sm"
-							pendingLabel="Retrying…"
-							pending={project.isFetching}
-							onClick={() => void project.refetch()}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<InlineStatus variant="error" retry={project}>
 					Couldn&rsquo;t load this project.
 				</InlineStatus>
 				<span className="label-sm">
@@ -418,21 +404,7 @@ export function ProjectLanding({
 							<section>
 								{sessionsFailed ? (
 									<div className="mb-3">
-										<InlineStatus
-											variant="error"
-											action={
-												<Button
-													ref={focusRegionOnLeave}
-													variant="secondary"
-													size="sm"
-													pendingLabel="Retrying…"
-													pending={projectSessions.isFetching}
-													onClick={() => void projectSessions.refetch()}
-												>
-													Try again
-												</Button>
-											}
-										>
+										<InlineStatus variant="error" retry={projectSessions}>
 											Couldn&apos;t load chats.
 										</InlineStatus>
 									</div>

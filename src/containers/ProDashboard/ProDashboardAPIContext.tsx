@@ -15,6 +15,7 @@ import {
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import pb from '~/utils/pocketbase'
+import { type QueryRetry, queryReadFailed } from '~/utils/query'
 import { type ChartDataPrerequisite, getProtocolCatalogPrerequisite } from './chartRuntime'
 import {
 	getDashboardHydrationState,
@@ -184,8 +185,9 @@ interface ProDashboardDashboardContextType {
 	dashboardDescription: string
 	isLoadingDashboard: boolean
 	streamHasResolved: boolean
-	loadError: { status: number; message: string } | null
-	reloadDashboard: () => void
+	/** The HTTP status of a failed load with no dashboard to show; 500 for a network failure. */
+	loadErrorStatus: number | null
+	dashboardRetry: QueryRetry
 	getCurrentRatingSession: () => (AISessionData & { sessionId: string }) | null
 	setDashboardName: (name: string) => void
 	setDashboardVisibility: (visibility: 'private' | 'public') => void
@@ -645,12 +647,7 @@ function ProDashboardAPIProviderInner({
 
 	// Load initial dashboard — stream seeds this cache key, queryFn fires as fallback after stream
 	const initialDashboardUpdatedAt = getDashboardUpdatedAtMs(initialDashboard)
-	const {
-		data: currentDashboard2 = null,
-		isLoading: isQueryLoadingDashboard,
-		error: dashboardQueryError,
-		refetch: refetchDashboardQuery
-	} = useQuery<Dashboard | null>({
+	const dashboardQuery = useQuery<Dashboard | null>({
 		queryKey: dashboardQueryKey,
 		queryFn: async () => {
 			if (!initialDashboardId) {
@@ -673,6 +670,24 @@ function ProDashboardAPIProviderInner({
 			: {}),
 		...(initialDashboardUpdatedAt === undefined ? {} : { initialDataUpdatedAt: initialDashboardUpdatedAt })
 	})
+	const {
+		data: currentDashboard2 = null,
+		isLoading: isQueryLoadingDashboard,
+		isFetching: isFetchingDashboard,
+		error: dashboardQueryError,
+		refetch: refetchDashboardQuery
+	} = dashboardQuery
+	// The query is the one source of a load failure: a stream that ends without a dashboard enables it (or, with a
+	// server payload, triggers the fallback below), so it always reruns and settles what the stream could not.
+	// True from a failed load until one succeeds, a Try again's run included, so the failure stays on screen meanwhile.
+	const dashboardReadFailed = queryReadFailed(dashboardQuery)
+	// A Try again from a failure with no data clears `error` while it runs. The last failure's status keeps its screen;
+	// adjusted during render because no stored value or key outlives that clearing.
+	const [lastDashboardQueryError, setLastDashboardQueryError] = useState<Error | null>(null)
+	if (dashboardQueryError && dashboardQueryError !== lastDashboardQueryError) {
+		setLastDashboardQueryError(dashboardQueryError)
+	}
+	const failedLoad = dashboardQueryError ?? lastDashboardQueryError
 	useDashboardConfigFallback(shouldFetchTrustedDashboardFallback, refetchDashboardQuery)
 	useEffect(() => {
 		if (!initialDashboardId || !dashboardReady) return
@@ -685,31 +700,26 @@ function ProDashboardAPIProviderInner({
 	}, [initialDashboardId, dashboardReady, hasPendingSave, queryClient, dashboardQueryKey])
 	// Loading until dashboard config arrives from stream (or query fallback)
 	const isLoadingDashboard =
-		(!!initialDashboardId && stream.dashboard === undefined && !dashboardReady) || isQueryLoadingDashboard
+		(!!initialDashboardId && stream.dashboard === undefined && !dashboardReady) ||
+		(isQueryLoadingDashboard && !dashboardReadFailed)
 
 	useEffect(() => {
 		applyTrustedDashboard(currentDashboard2)
 	}, [applyTrustedDashboard, currentDashboard2])
 
-	const loadError = useMemo<{ status: number; message: string } | null>(() => {
-		if (!initialDashboardId || currentDashboard) return null
-		if (dashboardQueryError) {
-			const status = dashboardQueryError instanceof DashboardError ? dashboardQueryError.status : 500
-			const message = dashboardQueryError instanceof Error ? dashboardQueryError.message : 'Failed to load dashboard'
-			return { status, message }
-		}
-		if (streamHasResolved && !currentDashboard2 && stream.error) {
-			const match = stream.error.match(/Stream failed:\s*(\d+)/)
-			const status = match ? Number(match[1]) : 500
-			return { status, message: stream.error }
-		}
-		return null
-	}, [initialDashboardId, currentDashboard, dashboardQueryError, streamHasResolved, currentDashboard2, stream.error])
-
-	const reloadDashboard = useCallback(() => {
-		void queryClient.invalidateQueries({ queryKey: dashboardQueryKey })
-		void refetchDashboardQuery()
-	}, [queryClient, dashboardQueryKey, refetchDashboardQuery])
+	// A network failure has no status and offers Try again, as a server error does. A 404 settles as `null` data
+	// (loadDashboard), so a failed refresh over it keeps "Dashboard not found", as a failed refresh keeps any data on
+	// screen. Trade-off: that screen offers no Try again; the next return to the tab refreshes again.
+	const loadErrorStatus =
+		initialDashboardId && !currentDashboard && dashboardReadFailed && failedLoad
+			? failedLoad instanceof DashboardError
+				? failedLoad.status
+				: 500
+			: null
+	const dashboardRetry = useMemo<QueryRetry>(
+		() => ({ refetch: refetchDashboardQuery, isFetching: isFetchingDashboard }),
+		[refetchDashboardQuery, isFetchingDashboard]
+	)
 
 	const deleteDashboard = useCallback(
 		async (id: string) => {
@@ -1258,8 +1268,8 @@ function ProDashboardAPIProviderInner({
 			dashboardDescription,
 			isLoadingDashboard,
 			streamHasResolved,
-			loadError,
-			reloadDashboard,
+			loadErrorStatus,
+			dashboardRetry,
 			getCurrentRatingSession,
 			setDashboardName,
 			setDashboardVisibility,
@@ -1287,8 +1297,8 @@ function ProDashboardAPIProviderInner({
 			dashboardDescription,
 			isLoadingDashboard,
 			streamHasResolved,
-			loadError,
-			reloadDashboard,
+			loadErrorStatus,
+			dashboardRetry,
 			getCurrentRatingSession,
 			setDashboardName,
 			setDashboardVisibility,

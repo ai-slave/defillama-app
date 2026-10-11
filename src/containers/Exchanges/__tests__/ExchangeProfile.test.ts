@@ -131,7 +131,7 @@ describe('profile country view states', () => {
 		// Try again keeps the error and its button on screen while the read runs again.
 		expect(resolveProfileCountryView('DE', query({ failed: true, isFetching: true }))).toMatchObject({
 			status: 'error',
-			retrying: true
+			query: { isFetching: true }
 		})
 	})
 

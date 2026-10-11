@@ -49,6 +49,7 @@ type RuleId =
 	| 'error-box'
 	| 'alert-line'
 	| 'retry-gating'
+	| 'hand-placed-retry'
 	| 'next-error'
 
 const MESSAGES: Record<RuleId, string> = {
@@ -61,6 +62,8 @@ const MESSAGES: Record<RuleId, string> = {
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
 		'gates a retry on a query error that clears when the retry runs; gate it on queryReadFailed(query) and check it before loading (docs/focus-and-errors.md)',
+	'hand-placed-retry':
+		"places a read's Try again by hand inside a status; pass the query as `retry` and the part draws it (RetryButton)",
 	'next-error': 'renders next/error\'s Error page; render EmptyState size="lg" for a not found'
 }
 
@@ -94,9 +97,16 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 			"an inline field's save error under the text it failed to save"
 	},
 	'retry-gating': {},
+	'hand-placed-retry': {
+		'src/containers/Articles/editor/LlamaAIChartPicker.tsx':
+			'a retry that succeeds moves focus to the search field that stays, not to the dialog'
+	},
 	'next-error': {}
 }
 
+// Parts whose failure is always a read and which take `retry`; InlineStatus also holds action errors, so only a Try
+// again that refetches counts there.
+const READ_STATUS_PARTS = new Set(['PanelStatus', 'SurfaceBodyStatus', 'ChartPanelBodyError'])
 const BUTTON_LIKE = new Set(['button', 'Button', 'ProButton', 'Ariakit.Button', 'option'])
 const LOADING_TEXT = /^(?:Loading|Fetching|Searching|Waiting)\b[\s\S]*(?:…|\.\.\.)$/
 const QUERY_HOOKS = new Set(['useQuery', 'useInfiniteQuery', 'useSuspenseQuery', 'useSuspenseInfiniteQuery'])
@@ -124,6 +134,29 @@ function attributeText(jsxAttribute: ts.JsxAttribute): string | undefined {
 	return ts.isJsxExpression(initializer) && initializer.expression
 		? literalText(unwrap(initializer.expression))
 		: undefined
+}
+
+/** A Try again button the status parts would draw: no focus handling of its own beyond focusRegionOnLeave. With
+    `refetchOnly`, only one whose click reruns a query. */
+function handPlacedRetry(node: ts.Node, refetchOnly: boolean): ts.Node | null {
+	if (ts.isJsxElement(node) && ['Button', 'button'].includes(tagName(node.openingElement))) {
+		const opening = node.openingElement
+		const label = node.children.map((child) => (ts.isJsxText(child) ? child.text : '')).join('')
+		const ref = attribute(opening, 'ref')
+		const onClick = attribute(opening, 'onClick')
+		if (
+			label.trim() === 'Try again' &&
+			(!ref || ref.initializer?.getText() === '{focusRegionOnLeave}') &&
+			(!refetchOnly || (!!onClick && /\brefetch\w*\(/.test(onClick.getText())))
+		) {
+			return opening
+		}
+	}
+	let found: ts.Node | null = null
+	ts.forEachChild(node, (child) => {
+		found ??= handPlacedRetry(child, refetchOnly)
+	})
+	return found
 }
 
 function openingOf(node: ts.Node): ts.JsxOpeningLikeElement | null {
@@ -477,6 +510,16 @@ export function scanSource(
 				report('alert-line', opening)
 			}
 
+			if (READ_STATUS_PARTS.has(tag) && ts.isJsxElement(node)) {
+				for (const child of node.children) {
+					const retry = handPlacedRetry(child, false)
+					if (retry) report('hand-placed-retry', retry)
+				}
+			}
+			const action = tag === 'InlineStatus' ? attribute(opening, 'action') : undefined
+			const actionRetry = action?.initializer ? handPlacedRetry(action.initializer, true) : null
+			if (actionRetry) report('hand-placed-retry', actionRetry)
+
 			if (nextErrorName && tag === nextErrorName && attribute(opening, 'statusCode')) report('next-error', opening)
 
 			if (ts.isJsxElement(node) && !BUTTON_LIKE.has(tag)) {
@@ -705,7 +748,7 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'retry gated on an error destructured from a query variable',
 			source:
-				'export function F() { const q = useInfiniteQuery(o); const { error } = q; return error ? <InlineStatus variant="error" action={<Button onClick={() => q.refetch()}>Try again</Button>}>x</InlineStatus> : null }',
+				'export function F() { const q = useInfiniteQuery(o); const { error } = q; return error ? <InlineStatus variant="error" retry={q}>x</InlineStatus> : null }',
 			rule: 'retry-gating'
 		},
 		{
@@ -788,6 +831,30 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'next/error outside pages',
 			source: "import Error from 'next/error'\nexport function P() { return <Error statusCode={404} /> }",
+			rule: null
+		},
+		{
+			name: 'Try again inside a surface status',
+			source:
+				'export const F = ({ q }) => <SurfaceBodyStatus variant="error"><p>Couldn\'t load.</p><Button size="sm" onClick={() => void q.refetch()}>Try again</Button></SurfaceBodyStatus>',
+			rule: 'hand-placed-retry'
+		},
+		{
+			name: 'refetching Try again in an InlineStatus action',
+			source:
+				'export const F = ({ refetch }) => <InlineStatus variant="error" action={<Button ref={focusRegionOnLeave} size="sm" onClick={() => void refetch()}>Try again</Button>}>Couldn\'t load.</InlineStatus>',
+			rule: 'hand-placed-retry'
+		},
+		{
+			name: 'mutation Try again in an InlineStatus action',
+			source:
+				'export const F = ({ save }) => <InlineStatus variant="error" action={<Button size="sm" onClick={() => save.mutate()}>Try again</Button>}>Couldn\'t save.</InlineStatus>',
+			rule: null
+		},
+		{
+			name: 'Try again with its own focus handoff',
+			source:
+				'export const F = ({ q }) => <InlineStatus variant="error" action={<Button ref={takeLostFocus} size="sm" onClick={() => void q.refetch()}>Try again</Button>}>Couldn\'t load.</InlineStatus>',
 			rule: null
 		}
 	]

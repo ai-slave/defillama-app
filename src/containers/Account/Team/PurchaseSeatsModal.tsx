@@ -4,7 +4,6 @@ import { Suspense, useId, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { EmbeddedCardCheckout } from '~/containers/Subscription/shared/EmbeddedCardCheckout'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
@@ -335,11 +334,9 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 							)}
 
 							{isTeamRefreshError ? (
-								<SubscriptionLoadError
-									isRetrying={isTeamRetrying}
-									onRetry={() => void refetchTeam()}
-									message="Couldn't refresh team billing. Refresh before making another change."
-								/>
+								<InlineStatus variant="error" retry={{ refetch: refetchTeam, isFetching: isTeamRetrying }}>
+									Couldn&apos;t refresh team billing. Refresh before making another change.
+								</InlineStatus>
 							) : null}
 							{holdsForPendingCheckout ? (
 								<InlineStatus variant="warning">

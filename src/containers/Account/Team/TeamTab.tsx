@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router'
 import { useEffect, useRef, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
-import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -54,11 +53,9 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 
 	if (token && membershipConfirmed && queryReadFailed(inviteAccount)) {
 		return (
-			<SubscriptionLoadError
-				isRetrying={inviteAccount.isFetching}
-				onRetry={() => void inviteAccount.refetch()}
-				message="You joined the team, but account details could not be loaded."
-			/>
+			<InlineStatus variant="error" retry={inviteAccount}>
+				You joined the team, but account details could not be loaded.
+			</InlineStatus>
 		)
 	}
 
@@ -107,11 +104,9 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 	// A failed team read is unknown, not "no team": don't offer Create team.
 	if (isTeamError) {
 		return (
-			<SubscriptionLoadError
-				isRetrying={isTeamRetrying}
-				onRetry={() => void refetchTeam()}
-				message="Couldn't load your team."
-			/>
+			<InlineStatus variant="error" retry={{ refetch: refetchTeam, isFetching: isTeamRetrying }}>
+				Couldn&apos;t load your team.
+			</InlineStatus>
 		)
 	}
 
