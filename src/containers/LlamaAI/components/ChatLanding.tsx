@@ -18,6 +18,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface, PopoverList } from '~/ui/PopoverSurface'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const FEATURED_KEYS = ['trade_thesis', 'x_data', 'tradfi', 'yields', 'onchain_analytics'] as const
@@ -127,10 +128,7 @@ export function ChatLanding({
 			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 lg:mt-25 lg:flex-none lg:justify-start">
 				<img src="/assets/llamaai/llama-ai.svg" alt="LlamaAI" className="object-contain" width={64} height={77} />
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
-					<span className="inline-flex items-center gap-1.5 rounded-full border border-ai-gold-muted bg-ai-gold-tint px-2.5 py-1 label-xs tracking-wide text-ai-gold-deep uppercase">
-						<Icon name="sparkles" className="size-3.5" />
-						Suggested for you
-					</span>
+					<PromoBadge icon="sparkles">Suggested for you</PromoBadge>
 				) : null}
 				{/* A greeting tip is shown by replacing the heading, so the heading records its impression. */}
 				<h1 ref={greetingTip ? () => markSeen(greetingTip) : undefined} className="text-center heading-lg text-primary">
@@ -269,12 +267,7 @@ function Capability({
 			>
 				<Icon name={cap.icon} className="size-3.5" />
 				{cap.name}
-				{/* A category badge (New, Beta) on the brand tint, not a selected state. */}
-				{cap.badge ? (
-					<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">
-						{cap.badge}
-					</span>
-				) : null}
+				{cap.badge ? <PromoBadge>{cap.badge}</PromoBadge> : null}
 			</Ariakit.MenuButton>
 			<MenuSurface
 				variant="list"

@@ -13,6 +13,7 @@ import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar, useOpeningKey } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
+import { MetaLine } from '~/ui/MetaLine'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -195,19 +196,10 @@ function ResultMetadata({ item, compact = false }: { item: ResearchSearchItem; c
 	return (
 		<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
 			<Tag>{item.typeLabel}</Tag>
-			{publishedLabel ? (
-				<time dateTime={item.publishedAt ?? undefined} className="body-sm text-tertiary">
-					{publishedLabel}
-				</time>
-			) : null}
-			{compact || item.readMinutes === null ? null : (
-				<>
-					<span className="body-sm text-tertiary" aria-hidden>
-						·
-					</span>
-					<span className="body-sm text-tertiary">{item.readMinutes} min read</span>
-				</>
-			)}
+			<MetaLine>
+				{publishedLabel ? <time dateTime={item.publishedAt ?? undefined}>{publishedLabel}</time> : null}
+				{compact || item.readMinutes === null ? null : `${item.readMinutes} min read`}
+			</MetaLine>
 		</span>
 	)
 }

@@ -6,6 +6,7 @@ import type { TriggerType } from '~/containers/LlamaAI/components/alerts/createA
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 
 interface EmptyAlertsStateProps {
 	onOpenCreate: (tab: TriggerType) => void
@@ -30,9 +31,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 					onClick={() => onOpenCreate('price')}
 					className="hover-wash-card flex cursor-pointer flex-col items-start gap-2.5 text-left"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-warning-tint text-warning">
-						<Icon name="trending-up" className="size-4" />
-					</span>
+					<IconTile icon="trending-up" tone="warning" size="md" />
 					<span className="label-md text-primary">Watch a price</span>
 					<span className="body-sm text-secondary">
 						Instant ping when a token crosses your level — checked continuously
@@ -50,9 +49,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 					onClick={() => onOpenCreate('schedule')}
 					className="hover-wash-card flex cursor-pointer flex-col items-start gap-2.5 text-left"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-brand-tint text-link">
-						<Icon name="calendar" className="size-4" />
-					</span>
+					<IconTile icon="calendar" tone="brand" size="md" />
 					<span className="label-md text-primary">Any question, on a schedule</span>
 					<span className="body-sm text-secondary">
 						No trigger needed — the agent answers a question of yours every day or week

@@ -2,7 +2,6 @@ import { createColumnHelper, type PaginationState, type SortingState } from '@ta
 import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
@@ -14,6 +13,7 @@ import { Change } from '~/ui/Change'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { StaleText } from '~/ui/StaleText'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
@@ -44,9 +44,9 @@ function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListIt
 				className="size-6 shrink-0 rounded-full object-contain"
 			/>
 			<span className="flex min-w-0 flex-col">
-				<BasicLink href={`/pre-ipo/${row.original.id}`} className="truncate label-md text-link hover:underline">
+				<TextLink href={`/pre-ipo/${row.original.id}`} truncate>
 					{row.original.name}
-				</BasicLink>
+				</TextLink>
 			</span>
 		</span>
 	)

@@ -180,9 +180,9 @@ export function cardKeyFacts(card: CardsIndexCard): Array<CardKeyFact> {
 	]
 }
 
-/** "Credit · Visa", from the card types and networks its tiers share. */
-export function cardTraits(card: CardsIndexCard): string {
-	return [...card.roll.classes, ...card.roll.networks].map(humanize).join(' · ')
+/** The card types and networks its tiers share (Credit, Visa), one MetaLine item each. */
+export function cardTraits(card: CardsIndexCard): Array<string> {
+	return [...card.roll.classes, ...card.roll.networks].map(humanize)
 }
 
 export function tierDetailSections(

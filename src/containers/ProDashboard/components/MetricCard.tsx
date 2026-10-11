@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { MetaLine } from '~/ui/MetaLine'
 
 const SparklineChart = lazy(() =>
 	import('~/components/ECharts/SparklineChart').then((m) => ({ default: m.SparklineChart }))
@@ -15,7 +16,7 @@ import { useMetricData } from '../hooks/useMetricData'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } from '../types'
 import { getProDashboardChartTypeConfig } from '../types'
-import { ProBadge, ProMeta } from '../ui'
+import { ProBadge } from '../ui'
 import { getItemIconUrl } from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { EntityIcon } from './EntityIcon'
@@ -221,7 +222,13 @@ export function MetricCard({ metric }: MetricCardProps) {
 				title={displayTitle}
 				icon={<EntityIcon src={iconUrl} name={displayTitle} />}
 				badge={<BoundParameterBadge {...(metric.bindings === undefined ? {} : { bindings: metric.bindings })} />}
-				subtitle={<ProMeta items={[hasCustomLabel ? baseTitle : null, windowBadge, aggregatorBadge]} />}
+				subtitle={
+					<MetaLine>
+						{hasCustomLabel ? baseTitle : null}
+						{windowBadge}
+						{aggregatorBadge}
+					</MetaLine>
+				}
 			/>
 			<div className="flex h-full min-h-0 flex-1 flex-col px-3 pb-3">{content}</div>
 		</div>

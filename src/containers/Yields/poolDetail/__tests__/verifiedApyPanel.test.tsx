@@ -45,10 +45,10 @@ describe('VerifiedApyPanel', () => {
 
 		const body = new DOMParser().parseFromString(html, 'text/html').body
 		const text = body.textContent
-		expect(text).toContain('high confidence')
+		expect(text).toContain('High confidence')
 		const calls = Array.from(body.querySelectorAll('li'), (item) => item.textContent)
-		expect(calls.find((call) => call.includes('balanceOf(holder)'))).toContain('read')
-		expect(calls.find((call) => call.includes('Pool.withdraw'))).toContain('executed')
+		expect(calls.find((call) => call.includes('balanceOf(holder)'))).toContain('Read')
+		expect(calls.find((call) => call.includes('Pool.withdraw'))).toContain('Executed')
 		expect(text).toContain('As the holder')
 		expect(text).toContain('Measured since')
 		expect(text).toContain('Feb 6, 2023')

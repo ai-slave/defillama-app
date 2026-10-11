@@ -67,8 +67,10 @@ import { Dialog, DialogBody, DialogDiscardGuard, DialogFooter, DialogHeader, use
 import { Field, FieldGroup } from '~/ui/Field'
 import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { MetaLine } from '~/ui/MetaLine'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -467,21 +469,18 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 		</div>
 	) : null
 
-	const typeTileClass = !alert.enabled
-		? 'bg-surface-elevated-2 text-tertiary'
-		: isPriceAlert
-			? 'bg-page text-secondary'
-			: 'bg-brand-tint text-link'
-
 	return (
 		<AlertCard ref={cardRef}>
 			{execView}
 			<div hidden={!!selectedExec}>
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex min-w-0 flex-1 items-start gap-3">
-						<div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${typeTileClass}`}>
-							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-4" />
-						</div>
+						{/* A paused alert's tile goes quiet; a live one takes its type's hue, as on the empty state's cards. */}
+						<IconTile
+							icon={isPriceAlert ? 'trending-up' : 'calendar'}
+							tone={!alert.enabled ? 'neutral' : isPriceAlert ? 'warning' : 'brand'}
+							size="sm"
+						/>
 						<div className="min-w-0 flex-1">
 							<div className="flex flex-wrap items-center gap-2">
 								<h3 className="min-w-0 label-md break-words text-primary">{alert.title}</h3>
@@ -496,17 +495,14 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 									: formatScheduleExpression(alert.schedule_expression)}
 							</p>
 							{alert.condition ? <p className="mt-0.5 body-sm text-secondary">If: {alert.condition}</p> : null}
-							<p className="mt-1 body-sm text-secondary">
+							<MetaLine className="mt-1">
 								{channelLabel}
 								{/* A paused alert's status chip already says so. */}
 								{!isPriceAlert && alert.enabled ? (
-									<>
-										{' · '}
-										<RelativeTime value={alert.next_run_at} prefix="Next run" pastLabel="soon" />
-									</>
+									<RelativeTime value={alert.next_run_at} prefix="Next run" pastLabel="soon" />
 								) : null}
-								{` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
-							</p>
+								{`${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
+							</MetaLine>
 							{alert.last_run_status === 'error' && alert.last_error ? (
 								<div className="mt-1">
 									<ErrorLine inset="none">{alert.last_error}</ErrorLine>

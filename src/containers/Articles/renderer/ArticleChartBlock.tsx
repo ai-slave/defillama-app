@@ -12,6 +12,7 @@ import {
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
@@ -238,11 +239,7 @@ export function ArticleChartBlock({
 								)}
 						</span>
 					)}
-					{config.logScale ? (
-						<span className="ml-2 rounded-sm border border-medium px-1.5 py-px label-xs tracking-wider text-tertiary uppercase">
-							log scale
-						</span>
-					) : null}
+					{config.logScale ? <Tag className="ml-2">Log scale</Tag> : null}
 				</div>
 				<div className="shrink-0 label-xs tracking-[0.18em] text-tertiary uppercase">
 					Source ·{' '}

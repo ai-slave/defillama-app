@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Tag } from '~/ui/Tag'
+import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { DashboardVariable } from '../dashboardTypes'
 import { getDashboardItemBoundVariableIds } from '../dashboardVariables/bindableFields'
@@ -32,13 +34,18 @@ export function BoundParameterBadge({ bindings, item }: BoundParameterBadgeProps
 	return (
 		<>
 			{boundVariables.map((variable) => (
-				<span
+				<Tooltip
 					key={variable.id}
-					title={isReadOnly ? `Follows the ${variable.label} parameter` : 'Bound to dashboard parameter'}
-					className="inline-flex shrink-0 items-center rounded-full border border-medium bg-surface px-2 py-0.5 label-sm text-secondary"
+					content={isReadOnly ? `Follows the ${variable.label} parameter` : 'Bound to dashboard parameter'}
+					render={<Tag className="shrink-0" />}
+					tabIndex={0}
 				>
 					{variable.label}
-				</span>
+					{/* The tooltip is not announced (Tooltip header), so the tab stop's name carries its meaning. */}
+					<span className="sr-only">
+						{isReadOnly ? `, follows the ${variable.label} parameter` : ', bound to dashboard parameter'}
+					</span>
+				</Tooltip>
 			))}
 		</>
 	)

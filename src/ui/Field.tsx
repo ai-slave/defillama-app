@@ -4,6 +4,12 @@ import { type ReactNode, useId } from 'react'
    Field — a form control with its visible label, an optional hint and its
    error. FieldGroup is the same for a set of controls answered together
    (newsletter chips, delivery channels, a required pick of options).
+   A control that is itself a named group (SegmentedControl, a radio group)
+   never sits in FieldGroup: the reader would hear the label twice, once
+   for each group. Render the label (label-sm text-secondary) and hint
+   (body-sm text-tertiary) with ids and pass them to the control as
+   `aria-labelledby` and `aria-describedby` (VisibilityField in
+   ProDashboard).
 
    Validation (docs/focus-and-errors.md, "Validating a form"):
    - The submit button stays enabled. Disabling it to enforce input hides

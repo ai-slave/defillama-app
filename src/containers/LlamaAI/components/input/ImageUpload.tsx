@@ -7,6 +7,7 @@ import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/ut
 import { Button } from '~/ui/Button'
 import { keepFocus, neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph, ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -211,15 +212,10 @@ export function TextChip({
 						{topLine}
 					</p>
 					<div className="flex items-center gap-1.5">
-						<span className="body-sm text-secondary">{badgeLabel}</span>
-						{size ? (
-							<>
-								<span aria-hidden className="text-tertiary">
-									·
-								</span>
-								<span className="body-sm text-secondary">{size}</span>
-							</>
-						) : null}
+						<MetaLine>
+							{badgeLabel}
+							{size}
+						</MetaLine>
 						{opening ? <BusyGlyph decorative size={14} /> : null}
 					</div>
 				</div>

@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
@@ -10,9 +11,6 @@ import { DASHBOARD_DESCRIPTION_MAX_LENGTH } from '../dashboardTypes'
 
 /* The fields every dashboard form shares (create, comparison, generate, settings), so each fact reads
    and behaves the same wherever it is asked. */
-
-export const dashboardFieldLabelStyles = 'label-sm text-secondary'
-export const dashboardFieldHintStyles = 'body-sm text-tertiary'
 
 type Visibility = 'public' | 'private'
 
@@ -40,13 +38,15 @@ export function VisibilityField({
 }) {
 	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
+	// The radiogroup is the group, so it takes the label and hint ids instead of sitting in a FieldGroup.
 	return (
-		<div className="flex flex-col gap-1.5">
-			<p id={id} className={dashboardFieldLabelStyles}>
+		<div className="flex flex-col gap-1">
+			<span id={`${id}-label`} className="label-sm text-secondary">
 				Visibility
-			</p>
+			</span>
 			<SegmentedControl
-				aria-labelledby={id}
+				aria-labelledby={`${id}-label`}
+				aria-describedby={`${id}-hint`}
 				label="Visibility"
 				variant="field"
 				size="md"
@@ -75,7 +75,9 @@ export function VisibilityField({
 					}
 				]}
 			/>
-			<p className={dashboardFieldHintStyles}>{visibilityNote(value, hasActiveSubscription, sharedWithTeam)}</p>
+			<p id={`${id}-hint`} className="body-sm text-tertiary">
+				{visibilityNote(value, hasActiveSubscription, sharedWithTeam)}
+			</p>
 		</div>
 	)
 }
@@ -89,7 +91,6 @@ export function TagsField({
 	onChange: (tags: Array<string>) => void
 	disabled?: boolean
 }) {
-	const id = useId()
 	const inputRef = useRef<HTMLInputElement>(null)
 	const addTag = () => {
 		const input = inputRef.current!
@@ -98,45 +99,42 @@ export function TagsField({
 		input.value = ''
 	}
 	return (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className={dashboardFieldLabelStyles}>
-				Tags
-			</label>
-			<div className="flex gap-2">
-				<Input
-					id={id}
-					ref={inputRef}
-					type="text"
-					readOnly={disabled}
-					placeholder="e.g. lending"
-					aria-describedby={`${id}-hint`}
-					// Enter adds the tag; it never submits the form around the field.
-					onKeyDown={(e) => {
-						if (disabled) return
-						if (e.key === 'Enter') {
-							e.preventDefault()
-							addTag()
-						}
-						// Typed text is part of the draft: the first Escape adds it and keeps the dialog open, so the
-						// next one asks through the dialog's discard question instead of dropping it.
-						if (e.key === 'Escape' && e.currentTarget.value.trim()) {
-							e.preventDefault()
-							addTag()
-						}
-					}}
-					// Leaving the field for Save, Cancel or Back adds the typed tag, so it is saved or asked about.
-					onBlur={() => {
-						if (!disabled) addTag()
-					}}
-					className="flex-1"
-				/>
-				<Button type="button" size="md" onClick={addTag} disabled={disabled}>
-					Add tag
-				</Button>
-			</div>
-			<p id={`${id}-hint`} className={dashboardFieldHintStyles}>
-				Press Enter to add a tag.
-			</p>
+		<div className="flex flex-col gap-2">
+			<Field label="Tags" hint="Press Enter to add a tag.">
+				{(control) => (
+					<div className="flex gap-2">
+						<Input
+							{...control}
+							ref={inputRef}
+							type="text"
+							readOnly={disabled}
+							placeholder="e.g. lending"
+							// Enter adds the tag; it never submits the form around the field.
+							onKeyDown={(e) => {
+								if (disabled) return
+								if (e.key === 'Enter') {
+									e.preventDefault()
+									addTag()
+								}
+								// Typed text is part of the draft: the first Escape adds it and keeps the dialog open, so the
+								// next one asks through the dialog's discard question instead of dropping it.
+								if (e.key === 'Escape' && e.currentTarget.value.trim()) {
+									e.preventDefault()
+									addTag()
+								}
+							}}
+							// Leaving the field for Save, Cancel or Back adds the typed tag, so it is saved or asked about.
+							onBlur={() => {
+								if (!disabled) addTag()
+							}}
+							className="flex-1"
+						/>
+						<Button type="button" size="md" onClick={addTag} disabled={disabled}>
+							Add tag
+						</Button>
+					</div>
+				)}
+			</Field>
 			{tags.length > 0 ? (
 				<ul aria-label="Added tags" className="flex flex-wrap gap-2">
 					{tags.map((tag) => (
@@ -172,26 +170,20 @@ export function TagsField({
 }
 
 export function DescriptionField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-	const id = useId()
 	return (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className={dashboardFieldLabelStyles}>
-				Description
-			</label>
-			<Textarea
-				id={id}
-				name="description"
-				value={value}
-				onChange={(e) => onChange(e.target.value)}
-				placeholder="Describe your dashboard…"
-				maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
-				rows={3}
-				aria-describedby={`${id}-count`}
-				className="resize-none"
-			/>
-			<p id={`${id}-count`} className={dashboardFieldHintStyles}>
-				{value.length}/{DASHBOARD_DESCRIPTION_MAX_LENGTH} characters
-			</p>
-		</div>
+		<Field label="Description" hint={`${value.length}/${DASHBOARD_DESCRIPTION_MAX_LENGTH} characters`}>
+			{(control) => (
+				<Textarea
+					{...control}
+					name="description"
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					placeholder="Describe your dashboard…"
+					maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
+					rows={3}
+					className="resize-none"
+				/>
+			)}
+		</Field>
 	)
 }

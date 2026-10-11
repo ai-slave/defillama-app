@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
 import { useMemo } from 'react'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -12,6 +11,7 @@ import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
 import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { getDominancePercent } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
@@ -61,9 +61,9 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{protocolHref ? (
-						<BasicLink href={protocolHref} className="truncate label-md text-link hover:underline">
+						<TextLink href={protocolHref} truncate>
 							{name}
-						</BasicLink>
+						</TextLink>
 					) : (
 						<span className="truncate label-md">{name}</span>
 					)}

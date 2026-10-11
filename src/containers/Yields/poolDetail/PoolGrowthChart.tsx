@@ -15,6 +15,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Change } from '~/ui/Change'
 import { ChartPanelBody } from '~/ui/ChartPanel'
+import { Field } from '~/ui/Field'
 import { Input } from '~/ui/Input'
 import { MetricSeriesToggle } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -482,17 +483,23 @@ function GrowthReadout({
 								)
 							})}
 						</div>
-						<label className="flex flex-col gap-1.5 border-t border-subtle px-3 py-3 label-sm text-secondary">
-							Or pick a day
-							<Input
-								type="date"
-								value={anchoredOn ?? ''}
-								{...(firstDay ? { min: firstDay } : {})}
-								{...(lastDay ? { max: lastDay } : {})}
-								onChange={(event) => setQuery({ growthFrom: event.target.value || undefined, [rangeKey]: undefined })}
-								className="cursor-pointer"
-							/>
-						</label>
+						<div className="border-t border-subtle p-3">
+							<Field label="Or pick a day">
+								{(control) => (
+									<Input
+										{...control}
+										type="date"
+										value={anchoredOn ?? ''}
+										{...(firstDay ? { min: firstDay } : {})}
+										{...(lastDay ? { max: lastDay } : {})}
+										onChange={(event) =>
+											setQuery({ growthFrom: event.target.value || undefined, [rangeKey]: undefined })
+										}
+										className="cursor-pointer"
+									/>
+								)}
+							</Field>
+						</div>
 					</PopoverSurface>
 				</Ariakit.PopoverProvider>
 			</div>
@@ -659,7 +666,7 @@ export function PoolGrowthChart({
 				<PanelTitle>
 					Growth of {formatUsd(deposit, { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: 2 })}
 				</PanelTitle>
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+				<div className="flex flex-wrap items-center justify-end gap-1.5">
 					{/* Only where the pool has an intrinsic leg. */}
 					{currentModel.hasIntrinsic ? (
 						<Tooltip

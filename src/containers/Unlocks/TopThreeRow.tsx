@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 
@@ -28,10 +28,10 @@ export function TopThreeRow({ name, symbol, geckoId, value, trailingIcon = null 
 					fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
 					alt={`Logo of ${name}`}
 				/>
-				<BasicLink href={`/unlocks/${slug(name)}`} className="min-w-0 truncate text-link hover:underline">
+				<TextLink href={`/unlocks/${slug(name)}`} size="inherit" truncate>
 					{name}
 					{symbol ? ` (${symbol})` : null}
-				</BasicLink>
+				</TextLink>
 			</div>
 			<span className="justify-self-end text-right">{value}</span>
 			{hasTrailingIcon ? (

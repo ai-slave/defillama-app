@@ -41,12 +41,13 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import { ProButton, ProMeta } from '~/containers/ProDashboard/ui'
+import { ProButton } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
 import { DialogLoadingStatus } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { PanelStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs, TabLink } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -443,16 +444,14 @@ function ProContent({
 						/>
 
 						{!isLoadingMyDashboards && !myDashboardsReadFailed ? (
-							<ProMeta
-								items={[
-									myDashboardsControlsActive
-										? `${visibleMyDashboards.length} matching ${visibleMyDashboards.length === 1 ? 'dashboard' : 'dashboards'}`
-										: `Showing ${myDashboards.length} of ${myDashboardsTotalItems} dashboards`,
-									myDashboardsControlsActive && myDashboardsTotalItems > MY_DASHBOARDS_FILTERED_PAGE_SIZE
-										? `Searching the ${MY_DASHBOARDS_FILTERED_PAGE_SIZE} most recent dashboards`
-										: null
-								]}
-							/>
+							<MetaLine>
+								{myDashboardsControlsActive
+									? `${visibleMyDashboards.length} matching ${visibleMyDashboards.length === 1 ? 'dashboard' : 'dashboards'}`
+									: `Showing ${myDashboards.length} of ${myDashboardsTotalItems} dashboards`}
+								{myDashboardsControlsActive && myDashboardsTotalItems > MY_DASHBOARDS_FILTERED_PAGE_SIZE
+									? `Searching the ${MY_DASHBOARDS_FILTERED_PAGE_SIZE} most recent dashboards`
+									: null}
+							</MetaLine>
 						) : null}
 
 						{myDashboardsReadFailed ? (
@@ -492,12 +491,10 @@ function ProContent({
 				{isAuthenticated && myTeam ? (
 					<TabPanel value="team" className="flex flex-col gap-4">
 						{!isLoadingTeamDashboards && !teamDashboardsReadFailed ? (
-							<ProMeta
-								items={[
-									`Shared with ${myTeam.name}`,
-									`Showing ${teamDashboards.length} of ${teamDashboardsTotalItems} dashboards`
-								]}
-							/>
+							<MetaLine>
+								{`Shared with ${myTeam.name}`}
+								{`Showing ${teamDashboards.length} of ${teamDashboardsTotalItems} dashboards`}
+							</MetaLine>
 						) : null}
 
 						{teamDashboardsReadFailed ? (

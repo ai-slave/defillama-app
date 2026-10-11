@@ -5,7 +5,6 @@ import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
@@ -27,6 +26,7 @@ import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -187,19 +187,12 @@ const protocolsColumns = columnHelper.columns([
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 
 					<span className="-my-2 flex flex-col">
-						{row.original?.deprecated ? (
-							<BasicLink
-								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 truncate label-md text-link hover:underline"
-							>
-								<span className="truncate hover:underline">{value}</span>
-								<DeprecatedProtocolMarker />
-							</BasicLink>
-						) : (
-							<BasicLink href={`/protocol/${slug(value)}`} className="truncate label-md text-link hover:underline">
-								{`${value}`}
-							</BasicLink>
-						)}
+						<span className="flex items-center gap-1 overflow-hidden">
+							<TextLink href={`/protocol/${slug(value)}`} truncate>
+								{value}
+							</TextLink>
+							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
 
 						<ProtocolChainsHovercard chains={row.original.chains} />
 					</span>
@@ -220,12 +213,9 @@ const protocolsColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return value ? (
-				<BasicLink
-					href={getCategoryRoute(slug(value))}
-					className="label-md whitespace-nowrap text-link hover:underline"
-				>
+				<TextLink href={getCategoryRoute(slug(value))} className="whitespace-nowrap">
 					{value}
-				</BasicLink>
+				</TextLink>
 			) : (
 				''
 			)

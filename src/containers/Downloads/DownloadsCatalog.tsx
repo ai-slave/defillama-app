@@ -11,10 +11,12 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
+import { MetaLine } from '~/ui/MetaLine'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { BusyGlyph, EmptyState } from '~/ui/Status'
+import { EmptyState } from '~/ui/Status'
 import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -274,13 +276,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
-															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
-																{pending ? (
-																	<BusyGlyph decorative size={18} />
-																) : (
-																	<Icon name="file-text" className="size-5 text-link" />
-																)}
-															</div>
+															<IconTile icon="file-text" tone="brand" size="md" busy={pending} />
 															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
 														<span className="flex h-10 shrink-0 items-center">
@@ -310,9 +306,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								className="hover-wash-card group flex items-start justify-between gap-4 text-left"
 							>
 								<div className="flex items-start gap-3">
-									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint-strong">
-										<Icon name="layers" className="size-5 text-link" />
-									</div>
+									<IconTile icon="layers" tone="brand" size="md" />
 									<div className="flex flex-col gap-0.5">
 										<p className="font-medium text-primary">Combine multiple metrics</p>
 										<p className="body-md text-secondary">
@@ -348,13 +342,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 												>
 													<div className="flex items-start justify-between gap-3">
 														<div className="flex items-center gap-3">
-															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
-																{pending ? (
-																	<BusyGlyph decorative size={18} />
-																) : (
-																	<Icon name="bar-chart-2" className="size-5 text-link" />
-																)}
-															</div>
+															<IconTile icon="bar-chart-2" tone="brand" size="md" busy={pending} />
 															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
 														<span className="flex h-10 shrink-0 items-center">
@@ -764,17 +752,10 @@ function SavedDownloadRow({
 					<span className={`shrink-0 label-xs tracking-wider uppercase ${style.fg}`}>{style.label}</span>
 					<span className="truncate label-md text-primary">{preset.name}</span>
 				</span>
-				<span className="flex min-w-0 items-center gap-2 body-sm text-tertiary">
-					<span className="truncate text-secondary">{sourceLabel}</span>
-					{description ? (
-						<>
-							<span aria-hidden="true" className="text-tertiary">
-								·
-							</span>
-							<span className="truncate">{description}</span>
-						</>
-					) : null}
-				</span>
+				<MetaLine className="min-w-0">
+					<span className="min-w-0 truncate text-secondary">{sourceLabel}</span>
+					{description ? <span className="min-w-0 truncate">{description}</span> : null}
+				</MetaLine>
 			</button>
 
 			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}

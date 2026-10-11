@@ -66,7 +66,7 @@ async function signIn() {
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
-	await waitForUi(() => expect(container.textContent).toContain('Successfully logged in.'))
+	await waitForUi(() => expect(container.querySelector('h2')?.textContent).toBe('Signed in'))
 }
 
 // The sign-in fields are controlled, so a value reaches the form through an input event.

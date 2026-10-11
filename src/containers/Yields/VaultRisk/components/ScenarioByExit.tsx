@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import { formatUsd } from '~/utils/numberFormat'
 import { scenarioTone } from '../derive'
 import { toneClasses } from '../kindMeta'
@@ -130,10 +131,10 @@ function ScenarioRow({
 					{unquantified ? '—' : worstCaseLabel(s, supplyUsd)}
 				</td>
 				<td className="px-3 py-3 text-right align-middle">
-					<span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 body-sm whitespace-nowrap text-secondary">
+					<Tag className="gap-1">
 						{noEscape ? null : <Icon name="clock" className="size-3" aria-hidden />}
 						{exitLabel(s)}
-					</span>
+					</Tag>
 				</td>
 				<td className="px-2 py-3 align-middle">
 					{clickable ? (

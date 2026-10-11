@@ -11,7 +11,6 @@ import {
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { BasicLink } from '~/components/Link'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { TablePager } from '~/components/Table/TablePager'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -29,6 +28,7 @@ import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -208,11 +208,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		}),
 		columnHelper.accessor('bridge_name', {
 			header: 'Bridge',
-			cell: ({ row }) => (
-				<BasicLink href={`/bridge/${row.original.bridge_slug}`} className="font-medium text-link hover:underline">
-					{row.original.bridge_name}
-				</BasicLink>
-			),
+			cell: ({ row }) => <TextLink href={`/bridge/${row.original.bridge_slug}`}>{row.original.bridge_name}</TextLink>,
 			meta: {
 				headerClassName: 'w-[160px]'
 			}

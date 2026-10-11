@@ -7,7 +7,6 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { BasicLink } from '~/components/Link'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
@@ -18,6 +17,7 @@ import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readyAsPath } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
@@ -214,26 +214,26 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 	const desktopInfoColumns = [infoRows.slice(0, midpoint), infoRows.slice(midpoint)].filter((rows) => rows.length > 0)
 	const renderInfoRowValue = (row: (typeof infoRows)[number]) =>
 		row.label === d.venue.label ? (
-			<BasicLink href={`/rwa/perps/venue/${rwaSlug(row.value)}`} className="text-link hover:underline">
+			<TextLink href={`/rwa/perps/venue/${rwaSlug(row.value)}`} size="inherit">
 				{row.value}
-			</BasicLink>
+			</TextLink>
 		) : row.label === d.baseAsset.label ? (
-			<BasicLink href={`/rwa/perps/asset/${rwaSlug(row.value)}`} className="text-link hover:underline">
+			<TextLink href={`/rwa/perps/asset/${rwaSlug(row.value)}`} size="inherit">
 				{row.value}
-			</BasicLink>
+			</TextLink>
 		) : row.label === 'Website' ? (
-			<a
+			<TextLink
 				href={row.value}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="text-link hover:underline"
+				size="inherit"
 				data-umami-event="rwa-perps-website-click"
 				data-umami-event-contract={contract.contract.contract}
 				data-umami-event-placement="info"
 				data-umami-event-url={row.value}
 			>
 				{row.value}
-			</a>
+			</TextLink>
 		) : (
 			row.value
 		)

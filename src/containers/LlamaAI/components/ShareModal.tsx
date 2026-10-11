@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { memo, useCallback, useEffect, useId, useRef } from 'react'
+import { memo, useCallback, useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -9,6 +9,7 @@ import { toShareToken, type ShareToken } from '~/containers/LlamaAI/ids'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -50,7 +51,6 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 	const hasStartedRef = useRef(false)
 	const openingRef = useRef<HTMLSpanElement>(null)
 	const primaryRef = useRef<HTMLButtonElement>(null)
-	const shareLinkInputId = useId()
 	const copy = useMutation({
 		mutationFn: async (link: string) => {
 			if (!navigator.clipboard?.writeText) throw new Error(CLIPBOARD_UNAVAILABLE)
@@ -143,21 +143,20 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 			/>
 			{sessionId ? (
 				<DialogBody>
-					<div className="flex min-w-0 flex-col gap-1.5">
-						<label htmlFor={shareLinkInputId} className="label-sm text-secondary">
-							Share link
-						</label>
-						{/* The field keeps its place while the link is created, so the dialog does not grow when it lands. */}
-						<Input
-							id={shareLinkInputId}
-							type="text"
-							value={shareLink}
-							readOnly
-							aria-busy={creation.isPending}
-							onFocus={(event) => event.currentTarget.select()}
-							className="w-full min-w-0"
-						/>
-					</div>
+					<Field label="Share link">
+						{(control) => (
+							// The field keeps its place while the link is created, so the dialog does not grow when it lands.
+							<Input
+								{...control}
+								type="text"
+								value={shareLink}
+								readOnly
+								aria-busy={creation.isPending}
+								onFocus={(event) => event.currentTarget.select()}
+								className="w-full min-w-0"
+							/>
+						)}
+					</Field>
 					{creation.error ? (
 						<InlineStatus
 							variant="error"

@@ -19,6 +19,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -294,23 +295,13 @@ export function ResponseControls({
 						</Tooltip>
 					) : null}
 				</div>
-				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 body-sm text-tertiary tabular-nums">
-					{messageMetadata?.x402CostUsd != null ? (
-						<span>External data {formatResponseCost(Number(messageMetadata.x402CostUsd))}</span>
-					) : null}
-					{messageMetadata?.executionTimeMs != null && messageMetadata.x402CostUsd != null ? (
-						<span aria-hidden="true">·</span>
-					) : null}
-					{messageMetadata?.executionTimeMs != null ? (
-						<span>{formatResponseDuration(messageMetadata.executionTimeMs)}</span>
-					) : null}
-					{completedAt &&
-					isClient &&
-					(messageMetadata?.executionTimeMs != null || messageMetadata?.x402CostUsd != null) ? (
-						<span aria-hidden="true">·</span>
-					) : null}
+				<MetaLine className="px-2 tabular-nums">
+					{messageMetadata?.x402CostUsd != null
+						? `External data ${formatResponseCost(Number(messageMetadata.x402CostUsd))}`
+						: null}
+					{messageMetadata?.executionTimeMs != null ? formatResponseDuration(messageMetadata.executionTimeMs) : null}
 					{completedAt && isClient ? <CompletedTime completedAt={completedAt} /> : null}
-				</div>
+				</MetaLine>
 			</div>
 			<FeedbackDialog
 				open={feedback.open}

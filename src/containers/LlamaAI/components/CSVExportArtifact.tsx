@@ -2,6 +2,7 @@ import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatNumber } from '~/utils/numberFormat'
 import { ArtifactCard } from './messages/ArtifactCard'
@@ -26,9 +27,7 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 	if (!hasActiveSubscription) {
 		return (
 			<Card padding="sm" className="flex min-h-14 items-center gap-3">
-				<span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-elevated-2">
-					<Icon name="file-text" className="size-4 text-tertiary" />
-				</span>
+				<IconTile icon="file-text" tone="neutral" size="sm" />
 				<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<span className="m-0 truncate label-md text-primary">{csvExport.title}</span>
 					<span className="m-0 body-sm text-secondary">CSV exports require a subscription</span>

@@ -7,11 +7,11 @@ import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult, type QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormalization'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
+import { MetaLine } from '~/ui/MetaLine'
 import { formatNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import { StreamDoneContext } from '../../queries'
 import { type CustomDataConfig, getCustomDataRowCount } from '../../types'
-import { ProMeta } from '../../ui'
 import { toastRefusal } from '../../useDashboardActions'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
@@ -64,9 +64,10 @@ export function CustomDataCard({ config }: CustomDataCardProps) {
 			<ProCardHeader
 				title={config.name || 'Custom data'}
 				subtitle={
-					<ProMeta
-						items={[config.sourceName ?? null, `${formatNumber(rowCount)} ${rowCount === 1 ? 'row' : 'rows'}`]}
-					/>
+					<MetaLine>
+						{config.sourceName ?? null}
+						{`${formatNumber(rowCount)} ${rowCount === 1 ? 'row' : 'rows'}`}
+					</MetaLine>
 				}
 				menu={{
 					image:

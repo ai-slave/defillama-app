@@ -1,6 +1,7 @@
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
@@ -99,9 +100,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 				<>
 					<span className="flex flex-col gap-3">
 						<span className="flex items-start gap-2">
-							<span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
-								<Icon name="gift" className="size-3.5" />
-							</span>
+							<IconTile icon="gift" tone="neutral" size="sm" />
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="label-md text-primary">{promotion.title}</span>
 								<span className="label-sm text-link">{promotion.label}</span>

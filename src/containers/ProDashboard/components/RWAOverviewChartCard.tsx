@@ -4,9 +4,9 @@ import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
@@ -94,7 +94,12 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
 	const title = `RWA ${metricLabel} - ${viewLabel}`
-	const subtitle = <ProMeta items={[chainLabel, chain ? null : `by ${breakdownLabel}`]} />
+	const subtitle = (
+		<MetaLine>
+			{chainLabel}
+			{chain ? null : `by ${breakdownLabel}`}
+		</MetaLine>
+	)
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">

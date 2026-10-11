@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { ListLoading } from '~/ui/NoResults'
 import { InlineStatus } from '~/ui/Status'
 import { useAppMetadata } from '../../../AppMetadataContext'
@@ -49,10 +49,7 @@ export function SelectMetricsStep() {
 			) : (
 				<>
 					<div className="flex items-center gap-3 rounded-lg border border-subtle px-4 py-2.5">
-						{/* An icon chip on the brand tint, not a selected state. */}
-						<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-							<Icon name="bar-chart-2" className="size-4.5" />
-						</div>
+						<IconTile icon="bar-chart-2" tone="brand" size="sm" />
 						<div className="flex min-w-0 flex-col items-start label-sm">
 							<p className="label-sm text-primary">
 								{validMetrics.length} metric{validMetrics.length === 1 ? '' : 's'} available

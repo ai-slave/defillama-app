@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
@@ -28,7 +29,7 @@ const ICON_OPTIONS = [
 	{ value: 'bar', label: <Icon name="bar-chart-2" className="size-4" aria-hidden />, ariaLabel: 'Bar chart' },
 	{ value: 'line', label: <Icon name="activity" className="size-4" aria-hidden />, ariaLabel: 'Line chart' }
 ]
-const OPTION_TILE_LAYOUTS = ['stack', 'row', 'center'] as const
+const OPTION_TILE_LAYOUTS = ['stack', 'row', 'center', 'compact'] as const
 const CHECKBOX_VARIANTS = ['default', 'inline', 'inline-sm', 'consent', 'filter', 'filter-borderless'] as const
 
 function segmentRow(variant: (typeof VARIANTS)[number]) {
@@ -170,53 +171,85 @@ function SegmentedExamples() {
 	)
 }
 
+type TileLayout = (typeof OPTION_TILE_LAYOUTS)[number]
+
+// Picked is the demo's own state. A toggle tile announces aria-pressed; a multi-pick tile with its box is a checkbox.
 function OptionTileDemo({ values }: { values: KnobValues }) {
 	const [picked, setPicked] = useState(false)
-	const layout = values.layout as (typeof OPTION_TILE_LAYOUTS)[number]
+	const layout = values.layout as TileLayout
+	const box = values.check === 'box'
 	return (
 		<OptionTile
 			layout={layout}
 			selected={picked}
-			aria-pressed={picked}
+			check={box ? 'box' : undefined}
+			{...(box ? { role: 'checkbox', 'aria-checked': picked } : { 'aria-pressed': picked })}
 			disabled={values.state === 'disabled'}
 			onClick={() => setPicked(!picked)}
-			className="w-40"
+			className={layout === 'compact' ? 'w-20' : 'w-44'}
 		>
 			{optionTileBody(layout)}
 		</OptionTile>
 	)
 }
 
-function RadioGroupExample() {
-	const [grouping, setGrouping] = useState('chain')
+const GROUPINGS = [
+	['chain', 'By chain', 'One row per chain'],
+	['protocol', 'By protocol', 'One row per protocol'],
+	['category', 'By category', 'One row per category']
+] as const
+
+const CHART_TYPES = [
+	['line', 'Line', 'activity'],
+	['bar', 'Bar', 'bar-chart-2'],
+	['area', 'Area', 'layers'],
+	['pie', 'Pie', 'pie-chart']
+] as const
+
+// The group holds the value; each tile is a native radio spread over its label, so the tile draws the checked look.
+function RadioTilesExample() {
+	const [grouping, setGrouping] = useState<string>('chain')
+	const [chart, setChart] = useState<string>('line')
 	return (
-		<Example name="Radio group" prop='role="radio"'>
-			<div role="radiogroup" aria-label="Grouping" className="flex gap-2">
-				{(
-					[
-						['chain', 'By chain'],
-						['protocol', 'By protocol']
-					] as const
-				).map(([value, title]) => (
-					<OptionTile
-						key={value}
-						layout="stack"
-						selected={grouping === value}
-						role="radio"
-						aria-checked={grouping === value}
-						onClick={() => setGrouping(value)}
-						className="w-40"
-					>
-						<span className="label-md">{title}</span>
-						<span className="body-xs text-secondary">One row per {value}</span>
-					</OptionTile>
-				))}
+		<Example
+			name="Radio group"
+			prop="radio"
+			note="Tab into a group: it is one tab stop, and the arrow keys move and pick. The tile reads its look from the radio, so it takes no selected."
+		>
+			<div className="flex flex-col items-start gap-4">
+				<Ariakit.RadioProvider value={grouping} setValue={(next) => setGrouping(next as string)}>
+					<Ariakit.RadioGroup aria-label="Grouping" className="grid grid-cols-3 gap-2">
+						{GROUPINGS.map(([value, title, description]) => (
+							<OptionTile key={value} layout="stack" radio={value} className="w-40">
+								<span className="label-md">{title}</span>
+								<span className="body-xs text-secondary">{description}</span>
+							</OptionTile>
+						))}
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
+				<Ariakit.RadioProvider value={chart} setValue={(next) => setChart(next as string)}>
+					<Ariakit.RadioGroup aria-label="Chart type" className="grid w-80 grid-cols-4 gap-1.5">
+						{CHART_TYPES.map(([value, label, icon]) => (
+							<OptionTile key={value} layout="compact" radio={value}>
+								<Icon name={icon} className="size-4 text-tertiary group-has-checked:text-link" aria-hidden />
+								<span className="label-xs">{label}</span>
+							</OptionTile>
+						))}
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
 			</div>
 		</Example>
 	)
 }
 
-function optionTileBody(layout: (typeof OPTION_TILE_LAYOUTS)[number]) {
+function optionTileBody(layout: TileLayout) {
+	if (layout === 'compact')
+		return (
+			<>
+				<Icon name="bar-chart-2" className="size-4 text-tertiary" aria-hidden />
+				<span className="label-xs">Bar</span>
+			</>
+		)
 	return (
 		<>
 			{layout === 'row' ? <Icon name="layers" className="size-4 shrink-0 text-tertiary" aria-hidden /> : null}
@@ -306,9 +339,10 @@ export const selection: Family = {
 			source: 'src/ui/OptionTile.tsx',
 			knobs: [
 				{ name: 'layout', values: OPTION_TILE_LAYOUTS },
+				{ name: 'check', values: ['none', 'box'], default: 'none' },
 				{ name: 'state', values: ['rest', 'disabled'], default: 'rest', prop: false }
 			],
-			note: 'Click the tile to pick it.',
+			note: 'Click the tile or press Space on it to pick it; picked is the demo’s own state. With check="box" it is a multi pick, and the box follows the fill.',
 			render: (values) => <OptionTileDemo values={values} />,
 			states: () => (
 				<>
@@ -322,7 +356,7 @@ export const selection: Family = {
 										selected={props.selected ?? false}
 										disabled={props.disabled}
 										aria-pressed={props.selected ?? false}
-										className="w-40"
+										className={layout === 'compact' ? 'w-20' : 'w-40'}
 									>
 										{optionTileBody(layout)}
 									</OptionTile>
@@ -341,7 +375,7 @@ export const selection: Family = {
 							})}
 						/>
 					</Example>
-					<RadioGroupExample />
+					<RadioTilesExample />
 				</>
 			)
 		},

@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -10,6 +9,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -105,9 +105,9 @@ const bridgedNameColumn = columnHelper.accessor('name', {
 			<span className="relative flex items-center gap-2">
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
-				<BasicLink href={`/bridged/${slug(value)}`} className="truncate label-md text-link hover:underline">
+				<TextLink href={`/bridged/${slug(value)}`} truncate>
 					{value}
-				</BasicLink>
+				</TextLink>
 				{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 			</span>
 		)

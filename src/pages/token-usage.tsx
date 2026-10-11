@@ -38,6 +38,7 @@ import { ComboboxSurface, PopoverList, PopoverRow } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, ErrorLine, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -294,9 +295,9 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={row.original.slug ?? value} kind="token" data-lgonly alt={`Logo of ${value}`} />
 					{href ? (
-						<BasicLink href={href} className="truncate label-md text-link hover:underline">
+						<TextLink href={href} truncate>
 							{value}
-						</BasicLink>
+						</TextLink>
 					) : (
 						<span className="truncate label-md">{value}</span>
 					)}

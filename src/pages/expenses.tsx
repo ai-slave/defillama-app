@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -16,6 +15,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -81,12 +81,9 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.protocol?.logo} data-lgonly alt={`Logo of ${value}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
-						<BasicLink
-							href={`/protocol/${slug(value)}`}
-							className="min-w-0 truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/protocol/${slug(value)}`} truncate>
 							{value}
-						</BasicLink>
+						</TextLink>
 						{isDeprecatedProtocol(row.original.protocol) ? <DeprecatedProtocolMarker /> : null}
 					</span>
 				</span>

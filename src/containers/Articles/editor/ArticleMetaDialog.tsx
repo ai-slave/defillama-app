@@ -12,6 +12,7 @@ import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { emailError } from '~/utils/email'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
@@ -491,11 +492,8 @@ function MetaSheet({
 								<div className="flex flex-col gap-1.5">
 									<span className="label-sm text-secondary">Editorial</span>
 									<div className="flex flex-wrap gap-1.5">
-										{/* Tag pills on the brand tint, not a selected state. */}
 										{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
-											<span key={slug} className="rounded-full bg-brand-muted px-2 py-0.5 label-sm text-link">
-												{EDITORIAL_TAGS[slug].label}
-											</span>
+											<Tag key={slug}>{EDITORIAL_TAGS[slug].label}</Tag>
 										))}
 									</div>
 									<p className="body-sm text-tertiary">Managed by editors from /research/admin/curation.</p>

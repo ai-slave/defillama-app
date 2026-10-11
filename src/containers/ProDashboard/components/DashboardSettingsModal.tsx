@@ -19,7 +19,7 @@ import { InlineStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
 import type { DashboardTeam } from '../dashboardTypes'
 import { type DashboardSaveNotices, showDashboardSaveNotices } from '../hooks/useDashboardAPI'
-import { dashboardFieldHintStyles, TagsField, VisibilityField } from './DashboardFormFields'
+import { TagsField, VisibilityField } from './DashboardFormFields'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
 interface DashboardSettingsModalProps {
@@ -146,9 +146,9 @@ function DashboardSettingsModalInner({
 										</span>
 									</Checkbox>
 									{!hasActiveSubscription ? (
-										<p className={dashboardFieldHintStyles}>Team dashboards need a seat or Pro.</p>
+										<p className="body-sm text-tertiary">Team dashboards need a seat or Pro.</p>
 									) : !canMove ? (
-										<p className={dashboardFieldHintStyles}>Only the creator or a team admin can change this.</p>
+										<p className="body-sm text-tertiary">Only the creator or a team admin can change this.</p>
 									) : null}
 								</div>
 							) : null}

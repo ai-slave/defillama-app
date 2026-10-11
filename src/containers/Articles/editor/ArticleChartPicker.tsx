@@ -587,6 +587,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 
 							<div className="relative shrink-0 grow border-t border-medium bg-page">
 								<div className="pointer-events-none absolute top-3 left-5 z-10 flex items-center gap-2">
+									{/* A caption laid over the live preview on glass, so the chart shows through; it names the
+									    area rather than a value, so it is not a Tag. */}
 									<span className="rounded-full border border-medium bg-surface-glass px-2 py-0.5 label-xs tracking-wide text-tertiary uppercase backdrop-blur">
 										Preview
 									</span>

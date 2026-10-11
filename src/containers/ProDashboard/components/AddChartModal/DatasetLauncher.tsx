@@ -1,5 +1,6 @@
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Tag } from '~/ui/Tag'
 
 export type DatasetLauncherCard<T extends string> = {
@@ -33,9 +34,7 @@ export function DatasetLauncher<T extends string>({
 				className="hover-wash-card flex flex-col gap-3 text-left"
 			>
 				<span className="flex items-center gap-3">
-					<span className="flex size-10 items-center justify-center rounded-lg bg-brand-tint">
-						<Icon name={hero.icon} className="size-5 text-link" />
-					</span>
+					<IconTile icon={hero.icon} tone="brand" size="md" />
 					<span className="mr-auto heading-xs text-primary">{hero.title}</span>
 					<Icon name="arrow-right" className="size-4.5 text-tertiary" />
 				</span>

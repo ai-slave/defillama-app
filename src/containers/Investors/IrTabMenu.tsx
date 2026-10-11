@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { MenuSurface } from '~/ui/PopoverSurface'
 import { TabLink } from '~/ui/Tabs'
 import { IrTabLabel } from './IrTabLabel'
@@ -68,14 +69,7 @@ export function IrTabMenu({
 								{...umamiProps}
 								data-umami-event-ir-tab={tab.id}
 							>
-								<span
-									aria-hidden
-									className={`grid size-8 shrink-0 place-items-center rounded-md border border-subtle ${
-										isActive ? 'bg-brand-muted text-primary' : 'bg-surface-elevated-1 text-secondary'
-									}`}
-								>
-									<Icon name={tab.icon ?? 'layers'} className="size-4" />
-								</span>
+								<IconTile icon={tab.icon ?? 'layers'} tone={isActive ? 'brand' : 'neutral'} size="sm" />
 								<span className="flex min-w-0 flex-col">
 									<span className="label-sm text-primary">{tab.label}</span>
 									{tab.description ? <span className="truncate label-xs text-tertiary">{tab.description}</span> : null}

@@ -1,5 +1,6 @@
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -70,11 +71,11 @@ export function ResultsPanel({
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex items-baseline gap-2">
 						<h3 className="title-md tracking-tight text-primary">Results</h3>
-						<span className="body-sm text-tertiary tabular-nums">
-							{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
-							{result.columns.length === 1 ? '' : 's'}
-							{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}
-						</span>
+						<MetaLine className="tabular-nums">
+							{`${formatNumber(result.rows.length)} row${result.rows.length === 1 ? '' : 's'}`}
+							{`${result.columns.length} col${result.columns.length === 1 ? '' : 's'}`}
+							{durationMs != null ? formatSqlDuration(durationMs) : null}
+						</MetaLine>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
 						{viewToggleLabel ? <span className="label-sm text-secondary">{viewToggleLabel}</span> : null}

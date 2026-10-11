@@ -9,6 +9,7 @@ import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { Tag } from '~/ui/Tag'
@@ -273,15 +274,11 @@ function CardSection({
 					<Heading id={headingId} className="heading-sm">
 						{card.name}
 					</Heading>
-					<p className="mt-1 body-sm text-secondary">
-						{[
-							traits,
-							verified ? `Terms verified ${verified}` : 'Verification date not disclosed',
-							card.data_status === 'carried_forward' ? 'Carried forward from the last verified dataset' : ''
-						]
-							.filter(Boolean)
-							.join(' · ')}
-					</p>
+					<MetaLine className="mt-1">
+						{traits}
+						{verified ? `Terms verified ${verified}` : 'Verification date not disclosed'}
+						{card.data_status === 'carried_forward' ? 'Carried forward from the last verified dataset' : null}
+					</MetaLine>
 				</div>
 				<GetCardButton cardId={card.id} cardName={card.name} url={card.url ?? null} placement="details" />
 			</Card>

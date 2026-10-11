@@ -6,7 +6,6 @@ import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from
 import { tvlOptionNames } from '~/components/Filters/options'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -22,6 +21,7 @@ import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -230,9 +230,9 @@ const columns = columnHelper.columns([
 			const name = getValue()
 			return (
 				<span className="relative flex items-center gap-2">
-					<BasicLink href={`/oracles/${slug(name)}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/oracles/${slug(name)}`} truncate>
 						{name}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

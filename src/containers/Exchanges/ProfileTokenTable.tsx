@@ -8,7 +8,6 @@
  */
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
@@ -17,6 +16,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { Card } from '~/ui/Card'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
@@ -91,12 +91,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 						content={`${marketCount} market${marketCount === 1 ? '' : 's'} here: ${segments
 							.map((segment) => EXCHANGE_SEGMENT_LABELS[segment])
 							.join(', ')}`}
-						render={
-							<BasicLink
-								href={`/token/${encodeURIComponent(token)}`}
-								className="min-w-0 truncate label-md text-link hover:underline"
-							/>
-						}
+						render={<TextLink href={`/token/${encodeURIComponent(token)}`} truncate />}
 					>
 						{token}
 					</Tooltip>

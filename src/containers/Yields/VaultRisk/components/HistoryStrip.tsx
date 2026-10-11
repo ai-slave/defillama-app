@@ -3,6 +3,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -402,11 +404,7 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 						{INCIDENT_TONE_TEXT[selection.p.tone].label}
 					</span>
 				) : null}
-				{selection.kind === 'protocol' ? (
-					<span className="rounded-full border border-medium px-1.5 py-0.5 label-xs text-secondary uppercase">
-						{selection.p.classification}
-					</span>
-				) : null}
+				{selection.kind === 'protocol' ? <Tag>{selection.p.classification}</Tag> : null}
 				<Tooltip
 					content="Close detail"
 					render={
@@ -440,9 +438,10 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 				<ul className="flex flex-col divide-y divide-(--border-subtle) px-3 py-1">
 					{selection.c.items.map((a) => (
 						<li key={a.key} className="flex items-center justify-between gap-3 py-1.5 body-sm">
-							<span className="min-w-0 truncate text-secondary">
-								<span className="text-primary">{a.firm}</span> · {formatVerified(a.date)}
-							</span>
+							<MetaLine className="min-w-0">
+								<span className="min-w-0 truncate text-primary">{a.firm}</span>
+								{formatVerified(a.date)}
+							</MetaLine>
 							{a.url ? <ExternalLink href={a.url}>report</ExternalLink> : null}
 						</li>
 					))}

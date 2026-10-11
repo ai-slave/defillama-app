@@ -6,13 +6,13 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { slug } from '~/utils'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
-import { ProMeta } from '../ui'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
@@ -99,7 +99,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
-			<ProCardHeader titleAs="h3" title={title} subtitle={<ProMeta items={[dataTypeLabel]} />} />
+			<ProCardHeader titleAs="h3" title={title} subtitle={<MetaLine>{dataTypeLabel}</MetaLine>} />
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -121,7 +121,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 				titleAs="h3"
 				title={title}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[dataTypeLabel]} />}
+				subtitle={<MetaLine>{dataTypeLabel}</MetaLine>}
 				viewerControls={
 					hasChartData && stacks.length > 1 ? (
 						<SelectWithCombobox

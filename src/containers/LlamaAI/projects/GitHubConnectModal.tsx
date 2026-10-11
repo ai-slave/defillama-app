@@ -7,6 +7,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { Field } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Input } from '~/ui/Input'
 import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { Select } from '~/ui/Select'
@@ -203,11 +204,7 @@ function GitHubConnectForm({
 			<DialogHeader
 				title="Connect a GitHub repo"
 				subtitle="Read-only access. Files are fetched on demand, never written back."
-				leading={
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface-elevated-1 text-secondary">
-						<Icon name="github" className="size-4" aria-hidden="true" />
-					</span>
-				}
+				leading={<IconTile icon="github" tone="neutral" size="sm" />}
 			/>
 			<form noValidate onSubmit={(event) => void onConnect(event)} className="flex min-h-0 flex-auto flex-col">
 				<DialogBody>

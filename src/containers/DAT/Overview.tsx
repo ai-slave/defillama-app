@@ -9,7 +9,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -26,6 +25,7 @@ import { Hovercard } from '~/ui/Hovercard'
 import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Definition } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -165,12 +165,9 @@ const overviewColumns = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<BasicLink
-						href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
-						className="truncate label-md text-link hover:underline"
-					>
+					<TextLink href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`} truncate>
 						{name}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

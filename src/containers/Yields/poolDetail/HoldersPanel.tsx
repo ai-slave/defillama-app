@@ -18,8 +18,8 @@ import { CopyHelper } from '~/ui/Copy'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { StatusBadge } from '~/ui/StatusBadge'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import {
 	formatCompactNumber,
@@ -79,13 +79,9 @@ export function ChangeBadge({ delta }: { delta: HolderDelta | null }) {
 			return <Change value={(delta.status === 'down' ? -1 : 1) * Math.abs(delta.value)} unit={delta.unit} />
 		case 'entered_top_10':
 			return (
-				<Tooltip
-					content="Entered Top 10"
-					render={<span aria-label="Entered Top 10" />}
-					className="ml-auto w-fit rounded-full bg-brand-muted px-1.5 py-0.5 label-sm whitespace-nowrap text-link"
-				>
-					Entered
-				</Tooltip>
+				<StatusBadge status="neutral" tooltip="Entered the top 10 holders" className="ml-auto">
+					Entered<span className="sr-only"> top 10</span>
+				</StatusBadge>
 			)
 		case 'steady':
 			return <span className="text-secondary">Steady</span>
@@ -400,7 +396,7 @@ export function HoldersPanel({
 		<Card as="section" padding="none">
 			<PanelHeader>
 				<PanelTitle>Holders</PanelTitle>
-				<div className="ml-auto flex flex-wrap items-center gap-1.5">
+				<div className="flex flex-wrap items-center gap-1.5">
 					<SegmentedControl<HolderMode>
 						value={mode}
 						options={[

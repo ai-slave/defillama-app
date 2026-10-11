@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { formatNumber } from '~/utils/numberFormat'
@@ -93,47 +94,48 @@ export function PositionControl({
 	}
 
 	return (
-		<div className="flex flex-wrap items-center gap-1.5">
-			<label htmlFor="risk-position" className="label-sm text-secondary">
-				Your deposit <span className="text-tertiary">(optional)</span>
-			</label>
-			<div className="flex items-center gap-1">
-				<div className="relative">
-					<span
-						aria-hidden
-						className="pointer-events-none absolute inset-y-0 left-2 flex items-center body-sm text-secondary"
-					>
-						$
-					</span>
-					<Input
-						id="risk-position"
-						type="text"
-						inputMode="decimal"
-						autoComplete="off"
-						placeholder="amount"
-						value={draft}
-						onChange={(e) => setDraft(e.target.value)}
-						onBlur={commit}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') e.currentTarget.blur()
-							if (e.key === 'Escape') setDraft(position ? formatNumber(position) : '')
-						}}
-						className="w-24 pr-2 pl-5 tabular-nums"
-					/>
-				</div>
-				{position ? (
-					<Button
-						type="button"
-						variant="ghost"
-						size="md"
-						square
-						onClick={() => onChange(null)}
-						aria-label="Clear your deposit, show pool-wide figures"
-					>
-						<Icon name="x" className="size-3" />
-					</Button>
-				) : null}
-			</div>
+		// items-end: the presets line up with the field, under its label.
+		<div className="flex flex-wrap items-end gap-1.5">
+			<Field
+				label={
+					<>
+						Your deposit <span className="text-tertiary">(optional)</span>
+					</>
+				}
+			>
+				{(control) => (
+					<div className="flex items-center gap-1">
+						<Input
+							{...control}
+							prefix="$"
+							type="text"
+							inputMode="decimal"
+							autoComplete="off"
+							placeholder="amount"
+							value={draft}
+							onChange={(e) => setDraft(e.target.value)}
+							onBlur={commit}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') e.currentTarget.blur()
+								if (e.key === 'Escape') setDraft(position ? formatNumber(position) : '')
+							}}
+							className="w-24 tabular-nums"
+						/>
+						{position ? (
+							<Button
+								type="button"
+								variant="ghost"
+								size="md"
+								square
+								onClick={() => onChange(null)}
+								aria-label="Clear your deposit, show pool-wide figures"
+							>
+								<Icon name="x" className="size-3" />
+							</Button>
+						) : null}
+					</div>
+				)}
+			</Field>
 			<div className="flex items-center gap-1" role="group" aria-label="Deposit presets">
 				{PRESETS.map((p) => {
 					const active = position === p.value

@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import type { FieldControlProps } from '~/ui/Field'
-import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Input } from '~/ui/Input'
 
 const settingsIntegrationsLinkClass =
@@ -30,15 +30,9 @@ export function SettingsIntegrationsLink() {
 	)
 }
 
-export const alertFieldLabelClass = 'label-sm text-secondary'
-
-/** The 32px tile that leads every alerts dialog header. */
+/** The tile that marks alerts: every alerts dialog header and an alert drafted in chat. */
 export function AlertsHeaderIcon() {
-	return (
-		<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
-			<Icon name="calendar-plus" className="size-4" aria-hidden="true" />
-		</span>
-	)
+	return <IconTile icon="calendar-plus" tone="warning" size="sm" />
 }
 
 /** `control` is a Field's wiring (ui/Field.tsx); the input keeps its own "Price" name beside the comparison toggle. */

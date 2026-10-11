@@ -1,7 +1,7 @@
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import { ProMeta } from '../ui'
 import { dashboardItemKindLabel, dashboardItemLabel } from './dashboardItemLabel'
 import { ProCardSkeleton, skeletonVariantForItemKind } from './ProCardSkeleton'
 
@@ -15,7 +15,7 @@ export function DragPreviewCard({ item }: { item: DashboardItemConfig }) {
 			<div className="flex min-w-0 items-center gap-2">
 				<Icon name="grip-vertical" className="size-3.5 shrink-0 text-tertiary" />
 				<span className="truncate label-md text-primary">{label}</span>
-				<ProMeta className="shrink-0" items={[label === kindLabel ? null : kindLabel]} />
+				<MetaLine className="shrink-0">{label === kindLabel ? null : kindLabel}</MetaLine>
 			</div>
 			<ProCardSkeleton kind={skeletonVariantForItemKind(item.kind)} />
 		</Card>

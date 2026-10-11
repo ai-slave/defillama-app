@@ -1,9 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import { type ReactNode, useCallback, useRef } from 'react'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Tab, TabPanel, Tabs, TabLink } from '~/ui/Tabs'
+import { Tab, TabPanel, Tabs, TabLink, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
 import type { DashboardLayoutTab } from '../dashboardLayout/buildDashboardLayout'
@@ -69,11 +68,7 @@ export function DashboardTabs({
 						</Tooltip>
 					</>
 				) : null}
-				<Ariakit.TabList
-					ref={overflowRef}
-					aria-label="Dashboard sections"
-					className="flex scrollbar-none overflow-x-auto border-b border-subtle"
-				>
+				<UnderlineTabList ref={overflowRef} label="Dashboard sections">
 					{tabs.map((tab) => (
 						<Tab
 							key={tab.section.id}
@@ -87,7 +82,7 @@ export function DashboardTabs({
 							{tab.section.title}
 						</Tab>
 					))}
-				</Ariakit.TabList>
+				</UnderlineTabList>
 				{canScrollLeft || canScrollRight ? (
 					<>
 						{canScrollRight ? (

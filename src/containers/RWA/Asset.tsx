@@ -28,6 +28,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
+import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -618,9 +619,9 @@ export function RWAAssetPage({
 									<span className="flex flex-wrap items-center gap-1 font-medium">
 										{categories.map((category, idx) => (
 											<span key={category} className="flex items-center gap-0.5">
-												<BasicLink href={`/rwa/category/${rwaSlug(category)}`} className="text-link hover:underline">
+												<TextLink href={`/rwa/category/${rwaSlug(category)}`} size="inherit">
 													{category}
-												</BasicLink>
+												</TextLink>
 												{definitions.category.values?.[category] ? (
 													<QuestionHelper text={definitions.category.values[category]} />
 												) : null}
@@ -685,9 +686,9 @@ export function RWAAssetPage({
 										{parentPlatforms.map((platform, idx) => (
 											<span key={platform} className="flex items-center gap-0.5">
 												{parentPlatformHref ? (
-													<BasicLink href={parentPlatformHref} className="text-link hover:underline">
+													<TextLink href={parentPlatformHref} size="inherit">
 														{platform}
-													</BasicLink>
+													</TextLink>
 												) : (
 													platform
 												)}

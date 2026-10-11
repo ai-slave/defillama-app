@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { tvlOptionNames } from '~/components/Filters/options'
-import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -20,6 +19,7 @@ import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -102,12 +102,9 @@ export function OracleOverview({
 								<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 
 								<span className="flex items-center gap-1 overflow-hidden">
-									<BasicLink
-										href={`/protocol/${slug(name)}`}
-										className="min-w-0 truncate label-md text-link hover:underline"
-									>
+									<TextLink href={`/protocol/${slug(name)}`} truncate>
 										{name}
-									</BasicLink>
+									</TextLink>
 									{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 								</span>
 							</span>

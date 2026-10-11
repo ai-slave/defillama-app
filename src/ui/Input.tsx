@@ -87,10 +87,12 @@ const fieldFrameStyles = tw`flex min-h-8 min-w-0 cursor-text items-center gap-1 
 // 16px prefix on phones and let iOS zoom on focus.
 const fieldFrameInputStyles = tw`min-w-0 flex-1 cursor-[inherit] bg-transparent py-0.5 text-inherit outline-hidden [font:inherit] placeholder:text-tertiary`
 
-/* A rename in place (a query tab, a saved row): the field takes the label's own type and stands where the label was,
-   24px inside a 32px row, with a brand ring marking it as editing. A rename with room for a full field (a sidebar row
-   at 36px or more) stays the text variant. */
-const inlineInputStyles = tw`min-w-0 rounded-sm bg-page px-1 py-px text-primary ring-1 ring-brand outline-hidden [font:inherit]`
+/* A rename in place (a query tab, a saved row, a dashboard's name): the field takes the label's own type and stands
+   where the label was, 24px inside a 32px row, with a brand ring marking it as editing, red after a failed save.
+   InlineTextField and InlineRenameInput (./InlineTextField.tsx) render it with the keyboard every rename shares; pages
+   use them, never the variant. A rename with room for a full field (a sidebar row at 36px or more) stays the text
+   variant. */
+const inlineInputStyles = tw`min-w-0 rounded-sm bg-page px-1 py-px text-primary ring-1 ring-brand outline-hidden [font:inherit] aria-invalid:ring-error`
 const INPUT_VARIANTS = {
 	text: inputStyles,
 	code: codeInputStyles,
@@ -101,7 +103,7 @@ const INPUT_VARIANTS = {
 type InputProps = (
 	| {
 			/** text (default); code for addresses, hex colors and formulas (mono at the same sizes); oneTimeCode for a
-			    verification code (centered, spaced digits); inline for a rename in place inside a tab or a dense row. */
+			    verification code (centered, spaced digits); inline for a rename in place, rendered by InlineTextField. */
 			variant?: keyof typeof INPUT_VARIANTS
 			prefix?: never
 			suffix?: never
@@ -160,11 +162,13 @@ export function Input({ variant = 'text', prefix, suffix, className, id, ...prop
 
 const TEXTAREA_VARIANTS = {
 	prose: textareaStyles,
-	code: codeTextareaStyles
+	code: codeTextareaStyles,
+	inline: `${inlineInputStyles} resize-none`
 } as const
 
 type TextareaProps = {
-	/** prose (default) on the body ramp; code in the mono family (CSV, SQL, embed snippets). */
+	/** prose (default) on the body ramp; code in the mono family (CSV, SQL, embed snippets); inline for a multiline
+	    edit in place (InlineTextField). */
 	variant?: keyof typeof TEXTAREA_VARIANTS
 	/** Layout placement, rows' height limits and resizing (w-full, min-h-*, resize-none) — never colors or type. */
 	className?: string

@@ -7,6 +7,7 @@ import { divergingColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { TextLink } from '~/ui/TextLink'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import {
@@ -510,9 +511,9 @@ export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable:
 						/>
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<div className="flex min-w-0 items-center gap-2">
-								<BasicLink href={profileHref} className="truncate label-md text-link hover:underline">
+								<TextLink href={profileHref} truncate>
 									{venue.name}
-								</BasicLink>
+								</TextLink>
 								{liquidityNote ? <QuestionHelper text={liquidityNote} /> : null}
 							</div>
 							{venue.tracked ? null : <span className="body-sm text-tertiary">Metadata only</span>}

@@ -168,7 +168,7 @@ export default function Financials() {
 						<Kpi key={`${label}-lifetime`} kpi={d?.lifetime} label={`${label} (Lifetime)`} def={def} />,
 						<Kpi key={`${label}-1y`} kpi={d?.y1} label={`${label} (1Y)`} />,
 						<Kpi key={`${label}-30d`} kpi={d?.d30} label={`${label} (30d)`} />,
-						<Kpi key={`${label}-7d`} kpi={d?.d7} label={`${label} (7D)`} />
+						<Kpi key={`${label}-7d`} kpi={d?.d7} label={`${label} (7d)`} />
 					])}
 				</KpiBand>
 

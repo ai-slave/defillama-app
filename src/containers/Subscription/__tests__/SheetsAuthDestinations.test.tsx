@@ -50,7 +50,7 @@ async function renderSignedIn() {
 			</QueryClientProvider>
 		)
 	)
-	await waitForUi(() => expect(container.textContent).toContain('Successfully logged in.'))
+	await waitForUi(() => expect(container.querySelector('h2')?.textContent).toBe('Signed in'))
 }
 
 test('returns to the Sheets add-on callback with the subscription and the OAuth state', async () => {

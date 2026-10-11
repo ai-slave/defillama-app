@@ -14,6 +14,7 @@ import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel } from '~/ui/Panel'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tag } from '~/ui/Tag'
@@ -1311,10 +1312,11 @@ export function TokenPageLive({
 				<PreTgePerformance hasFundraising={asset.hasFundraising ?? null} lastRound={asset.lastRound ?? null} />
 			)}
 
-			<p className="body-sm text-tertiary">
-				Data as of {asset.asOf ? asset.asOf.slice(0, 10) : 'N/A'} · Scoring config v{asset.configVersion} · Rated{' '}
-				{asset.ratedCount} of {asset.totalCount} projects
-			</p>
+			<MetaLine>
+				{`Data as of ${asset.asOf ? asset.asOf.slice(0, 10) : 'N/A'}`}
+				{`Scoring config v${asset.configVersion}`}
+				{`Rated ${asset.ratedCount} of ${asset.totalCount} projects`}
+			</MetaLine>
 			<UtrDisclaimer />
 
 			<AboutDrawer

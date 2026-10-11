@@ -3,7 +3,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -15,6 +14,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Skeleton } from '~/ui/Skeleton'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -178,9 +178,9 @@ const columns = columnHelper.columns([
 					{cexProtocolSlug == null ? (
 						name
 					) : (
-						<BasicLink href={`/cex/${cexProtocolSlug}`} className="truncate label-md text-link hover:underline">
+						<TextLink href={`/cex/${cexProtocolSlug}`} truncate>
 							{name}
-						</BasicLink>
+						</TextLink>
 					)}
 				</span>
 			)

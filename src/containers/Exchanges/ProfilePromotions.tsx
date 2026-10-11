@@ -1,6 +1,6 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Tag } from '~/ui/Tag'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { ExchangeProfileModel } from './models'
@@ -23,9 +23,7 @@ export function ProfilePromotions({
 				const links = promotionLinks(promotion)
 				return (
 					<div key={key} className="flex flex-wrap items-center gap-2 border-b border-subtle p-2 last:border-b-0">
-						<span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-medium text-link">
-							<Icon name="gift" className="size-4" />
-						</span>
+						<IconTile icon="gift" tone="brand" size="sm" />
 						<div className="min-w-0 flex-1">
 							<div className="flex flex-wrap items-center gap-2">
 								<h2 className="label-md">{promotion.title}</h2>

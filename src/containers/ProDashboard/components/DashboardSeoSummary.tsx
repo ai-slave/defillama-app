@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { TextLink } from '~/ui/TextLink'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import type { DashboardSeo, DashboardSeoPublicDashboard } from '../utils/seo'
@@ -105,9 +106,9 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 									{String(index + 1).padStart(2, '0')}
 								</span>
 								{item.href ? (
-									<BasicLink href={item.href} className="text-link hover:underline">
+									<TextLink href={item.href} size="inherit">
 										{item.label}
-									</BasicLink>
+									</TextLink>
 								) : (
 									item.label
 								)}

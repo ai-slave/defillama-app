@@ -2,7 +2,9 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
@@ -76,9 +78,7 @@ function OracleLegs({ legs }: { legs: Array<OracleLeg> }) {
 						<span className="w-10 shrink-0 pt-0.5 label-sm text-secondary">{showSide ? side : ''}</span>
 						<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 							<span className="text-secondary">{leg.description}</span>
-							<span className="inline-flex shrink-0 items-center rounded-full border border-medium bg-surface px-1.5 py-0.5 label-xs text-secondary">
-								{legKindLabel(leg.kind)}
-							</span>
+							<Tag className="shrink-0">{legKindLabel(leg.kind)}</Tag>
 							{leg.vendor ? <span className="body-sm text-tertiary">{leg.vendor}</span> : null}
 						</span>
 					</span>
@@ -451,16 +451,10 @@ export function CollateralRow({
 							<OraclePricePath base={c.oracleBaseLeg} quote={c.oracleQuoteLeg} />
 						)}
 
-						{oc?.heartbeat_sec || oc?.deviation_threshold ? (
-							<span className="body-sm text-tertiary">
-								{[
-									oc?.heartbeat_sec ? `Heartbeat ${Math.round(oc.heartbeat_sec / 3600)}h` : null,
-									oc?.deviation_threshold ? `Deviation ${oc.deviation_threshold}bps` : null
-								]
-									.filter(Boolean)
-									.join(' · ')}
-							</span>
-						) : null}
+						<MetaLine>
+							{oc?.heartbeat_sec ? `Heartbeat ${Math.round(oc.heartbeat_sec / 3600)}h` : null}
+							{oc?.deviation_threshold ? `Deviation ${oc.deviation_threshold}bps` : null}
+						</MetaLine>
 
 						{rowMarkets.length === 0 && oracleAddrs.length > 0 ? (
 							<span className="flex flex-col gap-1.5">

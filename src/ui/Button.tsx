@@ -61,7 +61,9 @@ import { LoadingSpinner } from './internal/Loaders'
                   It is always underlined, softly at rest and solid on hover
                   and focus: the link blue is too close to body text for
                   color alone to mark it in a sentence. A disabled link's
-                  underline is solid, in the disabled color.
+                  underline is solid, in the disabled color. An entity's name
+                  in a table cell or list row is TextLink, underlined only on
+                  hover, since a column of names reads as data.
    Pick a pill by its job: a removable active filter or a filter picker is
    `filter`; a pill that turns a list filter on or off is `toggle` (whether
    its value lives in the URL or in state is in docs/url-state.md); a pill

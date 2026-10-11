@@ -4,6 +4,7 @@ import { Card } from '~/ui/Card'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface Column {
@@ -90,9 +91,7 @@ export function ColumnManagementPanel({
 									<div className="flex items-center gap-2">
 										<Icon name="check" className="size-3.5 text-success" />
 										<span className="body-sm text-primary">{column.name}</span>
-										{columnId.endsWith('_share') ? (
-											<span className="rounded-md bg-brand-tint px-1 py-0.5 body-sm text-link">%</span>
-										) : null}
+										{columnId.endsWith('_share') ? <Tag>%</Tag> : null}
 									</div>
 									<div className="flex items-center gap-1">
 										<Tooltip
@@ -181,9 +180,7 @@ export function ColumnManagementPanel({
 											>
 												<Icon name="plus" className="size-3.5" />
 												{column.name}
-												{column.id.endsWith('_share') ? (
-													<span className="ml-auto rounded-md bg-brand-tint px-1 py-0.5 label-sm text-link">%</span>
-												) : null}
+												{column.id.endsWith('_share') ? <Tag className="ml-auto">%</Tag> : null}
 											</Button>
 										))}
 								</div>

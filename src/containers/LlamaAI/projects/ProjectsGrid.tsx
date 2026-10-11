@@ -7,6 +7,7 @@ import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
@@ -207,10 +208,7 @@ export function ProjectsGrid() {
 						<li key={p.id}>
 							<Card padding="base" className="group hover-wash-card relative flex size-full flex-col gap-2">
 								<header className="flex items-center gap-2">
-									{/* An icon chip on the brand tint, not a selected state. */}
-									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
-										<Icon name="folder" className="size-3.5" />
-									</div>
+									<IconTile icon="folder" tone="brand" size="sm" />
 									<div className="min-w-0 flex-1">
 										<h3 className="truncate label-md text-primary">
 											<BasicLink

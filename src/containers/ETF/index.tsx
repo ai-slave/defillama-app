@@ -9,7 +9,6 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -25,6 +24,7 @@ import { Panel } from '~/ui/Panel'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -151,9 +151,9 @@ const columns = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<BasicLink href={row.original.url} className="truncate label-md text-link hover:underline">
+					<TextLink href={row.original.url} truncate>
 						{getValue()}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

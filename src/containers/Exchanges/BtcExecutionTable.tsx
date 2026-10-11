@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { SearchTableView } from '~/components/Table/search/SearchTableView'
@@ -7,6 +6,7 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { letterLogoDataUri } from '~/utils/icons'
 import { formatNumber, formatUsd } from '~/utils/numberFormat'
@@ -32,9 +32,9 @@ const columns = columnHelper.columns([
 						fallbackSrc={letterLogoDataUri(venue.name)}
 						alt={`${venue.name} logo`}
 					/>
-					<BasicLink href={venue.profileHref} className="truncate label-md text-link hover:underline">
+					<TextLink href={venue.profileHref} truncate>
 						{venue.name}
-					</BasicLink>
+					</TextLink>
 				</div>
 			)
 		},

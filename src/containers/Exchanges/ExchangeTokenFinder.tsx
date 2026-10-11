@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { TokenExchangeListing } from '~/containers/Markets/api.types'
 import { fetchTokenExchangeListings } from '~/containers/Token/api'
@@ -12,6 +11,7 @@ import { Card } from '~/ui/Card'
 import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { letterLogoDataUri } from '~/utils/icons'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -249,10 +249,7 @@ export function ExchangeTokenFinder({
 							{rows.map((row) => (
 								<tr key={row.slug} className="border-b border-subtle last:border-0">
 									<td className="px-4 py-2.5">
-										<BasicLink
-											href={withCountryParam(`/exchange/${row.slug}`, countryState.country)}
-											className="flex min-w-0 items-center gap-2 text-link hover:underline"
-										>
+										<span className="flex min-w-0 items-center gap-2">
 											<TokenLogo
 												name={row.slug}
 												kind="exchange"
@@ -260,8 +257,10 @@ export function ExchangeTokenFinder({
 												fallbackSrc={letterLogoDataUri(row.name)}
 												alt={`${row.name} logo`}
 											/>
-											<span className="truncate label-md">{row.name}</span>
-										</BasicLink>
+											<TextLink href={withCountryParam(`/exchange/${row.slug}`, countryState.country)} truncate>
+												{row.name}
+											</TextLink>
+										</span>
 									</td>
 									<td className="px-4 py-2.5 text-secondary">
 										{row.listings

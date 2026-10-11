@@ -1,8 +1,8 @@
 import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems, yieldsChainHref } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { TextLink } from '~/ui/TextLink'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ProYieldRow } from '../../../yieldData'
 import type { tableFeaturesConfig } from './useYieldsTable'
@@ -63,12 +63,9 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 						alt={`Logo of ${row.original.project}`}
 						data-lgonly
 					/>
-					<BasicLink
-						href={`/yields/pool/${row.original.configID}`}
-						className="truncate label-md text-link hover:underline"
-					>
+					<TextLink href={`/yields/pool/${row.original.configID}`} truncate>
 						{row.original.pool}
-					</BasicLink>
+					</TextLink>
 					{row.original.poolMeta ? <span className="body-sm text-secondary">{row.original.poolMeta}</span> : null}
 				</span>
 			),
@@ -77,12 +74,9 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 		columnHelper.accessor('project', {
 			header: 'Protocol',
 			cell: ({ row }) => (
-				<BasicLink
-					href={`/yields?protocol=${encodeURIComponent(row.original.project)}`}
-					className="body-md text-link hover:underline"
-				>
+				<TextLink href={`/yields?protocol=${encodeURIComponent(row.original.project)}`}>
 					{row.original.project}
-				</BasicLink>
+				</TextLink>
 			),
 			size: 140,
 			meta: { align: 'end' }

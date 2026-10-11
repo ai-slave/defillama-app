@@ -4,6 +4,7 @@ import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurr
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { focusNeighborOnLeave, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -29,7 +30,9 @@ const PAUSED_REASONS = new Set<QueueNotSentReason>([
 	'quota_exceeded',
 	'server_restarted'
 ])
-const ROW = 'flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-2'
+// A row centers its one line; a row whose text wraps (an error, an unsaved edit) starts at the top.
+const ROW = 'flex items-center gap-2'
+const ROW_TOP = 'flex items-start gap-2'
 // A row's controls change with its state; when the ones that had focus leave (a saved edit, a retried send), the row
 // itself holds focus. Rows take tabIndex -1 for it.
 const focusRowOnLeave = passFocusOnLeave((controls) => controls.closest('li'))
@@ -228,7 +231,15 @@ export function QueueChips({
 						const adding = item.state === 'adding'
 						const failed = item.state === 'failed'
 						return (
-							<li key={rowKey} data-row ref={focusNeighborRowOnLeave} tabIndex={-1} className={ROW}>
+							<Card
+								as="li"
+								padding="row"
+								key={rowKey}
+								data-row
+								ref={focusNeighborRowOnLeave}
+								tabIndex={-1}
+								className={ROW}
+							>
 								{adding ? (
 									<span className="shrink-0 text-tertiary">
 										<BusyGlyph label="Adding to queue" size={14} hideLabel />
@@ -281,7 +292,7 @@ export function QueueChips({
 										</Tooltip>
 									</div>
 								) : null}
-							</li>
+							</Card>
 						)
 					}
 
@@ -289,18 +300,34 @@ export function QueueChips({
 					const message = status?.unsavedDraft ?? item.displayMessage ?? item.message
 					if (item.state === 'firing') {
 						return (
-							<li key={rowKey} data-row ref={focusNeighborRowOnLeave} tabIndex={-1} className={ROW}>
+							<Card
+								as="li"
+								padding="row"
+								key={rowKey}
+								data-row
+								ref={focusNeighborRowOnLeave}
+								tabIndex={-1}
+								className={ROW}
+							>
 								<span className="shrink-0 text-tertiary">
 									<BusyGlyph label="Sending" size={14} hideLabel />
 								</span>
 								<p className="m-0 min-w-0 flex-1 truncate body-sm text-secondary">{message}</p>
-							</li>
+							</Card>
 						)
 					}
 
 					if (item.state === 'editing') {
 						return (
-							<li key={rowKey} data-row ref={focusNeighborRowOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
+							<Card
+								as="li"
+								padding="row"
+								key={rowKey}
+								data-row
+								ref={focusNeighborRowOnLeave}
+								tabIndex={-1}
+								className={ROW_TOP}
+							>
 								{ownedEditId === item.id ? (
 									<QueueChipEditor
 										id={item.id}
@@ -333,14 +360,22 @@ export function QueueChips({
 										</div>
 									</>
 								)}
-							</li>
+							</Card>
 						)
 					}
 
 					if (item.state === 'pending') {
 						const busy = status?.action !== null && status?.action !== undefined
 						return (
-							<li key={rowKey} data-row ref={focusNeighborRowOnLeave} tabIndex={-1} className={ROW}>
+							<Card
+								as="li"
+								padding="row"
+								key={rowKey}
+								data-row
+								ref={focusNeighborRowOnLeave}
+								tabIndex={-1}
+								className={ROW}
+							>
 								<Icon name="clock" className="size-3.5 shrink-0 text-tertiary" />
 								<div className="min-w-0 flex-1">
 									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
@@ -393,7 +428,7 @@ export function QueueChips({
 										<span className="sr-only">Dismiss</span>
 									</Tooltip>
 								</div>
-							</li>
+							</Card>
 						)
 					}
 
@@ -402,7 +437,15 @@ export function QueueChips({
 					const resetCopy = item.reason === 'quota_exceeded' ? formatResetIn(quotaResetTime, now) : null
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
-						<li key={rowKey} data-row ref={focusNeighborRowOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
+						<Card
+							as="li"
+							padding="row"
+							key={rowKey}
+							data-row
+							ref={focusNeighborRowOnLeave}
+							tabIndex={-1}
+							className={ROW_TOP}
+						>
 							<span className="flex h-lh shrink-0 items-center body-sm">
 								<Icon name="alert-triangle" className="size-3.5 text-error" />
 							</span>
@@ -467,7 +510,7 @@ export function QueueChips({
 									<span className="sr-only">Dismiss</span>
 								</Tooltip>
 							</div>
-						</li>
+						</Card>
 					)
 				})}
 			</ul>

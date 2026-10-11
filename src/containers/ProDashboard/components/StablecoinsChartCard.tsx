@@ -14,11 +14,11 @@ import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
@@ -133,7 +133,11 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[`${chainLabel} Stablecoins`]} />} />
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTypeLabel}
+				subtitle={<MetaLine>{`${chainLabel} Stablecoins`}</MetaLine>}
+			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -164,7 +168,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				titleAs="h3"
 				title={chartTypeLabel}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[`${chainLabel} Stablecoins`]} />}
+				subtitle={<MetaLine>{`${chainLabel} Stablecoins`}</MetaLine>}
 				viewerControls={
 					hasChartData ? (
 						chartType === 'pie' && pieSeries.peers.length > 1 ? (

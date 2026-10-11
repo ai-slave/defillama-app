@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
@@ -363,10 +364,7 @@ function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {
 	const presentation = METADATA_GROUP_PRESENTATION[group.key]
 	return (
 		<div className="flex flex-wrap items-center gap-2 border-b border-subtle px-3 py-2.5">
-			{/* An icon chip on the brand tint, not a selected state. */}
-			<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-				<Icon name={presentation.icon} className="size-4" />
-			</span>
+			<IconTile icon={presentation.icon} tone="brand" size="sm" />
 			<h2 className="label-lg">{presentation.title}</h2>
 			{group.fromProofOfReserves ? <StatusBadge status="good">Live reserves data</StatusBadge> : null}
 			<span className="ml-auto">

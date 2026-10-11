@@ -10,7 +10,6 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
@@ -21,6 +20,7 @@ import { Change, formatChange } from '~/ui/Change'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Definition } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -79,13 +79,12 @@ const stablecoinsColumns = columnHelper.columns([
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={row.original.name} kind="pegged" alt={`Logo of ${row.original.name}`} data-lgonly />
-					<BasicLink
-						href={`/stablecoin/${slug(row.original.name)}`}
-						className="flex items-center gap-1 truncate label-md text-link hover:underline"
-					>
-						<span className="truncate">{getValue()}</span>
+					<span className="flex min-w-0 items-center gap-1">
+						<TextLink href={`/stablecoin/${slug(row.original.name)}`} truncate>
+							{getValue()}
+						</TextLink>
 						{lifecycleStatus ? <DeprecatedEntityMarker content={lifecycleStatus} /> : null}
-					</BasicLink>
+					</span>
 				</span>
 			)
 		},

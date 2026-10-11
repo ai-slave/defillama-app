@@ -2,10 +2,11 @@ import { useId } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { InlineTextField } from '~/ui/InlineTextField'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { SECTION_DESCRIPTION_MAX_LENGTH, SECTION_TITLE_MAX_LENGTH, type SectionConfig } from '../types'
-import { InlineTextField, ProMeta } from '../ui'
 import { keepKeyboardEventsInsideCard } from './ProCardActions'
 
 let tabsExplainerShown = false
@@ -93,33 +94,40 @@ export function SectionCard({
 			) : null}
 			<div className="flex min-w-48 flex-col">
 				{editing ? (
-					<InlineTextField
-						value={section.title}
-						placeholder="Section title"
-						maxLength={SECTION_TITLE_MAX_LENGTH}
-						autoFocus={editing.autoFocusTitle}
-						className="title-lg text-primary"
-						onCommit={(title) => editing.onUpdate({ title: title || 'Section' })}
-					/>
+					<div className="title-lg text-primary">
+						<InlineTextField
+							value={section.title}
+							label="Section title"
+							placeholder="Section title"
+							maxLength={SECTION_TITLE_MAX_LENGTH}
+							autoFocus={editing.autoFocusTitle}
+							// A blank title keeps the previous name (docs/focus-and-errors.md).
+							onCommit={(title) => {
+								if (title) editing.onUpdate({ title })
+							}}
+						/>
+					</div>
 				) : (
 					<h2 id={headingId} className="truncate title-lg text-primary">
 						{section.title}
 					</h2>
 				)}
 				{editing ? (
-					<InlineTextField
-						value={section.description ?? ''}
-						placeholder="Add a description"
-						maxLength={SECTION_DESCRIPTION_MAX_LENGTH}
-						className="body-md text-secondary"
-						onCommit={(description) => editing.onUpdate({ description })}
-					/>
+					<div className="body-md text-secondary">
+						<InlineTextField
+							value={section.description ?? ''}
+							label="Section description"
+							placeholder="Add a description"
+							maxLength={SECTION_DESCRIPTION_MAX_LENGTH}
+							onCommit={(description) => editing.onUpdate({ description })}
+						/>
+					</div>
 				) : section.description ? (
 					<p className="body-md text-secondary">{section.description}</p>
 				) : null}
 			</div>
 			<div aria-hidden="true" className="h-px min-w-6 flex-1 bg-border-subtle" />
-			<ProMeta className="shrink-0 tabular-nums" items={[`${itemCount} ${itemCount === 1 ? 'card' : 'cards'}`]} />
+			<MetaLine className="shrink-0 tabular-nums">{`${itemCount} ${itemCount === 1 ? 'card' : 'cards'}`}</MetaLine>
 			{editing ? (
 				<div role="presentation" onKeyDown={keepKeyboardEventsInsideCard} className={SECTION_CONTROLS_CLASS}>
 					<Tooltip

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig } from '../chartConfig'
@@ -265,11 +266,11 @@ export function NotebookView({
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
 					<h3 className="title-md tracking-tight text-primary">{tab.title}</h3>
-					<span className="body-sm text-tertiary tabular-nums">
-						{cells.length} cell{cells.length === 1 ? '' : 's'}
-						{hasRunnableSql ? ` · ${runnableSqlCount} SQL` : ''}
-						{chartCount > 0 ? ` · ${chartCount} chart${chartCount === 1 ? '' : 's'}` : ''}
-					</span>
+					<MetaLine className="tabular-nums">
+						{`${cells.length} cell${cells.length === 1 ? '' : 's'}`}
+						{hasRunnableSql ? `${runnableSqlCount} SQL` : null}
+						{chartCount > 0 ? `${chartCount} chart${chartCount === 1 ? '' : 's'}` : null}
+					</MetaLine>
 				</div>
 				<div className="flex items-center gap-2">
 					{promoteRunAll && hasRunnableSql ? (

@@ -53,6 +53,7 @@ import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
 
@@ -865,12 +866,8 @@ export function ColumnManager({
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
 										<span className="truncate label-sm text-primary">{col.name}</span>
-										<span className="rounded-sm border border-medium bg-surface px-1 py-0.5 label-xs uppercase">
-											{col.format}
-										</span>
-										<span className="rounded-sm border border-medium bg-surface px-1 py-0.5 label-xs text-tertiary">
-											{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}
-										</span>
+										<Tag>{col.format}</Tag>
+										<Tag>{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}</Tag>
 									</div>
 									<code className="block truncate body-sm text-tertiary">{col.expression}</code>
 								</div>

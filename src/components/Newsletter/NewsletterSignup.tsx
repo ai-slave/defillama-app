@@ -15,6 +15,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { EmptyState } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { emailError } from '~/utils/email'
@@ -310,21 +311,17 @@ function NewsletterSuccess({
 	}
 
 	return (
-		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-brand-faint">
-				<Icon name="check-circle" className="size-7 text-link" />
-			</div>
-			<div className="flex flex-col gap-1">
-				<span className="label-lg text-primary">You are subscribed</span>
-				<p className="max-w-[360px] body-sm text-tertiary">
-					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
-				</p>
-			</div>
-			<p className="body-sm">
-				<Button variant="link" onClick={onReset}>
+		<EmptyState
+			size="md"
+			tone="success"
+			title="You are subscribed"
+			actions={
+				<Button size="sm" onClick={onReset}>
 					Manage newsletters
 				</Button>
-			</p>
-		</div>
+			}
+		>
+			<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
+		</EmptyState>
 	)
 }

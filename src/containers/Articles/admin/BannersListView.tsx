@@ -14,6 +14,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighborRowControl } from '~/ui/focus'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
@@ -136,13 +137,8 @@ export function BannersListView() {
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
-									{/* A kind badge on the brand tint, not a selected state. */}
-									<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
-										{BANNER_KIND_LABELS[banner.type]}
-									</span>
-									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-[0.12em] text-secondary uppercase">
-										{bannerAudienceLabel(banner.targetCountries)}
-									</span>
+									<Tag>{BANNER_KIND_LABELS[banner.type]}</Tag>
+									<Tag>{bannerAudienceLabel(banner.targetCountries)}</Tag>
 									<StatusBadge status={banner.enabled ? 'good' : 'neutral'}>
 										{banner.enabled ? 'Live' : 'Disabled'}
 									</StatusBadge>

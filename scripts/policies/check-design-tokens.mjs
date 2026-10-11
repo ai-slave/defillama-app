@@ -627,8 +627,12 @@ function matchUngatedHover(content) {
 function matchChartToolbarAutoMargin(content) {
 	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
 	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
+	// A PanelHeader works the same way: PanelTitle already pushes every other child right, so a second auto
+	// margin splits the free space and centers whatever sits between them.
 	const found = []
-	for (const [block] of content.matchAll(/<ChartPanelToolbar\b[\s\S]*?<\/ChartPanelToolbar>/g)) {
+	for (const [block] of content.matchAll(
+		/<ChartPanelToolbar\b[\s\S]*?<\/ChartPanelToolbar>|<PanelHeader\b[\s\S]*?<\/PanelHeader>/g
+	)) {
 		// Dialogs opened from the toolbar lay out their own header; only the toolbar row counts.
 		const row = block.replace(/<Ariakit\.Dialog\b[\s\S]*?<\/Ariakit\.Dialog>/g, '')
 		for (const [cls] of row.matchAll(/className="[^"]*"/g)) {
@@ -700,10 +704,8 @@ const RULES = [
 		exceptions: {
 			'src/containers/Exchanges/ComplianceCells.tsx':
 				'the five KYC requirement chips each take a category hue (sky, violet, amber, teal, indigo); the ramps hold only blue, emerald, crimson, amber and violet, and three of those carry status meaning',
-			'src/containers/Investors/dashboards/berachain/BerachainHeader.tsx':
-				"the Launch App pill's black label on Berachain's orange brand fill, which stays the same in both modes; a text token turns white in dark mode",
-			'src/containers/Investors/dashboards/thorchain/ThorchainHeader.tsx':
-				"the Launch App pill's black label on THORChain's cyan-green brand gradient, which stays the same in both modes; a text token turns white in dark mode"
+			'src/containers/Investors/IrHeaderLinks.tsx':
+				"a partner's call to action labeled in black on a light brand fill (Berachain's orange, THORChain's cyan-green), which stays the same in both modes; a text token turns white in dark mode"
 		},
 		description:
 			'stock Tailwind palette color (red-500, black/[0.06], white, …) — use a semantic token or a product-theme token',
@@ -968,7 +970,7 @@ const RULES = [
 	{
 		id: 'chart-toolbar-auto-margin',
 		description:
-			'ml-auto group or last-of-type:mr-auto inside ChartPanelToolbar — put the title, view switch or metric chips in its `leading` slot; everything else hugs the right',
+			"ml-auto group or last-of-type:mr-auto inside ChartPanelToolbar or PanelHeader — the toolbar's `leading` slot or the PanelTitle holds the left side; everything else hugs the right",
 		match: matchChartToolbarAutoMargin
 	},
 	{
@@ -1060,11 +1062,7 @@ const RULES = [
 			'src/containers/Downloads/sql/TableChipRail.tsx':
 				'a table still loading into the console: dashed until it registers, red if it failed',
 			'src/containers/Downloads/sql/notebook/NotebookView.tsx': 'a warning message box above the notebook',
-			'src/containers/Exchanges/ExchangeRegionalInformation.tsx': 'an icon tile beside the not-available heading',
-			'src/containers/LlamaAI/components/AlertArtifact.tsx': "an alert's icon tile",
-			'src/containers/LlamaAI/components/FeedbackForm.tsx': 'the picked thumbs-up or thumbs-down button',
-			'src/containers/LlamaAI/components/alerts/EmptyAlertsState.tsx': 'the empty state icon tile',
-			'src/containers/LlamaAI/components/alerts/ui.tsx': "an alert's icon tile"
+			'src/containers/LlamaAI/components/FeedbackForm.tsx': 'the picked thumbs-up or thumbs-down button'
 		},
 		description:
 			'a status colored by hand with a success, warning or error tint and its text color — render StatusBadge from src/ui/StatusBadge.tsx with status good, caution, bad or neutral; map the product value to a status, never to classes',
@@ -1120,13 +1118,10 @@ const RULES = [
 	{
 		id: 'hand-built-empty-state',
 		exceptions: {
-			'src/components/Newsletter/NewsletterSignup.tsx': 'the subscribed confirmation, a success check in a tinted disc',
 			'src/containers/Articles/admin/BannerForm.tsx':
 				"a banner preview's placeholder, drawn at the banner's own size until an image is chosen",
 			'src/containers/Articles/profile/AuthorProfileForm.tsx': "the author's avatar placeholder",
-			'src/pages/ai/index.tsx': "the demo video's play button",
-			'src/pages/sheets/auth.tsx': 'the signed-in confirmation, a success check in a tinted disc',
-			'src/pages/support.tsx': 'the request-sent confirmation, a success check in a tinted disc'
+			'src/pages/ai/index.tsx': "the demo video's play button"
 		},
 		description:
 			'an empty state built by hand: an icon disc or a dashed text-centered well — render EmptyState from src/ui/Status.tsx (size md or lg, framed for a dashed well); a quick no-match in a list, popover or table is NoResults',
@@ -1172,33 +1167,23 @@ const RULES = [
 	{
 		id: 'hand-built-card',
 		description:
-			'a card surface drawn by hand (rounded-md, -lg, -xl or -2xl with border-subtle and bg-surface) — render Card from src/ui/Card.tsx with a padding step (none, sm, base, md, strip), or Panel for a titled shell; className keeps only placement',
+			'a card surface drawn by hand (rounded-md, -lg, -xl or -2xl with border-subtle and bg-surface) — render Card from src/ui/Card.tsx with a padding step (none, sm, base, md, strip, row), or Panel for a titled shell; className keeps only placement',
 		match: (content) =>
 			withoutComments(content).match(/\brounded-(?:md|lg|xl|2xl) border border-subtle bg-surface(?=[\s"'`])/g),
 		exceptions: {
 			'src/components/NotFoundPage.tsx': 'the 404 frame keeps a 4px inset around its full-bleed illustration',
 			'src/containers/AttestationLanding/index.tsx': 'a venue label pill in the flow diagram',
 			'src/containers/Downloads/index.tsx': 'the API host chip in the downloads hero, set in mono',
-			'src/containers/Downloads/sql/SqlWorkspace.tsx': 'the one-line engine status strip above the editor, 8px by 12px',
-			'src/containers/Downloads/sql/TableChipRail.tsx':
-				'the one-line no-tables strip, 8px by 12px like the engine status strip',
 			'src/containers/LlamaAI/projects/ProjectFilesPanel.tsx':
 				'a connected GitHub repo row with its branch badge and Disconnect control',
-			'src/containers/ProDashboard/components/AddChartModal/UnifiedTableTab/index.tsx':
-				'the one-line note that stands in for the data-view list when every view is shown, 8px by 12px',
 			'src/components/RowLinksWithDropdown/index.tsx': 'a segmented row of links, a control rather than a card',
 			'src/containers/DesignSystem/components/surfaces.tsx': "the design system page's don't example",
 			'src/containers/DesignSystem/foundations/color.tsx': 'a specimen swatch on the dev-only design system page',
 			'src/containers/DesignSystem/shared.tsx': 'the specimen frame on the dev-only design system page',
-			'src/containers/Exchanges/MicaCells.tsx': 'a 28px icon tile in a table cell',
 			'src/containers/Investors/dashboards/flare/ui.tsx':
 				"a callout with the partner's 3px accent edge and its wider left inset",
 			'src/containers/LlamaAI/components/AlertsModal.tsx':
 				"an alert row whose 14px vertical inset lines up with the modal's list rows",
-			'src/containers/LlamaAI/components/LlamaAITipBanner.tsx': 'a one-line tip strip under the composer, 10px by 14px',
-			'src/containers/LlamaAI/components/NotificationPermissionBanner.tsx': 'the same tip strip as LlamaAITipBanner',
-			'src/containers/LlamaAI/components/TipOrNotifyBanner.tsx': 'the same tip strip as LlamaAITipBanner',
-			'src/containers/LlamaAI/components/QueueChips.tsx': 'queued prompt rows, 8px by 12px, under the composer',
 			'src/containers/LlamaAI/components/charts/ChartRenderer.tsx':
 				'the chart frame with its tab row pulled into the top inset',
 			'src/containers/LlamaAI/components/sidebar/AgenticSidebar.tsx': 'the folded 44px icon rail',

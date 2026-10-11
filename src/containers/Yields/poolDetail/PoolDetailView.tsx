@@ -117,7 +117,7 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 		<Panel className="h-full">
 			<PanelHeader>
 				<PanelTitle>{title}</PanelTitle>
-				<Skeleton className="ml-auto h-8 w-40" />
+				<Skeleton className="h-8 w-40" />
 			</PanelHeader>
 			<ChartPanelToolbar leading={<Skeleton className="h-8 w-40" />}>
 				<Skeleton className="h-8 w-40" />

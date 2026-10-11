@@ -8,6 +8,7 @@ import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { GetCardButton } from './GetCardButton'
@@ -283,12 +284,9 @@ export function buildCardsColumns(
 						{/* The name opens the card page; the Get pill beside it is the one way to the issuer. */}
 						<div className="flex min-w-0 flex-1 items-center gap-1">
 							{reference.detailsHrefByIssuer[card.parentId] ? (
-								<BasicLink
-									href={reference.detailsHrefByIssuer[card.parentId]}
-									className="block max-w-fit truncate label-md text-link hover:underline"
-								>
+								<TextLink href={reference.detailsHrefByIssuer[card.parentId]} truncate className="block max-w-fit">
 									{card.cardName}
-								</BasicLink>
+								</TextLink>
 							) : (
 								<span className="block truncate label-md">{card.cardName}</span>
 							)}

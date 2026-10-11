@@ -37,9 +37,9 @@ export function timeframeBadge(tf: Timeframe): string {
 
 const TIMEFRAME_PERIODS: Record<Timeframe, string> = {
 	'All Time': 'All Time',
-	'Prev. 7d': '7D',
-	'Prev. 30d': '30D',
-	'Prev. 60d': '60D'
+	'Prev. 7d': '7d',
+	'Prev. 30d': '30d',
+	'Prev. 60d': '60d'
 }
 
 export function timeframePeriod(tf: Timeframe): string {

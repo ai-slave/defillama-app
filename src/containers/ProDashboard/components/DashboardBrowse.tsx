@@ -3,7 +3,6 @@ import { Button } from '~/ui/Button'
 import type { Dashboard } from '../dashboardTypes'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
-import { ProMeta } from '../ui'
 import { isLowQualityDashboardName } from './discoveryQuality'
 import { DiscoverySection } from './DiscoverySection'
 import { dedupeShelves, DISCOVERY_RAIL_SIZE } from './discoveryShelves'
@@ -82,7 +81,7 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="flex scrollbar-none items-center gap-2 overflow-x-auto pb-1">
-				<ProMeta className="shrink-0" items={['Trending']} />
+				<span className="shrink-0 body-sm text-tertiary">Trending</span>
 				{trendingTags.map((tag) => (
 					<Button
 						type="button"

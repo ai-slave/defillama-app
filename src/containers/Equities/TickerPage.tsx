@@ -20,6 +20,7 @@ import { StaleText } from '~/ui/StaleText'
 import { PanelLoadingStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
+import { TextLink } from '~/ui/TextLink'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import {
@@ -626,18 +627,18 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 										label="Website"
 										value={
 											props.metadata.website ? (
-												<a
+												<TextLink
 													href={props.metadata.website}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="text-link hover:underline"
+													size="inherit"
 													data-umami-event="equities-website-click"
 													data-umami-event-ticker={props.ticker}
 													data-umami-event-placement="info"
 													data-umami-event-url={props.metadata.website}
 												>
 													{props.metadata.website}
-												</a>
+												</TextLink>
 											) : (
 												'—'
 											)

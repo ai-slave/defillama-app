@@ -121,6 +121,7 @@ export function CitationDetailPanel({
 					leading={
 						<>
 							{onBackToDashboard ? <DialogBackButton label="Back to dashboard" onClick={onBackToDashboard} /> : null}
+							{/* Not IconTile: the tile takes the source type's accent, which is LlamaAI violet for a computed source. */}
 							<span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${accent.chip}`}>
 								<Icon name={iconName} className="size-4" />
 							</span>

@@ -216,7 +216,7 @@ export function InlineLoading({ label, insideLiveRegion = false }: { label: stri
     beside it announces the work where the change needs announcing. A busy button with room for a label is Button
     `pending` with `pendingLabel`.
     `size` matches what it stands in for: 12 beside body-sm or label-sm text and in a 12-16px slot, 14 in place of a
-    size-3.5 icon, 18 in place of a size-5 tile icon.
+    size-3.5 icon, 18 in place of a size-5 icon (IconTile's `busy` picks its own).
     Content still loading is one of the loading parts above, never this. */
 export function BusyGlyph(
 	props: { size: 12 | 14 | 18 } & (
@@ -350,12 +350,19 @@ const EMPTY_STATE_SIZE = {
 	}
 } as const
 
+const EMPTY_STATE_DISC = {
+	neutral: 'border border-subtle bg-surface-elevated-1 text-tertiary',
+	success: 'bg-success-tint text-success'
+} as const
+
 /** Where content would be and there is none: nothing created yet (no dashboards, no API key), nothing matched with a
     way back (Clear filters), a choice to make first (pick a token), or a locked feature (Sign in, Upgrade). Not an error, which
     keeps PanelStatus or InlineStatus so it reads as broken, and not a quick no-match inside a table, list or popover,
     which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus.
     `md` sits inside a Panel, Card or dialog body and takes sm buttons; `lg` fills a page or tab and takes md buttons,
-    with at most one primary. The icon sits in a neutral disc. `framed` draws a dashed well where a card, a grid of
+    with at most one primary. The icon sits in a neutral disc. `tone="success"` turns the disc green, with a check as
+    its icon when none is passed, for a finished task's confirmation that takes the form's place (subscribed, request sent, signed in): the
+    title says what is done and the actions offer the next step. `framed` draws a dashed well where a card, a grid of
     cards or a list would sit with no surface of its own (the page, a canvas dialog body); inside the Panel or Card that
     holds the content it draws no frame. `actions` holds the buttons, or the picker or form that fills the space; the
     hint is inline text. The title is a <p>; `headingAs` makes it a heading when it stands in for the page's or tab's
@@ -368,11 +375,13 @@ export function EmptyState({
 	children,
 	actions,
 	framed,
+	tone = 'neutral',
 	headingAs: Title = 'p',
 	className
 }: {
 	size: keyof typeof EMPTY_STATE_SIZE
 	icon?: IIcon['name']
+	tone?: keyof typeof EMPTY_STATE_DISC
 	title: ReactNode
 	/** The hint under the title. */
 	children?: ReactNode
@@ -382,15 +391,14 @@ export function EmptyState({
 	className?: string
 }) {
 	const s = EMPTY_STATE_SIZE[size]
+	const glyph = icon ?? (tone === 'success' ? 'check' : undefined)
 	return (
 		<div
 			className={`flex flex-1 flex-col items-center justify-center text-center ${s.box} ${framed ? 'rounded-lg border border-dashed border-medium' : ''} ${className ?? ''}`}
 		>
-			{icon ? (
-				<span
-					className={`flex shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-elevated-1 text-tertiary ${s.disc}`}
-				>
-					<Icon name={icon} className={s.icon} aria-hidden />
+			{glyph ? (
+				<span className={`flex shrink-0 items-center justify-center rounded-full ${EMPTY_STATE_DISC[tone]} ${s.disc}`}>
+					<Icon name={glyph} className={s.icon} aria-hidden />
 				</span>
 			) : null}
 			<div role="status" aria-live="polite" className={`flex flex-col items-center ${s.text}`}>

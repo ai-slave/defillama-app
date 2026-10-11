@@ -24,6 +24,7 @@ import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/c
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
@@ -69,7 +70,7 @@ function ByLine({ article }: { article: ArticleDocument }) {
 			: null)
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-sm text-tertiary">
+		<MetaLine>
 			{authorEntries?.length ? (
 				<span className="flex flex-wrap items-center gap-1 font-medium text-secondary">
 					{authorEntries.map((entry, index) => (
@@ -87,11 +88,9 @@ function ByLine({ article }: { article: ArticleDocument }) {
 					))}
 				</span>
 			) : null}
-			{authorEntries?.length ? <span aria-hidden>·</span> : null}
-			<span>{formatDate(article.displayDate ?? article.publishedAt)}</span>
-			<span aria-hidden>·</span>
-			<span>{readingMinutes(article)} min read</span>
-		</div>
+			{formatDate(article.displayDate ?? article.publishedAt)}
+			{`${readingMinutes(article)} min read`}
+		</MetaLine>
 	)
 }
 

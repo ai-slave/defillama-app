@@ -12,6 +12,7 @@ import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { MetaLine } from '~/ui/MetaLine'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
@@ -189,17 +190,10 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 					) : (
 						<p className="max-w-prose body-md text-tertiary italic">Add a bio so readers know what you cover.</p>
 					)}
-					{joined || socialCount > 0 ? (
-						<div className="mt-1 flex flex-wrap items-center gap-2 body-sm text-tertiary">
-							{joined ? <span>Joined {joined}</span> : null}
-							{joined && socialCount > 0 ? <span aria-hidden>·</span> : null}
-							{socialCount > 0 ? (
-								<span>
-									{socialCount} {socialCount === 1 ? 'link' : 'links'}
-								</span>
-							) : null}
-						</div>
-					) : null}
+					<MetaLine className="mt-1">
+						{joined ? `Joined ${joined}` : null}
+						{socialCount > 0 ? `${socialCount} ${socialCount === 1 ? 'link' : 'links'}` : null}
+					</MetaLine>
 				</div>
 			</div>
 		</section>

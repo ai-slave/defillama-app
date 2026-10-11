@@ -6,6 +6,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
 import { BusyGlyph, EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
@@ -1131,7 +1132,7 @@ function StatusStrip({
 	const runStatus = error ? 'bad' : busy ? 'caution' : lastRun ? 'good' : 'neutral'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
+		<Card padding="row" className="flex flex-wrap items-center gap-x-3 gap-y-1.5 body-sm text-secondary">
 			<span className="flex items-center gap-1.5">
 				<StatusDot status={envStatus} />
 				<span className="text-tertiary">LlamaSQL</span>
@@ -1166,7 +1167,7 @@ function StatusStrip({
 					<span className="text-tertiary">idle</span>
 				)}
 			</span>
-		</div>
+		</Card>
 	)
 }
 

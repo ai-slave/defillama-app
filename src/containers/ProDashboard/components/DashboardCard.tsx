@@ -8,6 +8,7 @@ import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighborRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -17,7 +18,6 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
 import { countDashboardWidgets } from '../dashboardWidgets'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProMeta } from '../ui'
 import { CardLikeButton } from './CardLikeButton'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 import { DashboardPreview } from './DashboardPreview'
@@ -123,29 +123,21 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	const tags = dashboard.tags ?? []
 
 	const meta = (
-		<ProMeta
-			items={[
-				dashboard.copiedFrom ? (
-					<span
-						key="fork"
-						className="inline-flex items-center gap-1"
-						title={`Forked from ${dashboard.copiedFrom.name}`}
-					>
-						<Icon name="copy" className="size-3" />
-						Fork
-					</span>
-				) : null,
-				widgetCount > 0 ? (
-					<span key="cards" className="tabular-nums" title={itemTypes}>
-						{cardCountLabel}
-					</span>
-				) : null,
-				<span key="views" className="tabular-nums">
-					{viewCountLabel}
-				</span>,
-				<RelativeTime key="updated" value={updatedAt} prefix={editedBy ? `Edited by ${editedBy}` : 'Updated'} />
-			]}
-		/>
+		<MetaLine>
+			{dashboard.copiedFrom ? (
+				<span className="inline-flex items-center gap-1" title={`Forked from ${dashboard.copiedFrom.name}`}>
+					<Icon name="copy" className="size-3" />
+					Fork
+				</span>
+			) : null}
+			{widgetCount > 0 ? (
+				<span className="tabular-nums" title={itemTypes}>
+					{cardCountLabel}
+				</span>
+			) : null}
+			<span className="tabular-nums">{viewCountLabel}</span>
+			<RelativeTime value={updatedAt} prefix={editedBy ? `Edited by ${editedBy}` : 'Updated'} />
+		</MetaLine>
 	)
 
 	const titleRow = (

@@ -4,7 +4,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
@@ -129,9 +131,9 @@ function RankingRow({
 							fallbackSrc={letterLogoDataUri(row.name)}
 							alt={`${row.name} logo`}
 						/>
-						<BasicLink href={row.profileHref} className="truncate label-md text-link hover:underline">
+						<TextLink href={row.profileHref} truncate>
 							{row.name}
-						</BasicLink>
+						</TextLink>
 						<span className="body-sm text-tertiary uppercase">{row.kind}</span>
 					</span>
 				</td>
@@ -241,9 +243,9 @@ function ExampleChip({ label, row, pillarKey }: { label: string; row: ExchangeRa
 				fallbackSrc={letterLogoDataUri(row.name)}
 				alt={`${row.name} logo`}
 			/>
-			<BasicLink href={row.profileHref} className="label-sm text-link hover:underline">
+			<TextLink href={row.profileHref} size="sm">
 				{row.name}
-			</BasicLink>
+			</TextLink>
 			<span className="flex items-center gap-1 mono-sm-bold">
 				<span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: scoreColor(score) }} />
 				{Math.round(score)}
@@ -345,9 +347,10 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 						variant="default"
 						size="md"
 					/>
-					<span className="body-sm text-tertiary">
-						{rows.length} exchanges scored · computed {ranking.generatedAt}
-					</span>
+					<MetaLine>
+						{`${rows.length} exchanges scored`}
+						{`computed ${ranking.generatedAt}`}
+					</MetaLine>
 				</div>
 				<div className="overflow-x-auto">
 					<table className="w-full min-w-[56rem] border-collapse text-left">

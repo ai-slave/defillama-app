@@ -10,7 +10,6 @@ import { startTransition, useMemo, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
-import { BasicLink } from '~/components/Link'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -44,6 +43,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -567,12 +567,12 @@ const NameColumn = (type: IProps['type']) =>
 
 					<span className="-my-2 flex min-w-0 flex-col">
 						<span className="flex min-w-0 items-center gap-1">
-							<BasicLink
+							<TextLink
 								href={`/${basePath}/${row.original.slug}${chartKey ? `?tvl=false&events=false&${chartKey}=true` : ''}`}
-								className="min-w-0 truncate label-md text-link hover:underline"
+								truncate
 							>
 								{value}
-							</BasicLink>
+							</TextLink>
 							{row.original.warning ? (
 								<Tooltip content={row.original.warning}>
 									<Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" />
@@ -636,13 +636,7 @@ const categoryColumn = (align?: 'center') =>
 		header: 'Category',
 		enableSorting: false,
 		cell: ({ getValue }) =>
-			getValue() ? (
-				<BasicLink href={getCategoryRoute(slug(getValue()))} className="label-md text-link hover:underline">
-					{getValue()}
-				</BasicLink>
-			) : (
-				''
-			),
+			getValue() ? <TextLink href={getCategoryRoute(slug(getValue()))}>{getValue()}</TextLink> : '',
 		meta: {
 			headerClassName: 'w-[128px]',
 			...(align ? { align } : {})

@@ -25,8 +25,10 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave, keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
@@ -99,9 +101,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 				<div className="grid min-w-0 gap-1">
 					<div className="flex flex-wrap items-center gap-2">
 						<h2 className="heading-xs text-primary">{sponsor.displayName}</h2>
-						<span className="rounded-full border border-medium px-2 py-0.5 label-xs text-secondary uppercase">
-							{sponsor.entityType}
-						</span>
+						<Tag>{sponsor.entityType}</Tag>
 					</div>
 					<Link href={`/${sponsor.entityType}/${sponsor.entitySlug}`} className="body-sm text-link hover:underline">
 						/{sponsor.entityType}/{sponsor.entitySlug}
@@ -183,13 +183,12 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								>
 									{report.title}
 								</Link>
-								<p className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
-									<span>{report.section ? ARTICLE_SECTION_LABELS[report.section] : 'No section'}</span>
-									<span aria-hidden>·</span>
+								<MetaLine>
+									{report.section ? ARTICLE_SECTION_LABELS[report.section] : 'No section'}
 									<span className={report.lifecycleStatus === 'published' ? 'text-success' : 'text-warning'}>
 										{report.lifecycleStatus}
 									</span>
-								</p>
+								</MetaLine>
 							</div>
 							<ReportRelationControl
 								report={report}

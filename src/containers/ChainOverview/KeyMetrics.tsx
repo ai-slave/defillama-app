@@ -1,6 +1,5 @@
 import { Fragment, useRef, type ReactNode } from 'react'
 import { KeyMetricsPngExportButton } from '~/components/KeyMetricsPngExport/KeyMetricsPngExportButton'
-import { BasicLink } from '~/components/Link'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
@@ -12,6 +11,7 @@ import {
 	MetricSection as ChainMetricSection,
 	SubMetricRow as ChainSubMetricRow
 } from '~/ui/MetricPrimitives'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -215,9 +215,9 @@ function NativeStablecoins({ chainStablecoins }: { chainStablecoins: IChainOverv
 			value={
 				<>
 					{chainStablecoins.map((coin) => (
-						<BasicLink key={`native-stablecoin-${coin.name}`} href={coin.url} className="hover:underline">
+						<TextLink key={`native-stablecoin-${coin.name}`} href={coin.url} size="inherit">
 							{coin.symbol ?? coin.name}
-						</BasicLink>
+						</TextLink>
 					))}
 				</>
 			}
@@ -456,9 +456,9 @@ function ChainTokenInfo({ chainTokenInfo }: { chainTokenInfo: IChainOverviewData
 
 	const tokenLabel = (text: string) =>
 		chainTokenInfo.tokenPageRoute ? (
-			<BasicLink href={chainTokenInfo.tokenPageRoute} className="text-link hover:underline">
+			<TextLink href={chainTokenInfo.tokenPageRoute} size="inherit">
 				{text}
-			</BasicLink>
+			</TextLink>
 		) : (
 			text
 		)

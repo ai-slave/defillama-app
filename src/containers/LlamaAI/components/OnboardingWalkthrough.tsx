@@ -6,6 +6,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { getExperimentVariant } from '~/utils/analytics/experiment'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { ChatLandingProps } from './ChatLanding'
@@ -136,13 +137,12 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 	}
 }
 
-// Spotlight hues as theme colors: the glow, hairline, chip, and icon all derive from one variable.
+// Spotlight hues as theme colors: the glow and hairline derive from one variable, and the IconTile takes the same tone.
 const TONE_VAR = {
 	brand: 'var(--color-brand)',
 	warning: 'var(--color-warning)',
 	success: 'var(--color-success)'
 } as const
-const TONE_TEXT = { brand: 'text-link', warning: 'text-warning', success: 'text-success' } as const
 
 interface OnboardingWalkthroughProps {
 	isAlertsModalOpen: boolean
@@ -392,6 +392,7 @@ export function OnboardingWalkthrough({
 							</div>
 
 							<div className="mb-5 flex flex-wrap justify-center gap-1.5">
+								{/* The welcome's capability list keeps LlamaAI's gold (llamaai.css), so these are not Tags. */}
 								{CAPABILITY_BADGES.map(([icon, label]) => (
 									<span
 										key={label}
@@ -482,12 +483,7 @@ export function OnboardingWalkthrough({
 									/>
 									<div className="p-4">
 										<div className="flex items-start gap-3">
-											<div
-												className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${TONE_TEXT[config.tone]}`}
-												style={{ backgroundColor: `color-mix(in srgb, ${TONE_VAR[config.tone]} 10%, transparent)` }}
-											>
-												<Icon name={config.icon} className="size-3.5" />
-											</div>
+											<IconTile icon={config.icon} tone={config.tone} size="sm" />
 											<div className="flex flex-col gap-1">
 												<Ariakit.PopoverHeading className="label-md text-primary">
 													{config.title}

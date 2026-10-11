@@ -11,6 +11,7 @@ import {
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
@@ -171,9 +172,9 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 								<div className={cell}>{report.repo}</div>
 								<div className={cell}>{report.version}</div>
 								<div className={cell}>
-									<a href={report.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+									<TextLink href={report.url} target="_blank" rel="noopener noreferrer">
 										{report.file}
-									</a>
+									</TextLink>
 								</div>
 								<div className={cell}>{report.firm}</div>
 							</Fragment>

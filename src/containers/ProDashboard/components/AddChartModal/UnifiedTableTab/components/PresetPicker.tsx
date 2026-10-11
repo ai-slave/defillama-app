@@ -1,6 +1,7 @@
 import type { UnifiedTablePreset } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
 import { UNIFIED_TABLE_PRESETS } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
 import { OptionTile } from '~/ui/OptionTile'
+import { StatusBadge } from '~/ui/StatusBadge'
 
 export function PresetPicker({
 	activePresetId,
@@ -31,7 +32,7 @@ export function PresetPicker({
 					>
 						<span className="title-md text-primary">{preset.name}</span>
 						{preset.description ? <span className="body-sm text-secondary">{preset.description}</span> : null}
-						{isActive ? <span className="rounded-sm bg-brand-tint px-2 py-0.5 label-sm text-link">Active</span> : null}
+						{isActive ? <StatusBadge status="neutral">Active</StatusBadge> : null}
 					</OptionTile>
 				)
 			})}

@@ -3,8 +3,10 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -161,9 +163,7 @@ export function ProjectFilesPanel({
 								<span className="min-w-0 flex-1 truncate mono-sm">
 									{owner}/{repo}
 								</span>
-								<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary">
-									{branch}
-								</span>
+								<Tag className="shrink-0">{branch}</Tag>
 								<Tooltip
 									content="Disconnect"
 									render={
@@ -234,9 +234,7 @@ export function ProjectFilesPanel({
 										{file.path}
 									</span>
 									{source ? (
-										<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 body-sm text-secondary">
-											{source.adapter_type === 'github' ? 'GitHub' : 'Uploaded'}
-										</span>
+										<Tag className="shrink-0">{source.adapter_type === 'github' ? 'GitHub' : 'Uploaded'}</Tag>
 									) : null}
 									<span className="shrink-0 text-tertiary tabular-nums">{formatProjectBytes(file.size)}</span>
 									{source?.adapter_type === 'blob' ? (
@@ -279,12 +277,12 @@ export function ProjectFilesPanel({
 
 			<div className="flex flex-col gap-1">
 				<div className="flex items-baseline justify-between gap-2 body-sm text-secondary">
-					<span>
+					<MetaLine>
 						{projectBytesLimit
 							? `${formatProjectBytes(projectBytesUsed)} / ${formatProjectBytes(projectBytesLimit)} used`
 							: `${formatProjectBytes(projectBytesUsed)} used`}
-						{projectFileLimit ? ` · ${projectFileCount} / ${projectFileLimit} files` : ` · ${projectFileCount} files`}
-					</span>
+						{projectFileLimit ? `${projectFileCount} / ${projectFileLimit} files` : `${projectFileCount} files`}
+					</MetaLine>
 					{tier === 'free' ? <span className="shrink-0 text-warning">Free tier</span> : null}
 				</div>
 				{projectBytesLimit ? (

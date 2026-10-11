@@ -1,3 +1,4 @@
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent } from '~/utils/numberFormat'
 
@@ -62,10 +63,10 @@ function ptPricingMeta(pt: string): { label: string; note?: string } {
 export function PtPricingChip({ pricing }: { pricing: string }) {
 	const { label, note } = ptPricingMeta(pricing)
 	const chip = (
-		<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-medium bg-surface px-1.5 py-0.5 label-xs text-secondary">
+		<Tag className="shrink-0 gap-1">
 			<span className="text-tertiary">PT</span>
 			{label}
-		</span>
+		</Tag>
 	)
 	return note ? (
 		<Tooltip content={note} className="shrink-0">

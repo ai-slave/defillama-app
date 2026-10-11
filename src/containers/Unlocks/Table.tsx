@@ -10,7 +10,6 @@ import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
-import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
@@ -30,6 +29,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -401,12 +401,9 @@ const emissionsColumns = columnHelper.columns([
 							fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
 							alt={`Logo of ${protocolName}`}
 						/>
-						<BasicLink
-							href={`/unlocks/${slug(protocolName)}`}
-							className="min-w-0 truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/unlocks/${slug(protocolName)}`} truncate>
 							{protocolName}
-						</BasicLink>
+						</TextLink>
 					</span>
 				</div>
 			)

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { TextLink } from '~/ui/TextLink'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercentChange } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../api.types'
@@ -55,9 +55,9 @@ export function RWAHighlights({
 					<ul className="flex flex-col gap-1">
 						{newListings.map(({ asset, firstSeen }) => (
 							<li key={asset.id} className="flex items-baseline justify-between gap-2">
-								<BasicLink href={asset.detailHref} className="truncate label-md text-link hover:underline">
+								<TextLink href={asset.detailHref} truncate>
 									{asset.assetName}
-								</BasicLink>
+								</TextLink>
 								<span className="shrink-0 label-sm text-secondary">
 									{formatDate(firstSeen, { input: 'milliseconds' }) ?? '-'}
 								</span>
@@ -106,9 +106,9 @@ function MoverList({ title, movers }: { title: string; movers: Array<RWAMover> }
 				<ul className="flex flex-col gap-1">
 					{movers.map(({ asset, flow, change7d }) => (
 						<li key={asset.id} className="flex items-baseline justify-between gap-2">
-							<BasicLink href={asset.detailHref} className="truncate label-md text-link hover:underline">
+							<TextLink href={asset.detailHref} truncate>
 								{asset.assetName}
-							</BasicLink>
+							</TextLink>
 							<span className="flex shrink-0 items-baseline gap-2">
 								<span className="label-md">
 									<Change value={flow} unit="usd" />

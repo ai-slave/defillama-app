@@ -1,5 +1,5 @@
-import { BasicLink } from '~/components/Link'
 import { Tag } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from '../../grouping'
 import { perpsDefinitions } from '../../Perps/definitions'
@@ -46,9 +46,9 @@ function createPlatformColumn(kind: 'spot' | 'perps') {
 						{name === UNKNOWN_PLATFORM ? (
 							<span className="truncate">{name}</span>
 						) : (
-							<BasicLink href={getRwaPlatformHref(name, kind)} className="truncate text-link hover:underline">
+							<TextLink href={getRwaPlatformHref(name, kind)} truncate>
 								{name}
-							</BasicLink>
+							</TextLink>
 						)}
 						{venueType ? <Tag className="shrink-0">{venueType}</Tag> : null}
 					</span>

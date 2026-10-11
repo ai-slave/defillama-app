@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo, useState } from 'react'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useAppMetadata } from '../AppMetadataContext'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { IncomeStatementConfig } from '../types'
-import { ProMeta } from '../ui'
 import { getItemIconUrl } from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { EntityIcon } from './EntityIcon'
@@ -72,7 +72,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 				title={`${displayName} Income statement`}
 				icon={<EntityIcon src={iconUrl} name={displayName} />}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[view === 'table' ? 'Table' : 'Sankey']} />}
+				subtitle={<MetaLine>{view === 'table' ? 'Table' : 'Sankey'}</MetaLine>}
 				viewerControls={
 					<SegmentedControl<ViewMode>
 						variant="default"

@@ -5,6 +5,7 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -14,10 +15,7 @@ import type { ExchangeProfileModel } from './models'
 function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: string; count?: number }) {
 	return (
 		<div className="flex items-center gap-2">
-			{/* An icon chip on the brand tint, not a selected state. */}
-			<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-				<Icon name={icon} className="size-4" />
-			</span>
+			<IconTile icon={icon} tone="brand" size="sm" />
 			<h2 className="label-lg">{title}</h2>
 			{count != null ? <Tag>{count}</Tag> : null}
 		</div>

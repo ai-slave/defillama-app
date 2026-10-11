@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { Card } from '~/ui/Card'
+import { MetaLine } from '~/ui/MetaLine'
 
 export function GenericCard({ article }: { article: ArticleDocument }) {
 	const cover = article.coverImage?.url || null
@@ -21,20 +22,14 @@ export function GenericCard({ article }: { article: ArticleDocument }) {
 			{article.excerpt || article.subtitle ? (
 				<p className="line-clamp-3 body-md text-secondary">{article.excerpt || article.subtitle}</p>
 			) : null}
-			<span className="flex items-center gap-2 body-sm text-tertiary">
+			<MetaLine>
 				{article.brandByline ? (
-					<>
-						<span className="font-medium text-secondary">DefiLlama Research</span>
-						<span aria-hidden>·</span>
-					</>
+					<span className="font-medium text-secondary">DefiLlama Research</span>
 				) : article.authorProfile?.displayName ? (
-					<>
-						<span className="font-medium text-secondary">{article.authorProfile.displayName}</span>
-						<span aria-hidden>·</span>
-					</>
+					<span className="font-medium text-secondary">{article.authorProfile.displayName}</span>
 				) : null}
-				<span>{formatDate(article.displayDate ?? article.publishedAt)}</span>
-			</span>
+				{formatDate(article.displayDate ?? article.publishedAt)}
+			</MetaLine>
 		</Card>
 	)
 }

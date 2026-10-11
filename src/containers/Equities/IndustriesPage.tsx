@@ -1,5 +1,4 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -12,10 +11,12 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { childColors } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildIndustrySummary,
@@ -96,12 +97,11 @@ const industryColumns = industryColumnHelper.columns([
 			<div className="flex gap-2">
 				<RowNumber rowId={row.id} />
 				<div>
-					<Link
+					<TextLink
 						href={`/equities/sectors/${row.original.sectorSlug}?industry=${encodeURIComponent(row.original.industrySlug)}`}
-						className="label-md text-link hover:underline"
 					>
 						{getValue()}
-					</Link>
+					</TextLink>
 					<p className="body-sm text-tertiary">{row.original.sector}</p>
 				</div>
 			</div>
@@ -434,9 +434,10 @@ function IndustriesReadyPage({
 				<PanelHeader>
 					<div className="mr-auto">
 						<PanelTitle>All industries</PanelTitle>
-						<p className="body-sm text-tertiary">
-							{visibleRows.length} shown · {hiddenRows.length} hidden by the tail filter
-						</p>
+						<MetaLine>
+							{`${visibleRows.length} shown`}
+							{`${hiddenRows.length} hidden by the tail filter`}
+						</MetaLine>
 					</div>
 					<Button
 						type="button"

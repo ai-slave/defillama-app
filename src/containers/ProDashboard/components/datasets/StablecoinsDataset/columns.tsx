@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import type { tableFeaturesConfig } from './index'
@@ -22,10 +22,10 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 			return (
 				<span className="relative flex items-center gap-2 pl-6">
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
-					<BasicLink href={`/stablecoin/${row.original.slug}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/stablecoin/${row.original.slug}`} truncate>
 						{name}
 						{symbol && symbol !== '-' ? <span className="text-tertiary"> ({symbol})</span> : null}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

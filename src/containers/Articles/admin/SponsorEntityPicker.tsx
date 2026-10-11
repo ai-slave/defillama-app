@@ -9,6 +9,7 @@ import { keepFocus } from '~/ui/focus'
 import { ListLoading } from '~/ui/NoResults'
 import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
+import { Tag } from '~/ui/Tag'
 
 const ALLOWED_TYPES = new Set<ResearchSponsorEntityType>(['protocol', 'chain', 'cex'])
 
@@ -87,9 +88,7 @@ export function SponsorEntityPicker({
 								<span className="truncate label-md text-primary">{item.label}</span>
 								<span className="truncate body-sm text-tertiary">{item.route}</span>
 							</span>
-							<span className="rounded-full border border-medium px-2 py-0.5 label-xs text-secondary uppercase">
-								{item.entityType}
-							</span>
+							<Tag>{item.entityType}</Tag>
 						</PopoverRow>
 					))}
 				</ComboboxSurface>

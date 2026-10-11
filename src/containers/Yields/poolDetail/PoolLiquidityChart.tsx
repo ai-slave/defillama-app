@@ -19,6 +19,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DividedGrid } from '~/ui/DividedGrid'
+import { MetaLine } from '~/ui/MetaLine'
 import { MetricSeriesToggle } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -421,25 +422,13 @@ function LiquidityReadout({
 					<span className="body-sm text-secondary">
 						{formatPercent(cleanShare, { input: 'percent', maximumFractionDigits: 0 })}
 					</span>
-					<span className="flex basis-full flex-wrap gap-x-1.5 body-sm">
-						{failures.length > 0 ? (
-							<>
-								{partialDays > 0 ? (
-									<span className="text-warning">{formatNumber(partialDays)} days partial exit only</span>
-								) : null}
-								{partialDays > 0 && revertedDays > 0 ? (
-									<span aria-hidden className="text-secondary">
-										·
-									</span>
-								) : null}
-								{revertedDays > 0 ? (
-									<span className="text-error">{formatNumber(revertedDays)} days reverted</span>
-								) : null}
-							</>
-						) : (
-							<span className="text-success">No interruptions</span>
-						)}
-					</span>
+					<MetaLine className="basis-full">
+						{failures.length === 0 ? <span className="text-success">No interruptions</span> : null}
+						{partialDays > 0 ? (
+							<span className="text-warning">{formatNumber(partialDays)} days partial exit only</span>
+						) : null}
+						{revertedDays > 0 ? <span className="text-error">{formatNumber(revertedDays)} days reverted</span> : null}
+					</MetaLine>
 				</ReadoutCell>
 			) : null}
 		</DividedGrid>

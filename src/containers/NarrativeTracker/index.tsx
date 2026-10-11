@@ -4,7 +4,6 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -20,6 +19,7 @@ import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import {
@@ -373,13 +373,9 @@ const CoinPerformanceColumn = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<BasicLink
-						href={`https://www.coingecko.com/en/coins/${row.original.id}`}
-						target="_blank"
-						className="truncate label-md text-link hover:underline"
-					>
+					<TextLink href={`https://www.coingecko.com/en/coins/${row.original.id}`} target="_blank" truncate>
 						{getValue()}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},
@@ -436,20 +432,13 @@ const CategoryPerformanceColumn = columnHelper.columns([
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					{['bitcoin', 'ethereum', 'solana'].includes(row.original.id) ? (
-						<BasicLink
-							href={`https://www.coingecko.com/en/coins/${row.original.id}`}
-							target="_blank"
-							className="truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`https://www.coingecko.com/en/coins/${row.original.id}`} target="_blank" truncate>
 							{getValue()}
-						</BasicLink>
+						</TextLink>
 					) : (
-						<BasicLink
-							href={`/narrative-tracker/${row.original.id}`}
-							className="truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/narrative-tracker/${row.original.id}`} truncate>
 							{getValue()}
-						</BasicLink>
+						</TextLink>
 					)}
 				</span>
 			)

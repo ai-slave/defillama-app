@@ -1,5 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
+import { Tag } from '~/ui/Tag'
 import { asRoleEntity, humanizeDuration, roleEntityLabel } from '../format'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'
@@ -26,10 +28,10 @@ function EntityBadge({ entity }: { entity: RoleEntity }) {
 		)
 	}
 	return (
-		<span className="inline-flex items-center gap-1 rounded-full border border-medium bg-surface px-1.5 py-0.5 body-xs text-secondary">
+		<Tag className="gap-1">
 			<Icon name={ENTITY_ICON[entity.kind] ?? 'help-circle'} className="size-3" aria-hidden />
 			{roleEntityLabel(entity)}
-		</span>
+		</Tag>
 	)
 }
 
@@ -116,8 +118,8 @@ function OperatorLine({
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
-// "1 multisig · 2 contracts · 1 EOA" — the collapsed line's make-up summary.
-function entityBreakdown(entities: Array<RoleEntity>): string {
+// The collapsed line's make-up (1 multisig, 2 contracts, 1 EOA), one MetaLine item each.
+function entityBreakdown(entities: Array<RoleEntity>): Array<string> {
 	const counts: Record<string, number> = {}
 	for (const e of entities) counts[e.kind] = (counts[e.kind] ?? 0) + 1
 	const parts: Array<string> = []
@@ -125,7 +127,7 @@ function entityBreakdown(entities: Array<RoleEntity>): string {
 	if (counts.contract) parts.push(plural(counts.contract, 'contract'))
 	if (counts.eoa) parts.push(plural(counts.eoa, 'EOA'))
 	if (counts.unknown) parts.push(`${counts.unknown} unverified`)
-	return parts.join(' · ')
+	return parts
 }
 
 // A many-holder role (allocators, sentinels) collapsed to one counted line.
@@ -150,9 +152,10 @@ function RoleListDisclosure({
 		<details className="group py-1">
 			<summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-1">
 				<span className="w-20 shrink-0 label-md text-primary">{roleName}</span>
-				<span className="body-sm text-secondary">
-					{entities.length} · {entityBreakdown(entities)}
-				</span>
+				<MetaLine>
+					{entities.length}
+					{entityBreakdown(entities)}
+				</MetaLine>
 				<span className="ml-auto flex items-center gap-2">
 					{/* same quiet grammar as the legend: tone dot + muted text, never alarm ink */}
 					{marker ? (

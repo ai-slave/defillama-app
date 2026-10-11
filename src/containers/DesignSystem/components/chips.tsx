@@ -2,11 +2,14 @@ import { type ReactNode, useState } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { CountBadge } from '~/ui/CountBadge'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
+import { MetaLine } from '~/ui/MetaLine'
 import { MetricChip, MetricOptionChip, MetricSeriesToggle } from '~/ui/MetricChip'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { type Status, StatusBadge, StatusDot } from '~/ui/StatusBadge'
+import { TabLink } from '~/ui/Tabs'
 import { Tag, TagButton, TagLink } from '~/ui/Tag'
 import { Cell, Example, type Family, type KnobValues, NotApplicable, REST_HOVER_FOCUS, Row, StateGrid } from '../shared'
 
@@ -62,6 +65,79 @@ const OPTION_CHIPS: ReadonlyArray<[string, (active?: boolean) => ReactNode]> = [
 	['MetricSeriesToggle', (active) => <MetricSeriesToggle data-active={active}>Volume</MetricSeriesToggle>]
 ]
 
+const OPTION_LABELS = ['TVL', 'Fees', 'Volume', 'Revenue'] as const
+
+// Picked is the demo's own state: the caller keeps data-active and aria-pressed in step.
+function OptionChipsDemo({ values }: { values: KnobValues }) {
+	const [picked, setPicked] = useState<ReadonlyArray<string>>(['Fees'])
+	return (
+		<Row>
+			{OPTION_LABELS.map((label) => {
+				const on = picked.includes(label)
+				return (
+					<MetricOptionChip
+						key={label}
+						size={values.size as 'sm' | 'md'}
+						data-active={on}
+						aria-pressed={on}
+						onClick={() => setPicked(on ? picked.filter((item) => item !== label) : [...picked, label])}
+					>
+						{label}
+					</MetricOptionChip>
+				)
+			})}
+		</Row>
+	)
+}
+
+function SeriesTogglesDemo() {
+	const [shown, setShown] = useState<ReadonlyArray<string>>(['Volume', 'Fees'])
+	return (
+		<Row>
+			{['Volume', 'Fees', 'Revenue'].map((label) => {
+				const on = shown.includes(label)
+				return (
+					<MetricSeriesToggle
+						key={label}
+						data-active={on}
+						aria-pressed={on}
+						onClick={() => setShown(on ? shown.filter((item) => item !== label) : [...shown, label])}
+					>
+						{label}
+					</MetricSeriesToggle>
+				)
+			})}
+		</Row>
+	)
+}
+
+function StatusBadgeDemo({ values }: { values: KnobValues }) {
+	const status = values.status as Status
+	const label = STATUSES.find(([key]) => key === status)[1]
+	if (values.explains === 'tooltip')
+		return (
+			<StatusBadge status={status} tooltip="Two of five venues report">
+				{label}
+			</StatusBadge>
+		)
+	if (values.explains === 'hovercard')
+		return (
+			<Hovercard
+				render={<StatusBadge status={status} render={<button type="button" />} />}
+				width="md"
+				content={
+					<span className="flex flex-col gap-1">
+						<span className="label-md">Venue coverage</span>
+						<span className="text-secondary">Two of five venues report volume for this market.</span>
+					</span>
+				}
+			>
+				{label}
+			</Hovercard>
+		)
+	return <StatusBadge status={status}>{label}</StatusBadge>
+}
+
 const STATUS_TEXT: Record<Status, string> = {
 	good: 'All changes saved',
 	caution: 'Unsaved changes',
@@ -107,7 +183,7 @@ export const chips: Family = {
 					<Example
 						wide
 						name="Interaction"
-						note="MetricChip has no selected state; the option chips show selected as data-active."
+						note="The three chart chips side by side. MetricChip has no selected state; the option chip and the series toggle show selected as data-active."
 					>
 						<StateGrid
 							columns={['Rest', 'Hover', 'Focus', 'Selected']}
@@ -148,13 +224,70 @@ export const chips: Family = {
 			)
 		},
 		{
+			name: 'MetricOptionChip',
+			source: 'src/ui/MetricChip.tsx',
+			knobs: [{ name: 'size', values: ['sm', 'md'] }],
+			note: 'Click a chip or press Space on it to pick it; picked is the demo’s own state (data-active with aria-pressed). sm sits in dialog chip rows, md beside md controls.',
+			render: (values) => <OptionChipsDemo values={values} />
+		},
+		{
+			name: 'MetricSeriesToggle',
+			source: 'src/ui/MetricChip.tsx',
+			note: 'Click a series or press Space on it to turn it off and on. It keeps the 32px chart-toolbar height and has no ×.',
+			render: () => <SeriesTogglesDemo />
+		},
+		{
 			name: 'PromoBadge',
 			source: 'src/ui/PromoBadge.tsx',
-			knobs: [{ name: 'icon', values: ['none', 'sparkles', 'file-lock-2'], default: 'none' }],
+			knobs: [
+				{ name: 'icon', values: ['none', 'sparkles', 'file-lock-2'], default: 'none' },
+				{ name: 'href', boolean: true, prop: false }
+			],
+			note: 'With href the badge is the link itself: Tab to it, and it takes the hover wash.',
 			render: (values) => (
-				<PromoBadge icon={values.icon === 'none' ? undefined : (values.icon as 'sparkles' | 'file-lock-2')}>
+				<PromoBadge
+					icon={values.icon === 'none' ? undefined : (values.icon as 'sparkles' | 'file-lock-2')}
+					href={values.href ? '/subscription' : undefined}
+				>
 					Try free
 				</PromoBadge>
+			),
+			states: () => (
+				<>
+					<Example name="Link" prop="href">
+						<StateGrid
+							columns={['Rest', 'Hover', 'Focus']}
+							rows={[
+								[
+									'href',
+									<>
+										{REST_HOVER_FOCUS.map((force) => (
+											<Cell key={force ?? 'rest'} force={force}>
+												<PromoBadge href="/subscription" icon="sparkles">
+													New
+												</PromoBadge>
+											</Cell>
+										))}
+									</>
+								]
+							]}
+						/>
+					</Example>
+					<Example name="Inside a control" note="16px tall, so a badge in a button or a tab keeps its row height.">
+						<Row>
+							<Button size="md">
+								Export
+								<PromoBadge icon="file-lock-2">Pro</PromoBadge>
+							</Button>
+							<TabLink href="/yields">
+								<span className="inline-flex items-center gap-1.5">
+									LlamaAI
+									<PromoBadge>New</PromoBadge>
+								</span>
+							</TabLink>
+						</Row>
+					</Example>
+				</>
 			)
 		},
 		{
@@ -162,16 +295,10 @@ export const chips: Family = {
 			source: 'src/ui/StatusBadge.tsx',
 			knobs: [
 				{ name: 'status', values: ['good', 'caution', 'bad', 'neutral'] },
-				{ name: 'tooltip', boolean: true, prop: false }
+				{ name: 'explains', values: ['none', 'tooltip', 'hovercard'], default: 'none', prop: false }
 			],
-			render: (values) => {
-				const status = values.status as Status
-				return (
-					<StatusBadge status={status} tooltip={values.tooltip ? 'Two of five venues report' : undefined}>
-						{STATUSES.find(([key]) => key === status)[1]}
-					</StatusBadge>
-				)
-			},
+			note: 'With a tooltip the badge is a tab stop that opens it on hover or focus. As a hovercard anchor it renders a button (render): Enter or Space opens the card and moves focus into it, Escape returns focus to the badge.',
+			render: (values) => <StatusBadgeDemo values={values} />,
 			states: () => (
 				<Example name="Tooltip focus" prop="tooltip" note="The label is focusable; the last badge is forced focused.">
 					<Row>
@@ -203,10 +330,17 @@ export const chips: Family = {
 		{
 			name: 'CountBadge',
 			source: 'src/ui/CountBadge.tsx',
+			note: 'The count of values a trigger holds; it widens with two digits and keeps its height.',
 			render: () => (
-				<span className="flex items-center gap-1 label-sm text-primary">
-					Chains <CountBadge count={3} />
-				</span>
+				<Row>
+					<span className="flex items-center gap-1 label-sm text-primary">
+						Chains <CountBadge count={3} />
+					</span>
+					<Button size="md">
+						Filters
+						<CountBadge count={12} />
+					</Button>
+				</Row>
 			)
 		},
 		{
@@ -230,9 +364,47 @@ export const chips: Family = {
 			)
 		},
 		{
+			name: 'MetaLine',
+			source: 'src/ui/MetaLine.tsx',
+			render: () => <MetaLine>{['9 cards', '52 views', 'Updated 4d ago']}</MetaLine>,
+			states: () => (
+				<>
+					<Example
+						name="Empty items"
+						prop="children"
+						note="The middle item is null (no author): it drops out with its dot, so the condition stays inline."
+					>
+						<MetaLine>9 cards{null}Updated 4d ago</MetaLine>
+					</Example>
+					<Example
+						name="An item with weight"
+						note="A status brings its own element and color; the line keeps the size."
+					>
+						<MetaLine>
+							<span className="flex items-center gap-1.5 text-secondary">
+								<StatusDot status="good" />
+								Published
+							</span>
+							{['3 charts', 'Updated 4d ago']}
+						</MetaLine>
+					</Example>
+				</>
+			)
+		},
+		{
 			name: 'Tag',
 			source: 'src/ui/Tag.tsx',
-			render: () => <Tag>Lending</Tag>
+			note: 'Read-only: no hover, no tab stop. A set of values in a field is a row of tags.',
+			render: () => (
+				<dl className="flex flex-col gap-1">
+					<dt className="label-sm text-secondary">Reward tokens</dt>
+					<dd className="flex flex-wrap gap-1.5">
+						<Tag>AAVE</Tag>
+						<Tag>stkAAVE</Tag>
+						<Tag>GHO</Tag>
+					</dd>
+				</dl>
+			)
 		},
 		{
 			name: 'TagButton',

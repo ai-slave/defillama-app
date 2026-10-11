@@ -20,6 +20,7 @@
 | Link Telegram or Slack                   | `useIntegrationLink` / `useSlackIntegrationLink`; components read derived state, never poll  | `components/SlackIntegrationRow.tsx`        |
 | Show status in the thread                | `ChatStatusLine`                                                                             | `components/status/ChatStatusLine.tsx`      |
 | Show state that blocks the next prompt   | `ComposerTray`; the composer box holds the draft only                                        | failed prompt, full queue, context limit    |
+| Show a tip or prompt under the composer  | `ComposerTip`: one strip, one action and Dismiss; never a hand-built notice row              | tips, notification prompt, low balance      |
 | Draw the box around a prompt             | `ComposerFrame` (`row` or `stack`; `gold` on the /ai landing), never a hand-built border     | `components/input/ComposerFrame.tsx`        |
 | Pick a color                             | A `semantics.css` token; `--ai-*` only for the exceptions in `src/styles/themes/llamaai.css` | gold welcome action                         |
 | Draw a gold LlamaAI call to action       | `GoldCta` (Button sizes, no lift); never a hand-built gold gradient                          | `components/GoldCta.tsx`                    |

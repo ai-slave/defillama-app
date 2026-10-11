@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { TextLink } from '~/ui/TextLink'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
 import { CryptoRailsValue, cryptoRailSummary } from './CryptoRailsValue'
@@ -45,7 +46,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 						/>
 						<span className="min-w-0 flex-1">
 							{destination ? (
-								<a
+								<TextLink
 									href={destination.url}
 									target="_blank"
 									rel="noopener noreferrer"
@@ -54,10 +55,11 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 									data-umami-event-url={destination.url}
 									data-umami-event-type={destination.kind === 'referral' ? 'ref' : 'website'}
 									data-umami-event-placement="name"
-									className="block truncate label-md text-link hover:underline"
+									truncate
+									className="block"
 								>
 									{venue.name}
-								</a>
+								</TextLink>
 							) : (
 								<span className="block truncate label-md">{venue.name}</span>
 							)}

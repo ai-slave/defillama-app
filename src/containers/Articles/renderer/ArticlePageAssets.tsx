@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Change } from '~/ui/Change'
+import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Skeleton } from '~/ui/Skeleton'
@@ -119,9 +120,7 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 			>
 				<span className="flex items-center gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
 					Assets on this page
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs tracking-normal text-tertiary">
-						{assets.length}
-					</span>
+					<CountBadge count={assets.length} />
 				</span>
 				<Icon
 					name="chevron-down"

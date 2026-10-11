@@ -1,10 +1,10 @@
 import { createColumnHelper, type Row } from '@tanstack/react-table'
-import Link from 'next/link'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import type { tableFeaturesConfig } from './index'
 import type { RewardLifecycle, RewardProgram } from './types'
 
@@ -40,14 +40,13 @@ export const columns = helper.columns([
 				<Logo src={row.original.logo} size={28} />
 				<div className="flex min-w-0 flex-col gap-0.5">
 					{row.original.protocolHref ? (
-						<Link
+						<TextLink
 							href={row.original.protocolHref}
-							className="label-md text-link hover:underline"
 							data-reward-protocol-id={row.original.programId}
 							data-reward-project-path={row.original.projectPath ?? undefined}
 						>
 							{row.original.protocol}
-						</Link>
+						</TextLink>
 					) : (
 						<span className="label-md text-primary">{row.original.protocol}</span>
 					)}

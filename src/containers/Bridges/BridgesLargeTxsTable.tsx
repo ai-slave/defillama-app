@@ -11,13 +11,13 @@ import {
 import type { Ref } from 'react'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
-import { BasicLink } from '~/components/Link'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatDateTime } from '~/utils/dateFormat'
@@ -88,9 +88,9 @@ export function BridgesLargeTxsTable({
 						const value = getValue()
 						const linkValue = slug(value)
 						return (
-							<BasicLink href={`/bridge/${linkValue}`} className="truncate label-md text-link hover:underline">
+							<TextLink href={`/bridge/${linkValue}`} truncate>
 								{value}
-							</BasicLink>
+							</TextLink>
 						)
 					},
 					meta: {

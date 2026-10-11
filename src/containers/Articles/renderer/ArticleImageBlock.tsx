@@ -1,3 +1,5 @@
+import { MetaLine } from '~/ui/MetaLine'
+
 export type ArticleImageBlockAttrs = {
 	src?: string | null
 	alt?: string | null
@@ -20,7 +22,6 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 	const headline = (attrs?.headline ?? '').trim()
 	const href = (attrs?.href ?? '').trim()
 	const aspectStyle = attrs?.width && attrs?.height ? { aspectRatio: `${attrs.width} / ${attrs.height}` } : undefined
-	const metaParts = [credit ? `Credit: ${credit}` : '', copyright ? `© ${copyright}` : ''].filter(Boolean)
 
 	const imgEl = (
 		<img
@@ -33,7 +34,7 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 		/>
 	)
 
-	const hasMeta = headline || caption || metaParts.length > 0
+	const hasMeta = headline || caption || credit || copyright
 
 	return (
 		<figure className="not-prose mx-auto my-8" data-article-image>
@@ -48,7 +49,10 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 				<figcaption className="mt-2 grid gap-1 body-sm text-tertiary">
 					{headline ? <span className="font-medium text-secondary">{headline}</span> : null}
 					{caption ? <span>{caption}</span> : null}
-					{metaParts.length > 0 ? <span className="text-tertiary">{metaParts.join(' · ')}</span> : null}
+					<MetaLine>
+						{credit ? `Credit: ${credit}` : null}
+						{copyright ? `© ${copyright}` : null}
+					</MetaLine>
 				</figcaption>
 			) : null}
 		</figure>

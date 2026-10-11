@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { ChartToolbar } from '~/containers/Downloads/sql/chart/ChartToolbar'
 import { type ChartConfig as DownloadChartConfig, defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -11,6 +11,7 @@ import { Field } from '~/ui/Field'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
@@ -91,8 +92,6 @@ function CustomDataForm({
 	onPaneChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
-	const csvErrorId = `${useId()}-error`
-	const pasteId = useId()
 	// A CSV that does not parse says so as it is read; a missing one waits for Add. No parse error is '', not null.
 	const csvError = customData.error || submitError
 	// A fresh CSV preview replaces the stored rows, so those only decode while there is no preview.
@@ -198,10 +197,9 @@ function CustomDataForm({
 					)}
 				</Field>
 
-				{/* A file or a paste fills one CSV, so their error sits under both and the paste field takes it. */}
+				{/* A file or a paste fills one CSV, so the paste field's error, last in the column, answers for both. */}
 				{/* A CSV dropped anywhere in the column loads like a picked one, as the native file box allowed. */}
 				<div
-					data-invalid={csvError ? '' : undefined}
 					className="flex min-h-0 flex-1 flex-col gap-3"
 					onDragOver={(event) => {
 						if (event.dataTransfer.types.includes('Files')) event.preventDefault()
@@ -224,27 +222,18 @@ function CustomDataForm({
 						Upload CSV file
 					</FileButton>
 
-					<div className="flex min-h-0 flex-1 flex-col gap-1">
-						<label htmlFor={pasteId} className="label-sm text-secondary">
-							Or paste CSV
-						</label>
-						<Textarea
-							id={pasteId}
-							value={customData.csvText}
-							onChange={(event) => handleTextChange(event.target.value)}
-							placeholder={'date,value\n2026-01-01,10'}
-							aria-invalid={csvError ? true : undefined}
-							aria-describedby={csvError ? csvErrorId : undefined}
-							variant="code"
-							className="min-h-[160px] w-full flex-1 resize-none"
-						/>
-					</div>
-
-					{csvError ? (
-						<p id={csvErrorId} className="body-sm text-error">
-							{csvError}
-						</p>
-					) : null}
+					<Field label="Or paste CSV" error={csvError} className="min-h-0 flex-1">
+						{(control) => (
+							<Textarea
+								{...control}
+								value={customData.csvText}
+								onChange={(event) => handleTextChange(event.target.value)}
+								placeholder={'date,value\n2026-01-01,10'}
+								variant="code"
+								className="min-h-[160px] w-full flex-1 resize-none"
+							/>
+						)}
+					</Field>
 				</div>
 				{customData.sourceName ? (
 					<p className="truncate body-sm text-tertiary">Source: {customData.sourceName}</p>
@@ -267,9 +256,10 @@ function CustomDataForm({
 						options={DISPLAY_MODE_OPTIONS}
 					/>
 					{result ? (
-						<span className="body-sm text-tertiary">
-							{result.rows.length} {result.rows.length === 1 ? 'row' : 'rows'} · {result.columns.length} columns
-						</span>
+						<MetaLine>
+							{`${result.rows.length} ${result.rows.length === 1 ? 'row' : 'rows'}`}
+							{`${result.columns.length} columns`}
+						</MetaLine>
 					) : null}
 				</div>
 

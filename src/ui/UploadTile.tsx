@@ -1,12 +1,15 @@
 import * as Ariakit from '@ariakit/react'
-import type { ComponentPropsWithRef } from 'react'
+import type { ComponentPropsWithRef, ElementType } from 'react'
 import { Icon, type IIcon } from './Icon'
 import { LoadingSpinner } from './internal/Loaders'
+import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    UploadTile — the dashed drop target that picks a file (cover image, avatar,
    PDF, project files), and ImageReplaceTile, its filled twin that shows the
-   current image and reveals Replace on hover.
+   current image and reveals Replace on hover. DashedTile is the same dashed
+   edge on a tile that stands where the next card would: a grid's "Add card",
+   a shelf's "View all".
 
    UploadTile: dashed border-medium on bg-page, text-tertiary icon and label;
    hover and focus darken the border to border-strong and the text to
@@ -28,7 +31,16 @@ import { LoadingSpinner } from './internal/Loaders'
    Replace button and a menu item often open the same picker, and a menu
    item unmounts before its input reports the pick. These tiles are the
    visible control that opens it; a lone plain button is FileButton.
+
+   DashedTile: the dashed edge with a label-md text-secondary row (an icon
+   beside the label) and no fill of its own, so it shows whatever surface
+   holds it (the page, a panel), sized by the caller's
+   grid or rail (`className`: span, width, min height). A button by default;
+   `as={BasicLink}` with `href` when it opens a page.
 ---------------------------------------------------------------------------- */
+
+// The dashed edge both tiles share: a neutral control never hovers blue, so hover and focus darken it instead.
+const dashedEdgeStyles = tw`border border-dashed border-medium not-aria-disabled:hover:border-strong not-aria-disabled:hover:text-primary focus-visible:border-strong focus-visible:text-primary not-aria-disabled:active:bg-pressed-row`
 
 const SHAPE = {
 	wide: 'h-28 w-full rounded-lg',
@@ -66,7 +78,7 @@ export function UploadTile({
 			disabled={disabled || pending}
 			accessibleWhenDisabled
 			aria-busy={pending || undefined}
-			className={`flex flex-col items-center justify-center gap-1.5 border border-dashed border-medium bg-page p-3 text-center text-tertiary not-aria-disabled:hover:border-strong not-aria-disabled:hover:text-primary focus-visible:border-strong focus-visible:text-primary not-aria-disabled:active:bg-pressed-row aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled aria-invalid:border-error ${SHAPE[shape]} ${className ?? ''}`.trim()}
+			className={`flex flex-col items-center justify-center gap-1.5 bg-page p-3 text-center text-tertiary ${dashedEdgeStyles} aria-busy:cursor-progress aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:border-disabled aria-disabled:not-aria-busy:text-disabled aria-invalid:border-error ${SHAPE[shape]} ${className ?? ''}`.trim()}
 		>
 			{pending ? <LoadingSpinner size={14} /> : <Icon name={icon} className="size-5" />}
 			<span className="label-sm">{pending ? pendingLabel : label}</span>
@@ -99,5 +111,22 @@ export function ImageReplaceTile({
 				{pending ? pendingLabel : 'Replace'}
 			</span>
 		</Ariakit.Button>
+	)
+}
+
+type DashedTileProps<T extends ElementType> = {
+	as?: T
+	/** Layout placement only: grid span, width, min height. */
+	className?: string
+} & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
+
+export function DashedTile<T extends ElementType = 'button'>({ as, className, ...props }: DashedTileProps<T>) {
+	const Component = (as ?? 'button') as ElementType
+	return (
+		<Component
+			{...(as ? {} : { type: 'button' })}
+			className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg label-md text-secondary ${dashedEdgeStyles} ${className ?? ''}`.trim()}
+			{...props}
+		/>
 	)
 }

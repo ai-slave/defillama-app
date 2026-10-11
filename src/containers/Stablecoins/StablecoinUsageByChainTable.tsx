@@ -7,7 +7,6 @@ import {
 	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { BasicLink } from '~/components/Link'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
@@ -19,6 +18,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
@@ -73,12 +73,9 @@ const stablecoinsByChainColumns = columnHelper.columns([
 						<>
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={row.original.name} kind="chain" data-lgonly alt={`Logo of ${row.original.name}`} />
-							<BasicLink
-								href={`/stablecoins/${row.original.name}`}
-								className="truncate label-md text-link hover:underline"
-							>
+							<TextLink href={`/stablecoins/${row.original.name}`} truncate>
 								{getValue()}
-							</BasicLink>
+							</TextLink>
 						</>
 					)}
 				</span>
@@ -94,17 +91,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const value = getValue()
 			if (!value.name || value.name === '-' || value.name === 'not-found') return null
-			return (
-				<>
-					{value.link ? (
-						<BasicLink href={value.link} className="label-md text-link hover:underline">
-							{value.name}
-						</BasicLink>
-					) : (
-						<span>{value.name}</span>
-					)}
-				</>
-			)
+			return <>{value.link ? <TextLink href={value.link}>{value.name}</TextLink> : <span>{value.name}</span>}</>
 		},
 		meta: {
 			headerClassName: 'w-[240px]',

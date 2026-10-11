@@ -1,6 +1,6 @@
 import clsx from 'clsx'
-import { BasicLink } from '~/components/Link'
 import { Hovercard } from '~/ui/Hovercard'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import type { RWAOverviewDisplayRow } from '../../api.types'
 import { normalizeRwaAssetGroup } from '../../assetGroup'
@@ -34,9 +34,9 @@ function AssetGroupLink({ assetGroup, kind }: { assetGroup: string; kind: RWAOve
 	const href = getRwaAssetGroupHref(assetGroup, kind)
 	if (!href) return <span className="truncate">{assetGroup}</span>
 	return (
-		<BasicLink href={href} className="truncate text-link hover:underline">
+		<TextLink href={href} size="inherit" truncate>
 			{assetGroup}
-		</BasicLink>
+		</TextLink>
 	)
 }
 

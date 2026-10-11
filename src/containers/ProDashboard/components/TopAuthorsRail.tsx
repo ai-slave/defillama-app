@@ -5,12 +5,12 @@ import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { Skeleton } from '~/ui/Skeleton'
 import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
-import { ProMeta } from '../ui'
 import { DiscoveryShelfHeading } from './DiscoverySection'
 
 const RAIL_TITLE = 'Top Authors'
@@ -47,14 +47,11 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 				</div>
 			</div>
 			{author.bio ? <p className="line-clamp-2 body-sm text-secondary">{author.bio}</p> : null}
-			<ProMeta
-				className="mt-auto tabular-nums"
-				items={[
-					`${compact(entry.dashboardCount)} dashboards`,
-					`${compact(entry.totalViews)} views`,
-					`${compact(entry.totalLikes)} stars`
-				]}
-			/>
+			<MetaLine className="mt-auto tabular-nums">
+				{`${compact(entry.dashboardCount)} dashboards`}
+				{`${compact(entry.totalViews)} views`}
+				{`${compact(entry.totalLikes)} stars`}
+			</MetaLine>
 		</Card>
 	)
 }

@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import { useId, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
@@ -45,7 +46,6 @@ function FormActions() {
 
 function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 	const [draft, setDraft] = useState(alt)
-	const altId = useId()
 	const store = Ariakit.usePopoverContext()!
 	return (
 		<form
@@ -57,25 +57,24 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 				store.hide()
 			}}
 		>
-			<div className="grid gap-1.5">
-				<label htmlFor={altId} className="label-sm text-secondary">
-					Alt text
-				</label>
-				<Textarea
-					id={altId}
-					value={draft}
-					onChange={(event) => setDraft(event.target.value)}
-					rows={3}
-					placeholder="Describe the image for screen readers"
-					className="w-full resize-none"
-					onKeyDown={(event) => {
-						if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
-							event.preventDefault()
-							event.currentTarget.form?.requestSubmit()
-						}
-					}}
-				/>
-			</div>
+			<Field label="Alt text">
+				{(control) => (
+					<Textarea
+						{...control}
+						value={draft}
+						onChange={(event) => setDraft(event.target.value)}
+						rows={3}
+						placeholder="Describe the image for screen readers"
+						className="w-full resize-none"
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
+								event.preventDefault()
+								event.currentTarget.form?.requestSubmit()
+							}
+						}}
+					/>
+				)}
+			</Field>
 			<FormActions />
 		</form>
 	)
@@ -94,17 +93,19 @@ function LinkForm({ href, save }: { href: string; save: (href: string) => void }
 				store.hide()
 			}}
 		>
-			<label className="grid gap-1.5">
-				<span className="label-sm text-secondary">Image link</span>
-				<Input
-					type="text"
-					inputMode="url"
-					value={draft}
-					onChange={(event) => setDraft(event.target.value)}
-					placeholder="https://…"
-					className="w-full"
-				/>
-			</label>
+			<Field label="Image link">
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						inputMode="url"
+						value={draft}
+						onChange={(event) => setDraft(event.target.value)}
+						placeholder="https://…"
+						className="w-full"
+					/>
+				)}
+			</Field>
 			{href ? (
 				<Button
 					variant="secondary"
@@ -141,33 +142,39 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 				store.hide()
 			}}
 		>
-			<label className="grid gap-1.5">
-				<span className="label-sm text-secondary">Headline</span>
-				<Input
-					value={draft.headline}
-					onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
-					placeholder="Image title"
-					className="w-full"
-				/>
-			</label>
-			<label className="grid gap-1.5">
-				<span className="label-sm text-secondary">Credit</span>
-				<Input
-					value={draft.credit}
-					onChange={(event) => setDraft({ ...draft, credit: event.target.value })}
-					placeholder="Photographer or illustrator"
-					className="w-full"
-				/>
-			</label>
-			<label className="grid gap-1.5">
-				<span className="label-sm text-secondary">Copyright</span>
-				<Input
-					value={draft.copyright}
-					onChange={(event) => setDraft({ ...draft, copyright: event.target.value })}
-					placeholder="Rights holder"
-					className="w-full"
-				/>
-			</label>
+			<Field label="Headline">
+				{(control) => (
+					<Input
+						{...control}
+						value={draft.headline}
+						onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
+						placeholder="Image title"
+						className="w-full"
+					/>
+				)}
+			</Field>
+			<Field label="Credit">
+				{(control) => (
+					<Input
+						{...control}
+						value={draft.credit}
+						onChange={(event) => setDraft({ ...draft, credit: event.target.value })}
+						placeholder="Photographer or illustrator"
+						className="w-full"
+					/>
+				)}
+			</Field>
+			<Field label="Copyright">
+				{(control) => (
+					<Input
+						{...control}
+						value={draft.copyright}
+						onChange={(event) => setDraft({ ...draft, copyright: event.target.value })}
+						placeholder="Rights holder"
+						className="w-full"
+					/>
+				)}
+			</Field>
 			<FormActions />
 		</form>
 	)

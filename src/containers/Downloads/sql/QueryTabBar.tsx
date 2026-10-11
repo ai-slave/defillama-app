@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input } from '~/ui/Input'
+import { InlineRenameInput } from '~/ui/InlineTextField'
 import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
@@ -362,7 +362,15 @@ function TabPill({
 				) : null}
 				<span className={`min-w-0 flex-1 truncate ${isRenaming ? 'invisible' : ''}`}>{tab.title}</span>
 			</Tab>
-			{isRenaming ? <RenameInput initial={tab.title} onCommit={onFinishRename} onCancel={onCancelRename} /> : null}
+			{isRenaming ? (
+				<InlineRenameInput
+					initial={tab.title}
+					label={`Rename ${tab.title}`}
+					onCommit={onFinishRename}
+					onCancel={onCancelRename}
+					className="absolute inset-y-1 right-12 left-2"
+				/>
+			) : null}
 			<Ariakit.MenuButton
 				store={menuStore}
 				aria-label={`Actions for ${tab.title}`}
@@ -395,49 +403,4 @@ function TabPill({
 // Module scope keeps each ref callback's identity stable, so it runs when its element attaches, not on every render.
 function scrollIntoViewNearest(pill: HTMLDivElement | null) {
 	pill?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-}
-
-function focusAndSelect(input: HTMLInputElement | null) {
-	input?.focus()
-	input?.select()
-}
-
-function RenameInput({
-	initial,
-	onCommit,
-	onCancel
-}: {
-	initial: string
-	onCommit: (title: string, restoreFocus: boolean) => void
-	onCancel: () => void
-}) {
-	const [value, setValue] = useState(initial)
-	// Enter/Escape may also cause blur when focus returns to the tab.
-	const finished = useRef(false)
-	return (
-		<Input
-			variant="inline"
-			ref={focusAndSelect}
-			aria-label={`Rename ${initial}`}
-			value={value}
-			onChange={(event) => setValue(event.target.value)}
-			onKeyDown={(event) => {
-				event.stopPropagation()
-				if (event.nativeEvent.isComposing) return
-				if (event.key === 'Enter' || event.key === 'Escape') {
-					event.preventDefault()
-					finished.current = true
-					if (event.key === 'Enter') onCommit(value, true)
-					else onCancel()
-				}
-			}}
-			onBlur={() => {
-				if (!finished.current) {
-					finished.current = true
-					onCommit(value, false)
-				}
-			}}
-			className="absolute inset-y-1 right-12 left-2"
-		/>
-	)
 }

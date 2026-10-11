@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { Announcement, announcementCtaStyles, type AnnouncementScope } from '~/components/Announcement'
+import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
@@ -20,8 +24,11 @@ const PERIODS = [
 	{ value: '90d', label: '90d' }
 ] as const
 
-type CardPadding = 'none' | 'sm' | 'base' | 'md' | 'strip'
+type CardPadding = 'none' | 'sm' | 'base' | 'md' | 'strip' | 'row'
 type CardTone = 'plain' | 'brand' | 'warning'
+type IconTileTone = 'brand' | 'warning' | 'error' | 'success' | 'neutral'
+const ICON_TILE_TONES: ReadonlyArray<IconTileTone> = ['brand', 'warning', 'error', 'success', 'neutral']
+const CARD_PADDINGS: ReadonlyArray<CardPadding> = ['sm', 'base', 'strip', 'row', 'md', 'none']
 
 function PanelDemo({ values }: { values: KnobValues }) {
 	const [chain, setChain] = useState('Ethereum')
@@ -60,6 +67,61 @@ function PanelDemo({ values }: { values: KnobValues }) {
 	)
 }
 
+const ANNOUNCEMENT_SCOPES: ReadonlyArray<AnnouncementScope> = [
+	'notice',
+	'llamaai',
+	'app',
+	'verified',
+	'ir',
+	'data',
+	'near',
+	'sonic',
+	'odyssey',
+	'spark',
+	'research'
+]
+
+// The home-slot scopes, whose `*-announcement-scope` class colors the call-to-action pill
+// (src/styles/themes/announcements.css). The other banners link inline, as the NEAR banner does.
+const CTA_SCOPES = new Set<AnnouncementScope>(['llamaai', 'app', 'verified', 'ir', 'data'])
+
+// Closing writes the dismissal cookie for this version, so Show again moves to a new version, as a changed banner does.
+function AnnouncementDemo({ values }: { values: KnobValues }) {
+	const [version, setVersion] = useState(1)
+	const scope = values.scope as AnnouncementScope
+	const content = (
+		<span className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1">
+			Fees now include MEV rebates.
+			<BasicLink
+				href="/yields"
+				className={CTA_SCOPES.has(scope) ? announcementCtaStyles : 'underline underline-offset-2'}
+			>
+				Read more
+			</BasicLink>
+		</span>
+	)
+	return (
+		<div className="flex w-full max-w-2xl flex-col items-start gap-3">
+			<div className="w-full">
+				{values.notCancellable ? (
+					<Announcement notCancellable scope={scope}>
+						{content}
+					</Announcement>
+				) : (
+					<Announcement announcementId="design-system-demo" version={String(version)} scope={scope}>
+						{content}
+					</Announcement>
+				)}
+			</div>
+			{values.notCancellable ? null : (
+				<Button size="sm" onClick={() => setVersion(version + 1)}>
+					Show again
+				</Button>
+			)}
+		</div>
+	)
+}
+
 export const surfaces: Family = {
 	id: 'surfaces',
 	title: 'Surfaces',
@@ -68,7 +130,7 @@ export const surfaces: Family = {
 			name: 'Card',
 			source: 'src/ui/Card.tsx',
 			knobs: [
-				{ name: 'padding', values: ['base', 'sm', 'md', 'strip', 'none'] },
+				{ name: 'padding', values: ['base', 'sm', 'md', 'strip', 'row', 'none'] },
 				{ name: 'tone', values: ['plain', 'brand', 'warning'], default: 'plain' },
 				{ name: 'radius', values: ['default', 'large'], default: 'default' }
 			],
@@ -89,25 +151,41 @@ export const surfaces: Family = {
 			},
 			anatomy: true,
 			states: () => (
-				<Example name="Button card" prop='as="button"' note="With hover-wash-card.">
-					<StateGrid
-						columns={['Rest', 'Hover', 'Focus', 'Pressed']}
-						rows={[
-							[
-								'Open report',
-								<>
-									{([...REST_HOVER_FOCUS, 'active'] as const).map((force) => (
-										<Cell key={force ?? 'rest'} force={force}>
-											<Card as="button" padding="base" className="hover-wash-card">
-												<span className="body-sm text-primary">Open report</span>
-											</Card>
-										</Cell>
-									))}
-								</>
-							]
-						]}
-					/>
-				</Example>
+				<>
+					<Example
+						wide
+						name="Padding"
+						prop="padding"
+						note="Show anatomy tints the padding in the playground; here every step sits side by side."
+					>
+						<div className="flex flex-wrap items-start gap-3">
+							{CARD_PADDINGS.map((padding) => (
+								<Card key={padding} padding={padding}>
+									<span className="block mono-sm text-secondary">padding="{padding}"</span>
+								</Card>
+							))}
+						</div>
+					</Example>
+					<Example name="Button card" prop='as="button"' note="With hover-wash-card.">
+						<StateGrid
+							columns={['Rest', 'Hover', 'Focus', 'Pressed']}
+							rows={[
+								[
+									'Open report',
+									<>
+										{([...REST_HOVER_FOCUS, 'active'] as const).map((force) => (
+											<Cell key={force ?? 'rest'} force={force}>
+												<Card as="button" padding="base" className="hover-wash-card">
+													<span className="body-sm text-primary">Open report</span>
+												</Card>
+											</Cell>
+										))}
+									</>
+								]
+							]}
+						/>
+					</Example>
+				</>
 			),
 			dos: () => (
 				<Example name="Corners">
@@ -127,6 +205,72 @@ export const surfaces: Family = {
 						badCaption="A hand-rounded 6px frame reads as a different object beside 8px cards."
 					/>
 				</Example>
+			)
+		},
+		{
+			name: 'Announcement',
+			source: 'src/components/Announcement.tsx',
+			knobs: [
+				{ name: 'scope', values: ANNOUNCEMENT_SCOPES, default: 'notice' },
+				{ name: 'notCancellable', boolean: true }
+			],
+			note: 'Close it with the × (Tab to it, then Enter): the banner leaves and focus moves to the page content. Show again brings it back as a new version. Each scope repaints the banner; a home-slot scope (llamaai, app, verified, ir, data) also colors its call-to-action pill.',
+			render: (values) => <AnnouncementDemo values={values} />
+		},
+		{
+			name: 'IconTile',
+			source: 'src/ui/IconTile.tsx',
+			knobs: [
+				{ name: 'tone', values: ICON_TILE_TONES },
+				{ name: 'size', values: ['sm', 'md'] },
+				{ name: 'busy', boolean: true }
+			],
+			note: 'Decoration beside the text that names the subject: hidden from assistive tech. busy swaps the icon for the spinner while the card waits.',
+			render: (values) => (
+				<IconTile
+					icon="calendar-plus"
+					tone={values.tone as IconTileTone}
+					size={values.size as 'sm' | 'md'}
+					busy={values.busy as boolean}
+				/>
+			),
+			states: () => (
+				<>
+					<Example wide name="Tone × size">
+						<StateGrid
+							columns={ICON_TILE_TONES}
+							rows={(['sm', 'md'] as const).map((size) => [
+								size,
+								<>
+									{ICON_TILE_TONES.map((tone) => (
+										<IconTile key={tone} icon="calendar-plus" tone={tone} size={size} />
+									))}
+								</>
+							])}
+						/>
+					</Example>
+					<Example
+						name="Leading a card"
+						note="md beside a title and a description; sm beside a title and one meta line."
+					>
+						<div className="flex w-80 flex-col gap-3">
+							<Card padding="base" className="flex items-start gap-3">
+								<IconTile icon="calendar-plus" tone="brand" size="md" />
+								<span className="flex flex-col gap-0.5">
+									<span className="label-md text-primary">Token unlocks</span>
+									<span className="body-sm text-secondary">Upcoming emissions by date</span>
+								</span>
+							</Card>
+							<Card padding="base" className="flex items-center gap-3">
+								<IconTile icon="calendar-plus" tone="warning" size="sm" />
+								<span className="flex flex-col">
+									<span className="label-md text-primary">Unlock alert</span>
+									<MetaLine>{['Daily', '3 tokens']}</MetaLine>
+								</span>
+							</Card>
+						</div>
+					</Example>
+				</>
 			)
 		},
 		{

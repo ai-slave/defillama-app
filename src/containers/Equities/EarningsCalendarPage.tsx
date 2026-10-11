@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
@@ -11,11 +10,13 @@ import { Card } from '~/ui/Card'
 import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
+import { TextLink } from '~/ui/TextLink'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -119,9 +120,7 @@ function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: st
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
 						{row.href ? (
-							<Link href={row.href} className="label-md text-link hover:underline">
-								{row.ticker}
-							</Link>
+							<TextLink href={row.href}>{row.ticker}</TextLink>
 						) : (
 							<span className="label-md">{row.ticker}</span>
 						)}
@@ -445,7 +444,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				<Panel>
 					<PanelHeader>
 						<PanelTitle>At stake this week</PanelTitle>
-						<p className="ml-auto label-sm text-secondary">{formatWeekRange(week.monday, week.friday)}</p>
+						<p className="label-sm text-secondary">{formatWeekRange(week.monday, week.friday)}</p>
 					</PanelHeader>
 					<WeekExposure rows={week.rows} monday={week.monday} todayET={todayET} />
 				</Panel>
@@ -525,9 +524,10 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 							void pushShallowQuery(router, { tightWindows: event.target.checked ? 'true' : undefined })
 						}
 					/>
-					<p className="ml-auto body-sm text-secondary">
-						{formatNumber(week.companyCount) ?? '0'} companies · ranked by market cap
-					</p>
+					<MetaLine className="ml-auto">
+						{`${formatNumber(week.companyCount) ?? '0'} companies`}
+						ranked by market cap
+					</MetaLine>
 				</div>
 			</Panel>
 

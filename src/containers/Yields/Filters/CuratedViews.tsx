@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { MetricOptionChip } from '~/ui/MetricChip'
+import { Tag } from '~/ui/Tag'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -33,7 +34,7 @@ type PresetParams = {
 	maxAvailable?: number
 }
 
-type CriteriaGroup = { label: string; items: Array<string>; tone: 'neutral' | 'accent' }
+type CriteriaGroup = { label: string; items: Array<string> }
 
 export interface Preset {
 	id: string
@@ -58,8 +59,8 @@ const EARN_PRESETS: Array<Preset> = [
 		icon: 'dollar-sign',
 		params: { token: ['family:stablecoins'], minTvl: 1_000_000 },
 		criteria: [
-			{ label: 'Tokens', tone: 'neutral', items: ['Stablecoins'] },
-			{ label: 'Filters', tone: 'accent', items: ['TVL ≥ $1M'] }
+			{ label: 'Tokens', items: ['Stablecoins'] },
+			{ label: 'Filters', items: ['TVL ≥ $1M'] }
 		]
 	},
 	{
@@ -72,8 +73,8 @@ const EARN_PRESETS: Array<Preset> = [
 			minTvl: 10_000_000
 		},
 		criteria: [
-			{ label: 'Tokens', tone: 'neutral', items: ['BTC', 'ETH', 'SOL', 'Stablecoins'] },
-			{ label: 'Filters', tone: 'accent', items: ['Audited', 'TVL ≥ $10M'] }
+			{ label: 'Tokens', items: ['BTC', 'ETH', 'SOL', 'Stablecoins'] },
+			{ label: 'Filters', items: ['Audited', 'TVL ≥ $10M'] }
 		]
 	},
 	{
@@ -82,8 +83,8 @@ const EARN_PRESETS: Array<Preset> = [
 		icon: 'banknote',
 		params: { token: ['family:tokenized-commodities'], minTvl: 100_000 },
 		criteria: [
-			{ label: 'Tokens', tone: 'neutral', items: ['Tokenized Commodities'] },
-			{ label: 'Filters', tone: 'accent', items: ['TVL ≥ $100K'] }
+			{ label: 'Tokens', items: ['Tokenized Commodities'] },
+			{ label: 'Filters', items: ['TVL ≥ $100K'] }
 		]
 	},
 	{
@@ -92,8 +93,8 @@ const EARN_PRESETS: Array<Preset> = [
 		icon: 'activity',
 		params: { category: ['Liquid Staking'], attribute: ['audited'], minTvl: 1_000_000 },
 		criteria: [
-			{ label: 'Categories', tone: 'neutral', items: ['Liquid Staking'] },
-			{ label: 'Filters', tone: 'accent', items: ['Audited', 'TVL ≥ $1M'] }
+			{ label: 'Categories', items: ['Liquid Staking'] },
+			{ label: 'Filters', items: ['Audited', 'TVL ≥ $1M'] }
 		]
 	},
 	{
@@ -101,14 +102,14 @@ const EARN_PRESETS: Array<Preset> = [
 		label: 'Safe Haven',
 		icon: 'check-circle',
 		params: { attribute: ['audited', 'single_exposure', 'no_il'], minTvl: 10_000_000 },
-		criteria: [{ label: 'Filters', tone: 'accent', items: ['Audited', 'Single-asset', 'No IL risk', 'TVL ≥ $10M'] }]
+		criteria: [{ label: 'Filters', items: ['Audited', 'Single-asset', 'No IL risk', 'TVL ≥ $10M'] }]
 	},
 	{
 		id: 'high-yield',
 		label: 'High Yield',
 		icon: 'trending-up',
 		params: { attribute: ['audited'], minTvl: 1_000_000, minApy: 10 },
-		criteria: [{ label: 'Filters', tone: 'accent', items: ['Audited', 'TVL ≥ $1M', 'APY ≥ 10%'] }]
+		criteria: [{ label: 'Filters', items: ['Audited', 'TVL ≥ $1M', 'APY ≥ 10%'] }]
 	}
 ]
 
@@ -266,16 +267,7 @@ export function CuratedViews({
 									<span className="label-sm text-secondary uppercase">{group.label}</span>
 									<span className="flex flex-wrap gap-1.5">
 										{group.items.map((item) => (
-											<span
-												key={item}
-												className={`inline-flex items-center rounded-full border px-2.5 py-0.5 whitespace-nowrap ${
-													group.tone === 'accent'
-														? 'border-brand bg-brand-muted label-sm text-link'
-														: 'border-medium bg-surface-elevated-1 label-sm text-secondary'
-												}`}
-											>
-												{item}
-											</span>
+											<Tag key={item}>{item}</Tag>
 										))}
 									</span>
 								</div>

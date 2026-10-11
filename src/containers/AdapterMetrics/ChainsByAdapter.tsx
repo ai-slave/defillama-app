@@ -9,7 +9,6 @@ import { startTransition, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { BasicLink } from '~/components/Link'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -18,6 +17,7 @@ import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -135,12 +135,9 @@ const NameColumn = (route: string) =>
 
 					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 
-					<BasicLink
-						href={route ? `/${route}/chain/${slug(value)}` : `/chain/${slug(value)}`}
-						className="truncate label-md text-link hover:underline"
-					>
+					<TextLink href={route ? `/${route}/chain/${slug(value)}` : `/chain/${slug(value)}`} truncate>
 						{value}
-					</BasicLink>
+					</TextLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 					{row.original.warning ? (
 						<Tooltip content={row.original.warning}>

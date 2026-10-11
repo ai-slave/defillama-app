@@ -8,7 +8,10 @@ import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'reac
    Header: px-4 py-3 with a subtle bottom divider (divider floor); heading-xs title on
            the left, controls on the right. Every control in a panel header
            is the 32px md size (Button md, Select size="md", segmented
-           min-h-8); dense control clusters use a 6px gap.
+           min-h-8); dense control clusters use a 6px gap. PanelTitle already
+           pushes the controls right, so a control group never adds ml-auto:
+           a second auto margin centers whatever sits between them
+           (`chart-toolbar-auto-margin`).
    Body:   flush; the chart, table or body below the header brings its own
            inset. Any other surface is a Card (./Card.tsx), which has the
            padding steps.

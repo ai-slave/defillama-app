@@ -15,7 +15,7 @@ export const CAPABILITIES: Array<Capability> = [
 		key: 'trade_thesis',
 		name: 'Trade thesis',
 		icon: 'activity',
-		badge: 'HOT',
+		badge: 'Hot',
 		description:
 			'Get a data-backed buy/sell verdict on any token — fundamentals, momentum, risk, and a conviction score.',
 		prompts: [

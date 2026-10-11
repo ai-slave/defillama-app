@@ -2,7 +2,8 @@
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { Definition } from '~/ui/Tooltip'
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import type { VerifiedBlock, VerifiedConfidence } from '../data/types'
 import { splitMethod } from '../Tables/Measured'
@@ -22,6 +23,15 @@ const CONFIDENCE_HINT: Record<VerifiedConfidence, string> = {
 	// `low` usually means the rate was NAV-quoted: no executable exit that day.
 	low: 'Wide spread between holders, or no executable exit to measure that day.'
 }
+
+const CONFIDENCE_LABEL: Record<VerifiedConfidence, string> = {
+	high: 'High confidence',
+	medium: 'Medium confidence',
+	low: 'Low confidence'
+}
+
+// Only close agreement reads as good; any spread between holders is a caution.
+const CONFIDENCE_STATUS: Record<VerifiedConfidence, Status> = { high: 'good', medium: 'caution', low: 'caution' }
 
 const STEPS: ReadonlyArray<{ title: string; detail: string | null }> = [
 	{ title: 'Find real holders', detail: null },
@@ -83,6 +93,7 @@ export function VerifiedApyPanel({
 									→
 								</span>
 							) : null}
+							{/* A step in the measured path, its title over a detail, linked by arrows: a sequence, not a value. */}
 							<span className="flex items-baseline gap-1 rounded-full border border-subtle px-2.5 py-0.5 label-sm text-primary">
 								{step.title}
 								{step.detail ? <span className="body-sm text-secondary">{step.detail}</span> : null}
@@ -106,13 +117,7 @@ export function VerifiedApyPanel({
 								>
 									<span className="pt-0.5 mono-sm text-secondary">{ordinal(index)}</span>
 									<span className="mono-sm break-words text-primary">{call.signature}</span>
-									<span
-										className={`mt-px rounded-sm border border-medium px-1.5 label-xs tracking-widest uppercase ${
-											call.executed ? 'text-link' : 'text-secondary'
-										}`}
-									>
-										{call.executed ? 'executed' : 'read'}
-									</span>
+									<Tag>{call.executed ? 'Executed' : 'Read'}</Tag>
 									{call.note ? (
 										<span className="col-span-2 col-start-2 body-sm text-secondary">{call.note}</span>
 									) : null}
@@ -138,18 +143,9 @@ export function VerifiedApyPanel({
 					</span>
 				) : null}
 				{confidence ? (
-					<Definition content={CONFIDENCE_HINT[confidence]}>
-						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
-							<span
-								aria-hidden
-								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-success' : 'text-warning'}`}
-								style={{ backgroundColor: 'currentColor' }}
-							/>
-							<span>
-								<span className="capitalize">{confidence}</span> confidence
-							</span>
-						</span>
-					</Definition>
+					<StatusBadge status={CONFIDENCE_STATUS[confidence]} tooltip={CONFIDENCE_HINT[confidence]}>
+						{CONFIDENCE_LABEL[confidence]}
+					</StatusBadge>
 				) : null}
 				<span className="ml-auto">Reproducible: the same call at the same block returns the same result.</span>
 			</div>

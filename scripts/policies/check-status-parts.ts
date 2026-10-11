@@ -99,10 +99,7 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-colored on purpose',
 		'src/containers/Yields/poolDetail/PoolDetailView.tsx': "the exploit warning banner on a hacked pool's page"
 	},
-	'alert-line': {
-		'src/containers/ProDashboard/ui/InlineTextField.tsx':
-			"an inline field's save error under the text it failed to save"
-	},
+	'alert-line': {},
 	'retry-gating': {},
 	'hand-placed-retry': {
 		'src/containers/Articles/editor/LlamaAIChartPicker.tsx':

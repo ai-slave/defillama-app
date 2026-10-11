@@ -1,6 +1,5 @@
 import { createColumnHelper, type ColumnVisibilityState, type SortingState } from '@tanstack/react-table'
 import * as React from 'react'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
@@ -10,6 +9,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -101,12 +101,9 @@ export function buildPairColumns(
 							alt=""
 						/>
 						{ticker ? (
-							<BasicLink
-								href={`/token/${encodeURIComponent(ticker)}`}
-								className="truncate label-md text-link hover:underline"
-							>
+							<TextLink href={`/token/${encodeURIComponent(ticker)}`} truncate>
 								{ticker}
-							</BasicLink>
+							</TextLink>
 						) : (
 							<span className="text-tertiary">–</span>
 						)}
@@ -122,14 +119,9 @@ export function buildPairColumns(
 			enableSorting: false,
 			cell: ({ row, getValue }) => (
 				<span className="flex min-w-0 items-center gap-1.5">
-					<BasicLink
-						href={row.original.pairUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="truncate label-md text-link uppercase hover:underline"
-					>
-						{getValue()}
-					</BasicLink>
+					<TextLink href={row.original.pairUrl} target="_blank" rel="noopener noreferrer" truncate>
+						{getValue().toUpperCase()}
+					</TextLink>
 					{/* Sibling of the link, not a child: leverage must never end up inside the link text. */}
 					{isPerp && row.original.maxLeverage != null ? (
 						<Tooltip content={`${definitions.maxLeverage.label}: ${row.original.maxLeverage}×`}>
@@ -480,8 +472,8 @@ export function buildPairColumns(
 						if (!venue) return <span className="text-tertiary">–</span>
 						const venueSlug = row.original.venueSlug ?? venue
 
-						const content = (
-							<>
+						return (
+							<span className="flex min-w-0 items-center gap-2">
 								<TokenLogo
 									name={venueSlug}
 									kind="exchange"
@@ -489,19 +481,14 @@ export function buildPairColumns(
 									fallbackSrc={letterLogoDataUri(venueSlug)}
 									alt=""
 								/>
-								<span className="truncate label-md">{venue}</span>
-							</>
-						)
-
-						return row.original.venueUrl ? (
-							<BasicLink
-								href={row.original.venueUrl}
-								className="flex min-w-0 items-center gap-2 text-link hover:underline"
-							>
-								{content}
-							</BasicLink>
-						) : (
-							<span className="flex min-w-0 items-center gap-2">{content}</span>
+								{row.original.venueUrl ? (
+									<TextLink href={row.original.venueUrl} truncate>
+										{venue}
+									</TextLink>
+								) : (
+									<span className="truncate label-md">{venue}</span>
+								)}
+							</span>
 						)
 					},
 					meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }

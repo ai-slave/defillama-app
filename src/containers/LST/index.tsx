@@ -15,7 +15,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -31,6 +30,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -54,12 +54,9 @@ const LST_BASE_COLUMNS = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 					<span className="flex items-center gap-1 overflow-hidden">
-						<BasicLink
-							href={`/protocol/${row.original.protocolSlug}`}
-							className="min-w-0 truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/protocol/${row.original.protocolSlug}`} truncate>
 							{getValue()}
-						</BasicLink>
+						</TextLink>
 						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 					</span>
 				</span>

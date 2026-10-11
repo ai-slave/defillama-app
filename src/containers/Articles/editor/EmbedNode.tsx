@@ -1,6 +1,7 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react'
 import { Button } from '~/ui/Button'
+import { Tag } from '~/ui/Tag'
 import { getEmbedProviderLabel } from '../embedProviders'
 import type { ArticleEmbedConfig } from '../types'
 import { useArticleEditable } from './useArticleEditable'
@@ -30,9 +31,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos, editor }: NodeViewP
 			<div className="flex items-start justify-between gap-3 px-4 py-3">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2 body-sm text-tertiary">
-						<span className="shrink-0 rounded-sm border border-medium bg-page px-1.5 py-0.5 label-xs tracking-wider text-secondary uppercase">
-							{providerLabel}
-						</span>
+						<Tag className="shrink-0">{providerLabel}</Tag>
 						<span className="truncate">{config.sourceUrl}</span>
 					</div>
 					{config.title ? <div className="mt-1 truncate label-md text-primary">{config.title}</div> : null}

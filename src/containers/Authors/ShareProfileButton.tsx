@@ -1,15 +1,14 @@
 import * as Ariakit from '@ariakit/react'
-import { useId } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Button } from '~/ui/Button'
 import { CopyHelper } from '~/ui/Copy'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 export function ShareProfileButton({ slug, displayName }: { slug: string; displayName: string }) {
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
-	const linkId = useId()
 
 	const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://defillama.com'}/authors/${slug}`
 
@@ -25,15 +24,14 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 
 			<PopoverSurface variant="panel" heading="Share profile" gutter={8} width="md">
 				<div className="flex flex-col gap-3 p-3">
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={linkId} className="label-sm text-secondary">
-							Profile link
-						</label>
-						<div className="flex items-center gap-2">
-							<Input id={linkId} type="text" value={shareUrl} readOnly className="min-w-0 flex-1" />
-							<CopyHelper toCopy={shareUrl} aria-label="Copy profile link" />
-						</div>
-					</div>
+					<Field label="Profile link">
+						{(control) => (
+							<div className="flex items-center gap-2">
+								<Input {...control} type="text" value={shareUrl} readOnly className="min-w-0 flex-1" />
+								<CopyHelper toCopy={shareUrl} aria-label="Copy profile link" />
+							</div>
+						)}
+					</Field>
 
 					<div className="flex flex-col gap-1.5">
 						<p className="label-sm text-secondary">Share on</p>

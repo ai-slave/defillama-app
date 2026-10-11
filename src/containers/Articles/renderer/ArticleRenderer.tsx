@@ -4,6 +4,7 @@ import { createElement, useEffect, useId, useMemo, useRef, useState, useSyncExte
 import { Button } from '~/ui/Button'
 import { useCopy } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import styles from '../ArticleStyles.module.css'
@@ -934,10 +935,7 @@ export function ArticleRenderer({
 	const coverCaption = cover ? (cover.caption ?? '').trim() : ''
 	const coverCredit = cover ? (cover.credit ?? '').trim() : ''
 	const coverCopyright = cover ? (cover.copyright ?? '').trim() : ''
-	const coverMetaParts = cover
-		? [coverCredit ? `Credit: ${coverCredit}` : '', coverCopyright ? `© ${coverCopyright}` : ''].filter(Boolean)
-		: []
-	const hasCoverMeta = !!cover && (coverHeadline || coverCaption || coverMetaParts.length > 0)
+	const hasCoverMeta = !!cover && (coverHeadline || coverCaption || coverCredit || coverCopyright)
 	const articlePageClassName = hideSidePanel
 		? `${styles.root} article-page mx-auto grid w-full max-w-[760px] animate-fadein gap-10 px-4 pb-8 sm:px-6`
 		: `${styles.root} article-page mx-auto grid w-full max-w-[1300px] animate-fadein gap-10 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,700px)_401px] lg:gap-31.25`
@@ -1058,7 +1056,10 @@ export function ArticleRenderer({
 							<figcaption className="grid gap-1 body-sm text-tertiary">
 								{coverHeadline ? <span className="font-medium text-secondary">{coverHeadline}</span> : null}
 								{coverCaption ? <span>{coverCaption}</span> : null}
-								{coverMetaParts.length > 0 ? <span className="text-tertiary">{coverMetaParts.join(' · ')}</span> : null}
+								<MetaLine>
+									{coverCredit ? `Credit: ${coverCredit}` : null}
+									{coverCopyright ? `© ${coverCopyright}` : null}
+								</MetaLine>
 							</figcaption>
 						) : null}
 					</figure>

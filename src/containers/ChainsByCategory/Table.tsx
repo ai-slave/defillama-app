@@ -10,7 +10,6 @@ import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { BasicLink } from '~/components/Link'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import { getColumnSelectState, getColumnVisibilityForSelection } from '~/components/Table/search/columnSelect'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
@@ -26,6 +25,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -282,9 +282,9 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
 					<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
-					<BasicLink href={`/chain/${slug(value)}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/chain/${slug(value)}`} truncate>
 						{value}
-					</BasicLink>
+					</TextLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)

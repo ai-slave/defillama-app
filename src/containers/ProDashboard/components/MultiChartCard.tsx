@@ -4,6 +4,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/EChar
 import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { BusyGlyph } from '~/ui/Status'
@@ -25,7 +26,6 @@ import {
 	limitMultiChartItems,
 	type MultiChartConfig
 } from '../types'
-import { ProMeta } from '../ui'
 import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { getMultiChartSeriesColors } from '../utils/colorManager'
@@ -296,13 +296,11 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				title={multi.name || `Multi-Chart (${limitedItems.length})`}
 				badge={<BoundParameterBadge item={multi} />}
 				subtitle={
-					<ProMeta
-						items={[
-							`${limitedItems.length} series`,
-							allChartsGroupable ? DASHBOARD_GROUPING_LABELS[multi.grouping ?? 'day'] : null,
-							showTreemap ? 'Tree map' : null
-						]}
-					/>
+					<MetaLine>
+						{`${limitedItems.length} series`}
+						{allChartsGroupable ? DASHBOARD_GROUPING_LABELS[multi.grouping ?? 'day'] : null}
+						{showTreemap ? 'Tree map' : null}
+					</MetaLine>
 				}
 				controls={
 					<>
@@ -401,16 +399,13 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{loadingItems.length > 0 && failedItems.length < limitedItems.length ? (
 					<div role="status" aria-live="polite">
-						<ProMeta
-							items={[
-								<BusyGlyph
-									key="progress"
-									label={`${validItems.length} of ${limitedItems.length - failedItems.length} charts loaded`}
-									size={12}
-									insideLiveRegion
-								/>
-							]}
-						/>
+						<MetaLine>
+							<BusyGlyph
+								label={`${validItems.length} of ${limitedItems.length - failedItems.length} charts loaded`}
+								size={12}
+								insideLiveRegion
+							/>
+						</MetaLine>
 					</div>
 				) : null}
 				{hasAnyData && failedItems.length > 0 ? (

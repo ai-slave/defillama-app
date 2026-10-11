@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -13,6 +12,7 @@ import Layout from '~/layout'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -43,9 +43,9 @@ const columns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => {
 			return (
-				<BasicLink href={`/raises/${slug(getValue())}`} className="truncate label-md text-link hover:underline">
+				<TextLink href={`/raises/${slug(getValue())}`} truncate>
 					{getValue()}
-				</BasicLink>
+				</TextLink>
 			)
 		},
 		meta: {

@@ -17,6 +17,7 @@ import { Button } from '~/ui/Button'
 import { DialogLoadingStatus } from '~/ui/Dialog'
 import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { InlineTextField } from '~/ui/InlineTextField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { BusyGlyph, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -73,7 +74,7 @@ import {
 	useProDashboardVariables
 } from './ProDashboardAPIContext'
 import type { SectionConfig, SqlChartConfig } from './types'
-import { InlineTextField, ProBadge, ProButton } from './ui'
+import { ProBadge, ProButton } from './ui'
 import { type DashboardItemPlacement, toastRefusal } from './useDashboardActions'
 import { generateItemId } from './utils/dashboardUtils'
 
@@ -692,17 +693,18 @@ function ProDashboardContent() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-				<h1 className="heading-lg text-primary">
+				<h1 className="heading-sm text-primary md:heading-lg">
 					{canEditHeaderText ? (
 						<InlineTextField
 							value={dashboardName}
+							label="Dashboard name"
 							placeholder="Dashboard name"
 							maxLength={DASHBOARD_NAME_MAX_LENGTH}
 							status={renameDashboard.isPending ? 'saving' : renameDashboard.isError ? 'error' : 'idle'}
 							{...(renameDashboard.error
 								? { errorMessage: httpErrorMessage(renameDashboard.error, "Couldn't rename the dashboard. Try again.") }
 								: {})}
-							className="max-w-full heading-sm md:heading-lg"
+							className="max-w-full"
 							onCommit={(next) => {
 								if (next) renameDashboard.mutate(next)
 							}}
@@ -741,6 +743,7 @@ function ProDashboardContent() {
 						<InlineTextField
 							multiline
 							value={dashboardDescription ?? ''}
+							label="Dashboard description"
 							placeholder="Add a description"
 							maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
 							status={describeDashboard.isPending ? 'saving' : describeDashboard.isError ? 'error' : 'idle'}
@@ -749,7 +752,7 @@ function ProDashboardContent() {
 										errorMessage: httpErrorMessage(describeDashboard.error, "Couldn't save the description. Try again.")
 									}
 								: {})}
-							className="w-full max-w-3xl body-md"
+							className="w-full max-w-3xl"
 							onCommit={(next) => describeDashboard.mutate(next)}
 						/>
 					) : dashboardDescription ? (

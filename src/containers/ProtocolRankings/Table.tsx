@@ -13,7 +13,6 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/quickPicks'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { getHideableColumns } from '~/components/Table/search/columnSelect'
@@ -44,6 +43,7 @@ import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -1312,12 +1312,9 @@ const columns = columnHelper.columns([
 
 					<span className="-my-2 flex flex-col">
 						<span className="flex items-center gap-1 overflow-hidden">
-							<BasicLink
-								href={`/protocol/${row.original.slug}`}
-								className="min-w-0 truncate label-md text-link hover:underline"
-							>
+							<TextLink href={`/protocol/${row.original.slug}`} truncate>
 								{value}
-							</BasicLink>
+							</TextLink>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
 
@@ -1346,11 +1343,7 @@ const columns = columnHelper.columns([
 
 			const href = getCategoryRoute(slug(category))
 
-			return (
-				<BasicLink href={href} className="label-md text-link hover:underline">
-					{category}
-				</BasicLink>
-			)
+			return <TextLink href={href}>{category}</TextLink>
 		},
 		meta: {
 			headerClassName: 'w-[139px] min-w-[139px]'

@@ -2,6 +2,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 
 const dlResearchReports = [
 	{
@@ -163,9 +164,7 @@ function DLReportCard({ report }: { report: Report }) {
 					<p className="body-md text-secondary">{report.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{report.topics.map((topic) => (
-							<span key={topic} className="rounded-full bg-brand-tint px-2.5 py-0.5 label-sm text-link">
-								{topic}
-							</span>
+							<Tag key={topic}>{topic}</Tag>
 						))}
 					</div>
 					{report.spotlightHref && (
@@ -221,9 +220,7 @@ function DLReportCard({ report }: { report: Report }) {
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
-						<span key={topic} className="rounded-full bg-brand-tint px-2.5 py-0.5 label-sm text-link">
-							{topic}
-						</span>
+						<Tag key={topic}>{topic}</Tag>
 					))}
 				</div>
 			</div>
@@ -272,9 +269,7 @@ function ReportCard({ report }: { report: Report }) {
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
-						<span key={topic} className="rounded-full bg-surface-elevated-1 px-2.5 py-0.5 label-sm text-secondary">
-							{topic}
-						</span>
+						<Tag key={topic}>{topic}</Tag>
 					))}
 				</div>
 			</div>

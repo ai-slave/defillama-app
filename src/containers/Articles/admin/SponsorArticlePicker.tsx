@@ -5,6 +5,7 @@ import { useAuthContext } from '~/auth'
 import { searchResearchSponsorArticles } from '~/containers/Articles/api'
 import type { ResearchSponsorArticleSearchResult } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import { MetaLine } from '~/ui/MetaLine'
 import { ListLoading } from '~/ui/NoResults'
 import { ComboboxSurface, PopoverRow } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
@@ -60,14 +61,13 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					>
 						<span className="grid min-w-0 gap-1">
 							<span className="line-clamp-2 label-md text-primary">{article.title}</span>
-							<span className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
-								<span>{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'}</span>
-								<span aria-hidden>·</span>
-								<span className="truncate">/{article.slug}</span>
+							<MetaLine>
+								{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'}
+								<span className="min-w-0 truncate">/{article.slug}</span>
 								<span className={article.lifecycleStatus === 'published' ? 'text-success' : 'text-warning'}>
 									{article.lifecycleStatus}
 								</span>
-							</span>
+							</MetaLine>
 						</span>
 					</PopoverRow>
 				))}

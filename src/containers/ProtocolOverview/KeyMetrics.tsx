@@ -9,6 +9,7 @@ import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { TextLink } from '~/ui/TextLink'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getProtocolBridgeVolumeMetrics } from './chartSeries.utils'
@@ -954,9 +955,9 @@ function TokenCGData(props: IKeyMetricsProps) {
 	const dexVolumeShare = getSharePercent(props.tokenCGData.volume24h.dex, props.tokenCGData.volume24h.total)
 	const priceLabel = `${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`
 	const linkedPriceLabel = props.token?.tokenPageRoute ? (
-		<BasicLink href={props.token.tokenPageRoute} className="text-link hover:underline">
+		<TextLink href={props.token.tokenPageRoute} size="inherit">
 			{priceLabel}
-		</BasicLink>
+		</TextLink>
 	) : (
 		priceLabel
 	)

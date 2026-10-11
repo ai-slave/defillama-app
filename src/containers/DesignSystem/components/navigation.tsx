@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { useRef, useState } from 'react'
 import { LinksWithDropdown } from '~/components/RowLinksWithDropdown/LinksWithDropdown'
+import { Button } from '~/ui/Button'
 import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { RailItem } from '~/ui/RailItem'
 import { BusyGlyph } from '~/ui/Status'
 import { Tab, TabLink, TabNav, TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import { Cell, Example, type Family, type KnobValues, StateGrid } from '../shared'
 
 const VIEWS = ['overview', 'yields', 'risk'] as const
@@ -74,72 +77,205 @@ const PANELS = (
 	</>
 )
 
-function UnderlineTabListDemo() {
+const SECTION_TABS = [
+	{ id: 'overview', label: 'Overview' },
+	{ id: 'yields', label: 'Yields' },
+	{ id: 'risk', label: 'Risk' }
+] as const
+
+function UnderlineTabListDemo({ values }: { values: KnobValues }) {
 	const [tab, setTab] = useState<(typeof VIEWS)[number]>('overview')
 	return (
 		<div className="w-80">
 			<Tabs<(typeof VIEWS)[number]> value={tab} onValueChange={setTab} values={VIEWS}>
-				<UnderlineTabList
-					label="Sections"
-					tabs={[
-						{ id: 'overview', label: 'Overview' },
-						{ id: 'yields', label: 'Yields' },
-						{ id: 'risk', label: 'Risk' }
-					]}
-				/>
+				{values.items === 'Tab children' ? (
+					<UnderlineTabList label="Protocol views">
+						<Tab value="overview" render={<TabLink as="button" type="button" />}>
+							<span className="inline-flex items-center gap-1.5">
+								<Icon name="layout-grid" className="size-3.5" aria-hidden />
+								Overview
+							</span>
+						</Tab>
+						<Tab value="yields" render={<TabLink as="button" type="button" />}>
+							<span className="inline-flex items-center gap-1.5">
+								Yields
+								<CountBadge count={12} />
+							</span>
+						</Tab>
+						<Tab value="risk" render={<TabLink as="button" type="button" />}>
+							<span className="inline-flex items-center gap-1.5">
+								<Icon name="shield-check" className="size-3.5" aria-hidden />
+								Risk
+							</span>
+						</Tab>
+					</UnderlineTabList>
+				) : (
+					<UnderlineTabList label="Sections" tabs={SECTION_TABS} />
+				)}
 				{PANELS}
 			</Tabs>
 		</div>
 	)
 }
 
-function TabDemo() {
-	const [tab, setTab] = useState<(typeof VIEWS)[number]>('overview')
+const MANY_SECTIONS = ['overview', 'fees', 'revenue', 'holders', 'treasury', 'governance', 'unlocks', 'raises'] as const
+
+// The ref reaches the track, so the caller scrolls it from its own buttons, as a Pro dashboard's section arrows do.
+function OverflowTabsDemo() {
+	const [tab, setTab] = useState<(typeof MANY_SECTIONS)[number]>('overview')
+	const track = useRef<HTMLDivElement>(null)
+	const scroll = (by: number) => track.current.scrollBy({ left: by, behavior: 'smooth' })
 	return (
-		<div className="w-80">
-			<Tabs<(typeof VIEWS)[number]> value={tab} onValueChange={setTab} values={VIEWS}>
-				<UnderlineTabList label="Protocol views">
-					<Tab value="overview" render={<TabLink as="button" type="button" />}>
-						<span className="inline-flex items-center gap-1.5">
-							<Icon name="layout-grid" className="size-3.5" aria-hidden />
-							Overview
-						</span>
-					</Tab>
-					<Tab value="yields" render={<TabLink as="button" type="button" />}>
-						<span className="inline-flex items-center gap-1.5">
-							Yields
-							<CountBadge count={12} />
-						</span>
-					</Tab>
-					<Tab value="risk" render={<TabLink as="button" type="button" />}>
-						<span className="inline-flex items-center gap-1.5">
-							<Icon name="shield-check" className="size-3.5" aria-hidden />
-							Risk
-						</span>
-					</Tab>
-				</UnderlineTabList>
-				{PANELS}
-			</Tabs>
+		<div className="flex w-80 items-center gap-1">
+			<Tooltip
+				content="Scroll left"
+				render={<Button variant="ghost" size="sm" square aria-label="Scroll left" onClick={() => scroll(-160)} />}
+			>
+				<Icon name="chevron-left" className="size-4" aria-hidden />
+			</Tooltip>
+			<div className="min-w-0 flex-1">
+				<Tabs<(typeof MANY_SECTIONS)[number]> value={tab} onValueChange={setTab} values={MANY_SECTIONS}>
+					<UnderlineTabList
+						ref={track}
+						label="Dashboard sections"
+						tabs={MANY_SECTIONS.map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }))}
+					/>
+				</Tabs>
+			</div>
+			<Tooltip
+				content="Scroll right"
+				render={<Button variant="ghost" size="sm" square aria-label="Scroll right" onClick={() => scroll(160)} />}
+			>
+				<Icon name="chevron-right" className="size-4" aria-hidden />
+			</Tooltip>
+		</div>
+	)
+}
+
+const PAGE_TABS = ['Overview', 'Fees', 'Governance'] as const
+const MORE_PAGE_TABS = ['Overview', 'Fees', 'Revenue', 'Holders', 'Treasury', 'Governance', 'Unlocks'] as const
+
+// The current page is the demo's own state: a click moves aria-current, as following the link would.
+function TabNavDemo({ values }: { values: KnobValues }) {
+	const [current, setCurrent] = useState('Overview')
+	const overflow = values.overflow === true
+	return (
+		<div className={overflow ? 'w-72' : 'w-96'}>
+			<TabNav label="Protocol pages">
+				{(overflow ? MORE_PAGE_TABS : PAGE_TABS).map((page) => (
+					<TabLink
+						key={page}
+						href="/yields"
+						aria-current={page === current ? 'page' : undefined}
+						onClick={() => setCurrent(page)}
+					>
+						{page}
+					</TabLink>
+				))}
+			</TabNav>
 		</div>
 	)
 }
 
 function ListRowDemo({ values }: { values: KnobValues }) {
+	const [selected, setSelected] = useState(false)
 	const busy = values.state === 'busy'
-	const selected = values.selected === true
 	return (
 		<div className="w-64">
 			<ListRow
 				nested={values.nested === true}
+				check={values.check === 'none' ? undefined : (values.check as 'box' | 'tick')}
 				selected={selected}
 				aria-pressed={selected}
 				aria-busy={busy || undefined}
 				aria-disabled={busy || values.state === 'disabled' || undefined}
+				onClick={() => setSelected(!selected)}
 			>
 				<span className="flex-1 truncate">Ethereum fees</span>
 				{busy ? <BusyGlyph decorative size={14} /> : null}
 			</ListRow>
 		</div>
+	)
+}
+
+const PICKER_ROWS = ['Stablecoins overview', 'Ethereum fees', 'Yields watchlist'] as const
+
+function SinglePickRows() {
+	const [picked, setPicked] = useState<string>('Ethereum fees')
+	return (
+		<div className="flex w-64 flex-col gap-0.5">
+			{PICKER_ROWS.map((label) => (
+				<ListRow
+					key={label}
+					check="tick"
+					selected={label === picked}
+					aria-pressed={label === picked}
+					onClick={() => setPicked(label)}
+				>
+					<span className="flex-1 truncate">{label}</span>
+				</ListRow>
+			))}
+		</div>
+	)
+}
+
+/** `fill` off passes `checked`: the box follows the pick and the row takes no fill. */
+function MultiPickRows({ fill }: { fill: boolean }) {
+	const [picked, setPicked] = useState<ReadonlyArray<string>>(['Ethereum fees'])
+	return (
+		<div className="flex w-64 flex-col gap-0.5">
+			{PICKER_ROWS.map((label) => {
+				const on = picked.includes(label)
+				return (
+					<ListRow
+						key={label}
+						check="box"
+						selected={fill && on}
+						checked={on}
+						aria-pressed={on}
+						onClick={() => setPicked(on ? picked.filter((item) => item !== label) : [...picked, label])}
+					>
+						<span className="flex-1 truncate">{label}</span>
+					</ListRow>
+				)
+			})}
+		</div>
+	)
+}
+
+const RAIL_SECTIONS = ['general', 'memory', 'billing'] as const
+
+function RailTabsDemo() {
+	const [section, setSection] = useState<(typeof RAIL_SECTIONS)[number]>('general')
+	return (
+		<Tabs<(typeof RAIL_SECTIONS)[number]>
+			value={section}
+			onValueChange={setSection}
+			values={RAIL_SECTIONS}
+			orientation="vertical"
+		>
+			<div className="flex w-96 gap-4">
+				<Ariakit.TabList aria-label="Settings sections" className="flex w-40 shrink-0 flex-col gap-0.5">
+					<Tab value="general" render={<RailItem as="button" type="button" />}>
+						<Icon name="settings" className="size-3.5 shrink-0" aria-hidden />
+						General
+					</Tab>
+					<Tab value="memory" render={<RailItem as="button" type="button" />}>
+						<Icon name="layers" className="size-3.5 shrink-0" aria-hidden />
+						Memory
+					</Tab>
+					<Tab value="billing" render={<RailItem as="button" type="button" />}>
+						<Icon name="file-text" className="size-3.5 shrink-0" aria-hidden />
+						Billing
+					</Tab>
+				</Ariakit.TabList>
+				{RAIL_SECTIONS.map((value) => (
+					<TabPanel key={value} value={value} className="body-sm text-secondary">
+						{value[0].toUpperCase() + value.slice(1)} settings
+					</TabPanel>
+				))}
+			</div>
+		</Tabs>
 	)
 }
 
@@ -164,25 +300,42 @@ export const navigation: Family = {
 		{
 			name: 'UnderlineTabList',
 			source: 'src/ui/Tabs.tsx',
-			note: 'Arrow keys move focus; Enter or Space selects.',
-			render: () => <UnderlineTabListDemo />
+			knobs: [{ name: 'items', values: ['tabs', 'Tab children'], default: 'tabs', prop: false }],
+			note: 'Tab into the list: arrow keys move focus between tabs, Enter or Space selects one. Tab children carry an icon or a count.',
+			render: (values) => <UnderlineTabListDemo values={values} />,
+			states: () => (
+				<Example
+					name="Overflow and ref"
+					prop="ref"
+					note="Eight tabs in a narrow track: it scrolls sideways with no scrollbar, and focus moving to a tab scrolls it into view. The ref reaches the track, so the arrows beside it scroll it."
+				>
+					<OverflowTabsDemo />
+				</Example>
+			)
 		},
 		{
 			name: 'Tab',
 			source: 'src/ui/Tabs.tsx',
-			note: 'An icon or a count badge sits inside the tab.',
-			render: () => <TabDemo />
+			note: 'A section tab drawn as a RailItem, in a vertical list: Tab into it, ArrowUp and ArrowDown move, Enter or Space selects. The underline look with Tab children is UnderlineTabList above.',
+			render: () => <RailTabsDemo />
+		},
+		{
+			name: 'TabNav',
+			source: 'src/ui/Tabs.tsx',
+			knobs: [{ name: 'overflow', boolean: true, prop: false }],
+			note: 'Route tabs are links, so Tab moves through them one by one. Click one: it takes aria-current="page", which draws it current. With overflow the track scrolls sideways.',
+			render: (values) => <TabNavDemo values={values} />
 		},
 		{
 			name: 'TabLink',
 			source: 'src/ui/Tabs.tsx',
+			note: 'One item of TabNav, or of UnderlineTabList when a Tab renders it as a button.',
 			render: () => (
 				<TabNav label="Protocol pages">
 					<TabLink href="/yields" aria-current="page">
 						Overview
 					</TabLink>
 					<TabLink href="/yields">Fees</TabLink>
-					<TabLink href="/yields">Governance</TabLink>
 				</TabNav>
 			),
 			states: () => (
@@ -276,11 +429,11 @@ export const navigation: Family = {
 			name: 'ListRow',
 			source: 'src/ui/ListRow.tsx',
 			knobs: [
-				{ name: 'selected', boolean: true },
+				{ name: 'check', values: ['none', 'box', 'tick'], default: 'none' },
 				{ name: 'nested', boolean: true },
 				{ name: 'state', values: ['rest', 'busy', 'disabled'], default: 'rest', prop: false }
 			],
-			note: 'Busy and disabled are aria-busy and aria-disabled.',
+			note: 'Click the row or press Enter on it to pick it: selected is the demo’s own state, and a check mark follows it. Busy and disabled are aria-busy and aria-disabled.',
 			render: (values) => <ListRowDemo values={values} />,
 			states: () => (
 				<>
@@ -293,15 +446,22 @@ export const navigation: Family = {
 							]}
 						/>
 					</Example>
-					<Example name="Picker" prop="selected" note="The check slot keeps labels in place. The second row is picked.">
-						<div className="flex w-64 flex-col gap-0.5">
-							{['Stablecoins overview', 'Ethereum fees', 'Yields watchlist'].map((label, i) => (
-								<ListRow key={label} selected={i === 1} aria-pressed={i === 1}>
-									<span className="flex-1 truncate">{label}</span>
-									<Icon name="check" className={`size-4 text-link ${i === 1 ? '' : 'invisible'}`} aria-hidden />
-								</ListRow>
-							))}
-						</div>
+					<Example
+						name="Single pick"
+						prop='check="tick"'
+						note="Click a row: the tick and the fill move to it. The tick slot stays in place when empty, so labels never shift."
+					>
+						<SinglePickRows />
+					</Example>
+					<Example name="Multi pick" prop='check="box"' note="Click rows to pick several; the box leads each row.">
+						<MultiPickRows fill />
+					</Example>
+					<Example
+						name="Mark without the fill"
+						prop="checked"
+						note="For a list whose keyboard highlight would look like the fill: the box follows checked and the row stays unfilled."
+					>
+						<MultiPickRows fill={false} />
 					</Example>
 				</>
 			)

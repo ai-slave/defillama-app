@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
@@ -100,8 +101,7 @@ export function ArticleCoverImageEditor({
 						const caption = (article.coverImage.caption ?? '').trim()
 						const credit = (article.coverImage.credit ?? '').trim()
 						const copyright = (article.coverImage.copyright ?? '').trim()
-						const metaParts = [credit ? `Credit: ${credit}` : '', copyright ? `© ${copyright}` : ''].filter(Boolean)
-						const hasAny = headline || caption || metaParts.length > 0
+						const hasAny = headline || caption || credit || copyright
 						if (!hasAny) {
 							return (
 								<Button variant="secondary" size="sm" onClick={onOpenCoverDetails} className="justify-self-start">
@@ -115,7 +115,10 @@ export function ArticleCoverImageEditor({
 								<div className="grid gap-0.5 body-sm">
 									{headline ? <span className="label-sm text-secondary">{headline}</span> : null}
 									{caption ? <span className="text-tertiary">{caption}</span> : null}
-									{metaParts.length > 0 ? <span className="text-tertiary">{metaParts.join(' · ')}</span> : null}
+									<MetaLine>
+										{credit ? `Credit: ${credit}` : null}
+										{copyright ? `© ${copyright}` : null}
+									</MetaLine>
 								</div>
 								<Tooltip
 									content="Edit cover details"

@@ -11,10 +11,12 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change, formatChange } from '~/ui/Change'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import {
 	calculateCompanyDollarVolume,
 	calculateConstituentSectorWeight,
@@ -51,15 +53,13 @@ const constituentColumns = constituentColumnHelper.columns([
 				<RowNumber rowId={row.id} />
 				<TokenLogo kind="equities" name={row.original.ticker} country={row.original.country} />
 				<div>
-					<Link
-						href={`/equities/${buildEquityTickerCountrySlug(row.original.ticker, row.original.country)}`}
-						className="label-md text-link hover:underline"
-					>
+					<TextLink href={`/equities/${buildEquityTickerCountrySlug(row.original.ticker, row.original.country)}`}>
 						{getValue()}
-					</Link>
-					<p className="body-sm text-tertiary">
-						{row.original.ticker} · {row.original.country}
-					</p>
+					</TextLink>
+					<MetaLine>
+						{row.original.ticker}
+						{row.original.country}
+					</MetaLine>
 				</div>
 			</div>
 		),
@@ -329,9 +329,10 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Industry breakdown</PanelTitle>
-							<p className="body-sm text-tertiary">
-								Share of sector market cap · {classifiedIndustries.length} industries
-							</p>
+							<MetaLine>
+								Share of sector market cap
+								{`${classifiedIndustries.length} industries`}
+							</MetaLine>
 						</div>
 					</PanelHeader>
 					<div className="flex flex-col p-4">
@@ -340,12 +341,12 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								key={industry.industrySlug}
 								className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-subtle py-2 body-md"
 							>
-								<Link
+								<TextLink
 									href={`/equities/sectors/${sector.sectorSlug}?industry=${encodeURIComponent(industry.industrySlug)}`}
-									className="truncate label-md text-link hover:underline"
+									truncate
 								>
 									{industry.industry}
-								</Link>
+								</TextLink>
 								<span>{formatMetric(industry.marketCap, 'usd')}</span>
 								<span className="w-16 text-right">
 									{industry.priceChangePercentage1m == null ? '—' : <Change value={industry.priceChangePercentage1m} />}

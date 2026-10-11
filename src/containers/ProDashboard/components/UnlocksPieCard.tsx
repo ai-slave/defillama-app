@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, type ReactNode, Suspense, useCallback, useContext, useMemo } from 'react'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
-import { ProMeta } from '../ui'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { ProCardHeader } from './ProCardHeader'
@@ -77,7 +77,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			<ProCardHeader titleAs="h3" title={chartTitle} subtitle={<ProMeta items={[protocolName]} />} />
+			<ProCardHeader titleAs="h3" title={chartTitle} subtitle={<MetaLine>{protocolName}</MetaLine>} />
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -99,7 +99,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 				titleAs="h3"
 				title={chartTitle}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[protocolName]} />}
+				subtitle={<MetaLine>{protocolName}</MetaLine>}
 				menu={
 					hasChartData
 						? {

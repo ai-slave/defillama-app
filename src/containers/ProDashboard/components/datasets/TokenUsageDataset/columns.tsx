@@ -1,8 +1,8 @@
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 
@@ -43,9 +43,7 @@ export const getColumns = (
 					<div className="flex items-center gap-2">
 						<span className="min-w-[30px] shrink-0 label-md text-tertiary">{index + 1}</span>
 						<Logo size={24} src={row.original.logo} alt={`Logo of ${value}`} data-lgonly />
-						<BasicLink href={`/protocol/${slug(value)}`} className="label-md text-link hover:underline">
-							{value}
-						</BasicLink>
+						<TextLink href={`/protocol/${slug(value)}`}>{value}</TextLink>
 					</div>
 				)
 			}

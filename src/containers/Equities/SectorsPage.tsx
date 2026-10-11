@@ -13,10 +13,12 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change, formatChange } from '~/ui/Change'
 import { ChartPanelBody } from '~/ui/ChartPanel'
+import { MetaLine } from '~/ui/MetaLine'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildSectorTreemapData,
@@ -83,9 +85,7 @@ const sectorColumns = sectorColumnHelper.columns([
 		cell: ({ row, getValue }) => (
 			<span className="flex items-center gap-2">
 				<RowNumber rowId={row.id} />
-				<Link href={`/equities/sectors/${row.original.sectorSlug}`} className="label-md text-link hover:underline">
-					{getValue()}
-				</Link>
+				<TextLink href={`/equities/sectors/${row.original.sectorSlug}`}>{getValue()}</TextLink>
 			</span>
 		),
 		enableHiding: false,
@@ -395,9 +395,10 @@ function SectorsReadyPage({
 									>
 										{sector.sector}
 									</Link>
-									<p className="body-sm text-tertiary">
-										{sector.companyCount} equities · {sector.industryCount} industries
-									</p>
+									<MetaLine>
+										{`${sector.companyCount} equities`}
+										{`${sector.industryCount} industries`}
+									</MetaLine>
 								</div>
 								<span className="size-3 rounded-sm" style={{ backgroundColor: sectorColor(sector.sectorSlug) }} />
 							</div>

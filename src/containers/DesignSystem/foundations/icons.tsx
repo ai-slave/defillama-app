@@ -1,8 +1,11 @@
 import { Icon, ICON_GROUPS, ICON_NAMES } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { letterLogoDataUri } from '~/utils/icons'
-import { DEMO_LOGO } from '../demoAssets'
-import { Example, type Foundation, Row } from '../shared'
+import { DEMO_LOGO, DEMO_LOGO_ALT } from '../demoAssets'
+import { Example, type Foundation, StateGrid } from '../shared'
+
+// Not an image, so the browser fails to decode it at once, with no request: the logo falls through to its next source.
+const BROKEN_IMAGE = 'data:image/png;base64,AAAA'
 
 function IconsOverview() {
 	return (
@@ -31,17 +34,57 @@ function IconsOverview() {
 			</Example>
 			<Example
 				name="Logo"
-				prop="src / size / variant"
-				note="Static sources: a bundled asset, an inline letter logo, a missing source that falls through to the placeholder, and company artwork on its light canvas. TokenLogo draws the same part for a named token, chain, exchange, pegged asset or equity, loading the artwork from the icon CDN."
+				prop="src / fallbackSrc / size / variant"
+				note="Static sources only: a bundled asset, an inline letter logo, and broken images that fall through. TokenLogo draws the same part for a named token, chain, exchange, pegged asset or equity, loading the artwork from the icon CDN."
 			>
-				<Row>
-					<Logo src={DEMO_LOGO} size={14} />
-					<Logo src={DEMO_LOGO} size={24} />
-					<Logo src={DEMO_LOGO} size={32} />
-					<Logo src={letterLogoDataUri('Ethereum')} size={24} />
-					<Logo src={null} size={24} />
-					<Logo src={DEMO_LOGO} size={24} variant="company" />
-				</Row>
+				<StateGrid
+					columns={['14px', '24px', '32px']}
+					rows={[
+						[
+							'fill',
+							<>
+								<Logo src={DEMO_LOGO} size={14} />
+								<Logo src={DEMO_LOGO} size={24} />
+								<Logo src={DEMO_LOGO} size={32} />
+							</>
+						],
+						[
+							'company',
+							<>
+								<Logo src={DEMO_LOGO} size={14} variant="company" />
+								<Logo src={DEMO_LOGO} size={24} variant="company" />
+								<Logo src={DEMO_LOGO} size={32} variant="company" />
+							</>
+						],
+						[
+							'letter logo',
+							<>
+								<Logo src={letterLogoDataUri('Ethereum')} size={14} />
+								<Logo src={letterLogoDataUri('Ethereum')} size={24} />
+								<Logo src={letterLogoDataUri('Ethereum')} size={32} />
+							</>
+						]
+					]}
+				/>
+			</Example>
+			<Example
+				name="Logo fallback"
+				prop="fallbackSrc"
+				note="A broken src falls through fallbackSrc, then the placeholder; a missing src starts at the next source."
+			>
+				<StateGrid
+					columns={['broken src, fallbackSrc', 'broken src', 'src null']}
+					rows={[
+						[
+							'32px',
+							<>
+								<Logo src={BROKEN_IMAGE} fallbackSrc={DEMO_LOGO_ALT} size={32} />
+								<Logo src={BROKEN_IMAGE} size={32} />
+								<Logo src={null} size={32} />
+							</>
+						]
+					]}
+				/>
 			</Example>
 		</>
 	)

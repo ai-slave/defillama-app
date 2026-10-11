@@ -7,7 +7,6 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
@@ -28,6 +27,7 @@ import { Logo } from '~/ui/Logo'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
@@ -62,12 +62,9 @@ const columns = columnHelper.columns([
 						<TokenLogo name={value} kind="token" alt={`Logo of ${value}`} size={22} />
 					)}
 					{href ? (
-						<BasicLink
-							href={href}
-							className={`min-w-0 truncate label-md text-link hover:underline ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
-						>
+						<TextLink href={href} truncate className={TOKEN_USAGE_NAME_MAX_WIDTH}>
 							{value}
-						</BasicLink>
+						</TextLink>
 					) : (
 						<span className={`min-w-0 truncate label-md ${TOKEN_USAGE_NAME_MAX_WIDTH}`}>{value}</span>
 					)}

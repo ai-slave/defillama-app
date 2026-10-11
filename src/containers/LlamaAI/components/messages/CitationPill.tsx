@@ -4,6 +4,7 @@ import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import {
 	accentFor,
 	badgeFor,
@@ -176,10 +177,10 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 				<div className="flex items-center justify-between gap-2">
 					{entity ? <span className="label-xs tracking-wide text-tertiary uppercase">{entity}</span> : <span />}
 					{rowDate ? (
-						<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-1 px-2 py-0.5 label-sm text-link">
+						<Tag className="gap-1">
 							<Icon name="calendar" className="size-3" />
 							{rowDate}
-						</span>
+						</Tag>
 					) : null}
 				</div>
 			) : null}

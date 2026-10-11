@@ -2,13 +2,13 @@ import type { CellContext, ColumnDef } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -204,11 +204,7 @@ export const getUnifiedTableColumns = ({
 				if (!category) {
 					return renderDash()
 				}
-				return (
-					<BasicLink href={getCategoryRoute(slug(category))} className="label-md text-link hover:underline">
-						{category}
-					</BasicLink>
-				)
+				return <TextLink href={getCategoryRoute(slug(category))}>{category}</TextLink>
 			}
 		},
 		{
@@ -247,9 +243,9 @@ export const getUnifiedTableColumns = ({
 				return (
 					<span className="flex flex-wrap items-center justify-end gap-1">
 						{visible.map((oracle) => (
-							<BasicLink key={oracle} href={`/oracles/${slug(oracle)}`} className="label-md text-link hover:underline">
+							<TextLink key={oracle} href={`/oracles/${slug(oracle)}`}>
 								{oracle}
-							</BasicLink>
+							</TextLink>
 						))}
 						{extra > 0 ? <Tooltip content={oracles.slice(3).join(', ')}>+{extra}</Tooltip> : null}
 					</span>

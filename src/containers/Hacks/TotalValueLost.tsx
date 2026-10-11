@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
@@ -9,6 +8,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 
@@ -31,9 +31,9 @@ const columns = columnHelper.columns([
 					<TokenLogo name={row.original.slug} kind="token" data-lgonly alt={`Logo of ${row.original.slug}`} />
 
 					{row.original.route ? (
-						<BasicLink href={row.original.route} className="truncate label-md text-link hover:underline">
+						<TextLink href={row.original.route} truncate>
 							{name}
-						</BasicLink>
+						</TextLink>
 					) : (
 						<span className="truncate label-md">{name}</span>
 					)}

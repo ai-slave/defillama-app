@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Keycap } from '~/ui/Keycap'
 import { ListLoading, NoResults } from '~/ui/NoResults'
+import { Tag } from '~/ui/Tag'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
@@ -183,9 +184,7 @@ export function EntitySuggestionList({
 					</span>
 				</span>
 				<MetricChip item={item} />
-				<span className="ml-1 shrink-0 rounded-sm border border-medium px-1.5 py-px label-xs tracking-wider text-tertiary">
-					{TYPE_BADGE[item.entityType] ?? item.entityType.toUpperCase()}
-				</span>
+				<Tag className="ml-1 shrink-0">{TYPE_BADGE[item.entityType] ?? item.entityType.toUpperCase()}</Tag>
 			</button>
 		)
 	}

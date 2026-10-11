@@ -2,7 +2,9 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -115,10 +117,7 @@ function groupMultisigsByRole(multisigs: Array<Multisig> | undefined, poolChain?
 function ChainsBadge({ chains }: { chains: Array<string> }) {
 	if (chains.length < 2) return null
 	return (
-		<Tooltip
-			content={`Same role replicated across ${chains.length} chains: ${chains.join(', ')}`}
-			className="rounded-full border border-medium bg-surface px-1.5 py-0.5 body-xs text-secondary"
-		>
+		<Tooltip content={`Same role replicated across ${chains.length} chains: ${chains.join(', ')}`} render={<Tag />}>
 			{chains.length} chains
 		</Tooltip>
 	)
@@ -194,7 +193,7 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 						const formal = a.findings_status === 'not_applicable_formal_verification'
 						return (
 							<li key={key} className="flex items-center justify-between gap-2 py-1.5 body-sm">
-								<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
+								<MetaLine className="min-w-0">
 									{meta ? (
 										<Definition content={meta} className="text-primary">
 											{a.firm}
@@ -202,9 +201,9 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 									) : (
 										<span className="text-primary">{a.firm}</span>
 									)}
-									<span>· {formatVerified(a.date)}</span>
+									{formatVerified(a.date)}
 									{formal ? <StatusBadge status="good">formal verification</StatusBadge> : null}
-								</span>
+								</MetaLine>
 								{a.report?.value ? <ExternalLink href={a.report.value}>report</ExternalLink> : null}
 							</li>
 						)

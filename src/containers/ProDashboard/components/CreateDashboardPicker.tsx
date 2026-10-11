@@ -21,6 +21,7 @@ import {
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -39,13 +40,7 @@ import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { DASHBOARD_TEMPLATES, generateTemplateCharts, getTemplateItems, type ChainCategoryData } from '../templates'
 import type { ComparisonPreset } from './ComparisonWizard/types'
-import {
-	dashboardFieldHintStyles,
-	dashboardFieldLabelStyles,
-	DescriptionField,
-	TagsField,
-	VisibilityField
-} from './DashboardFormFields'
+import { DescriptionField, TagsField, VisibilityField } from './DashboardFormFields'
 
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
 
@@ -239,10 +234,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'scratch', from: null })}
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
-						{/* An icon chip on the brand tint, not a selected state. */}
-						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
-							<Icon name="file-plus" className="size-5" />
-						</span>
+						<IconTile icon="file-plus" tone="brand" size="md" />
 						<span className="flex flex-col gap-1">
 							<span className="label-md text-primary">From scratch</span>
 							<span className="body-sm text-tertiary">Create an empty dashboard and add charts manually</span>
@@ -257,10 +249,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'comparison', from: null })}
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
-						{/* An icon chip on the brand tint, not a selected state. */}
-						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
-							<Icon name="bar-chart-2" className="size-5" />
-						</span>
+						<IconTile icon="bar-chart-2" tone="brand" size="md" />
 						<span className="flex flex-col gap-1">
 							<span className="label-md text-primary">Comparison</span>
 							<span className="body-sm text-tertiary">Compare chains or protocols with pre-built charts</span>
@@ -496,12 +485,14 @@ function CreateDashboardModalContent({
 						</Field>
 
 						{team ? (
-							<div className="flex flex-col gap-1.5">
-								<p id={`${id}-owner`} className={dashboardFieldLabelStyles}>
+							// The radiogroup is the group, so it takes the label and hint ids instead of sitting in a FieldGroup.
+							<div className="flex flex-col gap-1">
+								<span id={`${id}-owner`} className="label-sm text-secondary">
 									Create in
-								</p>
+								</span>
 								<SegmentedControl
 									aria-labelledby={`${id}-owner`}
+									aria-describedby={`${id}-owner-hint`}
 									label="Create in"
 									variant="field"
 									size="md"
@@ -530,7 +521,7 @@ function CreateDashboardModalContent({
 										}
 									]}
 								/>
-								<p className={dashboardFieldHintStyles}>
+								<p id={`${id}-owner-hint`} className="body-sm text-tertiary">
 									{createIn === 'team' && canCreateInTeam
 										? 'Teammates with a seat can edit it. It stays with the team if you leave.'
 										: canCreateInTeam

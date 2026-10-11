@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
-import { type ComponentPropsWithRef, type ElementType, type ReactNode, useId } from 'react'
+import { type ComponentPropsWithRef, type ElementType, type ReactNode, type Ref, useId } from 'react'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
@@ -33,6 +33,8 @@ import { tw } from './tw'
    for route navigation and `UnderlineTabList` for panel tabs; pages never
    draw it themselves. Their `className` places it or sets its display (a
    nav hidden below a breakpoint): `flex` is an `initial:` default.
+   `UnderlineTabList` passes `ref` to the track, for a caller that measures
+   its overflow to show scroll arrows over it (a Pro dashboard's sections).
 
    Route navigation: `TabNav` is the labeled `<nav>`, and the current
    page's item carries `aria-current="page"`, which also draws it active:
@@ -57,14 +59,19 @@ export function TabNav({ label, className, children }: { label: string; classNam
 export type UnderlineTab<T extends string> = { id: T; label: string }
 
 /** Panel tabs on the underline track, inside a `Tabs` provider. Plain text labels pass `tabs`; items with icons, counts
-    or per-tab props are `Tab` children rendered as `TabLink` buttons. `className` is placement and display only. */
+    or per-tab props are `Tab` children rendered as `TabLink` buttons. `className` is placement and display only; `ref`
+    reaches the track. */
 export function UnderlineTabList({
 	label,
 	className,
+	ref,
 	...items
-}: { label: string; className?: string } & ({ tabs: ReadonlyArray<UnderlineTab<string>> } | { children: ReactNode })) {
+}: { label: string; className?: string; ref?: Ref<HTMLDivElement> } & (
+	| { tabs: ReadonlyArray<UnderlineTab<string>> }
+	| { children: ReactNode }
+)) {
 	return (
-		<Ariakit.TabList aria-label={label} className={clsx(tabTrackStyles, className)}>
+		<Ariakit.TabList ref={ref} aria-label={label} className={clsx(tabTrackStyles, className)}>
 			{'tabs' in items
 				? items.tabs.map((tab) => (
 						<Tab key={tab.id} value={tab.id} render={<TabLink as="button" type="button" />}>

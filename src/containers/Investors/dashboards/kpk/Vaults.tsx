@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Card } from '~/ui/Card'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -142,9 +143,10 @@ export default function Vaults() {
 											{row.doubleCounted && <InfoTip text={doubleCountNote} className="ml-1" />}{' '}
 											<RowLink href={row.url} label={row.name} size="sm" />
 										</span>
-										<span className="body-sm text-tertiary">
-											{row.venue} · {row.chain}
-										</span>
+										<MetaLine>
+											{row.venue}
+											{row.chain}
+										</MetaLine>
 									</span>
 								)
 							},

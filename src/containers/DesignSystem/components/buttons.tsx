@@ -10,7 +10,7 @@ import { Menu } from '~/ui/Menu'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
+import { DashedTile, ImageReplaceTile, UploadTile } from '~/ui/UploadTile'
 import { DEMO_IMAGE } from '../demoAssets'
 import {
 	Cell,
@@ -488,14 +488,17 @@ export const buttons: Family = {
 			source: 'src/ui/UploadTile.tsx',
 			knobs: [
 				{ name: 'shape', values: UPLOAD_SHAPES },
-				{ name: 'state', values: ['rest', 'uploading', 'invalid', 'disabled'], default: 'rest', prop: false }
+				{ name: 'state', values: ['rest', 'uploading', 'invalid', 'disabled'], default: 'rest', prop: false },
+				{ name: 'hint', boolean: true, prop: false }
 			],
+			note: 'The file input stays with the caller, so this tile opens nothing. Tab to it and pick uploading: it keeps focus, is announced busy and ignores presses. The hint names the accepted files.',
 			render: (values) => (
 				<div className={tileSlot(values.shape as Shape, 'w-72')}>
 					<UploadTile
 						shape={values.shape as Shape}
 						icon="image-plus"
 						label="Upload logo"
+						hint={values.hint ? 'PNG or SVG, up to 2 MB' : undefined}
 						pendingLabel="Uploading…"
 						pending={values.state === 'uploading'}
 						aria-invalid={values.state === 'invalid' || undefined}
@@ -530,6 +533,46 @@ export const buttons: Family = {
 								</>
 							]
 						})}
+					/>
+				</Example>
+			)
+		},
+		{
+			name: 'DashedTile',
+			source: 'src/ui/UploadTile.tsx',
+			knobs: [{ name: 'as', values: ['button', 'BasicLink'], default: 'button', prop: false }],
+			note: 'A button that adds the next card, or with as={BasicLink} and href a link that opens a page (View all). Hover it or Tab to it: the dashed edge and the text darken, never blue.',
+			render: (values) =>
+				values.as === 'BasicLink' ? (
+					<DashedTile as={BasicLink} href="/yields" className="min-h-12 w-72">
+						View all
+						<Icon name="arrow-right" className="size-3.5" aria-hidden />
+					</DashedTile>
+				) : (
+					<DashedTile className="min-h-12 w-72">
+						<Icon name="plus" className="size-3.5" aria-hidden />
+						Add card
+					</DashedTile>
+				),
+			states: () => (
+				<Example wide name="Interaction">
+					<StateGrid
+						columns={['Rest', 'Hover', 'Focus', 'Pressed']}
+						rows={[
+							[
+								'button',
+								<>
+									{([...REST_HOVER_FOCUS, 'active'] as const).map((force) => (
+										<Cell key={force ?? 'rest'} force={force}>
+											<DashedTile className="min-h-12 w-48">
+												<Icon name="plus" className="size-3.5" aria-hidden />
+												Add card
+											</DashedTile>
+										</Cell>
+									))}
+								</>
+							]
+						]}
 					/>
 				</Example>
 			)

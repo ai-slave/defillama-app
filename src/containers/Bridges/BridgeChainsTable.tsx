@@ -8,7 +8,6 @@ import {
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { BasicLink } from '~/components/Link'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
@@ -17,6 +16,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeChainTableRow } from './utils'
@@ -33,9 +33,9 @@ const bridgeChainsColumn = columnHelper.columns([
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
-					<BasicLink href={`/bridges/${slug(value)}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/bridges/${slug(value)}`} truncate>
 						{value}
-					</BasicLink>
+					</TextLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)

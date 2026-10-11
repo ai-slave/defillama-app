@@ -3,7 +3,6 @@ import { Button } from '~/ui/Button'
 import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
 import { ErrorLine } from '~/ui/Status'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
-import { ProMeta } from '../../ui'
 import { type PickListLoad, resolveSubmitGate } from './submitBlocker'
 import type { ModalState } from './types'
 
@@ -36,7 +35,11 @@ export function SubmitButton({ editItem, state, onSubmit, submitError, pickList 
 		<DialogFooter
 			leading={
 				<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
-					{submitError ? <ErrorLine inset="none">{submitError}</ErrorLine> : <ProMeta items={[gate]} />}
+					{submitError ? (
+						<ErrorLine inset="none">{submitError}</ErrorLine>
+					) : (
+						<p className="body-sm text-tertiary">{gate}</p>
+					)}
 				</div>
 			}
 			dismiss={<DialogCancelButton />}

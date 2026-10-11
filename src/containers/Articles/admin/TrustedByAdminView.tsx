@@ -35,7 +35,9 @@ import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -563,24 +565,16 @@ function SortableMentionRow({
 				<Icon name="menu" className="size-4 text-tertiary" />
 			</Tooltip>
 
-			{/* A slot badge on the brand tint, not a selected state. */}
-			{slotLabel ? (
-				<span className="inline-flex shrink-0 items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
-					{slotLabel}
-				</span>
-			) : (
-				<span className="size-2" />
-			)}
+			{slotLabel ? <Tag className="shrink-0">{slotLabel}</Tag> : <span className="size-2" />}
 
 			<div className="grid min-w-0 gap-0.5">
 				<p className="line-clamp-1 body-md text-primary">
 					{mention.quote || <span className="text-tertiary italic">no quote</span>}
 				</p>
-				<p className="truncate body-sm text-tertiary">
+				<MetaLine>
 					{mention.username ? `@${mention.username}` : null}
-					{mention.username && mention.xPostId ? ' · ' : null}
-					{mention.xPostId}
-				</p>
+					{mention.xPostId ? <span className="min-w-0 truncate">{mention.xPostId}</span> : null}
+				</MetaLine>
 			</div>
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">

@@ -8,9 +8,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
-import { BusyGlyph, InlineStatus } from '~/ui/Status'
+import { BusyGlyph, EmptyState, InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
 
 const EMPTY_REQUEST = { name: '', email: '', body: '' }
@@ -225,17 +224,20 @@ export default Support
 
 function SuccessScreen({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) {
 	return (
-		<Card padding="md" className="flex w-full flex-col gap-4 text-center">
-			<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success-tint-strong">
-				<Icon name="check" className="size-8 text-success" />
-			</div>
-			<h2 className="heading-xs text-success">Request sent</h2>
-			<p className="text-secondary">
+		<Card padding="md" className="w-full">
+			<EmptyState
+				size="md"
+				tone="success"
+				headingAs="h2"
+				title="Request sent"
+				actions={
+					<Button variant="primary" size="sm" onClick={() => setIsSubmitted(false)}>
+						Submit another request
+					</Button>
+				}
+			>
 				Your support request has been submitted successfully. We'll get back to you as soon as possible.
-			</p>
-			<Button variant="primary" size="md" onClick={() => setIsSubmitted(false)} className="mt-4 w-full">
-				Submit another request
-			</Button>
+			</EmptyState>
 		</Card>
 	)
 }

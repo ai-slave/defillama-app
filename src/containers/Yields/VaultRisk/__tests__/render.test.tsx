@@ -994,7 +994,7 @@ describe('VaultRiskSection render', () => {
 		})
 		const html = await render(<TrustPanel protocol={protocol} vaultRoles={roles} nowIso="2026-06-19T00:00:00Z" />)
 		expect(html).toContain('Sentinels') // the many-holder veto row
-		expect(html).toContain('1 multisig · 1 EOA') // collapsed line summarizes the holders
+		expect(text(html)).toContain('1 multisig·1 EOA') // collapsed line summarizes the holders
 		expect(html).toContain('Safety role · veto only') // capability marker joined on role: 'sentinel'
 		expect(html).toContain('Cancels queued curator changes') // authored summary, not the static fallback
 		// sentinels ARE the veto role — the guardian-absence danger state must not fire

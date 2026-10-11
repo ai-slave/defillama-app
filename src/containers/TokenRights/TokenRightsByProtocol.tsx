@@ -8,6 +8,7 @@ import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -643,9 +644,12 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 				<Definition as="h3" content={tooltip} className="label-md">
 					Raise history
 				</Definition>
-				<span className="label-sm text-secondary">
-					{raises.length} round{raises.length !== 1 ? 's' : ''} · <RaisesTotal {...summarizeRaises(raises)} /> total
-				</span>
+				<MetaLine>
+					{`${raises.length} round${raises.length !== 1 ? 's' : ''}`}
+					<span>
+						<RaisesTotal {...summarizeRaises(raises)} /> total
+					</span>
+				</MetaLine>
 			</div>
 			<div className="overflow-x-auto">
 				<table className="w-full text-left body-sm">

@@ -7,6 +7,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { buildProtocolBreakdownCsvDataset } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
@@ -14,7 +15,6 @@ import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressBorrowedTokenBreakdown } from '../services/protocolTvl'
 import type { BorrowedChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
@@ -158,7 +158,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[protocolName]} />} />
+			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<MetaLine>{protocolName}</MetaLine>} />
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -247,7 +247,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				titleAs="h3"
 				title={chartTypeLabel}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[protocolName]} />}
+				subtitle={<MetaLine>{protocolName}</MetaLine>}
 				viewerControls={
 					hasChartData ? (
 						chartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (

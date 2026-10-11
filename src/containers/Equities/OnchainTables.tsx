@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { BasicLink } from '~/components/Link'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -12,6 +11,7 @@ import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { Tag } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -69,11 +69,7 @@ const marketsColumns = marketsColumnHelper.columns([
 	marketsColumnHelper.accessor('contractSlug', {
 		header: 'Contract',
 		enableSorting: false,
-		cell: ({ getValue }) => (
-			<BasicLink href={rwaPerpsContractHref(getValue())} className="text-link hover:underline">
-				{getValue()}
-			</BasicLink>
-		),
+		cell: ({ getValue }) => <TextLink href={rwaPerpsContractHref(getValue())}>{getValue()}</TextLink>,
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'start'
@@ -120,9 +116,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue, row }) =>
 			row.original.exchangeProtocolSlug ? (
-				<BasicLink href={protocolHref(row.original.exchangeProtocolSlug)} className="text-link hover:underline">
-					{getValue()}
-				</BasicLink>
+				<TextLink href={protocolHref(row.original.exchangeProtocolSlug)}>{getValue()}</TextLink>
 			) : (
 				'-'
 			),
@@ -145,9 +139,7 @@ const marketsColumns = marketsColumnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue, row }) =>
 			row.original.rwaPlatformSlug ? (
-				<BasicLink href={rwaPlatformHref(row.original.rwaPlatformSlug)} className="text-link hover:underline">
-					{getValue()}
-				</BasicLink>
+				<TextLink href={rwaPlatformHref(row.original.rwaPlatformSlug)}>{getValue()}</TextLink>
 			) : (
 				'-'
 			),
@@ -193,11 +185,7 @@ const tokensColumns = tokensColumnHelper.columns([
 	tokensColumnHelper.accessor('assetSlug', {
 		header: 'Asset',
 		enableSorting: false,
-		cell: ({ getValue }) => (
-			<BasicLink href={rwaAssetHref(getValue())} className="text-link hover:underline">
-				{getValue()}
-			</BasicLink>
-		),
+		cell: ({ getValue }) => <TextLink href={rwaAssetHref(getValue())}>{getValue()}</TextLink>,
 		meta: {
 			headerClassName: 'w-[132px]',
 			align: 'start'
@@ -207,9 +195,7 @@ const tokensColumns = tokensColumnHelper.columns([
 		header: 'Platform',
 		enableSorting: false,
 		cell: ({ getValue, row }) => (
-			<BasicLink href={rwaPlatformHref(row.original.issuerRwaPlatformSlug)} className="text-link hover:underline">
-				{getValue()}
-			</BasicLink>
+			<TextLink href={rwaPlatformHref(row.original.issuerRwaPlatformSlug)}>{getValue()}</TextLink>
 		),
 		meta: {
 			headerClassName: 'w-[180px]',

@@ -4,6 +4,7 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Logo } from '~/ui/Logo'
+import { MetaLine } from '~/ui/MetaLine'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
@@ -160,9 +161,10 @@ export function ProfileMetrics({
 								{formatNumber(profile.quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
 							<span className="body-sm text-tertiary">/ 100</span>
-							<span className="ml-auto body-sm text-secondary">
-								#{profile.quality.rankInKind} of {profile.kind.toUpperCase()}s · #{profile.quality.overallRank} overall
-							</span>
+							<MetaLine className="ml-auto">
+								{`#${profile.quality.rankInKind} of ${profile.kind.toUpperCase()}s`}
+								{`#${profile.quality.overallRank} overall`}
+							</MetaLine>
 						</span>
 					</Tooltip>
 					<TierScale score={profile.quality.score} tier={profile.quality.tier} />

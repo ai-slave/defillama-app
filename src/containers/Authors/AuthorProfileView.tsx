@@ -13,6 +13,7 @@ import type { IIcon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { formatNumber } from '~/utils/numberFormat'
 import { avatarColorStyle } from './avatarColor'
 import { FollowAuthorButton } from './FollowAuthorButton'
@@ -239,8 +240,8 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
-								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 body-sm text-secondary">
-									{tag}
+								<li key={tag}>
+									<Tag>{tag}</Tag>
 								</li>
 							))}
 						</ul>
@@ -276,8 +277,8 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
-								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 body-sm text-secondary">
-									{tag}
+								<li key={tag}>
+									<Tag>{tag}</Tag>
 								</li>
 							))}
 						</ul>
@@ -344,9 +345,7 @@ function AuthorHero({
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-brand-muted bg-brand-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
-							Dashboard author
-						</span>
+						<Tag>Dashboard author</Tag>
 						<span className="body-md text-tertiary">@{author.slug}</span>
 					</div>
 

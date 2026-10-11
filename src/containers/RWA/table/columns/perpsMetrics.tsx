@@ -1,5 +1,5 @@
-import { BasicLink } from '~/components/Link'
 import { Change } from '~/ui/Change'
+import { TextLink } from '~/ui/TextLink'
 import { Definition } from '~/ui/Tooltip'
 import { formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { formatRwaMultiple } from '../../kpi/format'
@@ -29,9 +29,9 @@ const assetColumn = createDistinctTextColumn({
 	pick: (asset) => (asset.kind === 'perps' ? asset.assetName : null),
 	href: getRwaPerpsAssetHref,
 	render: (asset) => (
-		<BasicLink href={getRwaPerpsAssetHref(asset)} className="truncate text-link hover:underline">
+		<TextLink href={getRwaPerpsAssetHref(asset)} truncate>
 			{asset}
-		</BasicLink>
+		</TextLink>
 	),
 	meta: textColumnMeta('w-[140px]', d.baseAsset.description, d.baseAsset.label)
 })

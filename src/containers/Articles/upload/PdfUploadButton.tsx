@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { InlineStatus } from '~/ui/Status'
 import { UploadTile } from '~/ui/UploadTile'
 import { formatFixedNumber } from '~/utils/numberFormat'
@@ -61,10 +62,10 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 							>
 								{currentPdf.originalName || 'report.pdf'}
 							</a>
-							<span className="body-sm text-tertiary">
+							<MetaLine>
 								{formatSize(currentPdf.sizeBytes)}
-								{currentPdf.pageCount ? ` · ${currentPdf.pageCount} pages` : ''}
-							</span>
+								{currentPdf.pageCount ? `${currentPdf.pageCount} pages` : null}
+							</MetaLine>
 						</div>
 					</div>
 					<div className="flex flex-wrap gap-2">

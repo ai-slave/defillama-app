@@ -1,11 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { focusNeighborOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input } from '~/ui/Input'
+import { InlineRenameInput } from '~/ui/InlineTextField'
 import { BusyGlyph, EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -18,6 +18,13 @@ interface SavedQueriesPanelProps {
 export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueriesPanelProps) {
 	const { renameDownload, deleteDownload } = useSavedDownloads()
 	const [renamingId, setRenamingId] = useState<string | null>(null)
+	const renamingRowRef = useRef<HTMLLIElement>(null)
+	// Enter and Escape remove the field; focus goes to the query's own button, which takes the field's place. The row is
+	// read first: the commit detaches the ref.
+	const finishFromKeyboard = (commit: () => void) => {
+		const row = renamingRowRef.current
+		keepFocus(commit, () => row?.querySelector('button'))
+	}
 
 	if (queries.length === 0) {
 		return (
@@ -38,6 +45,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				return (
 					<li
 						key={query.id}
+						ref={isRenaming ? renamingRowRef : undefined}
 						data-row
 						// A tap focuses the row, which reveals its actions on screens that cannot hover.
 						tabIndex={-1}
@@ -49,12 +57,17 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 							<span className="flex min-w-0 flex-1 flex-col gap-0.5 py-2">
 								<InlineRenameInput
 									initial={query.name}
-									onCommit={(next) => {
+									label="Saved query name"
+									onCommit={(next, fromKeyboard) => {
 										const trimmed = next.trim()
-										if (trimmed && trimmed !== query.name) renameDownload(query.id, trimmed)
-										setRenamingId(null)
+										const commit = () => {
+											if (trimmed && trimmed !== query.name) renameDownload(query.id, trimmed)
+											setRenamingId(null)
+										}
+										if (fromKeyboard) finishFromKeyboard(commit)
+										else commit()
 									}}
-									onCancel={() => setRenamingId(null)}
+									onCancel={() => finishFromKeyboard(() => setRenamingId(null))}
 								/>
 								<span className="truncate mono-sm text-tertiary">{firstLine}</span>
 							</span>
@@ -127,45 +140,5 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				)
 			})}
 		</ul>
-	)
-}
-
-// Module scope keeps the ref callback's identity stable, so it runs when the input attaches, not on every keystroke.
-function focusAndSelect(input: HTMLInputElement | null) {
-	input?.focus()
-	input?.select()
-}
-
-function InlineRenameInput({
-	initial,
-	onCommit,
-	onCancel
-}: {
-	initial: string
-	onCommit: (value: string) => void
-	onCancel: () => void
-}) {
-	const [value, setValue] = useState(initial)
-
-	return (
-		<Input
-			variant="inline"
-			ref={focusAndSelect}
-			aria-label="Saved query name"
-			value={value}
-			onChange={(e) => setValue(e.target.value)}
-			onKeyDown={(e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault()
-					onCommit(value)
-				} else if (e.key === 'Escape') {
-					e.preventDefault()
-					onCancel()
-				}
-				e.stopPropagation()
-			}}
-			onBlur={() => onCommit(value)}
-			onClick={(e) => e.stopPropagation()}
-		/>
 	)
 }

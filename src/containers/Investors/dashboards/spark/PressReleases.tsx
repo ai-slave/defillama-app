@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
@@ -146,9 +147,7 @@ export default function PressReleases() {
 			{financialReports.length > 0 && (
 				<div className="space-y-4">
 					<div className="flex items-center gap-3">
-						<div className="flex size-8 items-center justify-center rounded-lg bg-brand-tint">
-							<Icon name="file-text" className="size-5 text-link" />
-						</div>
+						<IconTile icon="file-text" tone="brand" size="sm" />
 						<h2 className="heading-xs text-primary">Financial reports</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -195,9 +194,7 @@ export default function PressReleases() {
 			{pressReleases.length > 0 && (
 				<div className="space-y-4">
 					<div className="flex items-center gap-3">
-						<div className="flex size-8 items-center justify-center rounded-lg bg-surface-elevated-2">
-							<Icon name="newspaper" className="size-5 text-primary" />
-						</div>
+						<IconTile icon="newspaper" tone="neutral" size="sm" />
 						<h2 className="heading-xs text-primary">Press releases</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

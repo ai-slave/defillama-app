@@ -1,48 +1,22 @@
 import { Card } from '~/ui/Card'
 import { tokenIconUrl } from '~/utils/icons'
+import { type IrHeaderLink, IrHeaderLinks } from '../../IrHeaderLinks'
 import { useTab, type MetadataResponse } from './api'
 
 // llamaSlugs from /api/odyssey-ecosystem/metadata (protocols[].llamaSlug), used to pull protocol logos.
 const ODYSSEY_SLUG = 'odyssey-finance'
 
-function Logo({ slug, alt }: { slug: string; alt: string }) {
-	return (
-		<img src={tokenIconUrl(slug, 32)} alt={alt} className="size-4 shrink-0 rounded-full bg-surface object-contain" />
-	)
-}
-
-const debankIcon = (
-	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4 shrink-0">
-		<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6" />
-	</svg>
-)
-
-interface NavLink {
-	label: string
-	url: string
-	icon: React.ReactNode
-}
-
 // Live URLs come from metadata (links.* / debankBundles.*); static URLs are fallbacks until it loads.
-function buildLinks(meta: MetadataResponse | undefined): Array<NavLink> {
+function buildLinks(meta: MetadataResponse | undefined): Array<IrHeaderLink> {
 	const links = meta?.links ?? {}
 	const debank = meta?.debankBundles ?? {}
-	const items: Array<NavLink> = [
-		{
-			label: 'Odyssey',
-			url: links.odyssey ?? 'https://odyssey.finance',
-			icon: <Logo slug={ODYSSEY_SLUG} alt="Odyssey" />
-		},
-		{
-			label: 'Metronome',
-			url: links.metronome ?? 'https://metronome.io',
-			icon: <Logo slug="metronome-synth" alt="Metronome" />
-		},
-		{ label: 'Vesper', url: links.vesper ?? 'https://vesper.finance', icon: <Logo slug="vesper" alt="Vesper" /> },
-		{ label: 'Metronome Treasury', url: debank.metronome, icon: debankIcon },
-		{ label: 'Vesper Treasury', url: debank.vesper, icon: debankIcon }
+	return [
+		{ label: 'Odyssey', href: links.odyssey ?? 'https://odyssey.finance', logo: tokenIconUrl(ODYSSEY_SLUG, 32) },
+		{ label: 'Metronome', href: links.metronome ?? 'https://metronome.io', logo: tokenIconUrl('metronome-synth', 32) },
+		{ label: 'Vesper', href: links.vesper ?? 'https://vesper.finance', logo: tokenIconUrl('vesper', 32) },
+		{ label: 'Metronome Treasury', href: debank.metronome, icon: 'landmark' },
+		{ label: 'Vesper Treasury', href: debank.vesper, icon: 'landmark' }
 	]
-	return items.filter((l) => Boolean(l.url))
 }
 
 export function OdysseyIcon({ className = 'size-7' }: { className?: string }) {
@@ -67,22 +41,9 @@ function OdysseyLogo() {
 export default function OdysseyHeader() {
 	const { data: meta } = useTab<MetadataResponse>('metadata')
 	return (
-		<Card as="header" padding="strip" className="flex items-center gap-4">
+		<Card as="header" padding="strip" className="flex flex-wrap items-center gap-x-4 gap-y-2">
 			<OdysseyLogo />
-			<nav className="ml-auto flex items-center gap-0.5">
-				{buildLinks(meta).map(({ label, url, icon }) => (
-					<a
-						key={label}
-						href={url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
-					>
-						{icon}
-						<span className="max-lg:sr-only">{label}</span>
-					</a>
-				))}
-			</nav>
+			<IrHeaderLinks links={buildLinks(meta)} />
 		</Card>
 	)
 }

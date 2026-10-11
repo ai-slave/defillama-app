@@ -133,7 +133,7 @@ describe('a subscriber', () => {
 		await pasteCsv(CSV)
 
 		expect(latest?.customData.chart).toMatchObject({ chartType: 'line', xCol: 'day' })
-		expect(document.body.textContent).toContain('2 rows · 2 columns')
+		expect(document.body.textContent).toContain('2 rows·2 columns')
 		expect(latest?.customData.columns).toEqual([
 			{ name: 'day', type: 'DATE' },
 			{ name: 'value', type: 'BIGINT' }
@@ -244,11 +244,11 @@ describe('a subscriber', () => {
 			displayMode: 'chart'
 		})
 		expect(chartXColumn()).toBe('day')
-		expect(document.body.textContent).toContain('2 rows · 2 columns')
+		expect(document.body.textContent).toContain('2 rows·2 columns')
 
 		await typeCsv('d')
 		expect(chartXColumn()).toBe('day')
-		expect(document.body.textContent).toContain('2 rows · 2 columns')
+		expect(document.body.textContent).toContain('2 rows·2 columns')
 	})
 
 	test('reports a malformed CSV as plain text without storing rows', async () => {

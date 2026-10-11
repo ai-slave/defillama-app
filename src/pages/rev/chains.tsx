@@ -1,6 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -14,6 +13,7 @@ import { definitions } from '~/public/definitions'
 import { Card } from '~/ui/Card'
 import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -73,9 +73,9 @@ const columns = columnHelper.columns([
 					<Logo size={24} src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 
 					<span className="-my-2 flex flex-col">
-						<BasicLink href={`/chain/${row.original.slug}`} className="truncate label-md text-link hover:underline">
+						<TextLink href={`/chain/${row.original.slug}`} truncate>
 							{value}
-						</BasicLink>
+						</TextLink>
 					</span>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>

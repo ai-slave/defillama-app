@@ -7,12 +7,13 @@ import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { MetaLine } from '~/ui/MetaLine'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatDate } from '~/utils/dateFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
 import type { LlamaAIChartConfig } from '../types'
-import { ProBadge, ProMeta } from '../ui'
+import { ProBadge } from '../ui'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
 import { useCardHeightScale } from './cardHeightContext'
 import {
@@ -172,12 +173,10 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 					) : null
 				}
 				subtitle={
-					<ProMeta
-						items={[
-							updatedAt ? <RelativeTime key="updated" value={updatedAt} prefix="Updated" /> : null,
-							!updatedAt && data.dataAsOf ? `Data as of ${formatDate(data.dataAsOf) ?? '-'}` : null
-						]}
-					/>
+					<MetaLine>
+						{updatedAt ? <RelativeTime value={updatedAt} prefix="Updated" /> : null}
+						{!updatedAt && data.dataAsOf ? `Data as of ${formatDate(data.dataAsOf) ?? '-'}` : null}
+					</MetaLine>
 				}
 				controls={
 					canRefresh ? (

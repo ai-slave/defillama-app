@@ -3,7 +3,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -20,6 +19,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -75,12 +75,9 @@ const categoriesColumns = columnHelper.columns([
 						</Button>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<BasicLink
-						href={getCategoryRoute(slug(categoryName))}
-						className="truncate label-md text-link hover:underline"
-					>
+					<TextLink href={getCategoryRoute(slug(categoryName))} truncate>
 						{categoryName}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		}

@@ -29,7 +29,7 @@ import {
 import { formatScheduleExpression } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertFieldLabelClass,
+	AlertsHeaderIcon,
 	PriceInput,
 	PRICE_OPERATOR_OPTIONS,
 	DELIVERY_OPTIONS,
@@ -251,9 +251,7 @@ export function AlertArtifact({
 	if (!isAuthenticated) {
 		return (
 			<Card padding="base" className="my-2 flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
-					<Icon name="calendar-plus" className="size-4" />
-				</div>
+				<AlertsHeaderIcon />
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<h3 className="m-0 label-md text-primary">Sign in to save alerts</h3>
 					<p className="m-0 body-sm text-secondary">Scheduled alerts require authentication.</p>
@@ -278,9 +276,7 @@ export function AlertArtifact({
 			}`}
 		>
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
-					<Icon name="calendar-plus" className="size-4" />
-				</div>
+				<AlertsHeaderIcon />
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<h3 className="m-0 truncate label-md text-primary">
 						{isSaved
@@ -426,7 +422,7 @@ export function AlertArtifact({
 
 					{prompt ? (
 						<div className="flex flex-col gap-1">
-							<span className={alertFieldLabelClass}>What it will tell you</span>
+							<span className="label-sm text-secondary">What it will tell you</span>
 							<p className={`m-0 body-md text-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>{prompt}</p>
 							{prompt.length > 140 ? (
 								<span className="self-start label-sm">

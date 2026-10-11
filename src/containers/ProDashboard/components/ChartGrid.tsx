@@ -36,7 +36,9 @@ import { useMedia } from '~/hooks/useMedia'
 import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { EmptyState } from '~/ui/Status'
+import { DashedTile } from '~/ui/UploadTile'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
@@ -82,7 +84,6 @@ import {
 } from '../ProDashboardAPIContext'
 import { StreamDoneContext, StreamItemReadinessContext } from '../queries'
 import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type SectionConfig, type SqlChartConfig } from '../types'
-import { DashedTile, ProMeta } from '../ui'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { type DashboardItemPlacement, type DashboardWriteResult, toastRefusal } from '../useDashboardActions'
 import { generateItemId } from '../utils/dashboardUtils'
@@ -895,15 +896,12 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 							) : layout.shared.length > 0 || !isReadOnly ? (
 								<div className="flex flex-col gap-2">
 									{isReadOnly ? null : (
-										<ProMeta
-											className="px-1"
-											items={[
-												<>
-													<Icon name="pin" className="size-3" />
-													Shown on every tab
-												</>
-											]}
-										/>
+										<MetaLine className="px-1">
+											<>
+												<Icon name="pin" className="size-3" />
+												Shown on every tab
+											</>
+										</MetaLine>
 									)}
 									{layout.shared.length > 0 ? (
 										renderGroups(layout.shared, {

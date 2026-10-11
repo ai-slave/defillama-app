@@ -7,8 +7,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { Toast } from '~/components/Toast'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const SignInFlow = dynamic(() => import('~/containers/Subscription/SignInDialog').then((mod) => mod.SignInFlow), {
@@ -82,13 +81,11 @@ function AuthContent() {
 			</Head>
 			<div className="theme-dark col-span-full flex min-h-screen w-full items-center justify-center bg-page px-5">
 				{isAuthenticated ? (
-					<div className="w-full max-w-md rounded-xl border border-subtle bg-surface p-8 text-center">
+					<div className="w-full max-w-md rounded-xl border border-subtle bg-surface px-8 pb-8 text-center">
 						<div className="mb-6">
-							<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success-tint">
-								<Icon name="check" className="size-6 text-success" />
-							</div>
-							<h2 className="mb-2 heading-sm text-primary">Successfully logged in.</h2>
-							{user?.email ? <p className="body-md text-tertiary">Signed in as {user.email}</p> : null}
+							<EmptyState size="lg" tone="success" headingAs="h2" title="Signed in">
+								{user?.email ?? null}
+							</EmptyState>
 							{isUnknownRedirect ? (
 								<div className="mt-2 text-left">
 									<InlineStatus variant="error">

@@ -1,8 +1,8 @@
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Tag } from '~/ui/Tag'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { RWASuspiciousWarning } from '../../SuspiciousWarning'
 import type { RWAGroupRow, RWALeafRow } from '../rows'
@@ -61,9 +61,9 @@ function GroupNameCell({ group, expanded, onToggle }: { group: RWAGroupRow; expa
 			   the 50px row the virtualized table places rows by. */}
 			<span className="-my-2 flex flex-col overflow-hidden">
 				{group.href ? (
-					<BasicLink href={group.href} className="truncate label-md text-link hover:underline">
+					<TextLink href={group.href} truncate>
 						{group.label}
-					</BasicLink>
+					</TextLink>
 				) : (
 					<Tooltip content={group.label} render={<span className="truncate label-md" />}>
 						{group.label}
@@ -92,9 +92,9 @@ function LeafNameCell({ leaf, nested, assetLine }: { leaf: RWALeafRow; nested: b
 			<span className="vf-row-index shrink-0" aria-hidden="true" />
 			{asset.logo ? <Logo src={asset.logo} size={24} alt={`${asset.assetName} logo`} /> : null}
 			<span className="-my-1.5 flex flex-col overflow-hidden">
-				<BasicLink href={asset.detailHref} className="truncate label-md text-link hover:underline">
+				<TextLink href={asset.detailHref} truncate>
 					{label}
-				</BasicLink>
+				</TextLink>
 				{/* One line, like the title above: the virtualized table places rows by a fixed height, so a wrapped name
 				   (a perps market's full asset name) pushes the rows around it while scrolling. */}
 				{assetLine || asset.kind !== 'perps' ? (

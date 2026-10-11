@@ -21,6 +21,7 @@ import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -148,12 +149,9 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				return (
 					<span className="relative flex items-center gap-2">
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
-						<BasicLink
-							href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
-							className="truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`} truncate>
 							{name}
-						</BasicLink>
+						</TextLink>
 					</span>
 				)
 			},

@@ -6,6 +6,7 @@ import { LazySubscribeProModal } from '~/containers/Subscription/shared/Subscrib
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 
 const highlightFormula = (formula: string) => {
 	const parts = formula.split(/(=\w+|"[^"]*"|[(),])/).filter(Boolean)
@@ -400,9 +401,7 @@ function TemplatesSection() {
 						data-umami-event-template={tpl.title}
 						className="hover-wash-card flex flex-col gap-2.5"
 					>
-						<div className="flex size-10 items-center justify-center rounded-lg bg-brand-tint text-link">
-							<Icon name={tpl.icon} className="size-5" />
-						</div>
+						<IconTile icon={tpl.icon} tone="brand" size="md" />
 						<h3 className="title-md">{tpl.title}</h3>
 						<p className="body-md text-tertiary">{tpl.desc}</p>
 						<span className="mt-auto flex items-center gap-1 label-md text-link">View template &rarr;</span>

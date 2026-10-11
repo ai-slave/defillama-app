@@ -1,13 +1,14 @@
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 import { Card } from '~/ui/Card'
-import { Icon, type IIcon } from '~/ui/Icon'
+import type { IIcon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 
 /* ----------------------------------------------------------------------------
    ArtifactCard — a file or dashboard attached to a chat message: an exported
    document to download, a file the reader sent, the dashboard the answer
    built. Every attachment card is this one recipe: Card's surface (8px,
    border-subtle, bg-surface, the card wash on hover), one 56px height, a
-   32px brand icon tile, the title over a meta line, and an optional
+   32px brand IconTile, the title over a meta line, and an optional
    trailing hint (the file type, an external-link or panel chevron).
 
    Renders a button (type="button") by default; pass `as` for a link or an
@@ -43,10 +44,7 @@ export function ArtifactCard<T extends ElementType = 'button'>({
 			className={`hover-wash-card flex min-h-14 cursor-pointer items-center gap-3 text-left aria-busy:cursor-progress ${className ?? ''}`.trim()}
 			{...props}
 		>
-			{/* An icon chip on the brand tint, not a selected state. */}
-			<span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
-				<Icon name={icon} className="size-4" />
-			</span>
+			<IconTile icon={icon} tone="brand" size="sm" />
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="truncate label-md text-primary">{title}</span>
 				{meta ? <span className="truncate body-sm text-secondary">{meta}</span> : null}

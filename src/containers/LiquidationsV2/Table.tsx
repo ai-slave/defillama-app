@@ -3,7 +3,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -11,6 +10,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
@@ -68,9 +68,7 @@ const protocolColumns = protocolColumnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-link hover:underline">
-						{protocol}
-					</BasicLink>
+					<TextLink href={`/liquidations/${row.original.slug}`}>{protocol}</TextLink>
 				</span>
 			)
 		},
@@ -178,12 +176,7 @@ const protocolChainColumns = protocolChainColumnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={chain} kind="chain" data-lgonly alt={`Logo of ${chain}`} />
-					<BasicLink
-						href={`/liquidations/${row.original.protocolSlug}/${row.original.slug}`}
-						className="text-link hover:underline"
-					>
-						{chain}
-					</BasicLink>
+					<TextLink href={`/liquidations/${row.original.protocolSlug}/${row.original.slug}`}>{chain}</TextLink>
 				</span>
 			)
 		},
@@ -229,9 +222,7 @@ const positionColumns = positionColumnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.protocolSlug}`} className="text-link hover:underline">
-						{protocol}
-					</BasicLink>
+					<TextLink href={`/liquidations/${row.original.protocolSlug}`}>{protocol}</TextLink>
 				</span>
 			)
 		},
@@ -248,12 +239,7 @@ const positionColumns = positionColumnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={chain} kind="chain" data-lgonly alt={`Logo of ${chain}`} />
-					<BasicLink
-						href={`/liquidations/${row.original.protocolSlug}/${row.original.chainSlug}`}
-						className="text-link hover:underline"
-					>
-						{chain}
-					</BasicLink>
+					<TextLink href={`/liquidations/${row.original.protocolSlug}/${row.original.chainSlug}`}>{chain}</TextLink>
 				</span>
 			)
 		},

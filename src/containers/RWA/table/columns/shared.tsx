@@ -1,7 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { Fragment, type ReactNode } from 'react'
-import { BasicLink } from '~/components/Link'
 import { Hovercard } from '~/ui/Hovercard'
+import { TextLink } from '~/ui/TextLink'
 import { Definition, Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from '../../api.types'
@@ -110,9 +110,9 @@ export function DistinctListCell({
 					<Fragment key={value}>
 						{index > 0 ? ', ' : null}
 						{target ? (
-							<BasicLink href={target} className="whitespace-nowrap text-link hover:underline">
+							<TextLink href={target} className="whitespace-nowrap">
 								{value}
-							</BasicLink>
+							</TextLink>
 						) : (
 							value
 						)}

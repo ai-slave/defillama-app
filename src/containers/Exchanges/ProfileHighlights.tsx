@@ -5,10 +5,10 @@
  * is no leftover height and it shows one row.
  */
 import * as React from 'react'
-import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { EXCHANGE_SEGMENTS, type ExchangePairModel, type ExchangeProfileModel, type ExchangeSegment } from './models'
 import { formatPairPrice } from './PairTable'
@@ -85,9 +85,9 @@ export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }
 							fallbackSrc={letterLogoDataUri(pair.base)}
 							alt=""
 						/>
-						<BasicLink href={pair.pairUrl} target="_blank" className="truncate label-md text-link hover:underline">
+						<TextLink href={pair.pairUrl} target="_blank" truncate>
 							{pair.symbol.toUpperCase()}
-						</BasicLink>
+						</TextLink>
 						<span className="ml-auto flex flex-col items-end">
 							<span className="mono-sm">{formatPairPrice(pair.price, pair.quote)}</span>
 							<span className="label-sm">

@@ -8,7 +8,6 @@ import {
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { BasicLink } from '~/components/Link'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -21,6 +20,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -79,9 +79,9 @@ const stablecoinsByChainColumns = columnHelper.columns([
 						<>
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
-							<BasicLink href={`/stablecoins/${slug(value)}`} className="truncate label-md text-link hover:underline">
+							<TextLink href={`/stablecoins/${slug(value)}`} truncate>
 								{value}
-							</BasicLink>
+							</TextLink>
 							{deprecatedChains[value] ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 						</>
 					)}

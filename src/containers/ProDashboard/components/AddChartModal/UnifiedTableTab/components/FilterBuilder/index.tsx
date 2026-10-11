@@ -10,6 +10,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
 import { EmptyState } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	FILTER_CATEGORIES,
@@ -252,9 +253,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	const displayValue = buildDisplayValue(filter)
 	const hasValue = filterHasValue(filter)
 	const categoryLabel = CATEGORY_LABELS[config.category]
-	const categoryBadge = (
-		<span className="rounded-full bg-surface px-1.5 py-0.5 label-xs text-tertiary uppercase">{categoryLabel}</span>
-	)
+	const categoryBadge = <Tag>{categoryLabel}</Tag>
 	const removeButton = (
 		<Tooltip
 			content="Remove filter"
@@ -572,7 +571,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-2">
 						<span className="title-sm text-secondary">Browse filters</span>
-						<span className="rounded-full bg-surface-elevated-1 px-2 py-0.5 body-sm text-tertiary">
+						<span className="body-sm text-tertiary">
 							{search
 								? `${visibleAvailableCount} match${visibleAvailableCount === 1 ? '' : 'es'}`
 								: `${inactiveFiltersCount} available`}
@@ -614,9 +613,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-hover-row"
 								>
 									<div className="flex items-center gap-2">
-										<span className="rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-sm text-secondary">
-											{label}
-										</span>
+										<Tag>{label}</Tag>
 										<span className="body-sm text-tertiary">{availableFilters.length}</span>
 									</div>
 									<Icon

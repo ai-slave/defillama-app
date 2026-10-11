@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
+import { MetaLine } from '~/ui/MetaLine'
 import { InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { type QueryRetry, queryReadFailed } from '~/utils/query'
@@ -163,9 +164,7 @@ export function ExchangeRegionalInformation({
 		return (
 			<Card as="section" padding="none" className="overflow-hidden">
 				<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-error-tint text-error">
-						<Icon name="circle-x" className="size-4" />
-					</span>
+					<IconTile icon="circle-x" tone="error" size="sm" />
 					<h2 className="label-lg">Not available in {country}</h2>
 				</div>
 				<div className="p-3">
@@ -206,10 +205,7 @@ export function ExchangeRegionalInformation({
 						return (
 							<Card key={placeholder.key} as="section" padding="none" className="overflow-hidden">
 								<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
-									{/* An icon chip on the brand tint, not a selected state. */}
-									<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-										<Icon name={presentation.icon} className="size-4" />
-									</span>
+									<IconTile icon={presentation.icon} tone="brand" size="sm" />
 									<h2 className="label-lg">{presentation.title}</h2>
 								</div>
 								<p className="p-3 body-sm text-secondary">{placeholder.message}</p>
@@ -243,18 +239,20 @@ function RegionalAvailability({
 				{regional.usedFallback ? ' The global report is used because no specific regional report is authored.' : ''}
 			</p>
 			{regional.source ? (
-				<p className="body-sm text-tertiary">
-					Source:{' '}
-					<BasicLink
-						href={regional.source.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-link hover:underline"
-					>
-						{regional.source.note ?? 'Regional availability'}
-					</BasicLink>
-					{regional.source.asOf ? ` · ${regional.source.asOf}` : ''}
-				</p>
+				<MetaLine>
+					<span>
+						Source:{' '}
+						<BasicLink
+							href={regional.source.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-link hover:underline"
+						>
+							{regional.source.note ?? 'Regional availability'}
+						</BasicLink>
+					</span>
+					{regional.source.asOf}
+				</MetaLine>
 			) : null}
 		</div>
 	)

@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -19,6 +18,7 @@ import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -161,12 +161,9 @@ function createColumns(metric: ExtraTvlMetric) {
 
 						<span className="-my-2 flex flex-col">
 							<span className="flex items-center gap-1 overflow-hidden">
-								<BasicLink
-									href={`/protocol/${row.original.slug}?${chartParam}`}
-									className="min-w-0 truncate label-md text-link hover:underline"
-								>
+								<TextLink href={`/protocol/${row.original.slug}?${chartParam}`} truncate>
 									{value}
-								</BasicLink>
+								</TextLink>
 								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 							</span>
 
@@ -186,11 +183,7 @@ function createColumns(metric: ExtraTvlMetric) {
 			cell: ({ getValue }) => {
 				const value = getValue()
 				if (!value) return null
-				return (
-					<BasicLink href={getCategoryRoute(slug(value))} className="label-md text-link hover:underline">
-						{value}
-					</BasicLink>
-				)
+				return <TextLink href={getCategoryRoute(slug(value))}>{value}</TextLink>
 			},
 			meta: {
 				headerClassName: 'w-[128px]'

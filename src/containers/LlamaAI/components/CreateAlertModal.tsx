@@ -98,7 +98,8 @@ function AlertTypeCard({
 }) {
 	return (
 		<OptionTile layout="row" radio={value} aria-label={title} aria-description={description}>
-			{/* The icon chip follows its tile's pick; it is a decoration, not a selected control of its own. */}
+			{/* The icon chip follows its tile's pick through group-has-checked, as OptionTile's content does, so it is not
+			    an IconTile, whose tone is fixed per render. It is a decoration, not a selected control of its own. */}
 			<span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-page text-secondary group-has-checked:bg-brand-muted group-has-checked:text-link">
 				<Icon name={icon} className="size-3.5" />
 			</span>

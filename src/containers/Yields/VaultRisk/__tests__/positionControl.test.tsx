@@ -16,7 +16,7 @@ describe('PositionControl deposit input', () => {
 	}
 
 	function input() {
-		return container.querySelector<HTMLInputElement>('#risk-position')!
+		return container.querySelector<HTMLInputElement>('input[inputmode="decimal"]')!
 	}
 
 	function type(value: string) {

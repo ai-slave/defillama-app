@@ -3,6 +3,7 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Tag } from '~/ui/Tag'
 import { CollateralView } from './components/CollateralView'
 import { FreshnessFooter } from './components/FreshnessFooter'
 import { PositionProvider } from './components/PositionControl'
@@ -32,20 +33,12 @@ interface VaultRiskSectionProps {
 	standalone?: boolean // true = under the /risk page header, which already names chain + contract
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
-	return (
-		<span className="inline-flex items-center gap-1.5 rounded-full border border-medium bg-surface px-2 py-0.5 body-sm text-secondary">
-			{children}
-		</span>
-	)
-}
-
 function ChainChip({ chain }: { chain: string }) {
 	return (
-		<Chip>
+		<Tag className="gap-1.5">
 			<TokenLogo name={chain.toLowerCase()} kind="chain" size={14} />
 			{chain}
-		</Chip>
+		</Tag>
 	)
 }
 
@@ -133,7 +126,7 @@ export function VaultRiskUnmapped({
 			chips={
 				protocolId || showChain ? (
 					<>
-						{protocolId ? <Chip>{protocolId}</Chip> : null}
+						{protocolId ? <Tag className="gap-1.5">{protocolId}</Tag> : null}
 						{showChain ? <ChainChip chain={chain} /> : null}
 					</>
 				) : undefined
@@ -250,23 +243,23 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 				poolName={vm.vaultName ?? poolName}
 				chips={
 					<>
-						<Chip>
+						<Tag className="gap-1.5">
 							<TokenLogo name={vm.protocolId} kind="token" size={14} />
 							{prettyProtocolSlug(vm.protocolId)}
-						</Chip>
+						</Tag>
 						{/* the standalone /risk page header already carries chain + contract — repeat
 						    them only on the embedded pool-page view, where this row is the sole identity */}
 						{standalone ? null : <ChainChip chain={vm.chain} />}
-						<Chip>{poolTypeLabel}</Chip>
+						<Tag className="gap-1.5">{poolTypeLabel}</Tag>
 						{/* the same brand can run two vaults with one name+chain — the contract disambiguates */}
 						{!standalone && vm.vaultAddress ? (
-							<Chip>
+							<Tag className="gap-1.5">
 								<AddressActions
 									address={vm.vaultAddress}
 									url={explorerUrl(vm.vaultAddress, vm.chain, explorers)}
 									label="vault contract address"
 								/>
-							</Chip>
+							</Tag>
 						) : null}
 					</>
 				}

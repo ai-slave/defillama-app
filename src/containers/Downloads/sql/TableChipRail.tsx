@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
@@ -178,9 +179,10 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 body-sm">
 					<span className="mono-sm-bold text-primary">{table.name}</span>
-					<span className="text-tertiary">
-						{table.columns.length} cols · {prettyLabelForSource(table.source)}
-					</span>
+					<MetaLine>
+						{`${table.columns.length} cols`}
+						{prettyLabelForSource(table.source)}
+					</MetaLine>
 				</div>
 				<Tooltip
 					content="Close column list"
@@ -227,7 +229,7 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
+		<Card padding="row" className="flex flex-wrap items-center gap-x-3 gap-y-2 body-sm text-secondary">
 			<span className="text-primary">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalog.
 			</span>
@@ -239,7 +241,7 @@ function EmptyTablesPrompt({
 					<span className="tabular-nums">{totalSchemaCount}</span>
 				</Button>
 			</span>
-		</div>
+		</Card>
 	)
 }
 

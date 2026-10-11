@@ -312,7 +312,12 @@ function DialogLoadingDemo({ values }: { values: KnobValues }) {
 			>
 				Show for 2 seconds
 			</Button>
-			{shown ? <DialogLoadingStatus size={values.size as (typeof DIALOG_SIZES)[number]} /> : null}
+			{shown ? (
+				<DialogLoadingStatus
+					size={values.size as (typeof DIALOG_SIZES)[number]}
+					workspace={values.workspace === true}
+				/>
+			) : null}
 		</>
 	)
 }
@@ -588,8 +593,11 @@ export const dialogs: Family = {
 		{
 			name: 'DialogLoadingStatus',
 			source: 'src/ui/Dialog.tsx',
-			knobs: [{ name: 'size', values: DIALOG_SIZES }],
-			note: "A lazy dialog's Suspense fallback, shown here for 2 seconds. It takes no focus and announces only Loading dialog, so the dialog that loads takes focus once.",
+			knobs: [
+				{ name: 'size', values: DIALOG_SIZES },
+				{ name: 'workspace', boolean: true }
+			],
+			note: "A lazy dialog's Suspense fallback. Press Show for 2 seconds with the keyboard: focus stays on the button while the shape shows, and a screen reader hears only Loading dialog, so the dialog that loads takes focus once. workspace takes the workspace dialog's fixed height.",
 			render: (values) => <DialogLoadingDemo values={values} />
 		},
 		{

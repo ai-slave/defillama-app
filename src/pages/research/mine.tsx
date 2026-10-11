@@ -18,13 +18,15 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighborRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { Skeleton } from '~/ui/Skeleton'
 import { EmptyState, InlineStatus } from '~/ui/Status'
-import { StatusDot } from '~/ui/StatusBadge'
+import { StatusBadge, StatusDot } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
@@ -176,26 +178,20 @@ function MyArticlesContent() {
 						<span className="label-xs tracking-[0.22em] text-tertiary uppercase">Research · Workspace</span>
 						<h1 className="heading-lg tracking-tight text-primary">My research</h1>
 						{!showLoading ? (
-							<p className="body-md text-secondary">
-								<span className="text-primary tabular-nums">{draftCount}</span> draft
-								{draftCount === 1 ? '' : 's'}
+							<MetaLine>
+								<span>
+									<span className="text-primary tabular-nums">{draftCount}</span> draft{draftCount === 1 ? '' : 's'}
+								</span>
 								{scheduledCount > 0 ? (
-									<>
-										<span className="mx-2 text-tertiary">·</span>
+									<span>
 										<span className="text-primary tabular-nums">{scheduledCount}</span> scheduled
-									</>
+									</span>
 								) : null}
-								<span className="mx-2 text-tertiary">·</span>
-								<span className="text-primary tabular-nums">{publishedCount}</span> published
-								{capped ? (
-									<>
-										<span className="mx-2 text-tertiary">·</span>
-										<span className="text-tertiary">
-											showing latest {FETCH_LIMIT} of {formatNumber(data?.totalItems)}
-										</span>
-									</>
-								) : null}
-							</p>
+								<span>
+									<span className="text-primary tabular-nums">{publishedCount}</span> published
+								</span>
+								{capped ? `showing latest ${FETCH_LIMIT} of ${formatNumber(data?.totalItems)}` : null}
+							</MetaLine>
 						) : null}
 					</div>
 					<div className="flex items-center gap-2">
@@ -376,29 +372,18 @@ function MyArticlesContent() {
 											<h3 className="truncate title-lg tracking-tight text-primary group-hover:text-link">
 												{article.title || 'Untitled'}
 											</h3>
-											{/* Status badges on the brand tint, not a selected state. */}
-											{scheduled ? (
-												<span
-													className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-[0.12em] text-link uppercase"
-													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
-												>
-													Scheduled
-												</span>
-											) : null}
-											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-wide text-link uppercase">
-													Co-author
-												</span>
-											) : null}
+											{/* The go-live date is in the meta line below. */}
+											{scheduled ? <StatusBadge status="neutral">Scheduled</StatusBadge> : null}
+											{article.viewerRole === 'collaborator' ? <Tag>Co-author</Tag> : null}
 											{article.section ? (
 												<span className="label-xs tracking-[0.14em] text-tertiary uppercase">
 													{ARTICLE_SECTION_LABELS[article.section]}
 												</span>
 											) : null}
 										</div>
-										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 body-sm text-tertiary">
+										<MetaLine>
 											{scheduled ? (
-												<span>Scheduled {formatArticleDate(article.goLiveAt)}</span>
+												`Scheduled ${formatArticleDate(article.goLiveAt)}`
 											) : (
 												<RelativeTime
 													value={article.updatedAt}
@@ -406,17 +391,10 @@ function MyArticlesContent() {
 													fallback="—"
 												/>
 											)}
-											<span aria-hidden>·</span>
-											<span className="truncate mono-sm">/{article.slug}</span>
-											{words > 0 ? (
-												<>
-													<span aria-hidden>·</span>
-													<span className="tabular-nums">
-														{formatNumber(words)} words · {minutes} min
-													</span>
-												</>
-											) : null}
-										</div>
+											<span className="min-w-0 truncate mono-sm">/{article.slug}</span>
+											{words > 0 ? <span className="tabular-nums">{formatNumber(words)} words</span> : null}
+											{words > 0 ? `${minutes} min` : null}
+										</MetaLine>
 									</Link>
 
 									<div className="flex shrink-0 items-center gap-1">

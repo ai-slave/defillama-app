@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import { roundPriceValue, validatePrice } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
-import { alertFieldLabelClass, PriceInput, PRICE_OPERATOR_OPTIONS } from '~/containers/LlamaAI/components/alerts/ui'
+import { PriceInput, PRICE_OPERATOR_OPTIONS } from '~/containers/LlamaAI/components/alerts/ui'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
@@ -49,7 +49,7 @@ export function PriceAlertEditor({
 		>
 			{children(submitted)}
 			<div className="flex flex-col gap-1">
-				<span className={alertFieldLabelClass}>Token</span>
+				<span className="label-sm text-secondary">Token</span>
 				<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 			</div>
 			<Field label="Fires when the price goes" error={submitted ? priceError : null}>

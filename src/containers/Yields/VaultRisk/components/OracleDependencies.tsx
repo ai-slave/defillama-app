@@ -1,5 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Card } from '~/ui/Card'
+import { MetaLine } from '~/ui/MetaLine'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
 import { toneClasses } from '../kindMeta'
@@ -118,11 +119,10 @@ export function OracleDependencies({
 			<div className="flex flex-col gap-2 border-b border-subtle bg-surface-elevated-1 px-3 py-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
 					<h4 className="label-md text-primary">Oracle dependencies</h4>
-					<span className="body-sm text-secondary">
+					<MetaLine>
 						{feedCount > 0 ? `${feedCount} feed${feedCount === 1 ? '' : 's'}` : null}
-						{feedCount > 0 && controlCount > 0 ? ' · ' : null}
 						{controlCount > 0 ? `${controlCount} control point${controlCount === 1 ? '' : 's'}` : null}
-					</span>
+					</MetaLine>
 				</div>
 				{totalDrainableUsd > 0 ? (
 					<p className="flex flex-wrap items-baseline gap-x-1.5">

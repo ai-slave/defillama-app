@@ -47,7 +47,9 @@ const STATUS_CLASSES: Record<Status, string> = {
 
 /** `tooltip` explains the state on hover and focus. The badge is the anchor and carries no underline: the pill already
     reads as something to point at, and an underline inside a tinted pill looks like misspelled text. A column whose
-    every row would explain the same thing puts one QuestionHelper in its header instead.
+    every row would explain the same thing puts one QuestionHelper in its header instead. Screen readers do not announce
+    the tooltip (Tooltip header), so the badge's text names the state alone: a short visible word takes the rest of
+    its meaning in sr-only text (Entered<span className="sr-only"> top 10</span>).
     `render` makes the badge a button or link. As an Ariakit host's `render`, the badge takes what the host hands its
     anchor (the label as children, handlers, a ref, layout classes), so `className` is placement only. */
 export function StatusBadge({

@@ -12,12 +12,12 @@ import {
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { ProCardHeader } from './ProCardHeader'
@@ -181,7 +181,12 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}
-				subtitle={<ProMeta items={[displayName, stablecoinSymbol || null]} />}
+				subtitle={
+					<MetaLine>
+						{displayName}
+						{stablecoinSymbol || null}
+					</MetaLine>
+				}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
@@ -299,7 +304,12 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}
-				subtitle={<ProMeta items={[displayName, stablecoinSymbol || null]} />}
+				subtitle={
+					<MetaLine>
+						{displayName}
+						{stablecoinSymbol || null}
+					</MetaLine>
+				}
 				viewerControls={
 					hasChartData ? (
 						chartType === 'chainPie' && pieSeriesNames.length > 1 ? (

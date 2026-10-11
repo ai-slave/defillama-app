@@ -1,5 +1,11 @@
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { tabTo } from '~/utils/testing/keyboard'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChangeBadge, holderDistributionShares } from '../HoldersPanel'
 import type { Holder, HolderChange } from '../types'
 
@@ -46,6 +52,25 @@ describe('holder movement badges', () => {
 		expect(renderToStaticMarkup(<ChangeBadge delta={{ status: 'down', value: 0.5, unit: 'pp' }} />)).toContain(
 			'-0.50pp'
 		)
+	})
+
+	test('a keyboard reader reaches a new top-10 holder badge and reads what it means', async () => {
+		const container = document.createElement('div')
+		document.body.append(container)
+		const root = createRoot(container)
+		try {
+			await act(async () =>
+				root.render(<ChangeBadge delta={{ status: 'entered_top_10', value: null, unit: 'percent' }} />)
+			)
+			const badge = container.querySelector<HTMLElement>('[tabindex="0"]')!
+			// The tooltip is not announced, so the badge's own name says what was entered.
+			expect(accessibleName(badge)).toBe('Entered top 10')
+			await tabTo(badge)
+			await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('top 10'))
+		} finally {
+			await act(async () => root.unmount())
+			container.remove()
+		}
 	})
 })
 

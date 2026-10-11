@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useId, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useCallback, useMemo, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
@@ -10,6 +10,7 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { OptionTile } from '~/ui/OptionTile'
@@ -163,7 +164,6 @@ export function ChartBuilderTab({
 	pane,
 	onPaneChange
 }: ChartBuilderTabProps) {
-	const nameId = useId()
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
 	const { getProtocolInfo, protocols } = useProDashboardCatalog()
 
@@ -529,18 +529,17 @@ export function ChartBuilderTab({
 				className="mb-3 shrink-0 lg:hidden"
 			/>
 
-			<div className={`mb-1 lg:block ${pane === 'configure' ? 'block' : 'hidden'}`}>
-				<label htmlFor={nameId} className="mb-1 block label-sm text-secondary">
-					Card name (optional)
-				</label>
-				<Input
-					id={nameId}
-					type="text"
-					value={chartBuilderName}
-					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					className="w-full"
-				/>
-			</div>
+			<Field label="Card name (optional)" className={pane === 'configure' ? 'mb-1' : 'mb-1 max-lg:hidden'}>
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						value={chartBuilderName}
+						onChange={(e) => onChartBuilderNameChange(e.target.value)}
+						className="w-full"
+					/>
+				)}
+			</Field>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
 				<Card

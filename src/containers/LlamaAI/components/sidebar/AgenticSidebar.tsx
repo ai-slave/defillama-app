@@ -32,6 +32,7 @@ import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ListLoading, NoResults } from '~/ui/NoResults'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { BusyGlyph, InlineStatus } from '~/ui/Status'
@@ -831,9 +832,7 @@ function SidebarDestinations({
 								label: (
 									<>
 										Terminal
-										<span className="rounded-full border border-ai-gold-muted bg-ai-gold-tint px-1.5 label-xs text-ai-gold-deep uppercase">
-											New
-										</span>
+										<PromoBadge>New</PromoBadge>
 									</>
 								)
 							}

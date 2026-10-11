@@ -14,6 +14,7 @@ import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedT
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { DialogCancelButton, DialogFooter, useRefusal } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -532,9 +533,9 @@ export function UnifiedTableTab({
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
-								<div className="rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-tertiary">
+								<Card padding="row" className="body-sm text-tertiary">
 									All available data views are shown above.
-								</div>
+								</Card>
 							)}
 						</div>
 					</div>
@@ -828,6 +829,8 @@ export function UnifiedTableTab({
 							label: (
 								<span className="flex items-center gap-2">
 									<span className="truncate">{tab.label}</span>
+									{/* Not a Tag: the summary sits in a segment's label line, and a Tag's taller line would make this
+									    segment taller than its siblings. */}
 									{tab.badge ? (
 										<span className="max-w-[160px] truncate rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-tertiary max-sm:hidden">
 											{tab.badge}

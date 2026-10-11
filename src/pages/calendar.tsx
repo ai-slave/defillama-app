@@ -2,7 +2,6 @@ import { type ColumnFiltersState, createColumnHelper, type SortingState, useTabl
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
-import { BasicLink } from '~/components/Link'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { useTableSearch } from '~/components/Table/utils'
@@ -17,6 +16,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
@@ -179,12 +179,9 @@ const calendarColumns = columnHelper.columns([
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					{row.original.type === 'Unlock' ? (
-						<BasicLink
-							href={`/unlocks/${slug(row.original.link)}`}
-							className="truncate label-md text-link hover:underline"
-						>
+						<TextLink href={`/unlocks/${slug(row.original.link)}`} truncate>
 							{getValue()}
-						</BasicLink>
+						</TextLink>
 					) : (
 						getValue()
 					)}

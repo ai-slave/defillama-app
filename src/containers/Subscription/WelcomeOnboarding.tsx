@@ -377,6 +377,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 
 			{slackAcquisition ? (
 				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-muted bg-sub-purple-faint px-4 py-3 text-left">
+					{/* Not IconTile: the notice is drawn in the subscription purple, a product hue the tile's tones leave out. */}
 					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-tint">
 						<Icon name="message-square" className="size-4 text-sub-purple-text" />
 					</div>

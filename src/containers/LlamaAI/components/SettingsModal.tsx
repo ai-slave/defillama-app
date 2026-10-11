@@ -42,6 +42,7 @@ import { Skeleton } from '~/ui/Skeleton'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { Tag } from '~/ui/Tag'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -950,9 +951,9 @@ export const SettingsModal = memo(function SettingsModal({
 																			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 																				<p className="m-0 flex items-center gap-2 label-md text-primary">
 																					{skill.name}
-																					<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary">
-																						{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
-																					</span>
+																					<Tag>
+																						{skill.createdBy === 'agent' ? 'Learned by assistant' : 'Added by you'}
+																					</Tag>
 																				</p>
 																				<p className="m-0 body-sm text-secondary">{skill.description}</p>
 																			</div>

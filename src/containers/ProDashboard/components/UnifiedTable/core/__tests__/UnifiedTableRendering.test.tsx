@@ -9,6 +9,7 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { tabTo } from '~/utils/testing/keyboard'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { UnifiedTableConfig } from '../../../../unifiedTable/config/current'
 import type { ProtocolsUnifiedTableResponse } from '../../../../unifiedTable/contracts'
@@ -335,7 +336,7 @@ describe('UnifiedTable rendering', () => {
 		expect(dashboardMocks.handleDuplicateUnifiedTable).toHaveBeenCalledWith(unifiedTableConfig)
 	})
 
-	test('shows the bound dashboard parameter beside the title only while the table is editable', async () => {
+	test('the bound parameter badge says the table is bound while editable and follows the parameter when read-only', async () => {
 		dashboardMocks.permissions.isReadOnly = false
 		dashboardMocks.variables = [{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }]
 		const boundConfig: UnifiedTableConfig = {
@@ -354,13 +355,26 @@ describe('UnifiedTable rendering', () => {
 				)
 			)
 
+		// The badge names its parameter; its Tooltip says the table is bound only while the table is editable.
+		const explanationOfBadge = async () => {
+			const badge = [...container.querySelectorAll<HTMLElement>('[tabindex="0"]')].find((el) =>
+				el.textContent.startsWith('Chain, ')
+			)!
+			await tabTo(badge)
+			let text = ''
+			await waitForUi(() => {
+				text = document.querySelector('[role="tooltip"]')?.textContent ?? ''
+				expect(text).not.toBe('')
+			})
+			return text
+		}
+
 		await renderBound()
-		const badge = container.querySelector('[title="Bound to dashboard parameter"]')
-		expect(badge?.textContent).toBe('Chain')
+		expect(await explanationOfBadge()).toBe('Bound to dashboard parameter')
 
 		dashboardMocks.permissions.isReadOnly = true
 		await renderBound()
-		expect(container.querySelector('[title="Bound to dashboard parameter"]')).toBeNull()
+		expect(await explanationOfBadge()).toBe('Follows the Chain parameter')
 	})
 
 	test('the collapsed row search expands into an input that filters the rows', async () => {

@@ -10,6 +10,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { handleSimpleFetchResponse, httpErrorMessage, ReaderError } from '~/utils/async'
@@ -29,7 +30,7 @@ import {
 } from '../ProDashboardAPIContext'
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
 import type { ChartBuilderConfig } from '../types'
-import { ProBadge, ProMeta } from '../ui'
+import { ProBadge } from '../ui'
 import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
@@ -392,7 +393,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						: `${config.metric} by Protocol`)
 				}
 				badge={<BoundParameterBadge {...(builder.bindings === undefined ? {} : { bindings: builder.bindings })} />}
-				subtitle={<ProMeta items={subtitleParts} />}
+				subtitle={<MetaLine>{subtitleParts}</MetaLine>}
 				controls={
 					<>
 						{hasRenderableData && config.chartType !== 'treemap' ? (

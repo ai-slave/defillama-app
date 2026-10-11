@@ -10,6 +10,8 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  * - sm (p-2): dense stat and data cards, and information, methodology and notes cards.
  * - base (p-3): directory and list tiles, saved items, a card header row that sits flush with a chart below.
  * - strip (px-4 py-3): summary strips such as InlineStatStrip.
+ * - row (px-3 py-2): a one-line strip among controls: an engine status line, a note that stands in for a list, a tip
+ *   under the LlamaAI composer, a queued prompt.
  * - md (p-4): roomy detail cards, only where the content needs the extra inset.
  * - none: embedded tables and charts that bring their own layout.
  * Never add responsive padding such as `xl:p-4`.
@@ -34,7 +36,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  */
 type CardProps<T extends ElementType> = {
 	as?: T
-	padding: 'none' | 'sm' | 'base' | 'md' | 'strip'
+	padding: keyof typeof PADDING
 	radius?: 'default' | 'large'
 	tone?: keyof typeof TONE
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'padding'>
@@ -44,7 +46,8 @@ const PADDING = {
 	sm: ' p-2',
 	base: ' p-3',
 	md: ' p-4',
-	strip: ' px-4 py-3'
+	strip: ' px-4 py-3',
+	row: ' px-3 py-2'
 } as const
 
 const TONE = {

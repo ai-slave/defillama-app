@@ -29,6 +29,7 @@ import { Panel } from '~/ui/Panel'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { StaleText } from '~/ui/StaleText'
 import { TabPanel, Tabs, type UnderlineTab, UnderlineTabList } from '~/ui/Tabs'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDateTime } from '~/utils/dateFormat'
@@ -81,9 +82,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListC
 				data-lgonly
 				alt={`Logo of ${row.original.ticker}`}
 			/>
-			<BasicLink href={row.original.href} className="label-md text-link hover:underline">
-				{row.original.ticker}
-			</BasicLink>
+			<TextLink href={row.original.href}>{row.original.ticker}</TextLink>
 		</span>
 	)
 }

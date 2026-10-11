@@ -3,6 +3,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
+import { TextLink } from '~/ui/TextLink'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
 import { FeeValue, feeLabel } from './feePresentation'
@@ -51,7 +52,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 						/>
 						<span className="min-w-0 flex-1">
 							{venueDestination ? (
-								<a
+								<TextLink
 									href={venueDestination.url}
 									target="_blank"
 									rel="noopener noreferrer"
@@ -60,10 +61,11 @@ export const MICA_COLUMNS = columnHelper.columns([
 									data-umami-event-type={venueDestination.kind === 'referral' ? 'ref' : 'website'}
 									data-umami-event-placement="name"
 									data-umami-event-url={venueDestination.url}
-									className="block truncate label-md text-link hover:underline"
+									truncate
+									className="block"
 								>
 									{venue.name}
-								</a>
+								</TextLink>
 							) : (
 								<span className="block truncate label-md">{venue.name}</span>
 							)}

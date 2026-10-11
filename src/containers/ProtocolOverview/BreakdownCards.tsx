@@ -8,7 +8,6 @@ import {
 	buildRuntimePieChartTableRows,
 	type RuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
-import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
@@ -20,6 +19,7 @@ import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { buildProtocolBreakdownDominance } from './breakdownDominance'
@@ -62,9 +62,9 @@ const buildSnapshotNameColumn = (nameHeader: 'Chain' | 'Token') =>
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={name} kind="chain" size={20} alt={`Logo of ${name}`} />
-					<BasicLink href={`/chain/${slug(name)}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/chain/${slug(name)}`} truncate>
 						{name}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

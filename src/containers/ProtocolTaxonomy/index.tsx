@@ -8,7 +8,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -32,6 +31,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { chainIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -375,12 +375,9 @@ const COLUMN_REGISTRY = {
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 					<span className="-my-2 flex flex-col">
 						<span className="flex items-center gap-1 overflow-hidden">
-							<BasicLink
-								href={`/protocol/${row.original.slug}`}
-								className="min-w-0 truncate label-md text-link hover:underline"
-							>
+							<TextLink href={`/protocol/${row.original.slug}`} truncate>
 								{value}
-							</BasicLink>
+							</TextLink>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
 						<ProtocolChainsHovercard chains={row.original.chains} />

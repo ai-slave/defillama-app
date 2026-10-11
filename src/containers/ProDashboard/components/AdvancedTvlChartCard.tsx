@@ -17,6 +17,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
@@ -24,7 +25,6 @@ import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../services/protocolTvl'
 import type { AdvancedTvlChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { buildAdvancedTvlPresentation } from './advancedTvlPresentation'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
@@ -241,7 +241,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex min-h-[calc(402px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(418px*var(--card-scale,1))]">
-			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[protocolName]} />} />
+			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<MetaLine>{protocolName}</MetaLine>} />
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -294,7 +294,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				titleAs="h3"
 				title={chartTypeLabel}
 				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
-				subtitle={<ProMeta items={[protocolName]} />}
+				subtitle={<MetaLine>{protocolName}</MetaLine>}
 				viewerControls={
 					hasChartData ? (
 						chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (

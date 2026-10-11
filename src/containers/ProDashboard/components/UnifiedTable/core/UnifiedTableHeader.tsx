@@ -2,11 +2,12 @@ import { type ReactNode, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
-import { ProBadge, ProMeta } from '../../../ui'
+import { ProBadge } from '../../../ui'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 import { ProCardHeader } from '../../ProCardHeader'
 import type { ActiveFilterChip } from '../utils/filterChips'
@@ -138,7 +139,12 @@ export function UnifiedTableHeader({
 				titleAs="h3"
 				title={title}
 				badge={titleBadge}
-				subtitle={<ProMeta items={[scopeDescription, rowHeadersSummary ? `Grouped by ${rowHeadersSummary}` : null]} />}
+				subtitle={
+					<MetaLine>
+						{scopeDescription}
+						{rowHeadersSummary ? `Grouped by ${rowHeadersSummary}` : null}
+					</MetaLine>
+				}
 				viewerControls={
 					<>
 						<TableSearchField onSearchChange={onSearchChange} />

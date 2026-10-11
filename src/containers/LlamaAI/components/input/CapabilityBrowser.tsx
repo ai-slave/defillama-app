@@ -4,6 +4,7 @@ import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { RailItem } from '~/ui/RailItem'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -99,10 +100,9 @@ export function BrowserContent({
 						>
 							<Icon name={cap.icon} className="size-3.5 shrink-0" />
 							<span className="truncate">{cap.name}</span>
-							{/* A category badge (New, Beta) on the brand tint, not a selected state. */}
 							{cap.badge ? (
-								<span className="ml-auto shrink-0 rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
-									{cap.badge}
+								<span className="ml-auto flex shrink-0">
+									<PromoBadge>{cap.badge}</PromoBadge>
 								</span>
 							) : null}
 						</Tab>
@@ -120,12 +120,7 @@ export function BrowserContent({
 						<div className="hidden items-center gap-2 sm:flex">
 							<Icon name={activeCategory.icon} className="size-3.5 text-secondary" />
 							<h3 className="label-md text-primary">{activeCategory.name}</h3>
-							{/* The category badge again, a label on the brand tint, not a selected state. */}
-							{activeCategory.badge ? (
-								<span className="rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
-									{activeCategory.badge}
-								</span>
-							) : null}
+							{activeCategory.badge ? <PromoBadge>{activeCategory.badge}</PromoBadge> : null}
 						</div>
 						<p className="mt-1 body-md text-secondary">{activeCategory.description}</p>
 					</div>

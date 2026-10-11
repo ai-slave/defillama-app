@@ -1,8 +1,8 @@
 import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
@@ -45,7 +45,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			<ProCardHeader titleAs="h3" title={assetName} subtitle={<ProMeta items={[metricsLabel]} />} />
+			<ProCardHeader titleAs="h3" title={assetName} subtitle={<MetaLine>{metricsLabel}</MetaLine>} />
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -68,7 +68,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 			<ProCardHeader
 				titleAs="h3"
 				title={assetName}
-				subtitle={<ProMeta items={[metricsLabel]} />}
+				subtitle={<MetaLine>{metricsLabel}</MetaLine>}
 				menu={
 					hasData
 						? {

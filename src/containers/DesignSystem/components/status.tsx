@@ -52,13 +52,14 @@ export const status: Family = {
 			knobs: [
 				{ name: 'size', values: ['md', 'lg'] },
 				{ name: 'framed', boolean: true },
-				{ name: 'icon', values: ['none', 'bookmark', 'search', 'lock'], default: 'none' },
+				{ name: 'tone', values: ['neutral', 'success'], default: 'neutral' },
+				{ name: 'icon', values: ['none', 'bookmark', 'search', 'lock', 'check'], default: 'none' },
 				{ name: 'actions', values: ['none', 'one', 'two'], default: 'none', prop: false }
 			],
 			note: 'Unframed, it sits in a Panel that holds it; framed, it draws its own dashed frame.',
 			anatomy: true,
 			render: (values) => {
-				const icon = values.icon === 'none' ? undefined : (values.icon as 'bookmark' | 'search' | 'lock')
+				const icon = values.icon === 'none' ? undefined : (values.icon as 'bookmark' | 'search' | 'lock' | 'check')
 				const actions = values.actions === 'none' ? undefined : EMPTY_ACTIONS[values.actions as 'one' | 'two']
 				const framed = values.framed === true
 				const state = (
@@ -66,6 +67,7 @@ export const status: Family = {
 						<EmptyState
 							size={values.size as 'md' | 'lg'}
 							framed={framed}
+							tone={values.tone as 'neutral' | 'success'}
 							icon={icon}
 							title="No saved queries"
 							actions={actions}
@@ -77,28 +79,43 @@ export const status: Family = {
 				return <div className={values.size === 'lg' ? 'w-96' : 'w-80'}>{framed ? state : <Panel>{state}</Panel>}</div>
 			},
 			states: () => (
-				// headingAs="h3" is the lowest level EmptyState offers; the page outline shows it as is.
-				<Example name="Gated page" prop='headingAs="h3"'>
-					<div className="w-96">
-						<EmptyState
-							size="lg"
-							framed
-							icon="lock"
-							headingAs="h3"
-							title="Pro feature"
-							actions={
-								<>
-									<Button size="md" variant="primary">
-										Upgrade
-									</Button>
-									<Button size="md">Learn more</Button>
-								</>
-							}
-						>
-							Upgrade to export unlimited data.
-						</EmptyState>
-					</div>
-				</Example>
+				<>
+					<Example
+						name="Done confirmation"
+						prop='tone="success"'
+						note="Replaces a form once it is sent: the check sits on the success disc."
+					>
+						<div className="w-80">
+							<Panel>
+								<EmptyState size="md" tone="success" icon="check" title="Request sent">
+									We reply to name@example.com within two working days.
+								</EmptyState>
+							</Panel>
+						</div>
+					</Example>
+					{/* headingAs="h3" is the lowest level EmptyState offers; the page outline shows it as is. */}
+					<Example name="Gated page" prop='headingAs="h3"'>
+						<div className="w-96">
+							<EmptyState
+								size="lg"
+								framed
+								icon="lock"
+								headingAs="h3"
+								title="Pro feature"
+								actions={
+									<>
+										<Button size="md" variant="primary">
+											Upgrade
+										</Button>
+										<Button size="md">Learn more</Button>
+									</>
+								}
+							>
+								Upgrade to export unlimited data.
+							</EmptyState>
+						</div>
+					</Example>
+				</>
 			)
 		},
 		{
@@ -309,11 +326,21 @@ export const status: Family = {
 				{ name: 'shape', values: ['bar', 'square', 'round'], default: 'bar', prop: false },
 				{ name: 'still', boolean: true }
 			],
+			note: 'The caller sizes the shape with layout classes (h-3 w-40, size-10 rounded-full). still drops the pulse for a placeholder that illustrates content rather than waits for it.',
 			render: (values) => (
 				<Skeleton
 					className={SKELETON_SHAPES[values.shape as keyof typeof SKELETON_SHAPES]}
 					still={values.still === true}
 				/>
+			),
+			states: () => (
+				<Example name="A loading row" note="Shapes that mirror the row they stand in for: a logo, a name and a value.">
+					<div className="flex w-72 items-center gap-3">
+						<Skeleton className="size-6 rounded-full" />
+						<Skeleton className="h-3 w-32" />
+						<Skeleton className="ml-auto h-3 w-12" />
+					</div>
+				</Example>
 			)
 		}
 	]

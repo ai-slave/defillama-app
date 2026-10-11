@@ -9,13 +9,13 @@ import type { Ref } from 'react'
 import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatUsd } from '~/utils/numberFormat'
@@ -67,9 +67,9 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 							data-lgonly
 						/>
 					) : null}
-					<BasicLink href={`/bridge/${linkValue}`} className="truncate label-md text-link hover:underline">
+					<TextLink href={`/bridge/${linkValue}`} truncate>
 						{value}
-					</BasicLink>
+					</TextLink>
 				</span>
 			)
 		},

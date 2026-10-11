@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { Change } from '~/ui/Change'
 import { Hovercard } from '~/ui/Hovercard'
 import { Skeleton } from '~/ui/Skeleton'
+import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -102,11 +103,7 @@ function PreviewBody({
 			const tvl = formatUsd(preview.tvl, { compact: true })
 			return (
 				<span className="flex flex-col gap-2 pb-3">
-					{preview.category ? (
-						<span className="self-start rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
-							{preview.category}
-						</span>
-					) : null}
+					{preview.category ? <Tag className="self-start">{preview.category}</Tag> : null}
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
 							<span className="mono-xl text-primary tabular-nums">{tvl}</span>
@@ -121,9 +118,7 @@ function PreviewBody({
 					{preview.chains && preview.chains.length > 0 ? (
 						<span className="flex flex-wrap gap-1">
 							{preview.chains.slice(0, 6).map((c) => (
-								<span key={c} className="rounded-sm border border-medium px-1.5 py-px body-xs text-tertiary">
-									{c}
-								</span>
+								<Tag key={c}>{c}</Tag>
 							))}
 						</span>
 					) : null}
@@ -155,16 +150,8 @@ function PreviewBody({
 			return (
 				<span className="flex flex-col gap-2 pb-3">
 					<span className="flex flex-wrap gap-1">
-						{preview.pegType ? (
-							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
-								{preview.pegType}
-							</span>
-						) : null}
-						{preview.pegMechanism ? (
-							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
-								{preview.pegMechanism}
-							</span>
-						) : null}
+						{preview.pegType ? <Tag>{preview.pegType}</Tag> : null}
+						{preview.pegMechanism ? <Tag>{preview.pegMechanism}</Tag> : null}
 					</span>
 					{circ ? (
 						<span className="flex items-baseline gap-2">
@@ -272,9 +259,7 @@ function PreviewBody({
 					{preview.chains && preview.chains.length > 0 ? (
 						<span className="flex flex-wrap gap-1">
 							{preview.chains.slice(0, 6).map((c) => (
-								<span key={c} className="rounded-sm border border-medium px-1.5 py-px body-xs text-tertiary">
-									{c}
-								</span>
+								<Tag key={c}>{c}</Tag>
 							))}
 						</span>
 					) : null}
@@ -295,16 +280,8 @@ function PreviewBody({
 			return (
 				<span className="flex flex-col gap-2 pb-3">
 					<span className="flex flex-wrap gap-1">
-						{preview.classification ? (
-							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
-								{preview.classification}
-							</span>
-						) : null}
-						{preview.bridgeHack ? (
-							<span className="rounded-full border border-medium px-2 py-0.5 body-xs tracking-wider text-tertiary uppercase">
-								Bridge
-							</span>
-						) : null}
+						{preview.classification ? <Tag>{preview.classification}</Tag> : null}
+						{preview.bridgeHack ? <Tag>Bridge</Tag> : null}
 					</span>
 					{lossLabel ? (
 						<span className="flex items-baseline gap-2">
@@ -337,9 +314,7 @@ function PreviewBody({
 					{preview.chains && preview.chains.length > 0 ? (
 						<span className="flex flex-wrap gap-1">
 							{preview.chains.slice(0, 6).map((c) => (
-								<span key={c} className="rounded-sm border border-medium px-1.5 py-px body-xs text-tertiary">
-									{c}
-								</span>
+								<Tag key={c}>{c}</Tag>
 							))}
 						</span>
 					) : null}

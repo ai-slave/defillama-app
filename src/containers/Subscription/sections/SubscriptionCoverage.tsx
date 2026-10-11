@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { readExperimentVariant } from '~/utils/analytics/experiment'
@@ -220,10 +221,7 @@ export function CoveragePricingContent({
 			<div className="flex flex-col gap-1">
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<h3 className="heading-sm text-primary">{card.title}</h3>
-					{/* A plan badge on the brand tint, not a selected state. */}
-					{card.recommendedLabel ? (
-						<span className="rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">{card.recommendedLabel}</span>
-					) : null}
+					{card.recommendedLabel ? <PromoBadge>{card.recommendedLabel}</PromoBadge> : null}
 				</div>
 				<p className="body-md text-secondary">{card.subtitle}</p>
 				{card.priceMain ? (
@@ -232,10 +230,9 @@ export function CoveragePricingContent({
 							<span className="mono-xl text-link">{card.priceMain}</span>
 							<span className="body-lg text-primary">{card.priceUnit}</span>
 						</p>
-						{/* A trial badge on the brand tint, not a selected state. */}
 						{card.key === 'pro' && isTrialAvailable ? (
-							<span className="w-fit rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">
-								7-day free trial available
+							<span className="flex">
+								<PromoBadge>7-day free trial available</PromoBadge>
 							</span>
 						) : card.priceSecondary ? (
 							<p className="body-md text-secondary">{card.priceSecondary}</p>

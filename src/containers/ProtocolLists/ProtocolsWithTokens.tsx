@@ -2,7 +2,6 @@ import { type ColumnDef, createColumnHelper, type SortingState } from '@tanstack
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { readSelectionFromQuery } from '~/components/Select/query'
@@ -16,6 +15,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -159,12 +159,9 @@ function defaultColumns(type: TokenMetricType) {
 						{row.original.chains.length > 0 ? (
 							<span className="-my-2 flex flex-col">
 								<span className="flex items-center gap-1 overflow-hidden">
-									<BasicLink
-										href={`/${basePath}/${row.original.slug}${chartQuery}`}
-										className="min-w-0 truncate label-md text-link hover:underline"
-									>
+									<TextLink href={`/${basePath}/${row.original.slug}${chartQuery}`} truncate>
 										{value}
-									</BasicLink>
+									</TextLink>
 									{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 								</span>
 
@@ -172,12 +169,9 @@ function defaultColumns(type: TokenMetricType) {
 							</span>
 						) : (
 							<span className="flex items-center gap-1 overflow-hidden">
-								<BasicLink
-									href={`/${basePath}/${row.original.slug}${chartQuery}`}
-									className="min-w-0 truncate label-md text-link hover:underline"
-								>
+								<TextLink href={`/${basePath}/${row.original.slug}${chartQuery}`} truncate>
 									{value}
-								</BasicLink>
+								</TextLink>
 								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 							</span>
 						)}
@@ -194,11 +188,7 @@ function defaultColumns(type: TokenMetricType) {
 			cell: ({ getValue }) => {
 				const value = getValue()
 				if (!value) return null
-				return (
-					<BasicLink href={getCategoryRoute(slug(value))} className="label-md text-link hover:underline">
-						{value}
-					</BasicLink>
-				)
+				return <TextLink href={getCategoryRoute(slug(value))}>{value}</TextLink>
 			},
 			meta: {
 				headerClassName: 'w-[128px]'

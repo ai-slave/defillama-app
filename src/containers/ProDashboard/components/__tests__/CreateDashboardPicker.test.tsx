@@ -419,6 +419,23 @@ describe('a subscriber', () => {
 		})
 	})
 
+	test('the owner and visibility choices each announce one group, named by its label and described by its note', async () => {
+		team = { id: 'team-1', name: 'Growth' }
+		await mount()
+		const groups = [...document.querySelectorAll('[role="radiogroup"]')]
+		expect(
+			groups.map((group) => [
+				accessibleName(group),
+				document.getElementById(group.getAttribute('aria-describedby')!)?.textContent
+			])
+		).toEqual([
+			['Create in', 'Only you can edit it. You can share it with your team later from Settings.'],
+			['Visibility', 'Only you can see it.']
+		])
+		// A wrapping role="group" would read the label twice: once for it, once for the radio group.
+		for (const group of groups) expect(group.parentElement!.closest('[role="group"]')).toBeNull()
+	})
+
 	test('without a team the form has no owner choice', async () => {
 		await mount()
 		expect(document.body.textContent).not.toContain('Create in')

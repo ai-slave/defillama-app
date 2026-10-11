@@ -9,6 +9,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
 import { ListRow } from '~/ui/ListRow'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -606,10 +607,10 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 																			<StatusBadge status="caution">Pending</StatusBadge>
 																		) : null}
 																	</div>
-																	<p className="mt-0.5 body-sm text-secondary tabular-nums">
-																		{formatTime(entry.createdAt)}
-																		<span className="text-tertiary"> · {formatRelative(entry.createdAt)}</span>
-																	</p>
+																	<MetaLine className="mt-0.5 tabular-nums">
+																		<span className="text-secondary">{formatTime(entry.createdAt)}</span>
+																		{formatRelative(entry.createdAt)}
+																	</MetaLine>
 																	{entry.actor ? (
 																		<div className="mt-1.5 flex items-center gap-1.5 body-sm text-tertiary">
 																			<ActorAvatar
@@ -805,6 +806,7 @@ function PreviewSpecimenHeader({
 			<div className="grid grid-cols-1 items-start gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 lg:px-6">
 				<div className="grid min-w-0 gap-2">
 					<div className="flex flex-wrap items-center gap-2">
+						{/* The event's kind with its timeline glyph, in the event color the timeline uses; a Tag would drop it. */}
 						<span
 							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 label-sm ${tone}`}
 						>

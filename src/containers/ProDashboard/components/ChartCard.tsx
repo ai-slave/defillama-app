@@ -4,6 +4,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Select } from '~/ui/Select'
 import { downloadCSV } from '~/utils/download'
@@ -17,7 +18,6 @@ import {
 } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
 import { type ChartConfig, type DashboardGrouping, getDashboardChartValueSymbol } from '../types'
-import { ProMeta } from '../ui'
 import { DASHBOARD_CHART_GROUPING, getCsvPeriodCells, getCsvPeriodHeaders, getItemIconUrl } from '../utils'
 import { getChartEntityKey } from '../utils/colorManager'
 import { BoundParameterBadge } from './BoundParameterBadge'
@@ -203,7 +203,12 @@ export function ChartCard({ chart }: ChartCardProps) {
 					) : null
 				}
 				badge={<BoundParameterBadge {...(chart.bindings === undefined ? {} : { bindings: chart.bindings })} />}
-				subtitle={<ProMeta items={[subjectLabel, groupingLabel]} />}
+				subtitle={
+					<MetaLine>
+						{subjectLabel}
+						{groupingLabel}
+					</MetaLine>
+				}
 				controls={
 					<>
 						{isGroupable ? (

@@ -4,7 +4,6 @@ import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
-import { BasicLink } from '~/components/Link'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
@@ -21,6 +20,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { TabPanel, Tabs, type UnderlineTab, UnderlineTabList } from '~/ui/Tabs'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
@@ -118,9 +118,9 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 			/>
 			<Logo src={logo} size={24} alt={`Logo of ${name}`} />
 			{href ? (
-				<BasicLink href={href} className="min-w-0 text-link hover:underline">
+				<TextLink href={href} size="inherit" className="min-w-0">
 					{label}
-				</BasicLink>
+				</TextLink>
 			) : (
 				label
 			)}

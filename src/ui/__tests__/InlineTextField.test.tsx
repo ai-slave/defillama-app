@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { InlineTextField } from '../InlineTextField'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { InlineRenameInput, InlineTextField } from '../InlineTextField'
 
 let root: Root
 let container: HTMLDivElement
@@ -37,7 +37,9 @@ function press(field: HTMLElement, key: string, init: KeyboardEventInit = {}) {
 test('clicking the value opens a selected input', async () => {
 	const selected = vi.fn()
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />
+		)
 	)
 	expect(container.querySelector('button')!.textContent).toBe('Section')
 	const select = vi.spyOn(HTMLInputElement.prototype, 'select').mockImplementation(selected)
@@ -50,7 +52,9 @@ test('clicking the value opens a selected input', async () => {
 test('Enter commits the trimmed value clipped to maxLength', async () => {
 	const onCommit = vi.fn()
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={8} onCommit={onCommit} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={8} onCommit={onCommit} />
+		)
 	)
 	const input = await openEditor()
 	await act(async () => typeInto(input, '  Renamed section  '))
@@ -62,7 +66,9 @@ test('Enter commits the trimmed value clipped to maxLength', async () => {
 test('Escape leaves the value alone', async () => {
 	const onCommit = vi.fn()
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />
+		)
 	)
 	const input = await openEditor()
 	await act(async () => typeInto(input, 'Discarded'))
@@ -73,7 +79,9 @@ test('Escape leaves the value alone', async () => {
 
 test('Enter and Escape hand keyboard focus back to the value button', async () => {
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />
+		)
 	)
 	let input = await openEditor()
 	await act(async () => press(input, 'Escape'))
@@ -89,7 +97,7 @@ test('leaving the field with the pointer commits without stealing focus', async 
 	await act(async () =>
 		root.render(
 			<>
-				<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />
+				<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />
 				<button type="button" id="elsewhere">
 					Elsewhere
 				</button>
@@ -107,7 +115,9 @@ test('leaving the field with the pointer commits without stealing focus', async 
 test('committing the same value does not call back', async () => {
 	const onCommit = vi.fn()
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={onCommit} />
+		)
 	)
 	const input = await openEditor()
 	await act(async () => press(input, 'Enter'))
@@ -116,11 +126,19 @@ test('committing the same value does not call back', async () => {
 
 test('a value changed elsewhere replaces the draft while the field is closed', async () => {
 	await act(async () =>
-		root.render(<InlineTextField value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />)
+		root.render(
+			<InlineTextField label="Title" value="Section" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />
+		)
 	)
 	await act(async () =>
 		root.render(
-			<InlineTextField value="Renamed elsewhere" placeholder="Section title" maxLength={80} onCommit={vi.fn()} />
+			<InlineTextField
+				label="Title"
+				value="Renamed elsewhere"
+				placeholder="Section title"
+				maxLength={80}
+				onCommit={vi.fn()}
+			/>
 		)
 	)
 	const input = await openEditor()
@@ -129,7 +147,9 @@ test('a value changed elsewhere replaces the draft while the field is closed', a
 
 test('the placeholder shows when there is no value', async () => {
 	await act(async () =>
-		root.render(<InlineTextField value="" placeholder="Add a description" maxLength={200} onCommit={vi.fn()} />)
+		root.render(
+			<InlineTextField label="Title" value="" placeholder="Add a description" maxLength={200} onCommit={vi.fn()} />
+		)
 	)
 	expect(container.querySelector('button')!.textContent).toBe('Add a description')
 })
@@ -137,7 +157,14 @@ test('the placeholder shows when there is no value', async () => {
 test('saving marks the value busy without an error', async () => {
 	await act(async () =>
 		root.render(
-			<InlineTextField value="Section" placeholder="Section title" maxLength={80} status="saving" onCommit={vi.fn()} />
+			<InlineTextField
+				label="Title"
+				value="Section"
+				placeholder="Section title"
+				maxLength={80}
+				status="saving"
+				onCommit={vi.fn()}
+			/>
 		)
 	)
 	const button = container.querySelector('button')!
@@ -145,38 +172,11 @@ test('saving marks the value busy without an error', async () => {
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 })
 
-test('saving keeps the value focusable even when the caller also disables it', async () => {
-	await act(async () =>
-		root.render(
-			<InlineTextField
-				value="Section"
-				placeholder="Section title"
-				maxLength={80}
-				disabled
-				status="saving"
-				onCommit={vi.fn()}
-			/>
-		)
-	)
-	const button = container.querySelector('button')!
-	expect(button.disabled).toBe(false)
-	await act(async () => button.focus())
-	expect(document.activeElement).toBe(button)
-})
-
-test('disabled without a saving status still blocks the field', async () => {
-	await act(async () =>
-		root.render(
-			<InlineTextField value="Section" placeholder="Section title" maxLength={80} disabled onCommit={vi.fn()} />
-		)
-	)
-	expect(container.querySelector('button')!.disabled).toBe(true)
-})
-
 test('error marks the field and announces the message', async () => {
 	await act(async () =>
 		root.render(
 			<InlineTextField
+				label="Title"
 				value="Section"
 				placeholder="Section title"
 				maxLength={80}
@@ -195,7 +195,14 @@ test('multiline edits in a textarea where Enter commits and Shift+Enter does not
 	const onCommit = vi.fn()
 	await act(async () =>
 		root.render(
-			<InlineTextField multiline value="" placeholder="Add a description" maxLength={200} onCommit={onCommit} />
+			<InlineTextField
+				multiline
+				label="Description"
+				value=""
+				placeholder="Add a description"
+				maxLength={200}
+				onCommit={onCommit}
+			/>
 		)
 	)
 	await act(async () => container.querySelector('button')!.click())
@@ -213,6 +220,7 @@ test('autoFocus turning on after mount opens the editor', async () => {
 		act(async () =>
 			root.render(
 				<InlineTextField
+					label="Title"
 					value="Section"
 					placeholder="Section title"
 					maxLength={80}
@@ -225,4 +233,93 @@ test('autoFocus turning on after mount opens the editor', async () => {
 	expect(container.querySelector('input')).toBeNull()
 	await render(true)
 	expect(container.querySelector('input')!.value).toBe('Section')
+})
+
+describe('InlineRenameInput', () => {
+	function renderRename(onCommit = vi.fn(), onCancel = vi.fn(), multiline = false) {
+		return act(async () =>
+			root.render(
+				<InlineRenameInput
+					initial="Weekly volume"
+					label="Rename Weekly volume"
+					multiline={multiline}
+					onCommit={onCommit}
+					onCancel={onCancel}
+				/>
+			)
+		)
+	}
+	const field = () => container.querySelector<HTMLInputElement>('[aria-label="Rename Weekly volume"]')!
+
+	test('mounts focused with the whole name selected', async () => {
+		await renderRename()
+		expect(document.activeElement).toBe(field())
+		expect([field().selectionStart, field().selectionEnd]).toEqual([0, 'Weekly volume'.length])
+	})
+
+	test('Enter reports the raw text from the keyboard once, and the blur that follows is ignored', async () => {
+		const onCommit = vi.fn()
+		await renderRename(onCommit)
+		await act(async () => typeInto(field(), ' Daily '))
+		await act(async () => press(field(), 'Enter'))
+		await act(async () => field().blur())
+		expect(onCommit).toHaveBeenCalledExactlyOnceWith(' Daily ', true)
+	})
+
+	test('Escape cancels without saving, and the blur that follows is ignored', async () => {
+		const onCommit = vi.fn()
+		const onCancel = vi.fn()
+		await renderRename(onCommit, onCancel)
+		await act(async () => typeInto(field(), 'Daily'))
+		await act(async () => press(field(), 'Escape'))
+		await act(async () => field().blur())
+		expect(onCancel).toHaveBeenCalledOnce()
+		expect(onCommit).not.toHaveBeenCalled()
+	})
+
+	test('leaving the field saves, marked as not from the keyboard', async () => {
+		const onCommit = vi.fn()
+		await renderRename(onCommit)
+		await act(async () => typeInto(field(), 'Daily'))
+		await act(async () => field().blur())
+		expect(onCommit).toHaveBeenCalledExactlyOnceWith('Daily', false)
+	})
+
+	test('Enter while an IME composes belongs to the composition', async () => {
+		const onCommit = vi.fn()
+		await renderRename(onCommit)
+		await act(async () => press(field(), 'Enter', { isComposing: true }))
+		expect(onCommit).not.toHaveBeenCalled()
+		expect(document.activeElement).toBe(field())
+	})
+
+	test('keys and presses stay inside the field', async () => {
+		const outside = vi.fn()
+		await act(async () =>
+			root.render(
+				<div role="presentation" onKeyDown={outside} onClick={outside}>
+					<InlineRenameInput
+						initial="Weekly volume"
+						label="Rename Weekly volume"
+						onCommit={vi.fn()}
+						onCancel={vi.fn()}
+					/>
+				</div>
+			)
+		)
+		await act(async () => press(field(), 'ArrowRight'))
+		await act(async () => press(field(), 'Escape'))
+		await act(async () => field().click())
+		expect(outside).not.toHaveBeenCalled()
+	})
+
+	test('multiline keeps Shift+Enter as a new line and saves on Enter', async () => {
+		const onCommit = vi.fn()
+		await renderRename(onCommit, vi.fn(), true)
+		expect(field()).toBeInstanceOf(HTMLTextAreaElement)
+		await act(async () => press(field(), 'Enter', { shiftKey: true }))
+		expect(onCommit).not.toHaveBeenCalled()
+		await act(async () => press(field(), 'Enter'))
+		expect(onCommit).toHaveBeenCalledExactlyOnceWith('Weekly volume', true)
+	})
 })

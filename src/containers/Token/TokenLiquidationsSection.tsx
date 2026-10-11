@@ -3,12 +3,12 @@ import { createColumnHelper } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow } from '../LiquidationsV2/api.types'
@@ -52,9 +52,7 @@ const protocolColumns = protocolColumnHelper.columns([
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-link hover:underline">
-						{protocol}
-					</BasicLink>
+					<TextLink href={`/liquidations/${row.original.slug}`}>{protocol}</TextLink>
 				</span>
 			)
 		},

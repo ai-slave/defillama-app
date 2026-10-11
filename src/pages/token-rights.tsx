@@ -1,6 +1,5 @@
 import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
-import Link from 'next/link'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
@@ -24,6 +23,7 @@ import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { InlineStatStrip } from '~/ui/SummaryStats'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -617,9 +617,9 @@ const columns = columnHelper.columns([
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
 						<span className="flex items-center gap-1 overflow-hidden">
-							<Link href={href} className="min-w-0 truncate label-md text-link hover:underline">
+							<TextLink href={href} truncate>
 								{name}
-							</Link>
+							</TextLink>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
 					) : (

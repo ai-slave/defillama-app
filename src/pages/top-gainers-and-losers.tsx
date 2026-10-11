@@ -5,7 +5,6 @@ import { Bookmark } from '~/components/Bookmark'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { BasicLink } from '~/components/Link'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { splitArrayByFalsyValues } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -16,6 +15,7 @@ import Layout from '~/layout'
 import { Change } from '~/ui/Change'
 import { Logo } from '~/ui/Logo'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -59,10 +59,7 @@ const topGainersAndLosersColumns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
-						<BasicLink
-							href={`/protocol/${slug(value)}`}
-							className="min-w-0 truncate label-md text-link hover:underline"
-						>{`${value}`}</BasicLink>
+						<TextLink href={`/protocol/${slug(value)}`} truncate>{`${value}`}</TextLink>
 						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 					</span>
 				</span>

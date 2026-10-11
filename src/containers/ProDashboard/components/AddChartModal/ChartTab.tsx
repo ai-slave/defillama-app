@@ -2,7 +2,6 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartRuntimeView } from '../../chartRuntime'
-import { ProMeta } from '../../ui'
 import { CategoryChartForm } from './CategoryChartForm'
 import { ChartBuilderTab } from './ChartBuilderTab'
 import type { AddCardPane } from './panes'
@@ -74,7 +73,7 @@ export function ChartTab({
 						label="Chart creation"
 						options={CHART_MODE_OPTIONS}
 					/>
-					<ProMeta className="min-w-0" items={[CHART_MODE_HINTS[chartMode]]} />
+					<p className="min-w-0 body-sm text-tertiary">{CHART_MODE_HINTS[chartMode]}</p>
 				</div>
 				<TabPanel value={chartMode} className="flex min-h-0 flex-1 flex-col">
 					{chartMode === 'builder' ? (

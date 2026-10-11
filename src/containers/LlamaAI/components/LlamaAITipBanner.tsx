@@ -2,11 +2,8 @@ import Router from 'next/router'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { focusComposerOnLeave } from './ComposerTray'
+import { ComposerTip } from './ComposerTip'
 
 export function LlamaAITipBanner() {
 	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
@@ -31,43 +28,14 @@ export function LlamaAITipBanner() {
 	}
 
 	return (
-		// The impression is recorded by the element that shows the tip; markSeen sends it once per tip.
-		<div
-			ref={(node) => {
-				if (node) markSeen(tip)
-				return focusComposerOnLeave(node)
-			}}
-			className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5"
-		>
-			<Tooltip
-				content={tip.title}
-				render={<p />}
-				className="m-0 min-w-0 flex-1 truncate body-md text-secondary"
-				data-fullwidth
-			>
-				{tip.title}
-			</Tooltip>
-			{tip.cta.kind !== 'none' && (
-				<Button variant="primary" size="md" onClick={onPrimary}>
-					{tip.cta.label}
-				</Button>
-			)}
-			<Tooltip
-				content="Dismiss tip"
-				render={
-					<Button
-						type="button"
-						variant="ghost"
-						size="md"
-						square
-						onClick={() => dismissTip(tip)}
-						aria-label="Dismiss tip"
-					/>
-				}
-			>
-				<Icon name="x" className="size-4" />
-			</Tooltip>
-		</div>
+		<ComposerTip
+			message={tip.title}
+			action={tip.cta.kind === 'none' ? undefined : { label: tip.cta.label, onClick: onPrimary }}
+			dismissLabel="Dismiss tip"
+			onDismiss={() => dismissTip(tip)}
+			// markSeen sends the impression once per tip.
+			onShow={() => markSeen(tip)}
+		/>
 	)
 }
 

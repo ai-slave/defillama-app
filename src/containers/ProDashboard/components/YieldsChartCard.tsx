@@ -5,6 +5,7 @@ import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/contai
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { getYieldBorrowHistoryQueryKey, getYieldSupplyHistoryQueryKey } from '~/containers/Yields/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { MetaLine } from '~/ui/MetaLine'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -13,7 +14,6 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { fetchProDashboardProxy } from '../services/fetchViaProxy'
 import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
-import { ProMeta } from '../ui'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
@@ -167,7 +167,16 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			<ProCardHeader titleAs="h3" title={poolName} subtitle={<ProMeta items={[project, chain]} />} />
+			<ProCardHeader
+				titleAs="h3"
+				title={poolName}
+				subtitle={
+					<MetaLine>
+						{project}
+						{chain}
+					</MetaLine>
+				}
+			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
 				{status}
 			</div>
@@ -205,7 +214,13 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 			<ProCardHeader
 				titleAs="h3"
 				title={poolName}
-				subtitle={<ProMeta items={[project, chain, chartType !== 'tvl-apy' ? chartTitle : null]} />}
+				subtitle={
+					<MetaLine>
+						{project}
+						{chain}
+						{chartType !== 'tvl-apy' ? chartTitle : null}
+					</MetaLine>
+				}
 				menu={
 					currentChartDataset.source.length > 0
 						? {

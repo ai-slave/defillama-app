@@ -1,6 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
-import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -14,6 +13,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Logo } from '~/ui/Logo'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
+import { TextLink } from '~/ui/TextLink'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -142,19 +142,16 @@ const columns = columnHelper.columns([
 
 					{row.original.chains.length > 0 ? (
 						<span className="-my-2 flex flex-col">
-							<BasicLink
-								href={`/protocol/${row.original.slug}`}
-								className="truncate label-md text-link hover:underline"
-							>
+							<TextLink href={`/protocol/${row.original.slug}`} truncate>
 								{value}
-							</BasicLink>
+							</TextLink>
 
 							<ProtocolChainsHovercard chains={row.original.chains} />
 						</span>
 					) : (
-						<BasicLink href={`/protocol/${row.original.slug}`} className="truncate label-md text-link hover:underline">
+						<TextLink href={`/protocol/${row.original.slug}`} truncate>
 							{value}
-						</BasicLink>
+						</TextLink>
 					)}
 				</span>
 			)

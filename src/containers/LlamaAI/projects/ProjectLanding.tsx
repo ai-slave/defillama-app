@@ -16,6 +16,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
@@ -266,10 +267,7 @@ export function ProjectLanding({
 					</header>
 
 					<div className="flex items-center gap-2 pb-2">
-						{/* An icon chip on the brand tint, not a selected state. */}
-						<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-							<Icon name="folder" className="size-4" />
-						</div>
+						<IconTile icon="folder" tone="brand" size="sm" />
 						<div className="min-w-0 flex-1">
 							<h1 className="truncate heading-sm text-primary">{project.data.name}</h1>
 							{project.data.description ? (

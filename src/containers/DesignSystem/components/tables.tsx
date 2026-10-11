@@ -4,10 +4,13 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Logo } from '~/ui/Logo'
 import { SearchField } from '~/ui/SearchField'
 import { Select } from '~/ui/Select'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import type { Family, KnobValues } from '../shared'
+import { DEMO_LOGO } from '../demoAssets'
+import { Cell, Example, type Family, type KnobValues, REST_HOVER_FOCUS, StateGrid } from '../shared'
 
 const CHAINS = ['All chains', 'Ethereum', 'Arbitrum', 'Base', 'Solana']
 
@@ -38,6 +41,12 @@ function TableToolbarDemo({ divided }: { divided: boolean }) {
 						<Button size="md">.csv</Button>
 					</TableToolbarControlGroup>
 				</TableToolbar>
+				{/* A stand-in for the table head the rule separates from the toolbar. */}
+				<div className="grid grid-cols-[1fr_6rem_6rem] px-3 py-2 label-sm text-tertiary">
+					<span>Name</span>
+					<span className="text-right">TVL</span>
+					<span className="text-right">1d change</span>
+				</div>
 			</Card>
 		</div>
 	)
@@ -130,7 +139,7 @@ export const tables: Family = {
 			name: 'TableToolbar',
 			source: 'src/ui/Toolbar.tsx',
 			knobs: [{ name: 'divided', boolean: true }],
-			note: 'The title takes the free space (mr-auto), the search keeps 280px, and a TableToolbarControlGroup keeps its controls together when the row wraps. A row stacked over another row is divided.',
+			note: 'The title takes the free space (mr-auto), the search keeps 280px, and a TableToolbarControlGroup keeps its controls together when the row wraps. Turn divided on: a rule separates the row from the table head under it.',
 			render: (values) => <TableToolbarDemo divided={values.divided === true} />
 		},
 		{
@@ -144,6 +153,58 @@ export const tables: Family = {
 			],
 			note: 'The page knob sets pageIndex; the buttons do not move it. First and last disable the buttons toward that end.',
 			render: pagerDemo
+		},
+		{
+			name: 'TextLink',
+			source: 'src/ui/TextLink.tsx',
+			knobs: [
+				{ name: 'size', values: ['md', 'sm', 'inherit'], default: 'md' },
+				{ name: 'truncate', boolean: true }
+			],
+			note: 'Drawn in a 160px cell, so truncate ends the long name with an ellipsis. Hover it or Tab to it: it underlines.',
+			render: (values) => (
+				<span className="flex w-40">
+					<TextLink
+						href="/protocol/aave-v3"
+						size={values.size as 'md' | 'sm' | 'inherit'}
+						truncate={values.truncate === true}
+					>
+						Aave V3 lending markets
+					</TextLink>
+				</span>
+			),
+			states: () => (
+				<>
+					<Example name="Interaction">
+						<StateGrid
+							columns={['Rest', 'Hover', 'Focus']}
+							rows={[
+								[
+									'link',
+									<>
+										{REST_HOVER_FOCUS.map((force) => (
+											<Cell key={force ?? 'rest'} force={force}>
+												<TextLink href="/protocol/aave-v3">Aave V3</TextLink>
+											</Cell>
+										))}
+									</>
+								]
+							]}
+						/>
+					</Example>
+					<Example
+						name="In a table cell"
+						note="The logo sits beside the link, never inside it, so the link's name is the protocol's name."
+					>
+						<span className="flex w-48 items-center gap-2">
+							<Logo src={DEMO_LOGO} size={20} />
+							<TextLink href="/protocol/aave-v3" truncate>
+								Aave V3 lending markets
+							</TextLink>
+						</span>
+					</Example>
+				</>
+			)
 		}
 	]
 }

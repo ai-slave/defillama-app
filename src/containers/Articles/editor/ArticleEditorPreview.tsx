@@ -1,6 +1,7 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { IconTile } from '~/ui/IconTile'
 import { formatNumber } from '~/utils/numberFormat'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 import type { LocalArticleDocument } from '../types'
@@ -40,9 +41,7 @@ export function ArticleEditorPreview({
 			<div className="sticky top-0 z-30 border-b border-medium bg-page-glass backdrop-blur">
 				<div className="mx-auto flex w-full max-w-[1300px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
 					<div className="flex min-w-[min(100%,18rem)] flex-1 items-start gap-3">
-						<div className="grid size-9 shrink-0 place-items-center rounded-md border border-medium bg-surface">
-							<Icon name="eye" className="size-4 text-link" />
-						</div>
+						<IconTile icon="eye" tone="brand" size="sm" />
 						<div className="min-w-0 flex-1">
 							<div className="label-xs tracking-[0.24em] text-tertiary uppercase">Rendered proof</div>
 							<div className="label-md break-words text-primary">{article.title || 'Untitled research'}</div>

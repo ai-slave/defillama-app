@@ -453,7 +453,7 @@ export function PoolApyChart({
 		<Panel>
 			<PanelHeader>
 				<PanelTitle>{currentModel.title}</PanelTitle>
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+				<div className="flex flex-wrap items-center justify-end gap-1.5">
 					<PoolRangeControl kind={kind} />
 					<ChartExportButtons
 						chartInstance={() => chartRef.current}

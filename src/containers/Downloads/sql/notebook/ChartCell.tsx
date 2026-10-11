@@ -1,5 +1,6 @@
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { MetaLine } from '~/ui/MetaLine'
 import { Select } from '~/ui/Select'
 import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
@@ -60,10 +61,10 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 						source not yet run
 					</span>
 				) : selected?.result ? (
-					<span className="inline-flex min-w-0 items-center gap-1.5 body-sm text-tertiary">
-						<span className="text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span>
-						rows
-						<span aria-hidden>·</span>
+					<MetaLine className="min-w-0">
+						<span>
+							<span className="text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span> rows
+						</span>
 						<span className="flex min-w-0 flex-wrap items-center gap-1">
 							{selectedCols.slice(0, 4).map((c) => (
 								<span key={c.name} className="truncate mono-sm text-secondary">
@@ -74,7 +75,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 								<span className="body-xs text-tertiary">+{selectedCols.length - 4}</span>
 							) : null}
 						</span>
-					</span>
+					</MetaLine>
 				) : null}
 			</Card>
 

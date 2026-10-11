@@ -81,6 +81,7 @@ export function TodoChecklistPanel({
 				</span>
 				<p className="m-0 flex-1 truncate label-sm text-primary">Progress</p>
 				{interrupted ? <StatusBadge status="bad">stopped early</StatusBadge> : null}
+				{/* A progress readout, not a value from a set, so not a Tag; StreamingStatus draws the same chip. */}
 				<p className="m-0 shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary tabular-nums">
 					{completed}/{total} done
 				</p>

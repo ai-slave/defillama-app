@@ -5,7 +5,6 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { tvlOptionNames } from '~/components/Filters/options'
-import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -22,6 +21,7 @@ import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { TextLink } from '~/ui/TextLink'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -49,9 +49,9 @@ const forksColumn = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<Logo size={24} src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
-						<BasicLink href={`/forks/${slug(name)}`} className="min-w-0 truncate label-md text-link hover:underline">
+						<TextLink href={`/forks/${slug(name)}`} truncate>
 							{name}
-						</BasicLink>
+						</TextLink>
 						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 					</span>
 				</span>

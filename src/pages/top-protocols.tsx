@@ -13,7 +13,6 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
-import { BasicLink } from '~/components/Link'
 import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
@@ -28,6 +27,7 @@ import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { TextLink } from '~/ui/TextLink'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -121,9 +121,9 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						<span className="flex items-center gap-2">
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
-							<BasicLink href={`/chain/${slug(chain)}`} className="truncate label-md text-link hover:underline">
+							<TextLink href={`/chain/${slug(chain)}`} truncate>
 								{chain}
-							</BasicLink>
+							</TextLink>
 						</span>
 					)
 				},
@@ -144,9 +144,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 					const deprecated = info.row.original[`${cat}Deprecated`] === true
 					return (
 						<span className="flex items-center gap-1">
-							<BasicLink href={`/protocol/${slug(protocolName)}`} className="label-md text-link hover:underline">
-								{protocolName}
-							</BasicLink>
+							<TextLink href={`/protocol/${slug(protocolName)}`}>{protocolName}</TextLink>
 							{deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
 					)

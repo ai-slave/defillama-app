@@ -7,13 +7,13 @@ import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { Button } from '~/ui/Button'
+import { MetaLine } from '~/ui/MetaLine'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
-import { ProMeta } from '../../ui'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
 import { ProCardHeader } from '../ProCardHeader'
 import { ProCardEmpty, ProCardLoading, ProCardNotice } from '../ProCardStatus'
@@ -88,12 +88,10 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 				<ProCardHeader
 					title={config.name || 'SQL chart'}
 					subtitle={
-						<ProMeta
-							items={[
-								displayMode === 'table' ? 'Table' : 'Chart',
-								snapshot ? <SqlFreshness key="freshness" computedAt={snapshot.computedAt} /> : null
-							]}
-						/>
+						<MetaLine>
+							{displayMode === 'table' ? 'Table' : 'Chart'}
+							{snapshot ? <SqlFreshness computedAt={snapshot.computedAt} /> : null}
+						</MetaLine>
 					}
 					viewerControls={
 						<SegmentedControl<'output' | 'query'>
