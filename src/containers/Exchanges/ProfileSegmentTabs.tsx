@@ -1,7 +1,7 @@
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EXCHANGE_SEGMENT_LABELS, EXCHANGE_SEGMENTS, type ExchangeProfileModel } from './models'
 import type { ProfileSegmentSelection } from './queryState'
-import { SegmentToggleLabel } from './segmentPresentation'
+import { segmentToggle } from './segmentPresentation'
 
 export function ProfileSegmentTabs({
 	profile,
@@ -18,8 +18,8 @@ export function ProfileSegmentTabs({
 			? [
 					{
 						value: segment.segment,
-						label: <SegmentToggleLabel segment={segment.segment} suffix={` · ${segment.marketCount}`} />,
-						ariaLabel: `${EXCHANGE_SEGMENT_LABELS[segment.segment]} · ${segment.marketCount}`
+						ariaLabel: `${EXCHANGE_SEGMENT_LABELS[segment.segment]} · ${segment.marketCount}`,
+						...segmentToggle(segment.segment, `${EXCHANGE_SEGMENT_LABELS[segment.segment]} · ${segment.marketCount}`)
 					}
 				]
 			: []

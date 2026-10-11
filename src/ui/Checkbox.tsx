@@ -11,7 +11,11 @@ import type { ComponentProps, ReactNode } from 'react'
               (a chart builder's options).
    - consent: body-sm text-secondary like the form copy around it, for a
               sentence-long agreement (claim consents, terms); the box stays
-              on the label's first line when it wraps.
+              on the label's first line when it wraps. Links to the
+              documents it agrees to are the one control a label holds:
+              their names belong in the box's name, and a click on a link
+              opens the document without toggling the box. Never a button
+              or a QuestionHelper (policy: check-focus-handoff).
    It toggles on Space, as a native checkbox does; Enter never toggles it
    (it submits the form around it). Never pass Ariakit's `clickOnEnter`.
    Keyboard focus on the hidden input draws the ring and row wash on the

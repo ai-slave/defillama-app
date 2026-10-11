@@ -107,17 +107,26 @@ export function UnifiedVirtualTable({
 										}`}
 									>
 										{header.column.getCanSort() ? (
-											<button
-												type="button"
-												className={HEADER_CONTENT_STYLES}
-												data-align={meta?.align ?? (isGroupRow ? 'center' : 'start')}
-												onClick={() => header.column.toggleSorting()}
+											// The sort button anchors the definition itself: a focusable span inside it would be a
+											// second tab stop within the button.
+											<Tooltip
+												content={meta?.headerHelperText}
+												render={
+													<button
+														type="button"
+														className={HEADER_CONTENT_STYLES}
+														data-align={meta?.align ?? (isGroupRow ? 'center' : 'start')}
+														onClick={() => header.column.toggleSorting()}
+													/>
+												}
 											>
 												{header.isPlaceholder ? null : (
-													<HeaderWithTooltip content={meta?.headerHelperText}>{value}</HeaderWithTooltip>
+													<span className={meta?.headerHelperText ? 'underline decoration-dotted' : undefined}>
+														{value}
+													</span>
 												)}
 												{header.isPlaceholder ? null : <SortIcon dir={header.column.getIsSorted()} />}
-											</button>
+											</Tooltip>
 										) : (
 											<div
 												className={HEADER_CONTENT_STYLES}

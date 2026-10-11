@@ -7,6 +7,7 @@ import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
 import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -279,11 +280,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					<div className="flex items-center gap-1.5">
 						<Icon name="check" className="size-3" />
 						<span className="truncate title-sm">{config.label}</span>
-						{config.description ? (
-							<Tooltip content={config.description} placement="top">
-								<Icon name="help-circle" className="size-3 text-tertiary" />
-							</Tooltip>
-						) : null}
+						{config.description ? <QuestionHelper text={config.description} /> : null}
 						{categoryBadge}
 					</div>
 					<span className="truncate body-sm text-secondary">{displayValue}</span>
@@ -296,25 +293,28 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (!isEditing && hasValue) {
 		return (
 			<div className="flex items-start justify-between rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-2 text-primary">
-				<button
-					ref={takeLostFocus}
-					type="button"
-					onClick={handleStartEdit}
-					className="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+				{/* The edit button anchors the filter's definition; the "?" only marks it (QuestionHelper header). */}
+				<Tooltip
+					content={config.description}
+					placement="top"
+					render={
+						<button
+							ref={takeLostFocus}
+							type="button"
+							onClick={handleStartEdit}
+							className="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+						/>
+					}
 				>
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<div className="flex items-center gap-1.5">
 							<span className="truncate title-sm">{config.label}</span>
-							{config.description ? (
-								<Tooltip content={config.description} placement="top">
-									<Icon name="help-circle" className="size-3 text-tertiary" />
-								</Tooltip>
-							) : null}
+							{config.description ? <Icon name="help-circle" className="size-3 text-tertiary" aria-hidden /> : null}
 							{categoryBadge}
 						</div>
 						<span className="truncate label-sm text-secondary">{displayValue}</span>
 					</div>
-				</button>
+				</Tooltip>
 				{removeButton}
 			</div>
 		)
@@ -326,11 +326,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-1.5">
 						<span className="truncate title-sm">{config.label}</span>
-						{config.description ? (
-							<Tooltip content={config.description} placement="top">
-								<Icon name="help-circle" className="size-3 text-tertiary" />
-							</Tooltip>
-						) : null}
+						{config.description ? <QuestionHelper text={config.description} /> : null}
 						{categoryBadge}
 					</div>
 					{removeButton}
@@ -631,25 +627,30 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 								{isExpanded && availableFilters.length > 0 ? (
 									<div className="border-t border-subtle bg-surface p-1">
 										{availableFilters.map((filter) => (
-											<ListRow
+											// The row anchors the filter's definition; the "?" only marks it (QuestionHelper header).
+											<Tooltip
 												key={filter.id}
-												data-filter-id={filter.id}
-												onClick={() => handleAddFilter(filter)}
-												className="group justify-between"
+												content={filter.description}
+												placement="right"
+												render={
+													<ListRow
+														data-filter-id={filter.id}
+														onClick={() => handleAddFilter(filter)}
+														className="group justify-between"
+													/>
+												}
 											>
 												<div className="flex min-w-0 items-center gap-1.5">
 													<span className="truncate">{filter.label}</span>
 													{filter.description ? (
-														<Tooltip content={filter.description} placement="right">
-															<Icon name="help-circle" className="size-3 text-tertiary" />
-														</Tooltip>
+														<Icon name="help-circle" className="size-3 text-tertiary" aria-hidden />
 													) : null}
 												</div>
 												<Icon
 													name="plus"
 													className="size-3.5 shrink-0 text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
 												/>
-											</ListRow>
+											</Tooltip>
 										))}
 									</div>
 								) : null}

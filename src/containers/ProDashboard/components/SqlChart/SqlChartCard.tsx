@@ -7,10 +7,9 @@ import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TabPanel, Tabs } from '~/ui/Tabs'
-import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
@@ -114,9 +113,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 								<Button size="sm" variant="ghost" onClick={refresh} pendingLabel="Refreshing…" pending={isRefreshing}>
 									Refresh
 								</Button>
-								<Tooltip content={REFRESH_HINT} className="flex items-center">
-									<Icon name="help-circle" className="size-4 text-tertiary" />
-								</Tooltip>
+								<QuestionHelper text={REFRESH_HINT} />
 							</>
 						) : null
 					}

@@ -7,7 +7,9 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
    40x24 rounded-full track, 16px bg-knob knob; on = bg-brand, off = elevated-2.
    Label is label-sm at gap-2. `hideLabel` keeps the label for assistive tech
    only, for rows whose visible text sits outside the control; `describedBy`
-   points the input at that row's description. `disabled` is announced with
+   points the input at that row's description. `help` adds a QuestionHelper
+   after the label, outside it, and `className` then places the pair.
+   `disabled` is announced with
    aria-disabled and keeps focus, so a control that is pending or gated does
    not drop the keyboard user; `isLoading` adds a spinner and the same activation guard.
    Enter toggles like Space, so a switch inside a form never submits it.
@@ -36,9 +38,9 @@ export function Switch({
 	disabled?: boolean
 	describedBy?: string
 }) {
-	return (
+	const control = (
 		<label
-			className={`relative isolate flex flex-nowrap items-center gap-2 label-sm ${disabled ? 'cursor-not-allowed text-disabled' : isLoading ? 'cursor-progress' : 'cursor-pointer'} ${className ?? ''}`}
+			className={`relative isolate flex flex-nowrap items-center gap-2 label-sm ${disabled ? 'cursor-not-allowed text-disabled' : isLoading ? 'cursor-progress' : 'cursor-pointer'} ${help ? '' : (className ?? '')}`}
 		>
 			<input
 				type="checkbox"
@@ -73,14 +75,16 @@ export function Switch({
 					</span>
 				) : null}
 			</span>
-			{help ? (
-				<span className="flex items-center gap-1">
-					<span>{label}</span>
-					<QuestionHelper text={help} />
-				</span>
-			) : (
-				<span className={hideLabel ? 'sr-only' : undefined}>{label}</span>
-			)}
+			<span className={hideLabel ? 'sr-only' : undefined}>{label}</span>
 		</label>
+	)
+	if (!help) return control
+
+	// Beside the label, not in it: inside, a tap on the "?" flips the switch and the definition joins the switch's name.
+	return (
+		<span className={`flex items-center gap-1 ${className ?? ''}`.trim()}>
+			{control}
+			<QuestionHelper text={help} />
+		</span>
 	)
 }

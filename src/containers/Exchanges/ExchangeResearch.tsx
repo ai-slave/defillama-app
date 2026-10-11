@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { Panel } from '~/ui/Panel'
-import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -20,7 +19,7 @@ import {
 } from './queryState'
 import { ResearchChart, ResearchChartStatus } from './ResearchChart'
 import { getResearchPresentation, RESEARCH_VIEWS, resolveResearchView } from './researchPresentation'
-import { SEGMENT_DEFINITIONS } from './segmentPresentation'
+import { segmentToggle } from './segmentPresentation'
 
 const STALE_TIME = 6 * 60 * 60 * 1000
 
@@ -144,16 +143,7 @@ function ResearchChartCard({
 					// (?) definition on toggle labels that name a perpetual class.
 					const segment = getResearchPresentation(part, id).segment
 					if (segment !== 'linear_perp' && segment !== 'inverse_perp') return { value: id, label }
-					return {
-						value: id,
-						ariaLabel: label,
-						label: (
-							<span className="flex items-center gap-1">
-								{label}
-								<QuestionHelper text={SEGMENT_DEFINITIONS[segment].description} />
-							</span>
-						)
-					}
+					return { value: id, ariaLabel: label, ...segmentToggle(segment, label) }
 				})}
 				label="Chart view"
 				variant="default"

@@ -39,10 +39,17 @@ import { Tooltip } from './Tooltip'
    Selects in dense card headers. In a phone sheet's rows the padded variants
    are 44px with a 4px inset and body-md labels. A disabled option dims to
    60% with the not-allowed cursor, like Button; its reason stays in visible
-   text or the option's `tooltip`.
+   text.
    An option's label is plain text or a fragment (icon, text, count): every
    segment lays its children out as one centered row with its own gap, so a
-   label never brings a wrapper span.
+   label never brings a wrapper span, and never a QuestionHelper or other
+   focusable part: it would be a tab stop inside the option.
+   An option's definition is its `tooltip`, anchored on the element that takes
+   focus (the tab, or the radio spread over its segment), so hover and keyboard
+   focus open it. Screen readers do not announce it (Tooltip header). A "?"
+   icon in the label may mark it. A tap selects the option and does not
+   open the tooltip: touch readers trade the definition for one tap target,
+   as on every control with a tooltip.
 
    `semantics` picks what the control announces; the look is the same:
    - radio (default): a value that reconfigures one region (a period, a
@@ -127,14 +134,6 @@ export const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof
 
 export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
 
-/* An option with a tooltip sits inside the tooltip's anchor span, which becomes the row's flex item, so the span takes
-   the segment's stretch: equal segments in `field`, a stretched row below sm in the responsive variants. */
-const tooltipAnchorSizing: Partial<Record<TagGroupVariant, string>> = {
-	field: 'flex-1 basis-0',
-	mode: 'grid',
-	responsive: 'max-sm:flex-1',
-	'solid-responsive': 'max-sm:flex-1'
-}
 type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
 
 export type SegmentedControlOption<T extends string> = {
@@ -190,8 +189,8 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 			className: clsx(button, buttonClassName),
 			children: option.label
 		}
-		const control =
-			semantics === 'tabs' ? (
+		if (semantics === 'tabs') {
+			const tab = (
 				<Tab
 					value={option.value}
 					{...controlProps}
@@ -200,39 +199,40 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 						'disabled:cursor-not-allowed disabled:text-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled'
 					)}
 				/>
-			) : (
-				<label
-					className={clsx(
-						button,
-						buttonClassName,
-						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:text-disabled',
-						variant === 'solid' && 'inline-flex items-center justify-center',
-						(variant === 'solid' || variant === 'solid-responsive') &&
-							'data-[active=true]:has-focus-visible:focus-ring-on-brand'
-					)}
-					data-active={option.value === value}
-					aria-disabled={option.disabled}
-				>
-					<Ariakit.Radio
-						value={option.value}
-						tabIndex={selectedIsDisabled ? (option.value === firstEnabledValue ? 0 : -1) : undefined}
-						disabled={option.disabled}
-						aria-label={option.ariaLabel}
-						className="sr-only"
-					/>
-					{option.label}
-				</label>
 			)
+			return option.tooltip ? (
+				<Tooltip key={option.value} content={option.tooltip} render={tab} />
+			) : (
+				<React.Fragment key={option.value}>{tab}</React.Fragment>
+			)
+		}
+		// The radio spreads over its segment, so it takes the segment's clicks and anchors the option's tooltip.
+		const radio = (
+			<Ariakit.Radio
+				value={option.value}
+				tabIndex={selectedIsDisabled ? (option.value === firstEnabledValue ? 0 : -1) : undefined}
+				disabled={option.disabled}
+				aria-label={option.ariaLabel}
+				className="absolute inset-0 cursor-[inherit] opacity-[0.00001]"
+			/>
+		)
 		return (
-			<React.Fragment key={option.value}>
-				{option.tooltip ? (
-					<Tooltip content={option.tooltip} className={tooltipAnchorSizing[variant]}>
-						{control}
-					</Tooltip>
-				) : (
-					control
+			<label
+				className={clsx(
+					button,
+					buttonClassName,
+					'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:text-disabled',
+					variant === 'solid' && 'inline-flex items-center justify-center',
+					(variant === 'solid' || variant === 'solid-responsive') &&
+						'data-[active=true]:has-focus-visible:focus-ring-on-brand'
 				)}
-			</React.Fragment>
+				key={option.value}
+				data-active={option.value === value}
+				aria-disabled={option.disabled}
+			>
+				{option.tooltip ? <Tooltip content={option.tooltip} render={radio} /> : radio}
+				{option.label}
+			</label>
 		)
 	})
 	const content = (

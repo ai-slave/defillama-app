@@ -1,6 +1,7 @@
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
 import type { ExchangePromotionModel, MicaVenueModel } from './models'
@@ -59,9 +60,7 @@ export function MicaDepthValue({
 			<Tooltip content={detail} className="justify-end whitespace-nowrap">
 				{formatUsd(value, { compact: true }) ?? '–'}
 			</Tooltip>
-			<Tooltip content={helperText}>
-				<Icon name="help-circle" className="size-3.5 shrink-0 text-tertiary" />
-			</Tooltip>
+			<QuestionHelper text={helperText} />
 		</span>
 	)
 }

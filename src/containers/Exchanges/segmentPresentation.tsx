@@ -1,4 +1,5 @@
-import { QuestionHelper } from '~/ui/QuestionHelper'
+import type { ReactNode } from 'react'
+import { Icon } from '~/ui/Icon'
 import { exchangeDefinitions, type ExchangeDefinition } from './definitions'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeSegment } from './models'
 
@@ -8,17 +9,21 @@ export const SEGMENT_DEFINITIONS: Record<ExchangeSegment, ExchangeDefinition> = 
 	inverse_perp: exchangeDefinitions.segments.inversePerps
 }
 
-/**
- * Exact segment toggle label — Spot | USD Perps | COIN Perps — with a (?)
- * definition tooltip on the perpetual classes.
- */
-export function SegmentToggleLabel({ segment, suffix }: { segment: ExchangeSegment; suffix?: string }) {
-	const label = `${EXCHANGE_SEGMENT_LABELS[segment]}${suffix ?? ''}`
-	if (segment === 'spot') return <>{label}</>
-	return (
-		<span className="flex items-center gap-1">
-			{label}
-			<QuestionHelper text={SEGMENT_DEFINITIONS[segment].description} />
-		</span>
-	)
+/** A segment toggle option's content (Spot | USD Perps | COIN Perps), spread into a SegmentedControl option. The
+    perpetual classes carry their definition as the option's `tooltip`, so the whole toggle anchors it; the "?" in the
+    label only marks it, because a focusable QuestionHelper inside the toggle would nest in the control. */
+export function segmentToggle(
+	segment: ExchangeSegment,
+	text = EXCHANGE_SEGMENT_LABELS[segment]
+): { label: ReactNode; tooltip?: string } {
+	if (segment === 'spot') return { label: text }
+	return {
+		label: (
+			<>
+				{text}
+				<Icon name="help-circle" className="size-4 text-tertiary" aria-hidden />
+			</>
+		),
+		tooltip: SEGMENT_DEFINITIONS[segment].description
+	}
 }

@@ -88,10 +88,15 @@ export function ChartPanelTitle({
 }) {
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<Heading className="flex items-center gap-1 heading-xs">
-				<span>{children}</span>
-				{titleTooltip ? <QuestionHelper text={titleTooltip} /> : null}
-			</Heading>
+			{titleTooltip ? (
+				// Beside the heading, not in it: the "?" is named by its definition, which would join the heading's name.
+				<div className="flex items-center gap-1">
+					<Heading className="heading-xs">{children}</Heading>
+					<QuestionHelper text={titleTooltip} />
+				</div>
+			) : (
+				<Heading className="heading-xs">{children}</Heading>
+			)}
 			{subtitle ? <p className="body-sm text-tertiary">{subtitle}</p> : null}
 		</div>
 	)

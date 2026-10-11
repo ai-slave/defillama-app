@@ -27,7 +27,7 @@ import {
 	type DirectoryOverviewTab,
 	type ExchangeResearchRange
 } from './queryState'
-import { SegmentToggleLabel } from './segmentPresentation'
+import { segmentToggle } from './segmentPresentation'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -43,9 +43,9 @@ interface SeriesSpec {
 
 const TAB_OPTIONS = [
 	{ value: 'total', label: 'Total' },
-	{ value: 'spot', label: <SegmentToggleLabel segment="spot" />, ariaLabel: 'Spot' },
-	{ value: 'linear_perp', label: <SegmentToggleLabel segment="linear_perp" />, ariaLabel: 'USD Perps' },
-	{ value: 'inverse_perp', label: <SegmentToggleLabel segment="inverse_perp" />, ariaLabel: 'COIN Perps' }
+	{ value: 'spot', ariaLabel: 'Spot', ...segmentToggle('spot') },
+	{ value: 'linear_perp', ariaLabel: 'USD Perps', ...segmentToggle('linear_perp') },
+	{ value: 'inverse_perp', ariaLabel: 'COIN Perps', ...segmentToggle('inverse_perp') }
 ] as const
 
 const LINEAR_PERP_OI: SeriesSpec = {

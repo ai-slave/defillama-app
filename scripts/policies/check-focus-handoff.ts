@@ -44,6 +44,18 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  *    `decoration-dotted` and whose anchor is not a control (CONTROL_TAGS, `summary`). Ariakit never makes the anchor
  *    focusable, so without `tabIndex={0}` keyboard readers cannot open the definition; `cursor-help` tells mouse
  *    readers a hover explains it. A control anchor keeps its own focus and cursor.
+ * 14. A help-circle definition built by hand, or put inside what it explains. A `Tooltip` whose only child is a
+ *    `help-circle` Icon is `QuestionHelper` beside text; inside a control (CONTROL_TAGS, `ListRow`, `summary`) the
+ *    control anchors the tooltip and the icon only marks it. `QuestionHelper` itself never sits inside a control, a
+ *    label, a `Checkbox` or a heading (HELPER_HOSTS): its name is the definition, which would join theirs, and a tap
+ *    there goes to the control. Put it beside them. Nesting through props or child components is caught at runtime
+ *    instead: Tooltip reports a focusable anchor inside a control, and tests fail on it.
+ * 15. A control written inside another (CONTROL_HOSTS): a link in a disclosure's `summary`, a button in a field's
+ *    `label`, a link in a row button. The outer control is announced with its content flattened into one name, and
+ *    keyboard readers meet a tab stop inside it. Put the inner control beside it or in the expanded content.
+ *    `Button as="span"` is not a control and is not checked. A link inside a label (LABEL_HOSTS) is allowed: a
+ *    consent checkbox links the documents it agrees to, their names belong in its label, and a click on the link
+ *    opens the document without toggling the box (Checkbox header). A button in a label is refused.
  *
  * "Pending flag" means the `disabled` expression names something pending or saving (isPending, pending, isSaving,
  * saving, submitting). Other reasons to disable are outside this check.
@@ -74,7 +86,39 @@ const CONTROL_TAGS = new Set([
 	'Ariakit.DialogDisclosure'
 ])
 
+const NESTED_CONTROL_TAGS = new Set([...CONTROL_TAGS, 'ListRow', 'summary'])
+const CONTROL_HOSTS = new Set([
+	...NESTED_CONTROL_TAGS,
+	'Ariakit.MenuItem',
+	'Ariakit.SelectItem',
+	'Ariakit.ComboboxItem'
+])
+const LABEL_HOSTS = new Set(['label', 'Checkbox'])
+const LINK_TAGS = new Set(['a', 'BasicLink'])
+const HELPER_HOSTS = new Set([
+	...NESTED_CONTROL_TAGS,
+	'label',
+	'Checkbox',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'Heading'
+])
+
 const HANDOFFS = new Set(['keepFocus', 'passFocusOnLeave'])
+
+/** Whether `node` is written inside one of `tags`. An element passed as an attribute (`render={<Button />}`) is that
+    host itself, not inside it, so the walk stops there. */
+function isInside(node: ts.Node, tags: Set<string>): boolean {
+	for (let parent = node.parent; !ts.isSourceFile(parent); parent = parent.parent) {
+		if (ts.isJsxAttribute(parent)) return false
+		if (ts.isJsxElement(parent) && tags.has(tagName(parent.openingElement))) return true
+	}
+	return false
+}
 
 function calleeName(node: ts.Node): string | null {
 	return ts.isCallExpression(node) && ts.isIdentifier(node.expression) ? node.expression.text : null
@@ -174,6 +218,32 @@ export function scanSource(relative: string, source: string): Array<string> {
 						violations.push(`${at(opening)} underlines a definition without cursor-help on its anchor`)
 					}
 				}
+			}
+			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
+				const children = node.children.filter((child) => !ts.isJsxText(child) || child.text.trim() !== '')
+				const icon = children.length === 1 && ts.isJsxSelfClosingElement(children[0]) ? children[0] : undefined
+				const iconName = icon && tagName(icon) === 'Icon' ? attribute(icon, 'name') : undefined
+				if (iconName && expressionText(iconName) === 'help-circle') {
+					violations.push(
+						isInside(node, NESTED_CONTROL_TAGS)
+							? `${at(opening)} puts a help tooltip inside a control; pass the control as the Tooltip's render and keep the icon as a mark`
+							: `${at(opening)} builds a help-circle definition by hand; use QuestionHelper`
+					)
+				}
+			}
+			if (
+				CONTROL_TAGS.has(tag) &&
+				!(attribute(opening, 'as') && expressionText(attribute(opening, 'as')!) === 'span') &&
+				(isInside(node, CONTROL_HOSTS) || (!LINK_TAGS.has(tag) && isInside(node, LABEL_HOSTS)))
+			) {
+				violations.push(
+					`${at(opening)} puts a control inside a disclosure, button, link or label; move it beside or into the expanded content`
+				)
+			}
+			if (tag === 'QuestionHelper' && isInside(node, HELPER_HOSTS)) {
+				violations.push(
+					`${at(opening)} puts QuestionHelper inside a control, label or heading; render it beside what it explains`
+				)
 			}
 			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
 				for (const child of node.children) {
@@ -526,6 +596,76 @@ if (process.argv.includes('--self-test')) {
 			name: 'definition on a control',
 			source:
 				'export const F = () => <Tooltip content="Sort by TVL" className="underline decoration-dotted" render={<button type="button" />}>TVL</Tooltip>',
+			violation: false
+		},
+		{
+			name: 'help icon built by hand',
+			source:
+				'export const F = () => <Tooltip content={hint}><Icon name="help-circle" className="size-4 text-tertiary" /></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'help tooltip inside a button',
+			source:
+				'export const F = () => <button type="button">Edit<Tooltip content={hint}><Icon name="help-circle" className="size-3" /></Tooltip></button>',
+			violation: true
+		},
+		{
+			name: 'button anchoring its definition',
+			source:
+				'export const F = () => <Tooltip content={hint} render={<button type="button" />}>Edit<Icon name="help-circle" className="size-3" aria-hidden /></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'help icon beside an option name',
+			source:
+				'export const F = () => <Tooltip content={hint}><span>Name</span><Icon name="help-circle" className="size-3.5" /></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'QuestionHelper inside a heading',
+			source: 'export const F = () => <h3>TVL <QuestionHelper text="Sum of value" /></h3>',
+			violation: true
+		},
+		{
+			name: 'QuestionHelper inside a checkbox label',
+			source:
+				'export const F = () => <Checkbox checked={on}><span>Primary chain only<QuestionHelper text={hint} /></span></Checkbox>',
+			violation: true
+		},
+		{
+			name: 'QuestionHelper beside a heading',
+			source: 'export const F = () => <div className="flex"><h3>TVL</h3><QuestionHelper text="Sum of value" /></div>',
+			violation: false
+		},
+		{
+			name: 'link inside a disclosure summary',
+			source:
+				'export const F = () => <details><summary><BasicLink href="/token/eth">ETH</BasicLink> 4%</summary>Body</details>',
+			violation: true
+		},
+		{
+			name: 'button inside a field label',
+			source:
+				'export const F = () => <label>Highlight<Textarea /><Button size="sm" onClick={save}>Save</Button></label>',
+			violation: true
+		},
+		{
+			name: 'consent checkbox linking its terms',
+			source:
+				'export const F = () => <Checkbox variant="consent" checked={ok}>I agree to the <BasicLink href="/terms">Terms</BasicLink></Checkbox>',
+			violation: false
+		},
+		{
+			name: 'button styled as a span inside an option',
+			source:
+				'export const F = () => <Ariakit.ComboboxItem value="a">Chart<Button as="span" size="sm">Customize</Button></Ariakit.ComboboxItem>',
+			violation: false
+		},
+		{
+			name: 'control rendered as its host',
+			source:
+				'export const F = () => <Ariakit.MenuButton store={menu} render={<Button size="md" />}>Export</Ariakit.MenuButton>',
 			violation: false
 		},
 		{

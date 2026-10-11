@@ -2,7 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { compile } from 'tailwindcss'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Button } from '../Button'
 import { Tooltip } from '../Tooltip'
@@ -71,6 +71,23 @@ test('leaves a tap on a link anchor to the link and still opens on focus', async
 	expect(tooltipText()).toBeUndefined()
 	await act(async () => link.focus())
 	await waitForUi(() => expect(tooltipText()).toBe('Open the DEX dashboard'))
+})
+
+test('reports a definition that takes focus inside another control', async () => {
+	const errors: Array<string> = []
+	// Replaces the test setup's console.error, which fails the test on this report.
+	const spy = vi.spyOn(console, 'error').mockImplementation((message: unknown) => void errors.push(String(message)))
+	await act(async () =>
+		root.render(
+			<button type="button">
+				<Tooltip content="Total value locked" tabIndex={0}>
+					TVL
+				</Tooltip>
+			</button>
+		)
+	)
+	spy.mockRestore()
+	expect(errors.filter((message) => message.startsWith('Nested tab stop:'))).toHaveLength(1)
 })
 
 /** Styles the rendered tree with the real Tailwind utilities its classes generate. */

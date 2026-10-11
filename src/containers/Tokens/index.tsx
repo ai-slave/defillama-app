@@ -486,12 +486,16 @@ function TokensSharedControls({
 				pushQueryUpdates={onChainQueryChange}
 			/>
 			{hasChainFilter ? (
-				<Checkbox variant="filter" checked={nativeOnly} onChange={(event) => onNativeOnlyChange(event.target.checked)}>
-					<span className="flex items-center gap-1">
+				<span className="flex items-center gap-1">
+					<Checkbox
+						variant="filter"
+						checked={nativeOnly}
+						onChange={(event) => onNativeOnlyChange(event.target.checked)}
+					>
 						Primary chain only
-						<QuestionHelper text="Only show tokens whose primary chain matches the selected chain filter." />
-					</span>
-				</Checkbox>
+					</Checkbox>
+					<QuestionHelper text="Only show tokens whose primary chain matches the selected chain filter." />
+				</span>
 			) : null}
 			<SelectWithCombobox
 				allValues={categorySelectOptions}

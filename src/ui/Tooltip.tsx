@@ -6,7 +6,8 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	content: string | null | React.ReactNode
 	'data-fullwidth'?: boolean
 	onClick?: (e: React.MouseEvent) => void
-	children: React.ReactNode
+	/** Optional only for a `render` anchor with no content of its own, such as an input. */
+	children?: React.ReactNode
 	className?: string
 	tabIndex?: number
 	placement?: Ariakit.TooltipProviderProps['placement']
@@ -14,7 +15,9 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	portal?: boolean
 }
 
-/* Tooltip — plain short text on hover, focus and tap, on the 6px tooltip surface. Structured or long content is a
+/* Tooltip — plain short text on hover, focus and tap, on the 6px tooltip surface. Ariakit links no description to the
+   anchor (no `aria-describedby`), so screen readers do not announce the text: what they must hear goes in the anchor's
+   name (`aria-label`, as QuestionHelper does) or in visible text. Structured or long content is a
    Hovercard (./Hovercard.tsx); content a reader acts on is a popover. Never put data in a native `title=`: it is
    unreachable on touch and unstyled. An icon-only control has an `aria-label` plus a Tooltip.
 
@@ -22,7 +25,9 @@ interface ITooltip extends Ariakit.TooltipOptions {
    is, or sits inside, a link, button or other control, where the tap keeps that control's action.
 
    A control is the anchor: pass it as `render` (`render={<Button … />}`), never as a child of the default span, so
-   the tap logic above sees it and `aria-describedby` lands on it (policy: check-focus-handoff).
+   the tap logic above sees it and keyboard focus on the control opens it (policy: check-focus-handoff). A definition of a
+   control anchors on the control the same way, never on a focusable part inside it; in development the anchor
+   reports one that takes focus inside another control (reportNestedTabStop), and tests fail on it.
 
    A definition on text (a label, a value, a heading) has a dotted underline, and its anchor takes `cursor-help` and
    `tabIndex={0}`: Ariakit never makes an anchor focusable, so without the tab stop a keyboard reader cannot open the
@@ -40,6 +45,19 @@ interface ITooltip extends Ariakit.TooltipOptions {
 /** Elements whose tap already does something, such as a link or button: a tap there keeps that action instead of opening the tooltip. */
 const TAP_ACTION_SELECTOR =
 	'a[href], button, summary, input, select, textarea, label, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]'
+
+/** Development check for an anchor that takes focus inside another control (a "?" in a toggle's label, a definition in
+    a sort button): it is a second tab stop within the control, and a tap reaches only one of the two. The policy
+    (check-focus-handoff) sees nesting written in one file; this sees nesting through props and child components.
+    Tests fail on it (vitest.setup.ts). A radio inside its own label is one control, not a nesting. */
+function reportNestedTabStop(anchor: HTMLElement | null) {
+	if (process.env.NODE_ENV === 'production' || !anchor || anchor.tabIndex < 0) return
+	const host = anchor.parentElement?.closest(TAP_ACTION_SELECTOR)
+	if (!host || (host instanceof HTMLLabelElement && host.control === anchor)) return
+	console.error(
+		`Nested tab stop: a Tooltip anchor <${anchor.tagName.toLowerCase()}> takes focus inside <${host.tagName.toLowerCase()}>. Anchor the tooltip on that control instead (src/ui/Tooltip.tsx).`
+	)
+}
 
 export function Tooltip({ content, children, placement = 'top-start', className, portal = true, ...props }: ITooltip) {
 	const store = Ariakit.useTooltipStore({ placement })
@@ -60,6 +78,7 @@ export function Tooltip({ content, children, placement = 'top-start', className,
 					store.toggle()
 				}}
 				onMouseLeave={store.hide}
+				ref={reportNestedTabStop}
 				{...props}
 			>
 				{children}

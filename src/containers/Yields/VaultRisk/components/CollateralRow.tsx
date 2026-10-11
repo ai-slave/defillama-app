@@ -356,12 +356,10 @@ export function CollateralRow({
 				<div className="flex items-center justify-between gap-2 sm:contents">
 					<span className="flex min-w-0 items-center gap-2">
 						<TokenLogo src={c.logoUrl} size={18} alt={c.symbol} />
-						<BasicLink href={`/token/${slug(c.symbol)}`} className="truncate label-md text-primary hover:underline">
-							{c.symbol}
-						</BasicLink>
-						<StatusBadge status={badge.status} tooltip={c.oracleMechanism ?? badge.story}>
-							{badge.label}
-						</StatusBadge>
+						{/* The summary holds no link or tooltip: each would be a tab stop inside the disclosure. The token
+						    link and the oracle mechanism sit in the expanded row. */}
+						<span className="truncate label-md text-primary">{c.symbol}</span>
+						<StatusBadge status={badge.status}>{badge.label}</StatusBadge>
 						{c.ptPricing ? <PtPricingChip pricing={c.ptPricing} /> : null}
 						{vendor ? <span className="hidden shrink-0 body-sm text-tertiary sm:inline">{vendor}</span> : null}
 					</span>
@@ -429,7 +427,12 @@ export function CollateralRow({
 
 			<div className="grid gap-x-8 gap-y-6 border-t border-subtle p-3 body-md sm:grid-cols-2 sm:p-4">
 				<div className="flex min-w-0 flex-col gap-4">
-					<h4 className={DETAIL_LABEL}>What it&apos;s made of</h4>
+					<div className="flex items-baseline justify-between gap-2">
+						<h4 className={DETAIL_LABEL}>What it&apos;s made of</h4>
+						<BasicLink href={`/token/${slug(c.symbol)}`} className="body-sm text-link hover:underline">
+							{c.symbol} token page
+						</BasicLink>
+					</div>
 
 					<div className="flex flex-col gap-2.5 text-secondary">
 						<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">

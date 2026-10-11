@@ -4,6 +4,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ViewTabs } from '~/components/ViewTabs'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { Checkbox } from '../Checkbox'
 import { SegmentedControl } from '../SegmentedControl'
 import { Tabs, TabPanel } from '../Tabs'
@@ -278,3 +279,41 @@ test('a checkbox toggles on click, never on Enter', async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
+
+test.each(['radio', 'tabs'] as const)(
+	'%s: an option definition opens when its control takes keyboard focus',
+	async (semantics) => {
+		const container = document.createElement('div')
+		document.body.append(container)
+		const root = createRoot(container)
+		const options = [
+			{ value: 'spot', label: 'Spot' },
+			{ value: 'perp', label: 'Perps', tooltip: 'Contracts with no expiry' }
+		] as const
+		await act(async () =>
+			root.render(
+				semantics === 'radio' ? (
+					<SegmentedControl
+						value="spot"
+						onValueChange={vi.fn()}
+						options={options}
+						label="Segment"
+						variant="default"
+						size="md"
+					/>
+				) : (
+					<Tabs value="spot" onValueChange={vi.fn()} values={['spot', 'perp']}>
+						<SegmentedControl semantics="tabs" options={options} label="Segment" variant="default" size="md" />
+					</Tabs>
+				)
+			)
+		)
+		const perps = container.querySelectorAll<HTMLElement>('input[type="radio"], [role="tab"]')[1]
+		await act(async () => perps.focus())
+		await waitForUi(() =>
+			expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Contracts with no expiry')
+		)
+		await act(async () => root.unmount())
+		container.remove()
+	}
+)

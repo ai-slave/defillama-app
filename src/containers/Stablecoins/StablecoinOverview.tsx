@@ -461,17 +461,17 @@ export function PeggedAssetInfo({
 						) : null}
 						{unreleased != null && unreleased > 0 ? (
 							<div className="flex flex-wrap items-center justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
-								<Checkbox
-									variant="inline"
-									checked={includeUnreleased}
-									onChange={onUnreleasedToggle}
-									value={UNRELEASED_QUERY_KEY}
-								>
-									<span className="flex items-center gap-1">
-										<span>{capitalizeFirstLetter(UNRELEASED_QUERY_KEY)}</span>
-										<QuestionHelper text="Use this option to choose whether to include coins that have been minted but have never been circulating." />
-									</span>
-								</Checkbox>
+								<span className="flex items-center gap-1">
+									<Checkbox
+										variant="inline"
+										checked={includeUnreleased}
+										onChange={onUnreleasedToggle}
+										value={UNRELEASED_QUERY_KEY}
+									>
+										{capitalizeFirstLetter(UNRELEASED_QUERY_KEY)}
+									</Checkbox>
+									<QuestionHelper text="Use this option to choose whether to include coins that have been minted but have never been circulating." />
+								</span>
 								<span className="mono-md">
 									{formatCompactNumber(unreleased, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 								</span>

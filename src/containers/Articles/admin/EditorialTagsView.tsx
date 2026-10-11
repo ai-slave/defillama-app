@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useId } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
@@ -249,6 +250,7 @@ export function ReportHighlightControls({
 }) {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
+	const highlightId = useId()
 	const { draft, saved, setDraft, conflict, loadSaved, acceptSaved } = useSavedDraft(
 		article,
 		article.id,
@@ -309,12 +311,16 @@ export function ReportHighlightControls({
 		<div className="grid gap-4 border-t border-medium pt-4">
 			{conflict ? <SavedChangedNotice noun="highlight" onLoadSaved={loadSaved} /> : null}
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-				<label className="grid gap-1.5">
+				{/* The label names only the field: the count describes it, and the buttons sit outside, so neither joins
+				    the textarea's name. */}
+				<div className="grid gap-1.5">
 					<span className="flex items-baseline justify-between gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
-						<span>Highlight text</span>
-						<span>{highlightText.length}/2000</span>
+						<label htmlFor={highlightId}>Highlight text</label>
+						<span id={`${highlightId}-count`}>{highlightText.length}/2000</span>
 					</span>
 					<Textarea
+						id={highlightId}
+						aria-describedby={`${highlightId}-count`}
 						value={highlightText}
 						onChange={(event) => setHighlightText(event.target.value.slice(0, 2000))}
 						placeholder="Custom text shown on the right side of the Report highlight block."
@@ -352,7 +358,7 @@ export function ReportHighlightControls({
 							</Button>
 						) : null}
 					</div>
-				</label>
+				</div>
 
 				<div className="grid content-start gap-1.5">
 					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Sponsor logo</span>
