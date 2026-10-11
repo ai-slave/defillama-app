@@ -1,4 +1,4 @@
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig, ChartType } from '../chartConfig'
@@ -49,7 +49,7 @@ export function SeriesChip({
 	}
 
 	return (
-		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row px-1.5 py-0.5">
+		<div data-row className="group flex items-center gap-1.5 rounded-md bg-hover-row px-1.5 py-0.5">
 			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
 			<span className="truncate mono-sm text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
@@ -95,12 +95,8 @@ export function SeriesChip({
 				render={
 					<button
 						type="button"
-						onClick={(event) => {
-							// The chip leaves with its button: the next chip's remove takes focus, else the previous one's.
-							const button = event.currentTarget
-							const next = neighbourRowControl(button.closest('[data-series-chip]')!, button)
-							keepFocus(onRemove, () => next)
-						}}
+						ref={focusNeighbourOnLeave()}
+						onClick={onRemove}
 						aria-label={`Remove ${name}`}
 						className="touch-target flex h-4 w-5 items-center justify-center rounded-sm text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-hover-row hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"
 					/>

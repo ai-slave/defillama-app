@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
@@ -40,15 +40,6 @@ export function ColumnManagementPanel({
 		{ title: 'Percentage share', columns: filteredColumns.filter((col) => col.id.endsWith('_share')) },
 		{ title: 'Standard metrics', columns: filteredColumns.filter((col) => !col.id.endsWith('_share')) }
 	].filter((group) => group.columns.length > 0)
-
-	// Hiding or adding a column moves its row to the other list; focus stays in the list the reader is working in.
-	const toggleFromRow = (event: React.MouseEvent<HTMLButtonElement>, row: Element, columnId: string) => {
-		const next = neighbourRowControl(row, event.currentTarget)
-		keepFocus(
-			() => toggleColumnVisibility(columnId),
-			() => next ?? searchRef.current
-		)
-	}
 
 	return (
 		<div className="mb-4 rounded-md border border-subtle bg-surface p-4">
@@ -95,6 +86,7 @@ export function ColumnManagementPanel({
 							return (
 								<div
 									key={columnId}
+									data-row
 									className="hover-wash flex items-center justify-between rounded-md border border-subtle bg-surface-elevated-1 p-2 transition-colors"
 								>
 									<div className="flex items-center gap-2">
@@ -148,9 +140,10 @@ export function ColumnManagementPanel({
 														variant="ghost"
 														size="sm"
 														square
-														onClick={(event) =>
-															toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnId)
-														}
+														// Hiding or adding a column moves its row to the other list; focus stays in the list
+														// the reader is working in.
+														ref={focusNeighbourOnLeave(() => searchRef.current)}
+														onClick={() => toggleColumnVisibility(columnId)}
 														aria-label={`Hide ${column.name}`}
 													/>
 												}
@@ -183,7 +176,9 @@ export function ColumnManagementPanel({
 												key={column.id}
 												variant="secondary"
 												size="md"
-												onClick={(event) => toggleFromRow(event, event.currentTarget, column.id)}
+												data-row
+												ref={focusNeighbourOnLeave(() => searchRef.current)}
+												onClick={() => toggleColumnVisibility(column.id)}
 												className="w-full justify-start"
 											>
 												<Icon name="plus" className="size-3.5" />

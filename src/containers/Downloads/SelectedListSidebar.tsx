@@ -1,5 +1,5 @@
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -56,15 +56,6 @@ export function SelectedListSidebar({
 	readyCount,
 	loadingCount
 }: SelectedListSidebarProps) {
-	// A removed row's × hands focus to the next row's ×, the one above, or the picker once the list closes: the
-	// modals show it only for two or more items, so the last row's × leaves with it.
-	const removeRow = (value: string, remove: HTMLElement) => {
-		const next = neighbourRowControl(remove.parentElement!, remove)
-		keepFocus(
-			() => onRemove(value),
-			() => (next?.isConnected ? next : pickerTrigger())
-		)
-	}
 	return (
 		<aside
 			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
@@ -96,6 +87,7 @@ export function SelectedListSidebar({
 					return (
 						<div
 							key={item.value}
+							data-row
 							className={`flex items-center gap-1.5 border-b border-subtle px-2.5 py-2 body-sm transition-colors ${
 								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
 							}`}
@@ -149,7 +141,10 @@ export function SelectedListSidebar({
 										variant="ghost"
 										size="sm"
 										square
-										onClick={(event) => removeRow(item.value, event.currentTarget)}
+										// The modals show the list only for two or more items, so the last row's × leaves with it and the
+										// picker takes focus.
+										ref={focusNeighbourOnLeave(pickerTrigger)}
+										onClick={() => onRemove(item.value)}
 										aria-label={`Remove ${item.label}`}
 									/>
 								}

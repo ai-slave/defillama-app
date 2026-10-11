@@ -9,7 +9,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -24,12 +24,11 @@ import {
 } from './entityChart'
 import { buildRwaPlatformEntityCsvDataset } from './metrics'
 
-// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip, else the previous one,
-// else the metrics button before the chips.
-const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
-	const next = neighbourRowControl(chip, chip)
-	return next?.querySelector<HTMLElement>('input') ?? next
-})
+// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
+// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
+const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
+	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
+)
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -110,10 +109,11 @@ export function RWAEntityChartPanel<K extends string>({
 							.map((metric) => (
 								<label
 									key={metric.key}
-									ref={focusNeighbourChipOnLeave}
+									data-row
 									className="relative flex cursor-pointer flex-nowrap items-center gap-1"
 								>
 									<input
+										ref={focusNeighbourChipOnLeave}
 										type="checkbox"
 										value={metric.key}
 										checked

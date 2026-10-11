@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { StatusDot } from '~/ui/StatusBadge'
@@ -103,7 +103,7 @@ function TableChip({
 	onRemove: () => void
 }) {
 	return (
-		<div className="group flex items-center">
+		<div data-row className="group flex items-center">
 			<Button variant="toggle" size="sm" data-active={open} aria-expanded={open} onClick={onToggle}>
 				<Icon
 					name="chevron-right"
@@ -132,10 +132,8 @@ function TableChip({
 	)
 }
 
-// The table drops once DuckDB does, after the press: the next chip's × takes focus, else the tables section.
-const focusNeighbourChipOnLeave = passFocusOnLeave(
-	(node) => neighbourRowControl(node.parentElement!, node) ?? node.closest<HTMLElement>('section')
-)
+// The table drops once DuckDB does, after the press. With no chip left, the tables section takes focus.
+const focusNeighbourChipOnLeave = focusNeighbourOnLeave((node) => node.closest<HTMLElement>('section'))
 
 function PendingChip({ table }: { table: PendingTable }) {
 	const { status } = table

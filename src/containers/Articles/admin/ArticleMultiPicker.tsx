@@ -6,7 +6,7 @@ import { listArticles, type ArticleListResponse } from '~/containers/Articles/ap
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
@@ -140,6 +140,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					{value.map((id) => (
 						<span
 							key={id}
+							data-row
 							className="inline-flex max-w-full items-center gap-0.5 rounded-md border border-medium bg-surface pl-2.5 body-sm text-primary"
 						>
 							<span className="truncate">{titles[id] ?? id}</span>
@@ -151,14 +152,8 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 										size="sm"
 										square
 										aria-label={`Remove ${titles[id] ?? 'article'}`}
-										onClick={(event) => {
-											// The chip takes its button with it: the next chip's takes focus, else the search field.
-											const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
-											keepFocus(
-												() => onChange(value.filter((entry) => entry !== id)),
-												() => next ?? inputRef.current
-											)
-										}}
+										ref={focusNeighbourOnLeave(() => inputRef.current)}
+										onClick={() => onChange(value.filter((entry) => entry !== id))}
 									/>
 								}
 							>

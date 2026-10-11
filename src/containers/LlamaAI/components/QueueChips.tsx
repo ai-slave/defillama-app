@@ -5,7 +5,7 @@ import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/us
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Textarea } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -164,8 +164,8 @@ export function QueueChips({
 		(item.kind === 'local' ? item.state !== 'failed' : item.state === 'pending' || item.state === 'firing')
 	let foldedCount = 0
 	for (let index = 0; index < rows.length; index++) if (isFolded(rows[index], index)) foldedCount++
-	// A row that leaves with focus (dismissed, sent) hands it to the next row, else the one before, else the composer.
-	const focusNeighbourOnLeave = passFocusOnLeave((row) => neighbourRowControl(row, row) ?? promptInputRef.current)
+	// A row leaves with focus once dismissed or sent; with no row left, the composer takes it.
+	const focusNeighbourRowOnLeave = focusNeighbourOnLeave(() => promptInputRef.current)
 
 	return (
 		<div className="flex flex-col gap-1.5">
@@ -229,7 +229,7 @@ export function QueueChips({
 						const adding = item.state === 'adding'
 						const failed = item.state === 'failed'
 						return (
-							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
+							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={ROW}>
 								{adding ? (
 									<span aria-label="Adding to queue" role="status" className="shrink-0 text-tertiary">
 										<LoadingSpinner size={14} />
@@ -290,7 +290,7 @@ export function QueueChips({
 					const message = status?.unsavedDraft ?? item.displayMessage ?? item.message
 					if (item.state === 'firing') {
 						return (
-							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
+							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={ROW}>
 								<span aria-label="Sending" role="status" className="shrink-0 text-tertiary">
 									<LoadingSpinner size={14} />
 								</span>
@@ -301,7 +301,7 @@ export function QueueChips({
 
 					if (item.state === 'editing') {
 						return (
-							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
+							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
 								{ownedEditId === item.id ? (
 									<QueueChipEditor
 										id={item.id}
@@ -341,7 +341,7 @@ export function QueueChips({
 					if (item.state === 'pending') {
 						const busy = status?.action !== null && status?.action !== undefined
 						return (
-							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
+							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={ROW}>
 								<Icon name="clock" className="size-3.5 shrink-0 text-tertiary" />
 								<div className="min-w-0 flex-1">
 									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
@@ -403,7 +403,7 @@ export function QueueChips({
 					const resetCopy = item.reason === 'quota_exceeded' ? formatResetIn(quotaResetTime, now) : null
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
-						<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
+						<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
 							<span className="flex h-lh shrink-0 items-center body-sm">
 								<Icon name="alert-triangle" className="size-3.5 text-error" />
 							</span>

@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useRef, useState } from 'react'
+import { type Ref, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
@@ -60,14 +60,6 @@ export function ArticlePageAssetPicker({
 	const addAsset = (hit: PageAssetSearchHit) => {
 		onChange([...value, { geckoId: hit.geckoId, symbol: hit.symbol, name: hit.name }])
 		setSearchValue('')
-	}
-	// The removed row's × hands focus to the next row's ×, the one above, or the search.
-	const removeAsset = (index: number, remove: HTMLElement) => {
-		const neighbour = neighbourRowControl(remove.closest('li')!, remove)
-		keepFocus(
-			() => onChange(value.filter((_, i) => i !== index)),
-			() => neighbour ?? searchRef.current
-		)
 	}
 	// The edge rows' moves are disabled, so the target always exists.
 	const moveAsset = (index: number, direction: -1 | 1) => {
@@ -144,6 +136,7 @@ export function ArticlePageAssetPicker({
 					{value.map((asset, index) => (
 						<li
 							key={asset.geckoId}
+							data-row
 							className="flex items-center gap-2 rounded-lg border border-subtle bg-page px-3 py-2"
 						>
 							<TokenLogo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={20} alt={asset.symbol} />
@@ -171,7 +164,8 @@ export function ArticlePageAssetPicker({
 									tip="Remove"
 									label={`Remove ${asset.symbol}`}
 									icon="x"
-									onClick={(event) => removeAsset(index, event.currentTarget)}
+									ref={focusNeighbourOnLeave(() => searchRef.current)}
+									onClick={() => onChange(value.filter((_, i) => i !== index))}
 								/>
 							</div>
 						</li>
@@ -189,13 +183,15 @@ function RowAction({
 	label,
 	icon,
 	disabled = false,
+	ref,
 	onClick
 }: {
 	tip: string
 	label: string
 	icon: 'chevron-up' | 'chevron-down' | 'x'
 	disabled?: boolean
-	onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
+	ref?: Ref<HTMLButtonElement>
+	onClick: () => void
 }) {
 	return (
 		<Tooltip
@@ -210,6 +206,7 @@ function RowAction({
 					disabled={disabled}
 					accessibleWhenDisabled
 					aria-label={label}
+					ref={ref}
 					onClick={onClick}
 				/>
 			}

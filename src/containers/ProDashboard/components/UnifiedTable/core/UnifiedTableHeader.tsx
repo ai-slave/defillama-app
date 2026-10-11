@@ -1,7 +1,7 @@
 import { type ReactNode, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { Tag } from '~/ui/Tag'
@@ -211,18 +211,12 @@ export function UnifiedTableHeader({
 									variant="filter"
 									size="sm"
 									data-active
-									onClick={(event) => {
-										// The next chip takes focus, else the previous one; after the last, the Filters button, else the card.
-										const removed = event.currentTarget
-										const next =
-											neighbourRowControl(removed, removed) ??
-											filtersButtonRef.current ??
-											removed.parentElement?.closest<HTMLElement>('[tabindex]')
-										keepFocus(
-											() => onFilterRemove?.(chip),
-											() => next
-										)
-									}}
+									data-row
+									// After the last chip, the Filters button, else the card.
+									ref={focusNeighbourOnLeave(
+										(node) => filtersButtonRef.current ?? node.parentElement?.closest<HTMLElement>('[tabindex]')
+									)}
+									onClick={() => onFilterRemove?.(chip)}
 									aria-label={`Remove filter: ${chip.label}`}
 								>
 									<span>

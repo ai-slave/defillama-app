@@ -22,7 +22,7 @@ import {
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -74,11 +74,11 @@ for (const category of chainChartCategoryOrder) {
 const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | undefined =>
 	isDefaultEnabled ? 'false' : undefined
 
-// A removed chip hands focus to the next chip, else the previous one, which for the first chip is Add Metrics.
-const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
-	const next = neighbourRowControl(chip, chip)
-	return next?.querySelector<HTMLElement>('input') ?? next
-})
+// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
+// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
+const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
+	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
+)
 
 interface ChainChartPanelProps {
 	charts: IChainOverviewData['charts']
@@ -223,9 +223,10 @@ export function ChainChartPanel({
 							<label
 								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
 								key={`add-or-remove-metric-${chainCharts[tchart]}`}
-								ref={focusNeighbourChipOnLeave}
+								data-row
 							>
 								<input
+									ref={focusNeighbourChipOnLeave}
 									type="checkbox"
 									value={tchart}
 									checked

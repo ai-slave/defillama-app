@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -142,6 +142,7 @@ export function TagsField({
 					{tags.map((tag) => (
 						<li
 							key={tag}
+							data-row
 							className="flex max-w-full items-center gap-0.5 rounded-md border border-medium pl-2 body-sm text-secondary"
 						>
 							<span className="min-w-0 wrap-anywhere">{tag}</span>
@@ -155,14 +156,8 @@ export function TagsField({
 										square
 										disabled={disabled}
 										aria-label={`Remove tag ${tag}`}
-										onClick={(event) => {
-											// The removed tag takes its button with it: the next tag's takes focus, else the field.
-											const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
-											keepFocus(
-												() => onChange(tags.filter((t) => t !== tag)),
-												() => next ?? inputRef.current
-											)
-										}}
+										ref={focusNeighbourOnLeave(() => inputRef.current)}
+										onClick={() => onChange(tags.filter((t) => t !== tag))}
 									/>
 								}
 							>

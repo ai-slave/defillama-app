@@ -5,7 +5,7 @@ import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -52,16 +52,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
-	const addPersonRef = useRef<HTMLButtonElement>(null)
-	// The removed row's × hands focus to the next row's ×, else the one above; with one person left, nothing more can
-	// go, so Add person takes it.
-	const removeItem = (idx: number, remove: HTMLElement) => {
-		const next = items.length > 2 ? neighbourRowControl(remove.closest('fieldset')!, remove) : addPersonRef.current
-		keepFocus(
-			() => setItems((prev) => prev.filter((_, i) => i !== idx)),
-			() => next
-		)
-	}
+	const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx))
 
 	const addItem = () => {
 		setItems((prev) => [...prev, { id: crypto.randomUUID(), item: makeEmptyPeoplePanelItem() }])
@@ -144,11 +135,11 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 								articleId={articleId}
 								submitted={submitted}
 								onChange={(patch) => updateItem(id, patch)}
-								onRemove={(remove) => removeItem(idx, remove)}
+								onRemove={() => removeItem(idx)}
 								onMove={(dir) => moveItem(idx, dir)}
 							/>
 						))}
-						<Button ref={addPersonRef} type="button" size="md" onClick={addItem} className="w-full">
+						<Button type="button" size="md" onClick={addItem} className="w-full">
 							<Icon name="plus" className="size-3.5" aria-hidden="true" />
 							Add person
 						</Button>
@@ -178,7 +169,7 @@ type RowProps = {
 	articleId: string | null
 	submitted: boolean
 	onChange: (patch: Partial<ArticlePeoplePanelItem>) => void
-	onRemove: (remove: HTMLElement) => void
+	onRemove: () => void
 	onMove: (direction: -1 | 1) => void
 }
 
@@ -216,7 +207,10 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 	}
 
 	return (
-		<fieldset className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:gap-4">
+		<fieldset
+			data-row
+			className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:gap-4"
+		>
 			{/* Every field has its visible label; the legend tells the rows apart for screen readers, as the move and
 			    remove buttons' names do. */}
 			<legend className="sr-only">Person {person}</legend>
@@ -339,6 +333,8 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 				>
 					<Icon name="arrow-down" className="size-4" aria-hidden="true" />
 				</Tooltip>
+				{/* The last person cannot go: once one is left, its disabled × gives way to Add person, the list's last
+				    child. */}
 				<Tooltip
 					content="Remove"
 					render={
@@ -349,7 +345,10 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 							square
 							accessibleWhenDisabled
 							disabled={total === 1}
-							onClick={(event) => onRemove(event.currentTarget)}
+							ref={focusNeighbourOnLeave(
+								(node) => node.closest('[data-row]')!.parentElement!.lastElementChild as HTMLElement
+							)}
+							onClick={onRemove}
 							aria-label={`Remove person ${person}`}
 						/>
 					}

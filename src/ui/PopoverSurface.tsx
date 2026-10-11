@@ -79,7 +79,7 @@ import { tw } from './tw'
    A PopoverSurface carries the dialogs' lost-focus net (catchLostFocus in
    ./focus.ts): a control removed or disabled inside it hands focus to the
    surface's first control, never to the page. The net is the floor; a row
-   that leaves still hands focus to its neighbour (neighbourRowControl).
+   that leaves still hands focus to its neighbour (focusNeighbourOnLeave).
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with

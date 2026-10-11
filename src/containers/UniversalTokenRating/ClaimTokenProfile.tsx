@@ -8,7 +8,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -182,14 +182,6 @@ function InlineTableSection({
 	const errorId = `${useId()}-error`
 	const error = errors ? firstSectionError(errors, section.id) : null
 	const addRef = useRef<HTMLButtonElement>(null)
-	// A deleted row's button hands focus to the next row's delete button, the one above, or Add more.
-	const deleteRow = (rowIndex: number, remove: HTMLElement) => {
-		const next = neighbourRowControl(remove.closest('tr')!, remove)
-		keepFocus(
-			() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex)),
-			() => next ?? addRef.current
-		)
-	}
 	return (
 		<div data-invalid={error ? '' : undefined} className="flex flex-col gap-3">
 			<h3 className="heading-xs">{section.title}</h3>
@@ -209,7 +201,7 @@ function InlineTableSection({
 						</thead>
 						<tbody>
 							{rows.map((row, rowIndex) => (
-								<tr key={row.id} className="border-b border-subtle last:border-b-0">
+								<tr key={row.id} data-row className="border-b border-subtle last:border-b-0">
 									{section.columns.map((column) => (
 										<td key={column.key} className="min-w-[160px] px-2 py-2">
 											<CellInput
@@ -253,7 +245,8 @@ function InlineTableSection({
 													size="md"
 													square
 													aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
-													onClick={(event) => deleteRow(rowIndex, event.currentTarget)}
+													ref={focusNeighbourOnLeave(() => addRef.current)}
+													onClick={() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex))}
 												/>
 											}
 										>
@@ -306,14 +299,6 @@ function AttachDocuments({
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const tileRef = useRef<HTMLButtonElement>(null)
-	// A removed file's × hands focus to the next file's ×, the one before it, or the attach tile.
-	const removeReceipt = (index: number, remove: HTMLElement) => {
-		const next = neighbourRowControl(remove.parentElement!, remove)
-		keepFocus(
-			() => onRemove(index),
-			() => next ?? tileRef.current
-		)
-	}
 	return (
 		<div className="flex flex-col gap-2">
 			{/* The tile keeps focus while the upload it started runs, and at the 10-file limit. */}
@@ -346,6 +331,7 @@ function AttachDocuments({
 					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
 						<span
 							key={key}
+							data-row
 							className="flex items-center gap-1 rounded-full border border-medium bg-surface-elevated-1 py-0.5 pr-1 pl-3 mono-sm"
 						>
 							{receipt.fileName}
@@ -357,7 +343,8 @@ function AttachDocuments({
 										size="sm"
 										square
 										aria-label={`Remove ${receipt.fileName}`}
-										onClick={(event) => removeReceipt(index, event.currentTarget)}
+										ref={focusNeighbourOnLeave(() => tileRef.current)}
+										onClick={() => onRemove(index)}
 									/>
 								}
 							>

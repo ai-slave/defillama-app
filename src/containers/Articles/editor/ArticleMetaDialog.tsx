@@ -7,7 +7,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -147,17 +147,10 @@ function MetaSheet({
 		commitGuestAuthors(next)
 	}
 	const addGuestRef = useRef<HTMLButtonElement>(null)
-	// The removed row's × hands focus to the next row's ×, the one above, or Add guest co-author.
-	const removeGuestAuthor = (index: number, remove: HTMLElement) => {
-		const neighbour = neighbourRowControl(remove.closest('li')!, remove)
-		keepFocus(
-			() => {
-				const next = guestRows.filter((_, i) => i !== index)
-				setGuestRows(next)
-				commitGuestAuthors(next)
-			},
-			() => neighbour ?? addGuestRef.current
-		)
+	const removeGuestAuthor = (index: number) => {
+		const next = guestRows.filter((_, i) => i !== index)
+		setGuestRows(next)
+		commitGuestAuthors(next)
 	}
 
 	// A request can outlive the sheet: the reader may leave the editor while it runs, and the store still reads
@@ -198,14 +191,6 @@ function MetaSheet({
 	const showListError = (message: string) => setAuthorError({ source: 'list', message })
 	const authorListRef = useRef<HTMLUListElement>(null)
 	const addInputRef = useRef<HTMLInputElement>(null)
-	// A removed co-author's row leaves once the list reloads. While its Remove still holds focus, focus moves on to
-	// the next co-author's Remove, the previous one's, or the add field.
-	const removeCollaborator = async (remove: HTMLButtonElement, pbUserId: string) => {
-		if (!(await runAuthorAction(handleRemoveCollaborator(pbUserId), showListError))) return
-		if (document.activeElement !== remove) return
-		const neighbour = neighbourRowControl(remove.closest('li')!, remove) ?? addInputRef.current
-		neighbour?.focus()
-	}
 	const publish = () => {
 		if (!scheduleMode) {
 			void runAction('publish', () => handlePublish(article.goLiveAt != null ? { goLiveAt: null } : {}))
@@ -680,6 +665,7 @@ function MetaSheet({
 							{authors.map((entry) => (
 								<li
 									key={entry.pbUserId}
+									data-row
 									className="flex flex-col gap-1 rounded-lg border border-subtle bg-page px-3 py-2"
 								>
 									<div className="flex min-w-0 items-center gap-2">
@@ -732,7 +718,8 @@ function MetaSheet({
 												aria-label={`Remove ${entry.profile.displayName}`}
 												pendingLabel="Removing…"
 												pending={collaboratorRemovingId === entry.pbUserId}
-												onClick={(event) => void removeCollaborator(event.currentTarget, entry.pbUserId)}
+												ref={focusNeighbourOnLeave(() => addInputRef.current)}
+												onClick={() => void runAuthorAction(handleRemoveCollaborator(entry.pbUserId), showListError)}
 											>
 												Remove
 											</Button>
@@ -793,6 +780,7 @@ function MetaSheet({
 								{guestRows.map((guest, index) => (
 									<li
 										key={guest.id}
+										data-row
 										className="flex flex-col gap-2 rounded-lg border border-subtle bg-page p-3"
 										aria-label={`Guest co-author ${index + 1}`}
 									>
@@ -814,7 +802,8 @@ function MetaSheet({
 														variant="ghost"
 														square
 														aria-label={`Remove guest co-author ${index + 1}`}
-														onClick={(event) => removeGuestAuthor(index, event.currentTarget)}
+														ref={focusNeighbourOnLeave(() => addGuestRef.current)}
+														onClick={() => removeGuestAuthor(index)}
 													/>
 												}
 											>

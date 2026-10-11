@@ -8,7 +8,7 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -226,6 +226,7 @@ export function SelectItemsStep() {
 							selectedLabels.map((item) => (
 								<div
 									key={item.value}
+									data-row
 									className="flex shrink-0 items-center gap-1.5 rounded-md border border-medium pl-1.5 body-sm text-primary"
 								>
 									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={16} />
@@ -239,13 +240,8 @@ export function SelectItemsStep() {
 												size="sm"
 												square
 												aria-label={`Remove ${item.label}`}
-												onClick={(event) => {
-													const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
-													keepFocus(
-														() => actions.toggleSelectedItem(item.value),
-														() => next ?? searchRef.current
-													)
-												}}
+												ref={focusNeighbourOnLeave(() => searchRef.current)}
+												onClick={() => actions.toggleSelectedItem(item.value)}
 											/>
 										}
 									>

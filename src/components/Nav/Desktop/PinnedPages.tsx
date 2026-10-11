@@ -69,9 +69,10 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 										onClick={(e) => {
 											e.preventDefault()
 											e.stopPropagation()
-											// The row leaves the list: its neighbour's link takes focus.
+											// The neighbour's × shows only on hover or focus, so focus cannot land on it:
+											// its link takes focus.
 											const row = e.currentTarget.parentElement!
-											const next = neighbourRowControl(row, row.querySelector('a')!)
+											const next = neighbourRowControl(row, row)?.querySelector('a')
 											keepFocus(
 												() => mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route)),
 												() => next

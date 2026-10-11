@@ -3,7 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -106,16 +106,9 @@ export function MultiSelectCombobox({
 								data-active
 								key={`mutliselectcombobox-selected-${value}`}
 								aria-label={`Remove ${labelsByValue.get(value) ?? value}`}
-								onClick={(event) => {
-									// The pill leaves: the next pill takes focus, else the search field.
-									const next =
-										neighbourRowControl(event.currentTarget, event.currentTarget) ??
-										anchorRef.current?.querySelector('input')
-									keepFocus(
-										() => setSelectedValues(selectedValues.filter((v) => v !== value)),
-										() => next
-									)
-								}}
+								data-row
+								ref={focusNeighbourOnLeave(() => anchorRef.current?.querySelector('input'))}
+								onClick={() => setSelectedValues(selectedValues.filter((v) => v !== value))}
 							>
 								<span>{labelsByValue.get(value) ?? value}</span>
 								<Icon name="x" className="size-3.5" />

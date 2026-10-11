@@ -9,7 +9,7 @@ import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
-import { neighbourRowControl, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -36,13 +36,10 @@ function filterSelectionKey(filters: Record<string, unknown>): string {
 	)
 }
 
-// Saved views re-render a task after a delete, so the delete button hands focus on as its row leaves: to the next
-// row's delete, else the previous one's, else the popover's name field (its heading only shows on phones, where this
-// popover never opens).
-const focusNeighbourOnLeave = passFocusOnLeave(
-	(node) =>
-		neighbourRowControl(node.closest('[data-saved-view]')!, node) ??
-		node.closest('[data-dialog]')!.querySelector<HTMLElement>('input')
+// Saved views re-render a task after a delete. With no view left, the popover's name field takes focus (its heading
+// only shows on phones, where this popover never opens).
+const focusNeighbourViewOnLeave = focusNeighbourOnLeave((node) =>
+	node.closest('[data-dialog]')!.querySelector<HTMLElement>('input')
 )
 
 // The "＋ Save view" pill: a single dashed-outline pill that opens ONE popover
@@ -98,7 +95,7 @@ export function SaveViewButton({
 						{savedFiltersEntries.map(([viewName]) => (
 							<div
 								key={viewName}
-								data-saved-view
+								data-row
 								className="flex items-center gap-2 rounded-md px-2 py-1.5 body-sm text-secondary hover:bg-hover-row"
 							>
 								<button
@@ -118,7 +115,7 @@ export function SaveViewButton({
 											size="sm"
 											square
 											aria-label={`Delete ${viewName}`}
-											ref={focusNeighbourOnLeave}
+											ref={focusNeighbourViewOnLeave}
 											onClick={() => deleteFilter(viewName)}
 										/>
 									}

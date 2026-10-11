@@ -6,7 +6,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
@@ -170,6 +170,7 @@ function Chip({
 		<button
 			ref={ref}
 			type="button"
+			data-row
 			onClick={onClick}
 			aria-pressed={remove ? undefined : selected}
 			aria-label={remove ? `Remove ${name}` : undefined}
@@ -531,9 +532,8 @@ export function TokenSearchDialog({
 										geckoId={optionByValue.get(value)?.[2]}
 										selected
 										remove
-										// The chip leaves once the page applies the removal. It hands focus to the next chip, else the
-										// previous one, else the search field.
-										ref={passFocusOnLeave((chip) => neighbourRowControl(chip, chip) ?? inputRef.current)}
+										// The chip leaves once the page applies the removal; with no chip left, the search field takes focus.
+										ref={focusNeighbourOnLeave(() => inputRef.current)}
 										onClick={() => toggle(value, true)}
 									/>
 								))}

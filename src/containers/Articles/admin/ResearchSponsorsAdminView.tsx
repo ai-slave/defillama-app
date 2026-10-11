@@ -23,7 +23,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -33,10 +33,6 @@ import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
 const SPONSORS_QUERY_KEY = ['research', 'admin', 'sponsors'] as const
-
-// An unlinked report's row leaves once the list reloads; its Unlink hands focus to the next row's, the one above, or
-// the page.
-const passUnlinkFocus = passFocusOnLeave((node) => neighbourRowControl(node.closest('li')!, node) ?? pageContent())
 
 function payloadFromEntity(entity: SponsorEntitySelection): ResearchSponsorPayload {
 	return {
@@ -179,7 +175,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			) : (
 				<ul className="divide-y divide-(--border-subtle) overflow-hidden rounded-lg border border-subtle">
 					{sponsor.reports.map((report) => (
-						<li key={report.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
+						<li key={report.id} data-row className="flex flex-wrap items-center justify-between gap-3 p-3">
 							<div className="grid min-w-0 flex-1 gap-1">
 								<Link
 									href={`/research/edit/${encodeURIComponent(report.id)}`}
@@ -207,7 +203,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								pendingLabel="Unlinking…"
 								pending={unlinkMutation.isPending && unlinkMutation.variables === report.id}
 								onClick={() => unlinkMutation.mutate(report.id)}
-								ref={passUnlinkFocus}
+								ref={focusNeighbourOnLeave(pageContent)}
 							>
 								<Icon name="x" className="size-3" /> Unlink
 							</Button>

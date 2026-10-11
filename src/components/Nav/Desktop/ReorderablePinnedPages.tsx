@@ -103,9 +103,10 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
-							// The row leaves the list: its neighbour's drag handle takes focus.
+							// The neighbour's × shows only on hover or focus, so focus cannot land on it:
+							// its drag handle takes focus.
 							const row = e.currentTarget.parentElement!
-							const next = neighbourRowControl(row, row.querySelector('button')!)
+							const next = neighbourRowControl(row, row)?.querySelector('button')
 							keepFocus(
 								() => mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route)),
 								() => next

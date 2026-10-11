@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -51,12 +51,8 @@ type ColumnButtonProps = {
 	columnKey: YieldColumnId
 	currentColumns: Record<string, boolean>
 	columnOrder: Array<string>
-	toggleFromRow: (
-		event: React.MouseEvent<HTMLButtonElement>,
-		row: Element,
-		columnKey: string,
-		isVisible: boolean
-	) => void
+	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
+	searchRef: React.RefObject<HTMLInputElement | null>
 } & (
 	| {
 			kind: 'active'
@@ -67,14 +63,14 @@ type ColumnButtonProps = {
 )
 
 function ColumnButton(props: ColumnButtonProps) {
-	const { columnKey, currentColumns, columnOrder, toggleFromRow } = props
+	const { columnKey, currentColumns, columnOrder, toggleColumnVisibility, searchRef } = props
 	const metadata = yieldsColumnMetadata[columnKey]
 	const isActive = currentColumns[columnKey]
 	const visibleColumns = columnOrder.filter((key) => currentColumns[key])
 	const index = visibleColumns.indexOf(columnKey)
 
 	return isActive ? (
-		<div className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2">
+		<div data-row className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2">
 			<div className="flex items-center gap-2">
 				<Icon name="check" className="size-3.5 text-success" />
 				<span className="body-sm text-primary">{metadata.name}</span>
@@ -127,9 +123,10 @@ function ColumnButton(props: ColumnButtonProps) {
 								variant="ghost"
 								size="sm"
 								square
-								onClick={(event) =>
-									toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnKey, false)
-								}
+								// Hiding or adding a column moves its row to the other list; focus stays in the list the
+								// reader is working in.
+								ref={focusNeighbourOnLeave(() => searchRef.current)}
+								onClick={() => toggleColumnVisibility(columnKey, false)}
 								aria-label={`Remove ${metadata.name}`}
 							/>
 						}
@@ -146,7 +143,9 @@ function ColumnButton(props: ColumnButtonProps) {
 				<Button
 					variant="secondary"
 					size="md"
-					onClick={(event) => toggleFromRow(event, event.currentTarget, columnKey, true)}
+					data-row
+					ref={focusNeighbourOnLeave(() => searchRef.current)}
+					onClick={() => toggleColumnVisibility(columnKey, true)}
 					className="w-full justify-start"
 				/>
 			}
@@ -184,20 +183,6 @@ export function YieldsColumnManagementPanel({
 	const searchRef = React.useRef<HTMLInputElement>(null)
 
 	if (!showColumnPanel) return null
-
-	// Hiding or adding a column moves its row to the other list; focus stays in the list the reader is working in.
-	const toggleFromRow = (
-		event: React.MouseEvent<HTMLButtonElement>,
-		row: Element,
-		columnKey: string,
-		isVisible: boolean
-	) => {
-		const next = neighbourRowControl(row, event.currentTarget)
-		keepFocus(
-			() => toggleColumnVisibility(columnKey, isVisible),
-			() => next ?? searchRef.current
-		)
-	}
 
 	const visibleCount = YIELDS_COLUMN_IDS.filter((key) => currentColumns[key]).length
 
@@ -252,7 +237,8 @@ export function YieldsColumnManagementPanel({
 									columnOrder={columnOrder}
 									moveColumnUp={moveColumnUp}
 									moveColumnDown={moveColumnDown}
-									toggleFromRow={toggleFromRow}
+									toggleColumnVisibility={toggleColumnVisibility}
+									searchRef={searchRef}
 								/>
 							))}
 					</div>
@@ -274,7 +260,8 @@ export function YieldsColumnManagementPanel({
 												columnKey={columnKey}
 												currentColumns={currentColumns}
 												columnOrder={columnOrder}
-												toggleFromRow={toggleFromRow}
+												toggleColumnVisibility={toggleColumnVisibility}
+												searchRef={searchRef}
 											/>
 										))}
 									</div>

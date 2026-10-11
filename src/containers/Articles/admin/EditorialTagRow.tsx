@@ -3,12 +3,7 @@ import type * as React from 'react'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
-
-// A removed row takes its Remove with it: the next row's Remove takes focus, else the section's article picker.
-const focusNeighbourOnLeave = passFocusOnLeave(
-	(node) => neighbourRowControl(node.closest('li')!, node) ?? node.closest('section')?.querySelector('input')
-)
+import { focusNeighbourOnLeave } from '~/ui/focus'
 
 type EditorialTagRowProps = {
 	article: ArticleDocument
@@ -38,7 +33,7 @@ export function EditorialTagRow({
 		: 'grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center'
 
 	return (
-		<li ref={ref} className={className ?? defaultClassName} {...rest}>
+		<li ref={ref} data-row className={className ?? defaultClassName} {...rest}>
 			{leading ? (
 				<div className="flex items-center gap-2 sm:col-start-1">
 					{leading}
@@ -54,7 +49,8 @@ export function EditorialTagRow({
 				<span className="truncate body-md text-primary">{article.title}</span>
 			</div>
 			<Button
-				ref={focusNeighbourOnLeave}
+				// The last row's Remove hands focus to the section's article picker.
+				ref={focusNeighbourOnLeave((node) => node.closest('section')?.querySelector('input'))}
 				variant="secondary"
 				size="sm"
 				onClick={onRemove}

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -39,6 +39,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				return (
 					<li
 						key={query.id}
+						data-row
 						// A tap focuses the row, which reveals its actions on screens that cannot hover.
 						tabIndex={-1}
 						className={`group/row flex items-center gap-1 border-b border-subtle last:border-b-0 ${
@@ -112,14 +113,8 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 										variant="ghostDestructive"
 										size="sm"
 										square
-										onClick={(event) => {
-											// The row leaves the list, so its neighbour's delete takes focus.
-											const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
-											keepFocus(
-												() => deleteDownload(query.id),
-												() => next
-											)
-										}}
+										ref={focusNeighbourOnLeave()}
+										onClick={() => deleteDownload(query.id)}
 										aria-label={`Delete ${query.name}`}
 										disabled={!!busyTaskId}
 										accessibleWhenDisabled

@@ -33,7 +33,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { focusNeighbourOnLeave, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { Skeleton } from '~/ui/Skeleton'
@@ -362,15 +362,11 @@ export const SettingsModal = memo(function SettingsModal({
 	// The last failed archive or restore, not the mutations' own errors: those clear as soon as a retry starts.
 	const [skillMoveError, setSkillMoveError] = useState<{ action: 'archive' | 'restore'; name: string } | null>(null)
 	const skillMutations = { archive: agentHome.archiveSkillMutation, restore: agentHome.restoreSkillMutation }
-	// An archived or restored skill leaves its list once the skills refetch, and its button hands focus on first.
-	// A retry from the error has no row button; its notice hands focus on as it leaves.
-	const moveSkill = (action: 'archive' | 'restore', name: string, button: HTMLButtonElement | null) => {
-		const next = button ? neighbourRowControl(button.closest('li')!, button) : null
+	// An archived or restored skill leaves its list once the skills refetch; its button's ref hands focus to the next
+	// row's. A retry from the error has no row button; its notice hands focus on as it leaves.
+	const moveSkill = (action: 'archive' | 'restore', name: string) => {
 		skillMutations[action].mutate(name, {
-			onSuccess: () => {
-				setSkillMoveError((current) => (current?.action === action ? null : current))
-				if (button && document.activeElement === button) next?.focus()
-			},
+			onSuccess: () => setSkillMoveError((current) => (current?.action === action ? null : current)),
 			onError: () => setSkillMoveError({ action, name })
 		})
 	}
@@ -923,7 +919,7 @@ export const SettingsModal = memo(function SettingsModal({
 																	skillMutations[skillMoveError.action].isPending &&
 																	skillMutations[skillMoveError.action].variables === skillMoveError.name
 																}
-																onClick={() => moveSkill(skillMoveError.action, skillMoveError.name, null)}
+																onClick={() => moveSkill(skillMoveError.action, skillMoveError.name)}
 															>
 																Try again
 															</Button>
@@ -945,7 +941,7 @@ export const SettingsModal = memo(function SettingsModal({
 														) : (
 															<ul>
 																{agentHome.skills.data!.active.map((skill, i) => (
-																	<li key={skill.name}>
+																	<li key={skill.name} data-row>
 																		{i > 0 ? <RowDivider /> : null}
 																		<div className="flex items-start justify-between gap-4 px-4 py-3.5">
 																			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -964,7 +960,8 @@ export const SettingsModal = memo(function SettingsModal({
 																					type="button"
 																					size="sm"
 																					variant="ghost"
-																					onClick={(event) => moveSkill('archive', skill.name, event.currentTarget)}
+																					ref={focusNeighbourOnLeave()}
+																					onClick={() => moveSkill('archive', skill.name)}
 																					// Focusable while another skill archives: the archived row hands focus to it.
 																					disabled={agentHome.archiveSkillMutation.isPending}
 																					accessibleWhenDisabled
@@ -992,13 +989,14 @@ export const SettingsModal = memo(function SettingsModal({
 														</summary>
 														<ul className="mt-2 space-y-2">
 															{agentHome.skills.data!.archived.map((skill) => (
-																<li key={skill.name} className="flex items-center justify-between gap-4">
+																<li key={skill.name} data-row className="flex items-center justify-between gap-4">
 																	<span className="min-w-0 flex-1 truncate text-secondary">{skill.name}</span>
 																	<Button
 																		type="button"
 																		size="sm"
 																		variant="ghost"
-																		onClick={(event) => moveSkill('restore', skill.name, event.currentTarget)}
+																		ref={focusNeighbourOnLeave()}
+																		onClick={() => moveSkill('restore', skill.name)}
 																		// Focusable while another skill restores: the restored row hands focus to it.
 																		disabled={agentHome.restoreSkillMutation.isPending}
 																		accessibleWhenDisabled

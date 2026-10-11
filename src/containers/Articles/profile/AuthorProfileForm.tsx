@@ -9,7 +9,7 @@ import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -460,6 +460,8 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						</div>
 						{state.customSocials.length === 0 ? (
 							<Button
+								// Replaces the last removed row, whose × had focus.
+								ref={takeLostFocus}
 								variant="secondary"
 								size="md"
 								onClick={(event) => {
@@ -471,7 +473,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 							</Button>
 						) : (
 							state.customSocials.map((entry, index) => (
-								<div key={entry.id} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-2">
+								<div key={entry.id} data-row className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-2">
 									<Input
 										type="text"
 										value={entry.key}
@@ -496,16 +498,8 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 												size="md"
 												square
 												aria-label={`Remove custom link ${entry.key || index + 1}`}
-												onClick={(event) => {
-													// The row leaves with its button: the next row's takes focus, else Add a custom link.
-													const row = event.currentTarget.parentElement!
-													const list = row.parentElement!
-													const next = neighbourRowControl(row, event.currentTarget)
-													keepFocus(
-														() => removeCustom(index),
-														() => next ?? (list.lastElementChild as HTMLElement)
-													)
-												}}
+												ref={focusNeighbourOnLeave()}
+												onClick={() => removeCustom(index)}
 											/>
 										}
 									>

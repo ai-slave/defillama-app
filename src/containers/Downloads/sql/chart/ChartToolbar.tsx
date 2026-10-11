@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverRowStyles } from '~/ui/Popover'
 import { PopoverSurface } from '~/ui/PopoverSurface'
@@ -259,14 +259,9 @@ function YSeriesPicker({
 											accessibleWhenDisabled
 											aria-label={`Add ${name}`}
 											key={name}
-											onClick={(event) => {
-												// The added column leaves this list: the next one takes focus, else the previous one.
-												const next = neighbourRowControl(event.currentTarget, event.currentTarget)
-												keepFocus(
-													() => onToggle(name),
-													() => next
-												)
-											}}
+											data-row
+											ref={focusNeighbourOnLeave()}
+											onClick={() => onToggle(name)}
 											className={popoverRowStyles}
 										>
 											<Icon name="plus" className="size-3.5 shrink-0 text-tertiary" />

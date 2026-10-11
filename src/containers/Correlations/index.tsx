@@ -13,7 +13,7 @@ import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -308,8 +308,9 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 									type="button"
 									key={coin.id}
 									onClick={() => removeCoin(coin.id)}
-									// The button leaves with its token; focus moves to the next token, else Add token.
-									ref={passFocusOnLeave((node) => neighbourRowControl(node, node))}
+									// Add token follows the last token, so it is that token's next row.
+									data-row
+									ref={focusNeighbourOnLeave()}
 									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-hover-row focus-visible:bg-hover-row"
 								>
 									<CoinImage src={coin.logo} />

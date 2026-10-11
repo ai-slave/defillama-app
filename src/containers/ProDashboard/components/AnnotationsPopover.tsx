@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
-import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
+import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
@@ -75,15 +75,6 @@ function AnnotationsPanel({
 		setSubmitted(false)
 	}
 
-	// The next row's delete takes focus, else the previous row's; after the last row, the date field that adds one.
-	const removeAnnotation = (id: string, button: HTMLElement) => {
-		const next = neighbourRowControl(button.closest('li')!, button) ?? dateInputRef.current
-		keepFocus(
-			() => setAnnotations(annotations.filter((annotation) => annotation.id !== id)),
-			() => next
-		)
-	}
-
 	return (
 		<div className="flex w-[340px] max-w-full flex-col">
 			<div className="flex items-center gap-2 border-b border-subtle py-2 pr-1 pl-3">
@@ -100,6 +91,7 @@ function AnnotationsPanel({
 					{annotations.map((annotation) => (
 						<li
 							key={annotation.id}
+							data-row
 							className="flex items-center gap-2 border-b border-subtle px-3 py-1.5 body-sm last-of-type:border-b-0"
 						>
 							<span className="shrink-0 mono-sm text-secondary">{annotation.date}</span>
@@ -113,7 +105,9 @@ function AnnotationsPanel({
 										square
 										variant="ghostDestructive"
 										aria-label={`Delete annotation ${annotation.label}`}
-										onClick={(event) => removeAnnotation(annotation.id, event.currentTarget)}
+										// After the last row, the date field that adds one.
+										ref={focusNeighbourOnLeave(() => dateInputRef.current)}
+										onClick={() => setAnnotations(annotations.filter((item) => item.id !== annotation.id))}
 									/>
 								}
 							>

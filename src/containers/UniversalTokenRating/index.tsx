@@ -5,7 +5,7 @@ import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -259,9 +259,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							size="sm"
 							data-active="true"
 							onClick={chip.onRemove}
-							// The chip leaves once the URL drops its filter. It hands focus to the next chip, else the previous
-							// one, else the Filter button.
-							ref={passFocusOnLeave((node) => neighbourRowControl(node, node) ?? filterButtonRef.current)}
+							// The chip leaves once the URL drops its filter; with no chip left, the Filter button takes focus.
+							data-row
+							ref={focusNeighbourOnLeave(() => filterButtonRef.current)}
 						>
 							<span className="sr-only">Remove </span>
 							{chip.label}

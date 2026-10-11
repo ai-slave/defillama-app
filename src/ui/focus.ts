@@ -108,6 +108,10 @@ export function catchLostFocus(dialog: HTMLElement | null) {
    - passFocusOnLeave(target): data removes the control later and nothing
      takes its place (a dismissed row, a notice a retry clears). Put it as the
      control's ref; when it leaves holding focus, `target` takes focus.
+   - focusNeighbourOnLeave(fallback): a row leaves its list, now (a ×) or
+     when data drops it later (an unlink that refetches). Put it as the
+     control's ref and mark each row `data-row`; focus moves to the neighbour
+     row's control.
 ---------------------------------------------------------------------------- */
 
 /** Where focus goes when `row` leaves its list: the control in the next row that sits where `control` sits in `row`,
@@ -162,6 +166,31 @@ export function pageContent() {
 export const focusRegionOnLeave = passFocusOnLeave((node) =>
 	node.closest('[data-dialog]') ? null : (node.parentElement?.closest<HTMLElement>('[tabindex]') ?? pageContent())
 )
+
+/** A ref callback for a control whose row leaves its list: a remove ×, an unpin, a chip that removes itself. The row
+    is the control's closest `[data-row]`, which may be the control itself. When it leaves holding focus, the control at
+    the same place in the next row takes focus, else the previous row's (neighbourRowControl), else `fallback` (the
+    list's search field or Add button). A neighbour that is gone or disabled once the change lands gives way to the
+    fallback. The removal may run now or when data drops the row later; either way the ref sees it, so the click
+    handler only removes. Inside a dialog without a nearer fallback, the dialog's net (catchLostFocus) catches the
+    last row. */
+export function focusNeighbourOnLeave(fallback?: (node: HTMLElement) => HTMLElement | null | undefined) {
+	return (node: HTMLElement | null) => {
+		if (!node) return
+		return () => {
+			if (!node.contains(document.activeElement)) return
+			// Both targets are read while the row is still on the page. The neighbour can leave or disable in the same commit
+			// (a list that hides below two rows, a last row that cannot go); the fallback takes over then. Without one, a
+			// disabled neighbour that stays focusable (`accessibleWhenDisabled`) still beats the page.
+			const neighbour = neighbourRowControl(node.closest('[data-row]')!, node)
+			const other = fallback?.(node) ?? null
+			queueMicrotask(() => {
+				const present = neighbour?.isConnected ? neighbour : null
+				takeLostFocus(present?.matches(':disabled, [aria-disabled="true"]') ? (other ?? present) : (present ?? other))
+			})
+		}
+	}
+}
 
 /** A ref callback for a control that data can remove while it has focus. When it leaves holding focus, `target` takes
     focus, unless content that mounted in the same commit already did (takeLostFocus). `target` runs while the control

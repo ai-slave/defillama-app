@@ -16,7 +16,7 @@ import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/L
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -39,11 +39,11 @@ import { useFetchProtocolChartData } from './useFetchProtocolChartData'
 
 const getQueryValueOnRemove = (isDefaultEnabled: boolean) => (isDefaultEnabled ? 'false' : undefined)
 
-// A removed chip hands focus to the next chip, else the previous one, which for the first chip is Add Metrics.
-const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
-	const next = neighbourRowControl(chip, chip)
-	return next?.querySelector<HTMLElement>('input') ?? next
-})
+// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
+// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
+const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
+	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
+)
 
 const ProtocolChart = lazy(() => import('./Chart'))
 
@@ -210,9 +210,10 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							<label
 								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
 								key={`add-or-remove-metric-${tchart}`}
-								ref={focusNeighbourChipOnLeave}
+								data-row
 							>
 								<input
+									ref={focusNeighbourChipOnLeave}
 									type="checkbox"
 									value={tchart}
 									checked
@@ -241,11 +242,9 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							</label>
 						))}
 						{shouldShowEnabledEventsChip ? (
-							<label
-								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
-								ref={focusNeighbourChipOnLeave}
-							>
+							<label className="relative flex cursor-pointer flex-nowrap items-center gap-1" data-row>
 								<input
+									ref={focusNeighbourChipOnLeave}
 									type="checkbox"
 									value="events"
 									checked

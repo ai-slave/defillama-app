@@ -27,7 +27,7 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -573,8 +573,9 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 								key={chart}
 								type="button"
 								aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
-								// The chip leaves with its series: focus moves to the next chip, else the previous one or Add Metrics.
-								ref={passFocusOnLeave((chip) => neighbourRowControl(chip, chip))}
+								// The Add Metrics button sits before the first chip, so it is that chip's previous row.
+								data-row
+								ref={focusNeighbourOnLeave()}
 								onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
 								className={metricChipStyles}
 								style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}
