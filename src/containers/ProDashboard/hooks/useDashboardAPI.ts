@@ -251,7 +251,8 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 		// Settings and page remounts must not let an older save overtake a newer save.
 		scope: { id: `pro-dashboard-update:${dashboardId}` },
 		mutationFn: async ({ id, data, changes }: DashboardUpdate): Promise<SavedDashboard> => {
-			if (wasDashboardDeleted(queryClient, id, user?.id)) throw new DashboardError('Dashboard has been deleted', 404)
+			if (wasDashboardDeleted(queryClient, id, user?.id))
+				throw new DashboardError('Dashboard has been deleted', 404, 'This dashboard was deleted.')
 			// The scope orders requests, but payloads must also preserve fields saved while waiting.
 			const latest = cachedDashboard(queryClient, id, isAuthenticated, user?.id)
 			const base = latest ? toDashboardSavePayload(latest) : undefined

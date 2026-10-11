@@ -407,14 +407,10 @@ function ClaimConfirmation() {
 	)
 }
 
-function uploadErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : "Couldn't upload supporting documents."
-}
-
 // Throws from outside the try's own body: the compiler cannot lower a ThrowStatement inside one.
 function assertReceiptsSigned(receipts: Array<{ signature?: string }>) {
 	if (receipts.some((receipt) => !receipt.signature)) {
-		throw new Error('A document receipt is missing its signature')
+		throw new Error("Couldn't upload supporting documents.")
 	}
 }
 
@@ -518,9 +514,9 @@ export function ClaimTokenProfile({
 			setDocuments((current) => ({ ...current, [key]: [...current[key], ...receipts] }))
 			setUploadStatuses((current) => ({ ...current, [key]: { state: 'idle' } }))
 		} catch (error) {
-			// Named out here, then read into a local: a conditional cannot be lowered inside a catch, and a
-			// caught binding referenced from the updater closure is not consistently local either.
-			const message = uploadErrorMessage(error)
+			// claimClient and assertReceiptsSigned word every failure for readers. Read into a local: a caught
+			// binding referenced from the updater closure is not consistently local.
+			const message: string = error.message
 			setUploadStatuses((current) => ({ ...current, [key]: { state: 'failed', error: message } }))
 		}
 	}

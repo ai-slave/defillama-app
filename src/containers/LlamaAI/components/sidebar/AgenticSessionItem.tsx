@@ -34,7 +34,6 @@ import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { ErrorLine, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { getErrorMessage } from '~/utils/error'
 
 interface AgenticSessionItemProps {
 	session: ChatSession
@@ -181,7 +180,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							)
 						)
 					}
-					throw new Error(`Couldn't change the pin: ${getErrorMessage(error)}`, { cause: error })
+					throw new Error("Couldn't change the pin. Try again.", { cause: error })
 				}
 			}),
 		onError: (error) => toast.error(error.message),
@@ -211,8 +210,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			await updateTitle.mutateAsync({ sessionId: session.sessionId, title, projectId: session.projectId })
 			closeRename()
 		} catch (error) {
-			setRenameError(getErrorMessage(error))
-			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
+			// useUpdateSessionTitle words every failure for readers.
+			setRenameError(error.message)
+			if (!formRef.current?.isConnected) toast.error(error.message)
 		}
 	}
 
@@ -458,6 +458,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					description="The shared link will no longer let other people view this conversation."
 					confirmLabel="Make private"
 					pendingLabel="Updating…"
+					errorMessage="Couldn't make the conversation private."
 					mutation={visibility}
 					variables={false}
 					onClose={() => setConfirmPrivate(false)}
@@ -467,6 +468,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			{confirmDelete ? (
 				<DeleteSessionDialog
 					title={`Delete “${session.title}”?`}
+					errorMessage="Couldn't delete this chat."
 					mutation={deletion}
 					variables={undefined}
 					onClose={() => setConfirmDelete(false)}

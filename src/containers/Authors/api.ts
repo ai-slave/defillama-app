@@ -1,4 +1,5 @@
 import { FEATURES_SERVER } from '~/constants'
+import { HttpError } from '~/utils/async'
 import type {
 	AuthorDashboardSort,
 	AuthorPageResponse,
@@ -10,27 +11,20 @@ import type {
 type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response | null>
 type FetchLike = (url: string, options?: RequestInit) => Promise<Response | null>
 
-export class AuthorApiError extends Error {
-	status: number
-
-	constructor(message: string, status: number) {
-		super(message)
+export class AuthorApiError extends HttpError {
+	constructor(message: string, status: number, reason: string | null) {
+		super(message, status, reason)
 		this.name = 'AuthorApiError'
-		this.status = status
-		Object.setPrototypeOf(this, AuthorApiError.prototype)
 	}
 }
 
 async function parseResponse<T>(response: Response | null): Promise<T> {
-	if (!response) throw new AuthorApiError('Sign in to continue.', 401)
+	if (!response) throw new AuthorApiError('Sign in to continue.', 401, 'Sign in to continue.')
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {
-		const message =
-			data && typeof data === 'object' && typeof data.error === 'string'
-				? data.error
-				: response.statusText || 'Author request failed'
-		throw new AuthorApiError(message, response.status)
+		const reason = data && typeof data === 'object' && typeof data.error === 'string' ? data.error : null
+		throw new AuthorApiError(reason ?? `Author request returned ${response.status}`, response.status, reason)
 	}
 	return data as T
 }

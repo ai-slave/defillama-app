@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useContext, useEffect } from 'react'
-import { uploadChatFile, type UploadedAttachment } from '~/containers/LlamaAI/api/uploadChatFile'
+import { uploadChatFile, UploadError, type UploadedAttachment } from '~/containers/LlamaAI/api/uploadChatFile'
 import type { UploadSelectionFeedback } from '~/containers/LlamaAI/components/UploadSelectionNotice'
 import { UploadTargetContext } from '~/containers/LlamaAI/components/UploadTarget'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
@@ -247,7 +247,7 @@ export function useImageUpload({ maxImages = 15, maxSizeBytes, uploadContext }: 
 				patchUpload(image.id, {
 					status: 'error',
 					progress: 0,
-					error: error instanceof Error ? error.message : 'Upload failed',
+					error: error instanceof UploadError ? error.message : "Couldn't upload the file.",
 					retryable: (error as { retryable?: unknown } | null)?.retryable !== false
 				})
 			}

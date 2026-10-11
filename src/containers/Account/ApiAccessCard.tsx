@@ -141,6 +141,7 @@ export function ApiAccessCard({
 					pendingLabel="Regenerating…"
 					mutation={generateNewKeyMutation}
 					variables={undefined}
+					errorMessage="Couldn't regenerate the API key."
 					onClose={() => setConfirmRegenerate(false)}
 				/>
 			) : null}

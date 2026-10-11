@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import { useMemo, useState } from 'react'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import {
 	addCollaborator,
@@ -77,10 +78,7 @@ export function useArticleCollaborators({
 	// The confirm dialog shows the failure; on success the authors list shows the new owner.
 	const transferOwnershipMutation = useMutation({
 		mutationKey: articleWriteKey(articleId),
-		mutationFn: (pbUserId: string) =>
-			transferOwnership(articleId!, { pbUserId }, authorizedFetch).catch((error: unknown) => {
-				throw new Error("Couldn't transfer ownership. Try again.", { cause: error })
-			}),
+		mutationFn: (pbUserId: string) => transferOwnership(articleId!, { pbUserId }, authorizedFetch),
 		onSuccess: async (updated) => {
 			void queryClient.invalidateQueries({ queryKey: collaboratorsQueryKey })
 			await cacheWrittenArticle(queryClient, updated)
@@ -106,7 +104,7 @@ export function useArticleCollaborators({
 			setCollaboratorEmail('')
 			return null
 		} catch (error) {
-			return error instanceof Error ? error.message : "Couldn't add the co-author."
+			return httpErrorMessage(error, "Couldn't add the co-author.")
 		}
 	}
 

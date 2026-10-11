@@ -34,6 +34,13 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    variable or destructured. Such an object's `query` property is the query, and its other fields count as the
  *    query's. useMutation results are outside this rule.
  * 7. next-error: next/error's `<Error statusCode=…>` under src/pages. Render EmptyState size="lg" for a not found.
+ * 8. error-copy: "Failed to …", "could not be …ed", "Something went wrong", "Oops", "Error: " or "Please" in client
+ *    copy, outside console calls (docs/focus-and-errors.md, "Error copy").
+ * 9. raw-error-message: `x instanceof Error ? x.message : …` or a `getErrorMessage(…)` call outside console calls in
+ *    client code. Both show any error's own message, so a browser "Failed to fetch" or a status text reaches the
+ *    screen. Use `httpErrorMessage(error, "Couldn't …")`, which keeps an API's 4xx reason, or narrow to the typed
+ *    error whose message is written for readers. A `.message` read from an inferred `Error` (a mutation's error) has
+ *    no shape to refuse here; the doc's rule covers it.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
  * matches fails, so the list never outlives the code it excuses.
@@ -51,6 +58,7 @@ type RuleId =
 	| 'retry-gating'
 	| 'hand-placed-retry'
 	| 'error-copy'
+	| 'raw-error-message'
 	| 'next-error'
 
 const MESSAGES: Record<RuleId, string> = {
@@ -67,6 +75,8 @@ const MESSAGES: Record<RuleId, string> = {
 		"places a read's Try again by hand inside a status; pass the query as `retry` and the part draws it (RetryButton)",
 	'error-copy':
 		'writes "Failed to", "could not be …ed", "Something went wrong", "Oops", "Error:" or "Please"; say "Couldn\'t <do what>." (docs/focus-and-errors.md, "Error copy")',
+	'raw-error-message':
+		'shows any error\'s own message ("Failed to fetch", a status text); use httpErrorMessage(error, "Couldn\'t …") or narrow to a typed error written for readers (docs/focus-and-errors.md, "Error copy")',
 	'next-error': 'renders next/error\'s Error page; render EmptyState size="lg" for a not found'
 }
 
@@ -115,6 +125,16 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 		'src/containers/Yields/VaultRisk/components/FreshnessFooter.tsx':
 			'a freshness line counting readings the last run could not refresh'
 	},
+	'raw-error-message': {
+		'src/utils/optionalPageData.ts': "a failed optional page read's log line, never shown",
+		'src/containers/Downloads/sql/executor.ts':
+			"DuckDB's error names the mistake in the reader's own SQL, and one read only matches it to retry",
+		'src/containers/ProtocolRankings/formula.service.ts':
+			"the formula parser's error names the mistake in the formula the reader typed",
+		'src/containers/LlamaAI/api/transport.ts': "a JSON parse failure's detail kept in the error body for logs",
+		'src/containers/RWA/queries.tsx': 'page-build loaders; the message goes to the build log',
+		'src/containers/Yields/VaultRisk/loader.ts': "a page-build loader's log line"
+	},
 	'next-error': {}
 }
 
@@ -125,6 +145,52 @@ const READ_STATUS_PARTS = new Set(['PanelStatus', 'SurfaceBodyStatus', 'ChartPan
 const ERROR_COPY =
 	/^\s*Failed to\b|\b[Pp]lease\b|\bcould not be \w+ed\b|\b[Ss]omething went wrong\b|\bOops\b|^\s*Error: /
 const CONSOLE_CALL = /^console\.\w+$/
+
+const COMPARISON = new Set([
+	ts.SyntaxKind.EqualsEqualsEqualsToken,
+	ts.SyntaxKind.ExclamationEqualsEqualsToken,
+	ts.SyntaxKind.EqualsEqualsToken,
+	ts.SyntaxKind.ExclamationEqualsToken
+])
+
+const MATCHING_METHODS = new Set(['includes', 'startsWith', 'endsWith', 'match', 'indexOf', 'search'])
+
+// Matching the text (`.message.includes(…)`, `=== 'code'`, `/re/.test(…)`) reads it without showing it;
+// `.message.trim()` still shows it.
+function matchesMessage(message: ts.Node): boolean {
+	return (
+		(ts.isPropertyAccessExpression(message.parent) && MATCHING_METHODS.has(message.parent.name.text)) ||
+		(ts.isBinaryExpression(message.parent) && COMPARISON.has(message.parent.operatorToken.kind)) ||
+		(ts.isCallExpression(message.parent) && message.parent.expression.getText().endsWith('.test'))
+	)
+}
+
+// `x instanceof Error ? …x.message… : …`, also inside an `&&` chain (`a && x instanceof Error ? x.message : …`).
+function showsAnyErrorMessage(node: ts.ConditionalExpression): boolean {
+	const subjects: Array<string> = []
+	const collect = (condition: ts.Expression) => {
+		const test = unwrap(condition)
+		if (ts.isBinaryExpression(test) && test.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+			collect(test.left)
+			collect(test.right)
+		} else if (
+			ts.isBinaryExpression(test) &&
+			test.operatorToken.kind === ts.SyntaxKind.InstanceOfKeyword &&
+			test.right.getText() === 'Error'
+		) {
+			subjects.push(test.left.getText())
+		}
+	}
+	collect(node.condition)
+	if (subjects.length === 0) return false
+	const showsMessage = (child: ts.Node): boolean =>
+		(ts.isPropertyAccessExpression(child) &&
+			child.name.text === 'message' &&
+			subjects.includes(child.expression.getText().replace(/[?!]/g, '')) &&
+			!matchesMessage(child)) ||
+		ts.forEachChild(child, showsMessage) === true
+	return showsMessage(node.whenTrue)
+}
 
 // Server routes, server loaders and build-time helpers write for logs and API consumers, not readers.
 function isServerSource(relative: string): boolean {
@@ -481,6 +547,7 @@ function isScanned(relative: string): boolean {
 	return !(
 		relative.startsWith('src/ui/') ||
 		relative.includes('/__tests__/') ||
+		relative.startsWith('src/utils/testing/') ||
 		/\.test\.tsx?$/.test(relative) ||
 		relative.startsWith('src/dev/')
 	)
@@ -503,6 +570,19 @@ export function scanSource(
 
 	const checkCopy = !isServerSource(relative)
 	let nextErrorName: string | null = null
+	let getErrorMessageName: string | null = null
+	for (const statement of sourceFile.statements) {
+		const bindings =
+			ts.isImportDeclaration(statement) &&
+			ts.isStringLiteral(statement.moduleSpecifier) &&
+			statement.moduleSpecifier.text === '~/utils/error'
+				? statement.importClause?.namedBindings
+				: undefined
+		if (!bindings || !ts.isNamedImports(bindings)) continue
+		for (const element of bindings.elements) {
+			if ((element.propertyName ?? element.name).text === 'getErrorMessage') getErrorMessageName = element.name.text
+		}
+	}
 	if (relative.startsWith('src/pages/')) {
 		for (const statement of sourceFile.statements) {
 			if (
@@ -605,6 +685,15 @@ export function scanSource(
 					? literalText(node)
 					: undefined
 			if (copy !== undefined && ERROR_COPY.test(copy) && !inConsoleCall(node)) report('error-copy', node)
+		}
+
+		if (
+			checkCopy &&
+			((ts.isConditionalExpression(node) && showsAnyErrorMessage(node)) ||
+				(ts.isCallExpression(node) && node.expression.getText() === getErrorMessageName)) &&
+			!inConsoleCall(node)
+		) {
+			report('raw-error-message', node)
 		}
 
 		if (
@@ -889,6 +978,63 @@ if (process.argv.includes('--self-test')) {
 			name: 'Failed to thrown',
 			source: "export function f() { throw new Error('Failed to load') }",
 			rule: 'error-copy'
+		},
+		{
+			name: 'any error message in a toast',
+			source: 'export const f = (error) => toast.error(error instanceof Error ? error.message : "Couldn\'t save.")',
+			rule: 'raw-error-message'
+		},
+		{
+			name: 'any error message behind a truthy check',
+			source:
+				"export const f = (error) => { throw new Error(error instanceof Error && error.message ? error.message : 'x') }",
+			rule: 'raw-error-message'
+		},
+		{
+			name: 'any error message in a template',
+			source: "export const m = (e) => (e instanceof Error ? `Couldn't render: ${e.message}` : String(e))",
+			rule: 'raw-error-message'
+		},
+		{
+			name: 'any error message after another test',
+			source: "export const m = (failed, error) => (failed && error instanceof Error ? error.message.trim() : 'x')",
+			rule: 'raw-error-message'
+		},
+		{
+			name: 'getErrorMessage into state',
+			source:
+				"import { getErrorMessage } from '~/utils/error'\nexport const f = (error) => setViewError(getErrorMessage(error))",
+			rule: 'raw-error-message'
+		},
+		{
+			name: 'typed error message',
+			source:
+				'export const f = (error) => toast.error(error instanceof UploadError ? error.message : "Couldn\'t upload.")',
+			rule: null
+		},
+		{
+			name: 'any error message in a console call',
+			source:
+				"import { getErrorMessage } from '~/utils/error'\nexport const f = (error) => console.error('save', error instanceof Error ? error.message : error, getErrorMessage(error))",
+			rule: null
+		},
+		{
+			name: 'any error message matched, not shown',
+			source:
+				"export const f = (error) => (error instanceof Error ? error.message.includes('[404]') || /x/.test(error.message) || error.message === 'gone' : false)",
+			rule: null
+		},
+		{
+			name: 'a local getErrorMessage that reads a response body',
+			source:
+				'const getErrorMessage = (body, fallback) => body.error ?? fallback\nexport const m = (body) => getErrorMessage(body, "x")',
+			rule: null
+		},
+		{
+			name: 'server message',
+			relative: 'src/containers/Foo/server/api.ts',
+			source: 'export const body = (error) => ({ error: error instanceof Error ? error.message : String(error) })',
+			rule: null
 		},
 		{
 			name: "Couldn't copy",

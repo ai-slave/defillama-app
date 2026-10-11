@@ -63,9 +63,7 @@ export const useCreateTopup = (isErrorShown: () => boolean) => {
 
 	return useMutation<TopupResult, Error, TopupRequest>({
 		mutationFn: async (topupData) => {
-			if (!isAuthenticated) {
-				throw new Error('Not authenticated')
-			}
+			if (!isAuthenticated) throw new Error("You're signed out. Sign in and try again.")
 
 			const response = await authorizedFetch(
 				`${AUTH_SERVER}/topup/create`,
@@ -77,24 +75,24 @@ export const useCreateTopup = (isErrorShown: () => boolean) => {
 					body: JSON.stringify(topupData)
 				},
 				true
-			)
-
-			if (!response) {
-				throw new Error('Not authenticated')
-			}
-
-			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(httpErrorMessage(error, "Couldn't create the top-up."))
+			).catch(() => {
+				throw new Error("Couldn't create the top-up.")
 			})
 
-			return normalizedResponse.json()
+			if (!response) throw new Error("You're signed out. Sign in and try again.")
+
+			return handleSimpleFetchResponse(response)
+				.then((res) => res.json())
+				.catch((error) => {
+					throw new Error(httpErrorMessage(error, "Couldn't create the top-up."))
+				})
 		},
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: [AI_BALANCE_QUERY_KEY] })
 		},
 		// Hook-level, so it still runs after the form unmounts. A payment write is never retried for the user.
 		onError: (error) => {
-			if (!isErrorShown()) toast.error(`Top-up failed: ${error.message}`)
+			if (!isErrorShown()) toast.error(error.message)
 		}
 	})
 }

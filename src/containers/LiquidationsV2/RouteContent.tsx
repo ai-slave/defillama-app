@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthContext } from '~/auth'
+import { httpErrorMessage } from '~/utils/async'
 import { LiquidationsAccessGate, LiquidationsShellError, LiquidationsShellLoader } from './AccessGate'
 import { fetchLiquidationsChainClient, fetchLiquidationsOverviewClient, fetchLiquidationsProtocolClient } from './api'
 import type { LiquidationsChainShell, LiquidationsOverviewShell, LiquidationsProtocolShell } from './api.types'
@@ -35,7 +36,7 @@ export function LiquidationsOverviewRouteContent({ shell }: { shell: Liquidation
 			<LiquidationsShellError
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink="Overview"
-				errorMessage={query.error.message}
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
 			/>
 		)
 	}
@@ -88,7 +89,7 @@ export function LiquidationsProtocolRouteContent({ shell }: { shell: Liquidation
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
 				activeChainLink="All Chains"
-				errorMessage={query.error.message}
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
 			/>
 		)
 	}
@@ -148,7 +149,7 @@ export function LiquidationsChainRouteContent({ shell }: { shell: LiquidationsCh
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
 				activeChainLink={shell.chainName}
-				errorMessage={query.error.message}
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
 			/>
 		)
 	}

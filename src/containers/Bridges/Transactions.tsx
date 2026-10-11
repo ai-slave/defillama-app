@@ -36,6 +36,7 @@ import { StatTile } from '~/ui/SummaryStats'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { httpErrorMessage } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -498,7 +499,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 
 	const { mutate, isPending } = useMutation({
 		mutationFn: fetchTransactions,
-		onError: (error) => setFetchFailure(error.message),
+		onError: (error) => setFetchFailure(httpErrorMessage(error, "Couldn't load bridge transactions.")),
 		onSuccess: (data, variables) => {
 			setFetchFailure(null)
 			setTransactionResult(data)

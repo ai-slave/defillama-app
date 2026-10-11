@@ -7,7 +7,6 @@ import { BasicLink } from '~/components/Link'
 import { SavedChangedNotice, sameValue, useSavedDraft, type SameField } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
-	ArticleApiError,
 	listArticles,
 	publishArticle,
 	updateArticleReportFields,
@@ -22,6 +21,7 @@ import { Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 function articleEditHref(article: ArticleDocument): string {
@@ -85,7 +85,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			toast.success(isPublished ? 'Saved — publish to push live' : 'Saved')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't save.")
+			toast.error(httpErrorMessage(err, "Couldn't save."))
 		}
 	})
 
@@ -103,7 +103,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			toast.success('Published')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't publish.")
+			toast.error(httpErrorMessage(err, "Couldn't publish."))
 		}
 	})
 
@@ -262,7 +262,7 @@ export function ReportsAdminView() {
 		const { error } = reportsQuery
 		return (
 			<PanelStatus variant="error" retry={reportsQuery} className="mx-auto w-full max-w-5xl">
-				Couldn&apos;t load reports.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load reports.")}
 			</PanelStatus>
 		)
 	}

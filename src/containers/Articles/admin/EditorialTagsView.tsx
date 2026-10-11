@@ -8,7 +8,6 @@ import { ReorderableEditorialTagList } from '~/containers/Articles/admin/Reorder
 import { SavedChangedNotice, sameValue, useSavedDraft, type SameField } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
-	ArticleApiError,
 	listArticlesByTag,
 	reorderEditorialTag,
 	setEditorialTag,
@@ -30,6 +29,7 @@ import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export function EditorialTagsView() {
@@ -86,7 +86,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			toast.success(`Added to ${definition.label}`)
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't update ${definition.label}.`)
+			toast.error(httpErrorMessage(err, `Couldn't update ${definition.label}.`))
 		}
 	})
 
@@ -97,7 +97,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			toast.success(`Removed from ${definition.label}`)
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't update ${definition.label}.`)
+			toast.error(httpErrorMessage(err, `Couldn't update ${definition.label}.`))
 		}
 	})
 
@@ -125,7 +125,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			if (context?.previous) {
 				queryClient.setQueryData(editorialTagQueryKey, context.previous)
 			}
-			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't reorder ${definition.label}.`)
+			toast.error(httpErrorMessage(err, `Couldn't reorder ${definition.label}.`))
 		}
 	})
 
@@ -182,7 +182,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			) : null}
 			{failed ? (
 				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-					{error instanceof ArticleApiError ? error.message : `Couldn't load ${definition.label}.`}
+					{httpErrorMessage(error, `Couldn't load ${definition.label}.`)}
 				</InlineStatus>
 			) : isLoading ? (
 				<SurfaceBodyLoadingStatus label="Loading articles" className="min-h-32" />
@@ -283,7 +283,7 @@ export function ReportHighlightControls({
 			toast.success('Highlight text saved')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't save the highlight text.")
+			toast.error(httpErrorMessage(err, "Couldn't save the highlight text."))
 		}
 	})
 
@@ -301,7 +301,7 @@ export function ReportHighlightControls({
 		// left alone. Highlight text is untouched either way.
 		onError: (err, submittedLogo) => {
 			setDraft((prev) => (prev.sponsorLogo === submittedLogo ? { ...prev, sponsorLogo: saved.sponsorLogo } : prev))
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the sponsor logo.")
+			toast.error(httpErrorMessage(err, "Couldn't update the sponsor logo."))
 		}
 	})
 

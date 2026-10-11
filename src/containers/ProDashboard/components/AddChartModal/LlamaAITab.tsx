@@ -186,6 +186,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 					description="The chart is deleted from LlamaAI. Dashboards that use it show an error instead."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the chart."
 					mutation={deleteMutation}
 					variables={deleteTarget.id}
 					finalFocus={returnFocus}

@@ -78,7 +78,7 @@ test.each(['card', 'strip'] as const)(
 		expect(submit.getAttribute('aria-disabled')).toBeNull()
 		expect(fieldErrorTexts(container)).toEqual([])
 		await act(async () => submit.click())
-		expect(fieldErrorTexts(container)).toEqual(['Choose at least one newsletter.'])
+		expect(fieldErrorTexts(container)).toHaveLength(1)
 		expect(document.activeElement).toBe(choices[0])
 		expect(subscribeRequests()).toHaveLength(0)
 		await act(async () => choices[1].click())

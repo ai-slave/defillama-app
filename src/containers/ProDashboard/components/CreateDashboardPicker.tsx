@@ -25,6 +25,7 @@ import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
@@ -87,8 +88,9 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	const creation = useMutation({
 		mutationFn: (data: CreateDashboardData) => onCreate(data),
 		onError: (error) => {
-			if (dialogRef.current?.isConnected) setCreationError(error.message)
-			else toast.error(error.message)
+			const message = httpErrorMessage(error, "Couldn't create the dashboard.")
+			if (dialogRef.current?.isConnected) setCreationError(message)
+			else toast.error(message)
 		}
 	})
 	const submitCreation = (data: CreateDashboardData) => {

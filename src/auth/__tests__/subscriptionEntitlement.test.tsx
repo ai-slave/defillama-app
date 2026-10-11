@@ -14,6 +14,7 @@ import { Account } from '~/components/Nav/Account'
 import { PremiumFeatureGate } from '~/containers/ProDashboard/components/PremiumFeatureGate'
 import { useVerifiedAccess, type VerifiedAccessStatus } from '~/containers/Yields/useVerifiedAccess'
 import pb from '~/utils/pocketbase'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({
@@ -299,7 +300,8 @@ test('keeps cached access visible and warns when background revalidation fails',
 
 	await passRetries()
 	expect(document.body.textContent).toContain('Active Subscription')
-	expect(document.body.textContent).toContain('Subscription unavailableTry again')
+	expect(alertTexts(document.body)).toHaveLength(1)
+	expect(document.body.textContent).toContain('Try again')
 	expect(document.body.textContent).not.toContain('Upgrade to Pro')
 	expect(sessionView.loaders.userLoading).toBe(false)
 })

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { httpErrorMessage } from '~/utils/async'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
@@ -46,7 +47,7 @@ export function useDashboardEngagement(dashboardId: string | null) {
 			toast.success(data.liked ? 'Dashboard starred' : 'Star removed')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : "Couldn't update the star.")
+			toast.error(httpErrorMessage(error, "Couldn't update the star."))
 		}
 	})
 

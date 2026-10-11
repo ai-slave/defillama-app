@@ -111,7 +111,7 @@ export function useChatExecutionOwner({
 								onTemporaryDisconnect(error, buffer)
 								return 'temporary-disconnect'
 							}
-							dispatch({ type: 'SET_ERROR', value: error.message })
+							dispatch({ type: 'SET_ERROR', value: "Couldn't check for a running answer." })
 							return 'failed'
 						}
 					}

@@ -12,6 +12,7 @@ import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
+import { DashboardError } from '../../services/DashboardAPI'
 import { CreateDashboardPicker } from '../CreateDashboardPicker'
 const navigation = vi.hoisted(() => ({ push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => navigation }))
@@ -148,17 +149,19 @@ describe('a subscriber', () => {
 			description: ''
 		})
 		await act(async () => {
-			reject(new Error('Unavailable'))
+			reject(new TypeError('Failed to fetch'))
 			await new Promise((done) => setTimeout(done, 0))
 		})
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
-		expect(document.querySelector('[role="alert"]')!.textContent).toBe('UnavailableYour choices are still here.')
+		const failure = document.querySelector('[role="alert"]')!.textContent!
+		expect(failure).toContain('Your choices are still here.')
+		expect(failure).not.toContain('Failed to fetch')
 		expect(name.value).toBe('Keep my draft')
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
 		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
 		// The retry runs under the error it answers.
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe('UnavailableYour choices are still here.')
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe(failure)
 		await act(async () => resolve({ id: 'created', slug: 'new-dashboard' }))
 		await waitFor(() => expect(store.getState().open).toBe(false))
 		expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard/edit')
@@ -363,11 +366,7 @@ describe('a subscriber', () => {
 					: new Response('Unavailable', { status: 503 })
 		})
 		await mount('Comparison', { toPreview: false })
-		await waitFor(() =>
-			expect(document.querySelector('[role="alert"]')?.textContent).toContain(
-				'Could not check which metrics the selected chains have.'
-			)
-		)
+		await waitFor(() => expect(alertTexts()).toHaveLength(1))
 		available = true
 		await click('Try again')
 		await waitFor(() => expect(document.body.textContent).toContain('1 metric available'))
@@ -433,7 +432,7 @@ describe('a free account', () => {
 	test('at the free dashboard limit a refusal says why and offers the upgrade instead of a retry', async () => {
 		session.serve({ [`${FEATURES_SERVER}/lite/dashboards`]: { items: [{ id: 'first', name: 'First dashboard' }] } })
 		const limit = 'You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.'
-		create.mockRejectedValueOnce(new Error(limit))
+		create.mockRejectedValueOnce(new DashboardError('Free tier dashboard limit', 403, limit))
 		await mount()
 		// The limit comes from the account's dashboard list, which loads alongside the picker.
 		await waitFor(() => expect(localStorage.getItem('lite-dashboards')).toContain('first'))

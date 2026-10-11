@@ -11,6 +11,7 @@ import type { Banner } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 
 function EditBannerInner({ id }: { id: string }) {
@@ -28,7 +29,7 @@ function EditBannerInner({ id }: { id: string }) {
 	if (queryReadFailed(bannerQuery) && !notFound) {
 		return (
 			<PanelStatus variant="error" retry={bannerQuery} className="mx-auto w-full max-w-4xl">
-				Couldn&apos;t load this banner.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load this banner.")}
 			</PanelStatus>
 		)
 	}

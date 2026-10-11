@@ -134,10 +134,7 @@ export function useDeleteProject() {
 	const { authorizedFetch } = useAuthContext()
 	const qc = useQueryClient()
 	return useMutation({
-		mutationFn: (id: string) =>
-			deleteProject(authorizedFetch, id).catch((error: unknown) => {
-				throw new Error("Couldn't delete this project. Try again.", { cause: error })
-			}),
+		mutationFn: (id: string) => deleteProject(authorizedFetch, id),
 		onSuccess: () => {
 			void qc.invalidateQueries({ queryKey: PROJECTS_KEY })
 		}
@@ -202,8 +199,8 @@ export function useMoveSessionToProject() {
 		},
 		// The menu that triggered this unmounts as it closes, so the feedback cannot ride on the mutate
 		// call the way a dialog-scoped effect would.
-		onError: (error) => {
-			toast.error(error instanceof Error ? error.message : "Couldn't move the chat.")
+		onError: () => {
+			toast.error("Couldn't move the chat. Try again.")
 		}
 	})
 }

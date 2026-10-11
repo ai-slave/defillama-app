@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
 import { buildEmbedIframeSnippet, dashboardEmbedPath, EMBED_ORIGIN } from './EmbedSnippetDialog'
 
@@ -95,7 +96,7 @@ export function CopyDashboardLinkButton({
 			})
 		} catch (error) {
 			pendingCopyLinkFocusRef.current = false
-			toast.error(error instanceof Error ? error.message : 'Could not make this dashboard public')
+			toast.error(httpErrorMessage(error, "Couldn't make this dashboard public. Try again."))
 		}
 		setMakingPublic(false)
 	}

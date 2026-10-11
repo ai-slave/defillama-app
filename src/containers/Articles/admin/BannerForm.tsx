@@ -22,7 +22,7 @@ import {
 } from '~/containers/Articles/admin/bannerFormState'
 import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
-import { ArticleApiError, createBanner, deleteBanner, updateBanner } from '~/containers/Articles/api'
+import { createBanner, deleteBanner, updateBanner } from '~/containers/Articles/api'
 import {
 	BANNER_COUNTRY_GROUPS,
 	BANNER_COUNTRY_OPTIONS,
@@ -48,6 +48,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { httpErrorMessage } from '~/utils/async'
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
 	if (state.kind === 'image-square') {
@@ -115,7 +116,7 @@ export function BannerForm({ banner }: Props) {
 			toast.success(banner ? 'Banner saved' : 'Banner created')
 		},
 		onError: (error) => {
-			toast.error(error instanceof ArticleApiError ? error.message : "Couldn't save.")
+			toast.error(httpErrorMessage(error, "Couldn't save."))
 		}
 	})
 
@@ -745,6 +746,7 @@ export function BannerForm({ banner }: Props) {
 					pendingLabel="Deleting…"
 					mutation={deleteMutation}
 					variables={banner.id}
+					errorMessage="Couldn't delete the banner."
 					onClose={() => setConfirmDelete(false)}
 					onSuccess={() => {
 						void router.push('/research/admin/banners')

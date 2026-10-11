@@ -124,7 +124,7 @@ describe('ProjectInstructionsEditor', () => {
 		expect(status()).toBe('Unsaved')
 		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
 		await waitForUi(() => expect(status()).toBe('Not saved'), { timeout: 1000 })
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Network unavailable')
+		expect(container.querySelector('[role="alert"]')?.textContent).not.toContain('Network unavailable')
 		expect(textarea.getAttribute('aria-invalid')).toBe('true')
 
 		await act(async () => type(textarea, 'Retry this newer draft'))

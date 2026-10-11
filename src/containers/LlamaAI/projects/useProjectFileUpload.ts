@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { LlamaAITransportError } from '../api/transport'
 import type { UploadSelectionFeedback } from '../components/UploadSelectionNotice'
 import { useUploadProjectFiles } from './hooks'
 import type { ImportResult } from './types'
@@ -113,8 +114,14 @@ export function getProjectUploadFeedback(
 			skipped: [...clientSkipped, ...outcome.result.skipped.map(({ path, reason }) => ({ filename: path, reason }))]
 		}
 	}
-	const reason =
-		outcome.error instanceof Error ? outcome.error.message : 'Upload failed. Select the file again to retry.'
+	// The project route's 4xx JSON `error` is written for readers ("Project storage quota exceeded"). A 5xx, a proxy's
+	// text page and the 401 `unauthenticated` code are not.
+	const { error } = outcome
+	const refusal =
+		error instanceof LlamaAITransportError && error.status < 500 && error.status !== 401
+			? (error.body as { error?: unknown } | null)?.error
+			: null
+	const reason = typeof refusal === 'string' ? refusal : "Couldn't upload the file. Select it again to retry."
 	return {
 		added: 0,
 		skipped: [...clientSkipped, ...sent.map((file) => ({ filename: getProjectFileName(file), reason }))]

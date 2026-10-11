@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
-import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/containers/Articles/api'
+import { deleteBanner, listBanners, updateBanner } from '~/containers/Articles/api'
 import { bannerAudienceLabel } from '~/containers/Articles/bannerCountryGroups'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
@@ -14,6 +14,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export function BannersListView() {
@@ -42,7 +43,7 @@ export function BannersListView() {
 			revalidateLanding()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update.")
+			toast.error(httpErrorMessage(err, "Couldn't update."))
 		}
 	})
 
@@ -59,7 +60,7 @@ export function BannersListView() {
 		const { error } = bannersQuery
 		return (
 			<PanelStatus variant="error" retry={bannersQuery} className="mx-auto w-full max-w-5xl">
-				Couldn&apos;t load banners.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load banners.")}
 			</PanelStatus>
 		)
 	}
@@ -100,6 +101,7 @@ export function BannersListView() {
 					pendingLabel="Deleting…"
 					mutation={deleteBannerMutation}
 					variables={deleteTarget.banner.id}
+					errorMessage="Couldn't delete the banner."
 					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {

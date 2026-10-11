@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Link from 'next/link'
 import { BasicLink } from '~/components/Link'
-import { ArticleApiError, listArticlesByTopic } from '~/containers/Articles/api'
+import { listArticlesByTopic } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { GenericCard } from '~/containers/Articles/landing/GenericCard'
@@ -10,6 +10,7 @@ import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { safeDecodeURIComponent } from '~/utils/route'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -97,7 +98,7 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 		const { error } = topicQuery
 		return (
 			<PanelStatus variant="error" retry={topicQuery} className="mx-auto w-full max-w-[1180px]">
-				Couldn&apos;t load this topic.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load this topic.")}
 			</PanelStatus>
 		)
 	}

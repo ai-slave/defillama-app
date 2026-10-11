@@ -18,7 +18,6 @@ import { BasicLink } from '~/components/Link'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
-	ArticleApiError,
 	deleteSocialMention,
 	deleteTrustedLogo,
 	listSocialMentions,
@@ -38,6 +37,7 @@ import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
@@ -95,7 +95,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't reorder logos.")
+			toast.error(httpErrorMessage(err, "Couldn't reorder logos."))
 		}
 	})
 
@@ -107,7 +107,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the logo.")
+			toast.error(httpErrorMessage(err, "Couldn't update the logo."))
 		}
 	})
 
@@ -126,7 +126,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't reorder mentions.")
+			toast.error(httpErrorMessage(err, "Couldn't reorder mentions."))
 		}
 	})
 
@@ -138,7 +138,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the mention.")
+			toast.error(httpErrorMessage(err, "Couldn't update the mention."))
 		}
 	})
 
@@ -200,6 +200,7 @@ export function TrustedByAdminView() {
 					pendingLabel="Deleting…"
 					mutation={deleteTarget.kind === 'logo' ? deleteLogoMutation : deleteMentionMutation}
 					variables={deleteTarget.id}
+					errorMessage={`Couldn't delete the ${deleteTarget.kind}.`}
 					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {
@@ -243,8 +244,7 @@ export function TrustedByAdminView() {
 				) : null}
 				{queryReadFailed(logosQuery) ? (
 					<PanelStatus variant="error" retry={logosQuery} className="min-h-32">
-						Couldn&apos;t load logos.
-						{logosQuery.error instanceof ArticleApiError ? ` ${logosQuery.error.message}` : null}
+						{httpErrorMessage(logosQuery.error, "Couldn't load logos.")}
 					</PanelStatus>
 				) : logosQuery.isLoading ? (
 					<PanelLoadingStatus label="Loading logos" className="min-h-32" />
@@ -294,8 +294,7 @@ export function TrustedByAdminView() {
 				) : null}
 				{queryReadFailed(mentionsQuery) ? (
 					<PanelStatus variant="error" retry={mentionsQuery} className="min-h-32">
-						Couldn&apos;t load mentions.
-						{mentionsQuery.error instanceof ArticleApiError ? ` ${mentionsQuery.error.message}` : null}
+						{httpErrorMessage(mentionsQuery.error, "Couldn't load mentions.")}
 					</PanelStatus>
 				) : mentionsQuery.isLoading ? (
 					<PanelLoadingStatus label="Loading mentions" className="min-h-32" />

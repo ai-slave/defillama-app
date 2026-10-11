@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-q
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { HttpError } from '~/utils/async'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ConfirmActionDialog } from '../ConfirmActionDialog'
@@ -42,6 +43,7 @@ function Harness() {
 					description="This cannot be undone."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the row."
 					mutation={deletion}
 					variables={undefined}
 					onClose={() => setOpen(false)}
@@ -72,11 +74,11 @@ test('a failed attempt keeps its error on screen while the retry runs', async ()
 	await render()
 	await click('Delete row')
 	await click('Delete')
-	await act(async () => attempts[0].reject(new Error('Offline')))
-	await waitForUi(() => expect(alertText()).toBe('Offline'))
+	await act(async () => attempts[0].reject(new TypeError('Failed to fetch')))
+	await waitForUi(() => expect(alertText()).toBe("Couldn't delete the row."))
 	await click('Delete')
 	await waitForUi(() => expect(button('Deleting…')).toBeDefined())
-	expect(alertText()).toBe('Offline')
+	expect(alertText()).toBe("Couldn't delete the row.")
 	await act(async () => attempts[1].resolve())
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 })
@@ -85,8 +87,8 @@ test('reopening after a failed attempt starts without the old error', async () =
 	await render()
 	await click('Delete row')
 	await click('Delete')
-	await act(async () => attempts[0].reject(new Error('Offline')))
-	await waitForUi(() => expect(alertText()).toBe('Offline'))
+	await act(async () => attempts[0].reject(new HttpError('[HTTP] [error] [409]', 409, 'The row is in use.')))
+	await waitForUi(() => expect(alertText()).toBe('The row is in use.'))
 	await click('Cancel')
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	await click('Delete row')
@@ -131,6 +133,7 @@ function SheetRows({ removes, named }: { removes: boolean; named: boolean }) {
 					description="This cannot be undone."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the row."
 					mutation={deletion}
 					variables={confirming}
 					onClose={() => setConfirming(null)}

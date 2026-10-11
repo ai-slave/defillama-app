@@ -260,6 +260,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					description="Deleting a dashboard cannot be undone."
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the dashboard."
 					mutation={deletion}
 					variables={undefined}
 					onClose={() => setShowDeleteConfirm(false)}

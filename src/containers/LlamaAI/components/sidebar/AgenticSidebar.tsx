@@ -603,6 +603,7 @@ function SidebarPanel({
 				{confirmBulkDelete ? (
 					<DeleteSessionDialog
 						title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
+						errorMessage="Couldn't delete the selected chats."
 						mutation={bulkDeletion}
 						variables={selectedIds}
 						onClose={() => setConfirmBulkDelete(false)}

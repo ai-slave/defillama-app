@@ -113,11 +113,14 @@ async function postJson<T>(url: string, body: Record<string, unknown>): Promise<
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(body)
+	}).catch(() => {
+		throw new Error("Couldn't submit the request.")
 	})
 	const data = await res.json().catch(() => null)
 	if (!res.ok) {
 		if (res.status === 429) throw new Error('Too many requests. Try again in a few minutes.')
-		const message = data && typeof data.error === 'string' ? data.error : null
+		// A 4xx names the field the route refused; a 5xx body is not written for readers.
+		const message = res.status < 500 && data && typeof data.error === 'string' ? data.error : null
 		throw new Error(message ?? "Couldn't submit the request.")
 	}
 	return data as T

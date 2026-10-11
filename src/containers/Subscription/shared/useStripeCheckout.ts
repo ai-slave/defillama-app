@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
 import { fetchSubscriptionStatus } from '~/auth/subscriptionStatus'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import {
 	decideEarlierUpgrade,
@@ -62,6 +62,7 @@ export function checkoutReturnPath(request: CheckoutRequest) {
 }
 
 const ACCOUNT_SWITCHED = 'The signed-in account changed while the checkout was starting. Try again.'
+const CHECKOUT_FAILED = "Couldn't start the checkout."
 
 async function readPaymentStatus(clientSecret: string) {
 	const stripe = await loadStripeOnce()
@@ -78,7 +79,9 @@ async function checkEarlierUpgrade(userId: string, token: string) {
 	const status = await readPaymentStatus(record.clientSecret)
 	let targetApplied = false
 	if (status === 'succeeded') {
-		const current = await fetchSubscriptionStatus({ token, subscriptionType: record.plan })
+		const current = await fetchSubscriptionStatus({ token, subscriptionType: record.plan }).catch(() => {
+			throw new Error("Couldn't check your earlier upgrade payment. Try again.")
+		})
 		targetApplied = current?.type === record.plan && current.billing_interval === record.interval
 	}
 	return { record, status, targetApplied }
@@ -157,15 +160,21 @@ export function useStripeCheckout() {
 						})
 					},
 					true
-				)
+				).catch(() => {
+					throw new Error(CHECKOUT_FAILED)
+				})
 
-				if (!response) throw new Error('Not authenticated')
+				if (!response) throw new Error("You're signed out. Sign in and try again.")
 
-				const data = await handleSimpleFetchResponse(response).then((res) => res.json())
+				const data = await handleSimpleFetchResponse(response)
+					.then((res) => res.json())
+					.catch((error) => {
+						throw new Error(httpErrorMessage(error, CHECKOUT_FAILED))
+					})
 
 				// Every upgrade asks for a payment; a response without a client secret is an error, never a free upgrade.
 				if (data.isUpgrade) {
-					if (!data.clientSecret) throw new Error('No client secret returned for upgrade payment')
+					if (!data.clientSecret) throw new Error(CHECKOUT_FAILED)
 
 					let pricing: UpgradePricing | null = null
 					if (data.amount !== undefined && data.currency) {
@@ -190,7 +199,7 @@ export function useStripeCheckout() {
 					return { kind: 'paidUpgrade', clientSecret: data.clientSecret, pricing, awaitingVerification: false }
 				}
 
-				if (!data.clientSecret) throw new Error('No client secret returned from server')
+				if (!data.clientSecret) throw new Error(CHECKOUT_FAILED)
 				if (pb.authStore.record?.id !== userId) throw new Error(ACCOUNT_SWITCHED)
 				return { kind: 'checkout', clientSecret: data.clientSecret }
 			}

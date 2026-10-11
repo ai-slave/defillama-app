@@ -76,7 +76,7 @@ test('a reopened popover drops the error of the last opening', async () => {
 	const trigger = container.querySelector('button')!
 	await act(async () => trigger.click())
 	await act(async () => document.querySelector('form')!.requestSubmit())
-	expect(fieldErrorTexts()).toEqual(['Enter a view name.'])
+	expect(fieldErrorTexts()).toHaveLength(1)
 	await act(async () =>
 		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 	)

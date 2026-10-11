@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { fetchTokensResponse } from '../queries.client'
 import { buildTokensSortIndexes, getTokensPageFromRows } from '../utils'
@@ -82,7 +83,10 @@ describe('Tokens watchlist', () => {
 			url === '/api/public/markets/tokens' ? { last_updated: '', tokens: [] } : { schemaVersion: 13, rows: [] }
 		)
 		await render(<TokensWatchlistContainer tokenUniverse={[]} />)
-		await expectShows("Couldn't load token data")
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(alertTexts(element)).toHaveLength(1)
+		})
 		expect(element.textContent).not.toContain('No tokens in your watchlist')
 		fetchJson.mockResolvedValue(page)
 		const retry = Array.from(element.querySelectorAll('button')).find((button) => button.textContent === 'Try again')

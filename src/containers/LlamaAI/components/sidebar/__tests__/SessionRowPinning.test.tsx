@@ -113,7 +113,8 @@ test('a failed pin restores the cached session, reports the failure, and can ret
 	await waitForUi(() => expect(isPinned('chat')).toBe(true))
 	await act(async () => first.resolve(failure('Unavailable')))
 	await waitForUi(() => expect(client.getQueryData(key)).toEqual(initial))
-	expect(toastError).toHaveBeenCalledExactlyOnceWith("Couldn't change the pin: Unavailable")
+	expect(toastError).toHaveBeenCalledOnce()
+	expect(toastError.mock.calls[0][0]).not.toContain('Unavailable')
 	const retry = await pinItem('chat')
 	await waitForUi(() => expect(retry.getAttribute('aria-disabled')).not.toBe('true'))
 	await act(async () => retry.click())
@@ -218,6 +219,7 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 	expect(button('Actions for chat')).toBeDefined()
 	await act(async () => first.resolve(failure('Offline')))
 	await waitForUi(() => expect(alertTexts(document.querySelector('[role="alertdialog"]')!)).toHaveLength(1))
+	expect(alertTexts(document.querySelector('[role="alertdialog"]')!)[0]).not.toContain('Offline')
 	expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
 	await click('Delete')
 	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
@@ -234,7 +236,8 @@ test('failed rename preserves the entered title for retry', async () => {
 		input.value = 'QA renamed'
 		input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(document.querySelector('[role="alert"]')!.textContent).not.toContain('Offline')
 	expect(input.value).toBe('QA renamed')
 	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
 	await waitForUi(() => expect(container.querySelector('[aria-label="Rename QA renamed"]')).not.toBeNull())
@@ -474,11 +477,7 @@ test.each(['copy', 'visibility'] as const)(
 			if (action === 'copy') copyRequest.reject(new Error('Denied'))
 			else visibilityRequest.reject(new Error('Offline'))
 		})
-		await waitForUi(() =>
-			expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-				action === 'copy' ? "Couldn't copy the link. Try again." : "Couldn't make this conversation public. Try again."
-			)
-		)
+		await waitForUi(() => expect(alertTexts()).toHaveLength(1))
 	}
 )
 

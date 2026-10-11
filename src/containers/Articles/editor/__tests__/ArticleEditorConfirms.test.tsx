@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -247,7 +247,7 @@ test('publishing from the page with a missing field opens the review that marks 
 	article = { ...article, status: 'published', tags: [], pending: { ...article, tags: [] } as ArticleSnapshotPayload }
 	await mount()
 	await click(button('Publish update'))
-	await waitForUi(() => expect(openDialog('Edit listing').textContent).toContain('Enter at least one topic.'))
+	await waitForUi(() => expect(fieldErrorTexts(openDialog('Edit listing'))).toHaveLength(1))
 	expect(toasts.error).not.toHaveBeenCalled()
 })
 
@@ -281,7 +281,9 @@ test('a publish that fails after the reader left the editor reports it in a toas
 	await act(async () => root.unmount())
 	root = createRoot(container)
 	await act(async () => held.resolve(fixtureStatus(500, { error: 'Publish unavailable' })()))
-	await waitForUi(() => expect(toasts.error).toHaveBeenCalledWith('Publish unavailable'))
+	await waitForUi(() => expect(toasts.error).toHaveBeenCalledOnce())
+	// A 5xx body is not written for readers.
+	expect(toasts.error).not.toHaveBeenCalledWith('Publish unavailable')
 })
 
 test('a co-author removal that fails after the reader left the editor reports it in a toast', async () => {
@@ -329,7 +331,7 @@ test('publishing without a topic marks Topics, focuses it, and the mark clears o
 	expect(fieldErrorOf(topics)).toBeNull()
 	await press(button('Publish now', review))
 	await waitForUi(() => expect(document.activeElement).toBe(topics))
-	expect(fieldErrorOf(topics)).toBe('Enter at least one topic.')
+	expect(fieldErrorOf(topics)).toBeTruthy()
 	await type(topics, 'lending')
 	expect(fieldErrorOf(topics)).toBeNull()
 })

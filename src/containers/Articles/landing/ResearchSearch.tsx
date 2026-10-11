@@ -5,7 +5,6 @@ import { useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
-	ArticleApiError,
 	listArticles,
 	listArticleSections,
 	listResearchClients,
@@ -27,6 +26,7 @@ import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 
@@ -489,7 +489,7 @@ export default function ResearchSearch() {
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
 			{failed ? (
 				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-					Couldn&apos;t load research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+					{httpErrorMessage(error, "Couldn't load research.")}
 				</InlineStatus>
 			) : resultsLoading ? (
 				<PanelLoadingStatus label="Loading research" className="min-h-[280px]" />

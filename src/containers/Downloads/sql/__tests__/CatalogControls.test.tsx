@@ -116,15 +116,19 @@ function RegistryBrowser({ authorizedFetch }: { authorizedFetch: () => Promise<R
 	)
 }
 
-test('a table that fails to load says why on its own row', async () => {
-	const authorizedFetch = vi.fn(async () => Response.json({ error: 'Hacks export is unavailable' }, { status: 503 }))
+test('a table the route refuses says why on its own row', async () => {
+	const authorizedFetch = vi.fn(async () =>
+		Response.json({ error: 'CSV downloads are available only for paid users.' }, { status: 403 })
+	)
 	await act(async () => root.render(<RegistryBrowser authorizedFetch={authorizedFetch} />))
 	const row = (description: string) =>
 		[...container.querySelectorAll('li')].find((li) => li.textContent?.includes(description))!
 	const load = [...row(flatDescription).querySelectorAll('button')].find((el) => el.textContent === 'Load')!
 	await act(async () => load.click())
 	await waitForUi(() =>
-		expect(row(flatDescription).querySelector('[role="alert"]')?.textContent).toBe('Hacks export is unavailable')
+		expect(row(flatDescription).querySelector('[role="alert"]')?.textContent).toBe(
+			'CSV downloads are available only for paid users.'
+		)
 	)
 	expect(authorizedFetch).toHaveBeenCalledWith('/api/private/downloads/hacks', undefined)
 	expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1)
@@ -180,7 +184,13 @@ test('a time series keeps its parameter across a tab switch and shows a failure 
 	expect(row().querySelector('[aria-busy="true"]')?.textContent).toContain('Loading…')
 
 	await act(async () => fail())
-	await waitForUi(() => expect(row().querySelector('[role="alert"]')?.textContent).toBe('Aave TVL is unavailable'))
+	// A 5xx body is not written for readers, so the row shows its own line.
+	const alert = await waitForUi(() => {
+		const found = row().querySelector('[role="alert"]')
+		expect(found).not.toBeNull()
+		return found!
+	})
+	expect(alert.textContent).not.toContain('Aave TVL is unavailable')
 	expect(authorizedFetch).toHaveBeenCalledWith('/api/private/downloads/chart/protocol-tvl-chart?param=aave', undefined)
 	expect(authorizedFetch).toHaveBeenCalledTimes(1)
 })

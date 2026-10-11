@@ -110,6 +110,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 					description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
 					confirmLabel="Unassign"
 					pendingLabel="Unassigning…"
+					errorMessage="Couldn't unassign the subscription."
 					mutation={unassignMemberMutation}
 					variables={{ userId: member.userId }}
 					onClose={closeDialog}
@@ -124,6 +125,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 					description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
 					confirmLabel="Remove"
 					pendingLabel="Removing…"
+					errorMessage="Couldn't remove the member."
 					mutation={removeMemberMutation}
 					variables={{ userId: member.userId }}
 					onClose={closeDialog}

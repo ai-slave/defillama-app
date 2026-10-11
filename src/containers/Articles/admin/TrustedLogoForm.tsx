@@ -6,7 +6,7 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
-import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo } from '~/containers/Articles/api'
+import { createTrustedLogo, listTrustedLogos, updateTrustedLogo } from '~/containers/Articles/api'
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
@@ -14,6 +14,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
@@ -93,7 +94,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 			toast.success(logo ? 'Logo saved' : 'Logo created')
 		},
 		onError: (error) => {
-			toast.error(error instanceof ArticleApiError ? error.message : "Couldn't save.")
+			toast.error(httpErrorMessage(error, "Couldn't save."))
 		}
 	})
 

@@ -4,12 +4,7 @@ import { useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import {
-	ArticleApiError,
-	type AuthorProfileUpdate,
-	getMyAuthorProfile,
-	updateMyAuthorProfile
-} from '~/containers/Articles/api'
+import { type AuthorProfileUpdate, getMyAuthorProfile, updateMyAuthorProfile } from '~/containers/Articles/api'
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
@@ -19,6 +14,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -245,7 +241,7 @@ export function AuthorProfileForm() {
 		const { error } = profileQuery
 		return (
 			<PanelStatus variant="error" retry={profileQuery} className="mx-auto w-full max-w-4xl">
-				Couldn&apos;t load your profile.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load your profile.")}
 			</PanelStatus>
 		)
 	}
@@ -320,7 +316,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				toast.success('Saved')
 			}
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Couldn't save.")
+			toast.error(httpErrorMessage(error, "Couldn't save."))
 		}
 	}
 

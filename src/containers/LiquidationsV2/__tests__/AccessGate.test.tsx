@@ -119,7 +119,7 @@ test('an open sign-in stays through the account load after a sign-in from anothe
 
 test('loads the chain for a subscriber and shows the server error message', async () => {
 	signIn('active')
-	http.serve({ '/api/private/liquidations/sky/arbitrum': fixtureStatus(503, { error: 'Liquidations are warming up' }) })
+	http.serve({ '/api/private/liquidations/sky/arbitrum': fixtureStatus(403, { error: 'Liquidations are warming up' }) })
 	await render()
 
 	await waitForText('Liquidations are warming up')

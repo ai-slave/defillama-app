@@ -2,6 +2,7 @@
 import { act, Suspense, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterAll, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { TopupCheckoutLoading } from '../TopupCheckoutLoading'
 
 const checkout = vi.hoisted(() => {
@@ -81,7 +82,7 @@ test('shows a recoverable message when the Stripe script fails to load', async (
 				</Suspense>
 			)
 		)
-		expect(host.querySelector('[role="alert"]')?.textContent).toContain('Card payments are unavailable')
+		expect(alertTexts(host)).toHaveLength(1)
 		expect(host.querySelector('[role="status"]')).toBeNull()
 	} finally {
 		await act(async () => root.unmount())

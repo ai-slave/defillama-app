@@ -114,10 +114,6 @@ function wasRunAborted(error: unknown, signal: AbortSignal) {
 	return isAbortError(error) || signal.aborted
 }
 
-function runErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : String(error)
-}
-
 export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	const { isAuthenticated, isTrial, loaders, authorizedFetch, user } = useAuthContext()
 	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
@@ -480,7 +476,8 @@ function SqlWorkspaceInner({
 					return
 				}
 				updateTab(tabId, {
-					runError: runErrorMessage(error),
+					// Table loads and the query report their own failures, so only an unexpected exception lands here.
+					runError: "Couldn't run this query.",
 					result: null,
 					running: false
 				})

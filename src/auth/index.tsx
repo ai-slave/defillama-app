@@ -410,7 +410,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					onSuccess: (data) => {
 						if (data) toast.success('Email preferences updated successfully')
 					},
-					onError: (error) => toast.error(httpErrorMessage(error, "Couldn't update email preferences."))
+					// setPromotionalEmails words every failure for readers, as OAuthWelcomeDialog relies on too.
+					onError: (error) => toast.error(error.message)
 				}
 			)
 		},

@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
+import { HttpError, httpErrorMessage } from '~/utils/async'
 
 export type UploadScope =
 	| 'avatar'
@@ -30,19 +31,16 @@ export type UploadResult = {
 const MAX_BYTES = 8 * 1024 * 1024
 const ALLOWED_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 
-export class UploadError extends Error {
-	status: number
-	constructor(message: string, status: number) {
-		super(message)
+/** A refusal written for readers: a client check, or the upload route's own 4xx reason. */
+export class UploadError extends HttpError {
+	constructor(reason: string, status: number) {
+		super(reason, status, reason)
 		this.name = 'UploadError'
-		this.status = status
 	}
 }
 
-/** Client checks and the server's 4xx reasons name the fix; anything else is a plain retry. */
 export function uploadErrorMessage(error: Error | null, retry: string) {
-	if (!error) return null
-	return error instanceof UploadError && error.status < 500 ? error.message : retry
+	return error ? httpErrorMessage(error, retry) : null
 }
 
 /** Sends a file as base64 JSON to an upload route, the shape both image and PDF uploads use. */
@@ -67,11 +65,9 @@ export async function postUpload<T>(
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {
-		const message =
-			data && typeof data === 'object' && typeof data.error === 'string'
-				? data.error
-				: response.statusText || 'Upload failed'
-		throw new UploadError(message, response.status)
+		if (data && typeof data === 'object' && typeof data.error === 'string')
+			throw new UploadError(data.error, response.status)
+		throw new HttpError(`Upload returned ${response.status}`, response.status, null)
 	}
 	return data as T
 }
@@ -118,7 +114,7 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 			return toast.promise(uploadFile(file), {
 				loading: 'Uploading…',
 				success: 'Uploaded',
-				error: (err) => (err instanceof Error ? err.message : 'Upload failed')
+				error: (err) => uploadErrorMessage(err, "Couldn't upload this image. Try again.")
 			})
 		},
 		[uploadFile]

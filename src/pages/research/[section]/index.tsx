@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Link from 'next/link'
 import { BasicLink } from '~/components/Link'
-import { ArticleApiError, getSectionBanner, listArticles } from '~/containers/Articles/api'
+import { getSectionBanner, listArticles } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { useResearchSectionEngagement } from '~/containers/Articles/landing/Analytics'
@@ -16,6 +16,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -138,7 +139,7 @@ function SectionLandingContent({
 		const { error } = articlesQuery
 		return (
 			<PanelStatus variant="error" retry={articlesQuery} className="mx-auto w-full max-w-[1180px]">
-				Couldn&apos;t load this section.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load this section.")}
 			</PanelStatus>
 		)
 	}

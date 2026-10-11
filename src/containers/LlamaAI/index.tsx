@@ -134,6 +134,7 @@ import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { getABSeedFromCookie } from '~/utils/abTesting'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { httpErrorMessage } from '~/utils/async'
 import { DuelPanel, type DuelChoice } from './components/DuelPanel'
 import { useDuelStream } from './hooks/useDuelStream'
 import {
@@ -1380,7 +1381,7 @@ export function AgenticChat({
 			if (failedRequest) {
 				rememberPromptFailure(targetSessionId, {
 					kind: 'reconnect',
-					error: getErrorMessage(recoveryError),
+					error: "Couldn't reconnect to the response.",
 					request: failedRequest
 				})
 			}
@@ -1845,7 +1846,7 @@ export function AgenticChat({
 						}
 						rememberPromptFailure(currentSessionId, {
 							kind: kind === 'temporary-connectivity' ? 'reconnect' : 'retry',
-							error: err.message || "Couldn't get a response.",
+							error: httpErrorMessage(err, "Couldn't get a response."),
 							request: failedRequest
 						})
 						dispatchStream({ type: 'SET_ERROR', value: null })
@@ -2328,7 +2329,7 @@ export function AgenticChat({
 						}
 						setMessages(messagesSnapshot)
 						setActiveLeafMessageId(activeLeafSnapshot)
-						setViewError(getErrorMessage(editError))
+						setViewError("Couldn't send the edited prompt.")
 						dispatchStream({ type: 'RESET_STREAM' })
 						shouldThrowEditError = editError
 					}
@@ -2399,17 +2400,17 @@ export function AgenticChat({
 						await restoreSessionSnapshot(sessionId, operation)
 					}
 				}
-				const reportSwitchFailure = (switchError: unknown) => {
+				const reportSwitchFailure = () => {
 					if (operation.isCurrent() && currentSessionIdRef.current === sessionId) {
-						setViewError(getErrorMessage(switchError))
+						setViewError("Couldn't switch to that version.")
 					}
 				}
 				try {
 					await applySwitchedLeaf(
 						await switchActiveLeaf.mutateAsync({ sessionId, leafMessageId, signal: operation.signal })
 					)
-				} catch (switchError) {
-					reportSwitchFailure(switchError)
+				} catch {
+					reportSwitchFailure()
 				}
 			})
 		},

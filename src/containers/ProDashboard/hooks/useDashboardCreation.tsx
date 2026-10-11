@@ -11,6 +11,7 @@ import {
 	type UnifiedTableConfig
 } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
+import { httpErrorMessage, ReaderError } from '~/utils/async'
 
 type DatasetType = 'dexs' | 'perps' | 'options' | 'aggregators' | 'bridge-aggregators'
 
@@ -72,7 +73,7 @@ export const useDashboardCreation = () => {
 		},
 		mutationFn: async (datasetType: DatasetType) => {
 			if (!isAuthenticated) {
-				throw new Error('Not authenticated')
+				throw new ReaderError('Sign in to create dashboards.')
 			}
 
 			const tableItem = createProtocolMetricTable(datasetType)
@@ -99,7 +100,7 @@ export const useDashboardCreation = () => {
 		},
 		onError: (error: unknown) => {
 			console.log('Error creating dashboard:', error)
-			toast.error(error instanceof Error ? error.message : "Couldn't create the dashboard. Try again.")
+			toast.error(httpErrorMessage(error, "Couldn't create the dashboard. Try again."))
 		}
 	})
 

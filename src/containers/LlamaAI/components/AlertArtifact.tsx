@@ -400,13 +400,13 @@ export function AlertArtifact({
 								</Button>
 							}
 						>
-							{testMutation.error.message}
+							Couldn't send the test alert.
 						</InlineStatus>
 					) : null}
 
 					{testMutation.isError && hasRetriedTest ? (
 						<div ref={takeLostFocus} tabIndex={-1}>
-							<InlineStatus variant="error">{testMutation.error.message}</InlineStatus>
+							<InlineStatus variant="error">Couldn't send the test alert.</InlineStatus>
 						</div>
 					) : null}
 
@@ -537,7 +537,7 @@ export function AlertArtifact({
 								</BasicLink>
 							</div>
 						) : (
-							<InlineStatus variant="error">{saveError.message}</InlineStatus>
+							<InlineStatus variant="error">Couldn't save the alert.</InlineStatus>
 						)
 					) : null}
 				</form>

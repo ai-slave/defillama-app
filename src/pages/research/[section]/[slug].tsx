@@ -7,13 +7,7 @@ import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
-import {
-	ArticleApiError,
-	getAllArticlesBanner,
-	getArticleBanner,
-	getArticleBySlug,
-	getSectionBanner
-} from '~/containers/Articles/api'
+import { getAllArticlesBanner, getArticleBanner, getArticleBySlug, getSectionBanner } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { canEditResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { ArticleSeo } from '~/containers/Articles/ArticleSeo'
@@ -30,6 +24,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -230,7 +225,7 @@ function SectionArticleContent({
 		const { error } = articleQuery
 		return (
 			<PanelStatus variant="error" retry={articleQuery} className="mx-auto w-full max-w-[1300px]">
-				Couldn&apos;t load research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load research.")}
 			</PanelStatus>
 		)
 	}

@@ -35,6 +35,7 @@ import type {
 } from '~/containers/LlamaAI/types'
 import { normalizeAlertProposedData } from '~/containers/LlamaAI/utils/restoredAlerts'
 import type { PersistedDashboardItemConfig } from '~/containers/ProDashboard/dashboardConfig/persisted'
+import { HttpError } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 
 export interface CsvExport {
@@ -885,7 +886,11 @@ export async function fetchAgenticResponse({
 			)
 		}
 		if (response.status === 429) {
-			throw new Error(errorData?.error || 'Too many concurrent requests. Wait a moment.')
+			throw new HttpError(
+				errorData?.error || 'Too many concurrent requests',
+				429,
+				'Too many questions are running at once. Wait a moment, then try again.'
+			)
 		}
 		throw new Error(errorData?.error || `HTTP error status: ${response.status}`)
 	}

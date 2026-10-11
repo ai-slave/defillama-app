@@ -220,11 +220,7 @@ test('an upgrade answer without a payment is an error, not a completed upgrade',
 	session.serve({ '/subscription/create': { isUpgrade: true, requiresPayment: false } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() =>
-			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-				'No client secret returned for upgrade payment'
-			)
-		)
+		await waitForUi(() => expect(dialog()?.querySelector('[role="alert"]')).toBeTruthy())
 		expect(buttonNamed('Try again')).toBeTruthy()
 	} finally {
 		await caller.cleanup()
@@ -238,12 +234,30 @@ test('offers a retry when the checkout session fails to load, then loads a fresh
 	])
 	const caller = await mountCaller()
 	try {
-		await waitForUi(() => expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
+		await waitForUi(() => expect(dialog()?.querySelector('[role="alert"]')).toBeTruthy())
+		// A 5xx body is not written for readers, so the dialog says what failed in its own words.
+		expect(dialog()!.querySelector('[role="alert"]')!.textContent).not.toContain('Checkout unavailable')
 		expect(dialog()!.querySelector('[role="status"]')).toBeNull()
 		await act(async () => buttonNamed('Try again')!.click())
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 		expect(dialog()!.querySelector('[role="alert"]')).toBeNull()
 		expect(creates()).toBe(2)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('a checkout that cannot reach the server shows an error, not the browser text', async () => {
+	session.serve({
+		'/subscription/create': () => {
+			throw new TypeError('Failed to fetch')
+		}
+	})
+	const caller = await mountCaller()
+	try {
+		await waitForUi(() => expect(dialog()?.querySelector('[role="alert"]')).toBeTruthy())
+		expect(dialog()!.querySelector('[role="alert"]')!.textContent).not.toContain('Failed to fetch')
+		expect(buttonNamed('Try again')).toBeTruthy()
 	} finally {
 		await caller.cleanup()
 	}
@@ -340,18 +354,13 @@ test('a declined upgrade payment shows the failure inline and keeps it on screen
 	try {
 		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
-		await waitForUi(() =>
-			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-				'Payment failed. Use a different payment method and try again.'
-			)
-		)
+		await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
+		const failure = alertTexts(dialog()!)
 		expect(JSON.parse(localStorage.getItem(pendingKey)!)).toMatchObject({ clientSecret: paidUpgrade.clientSecret })
 		await pay()
 		await waitForUi(() => expect(stripe.confirmPayment).toHaveBeenCalledTimes(2))
 		expect(buttonNamed('Processing…')!.getAttribute('aria-busy')).toBe('true')
-		expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-			'Payment failed. Use a different payment method and try again.'
-		)
+		expect(alertTexts(dialog()!)).toEqual(failure)
 	} finally {
 		await caller.cleanup()
 	}
@@ -710,10 +719,11 @@ test('a failed checkout keeps its error on screen while Try again runs', async (
 	const caller = await mountCaller()
 	try {
 		await waitForUi(() => expect(buttonNamed('Try again')).toBeTruthy())
+		const failure = dialog()!.querySelector('[role="alert"]')!.textContent
 		await act(async () => buttonNamed('Try again')!.click())
 		await waitForUi(() => expect(answer).toBeTypeOf('function'))
 
-		expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable')
+		expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(failure)
 		expect(buttonNamed('Retrying…')).toBeTruthy()
 		await act(async () => answer(Response.json({ clientSecret: 'cs_fixture' })))
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))

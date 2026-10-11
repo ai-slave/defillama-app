@@ -142,17 +142,14 @@ test('does not exchange a denied authorization and keeps its error on screen whi
 	try {
 		await act(async () => view.button.click())
 		await act(async () => google.options.callback({ error: 'access_denied' }))
-		expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
-			'Google sign-in did not finish. Try again.'
-		)
+		const denied = alertTexts(view.container)
+		expect(denied).toHaveLength(1)
 		expect(view.button.getAttribute('aria-disabled')).toBe(null)
 		expect(onCode).not.toHaveBeenCalled()
 		await act(async () => view.button.click())
 		expect(view.button.getAttribute('aria-busy')).toBe('true')
 		expect(view.button.textContent).toContain('Waiting for Google…')
-		expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
-			'Google sign-in did not finish. Try again.'
-		)
+		expect(alertTexts(view.container)).toEqual(denied)
 		await act(async () => google.options.callback({ code: 'retry-code' }))
 		expect(onCode).toHaveBeenCalledWith('retry-code')
 		expect(view.container.querySelector('[role="alert"]')).toBeNull()

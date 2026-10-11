@@ -14,6 +14,7 @@ import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug as toSlug } from '~/utils'
+import { httpErrorMessage } from '~/utils/async'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
@@ -1112,7 +1113,7 @@ export function ChartDatasetModal({
 							) : dataFailed ? (
 								<div className="flex flex-1 items-center justify-center p-4">
 									<InlineStatus variant="error" retry={isCategoryMode ? breakdownQuery : activeQuery!}>
-										{dataError instanceof Error ? dataError.message : "Couldn't load data."}
+										{httpErrorMessage(dataError, "Couldn't load data.")}
 									</InlineStatus>
 								</div>
 							) : columnMeta.length === 0 ? (

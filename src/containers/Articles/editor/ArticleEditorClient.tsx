@@ -16,6 +16,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import {
 	ArticleApiError,
@@ -45,7 +46,7 @@ import type {
 	LocalArticleDocument
 } from '../types'
 import { ARTICLE_SECTION_SLUGS } from '../types'
-import { type UploadResult, useImageUpload } from '../upload/useImageUpload'
+import { type UploadResult, uploadErrorMessage, useImageUpload } from '../upload/useImageUpload'
 import { ArticleChartPickerDialog } from './ArticleChartPicker'
 import { ArticleCoverImageEditor } from './ArticleCoverImageEditor'
 import { ARTICLE_BUBBLE_MENU_KEY, ArticleEditorCanvas } from './ArticleEditorCanvas'
@@ -75,11 +76,6 @@ import { useArticleCollaborators } from './useArticleCollaborators'
 /** The pending revision's timestamp wins whenever a draft edit is unpublished. */
 function latestArticleUpdatedAt(article: Pick<LocalArticleDocument, 'pendingUpdatedAt' | 'updatedAt'>) {
 	return article.pendingUpdatedAt ?? article.updatedAt
-}
-
-/** A non-Error reason gets the caller's fallback rather than being stringified. */
-function errorMessageOr(error: unknown, fallback: string) {
-	return error instanceof Error ? error.message : fallback
 }
 
 function publishValidationErrors(error: unknown) {
@@ -168,7 +164,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			return toast.promise(uploadInlineImageRaw(file), {
 				loading: 'Uploading image…',
 				success: 'Image inserted',
-				error: (err) => (err instanceof Error ? err.message : 'Upload failed')
+				error: (err) => uploadErrorMessage(err, "Couldn't upload this image. Try again.")
 			})
 		},
 		[uploadInlineImageRaw]
@@ -240,7 +236,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	// confirmed the "save in progress" prompt and left must not be pulled back into the editor.
 	const createDraft = useCallback(() => {
 		createArticleMutate(undefined, {
-			onError: (error) => setCreateError(errorMessageOr(error, "Couldn't create the draft.")),
+			onError: (error) => setCreateError(httpErrorMessage(error, "Couldn't create the draft.")),
 			onSuccess: (saved) => {
 				autoRedirectingRef.current = true
 				void Router.replace(`/research/edit/${saved.id}`)
@@ -384,7 +380,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			}
 		} catch (error) {
 			setSaveError(true)
-			if (!opts.silent) toast.error(errorMessageOr(error, "Couldn't save the research."))
+			if (!opts.silent) toast.error(httpErrorMessage(error, "Couldn't save the research."))
 		}
 		saveInFlightRef.current = false
 		return didSave
@@ -666,9 +662,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				clearTimeout(debounceRef.current)
 				debounceRef.current = null
 			}
-			return discardPendingEdits(targetArticleId, authorizedFetch).catch((error: unknown) => {
-				throw new Error("Couldn't discard the pending changes. Try again.", { cause: error })
-			})
+			return discardPendingEdits(targetArticleId, authorizedFetch)
 		},
 		// The editor shows the live version again. An editor the reader already left takes nothing: its state is
 		// gone and its tiptap instance destroyed.
@@ -682,10 +676,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		}
 	})
 	const deleteArticleMutation = useMutation({
-		mutationFn: (targetArticleId: string) =>
-			deleteArticle(targetArticleId, authorizedFetch).catch((error: unknown) => {
-				throw new Error("Couldn't delete this article. Try again.", { cause: error })
-			}),
+		mutationFn: (targetArticleId: string) => deleteArticle(targetArticleId, authorizedFetch),
 		onSuccess: () => {
 			revalidateLanding()
 		}
@@ -731,7 +722,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			saved = await publishMutation.mutateAsync(publishPayload)
 		} catch (error) {
 			const validationErrors = publishValidationErrors(error)
-			if (validationErrors.length === 0) return { ok: false, error: errorMessageOr(error, "Couldn't publish.") }
+			if (validationErrors.length === 0) return { ok: false, error: httpErrorMessage(error, "Couldn't publish.") }
 			flushSync(() => setServerPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message]))))
 			return { ok: false, error: null }
 		}
@@ -773,7 +764,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			revalidateLanding()
 			toast.success('Moved to drafts')
 		} catch (error) {
-			toast.error(errorMessageOr(error, "Couldn't unpublish."))
+			toast.error(httpErrorMessage(error, "Couldn't unpublish."))
 		}
 	}
 
@@ -893,7 +884,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		return (
 			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
 				<PanelStatus variant="error" retry={ownedArticleQuery}>
-					Couldn&apos;t load this research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+					{httpErrorMessage(error, "Couldn't load this research.")}
 				</PanelStatus>
 			</div>
 		)
@@ -1138,6 +1129,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 					pendingLabel="Deleting…"
 					mutation={deleteArticleMutation}
 					variables={article.id}
+					errorMessage="Couldn't delete this article."
 					onClose={() => setConfirmDelete(false)}
 					// A reader who already left must not be pulled back to the list.
 					onSuccess={() => void Router.replace('/research')}
@@ -1153,6 +1145,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 					pendingLabel="Discarding…"
 					mutation={discardPendingMutation}
 					variables={article.id}
+					errorMessage="Couldn't discard the pending changes."
 					onClose={() => setConfirmDiscard(false)}
 					successMessage="Pending changes discarded"
 				/>

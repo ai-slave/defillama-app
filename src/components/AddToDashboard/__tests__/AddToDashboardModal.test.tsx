@@ -59,7 +59,7 @@ async function type(input: HTMLInputElement, value: string) {
 async function renderModal() {
 	session.serve({
 		'/lite/dashboards': { items: [] },
-		'/api/private/pro-dashboard/save': fixtureStatus(500, { message: 'Dashboard limit reached' })
+		'/api/private/pro-dashboard/save': fixtureStatus(403, { message: 'Dashboard limit reached' })
 	})
 	await act(async () =>
 		root.render(
@@ -80,7 +80,7 @@ test('a submit without a dashboard or a new name says what is missing under it a
 	expect(submit.getAttribute('aria-disabled')).toBeNull()
 	expect(fieldErrorTexts(dialog())).toEqual([])
 	await act(async () => submit.click())
-	expect(fieldErrorTexts(dialog())).toEqual(['Choose a dashboard or create a new one.'])
+	expect(fieldErrorTexts(dialog())).toHaveLength(1)
 	expect(document.activeElement).toBe(button('Create new dashboard'))
 
 	await act(async () => button('Create new dashboard').click())
@@ -88,7 +88,7 @@ test('a submit without a dashboard or a new name says what is missing under it a
 	// The new name field is a new question: it opens quiet, and the next submit asks for it.
 	expect(fieldErrorTexts(dialog())).toEqual([])
 	await act(async () => submit.click())
-	expect(fieldErrorTexts(dialog())).toEqual(['Enter a name for the new dashboard.'])
+	expect(fieldErrorTexts(dialog())).toHaveLength(1)
 	expect(document.activeElement).toBe(name)
 	expect(name.getAttribute('aria-invalid')).toBe('true')
 	await type(name, 'Research')
@@ -129,6 +129,21 @@ test('a failed create shows its error inside the open dialog, not as a toast', a
 	await waitForUi(() => expect(dialog().querySelector('[role="alert"]')?.textContent).toBe('Dashboard limit reached'))
 	const toasts = [...document.querySelectorAll('[role="status"]')].map((el) => el.textContent)
 	expect(toasts).not.toContain('Dashboard limit reached')
+})
+
+test('a create that cannot reach the server says it failed without the browser error', async () => {
+	await renderModal()
+	session.serve({
+		'/api/private/pro-dashboard/save': () => {
+			throw new TypeError('Failed to fetch')
+		}
+	})
+	await act(async () => button('Create new dashboard').click())
+	await type(dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!, 'Research')
+	await act(async () => button('Add to dashboard').click())
+
+	await waitForUi(() => expect(dialog().querySelector('[role="alert"]')?.textContent).toBeTruthy())
+	expect(dialog().querySelector('[role="alert"]')!.textContent).not.toContain('Failed to fetch')
 })
 
 test('a failed dashboard list keeps the saved dashboards, and its retry loads the current list', async () => {

@@ -11,7 +11,10 @@ import type { ProtocolsUnifiedTableResponse } from '../../../unifiedTable/contra
 import { getUnifiedTableQueryIdentity } from '../../../unifiedTableQuery'
 import { useUnifiedTableReadModel } from '../useUnifiedTableReadModel'
 
-vi.mock('~/utils/async', () => ({ fetchJson: vi.fn() }))
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: vi.fn()
+}))
 const config: UnifiedTableConfig = {
 	id: 'data-test',
 	kind: 'unified-table',

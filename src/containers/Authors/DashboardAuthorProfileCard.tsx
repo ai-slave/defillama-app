@@ -11,6 +11,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { getMyDashboardAuthorProfile, TOP_AUTHORS_QUERY_KEY, updateMyDashboardAuthorProfile } from './api'
@@ -249,7 +250,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 			await toast.promise(updateMutation.mutateAsync(payload), {
 				loading: 'Saving profile…',
 				success: 'Profile saved',
-				error: (err) => (err instanceof Error ? err.message : "Couldn't save your profile.")
+				error: (err) => httpErrorMessage(err, "Couldn't save your profile.")
 			})
 		} catch {
 			// toast.promise already showed the error; the form keeps the unsaved draft.

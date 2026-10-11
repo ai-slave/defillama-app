@@ -281,10 +281,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const deleteRevisionMutation = useMutation({
-		mutationFn: (revisionId: string) =>
-			deleteArticleRevision(articleId, revisionId, authorizedFetch).catch((error: unknown) => {
-				throw new Error("Couldn't delete this revision. Try again.", { cause: error })
-			}),
+		mutationFn: (revisionId: string) => deleteArticleRevision(articleId, revisionId, authorizedFetch),
 		onSuccess: (_, revisionId) =>
 			queryClient.setQueryData<typeof revisionsQuery.data>(revisionsQueryKey, (current) =>
 				current
@@ -730,6 +727,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 					pendingLabel="Deleting…"
 					mutation={deleteRevisionMutation}
 					variables={selectedId}
+					errorMessage="Couldn't delete this revision."
 					onClose={() => setConfirming(null)}
 				/>
 			) : null}

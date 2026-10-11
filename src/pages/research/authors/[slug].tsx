@@ -5,7 +5,7 @@ import { useAuthContext } from '~/auth'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
-import { ArticleApiError, getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
+import { getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { isResearcher } from '~/containers/Articles/ArticlesAccessGate'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
@@ -22,6 +22,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -319,7 +320,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		const { error } = authorQuery
 		return (
 			<PanelStatus variant="error" retry={authorQuery} className="mx-auto w-full max-w-4xl">
-				Couldn&apos;t load this author.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+				{httpErrorMessage(error, "Couldn't load this author.")}
 			</PanelStatus>
 		)
 	}

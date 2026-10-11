@@ -200,7 +200,8 @@ describe('subscriber', () => {
 		await createPortfolio(session, 'Research')
 		await deletePortfolio()
 
-		await waitFor(() => expect(confirmDialog()?.textContent).toContain('Temporary failure'))
+		await waitFor(() => expect(confirmDialog()?.querySelector('[role="alert"]')).not.toBeNull())
+		expect(confirmDialog()!.textContent).not.toContain('Temporary failure')
 		expect(portfolioToolbar()).toContain('Research')
 
 		await confirmDelete()

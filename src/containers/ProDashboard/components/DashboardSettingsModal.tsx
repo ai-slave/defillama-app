@@ -16,6 +16,7 @@ import {
 } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import type { DashboardTeam } from '../dashboardTypes'
 import { type DashboardSaveNotices, showDashboardSaveNotices } from '../hooks/useDashboardAPI'
 import { dashboardFieldHintStyles, TagsField, VisibilityField } from './DashboardFormFields'
@@ -76,7 +77,7 @@ function DashboardSettingsModalInner({
 		},
 		onError: (error) => {
 			if (formRef.current?.isConnected) setSaveFailed(true)
-			else toast.error(error.message)
+			else toast.error(httpErrorMessage(error, "Couldn't save the dashboard settings. Try again."))
 		}
 	})
 	const deletion = useMutation({ mutationFn: (idToDelete: string) => onDelete!(idToDelete) })
@@ -187,6 +188,7 @@ function DashboardSettingsModalInner({
 					description={`Deleting “${dashboardName}” cannot be undone.`}
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the dashboard."
 					mutation={deletion}
 					variables={dashboardId}
 					onClose={() => setShowDeleteConfirm(false)}

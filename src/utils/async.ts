@@ -341,6 +341,40 @@ export async function handleFetchResponse(res: Response): Promise<unknown> {
 	throw new Error(errorMessage)
 }
 
+/** A failed response. `message` is for logs; `reason` is the text the API wrote for readers, kept only on a 4xx: a
+    5xx body, a status text or an HTML page says nothing a reader can act on. */
+export class HttpError extends Error {
+	status: number
+	reason: string | null
+
+	constructor(message: string, status: number, reason: string | null) {
+		super(message)
+		this.name = 'HttpError'
+		this.status = status
+		this.reason = status < 500 ? reason : null
+		Object.setPrototypeOf(this, new.target.prototype)
+	}
+}
+
+/** A failure the client words for readers itself: a sign-in gate, a plan limit, a refusal it checks before asking the
+    server. Its `message` reaches the screen as it is. */
+export class ReaderError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'ReaderError'
+		Object.setPrototypeOf(this, new.target.prototype)
+	}
+}
+
+/** The API's own reason in a JSON error body: `error` or `message` when it is text. */
+function bodyReason(body: unknown): string | null {
+	if (!body || typeof body !== 'object') return null
+	const { error, message } = body as { error?: unknown; message?: unknown }
+	if (typeof error === 'string' && error) return error
+	if (typeof message === 'string' && message) return message
+	return null
+}
+
 export async function handleSimpleFetchResponse(res: Response): Promise<Response> {
 	if (!res.ok) {
 		let errorMessage = `[HTTP] [error] [${res.status}]`
@@ -349,27 +383,25 @@ export async function handleSimpleFetchResponse(res: Response): Promise<Response
 			errorMessage += `: ${res.statusText}`
 		}
 
+		let reason: string | null = null
 		const responseText = await res.text().catch(() => '')
 		if (responseText) {
 			try {
-				const errorResponse = JSON.parse(responseText)
-				errorMessage = errorResponse.error ?? errorResponse.message ?? sanitizeResponseTextForError(responseText)
+				reason = bodyReason(JSON.parse(responseText))
+				errorMessage = reason ?? sanitizeResponseTextForError(responseText)
 			} catch {
 				errorMessage = sanitizeResponseTextForError(responseText)
 			}
 		}
 
-		throw new Error(errorMessage)
+		throw new HttpError(errorMessage, res.status, reason)
 	}
 	return res
 }
 
-/** The message to show for a failed request: the server's reason when `handleSimpleFetchResponse` read one, else the
-    status text of its `[HTTP] [error] [status]: text` message, else the fallback. Other errors show their own message. */
+/** The line to show for a failure: a ReaderError's message, or the API's reason when it wrote one for readers, else
+    the caller's own "Couldn't …" line. "Failed to fetch", a status text or any other error's message never reaches the screen. */
 export function httpErrorMessage(error: unknown, fallbackMessage: string): string {
-	if (!(error instanceof Error) || !error.message) return fallbackMessage
-	if (!error.message.startsWith('[HTTP] [error]')) return error.message
-	const colonIndex = error.message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	return error.message.slice(colonIndex + 1).trim() || fallbackMessage
+	if (error instanceof ReaderError) return error.message
+	return error instanceof HttpError && error.reason ? error.reason : fallbackMessage
 }

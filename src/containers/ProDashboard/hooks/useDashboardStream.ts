@@ -65,11 +65,6 @@ async function pumpStream(
 	}
 }
 
-// A conditional cannot be lowered inside a catch either, so the message is named out here.
-function streamErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : 'Stream failed'
-}
-
 export interface DashboardStreamRequestOptions {
 	variableOverrides?: Readonly<Record<string, string>>
 	itemId?: string
@@ -305,12 +300,10 @@ export function useDashboardStream(
 				if (!abortController.signal.aborted) {
 					setState((s) => (s.isDone ? s : { ...s, isStreaming: false, isDone: true }))
 				}
-			} catch (error) {
+			} catch {
 				if (abortController.signal.aborted) return
-				// Read out of the catch binding before the updater closes over it: the compiler cannot treat
-				// a caught binding referenced from a nested function as consistently local.
-				const message = streamErrorMessage(error)
-				setState((s) => ({ ...s, isStreaming: false, isDone: true, error: message }))
+				// The error only marks the failure for the notice; a network error's own text is never shown.
+				setState((s) => ({ ...s, isStreaming: false, isDone: true, error: 'Stream failed' }))
 			}
 		}
 

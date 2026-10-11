@@ -1,5 +1,5 @@
 import { LIQUIDATIONS_SERVER_URL_V2 } from '~/constants'
-import { fetchJson } from '~/utils/async'
+import { fetchJson, HttpError } from '~/utils/async'
 import type {
 	LiquidationsChainPageProps,
 	LiquidationsOverviewPageProps,
@@ -28,7 +28,8 @@ async function fetchLiquidationsClient<T>(url: string, fetchFn: LiquidationsFetc
 
 	if (!res.ok) {
 		const errorData = await res.json().catch(() => null)
-		throw new Error(errorData?.error ?? `Couldn't load liquidations data (status ${res.status}).`)
+		const reason: string | null = errorData?.error ?? null
+		throw new HttpError(reason ?? `Liquidations request returned ${res.status}`, res.status, reason)
 	}
 
 	return res.json()

@@ -74,8 +74,8 @@ describe('chart adapters', () => {
 		expect(result.props.charts?.[0]?.encode).toEqual({ x: 0, y: 1 })
 	})
 
-	test('two series with the same name fail with an error that names it', () => {
-		vi.spyOn(console, 'log').mockImplementation(() => undefined)
+	test('two series with the same name fail, and the log names the series', () => {
+		const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const series = timestampSeries.series[0]
 		const duplicateNames = {
 			...timestampSeries,
@@ -85,9 +85,8 @@ describe('chart adapters', () => {
 			]
 		} satisfies ChartConfiguration
 
-		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toBe(
-			`Couldn't render the chart: Duplicate series name "Duplicate" is not allowed`
-		)
+		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).seriesMeta).toEqual([])
+		expect(log.mock.calls[0][1]).toMatchObject({ message: expect.stringContaining('"Duplicate"') })
 	})
 
 	test('plots line series with their own numeric x values on one numeric axis in x order', () => {

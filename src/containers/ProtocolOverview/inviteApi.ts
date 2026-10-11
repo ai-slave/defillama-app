@@ -44,7 +44,10 @@ export async function revealInvite({
 		throw new Error('Could not retrieve an invite code. Check your connection and try again.')
 	})
 	if (response.status >= 500) throw new Error('Invite codes are temporarily unavailable. Try again later.')
-	const result: InviteClaim | InviteError = await response.json()
+	// A proxy's own 4xx page is not JSON.
+	const result: InviteClaim | InviteError = await response.json().catch(() => {
+		throw new Error("Couldn't get an invite code. Try again.")
+	})
 	switch (result.status) {
 		case 'assigned':
 		case 'unavailable':

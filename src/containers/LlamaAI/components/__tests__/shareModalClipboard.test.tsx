@@ -163,10 +163,9 @@ test('clipboard unavailability guides manual copying instead of retrying', async
 	Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })
 	session.serve({ [SHARE]: () => shareResponse() })
 	await render(true)
-	await expectText('Clipboard access is unavailable here.')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Clipboard access is unavailable here. Copy the link from the field above.'
-	)
+	await act(async () => {
+		await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
+	})
 	expect(button('Copy link').getAttribute('aria-disabled')).toBe('true')
 	expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/tok-1')
 	await act(async () => document.querySelector('input')!.focus())

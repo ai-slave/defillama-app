@@ -127,6 +127,8 @@ test.each(['success', 'failure'] as const)(
 		expect(close).not.toHaveBeenCalled()
 		expect(draft.value).toBe('New opening')
 		expect(document.querySelector('[role="alert"]')).toBeNull()
-		expect(vi.mocked(toast.error).mock.calls).toEqual(outcome === 'failure' ? [['Earlier save failed']] : [])
+		const toasts = vi.mocked(toast.error).mock.calls
+		expect(toasts).toHaveLength(outcome === 'failure' ? 1 : 0)
+		expect(JSON.stringify(toasts)).not.toContain('Earlier save failed')
 	}
 )

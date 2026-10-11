@@ -176,9 +176,8 @@ test('dashboard deletion keeps its confirmation open on error and closes setting
 	await waitForUi(() => expect(button('Deleting…')).toBeDefined())
 	expect(close).not.toHaveBeenCalled()
 	await act(async () => request.reject(new Error('Offline')))
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe('Offline')
-	)
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"] [role="alert"]')).not.toBeNull())
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).not.toContain('Offline')
 	await act(async () => button('Delete').click())
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(remove).toHaveBeenCalledTimes(2)

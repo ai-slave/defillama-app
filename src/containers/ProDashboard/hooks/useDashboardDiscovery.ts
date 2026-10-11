@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { httpErrorMessage, ReaderError } from '~/utils/async'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
@@ -67,7 +68,7 @@ export function useDashboardDiscovery(params: SearchParams) {
 	const likeMutation = useMutation({
 		mutationFn: async (dashboardId: string) => {
 			if (!isAuthenticated) {
-				throw new Error('Sign in to star dashboards.')
+				throw new ReaderError('Sign in to star dashboards.')
 			}
 			return await dashboardAPI.likeDashboard(dashboardId, authorizedFetch)
 		},
@@ -86,7 +87,7 @@ export function useDashboardDiscovery(params: SearchParams) {
 			toast.success(data.liked ? 'Dashboard starred' : 'Star removed')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : "Couldn't update the star.")
+			toast.error(httpErrorMessage(error, "Couldn't update the star."))
 		}
 	})
 

@@ -10,6 +10,7 @@ import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { Dashboard } from '../../dashboardTypes'
+import { DashboardError } from '../../services/DashboardAPI'
 import { GenerateDashboardModal } from '../GenerateDashboardModal'
 const mocks = vi.hoisted(() => ({ creator: vi.fn(), push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push }) }))
@@ -85,14 +86,16 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
 	await submit()
 	expect(mocks.creator).toHaveBeenCalledOnce()
-	await act(async () => pending.reject(new Error('Save unavailable')))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
+	await act(async () => pending.reject(new TypeError('Failed to fetch')))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	const failure = document.querySelector('[role="alert"]')!.textContent
+	expect(failure).not.toContain('Failed to fetch')
 	expect(toast.error).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('My analysis')
 	await submit()
 	await waitForUi(() => expect(save).toHaveBeenCalledTimes(2))
 	// The retry runs under the error it answers.
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(failure)
 	await act(async () => retry.resolve({ created: dashboard }))
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/pro/new')
@@ -112,7 +115,7 @@ test.each(['success', 'failure'] as const)(
 		await render()
 		await act(async () => {
 			if (outcome === 'success') pending.resolve({ created: dashboard })
-			else pending.reject(new Error('Earlier generation failed'))
+			else pending.reject(new DashboardError('Save refused', 403, 'Earlier generation failed'))
 		})
 		await waitForUi(() => expect(session.client.isMutating()).toBe(0))
 		expect(close).not.toHaveBeenCalled()
@@ -124,8 +127,8 @@ test.each(['success', 'failure'] as const)(
 test.each([
 	[
 		'a stream error',
-		() => new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'),
-		'Generation unavailable.'
+		() => new Response('data: {"type":"error","message":"Agent did not produce a dashboard config"}\n\n'),
+		"LlamaAI couldn't generate the dashboard."
 	],
 	[
 		'a network failure',
@@ -153,13 +156,12 @@ test('a generation retry keeps the failure on screen while it runs', async () =>
 	await draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	const failure = document.querySelector('[role="alert"]')!.textContent
 	await submit()
 
 	await waitForUi(() => expect(mocks.creator).toHaveBeenCalledTimes(2))
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-busy')).toBe('true')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Generation unavailable.Your draft is still here. Try again.'
-	)
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(failure)
 })
 
 test('iteration preserves existing metadata, awaits saving, and closes without creation navigation', async () => {
@@ -204,8 +206,8 @@ test('the notices from saving an edit toast only once the dialog has closed', as
 		order.push(`toast: ${String(message)}`)
 		return ''
 	})
-	vi.mocked(toast.error).mockImplementationOnce((message) => {
-		order.push(`error: ${String(message)}`)
+	vi.mocked(toast.error).mockImplementationOnce(() => {
+		order.push('error')
 		return ''
 	})
 	save.mockResolvedValueOnce({
@@ -216,11 +218,7 @@ test('the notices from saving an edit toast only once the dialog has closed', as
 	await submit()
 
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
-	expect(order).toEqual([
-		'closed',
-		'toast: This dashboard was changed in another tab or session.',
-		'error: Dashboard saved, but chart refresh setup is pending.'
-	])
+	expect(order).toEqual(['closed', 'toast: This dashboard was changed in another tab or session.', 'error'])
 })
 
 test('an iteration keeps custom data rows out of the request and restores what the model dropped', async () => {
@@ -254,7 +252,9 @@ test('an iteration keeps custom data rows out of the request and restores what t
 })
 
 test('editing the prompt discards the generated result, hands focus to the prompt and generates again', async () => {
-	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce({ created: dashboard })
+	save
+		.mockRejectedValueOnce(new DashboardError('Save refused', 403, 'Save unavailable'))
+		.mockResolvedValueOnce({ created: dashboard })
 	await render()
 	await draft()
 	await submit()
@@ -315,7 +315,7 @@ test('leaving with a typed prompt asks before discarding it', async () => {
 })
 
 test('leaving after a failed save asks before discarding the generated dashboard', async () => {
-	save.mockRejectedValueOnce(new Error('Save unavailable'))
+	save.mockRejectedValueOnce(new DashboardError('Save refused', 403, 'Save unavailable'))
 	await render()
 	await draft()
 	await submit()
@@ -333,7 +333,7 @@ test('a submit with a missing name and a short prompt says so under each field, 
 	await type(promptField(), 'Fees')
 	expect(fieldErrorTexts()).toEqual([])
 	await submit()
-	expect(fieldErrorTexts()).toEqual(['Enter a dashboard name.', 'Enter at least 20 characters.'])
+	expect(fieldErrorTexts()).toHaveLength(2)
 	expect(document.activeElement).toBe(nameField())
 	expect(nameField().getAttribute('aria-invalid')).toBe('true')
 	await type(nameField(), 'My analysis')

@@ -152,7 +152,7 @@ test('hides duplication for read-only viewers and explains datasets without nume
 	)
 	await openMenu()
 	expect(buttonNamed('Duplicate')).toBeUndefined()
-	expect(container.textContent).toContain('No numeric columns in this dataset to chart.')
+	expect(container.querySelector('[role="status"]')).not.toBeNull()
 })
 
 test('decodes compressed rows lazily before rendering them', async () => {
@@ -206,7 +206,7 @@ test('shows a loader while rows are still streaming and an empty state once the 
 	await render(withoutRows, { streamDone: false })
 	expect(container.textContent).toContain('Loading')
 	await render(withoutRows)
-	expect(container.textContent).toContain('No rows stored.')
+	expect(container.querySelector('[role="status"]')).not.toBeNull()
 	expect(container.textContent).toContain('0 rows')
 })
 

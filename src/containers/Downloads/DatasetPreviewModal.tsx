@@ -12,6 +12,7 @@ import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -605,7 +606,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 						) : failed ? (
 							<div className="flex flex-1 items-center justify-center p-4">
 								<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-									{error instanceof Error ? error.message : "Couldn't load data."}
+									{httpErrorMessage(error, "Couldn't load data.")}
 								</InlineStatus>
 							</div>
 						) : columnMeta.length === 0 ? (

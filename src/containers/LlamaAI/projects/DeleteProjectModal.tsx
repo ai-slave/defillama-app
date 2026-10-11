@@ -24,6 +24,7 @@ export function DeleteProjectModal({
 			description={`“${project.name}” will be soft-deleted and permanently removed in 14 days. Attached sessions remain.`}
 			confirmLabel="Delete project"
 			pendingLabel="Deleting…"
+			errorMessage="Couldn't delete this project."
 			mutation={remove}
 			variables={project.id}
 			onClose={onClose}

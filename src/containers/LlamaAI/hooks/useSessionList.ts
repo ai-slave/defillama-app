@@ -60,9 +60,7 @@ export function useSessionList() {
 				return mergeOptimisticSessions(page, existingData)
 			} catch (error) {
 				console.log('Failed to fetch sessions:', error)
-				throw new Error(`Couldn't load your chats: ${error instanceof Error ? error.message : String(error)}`, {
-					cause: error
-				})
+				throw new Error("Couldn't load your chats.", { cause: error })
 			}
 		},
 		initialPageParam: 0,
@@ -104,10 +102,10 @@ export function useSessionList() {
 		alertsUsage: data.alertsUsage,
 		freeUsage: data.freeUsage,
 		isLoading,
-		error: !isFetchNextPageError && queryError instanceof Error ? queryError.message : null,
+		error: isFetchNextPageError ? null : (queryError?.message ?? null),
 		hasNextPage,
 		isFetchingNextPage,
-		loadMoreSessionsError: isFetchNextPageError && queryError instanceof Error ? queryError.message : null,
+		loadMoreSessionsError: isFetchNextPageError ? (queryError?.message ?? null) : null,
 		fetchNextPage,
 		moveSessionToTop
 	}

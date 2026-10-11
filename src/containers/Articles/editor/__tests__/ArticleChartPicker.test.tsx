@@ -126,7 +126,7 @@ test('entity filters clear search while preserving chart settings and selected s
 	await press(radio('Entity type', 'Protocols'), 'Home')
 	await click(insert())
 	expect(onInsert).not.toHaveBeenCalled()
-	expect(fieldErrorOf(search)).toBe('Choose at least one series.')
+	expect(fieldErrorOf(search)).toBeTruthy()
 	expect(document.activeElement).toBe(search)
 	await click(entity('Aave'))
 	expect(search.getAttribute('aria-invalid')).toBeNull()

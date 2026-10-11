@@ -7,6 +7,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { getTokenPrivateSectionView } from './TokenPrivateSectionGate.utils'
 
 export function TokenPrivateSectionGate({
@@ -93,7 +94,7 @@ export function TokenPrivateSectionGate({
 						</div>
 					) : view === 'error' ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="max-w-md body-sm text-secondary">{error?.message || errorMessage}</p>
+							<p className="max-w-md body-sm text-secondary">{httpErrorMessage(error, errorMessage)}</p>
 						</div>
 					) : view === 'empty' ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">

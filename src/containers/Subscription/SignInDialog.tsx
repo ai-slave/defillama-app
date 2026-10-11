@@ -444,10 +444,11 @@ function AuthScreen({
 					signal,
 					onAuthenticated
 				})
-				.catch((caughtError) => {
+				// Every failure signInWithGoogle throws is worded for readers (src/auth/index.tsx).
+				.catch((caughtError: Error) => {
 					if (!signal.aborted)
 						store.dispatch({
-							error: caughtError instanceof Error ? caughtError.message : 'Could not sign in with Google.',
+							error: caughtError.message,
 							method: 'google',
 							kind: 'failed'
 						})

@@ -252,11 +252,7 @@ describe('RevisionHistoryDrawer', () => {
 		await renderDrawer(vi.fn(), onRestored, async () => false)
 		await askRestore()
 		await click(button('Restore'))
-		await waitForUi(() =>
-			expect(confirmation('Restore as pending?')?.querySelector('[role="alert"]')?.textContent).toBe(
-				'Save the latest edits before restoring.'
-			)
-		)
+		await waitForUi(() => expect(alertTexts(confirmation('Restore as pending?')!)).toHaveLength(1))
 		expect(http.requests.filter((request) => request.url.pathname.endsWith('/restore-pending'))).toHaveLength(0)
 		expect(onRestored).not.toHaveBeenCalled()
 	})

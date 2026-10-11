@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
+import { handleSimpleFetchResponse, type HttpError, httpErrorMessage, ReaderError } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { scheduleConfirmationReads } from '../utils'
@@ -19,7 +19,7 @@ async function sendTeamWrite(request: Promise<Response | null>, fallbackMessage:
 	const response = await request.catch((error) => {
 		throw new UnconfirmedTeamWriteError(httpErrorMessage(error, fallbackMessage))
 	})
-	if (!response) throw new Error(SIGNED_OUT_MESSAGE)
+	if (!response) throw new ReaderError(SIGNED_OUT_MESSAGE)
 	return handleSimpleFetchResponse(response).catch((error) => {
 		const message = httpErrorMessage(error, fallbackMessage)
 		throw response.status >= 500 ? new UnconfirmedTeamWriteError(message) : new Error(message)
@@ -48,10 +48,14 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		const response = await authorizedFetch(`${AUTH_SERVER}/team/${path}`, {
 			method: 'POST',
 			...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})
+		}).catch(() => {
+			throw new Error(fallbackMessage)
 		})
-		if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-		const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-			throw new Error(httpErrorMessage(error, fallbackMessage))
+		if (!response) throw new ReaderError(SIGNED_OUT_MESSAGE)
+		// A 4xx with a reason stays an HttpError, whose message is that reason, so callers that read `.message` and
+		// ConfirmActionDialog's httpErrorMessage both show it.
+		const normalized = await handleSimpleFetchResponse(response).catch((error: HttpError) => {
+			throw error.reason ? error : new Error(fallbackMessage)
 		})
 		return normalized.json()
 	}
@@ -68,7 +72,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		queryKey: ['team-invite-accept', currentUserId, inviteToken],
 		queryFn: async () => {
 			if (!inviteToken || !currentUserId || pb.authStore.record?.id !== currentUserId)
-				throw new Error(SIGNED_OUT_MESSAGE)
+				throw new ReaderError(SIGNED_OUT_MESSAGE)
 
 			const response = await sendTeamWrite(
 				authorizedFetch(`${AUTH_SERVER}/team/invite/accept`, {

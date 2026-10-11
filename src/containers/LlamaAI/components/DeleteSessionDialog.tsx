@@ -7,6 +7,7 @@ export const SessionListFocusContext = createContext<RefObject<HTMLElement | nul
 // Mount for one confirmation only, like ConfirmActionDialog.
 export function DeleteSessionDialog<TVariables>({
 	title,
+	errorMessage,
 	mutation,
 	variables,
 	onClose,
@@ -14,6 +15,7 @@ export function DeleteSessionDialog<TVariables>({
 	finalFocus
 }: {
 	title: string
+	errorMessage: string
 	mutation: UseMutationResult<unknown, Error, TVariables>
 	variables: TVariables
 	onClose: () => void
@@ -34,6 +36,7 @@ export function DeleteSessionDialog<TVariables>({
 			description="This permanently deletes the selected chat history."
 			confirmLabel="Delete"
 			pendingLabel="Deleting…"
+			errorMessage={errorMessage}
 			mutation={mutation}
 			variables={variables}
 			onClose={onClose}

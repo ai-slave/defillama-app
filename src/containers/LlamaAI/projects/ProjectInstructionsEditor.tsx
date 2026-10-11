@@ -21,10 +21,6 @@ interface ProjectInstructionsEditorProps {
 
 const MAX_LENGTH = 8000
 
-function saveInstructionsError(error: unknown) {
-	return error instanceof Error ? error.message : "Couldn't save instructions."
-}
-
 export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructionsEditorProps) {
 	const update = useUpdateProject(projectId)
 	const inputId = useId()
@@ -110,7 +106,7 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 							</Button>
 						}
 					>
-						{saveInstructionsError(saveError)}
+						Couldn't save instructions.
 					</InlineStatus>
 				</div>
 			) : null}

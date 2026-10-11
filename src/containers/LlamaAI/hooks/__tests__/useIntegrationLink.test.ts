@@ -71,33 +71,31 @@ describe('useIntegrationLink state helpers', () => {
 	})
 
 	test('keeps forced switch confirmation errors visible while a tglogin token is still present', () => {
-		expect(
-			deriveTelegramLinkState({
-				status: linked,
-				statusError: null,
-				isLoading: false,
-				isStarting: false,
-				confirm: {
-					isPending: false,
-					data: undefined,
-					variables: { token: 'deep-link-token', short_code: '123456', force: true },
-					error: new Error('Switch failed')
-				},
-				initialTgloginToken: 'deep-link-token'
-			})
-		).toEqual({ status: 'error', message: 'Switch failed' })
+		const state = deriveTelegramLinkState({
+			status: linked,
+			statusError: null,
+			isLoading: false,
+			isStarting: false,
+			confirm: {
+				isPending: false,
+				data: undefined,
+				variables: { token: 'deep-link-token', short_code: '123456', force: true },
+				error: new TypeError('Failed to fetch')
+			},
+			initialTgloginToken: 'deep-link-token'
+		})
+		expect(state).toEqual({ status: 'error', message: expect.not.stringContaining('Failed to fetch') })
 	})
 
 	test('surfaces status load errors when there is no status data to render', () => {
-		expect(
-			deriveTelegramLinkState({
-				status: undefined,
-				statusError: new Error('Failed to load Telegram status'),
-				isLoading: false,
-				isStarting: false,
-				confirm: noConfirm,
-				initialTgloginToken: null
-			})
-		).toEqual({ status: 'error', message: 'Failed to load Telegram status' })
+		const state = deriveTelegramLinkState({
+			status: undefined,
+			statusError: new TypeError('Failed to fetch'),
+			isLoading: false,
+			isStarting: false,
+			confirm: noConfirm,
+			initialTgloginToken: null
+		})
+		expect(state).toEqual({ status: 'error', message: expect.not.stringContaining('Failed to fetch') })
 	})
 })

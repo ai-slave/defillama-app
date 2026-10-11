@@ -18,7 +18,8 @@ const session = installSubscriberSession('crypto-buyer', { account: 'free', reso
 test('a crypto checkout that fails to start says why under the plan that started it', async () => {
 	session.serve({
 		'/subscription/trial-available': { trialAvailable: false },
-		'/subscription/create': fixtureStatus(500, { message: 'LlamaPay is unavailable' })
+		// A 4xx reason is written for readers, so it shows as the server wrote it.
+		'/subscription/create': fixtureStatus(409, { message: 'LlamaPay is unavailable' })
 	})
 	const host = document.body.appendChild(document.createElement('div'))
 	const root = createRoot(host)

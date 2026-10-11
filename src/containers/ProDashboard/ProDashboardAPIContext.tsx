@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
+import { ReaderError } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import { type QueryRetry, queryReadFailed } from '~/utils/query'
 import { type ChartDataPrerequisite, getProtocolCatalogPrerequisite } from './chartRuntime'
@@ -735,11 +736,11 @@ function ProDashboardAPIProviderInner({
 			options?: { allowOwnerInViewMode?: boolean }
 		): Promise<DashboardSaveNotices> => {
 			if (!isAuthenticated) {
-				throw new Error('Sign in to save dashboards.')
+				throw new ReaderError('Sign in to save dashboards.')
 			}
 
 			if (options?.allowOwnerInViewMode ? isOwnerWriteLocked : isReadOnly) {
-				throw new Error('This dashboard is read-only')
+				throw new ReaderError('This dashboard is read-only.')
 			}
 
 			// Reconciliation compares editable fields, not dialog visibility or the whole reducer state.
@@ -842,8 +843,12 @@ function ProDashboardAPIProviderInner({
 
 	const moveDashboardTeam = useCallback(
 		async (teamId: string | null) => {
-			if (!dashboardId) throw new Error('Save the dashboard before sharing it with your team')
-			if (!canMoveDashboard) throw new Error('Only the dashboard creator or the team admin can change this')
+			if (!dashboardId) {
+				throw new ReaderError('Save the dashboard before sharing it with your team.')
+			}
+			if (!canMoveDashboard) {
+				throw new ReaderError('Only the dashboard creator or the team admin can change this.')
+			}
 			await moveDashboardTeamRequest({ id: dashboardId, teamId })
 		},
 		[dashboardId, canMoveDashboard, moveDashboardTeamRequest]
@@ -861,7 +866,9 @@ function ProDashboardAPIProviderInner({
 			teamId?: string
 		}) => {
 			if (!(await checkCanCreateDashboard())) {
-				throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
+				throw new ReaderError(
+					'You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.'
+				)
 			}
 
 			if (isFreeUser && data.visibility !== 'public') notifyForcedPublicVisibility()
@@ -934,12 +941,14 @@ function ProDashboardAPIProviderInner({
 	const submitRating = useCallback(
 		async (sessionId: string, decision: DashboardRatingDecision) => {
 			if (!isAuthenticated || !user?.id || !dashboardId) {
-				throw new Error('Sign in to rate dashboards.')
+				throw new ReaderError('Sign in to rate dashboards.')
 			}
 
 			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
 			const existingSession = currentAiGenerated[sessionId]
-			if (!existingSession) throw new Error('This rating session is no longer available')
+			if (!existingSession) {
+				throw new ReaderError('This rating session is no longer available.')
+			}
 
 			await saveDashboard({
 				aiGenerated: {
@@ -1044,11 +1053,11 @@ function ProDashboardAPIProviderInner({
 	)
 	const copyDashboard = useCallback(async () => {
 		if (!isAuthenticated) {
-			throw new Error('Sign in to copy dashboards.')
+			throw new ReaderError('Sign in to copy dashboards.')
 		}
 
 		if (!(await checkCanCreateDashboard())) {
-			throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
+			throw new ReaderError('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 		}
 
 		const effectiveVariables = variables.map((variable) => {

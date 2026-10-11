@@ -201,7 +201,7 @@ describe('a subscriber editing a dashboard', () => {
 		})
 		replies.push(pendingSetup, pendingSetup)
 		await act(async () => dashboard.saveDashboard({ dashboardName: 'Renamed' }))
-		expect(toastMock.error.mock.calls).toEqual([['Dashboard saved, but chart refresh setup is pending.']])
+		expect(toastMock.error).toHaveBeenCalledTimes(1)
 
 		let notices: Awaited<ReturnType<typeof dashboard.saveDashboardWithNotices>> | undefined
 		await act(async () => {

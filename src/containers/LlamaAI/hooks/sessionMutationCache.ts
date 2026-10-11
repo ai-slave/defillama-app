@@ -2,12 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
 import { isProjectSessionsQueryKey, projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
-import { getErrorMessage } from '~/utils/error'
 import { SESSIONS_QUERY_KEY } from './sessionListCache'
-
-export function mutationActionError(action: string, error: unknown) {
-	return new Error(`${action}: ${getErrorMessage(error)}`)
-}
 
 // A session can be listed by the sidebar and by its project, so both caches follow every write.
 export function useInvalidateProjectSessions() {

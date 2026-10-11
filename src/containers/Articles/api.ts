@@ -1,4 +1,5 @@
 import { FEATURES_SERVER } from '~/constants'
+import { HttpError } from '~/utils/async'
 import type { EditorialTagOrderItem } from './editorialTagOrder'
 import type {
 	ArticleAuthorProfile,
@@ -37,16 +38,18 @@ export type ArticleApiValidationError = {
 	message: string
 }
 
-export class ArticleApiError extends Error {
-	status: number
+export class ArticleApiError extends HttpError {
 	validationErrors?: Array<ArticleApiValidationError>
 
-	constructor(message: string, status: number, validationErrors?: Array<ArticleApiValidationError>) {
-		super(message)
+	constructor(
+		message: string,
+		status: number,
+		reason: string | null,
+		validationErrors?: Array<ArticleApiValidationError>
+	) {
+		super(message, status, reason)
 		this.name = 'ArticleApiError'
-		this.status = status
 		this.validationErrors = validationErrors
-		Object.setPrototypeOf(this, ArticleApiError.prototype)
 	}
 }
 
@@ -115,20 +118,18 @@ function buildSavePayload(article: LocalArticleDocument, options: { includeStatu
 }
 
 async function parseResponse<T>(response: Response | null): Promise<T> {
-	if (!response) throw new ArticleApiError('Sign in to continue.', 401)
+	if (!response) throw new ArticleApiError('Sign in to continue.', 401, 'Sign in to continue.')
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {
-		const message =
-			data && typeof data === 'object' && typeof data.error === 'string'
-				? data.error
-				: response.statusText || 'Article request failed'
+		const reason = data && typeof data === 'object' && typeof data.error === 'string' ? data.error : null
+		const message = reason ?? `Article request returned ${response.status}`
 		const details = data && typeof data === 'object' ? data.details : null
 		const validationErrors =
 			details && typeof details === 'object' && Array.isArray(details.errors)
 				? (details.errors as Array<ArticleApiValidationError>)
 				: undefined
-		throw new ArticleApiError(message, response.status, validationErrors)
+		throw new ArticleApiError(message, response.status, reason, validationErrors)
 	}
 	return data as T
 }

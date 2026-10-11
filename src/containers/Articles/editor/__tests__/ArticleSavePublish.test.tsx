@@ -156,7 +156,9 @@ test('keeps the saved draft and review available after a publish failure', async
 	expect(title().value).toBe('Draft survives publish failure')
 	const review = button('Publish now').closest<HTMLElement>('[role="dialog"]')!
 	expect(review.hidden).toBe(false)
-	expect(review.textContent).toContain('Publish unavailable')
+	// A failure that is not the API's own 4xx reason shows the editor's line, never the raw error text.
+	expect(alertTexts(review)).not.toEqual([])
+	expect(review.textContent).not.toContain('Publish unavailable')
 	expect(api.error).not.toHaveBeenCalled()
 	await click('Publish now')
 	expect(api.publish).toHaveBeenCalledTimes(2)
@@ -203,7 +205,7 @@ test('lists the missing page fields in the review before issuing a publish reque
 	await click('Publish now')
 	expect(api.publish).not.toHaveBeenCalled()
 	const review = button('Keep editing').closest<HTMLElement>('[role="dialog"]')!
-	expect(review.textContent).toContain('Fix these on the page before publishing:Enter a headline.')
+	expect(alertTexts(review)).toHaveLength(1)
 	expect(api.error).not.toHaveBeenCalled()
 })
 

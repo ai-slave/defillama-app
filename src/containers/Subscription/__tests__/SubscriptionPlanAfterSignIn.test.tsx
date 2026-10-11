@@ -25,7 +25,8 @@ let host: HTMLDivElement
 beforeEach(async () => {
 	session.serve({
 		'/subscription/trial-available': { trialAvailable: false },
-		'/subscription/create': fixtureStatus(500, { message: 'LlamaPay is unavailable' })
+		// A 4xx reason is written for readers, so it shows as the server wrote it.
+		'/subscription/create': fixtureStatus(409, { message: 'LlamaPay is unavailable' })
 	})
 	host = document.body.appendChild(document.createElement('div'))
 	root = createRoot(host)

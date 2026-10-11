@@ -42,6 +42,7 @@ import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { httpErrorMessage } from '~/utils/async'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 
@@ -316,8 +317,10 @@ function AddToDashboardDialog({
 			submitAddToDashboard({ authorizedFetch, chartConfig, llamaAIChart, configName, ...variables, repairTarget }),
 		onError: (error, variables) =>
 			setSubmitError(
-				error.message ||
-					(variables.target.kind === 'new' ? "Couldn't create the dashboard." : "Couldn't add the chart.")
+				httpErrorMessage(
+					error,
+					variables.target.kind === 'new' ? "Couldn't create the dashboard." : "Couldn't add the chart."
+				)
 			),
 		onSuccess: (result) => {
 			setSubmitError(null)

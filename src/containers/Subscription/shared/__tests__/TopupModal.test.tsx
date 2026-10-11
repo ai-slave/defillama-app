@@ -38,7 +38,8 @@ const topups = () =>
 	session.requests
 		.filter(({ url }) => url.pathname === '/topup/create')
 		.map(({ init }) => JSON.parse(init!.body as string))
-const unavailable = () => Response.json({ error: 'Checkout unavailable' }, { status: 503 })
+// A 4xx reason is written for readers, so the form and its toast pass it through.
+const unavailable = () => Response.json({ error: 'Checkout unavailable' }, { status: 409 })
 
 let host: HTMLDivElement
 let root: Root
@@ -214,7 +215,7 @@ test('a crypto checkout that fails after the dialog closes says so outside it', 
 	await click('Close dialog')
 	await act(async () => request.resolve(unavailable()))
 
-	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
+	await waitForUi(() => expect(document.body.textContent).toContain('Checkout unavailable'))
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 	expect(topups()).toHaveLength(1)
 })
@@ -273,7 +274,7 @@ test('a crypto checkout that fails after Settings starts closing says so outside
 	await click('Close dialog')
 	await act(async () => request.resolve(unavailable()))
 
-	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
+	await waitForUi(() => expect(document.body.textContent).toContain('Checkout unavailable'))
 })
 
 test('in Settings, Back from an open card checkout asks before leaving it; before a session it goes straight back', async () => {
@@ -303,7 +304,19 @@ test('a crypto checkout that fails while the dialog is open shows the error only
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	// Settle the toast store too, so a toast fired with the error would be on screen by now.
 	for (let tick = 0; tick < 5; tick++) await act(async () => {})
-	expect(document.body.textContent).not.toContain('Top-up failed')
+	expect(document.body.textContent.split('Checkout unavailable')).toHaveLength(2)
+})
+
+test('a crypto checkout that cannot reach the server shows an error, not the browser text', async () => {
+	session.serve({
+		[`${AUTH_SERVER}/topup/create`]: () => {
+			throw new TypeError('Failed to fetch')
+		}
+	})
+	await mount()
+	await click('Pay with crypto')
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeTruthy())
+	expect(document.body.textContent).not.toContain('Failed to fetch')
 })
 
 test('a card checkout keeps its pending creation until it settles, so its failure shows in the dialog', async () => {

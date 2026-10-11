@@ -7,6 +7,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ErrorLine } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 
@@ -66,8 +67,9 @@ export function CopyDashboardButton({
 	const copy = useMutation({
 		mutationFn: onCopy,
 		onError: (error) => {
-			setCopyError(error.message)
-			if (!buttonRef.current?.isConnected) toast.error(error.message)
+			const message = httpErrorMessage(error, "Couldn't copy the dashboard.")
+			setCopyError(message)
+			if (!buttonRef.current?.isConnected) toast.error(message)
 		},
 		onSuccess: () => setCopyError(null)
 	})
@@ -126,8 +128,9 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 	const undo = useMutation({
 		mutationFn: onUndo,
 		onError: (error) => {
-			setUndoError(error.message)
-			if (!buttonRef.current?.isConnected) toast.error(error.message)
+			const message = httpErrorMessage(error, "Couldn't undo the AI changes.")
+			setUndoError(message)
+			if (!buttonRef.current?.isConnected) toast.error(message)
 		},
 		onSuccess: () => setUndoError(null)
 	})

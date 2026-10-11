@@ -19,6 +19,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import { emailError } from '~/utils/email'
 import pb from '~/utils/pocketbase'
 import { ResendCooldown } from './ResendCooldown'
@@ -37,11 +38,6 @@ interface FormError {
 	message: string
 }
 
-interface SwitchToEmailErrorResponse {
-	error?: string
-	message?: string
-}
-
 interface SwitchToEmailResponse {
 	token?: string
 }
@@ -54,12 +50,13 @@ async function requestSwitchToEmailOtp({ email, sessionToken }: { email: string;
 			Authorization: `Bearer ${sessionToken}`
 		},
 		body: JSON.stringify({ email })
+	}).catch(() => {
+		throw new Error("Couldn't send the verification code.")
 	})
 
-	if (!response.ok) {
-		const errorData = (await response.json().catch(() => null)) as SwitchToEmailErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || "Couldn't send the verification code.")
-	}
+	await handleSimpleFetchResponse(response).catch((error) => {
+		throw new Error(httpErrorMessage(error, "Couldn't send the verification code."))
+	})
 }
 
 async function confirmSwitchToEmail({
@@ -79,12 +76,13 @@ async function confirmSwitchToEmail({
 			Authorization: `Bearer ${sessionToken}`
 		},
 		body: JSON.stringify(payload)
+	}).catch(() => {
+		throw new Error("Couldn't add email sign-in.")
 	})
 
-	if (!response.ok) {
-		const errorData = (await response.json().catch(() => null)) as SwitchToEmailErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || "Couldn't add email sign-in.")
-	}
+	await handleSimpleFetchResponse(response).catch((error) => {
+		throw new Error(httpErrorMessage(error, "Couldn't add email sign-in."))
+	})
 
 	return (await response.json()) as SwitchToEmailResponse
 }

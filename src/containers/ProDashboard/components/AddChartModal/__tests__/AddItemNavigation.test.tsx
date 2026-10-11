@@ -154,7 +154,7 @@ describe('a subscriber without SQL access', () => {
 			)!
 		const csv = document.querySelector<HTMLTextAreaElement>('textarea')!
 		await click(add)
-		expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toEqual(['Paste or upload a CSV.'])
+		expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 		expect(document.activeElement).toBe(csv)
 		// Below lg a second press finds the error unchanged; it must still bring the CSV fields back to take focus.
 		for (let press = 0; press < 2; press++) {

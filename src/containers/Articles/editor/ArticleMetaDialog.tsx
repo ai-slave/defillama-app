@@ -945,6 +945,7 @@ function MetaSheet({
 					}}
 					mutation={transferOwnershipMutation}
 					variables={transferTarget.pbUserId}
+					errorMessage="Couldn't transfer ownership."
 					onClose={() => setTransferTarget(null)}
 				/>
 			) : null}

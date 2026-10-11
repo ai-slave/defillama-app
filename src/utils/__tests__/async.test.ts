@@ -187,25 +187,30 @@ describe('httpErrorMessage', () => {
 	const messageFor = (response: Response) =>
 		handleSimpleFetchResponse(response).then(
 			() => 'resolved',
-			(error: unknown) => httpErrorMessage(error, 'Something went wrong')
+			(error: unknown) => httpErrorMessage(error, 'fallback')
 		)
 
-	test('shows the reason the server gave', async () => {
+	test('shows the reason the API wrote on a 4xx', async () => {
 		expect(await messageFor(Response.json({ error: 'Seat limit reached' }, { status: 400 }))).toBe('Seat limit reached')
-	})
-
-	test('shows the status text of a failure without a body', async () => {
-		expect(await messageFor(new Response(null, { status: 500, statusText: 'Internal Server Error' }))).toBe(
-			'Internal Server Error'
+		expect(await messageFor(Response.json({ message: 'Seat limit reached' }, { status: 409 }))).toBe(
+			'Seat limit reached'
 		)
 	})
 
-	test('falls back for a failure with neither a body nor a status text', async () => {
-		expect(await messageFor(new Response(null, { status: 503 }))).toBe('Something went wrong')
+	test('falls back when the response carries no reason for readers', async () => {
+		expect(await messageFor(new Response(null, { status: 404, statusText: 'Not Found' }))).toBe('fallback')
+		expect(await messageFor(new Response('<!doctype html><html></html>', { status: 403 }))).toBe('fallback')
+		expect(await messageFor(Response.json({ error: { code: 'E1' } }, { status: 400 }))).toBe('fallback')
 	})
 
-	test('shows any other error as it is, and falls back for a value that is not an error', () => {
-		expect(httpErrorMessage(new Error('Network down'), 'Something went wrong')).toBe('Network down')
-		expect(httpErrorMessage('offline', 'Something went wrong')).toBe('Something went wrong')
+	test('falls back on a 5xx even when its body names a reason', async () => {
+		expect(await messageFor(Response.json({ error: 'pg: connection refused' }, { status: 500 }))).toBe('fallback')
+		expect(await messageFor(new Response(null, { status: 502, statusText: 'Bad Gateway' }))).toBe('fallback')
+	})
+
+	test('falls back for a network failure and any other error', () => {
+		expect(httpErrorMessage(new TypeError('Failed to fetch'), 'fallback')).toBe('fallback')
+		expect(httpErrorMessage(new Error('Network down'), 'fallback')).toBe('fallback')
+		expect(httpErrorMessage('offline', 'fallback')).toBe('fallback')
 	})
 })

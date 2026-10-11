@@ -4,12 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Select } from '~/components/Select/Select'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
-import {
-	ArticleApiError,
-	deleteArticle as deleteArticleApi,
-	listMyArticles,
-	type ArticleListResponse
-} from '~/containers/Articles/api'
+import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ArticlesAccessGate } from '~/containers/Articles/ArticlesAccessGate'
 import { isScheduled } from '~/containers/Articles/articleSchedule'
@@ -29,6 +24,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
@@ -173,6 +169,7 @@ function MyArticlesContent() {
 					pendingLabel="Deleting…"
 					mutation={deleteArticleMutation}
 					variables={deleteTarget.article.id}
+					errorMessage="Couldn't delete the article."
 					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {
@@ -302,7 +299,7 @@ function MyArticlesContent() {
 			{/* A failed refresh keeps the list below, with this notice above it. */}
 			{failed || queryRefreshFailed(myArticlesQuery) ? (
 				<InlineStatus variant="error" retry={myArticlesQuery}>
-					Couldn&apos;t load your research.{error instanceof ArticleApiError ? ` ${error.message}` : null}
+					{httpErrorMessage(error, "Couldn't load your research.")}
 				</InlineStatus>
 			) : null}
 

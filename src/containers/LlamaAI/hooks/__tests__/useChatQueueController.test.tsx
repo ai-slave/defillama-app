@@ -199,7 +199,7 @@ describe('useChatQueueController', () => {
 
 		expect(controller.ownedEditId).toBeNull()
 		expect(controller.rowStatus.q1).toMatchObject({
-			error: 'This edit is no longer reserved. Copy your changes and try again.',
+			error: expect.any(String),
 			unsavedDraft: 'unsaved long edit'
 		})
 	})

@@ -179,8 +179,10 @@ export function validateExpression(expression: string): { isValid: boolean; erro
 		}
 		expr.evaluate(testContext)
 		return { isValid: true }
-	} catch (error) {
-		return { isValid: false, error: error instanceof Error ? error.message : 'Invalid expression' }
+	} catch {
+		// Variables are checked above, so a throw here is the evaluator's or the engine's own text ("x is not a
+		// function"), not something the person typing the expression can act on.
+		return { isValid: false, error: 'Invalid expression' }
 	}
 }
 

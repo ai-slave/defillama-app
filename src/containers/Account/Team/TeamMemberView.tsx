@@ -109,6 +109,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 					description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
 					confirmLabel="Leave team"
 					pendingLabel="Leaving team…"
+					errorMessage="Couldn't leave the team."
 					mutation={leaveTeamMutation}
 					variables={undefined}
 					onClose={() => setShowLeaveConfirm(false)}

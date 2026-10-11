@@ -13,6 +13,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import { queryReadFailed } from '~/utils/query'
 import { ResendCooldown } from './ResendCooldown'
@@ -43,11 +44,6 @@ interface DeleteAccountEligibility {
 interface DeleteAccountRequestResponse {
 	message: string
 	requiredConfirmation: RequiredConfirmation
-}
-
-interface DeleteAccountErrorResponse {
-	error?: string
-	message?: string
 }
 
 interface DeleteAccountResult {
@@ -90,12 +86,13 @@ async function fetchDeleteAccountJson<T>(path: string, sessionToken: string, opt
 	const response = await fetch(`${AUTH_SERVER}${path}`, {
 		...options,
 		headers
+	}).catch(() => {
+		throw new Error("Couldn't process the account deletion.")
 	})
 
-	if (!response.ok) {
-		const errorData = (await response.json().catch(() => null)) as DeleteAccountErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || "Couldn't process the account deletion.")
-	}
+	await handleSimpleFetchResponse(response).catch((error) => {
+		throw new Error(httpErrorMessage(error, "Couldn't process the account deletion."))
+	})
 
 	const data = (await response.json().catch(() => null)) as T | null
 	if (!data) throw new Error('Invalid response from account deletion service')
@@ -400,11 +397,9 @@ function DeleteAccountModal({
 		: queryReadFailed(eligibilityQuery)
 			? {
 					kind: 'failed',
-					// The retry clears the error while it runs; the generic message covers that.
-					message:
-						eligibilityQuery.error instanceof Error
-							? eligibilityQuery.error.message
-							: "Couldn't load the account deletion details.",
+					// The retry clears the error while it runs; the generic message covers that. fetchDeleteAccountJson
+					// words every failure for readers.
+					message: eligibilityQuery.error?.message ?? "Couldn't load the account deletion details.",
 					retrying: eligibilityQuery.isFetching,
 					onRetry: () => void eligibilityQuery.refetch()
 				}

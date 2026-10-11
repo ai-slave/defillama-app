@@ -193,7 +193,8 @@ test('a failed first prompt stays unshareable while an older restored chat outsi
 	await mount()
 	await sendFromComposer('Hello')
 	await act(async () => request.resolve(Response.json({ error: 'Prompt rejected' }, { status: 400 })))
-	await waitFor(() => expect(document.body.textContent).toContain('Prompt rejected'))
+	await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(document.body.textContent).not.toContain('Prompt rejected')
 	await act(async () => {
 		for (const button of shareButtons()) {
 			expect(button.getAttribute('aria-disabled')).toBe('true')

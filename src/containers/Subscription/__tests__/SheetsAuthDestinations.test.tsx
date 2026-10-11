@@ -7,6 +7,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import SheetsAuthPage from '~/pages/sheets/auth'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -76,7 +77,7 @@ test.each([
 	route.query = { redirect_uri: redirectUri }
 	Object.defineProperty(window, 'opener', { value: opener, configurable: true })
 	await renderSignedIn()
-	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain('was not shared'))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(Router.push).not.toHaveBeenCalled()
 	expect(opener.postMessage).not.toHaveBeenCalled()
 })

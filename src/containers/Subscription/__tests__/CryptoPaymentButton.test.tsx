@@ -41,13 +41,15 @@ test('a failed crypto checkout says so under the button and clears on the next a
 	)
 
 	await act(async () => payWithCrypto().click())
-	await waitForUi(() => expect(alert()?.textContent).toBe('LlamaPay is unavailable'))
+	await waitForUi(() => expect(alert()).not.toBeNull())
+	// A 5xx body is not written for readers.
+	expect(alert()!.textContent).not.toContain('LlamaPay is unavailable')
 
 	const retry = Promise.withResolvers<Response>()
 	session.serve({ [CREATE]: () => retry.promise })
 	await act(async () => payWithCrypto().click())
 	expect(alert()).toBeNull()
 
-	await act(async () => retry.resolve(Response.json({ message: 'Still unavailable' }, { status: 503 })))
+	await act(async () => retry.resolve(Response.json({ message: 'Still unavailable' }, { status: 409 })))
 	await waitForUi(() => expect(alert()?.textContent).toBe('Still unavailable'))
 })

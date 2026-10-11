@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRef } from 'react'
 import { useAuthContext } from '~/auth'
+import { httpErrorMessage } from '~/utils/async'
 import { useProDashboardDashboard, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import type { SqlSnapshot } from '../../types'
 
@@ -45,7 +46,7 @@ export function useServerSqlRun(itemId: string, fallbackSnapshot: SqlSnapshot | 
 	return {
 		snapshot,
 		isRefreshing: query.isFetching,
-		error: query.data?.error ?? (query.error instanceof Error ? query.error.message : null),
+		error: query.data?.error ?? (query.error ? httpErrorMessage(query.error, "Couldn't refresh this query.") : null),
 		canRefresh: !!dashboardId && !isReadOnly,
 		refresh: () => {
 			if (isReadOnly || query.isFetching) return

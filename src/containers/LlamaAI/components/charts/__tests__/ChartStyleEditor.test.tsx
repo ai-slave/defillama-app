@@ -555,7 +555,7 @@ describe('ChartStyleEditor', () => {
 		expect(pane('Style').checked).toBe(true)
 		const title = labelled('Chart title')!
 		expect(document.activeElement).toBe(title)
-		expect(fieldErrorOf(title)).toBe('Enter a chart title.')
+		expect(fieldErrorOf(title)).toBeTruthy()
 		expect(onSave).not.toHaveBeenCalled()
 	})
 

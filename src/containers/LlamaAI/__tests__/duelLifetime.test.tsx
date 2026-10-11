@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider } from '~/contexts/LlamaAIRouteState'
 import { setLlamaAIWalkthroughState } from '~/contexts/LocalStorage'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { sendFromComposer } from './chatComposer'
 
@@ -592,7 +593,9 @@ test("a duel's saved answer that fails to load leaves an error under the duel's 
 
 	await waitForUi(() => {
 		const text = thread()!
-		const error = text.indexOf("Couldn't load this answer. Reload the conversation.")
+		const alerts = alertTexts()
+		expect(alerts).toHaveLength(1)
+		const error = text.indexOf(alerts[0])
 		expect(error).toBeGreaterThan(text.indexOf('Compare Aave and Morpho'))
 		expect(text.indexOf('And Spark?')).toBeGreaterThan(error)
 	})

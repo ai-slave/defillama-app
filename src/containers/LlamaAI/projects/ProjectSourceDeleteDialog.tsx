@@ -28,6 +28,7 @@ export function ProjectSourceDeleteDialog({
 			}
 			confirmLabel={action}
 			pendingLabel={target.kind === 'file' ? 'Deleting…' : 'Disconnecting…'}
+			errorMessage={target.kind === 'file' ? "Couldn't delete the file." : "Couldn't disconnect the source."}
 			mutation={mutation}
 			variables={target.id}
 			onClose={onClose}

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Button, StableLabel } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { httpErrorMessage } from '~/utils/async'
 import { followAuthor } from './api'
 import type { AuthorPageResponse } from './types'
 
@@ -35,7 +36,7 @@ export function FollowAuthorButton({
 			toast.success(data.following ? 'Following author' : 'Unfollowed author')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : "Couldn't update your follow.")
+			toast.error(httpErrorMessage(error, "Couldn't update your follow."))
 		}
 	})
 

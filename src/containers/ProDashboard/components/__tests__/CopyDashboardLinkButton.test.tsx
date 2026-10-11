@@ -3,6 +3,7 @@ import { act, type ReactNode, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { DashboardError } from '../../services/DashboardAPI'
 import { CopyDashboardLinkButton } from '../CopyDashboardLinkButton'
 
 vi.mock('react-hot-toast', () => ({
@@ -107,7 +108,7 @@ test('publishing announces that the dashboard is live and offers to copy its lin
 
 test('a publish that the server rejects surfaces its reason', async () => {
 	const onMakePublic = vi.fn(async () => {
-		throw new Error('This dashboard is read-only')
+		throw new DashboardError('Read-only', 403, 'This dashboard is read-only.')
 	})
 	await act(async () =>
 		root.render(
@@ -122,7 +123,7 @@ test('a publish that the server rejects surfaces its reason', async () => {
 	await openShare()
 	await act(async () => buttonLabelled('Make public')!.click())
 	const toast = (await import('react-hot-toast')).default
-	expect(toast.error).toHaveBeenCalledWith('This dashboard is read-only')
+	expect(toast.error).toHaveBeenCalledWith('This dashboard is read-only.')
 })
 
 test('a free-tier owner sees the explanation without the publish button', async () => {

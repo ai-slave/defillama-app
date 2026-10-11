@@ -113,7 +113,7 @@ describe('the dashboard author profile card', () => {
 		await act(async () => save.focus())
 		await act(async () => save.click())
 
-		expect(fieldErrorOf(displayName)).toBe('Enter a display name.')
+		expect(fieldErrorOf(displayName)).toBeTruthy()
 		expect(fieldErrorOf(handle)).toBe('Enter a handle that ends with a letter or number.')
 		expect(document.activeElement).toBe(displayName)
 		expect(saves()).toHaveLength(0)

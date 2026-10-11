@@ -7,11 +7,7 @@ import {
 	updateSessionInInfiniteData,
 	type SessionListInfiniteData
 } from '~/containers/LlamaAI/hooks/sessionListCache'
-import {
-	mutationActionError,
-	SESSION_WRITE_KEY,
-	useInvalidateSessionWrites
-} from '~/containers/LlamaAI/hooks/sessionMutationCache'
+import { SESSION_WRITE_KEY, useInvalidateSessionWrites } from '~/containers/LlamaAI/hooks/sessionMutationCache'
 import { withSessionWriteScope } from './sessionWriteScope'
 
 // Its own hook so a session row can rename itself without instantiating every session mutation.
@@ -44,7 +40,7 @@ export function useUpdateSessionTitle() {
 							)
 						)
 					}
-					throw mutationActionError("Couldn't update the chat title.", error)
+					throw new Error("Couldn't update the chat title.", { cause: error })
 				}
 			}),
 		onSettled: invalidateSessionWrites

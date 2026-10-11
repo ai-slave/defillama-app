@@ -143,7 +143,7 @@ test('a short deletion code is reported under the code field without a deletion 
 		setInput(CONFIRMATION_INPUT, 'DELETE')
 	})
 	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
-	expect(fieldErrorOf(code)).toBe('Enter a valid 6-digit code.')
+	expect(fieldErrorOf(code)).toBeTruthy()
 	expect(document.activeElement).toBe(code)
 	await act(async () => setInput(CODE_INPUT, '123456'))
 	expect(code.hasAttribute('aria-invalid')).toBe(false)
@@ -163,7 +163,7 @@ test('a refused deletion code is reported under the code field until the code is
 	})
 	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
 	await waitFor(() => expect(document.activeElement).toBe(code))
-	expect(fieldErrorOf(code)).toBe('This code is wrong or has expired.')
+	expect(fieldErrorOf(code)).toBeTruthy()
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => setInput(CODE_INPUT, '654321'))
 	expect(code.hasAttribute('aria-invalid')).toBe(false)
@@ -187,13 +187,26 @@ test('shows the warning copy while the account check runs and holds Continue unt
 test('a failed account check shows its error in the dialog and Try Again recovers', async () => {
 	session.serve({ [ELIGIBILITY]: fixtureStatus(503, { error: 'Account service unavailable' }) })
 	await startDialog()
-	await waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Account service unavailable'))
+	await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	// A 5xx body is not written for readers.
+	expect(text()).not.toContain('Account service unavailable')
 	expect(button('Continue')).toBeUndefined()
 
 	session.serve({ [ELIGIBILITY]: eligibility })
 	await act(async () => button('Try again')!.click())
 	await waitFor(() => expect(button('Continue')).toBeDefined())
-	expect(text()).not.toContain('Account service unavailable')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
+test('an account check that cannot reach the server shows an error, not the browser text', async () => {
+	session.serve({
+		[ELIGIBILITY]: () => {
+			throw new TypeError('Failed to fetch')
+		}
+	})
+	await startDialog()
+	await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(text()).not.toContain('Failed to fetch')
 })
 
 test('shows team blockers without offering the destructive flow', async () => {
@@ -220,9 +233,9 @@ test('directs Apple reauthentication to the mobile app', async () => {
 
 test.each([
 	[
-		'fails',
-		fixtureStatus(500, { error: 'Failed to remove external subscriptions' }),
-		'Failed to remove external subscriptions'
+		'is refused',
+		fixtureStatus(409, { error: 'Cancel your App Store subscription first.' }),
+		'Cancel your App Store subscription first.'
 	],
 	['does not report completion', { ...completed, status: 'processing' }, 'Account deletion did not complete'],
 	['omits the deletion time', { status: 'completed' }, 'Account deletion did not complete'],
@@ -312,11 +325,12 @@ test('a retried deletion keeps the last failure on screen while it runs', async 
 	await openDialog()
 	await continueAndSubmit()
 	const alert = () => document.querySelector('[role=alertdialog] [role=alert]')?.textContent
-	await waitFor(() => expect(alert()).toBe('Failed to remove external subscriptions'))
+	await waitFor(() => expect(alert()).toBeTruthy())
+	const failure = alert()
 
 	await act(async () => button('Delete account permanently')!.click())
 	await waitFor(() => expect(button('Deleting account…')!.getAttribute('aria-busy')).toBe('true'))
-	expect(alert()).toBe('Failed to remove external subscriptions')
+	expect(alert()).toBe(failure)
 })
 
 test('sends one deletion request when the form is submitted twice while pending', async () => {

@@ -21,6 +21,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
 import { isMacPlatform } from '~/utils/platform'
 import { toQueryString } from '~/utils/routerQuery'
@@ -689,7 +690,9 @@ function ProDashboardContent() {
 							placeholder="Dashboard name"
 							maxLength={DASHBOARD_NAME_MAX_LENGTH}
 							status={renameDashboard.isPending ? 'saving' : renameDashboard.isError ? 'error' : 'idle'}
-							{...(renameDashboard.error ? { errorMessage: renameDashboard.error.message } : {})}
+							{...(renameDashboard.error
+								? { errorMessage: httpErrorMessage(renameDashboard.error, "Couldn't rename the dashboard. Try again.") }
+								: {})}
 							className="max-w-full heading-sm md:heading-lg"
 							onCommit={(next) => {
 								if (next) renameDashboard.mutate(next)
@@ -732,7 +735,11 @@ function ProDashboardContent() {
 							placeholder="Add a description"
 							maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
 							status={describeDashboard.isPending ? 'saving' : describeDashboard.isError ? 'error' : 'idle'}
-							{...(describeDashboard.error ? { errorMessage: describeDashboard.error.message } : {})}
+							{...(describeDashboard.error
+								? {
+										errorMessage: httpErrorMessage(describeDashboard.error, "Couldn't save the description. Try again.")
+									}
+								: {})}
 							className="w-full max-w-3xl body-md"
 							onCommit={(next) => describeDashboard.mutate(next)}
 						/>

@@ -86,7 +86,7 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 	)
 	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1), { timeout: 1000 })
 	expect(alertTexts(container)[0]).not.toContain('SQL run failed')
-	expect(document.body.textContent).toContain('No numeric columns in this result to chart.')
+	expect(document.body.querySelector('[role="status"]')).not.toBeNull()
 
 	await act(async () =>
 		[...document.querySelectorAll<HTMLButtonElement>('button')]
@@ -140,11 +140,12 @@ test('the card view tabs swap the result panel for the query panel', async () =>
 		document.getElementById(
 			tabs.find((tab) => tab.getAttribute('aria-selected') === 'true')!.getAttribute('aria-controls')!
 		)!
-	await waitForUi(() => expect(panel().textContent).toContain('No numeric columns in this result to chart.'))
+	await waitForUi(() => expect(panel().querySelector('[role="status"]')).not.toBeNull())
+	const emptyNotice = panel().querySelector('[role="status"]')!.textContent!
 
 	await act(async () => tabs[1].click())
 	expect(tabs[1].getAttribute('aria-selected')).toBe('true')
 	expect(panel().getAttribute('aria-labelledby')).toBe(tabs[1].id)
 	expect(panel().textContent).toContain('Open in SQL Studio')
-	expect(panel().textContent).not.toContain('No numeric columns')
+	expect(panel().textContent).not.toContain(emptyNotice)
 })

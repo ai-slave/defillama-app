@@ -148,7 +148,7 @@ test('images keep riding inside the message and keep their budget', async () => 
 })
 
 test('a failed upload is shown on the file, not swallowed', async () => {
-	FakeUpload.answer = (upload) => queueMicrotask(() => upload.reject(507, { error: 'Project storage quota exceeded' }))
+	FakeUpload.answer = (upload) => queueMicrotask(() => upload.reject(413, { error: 'Project storage quota exceeded' }))
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => {
 		api.addImages([bigCsv('p1.csv', 72)])

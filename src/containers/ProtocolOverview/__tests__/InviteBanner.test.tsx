@@ -309,15 +309,15 @@ test('a failed claim keeps its error on screen while the retry runs', async () =
 	vi.mocked(fetch).mockResolvedValueOnce(new Response('<html>Unavailable</html>', { status: 502 }))
 	await click('Reveal my code')
 	await waitForText('Invite codes are temporarily unavailable. Try again later.')
+	const failure = alertTexts(document)
+	expect(failure).toHaveLength(1)
 
 	const retry = Promise.withResolvers<Response>()
 	vi.mocked(fetch).mockReturnValueOnce(retry.promise)
 	await click('Verify qfex_invite')
 	await click('Try again')
 	await waitForUi(() => expect(document.querySelector('[aria-busy="true"]')).not.toBeNull())
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Invite codes are temporarily unavailable. Try again later.'
-	)
+	expect(alertTexts(document)).toEqual(failure)
 
 	await act(async () => retry.resolve(Response.json(claimResponse)))
 	await waitForText('ABCD1234')

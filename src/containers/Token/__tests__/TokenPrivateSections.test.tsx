@@ -57,12 +57,21 @@ test('a subscriber sees token usage by descending amount, with CEXs only after o
 	expect(names()).toEqual(['Binance', 'Compound', 'Aave'])
 })
 
-test('a subscriber sees the server reason when token unlocks fail to load', async () => {
+test('a subscriber sees the server reason when token unlocks are refused', async () => {
+	session.serve({ '/api/private/token-unlocks/solana': fixtureStatus(404, { error: 'No unlocks for this token' }) })
+	await render(<TokenUnlocksSection resolvedUnlocksSlug="solana" />)
+
+	await settleQueries(session.client)
+	expect(container.textContent).toContain('No unlocks for this token')
+})
+
+test('a subscriber sees what failed, not a 5xx body, when token unlocks fail to load', async () => {
 	session.serve({ '/api/private/token-unlocks/solana': fixtureStatus(503, { error: 'Unlocks are being rebuilt' }) })
 	await render(<TokenUnlocksSection resolvedUnlocksSlug="solana" />)
 
 	await settleQueries(session.client)
-	expect(container.textContent).toContain('Unlocks are being rebuilt')
+	expect(container.textContent).toContain("Couldn't load token unlocks.")
+	expect(container.textContent).not.toContain('Unlocks are being rebuilt')
 })
 
 test('the liquidations section shows a token with positions and stays hidden for one without', async () => {

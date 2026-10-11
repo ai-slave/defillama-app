@@ -440,6 +440,7 @@ export function ProjectLanding({
 					{sessionToDelete ? (
 						<DeleteSessionDialog
 							title={`Delete “${sessionToDelete.session.title}”?`}
+							errorMessage="Couldn't delete this chat."
 							mutation={deleteSession}
 							variables={{ sessionId: sessionToDelete.session.sessionId, projectId }}
 							onClose={() => setSessionToDelete(null)}

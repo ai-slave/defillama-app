@@ -20,6 +20,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -69,9 +70,9 @@ interface DashboardCompleteEvent {
 	metadata?: { sessionId?: string; mode?: 'create' | 'iterate' }
 }
 
+// The server's `message` is its internal exception text, so the dialog writes its own line.
 interface DashboardErrorEvent {
 	type: 'error'
-	message?: string
 }
 
 type DashboardStreamEvent = DashboardCompleteEvent | DashboardErrorEvent
@@ -90,7 +91,7 @@ async function readDashboardCreatorStream(reader: ReadableStreamDefaultReader<Ui
 			return
 		}
 		if (event.type === 'dashboard_complete') completedDashboards.push(event)
-		else throw new Error(event.message || 'LlamaAI could not generate the dashboard.')
+		else throw new Error("LlamaAI couldn't generate the dashboard.")
 	})
 
 	try {
@@ -143,11 +144,14 @@ function GenerateDashboardModalInner({
 	const promptRef = useRef<HTMLTextAreaElement>(null)
 	// The last failed generation or save, not the mutations' own errors: those clear as soon as a retry starts.
 	const [error, setError] = useState<string | null>(null)
-	const showError = (failure: Error) => {
-		if (formRef.current?.isConnected) setError(asSentence(failure.message))
-		else toast.error(asSentence(failure.message))
+	const showError = (message: string) => {
+		if (formRef.current?.isConnected) setError(asSentence(message))
+		else toast.error(asSentence(message))
 	}
-	const save = useMutation({ mutationFn: onGenerate, onError: showError })
+	const save = useMutation({
+		mutationFn: onGenerate,
+		onError: (failure) => showError(httpErrorMessage(failure, "Couldn't save the dashboard."))
+	})
 	const saveGeneratedDashboard = (payload: GeneratedDashboardInput) => {
 		save.mutate(payload, {
 			// Close first, so the notices never toast over the dialog.
@@ -173,7 +177,7 @@ function GenerateDashboardModalInner({
 				body: JSON.stringify(request)
 			}).catch(reportUnreachable)
 			if (!response) throw new Error('Authentication failed. Sign in again.')
-			if (!response.ok) throw new Error('LlamaAI could not generate the dashboard.')
+			if (!response.ok) throw new Error("LlamaAI couldn't generate the dashboard.")
 			const reader = response.body?.getReader()
 			if (!reader) throw new Error(UNEXPECTED_RESPONSE)
 			const data = await readDashboardCreatorStream(reader).catch(reportUnreachable)
@@ -197,8 +201,9 @@ function GenerateDashboardModalInner({
 		},
 		// A generation that lands answers any earlier failure; its save reports its own.
 		onSuccess: () => setError(null),
-		// Each opening owns its form. A request can still fail after navigating away.
-		onError: showError
+		// Each opening owns its form. A request can still fail after navigating away. Every failure above is
+		// written for readers, network errors included.
+		onError: (failure) => showError(failure.message)
 	})
 	const pending = generation.isPending || save.isPending
 	const pendingLabel = save.isPending ? 'Saving' : mode === 'iterate' ? 'Updating' : 'Generating'

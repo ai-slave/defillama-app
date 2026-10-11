@@ -8,7 +8,6 @@ import { Input } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { getErrorMessage } from '~/utils/error'
 import type { ProjectChatSession } from './types'
 
 export function ProjectSessionItem({
@@ -49,8 +48,9 @@ export function ProjectSessionItem({
 			await updateTitle.mutateAsync({ sessionId: s.sessionId, title, projectId })
 			closeRename()
 		} catch (error) {
-			if (formRef.current?.isConnected) setRenameError(getErrorMessage(error))
-			else toast.error(getErrorMessage(error))
+			// useUpdateSessionTitle words every failure for readers.
+			if (formRef.current?.isConnected) setRenameError(error.message)
+			else toast.error(error.message)
 		}
 	}
 	if (isRenaming) {

@@ -8,7 +8,7 @@ import { subscriptionStatusQueryOptions, type Subscription } from '~/auth/subscr
 import { AUTH_SERVER } from '~/constants'
 import { holdEndTrial } from '~/containers/Account/endTrialHold'
 import { scheduleConfirmationReads } from '~/containers/Account/utils'
-import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
+import { handleSimpleFetchResponse, HttpError, httpErrorMessage, ReaderError } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
@@ -104,9 +104,7 @@ export const useSubscribe = () => {
 
 	const createSubscription = useMutation<SubscriptionCreateResponse, Error, SubscriptionRequest>({
 		mutationFn: async (subscriptionData) => {
-			if (!isAuthenticated) {
-				throw new Error('Not authenticated')
-			}
+			if (!isAuthenticated) throw new Error('Sign in to subscribe.')
 
 			const response = await authorizedFetch(
 				`${AUTH_SERVER}/subscription/create`,
@@ -118,17 +116,17 @@ export const useSubscribe = () => {
 					body: JSON.stringify(subscriptionData)
 				},
 				true
-			)
-
-			if (!response) {
-				throw new Error('Not authenticated')
-			}
-
-			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(httpErrorMessage(error, "Couldn't create the subscription."))
+			).catch(() => {
+				throw new Error("Couldn't create the subscription.")
 			})
 
-			return normalizedResponse.json()
+			if (!response) throw new Error('Sign in to subscribe.')
+
+			return handleSimpleFetchResponse(response)
+				.then((res) => res.json())
+				.catch((error) => {
+					throw new Error(httpErrorMessage(error, "Couldn't create the subscription."))
+				})
 		}
 	})
 
@@ -158,7 +156,7 @@ export const useSubscribe = () => {
 	const topupMutation = useMutation<void, Error, { type: 'api' | 'llamafeed'; billingInterval?: 'year' | 'month' }>({
 		mutationFn: async ({ type, billingInterval = 'month' }) => {
 			if (!isAuthenticated) {
-				throw new Error('Sign in to top up')
+				throw new ReaderError('Sign in to top up.')
 			}
 
 			const topupData: SubscriptionRequest = {
@@ -182,14 +180,10 @@ export const useSubscribe = () => {
 			)
 
 			if (!response) {
-				throw new Error('Not authenticated')
+				throw new ReaderError("You're signed out. Sign in and try again.")
 			}
 
-			const result: SubscriptionCreateResponse = await handleSimpleFetchResponse(response)
-				.then((res) => res.json())
-				.catch((error) => {
-					throw new Error(httpErrorMessage(error, "Couldn't create the top-up link."))
-				})
+			const result: SubscriptionCreateResponse = await handleSimpleFetchResponse(response).then((res) => res.json())
 
 			// Same tab, like subscribing: a new tab opened after these awaits is no longer a user gesture, and Safari blocks
 			// it without telling the page. LlamaPay returns to the account page.
@@ -270,7 +264,8 @@ export const useSubscribe = () => {
 				.then((res) => res.json())
 				.then(parseGeneratedApiKey)
 				.catch((error) => {
-					throw new Error(httpErrorMessage(error, "Couldn't generate an API key."))
+					// A 4xx reason stays an HttpError so ApiAccessCard's confirm dialog shows it too.
+					throw error instanceof HttpError && error.reason ? error : new Error("Couldn't generate an API key.")
 				})
 
 			queryClient.setQueryData(apiKeyQueryKey, newApiKey)
@@ -320,7 +315,7 @@ export const useSubscribe = () => {
 	const createPortalSessionMutation = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated) {
-				throw new Error('Not authenticated')
+				throw new ReaderError("You're signed out. Sign in and try again.")
 			}
 
 			const data = await authorizedFetch(
@@ -338,13 +333,9 @@ export const useSubscribe = () => {
 			)
 				.then(handleSimpleFetchResponse)
 				.then((res) => res.json())
-				.catch((error) => {
-					throw new Error(httpErrorMessage(error, "Couldn't open the billing portal."))
-				})
 
-			if (!data?.url) {
-				throw new Error("Couldn't open the billing portal.")
-			}
+			// No url falls to onError's own line.
+			if (!data?.url) throw new Error('Billing portal returned no url')
 			return data.url as string
 		},
 		onError: (error) => {
@@ -369,7 +360,7 @@ export const useSubscribe = () => {
 	const endTrialMutation = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated || !user) {
-				throw new Error('Not authenticated')
+				throw new Error("You're signed out. Sign in and try again.")
 			}
 			// Ending a trial charges the card at once. Any answer that may have charged holds the button for the account
 			// that clicked: a success, and a lost response or a 5xx whose outcome is unknown. Only the server's refusal
@@ -387,7 +378,7 @@ export const useSubscribe = () => {
 			})
 
 			if (!response) {
-				throw new Error('Not authenticated')
+				throw new Error("You're signed out. Sign in and try again.")
 			}
 			if (response.status >= 500) throw unconfirmed()
 
@@ -440,7 +431,7 @@ export const useSubscribe = () => {
 	>({
 		mutationFn: async (message?: string) => {
 			if (!isAuthenticated) {
-				throw new Error('Not authenticated')
+				throw new Error("You're signed out. Sign in and try again.")
 			}
 
 			const response = await authorizedFetch(
@@ -458,7 +449,7 @@ export const useSubscribe = () => {
 			})
 
 			if (!response) {
-				throw new Error('Not authenticated')
+				throw new Error("You're signed out. Sign in and try again.")
 			}
 			// A 5xx, like a lost response, can come after the server cancelled. A cancel that went through stays
 			// cancelled, so trying again is safe; the plan is read again either way.

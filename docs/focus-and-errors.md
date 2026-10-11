@@ -46,8 +46,10 @@ A dialog records the control that opened it, and a click inside a dialog focuses
 - Add "Try again." only where nothing beside the message offers a retry (a toast, a line with no button). A Try again button already says it.
 - Never "Failed to …", "… could not be loaded", "Something went wrong", "Oops", "Error:", first person, or "Please". A sign-in gate reads "Sign in to save dashboards."
 - A thrown `Error` message follows the same rules: callers pass it to toasts and notices, so it is reader copy wherever it may surface.
-- Show a server's message only where the API writes it for readers (`ArticleApiError`, a field refusal). A generic fetch error's `message` ("Failed to fetch", a status text) never reaches the screen; the site writes its own line.
-- `scripts/policies/check-status-parts.ts` (`error-copy`) refuses the banned phrasings in client code. Server routes and build scripts are not scanned: their messages go to logs and API consumers.
+- Show a server's message only where the API writes it for readers. A generic fetch error's `message` ("Failed to fetch", a status text, an HTML page, a server code) never reaches the screen; the site writes its own line.
+- A failed request throws an `HttpError` (`handleSimpleFetchResponse`, and `ArticleApiError`, `AuthorApiError` and `DashboardError`, which extend it). Its `message` is for logs. Its `reason` is the text the API wrote in its JSON `error` or `message`, kept only on a 4xx, because a 5xx body says nothing the reader can act on.
+- Show a failure with `httpErrorMessage(error, "Couldn't save the article.")`: the reason when there is one, else the site's line. `ConfirmActionDialog` takes that line as `errorMessage`. Show `error.message` as it is only when every error that can reach the site is reader copy: a typed client check (`UploadError` under 500, `CustomDataParseError`), a function that turns each failure, the network one included, into "Couldn't …", or an SDK that writes for buyers (Stripe).
+- `scripts/policies/check-status-parts.ts` refuses the banned phrasings (`error-copy`) and `x instanceof Error ? x.message : …` or `getErrorMessage(…)` outside console calls (`raw-error-message`) in client code. Server routes and build scripts are not scanned: their messages go to logs and API consumers.
 
 Never call `mutation.reset()` while a newer request may be pending: it detaches the running request and unlocks a pending dialog.
 

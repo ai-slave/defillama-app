@@ -177,7 +177,7 @@ export function useSessionMutations() {
 				return response
 			} catch (error) {
 				console.log('Failed to create session:', error)
-				throw new Error(`Couldn't create the chat: ${getErrorMessage(error)}`, { cause: error })
+				throw new Error("Couldn't create the chat.", { cause: error })
 			}
 		},
 		onSuccess: (_data, variables) => {
@@ -269,15 +269,10 @@ export function useSessionMutations() {
 	const bulkDeleteSessionsMutation = useMutation({
 		mutationKey: [SESSION_WRITE_KEY, user?.id],
 		mutationFn: async (sessionIds: Array<string>) => {
-			try {
-				await llamaAIRequest(authorizedFetch, '/user/sessions/bulk', {
-					method: 'DELETE',
-					json: { sessionIds }
-				})
-			} catch {
-				// The confirmation, or the toast after it closes, shows this sentence rather than the transport's.
-				throw new Error("Couldn't delete the selected chats. Try again.")
-			}
+			await llamaAIRequest(authorizedFetch, '/user/sessions/bulk', {
+				method: 'DELETE',
+				json: { sessionIds }
+			})
 		},
 		onSuccess: (_data, sessionIds) => {
 			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
@@ -401,7 +396,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
-					throw new Error(`Couldn't load older messages: ${getErrorMessage(error)}`)
+					throw new Error("Couldn't load older messages.", { cause: error })
 				})
 		},
 		[restoreSessionMutation]
@@ -422,7 +417,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
-					throw new Error(`Couldn't load newer messages: ${getErrorMessage(error)}`)
+					throw new Error("Couldn't load newer messages.", { cause: error })
 				})
 		},
 		[restoreSessionMutation]

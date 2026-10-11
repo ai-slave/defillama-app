@@ -435,6 +435,7 @@ export function PortfolioNotifications({
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
 					mutation={deletePreferences}
+					errorMessage="Couldn't delete the email notifications."
 					variables={{ portfolioName: selectedPortfolio }}
 					onClose={() => setConfirmingDelete(false)}
 					successMessage="Notification preferences deleted"
@@ -734,6 +735,7 @@ function PortfolioSelection() {
 						confirmLabel="Delete"
 						pendingLabel="Deleting…"
 						mutation={deletePortfolioWithNotifications}
+						errorMessage="Couldn't delete the portfolio."
 						variables={{ portfolioName: deleting.portfolio }}
 						onClose={() => setDeleting(null)}
 						onSuccess={() => {

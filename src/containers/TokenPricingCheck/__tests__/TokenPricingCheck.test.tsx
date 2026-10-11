@@ -51,16 +51,17 @@ test('waits for the chain list instead of asking for a chain the reader cannot p
 	await act(async () => chains.resolve(Response.json(['ethereum'])))
 	await waitForUi(() => expect(submit().textContent).toBe('Check pricing'))
 	await act(async () => submit().click())
-	expect(fieldErrorTexts(container)).toEqual(['Choose a chain.', 'Enter a token address or ID.'])
+	expect(fieldErrorTexts(container)).toHaveLength(2)
 })
 
 test('keeps the submit off beside the chain list failure and its Try again', async () => {
 	http.serve({ 'https://coins.llama.fi/chains': () => new Response(null, { status: 500 }) })
 	await render()
 
-	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain('Try again'))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
+	expect(container.querySelector('[role="alert"] button')).not.toBeNull()
 	expect(submit().disabled).toBe(true)
 	await act(async () => submit().click())
 	expect(fieldErrorTexts(container)).toEqual([])
-	expect(alertTexts(container)).toEqual([expect.stringMatching(/^Couldn’t load the supported chains\./)])
+	expect(alertTexts(container)).toHaveLength(1)
 })

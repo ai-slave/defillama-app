@@ -1,5 +1,6 @@
 import type { useAuthContext } from '~/auth'
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
+import { HttpError } from '~/utils/async'
 import { FEATURES_SERVER } from '../../../constants'
 import { migrateDashboardConfig } from '../dashboardConfig/migrate'
 import type { PersistedDashboard } from '../dashboardConfig/persisted'
@@ -64,14 +65,10 @@ export function matchesDashboardKey(
 	return !!dashboard && !!key && (dashboard.id === key || dashboard.slug === key)
 }
 
-export class DashboardError extends Error {
-	status: number
-
-	constructor(message: string, status: number) {
-		super(message)
+export class DashboardError extends HttpError {
+	constructor(message: string, status: number, reason: string | null) {
+		super(message, status, reason)
 		this.name = 'DashboardError'
-		this.status = status
-		Object.setPrototypeOf(this, DashboardError.prototype)
 	}
 }
 
@@ -81,7 +78,7 @@ async function requireAuthorizedResponse(
 	options?: Parameters<DashboardAuthorizedFetch>[1]
 ): Promise<Response> {
 	const response = options === undefined ? await authorizedFetch(url) : await authorizedFetch(url, options)
-	if (response === null) throw new DashboardError('Authentication required', 401)
+	if (response === null) throw new DashboardError('Authentication required', 401, 'Sign in to continue.')
 	return response
 }
 
@@ -138,16 +135,15 @@ let dashboardKeepaliveBytes = 0
 class DashboardAPIService {
 	private async handleResponse<T>(response: Response): Promise<T> {
 		if (!response.ok) {
-			let message = response.statusText || 'An error occurred'
-
+			let reason: string | null = null
 			try {
 				const errorData: { message?: string; error?: string } = await response.json()
-				message = errorData.message || errorData.error || message
+				reason = errorData.message || errorData.error || null
 			} catch {
-				// A non-JSON error body keeps the default message.
+				// A non-JSON error body carries no reason.
 			}
 
-			throw new DashboardError(message, response.status)
+			throw new DashboardError(reason ?? `Dashboard request returned ${response.status}`, response.status, reason)
 		}
 
 		return response.json()

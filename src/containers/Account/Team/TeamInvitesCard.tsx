@@ -100,6 +100,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 					description={`Are you sure you want to revoke the invite for ${invite.email}?`}
 					confirmLabel="Revoke"
 					pendingLabel="Revoking…"
+					errorMessage="Couldn't revoke the invite."
 					mutation={revokeInviteMutation}
 					variables={{ inviteId: invite.id }}
 					onClose={() => setShowRevokeConfirm(false)}

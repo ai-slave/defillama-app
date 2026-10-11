@@ -10,6 +10,7 @@ import { Icon } from '~/ui/Icon'
 import { Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import type { DashboardRatingDecision } from '../dashboardTypes'
 
 interface RatingProps {
@@ -34,8 +35,9 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 	const submission = useMutation({
 		mutationFn: (decision: DashboardRatingDecision) => onSubmit(sessionId, decision),
 		onError: (failure) => {
-			if (formRef.current?.isConnected) setError(failure.message)
-			else toast.error(failure.message)
+			const message = httpErrorMessage(failure, "Couldn't save your rating.")
+			if (formRef.current?.isConnected) setError(message)
+			else toast.error(message)
 		}
 	})
 	const skipping = submission.isPending && 'skipped' in submission.variables

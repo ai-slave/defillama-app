@@ -10,8 +10,9 @@ import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
-import { ArticleApiError, listResearchSponsors, setArticleClient } from '../api'
+import { listResearchSponsors, setArticleClient } from '../api'
 import type { ArticleClient, ArticleClientRelation } from '../types'
 import { ARTICLE_CLIENT_RELATION_LABELS } from '../types'
 import { MetaFieldHint } from './ArticleMetaFields'
@@ -55,9 +56,7 @@ export function ArticleClientField({
 		{ value: 'collaboration', label: ARTICLE_CLIENT_RELATION_LABELS.collaboration, disabled: disabled || !client }
 	]
 	const error = save.error
-		? save.error instanceof ArticleApiError
-			? save.error.message
-			: "Couldn't update the client."
+		? httpErrorMessage(save.error, "Couldn't update the client.")
 		: queryReadFailed(sponsors)
 			? "Couldn't load clients."
 			: null

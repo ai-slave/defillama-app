@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+import { LlamaAITransportError } from '../../api/transport'
 import { getProjectUploadFeedback, partitionProjectUploadFiles } from '../useProjectFileUpload'
 
 const ok = new File(['a'], 'ok.csv')
@@ -35,9 +36,23 @@ test('summarizes client and server rejections together without discarding accept
 	})
 })
 
-test('keeps failed project upload details visible for every sent file', () => {
-	expect(getProjectUploadFeedback([], [ok], { error: new Error('Project storage quota exceeded') })).toEqual({
+test("a refused project upload shows the route's reason on every sent file", () => {
+	const error = new LlamaAITransportError('Project storage quota exceeded', 413, {
+		error: 'Project storage quota exceeded'
+	})
+	expect(getProjectUploadFeedback([], [ok], { error })).toEqual({
 		added: 0,
 		skipped: [{ filename: 'ok.csv', reason: 'Project storage quota exceeded' }]
 	})
+})
+
+test('a failed project upload rejects every sent file without the raw transport text', () => {
+	for (const error of [
+		new TypeError('Failed to fetch'),
+		new LlamaAITransportError('Failed to upload files', 500, null)
+	]) {
+		const { skipped } = getProjectUploadFeedback([], [ok], { error })
+		expect(skipped).toHaveLength(1)
+		expect(skipped[0].reason).not.toMatch(/Failed to/)
+	}
 })

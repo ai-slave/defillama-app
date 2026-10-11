@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthContext } from '~/auth'
+import { ReaderError } from '~/utils/async'
 import { liteDashboardsQuery } from './useDashboardAPI'
 
 export const FREE_TIER_MAX_DASHBOARDS = 1
@@ -20,7 +21,7 @@ export function useFreeTierStatus() {
 		if (hasActiveSubscription) return true
 		if (!isFreeUser) return false
 		const current = await queryClient.fetchQuery(liteDashboardsQuery(authorizedFetch, user?.id)).catch(() => {
-			throw new Error("Couldn't check how many dashboards you have. Try again.")
+			throw new ReaderError("Couldn't check how many dashboards you have. Try again.")
 		})
 		return current.length < FREE_TIER_MAX_DASHBOARDS
 	}

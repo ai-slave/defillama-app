@@ -1,5 +1,6 @@
 import type { AsyncDuckDBConnection } from '@duckdb/duckdb-wasm'
 import { useCallback, useState } from 'react'
+import { HttpError, httpErrorMessage } from '~/utils/async'
 import { chartDatasetsBySlug } from '../chart-datasets'
 import { datasetsBySlug } from '../datasets'
 import { queryDuckDB } from './duckdb/query'
@@ -62,11 +63,6 @@ function canRegisterFileText(
 	return !!bindings && typeof (bindings as { registerFileText?: unknown }).registerFileText === 'function'
 }
 
-// Neither a conditional nor an optional chain can be lowered inside a catch.
-function loadErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : String(error)
-}
-
 function wasAborted(error: unknown, signal?: AbortSignal) {
 	return isAbortError(error) || signal?.aborted === true
 }
@@ -123,7 +119,7 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 					return entry
 				} catch (loadError) {
 					if (wasAborted(loadError, signal)) return null
-					setError({ table: name, message: loadErrorMessage(loadError) })
+					setError({ table: name, message: httpErrorMessage(loadError, "Couldn't load this table.") })
 					return null
 				}
 			}
@@ -198,10 +194,8 @@ async function fetchCsvFor(
 	if (!resp) throw new Error('Not authenticated')
 	if (!resp.ok) {
 		const body = await safeJson(resp)
-		throw new Error(
-			body?.error ??
-				`Couldn't load ${source.kind === 'dataset' ? source.slug : `${source.slug}/${source.param}`} (HTTP ${resp.status}). Try again.`
-		)
+		// The route writes its 4xx reasons for readers ("CSV downloads are available only for paid users.").
+		throw new HttpError(`Table download returned ${resp.status}`, resp.status, body?.error ?? null)
 	}
 	const csvText = await withAbort(resp.text(), signal)
 	throwIfAborted(signal)

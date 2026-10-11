@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { alertTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -136,13 +136,13 @@ test('a running submission names itself and cannot be cancelled', async () => {
 
 test('general feedback asks for a rating when Submit is pressed without one, and focuses the choice', async () => {
 	await click('Provide feedback')
-	expect(dialog()?.textContent).not.toContain('Choose Good or Bad.')
+	expect(fieldErrorTexts(dialog()!)).toEqual([])
 	expect(button('Submit').disabled).toBe(false)
 	await click('Submit')
-	expect(dialog()?.textContent).toContain('Choose Good or Bad.')
+	expect(fieldErrorTexts(dialog()!)).toHaveLength(1)
 	expect(document.activeElement).toBe(button('Good'))
 	expect(dialog()).not.toBeNull()
 	await click('Good')
 	expect(button('Good').getAttribute('aria-pressed')).toBe('true')
-	expect(dialog()?.textContent).not.toContain('Choose Good or Bad.')
+	expect(fieldErrorTexts(dialog()!)).toEqual([])
 })

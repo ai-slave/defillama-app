@@ -9,6 +9,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
+import { httpErrorMessage } from '~/utils/async'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { useProDashboardDashboard } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
@@ -69,7 +70,14 @@ export function DashboardOverflowMenu({
 						: 'Removed from the team',
 				statusToastOptions('dashboard-move-team', TOAST_DURATION_SHORT)
 			),
-		onError: (error) => toast.error(error.message, { id: 'dashboard-move-team' })
+		onError: (error, teamId) =>
+			toast.error(
+				httpErrorMessage(
+					error,
+					teamId ? "Couldn't share the dashboard with your team. Try again." : "Couldn't move the dashboard. Try again."
+				),
+				{ id: 'dashboard-move-team' }
+			)
 	})
 	const duplicate = useMutation({
 		mutationFn: () => onDuplicate!(),
@@ -81,14 +89,17 @@ export function DashboardOverflowMenu({
 					toast.error('Dashboard copied, but navigation failed. Open it from My dashboards.')
 				})
 		},
-		onError: (error) => toast.error(error.message, { id: 'dashboard-duplicate' })
+		onError: (error) =>
+			toast.error(httpErrorMessage(error, "Couldn't duplicate the dashboard. Try again."), {
+				id: 'dashboard-duplicate'
+			})
 	})
 	const deletion = useMutation({ mutationFn: () => onDelete!() })
 	const selection = useMutation({
 		mutationFn: async (action: DashboardMenuAction) => {
 			await action.onSelect()
 		},
-		onError: (error) => toast.error(error.message)
+		onError: (error, action) => toast.error(httpErrorMessage(error, `Couldn't finish “${action.label}”. Try again.`))
 	})
 
 	const hasDashboardActions = !!(onOpenSettings || onDuplicate || onNewDashboard || onDelete || moveTeam)
@@ -232,6 +243,7 @@ export function DashboardOverflowMenu({
 					description={`Deleting “${dashboardName}” cannot be undone.`}
 					confirmLabel="Delete"
 					pendingLabel="Deleting…"
+					errorMessage="Couldn't delete the dashboard."
 					mutation={deletion}
 					variables={undefined}
 					onClose={() => setShowDeleteConfirm(false)}

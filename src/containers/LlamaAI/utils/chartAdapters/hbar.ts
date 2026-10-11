@@ -157,7 +157,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 				valueSymbol: config.valueSymbol ?? ''
 			},
 			title: config.title || 'Chart error',
-			description: `Couldn't render the horizontal bar chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			description: "Couldn't render the horizontal bar chart.",
 			defaultExportKind: 'hbar'
 		}
 	}

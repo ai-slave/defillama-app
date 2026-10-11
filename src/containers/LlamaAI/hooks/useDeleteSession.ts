@@ -18,12 +18,7 @@ export function useDeleteSession() {
 	return useMutation({
 		mutationKey: [SESSION_WRITE_KEY, user?.id],
 		mutationFn: async ({ sessionId }: { sessionId: string; projectId?: string | null }) => {
-			try {
-				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}`, { method: 'DELETE' })
-			} catch {
-				// The confirmation, or the toast after it closes, shows this sentence rather than the transport's.
-				throw new Error("Couldn't delete this chat. Try again.")
-			}
+			await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}`, { method: 'DELETE' })
 		},
 		// Keep the row and its confirmation available until the server accepts deletion.
 		onSuccess: (_data, { sessionId }) => {

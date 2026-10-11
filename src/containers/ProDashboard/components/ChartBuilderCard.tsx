@@ -11,6 +11,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { handleSimpleFetchResponse, httpErrorMessage, ReaderError } from '~/utils/async'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
@@ -299,20 +300,11 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					filename: fileName
 				})
 			})
-			if (!response) throw new Error('Sign in to download this CSV')
-			if (!response.ok) {
-				let message = "Couldn't download the CSV."
-				try {
-					const body: { error?: string } = await response.json()
-					if (body.error) message = body.error
-				} catch {
-					// A non-JSON error body keeps the default message.
-				}
-				throw new Error(message)
-			}
+			if (!response) throw new ReaderError('Sign in to download this CSV.')
+			await handleSimpleFetchResponse(response)
 			downloadBlob(fileName, await response.blob())
 		},
-		onError: (error) => toast.error(error instanceof Error ? error.message : "Couldn't download the CSV.")
+		onError: (error) => toast.error(httpErrorMessage(error, "Couldn't download the CSV."))
 	})
 
 	const updateSeriesColors = (nextColors: Record<string, string>) => {

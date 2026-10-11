@@ -289,9 +289,9 @@ test('a general switch failure shows at the end of the form and leaves every fie
 	confirmCalls[0].resolve(Response.json({ error: 'Failed to switch authentication method' }, { status: 500 }))
 	await settle()
 
-	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
-		'Failed to switch authentication method'
-	)
+	expect(document.querySelector('[role=dialog] [role=alert]')).not.toBeNull()
+	// A 5xx body is not written for readers.
+	expect(document.body.textContent).not.toContain('Failed to switch authentication method')
 	expect(confirmFields().map((input) => input.getAttribute('aria-invalid'))).toEqual([null, null, null])
 })
 
@@ -300,13 +300,13 @@ test('retrying a failed switch keeps its error on screen while the retry runs', 
 	await renderModalAtConfirmStep()
 	confirmCalls[0].resolve(Response.json({ error: 'Failed to switch authentication method' }, { status: 500 }))
 	await settle()
+	const failure = document.querySelector('[role=dialog] [role=alert]')?.textContent
+	expect(failure).toBeTruthy()
 	await act(async () => submitForm(confirmFields()[0]))
 	await settle()
 
 	expect(confirmCalls).toHaveLength(2)
-	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
-		'Failed to switch authentication method'
-	)
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(failure)
 })
 
 test('a rejected code is reported under the code field only', async () => {

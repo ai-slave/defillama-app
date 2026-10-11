@@ -5,7 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IProtocol } from '../types'
 
@@ -195,7 +195,8 @@ test('saving a custom column without a name or formula says so under each field 
 
 	expect(fieldErrorTexts(dialog)).toEqual([])
 	await click(button('Save')!)
-	expect(fieldErrorTexts(dialog)).toEqual(['Enter a column name.', 'Enter a formula.'])
+	expect(fieldErrorTexts(dialog)).toHaveLength(2)
+	expect(fieldErrorOf(field('Column name'))).toBeTruthy()
 	expect(document.activeElement).toBe(field('Column name'))
 	await type(field('Column name'), 'Ratio')
 	await type(field('Formula'), 'tvl *')

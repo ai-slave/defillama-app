@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 
 export interface Subscription {
 	PK: string
@@ -100,7 +100,7 @@ export async function fetchSubscriptionStatus({
 	if (response.status === 404) return null
 
 	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-		throw new Error(error instanceof Error && error.message ? error.message : "Couldn't load your subscription.")
+		throw new Error(httpErrorMessage(error, "Couldn't load your subscription."))
 	})
 	const data: SubscriptionResponse = await normalized.json()
 	if (data.subscription.status !== 'active') {

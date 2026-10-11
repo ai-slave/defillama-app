@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
+import { DashboardError } from '../../services/DashboardAPI'
 import { CopyDashboardButton, EditDoneButton, UndoAIGenerationButton } from '../DashboardActionButtons'
 import { Rating } from '../Rating'
 
@@ -63,8 +64,9 @@ test('copy blocks repeated activation, exposes failure, and navigates after a su
 	expect(document.activeElement).toBe(button('Copying…'))
 	await click('Copying…')
 	expect(copy).toHaveBeenCalledOnce()
-	await act(async () => pending.reject(new Error('Copy unavailable')))
-	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Copy unavailable'))
+	await act(async () => pending.reject(new TypeError('Failed to fetch')))
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')).not.toBeNull())
+	expect(container.querySelector('[role="alert"]')!.textContent).not.toContain('Failed to fetch')
 	expect(push).not.toHaveBeenCalled()
 	await click('Copy Dashboard')
 	await waitForUi(() => expect(push).toHaveBeenCalledExactlyOnceWith('/pro/copied-analysis'))
@@ -95,8 +97,10 @@ test('undo blocks another request while pending and keeps failure beside the ret
 	await waitForUi(() => expect(button('Undoing…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Undoing…')
 	expect(undo).toHaveBeenCalledOnce()
-	await act(async () => pending.reject(new Error('Undo unavailable')))
-	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Undo unavailable'))
+	await act(async () => pending.reject(new DashboardError('Read-only', 403, 'This dashboard is read-only.')))
+	await waitForUi(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toBe('This dashboard is read-only.')
+	)
 	await click('Undo AI changes')
 	await waitForUi(() => expect(undo).toHaveBeenCalledTimes(2))
 	await waitForUi(() => {
@@ -123,8 +127,9 @@ test.each([
 	await click('Skipping…')
 	await click('Dismiss rating')
 	expect(submit).toHaveBeenCalledExactlyOnceWith('first', { skipped: true })
-	await act(async () => pending.reject(new Error('Rating unavailable')))
-	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Rating unavailable'))
+	await act(async () => pending.reject(new TypeError('Failed to fetch')))
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')).not.toBeNull())
+	expect(container.querySelector('[role="alert"]')!.textContent).not.toContain('Failed to fetch')
 	expect(container.querySelector('textarea')!.value).toBe('Keep this feedback')
 	await click('Submit Rating')
 	await waitForUi(() => expect(submit).toHaveBeenLastCalledWith('first', { rating: 4, feedback: 'Keep this feedback' }))

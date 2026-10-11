@@ -65,8 +65,7 @@ interface CustomDataTabProps {
 
 function describeError(error: unknown): string {
 	if (error instanceof CustomDataParseError || error instanceof CustomDataTooLargeError) return error.message
-	if (error instanceof Error && error.message) return error.message
-	return 'Could not read this CSV.'
+	return "Couldn't read this CSV."
 }
 
 export function CustomDataTab(props: CustomDataTabProps) {

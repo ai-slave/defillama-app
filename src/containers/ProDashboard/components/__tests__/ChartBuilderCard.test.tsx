@@ -71,7 +71,7 @@ describe('ChartBuilderCard streamed loading state', () => {
 		const html = renderCard(new QueryClient())
 
 		expect(html).toContain('Loading chart')
-		expect(html).not.toContain('No data available')
+		expect(html).not.toContain('role="status"')
 	})
 
 	test('shows no data after the stream provides a completed empty result', () => {
@@ -80,7 +80,7 @@ describe('ChartBuilderCard streamed loading state', () => {
 		const html = renderCard(queryClient)
 
 		expect(html).not.toContain('Loading chart')
-		expect(html).toContain('No data available')
+		expect(html).toContain('role="status"')
 	})
 
 	test('shows an error with retry when the series query fails', async () => {

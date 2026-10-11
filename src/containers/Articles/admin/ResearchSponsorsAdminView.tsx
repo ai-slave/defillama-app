@@ -4,7 +4,6 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import {
-	ArticleApiError,
 	createResearchSponsor,
 	deleteResearchSponsor,
 	linkResearchSponsorReport,
@@ -28,6 +27,7 @@ import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave, showFiel
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
@@ -54,10 +54,6 @@ const RELATION_OPTIONS: ReadonlyArray<SegmentedControlOption<RelationValue>> = [
 	{ value: 'collaboration', label: ARTICLE_CLIENT_RELATION_LABELS.collaboration }
 ]
 
-function mutationMessage(error: unknown, fallback: string) {
-	return error instanceof ArticleApiError ? error.message : fallback
-}
-
 function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 	const [confirmDelete, setConfirmDelete] = useState(false)
 	const { authorizedFetch } = useAuthContext()
@@ -73,7 +69,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			invalidate()
 			toast.success('Research article linked')
 		},
-		onError: (error) => toast.error(mutationMessage(error, "Couldn't link the article."))
+		onError: (error) => toast.error(httpErrorMessage(error, "Couldn't link the article."))
 	})
 	const unlinkMutation = useMutation({
 		mutationFn: (articleId: string) => unlinkResearchSponsorReport(sponsor.id, articleId, authorizedFetch),
@@ -81,13 +77,13 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			invalidate()
 			toast.success('Research article unlinked')
 		},
-		onError: (error) => toast.error(mutationMessage(error, "Couldn't unlink the article."))
+		onError: (error) => toast.error(httpErrorMessage(error, "Couldn't unlink the article."))
 	})
 	const relationMutation = useMutation({
 		mutationFn: ({ articleId, relation }: { articleId: string; relation: ArticleClientRelation | null }) =>
 			setArticleClient(articleId, { sponsorId: sponsor.id, relation }, authorizedFetch),
 		onSuccess: invalidate,
-		onError: (error) => toast.error(mutationMessage(error, "Couldn't update the relation."))
+		onError: (error) => toast.error(httpErrorMessage(error, "Couldn't update the relation."))
 	})
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteResearchSponsor(sponsor.id, authorizedFetch),
@@ -144,6 +140,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 					pendingLabel="Removing…"
 					mutation={deleteMutation}
 					variables={undefined}
+					errorMessage="Couldn't remove the client."
 					onClose={() => setConfirmDelete(false)}
 				/>
 			) : null}
@@ -244,7 +241,7 @@ export function ResearchSponsorsAdminView() {
 			setSubmitted(false)
 			toast.success('Client added')
 		},
-		onError: (mutationError) => toast.error(mutationMessage(mutationError, "Couldn't add the client."))
+		onError: (mutationError) => toast.error(httpErrorMessage(mutationError, "Couldn't add the client."))
 	})
 
 	return (
@@ -300,7 +297,7 @@ export function ResearchSponsorsAdminView() {
 			{isLoading && !failed ? <PanelLoadingStatus label="Loading clients" className="min-h-40" /> : null}
 			{failed ? (
 				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-					Couldn't load clients. {mutationMessage(error, 'Try again in a moment.')}
+					{httpErrorMessage(error, "Couldn't load clients.")}
 				</InlineStatus>
 			) : null}
 			{!isLoading && !failed && data?.length === 0 ? (
@@ -372,7 +369,7 @@ function SponsorPageEditor({
 			</Button>
 			{update.error ? (
 				<InlineStatus variant="error">
-					{mutationMessage(update.error, "Couldn't update the sponsor page.")}
+					{httpErrorMessage(update.error, "Couldn't update the sponsor page.")}
 				</InlineStatus>
 			) : null}
 		</form>

@@ -53,7 +53,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 			})
 		},
 		onSuccess: () => toast.success('PDF downloaded!', { id: TOAST_ID }),
-		onError: (error) => toast.error(error.message, { id: TOAST_ID })
+		onError: () => toast.error("Couldn't export the PDF. Try again.", { id: TOAST_ID })
 	})
 	const loading = loaders.userLoading || pdfExport.isPending
 

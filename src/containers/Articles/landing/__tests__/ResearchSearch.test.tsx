@@ -132,7 +132,7 @@ test('a failed search announces its error in the results with a Try again, keeps
 	http.serve({ [`${FEATURES_SERVER}/articles`]: fixtureStatus(500, { error: 'Search is down' }) })
 	await render()
 	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain('Search is down')
+	expect(alertTexts(container)[0]).not.toContain('Search is down')
 	expect(container.textContent).not.toContain('0 results')
 	expect(input().value).toBe('aave')
 

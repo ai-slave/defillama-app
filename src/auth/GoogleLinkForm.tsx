@@ -68,12 +68,13 @@ export function GoogleLinkForm({
 				signal,
 				onAuthenticated: onVerified
 			})
-			.catch((caughtError) => {
+			// Every failure confirmGoogleLink throws is worded for readers (src/auth/index.tsx).
+			.catch((caughtError: Error) => {
 				if (signal.aborted) return null
 				if (caughtError instanceof InvalidCodeError) showFieldErrors(form, () => setCodeRefusal(caughtError.message))
 				else
 					store.dispatch({
-						error: caughtError instanceof Error ? caughtError.message : 'Could not verify the code.',
+						error: caughtError.message,
 						kind: 'failed'
 					})
 				return null
@@ -88,7 +89,8 @@ export function GoogleLinkForm({
 				challengeToken: challenge.challengeToken,
 				signal
 			})
-			.catch((caughtError) => {
+			// Every failure resendGoogleLink throws is worded for readers (src/auth/index.tsx).
+			.catch((caughtError: Error) => {
 				if (signal.aborted) return null
 				if (caughtError instanceof OtpRequestError && caughtError.retryAt) {
 					// The wait was measured from Date.now(), so the clock re-reads the second before the form shows it.
@@ -102,7 +104,7 @@ export function GoogleLinkForm({
 					})
 				} else
 					store.dispatch({
-						error: caughtError instanceof Error ? caughtError.message : 'Could not resend the code.',
+						error: caughtError.message,
 						kind: 'failed'
 					})
 				return null
