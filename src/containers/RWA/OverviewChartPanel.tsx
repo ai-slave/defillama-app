@@ -527,7 +527,7 @@ export function RWAOverviewChartPanel({
 					) : null}
 					{isFlowMetric ? (
 						flowChartFailedRead ? (
-							<ChartPanelBodyError retry={flowChartFailedRead}>Failed to load flow data.</ChartPanelBodyError>
+							<ChartPanelBodyError retry={flowChartFailedRead}>Couldn&apos;t load flow data.</ChartPanelBodyError>
 						) : isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
 							<ChartPanelBodyFallback role="status" aria-live="polite">
 								<LoadingIndicator />
@@ -560,7 +560,7 @@ export function RWAOverviewChartPanel({
 							<ChartPanelBodyFallback className="body-sm text-tertiary">No flow data available.</ChartPanelBodyFallback>
 						)
 					) : chartFailedRead ? (
-						<ChartPanelBodyError retry={chartFailedRead}>Failed to load chart data.</ChartPanelBodyError>
+						<ChartPanelBodyError retry={chartFailedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 					) : isChartLoading ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite">
 							<LoadingIndicator />

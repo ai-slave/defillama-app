@@ -269,7 +269,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 
 	if (state.status === 'loading') return <PanelLoadingStatus />
 	if (state.status === 'unavailable')
-		return <PanelStatus variant="error">Failed to load stablecoin reserve data</PanelStatus>
+		return <PanelStatus variant="error">Couldn&apos;t load stablecoin reserve data.</PanelStatus>
 	if (state.status === 'empty')
 		return <PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
 

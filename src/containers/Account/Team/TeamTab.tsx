@@ -54,7 +54,7 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 	if (token && membershipConfirmed && queryReadFailed(inviteAccount)) {
 		return (
 			<InlineStatus variant="error" retry={inviteAccount}>
-				You joined the team, but account details could not be loaded.
+				You joined the team, but couldn&apos;t load your account details.
 			</InlineStatus>
 		)
 	}

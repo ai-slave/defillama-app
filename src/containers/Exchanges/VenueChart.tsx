@@ -160,7 +160,7 @@ export function VenueChart({
 					showGlobalDataNotice={showGlobalDataNotice}
 				>
 					{queryReadFailed(query) ? (
-						<ChartPanelBodyError retry={query}>Failed to load venue history.</ChartPanelBodyError>
+						<ChartPanelBodyError retry={query}>Couldn&apos;t load venue history.</ChartPanelBodyError>
 					) : (
 						<ChartPanelBodyFallback role="status" aria-live="polite">
 							<LoadingIndicator />

@@ -106,7 +106,7 @@ export function useArticleCollaborators({
 			setCollaboratorEmail('')
 			return null
 		} catch (error) {
-			return error instanceof Error ? error.message : 'Failed to add co-author'
+			return error instanceof Error ? error.message : "Couldn't add the co-author."
 		}
 	}
 

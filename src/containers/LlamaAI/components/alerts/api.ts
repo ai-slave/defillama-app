@@ -30,7 +30,7 @@ export async function createManualAlert(
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
 		const errBody = await res.json().catch(() => ({}))
-		throw new Error(errBody?.error || 'Failed to create alert')
+		throw new Error(errBody?.error || "Couldn't create the alert.")
 	}
 	return res.json()
 }
@@ -39,7 +39,7 @@ export async function fetchAlerts(authorizedFetch: AuthorizedFetch): Promise<Arr
 	const res = await authorizedFetch(`${AI_SERVER}/alerts`)
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
-		throw new Error('Failed to fetch alerts')
+		throw new Error("Couldn't load your alerts.")
 	}
 	const data = (await res.json().catch(() => null)) as { alerts?: Array<Alert> } | null
 	// Older alert list code treated missing 2xx envelopes as empty lists; keep that
@@ -53,7 +53,7 @@ export async function fetchAlertExecutions(
 ): Promise<Array<AlertExecution>> {
 	const encodedAlertId = encodeURIComponent(alertId)
 	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}/executions`)
-	if (!res?.ok) throw new Error('Failed to fetch executions')
+	if (!res?.ok) throw new Error("Couldn't load alert runs.")
 	const data = (await res.json().catch(() => null)) as { executions?: Array<AlertExecution> } | null
 	return Array.isArray(data?.executions) ? data.executions : []
 }
@@ -66,7 +66,7 @@ export async function fetchAlertExecutionDetail(
 	const encodedAlertId = encodeURIComponent(alertId)
 	const encodedExecutionId = encodeURIComponent(executionId)
 	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}/executions/${encodedExecutionId}`)
-	if (!res?.ok) throw new Error('Failed to fetch execution detail')
+	if (!res?.ok) throw new Error("Couldn't load the alert run.")
 	return res.json()
 }
 
@@ -83,7 +83,7 @@ export async function setAlertEnabled(
 	})
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
-		throw new Error('Failed to update alert')
+		throw new Error("Couldn't update the alert.")
 	}
 	return enabled
 }
@@ -93,7 +93,7 @@ export async function deleteAlert(authorizedFetch: AuthorizedFetch, alertId: str
 	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}`, { method: 'DELETE' })
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
-		throw new Error('Failed to delete alert')
+		throw new Error("Couldn't delete the alert.")
 	}
 	return alertId
 }
@@ -134,6 +134,6 @@ export async function updateAlert(
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
 		const errBody = await res.json().catch(() => ({ error: res.statusText }))
-		throw new Error(errBody.error || 'Failed to update alert')
+		throw new Error(errBody.error || "Couldn't update the alert.")
 	}
 }

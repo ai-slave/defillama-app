@@ -42,7 +42,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 		queryKey: ['pro-dashboard', 'saved-charts-list', user?.id],
 		queryFn: async () => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`)
-			if (!res.ok) throw new Error('Failed to load charts')
+			if (!res.ok) throw new Error("Couldn't load charts.")
 			const json = await res.json()
 			return json.charts as Array<SavedChart>
 		},
@@ -53,7 +53,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	const deleteMutation = useMutation({
 		mutationFn: async (chartId: string) => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`, { method: 'DELETE' })
-			if (!res.ok) throw new Error('The chart could not be deleted. Try again.')
+			if (!res.ok) throw new Error("Couldn't delete the chart. Try again.")
 		},
 		onSuccess: (_, chartId) => {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'saved-charts-list'] })

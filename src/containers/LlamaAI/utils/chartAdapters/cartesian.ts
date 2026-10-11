@@ -604,7 +604,7 @@ export function adaptCartesianChartData(
 			chartType: 'cartesian',
 			props,
 			title: config.title || 'Chart error',
-			description: `Failed to render chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			description: `Couldn't render the chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			rowCount: 0,
 			axisType: config.axes.x.type === 'time' ? 'time' : 'category',
 			isTimeChart: config.axes.x.type === 'time',

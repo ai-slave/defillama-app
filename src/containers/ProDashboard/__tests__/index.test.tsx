@@ -483,7 +483,7 @@ describe('an editor', () => {
 		expect(flush).not.toHaveBeenCalled()
 		expect(mocks.push).not.toHaveBeenCalled()
 		expect(toastMock.error).toHaveBeenCalledWith(
-			'Changes could not be saved. Retry the save first.',
+			"Couldn't save your changes. Retry the save first.",
 			expect.objectContaining({ id: 'dashboard-done-blocked' })
 		)
 	})

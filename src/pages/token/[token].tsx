@@ -132,13 +132,13 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			const noTokenMarkets = { summary: null, hasMarkets: false }
 			const marketsPromise = geckoId
 				? getTokenMarkets(geckoId).catch((error) =>
-						downgradeTokenPageError(error, `Failed to load token markets for ${geckoId}`, noTokenMarkets)
+						downgradeTokenPageError(error, `Couldn't load token markets for ${geckoId}`, noTokenMarkets)
 					)
 				: Promise.resolve(noTokenMarkets)
 			let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
 			if (metadataCache.liquidationsTokenSymbolsSet.has(record.symbol)) {
 				liquidationsPromise = hasTokenLiquidationsData(record.symbol).catch((error) =>
-					downgradeTokenPageError(error, `Failed to load token liquidations data for ${record.symbol}`, false)
+					downgradeTokenPageError(error, `Couldn't load token liquidations data for ${record.symbol}`, false)
 				)
 			}
 			const overviewPromise = (async () => {
@@ -147,13 +147,13 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				const [raises, treasury, currentSnapshot] = await Promise.all([
 					raisesDefillamaId
 						? fetchRaisesByDefillamaId(raisesDefillamaId).catch((error) =>
-								downgradeTokenPageError(error, `Failed to load token raises for ${raisesDefillamaId}`, null)
+								downgradeTokenPageError(error, `Couldn't load token raises for ${raisesDefillamaId}`, null)
 							)
 						: Promise.resolve(null),
 					// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
 					shouldFetchTreasury
 						? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch((error) =>
-								downgradeTokenPageError(error, `Failed to load token treasury for ${protocolDefiLlamaId}`, null)
+								downgradeTokenPageError(error, `Couldn't load token treasury for ${protocolDefiLlamaId}`, null)
 							)
 						: Promise.resolve(null),
 					currentSnapshotPromise
@@ -196,7 +196,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 						} catch (error) {
 							return downgradeTokenPageError(
 								error,
-								`Failed to load token rights data for ${tokenRightsDefillamaIds.join(', ') || record.name}`,
+								`Couldn't load token rights data for ${tokenRightsDefillamaIds.join(', ') || record.name}`,
 								null
 							)
 						}
@@ -221,14 +221,14 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 							borrowCapacitySnapshot: await getIndexedTokenRiskBorrowCapacity()
 						})
 					})().catch((error) => {
-						return downgradeTokenPageError(error, `Failed to load token risk data for ${geckoId}`, null)
+						return downgradeTokenPageError(error, `Couldn't load token risk data for ${geckoId}`, null)
 					})
 				: Promise.resolve(null)
 
 			const yieldsRowsPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
 				record.hasEarn && snapshot
 					? getTokenEarnRows(snapshot, record.symbol).catch((error) =>
-							downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, {
+							downgradeTokenPageError(error, `Couldn't load token yields data for ${record.symbol}`, {
 								rows: [],
 								tokenKeys: []
 							})
@@ -239,7 +239,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			const borrowRoutesPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
 				record.hasBorrow && snapshot
 					? getTokenBorrowRoutes(snapshot, record.symbol).catch((error) =>
-							downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
+							downgradeTokenPageError(error, `Couldn't load token borrow routes data for ${record.symbol}`, null)
 						)
 					: null
 			)

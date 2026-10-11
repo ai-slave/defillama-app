@@ -98,7 +98,7 @@ export function ChartPngExportButton({
 								const { filename: csvFilename, rows } = csvMenuItem.prepareCsv()
 								downloadCSV(withCsvExtension(csvFilename), rows, { addTimestamp: false })
 							} catch {
-								toast.error('Failed to export CSV')
+								toast.error("Couldn't export the CSV.")
 							}
 						}}
 					>

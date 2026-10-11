@@ -316,7 +316,8 @@ function AddToDashboardDialog({
 			submitAddToDashboard({ authorizedFetch, chartConfig, llamaAIChart, configName, ...variables, repairTarget }),
 		onError: (error, variables) =>
 			setSubmitError(
-				error.message || (variables.target.kind === 'new' ? 'Failed to create dashboard' : 'Failed to add chart')
+				error.message ||
+					(variables.target.kind === 'new' ? "Couldn't create the dashboard." : "Couldn't add the chart.")
 			),
 		onSuccess: (result) => {
 			setSubmitError(null)

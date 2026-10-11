@@ -175,7 +175,7 @@ export function ChainsByCategory({
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 					<ChartPanel className="relative isolate col-span-full">
 						{chartReadFailed ? (
-							<ChartPanelBodyError retry={chartDataQuery}>Failed to load chart data.</ChartPanelBodyError>
+							<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 						) : (
 							<ChartPanelExportShellFallback
 								role="status"

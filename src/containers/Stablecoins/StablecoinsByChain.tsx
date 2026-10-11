@@ -657,7 +657,7 @@ function MultiSeriesChartPanel({
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (state.status === 'error') {
-		return <ChartPanelBodyError retry={state.retry}>Failed to load chart data.</ChartPanelBodyError>
+		return <ChartPanelBodyError retry={state.retry}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 	}
 	if (state.status === 'loading') {
 		return (

@@ -82,7 +82,7 @@ test('a prepared export blocks duplicates, reports failure in a toast, and downl
 	expect(downloads).toEqual([])
 
 	await act(async () => pending.reject(new Error('Snapshot unavailable')))
-	await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Please try again.'))
+	await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Try again.'))
 	expect(button('Download .csv').disabled).toBe(false)
 
 	await click('Download .csv')
@@ -175,9 +175,7 @@ test('grouped export supports arrows and Escape, retains failed choices, and pre
 	expect(exportRows.mock.calls).toEqual([['chain']])
 	await act(async () => pending.reject(new Error('Unavailable')))
 	await waitFor(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-			'Couldn’t complete the CSV export. Please try again.'
-		)
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t complete the CSV export. Try again.')
 	)
 	expect(toastText()).toBe('')
 
@@ -240,7 +238,7 @@ test.each(['dismissed', 'unmounted'] as const)(
 			await render(null)
 		}
 		await act(async () => pending.reject(new Error('Snapshot unavailable')))
-		await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Please try again.'))
+		await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Try again.'))
 
 		await render(dropdown)
 		await click('More actions')

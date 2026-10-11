@@ -349,7 +349,7 @@ export function ChartCsvExportButton({
 		let result: CsvPayload
 		if (source === 'rendered-chart') {
 			const instance = chartInstance()
-			if (!instance) throw new Error('Failed to get chart instance')
+			if (!instance) throw new Error("Couldn't find the chart.")
 			result = buildCsvFromChart({ instance, filenameBase: filename })
 		} else if (source.type === 'dataset') {
 			const dataset = await source.prepare()

@@ -885,7 +885,7 @@ export async function fetchAgenticResponse({
 			)
 		}
 		if (response.status === 429) {
-			throw new Error(errorData?.error || 'Too many concurrent requests. Please wait.')
+			throw new Error(errorData?.error || 'Too many concurrent requests. Wait a moment.')
 		}
 		throw new Error(errorData?.error || `HTTP error status: ${response.status}`)
 	}
@@ -920,7 +920,7 @@ export async function stopAgenticExecution(
 		method: 'POST',
 		...(signal ? { signal } : {})
 	})
-	if (!response.ok) throw new Error(`Failed to stop execution (${response.status})`)
+	if (!response.ok) throw new Error(`Couldn't stop the run (status ${response.status}).`)
 	const value = (await response.json()) as { stopped?: unknown; active?: unknown; snapshot?: unknown }
 	if (typeof value.stopped !== 'boolean') throw new Error('Invalid stop response')
 	if (value.active === true) return { stopped: value.stopped, active: true }
@@ -940,12 +940,12 @@ export async function checkActiveExecution(
 	try {
 		const res = await fetchFn(`${AI_SERVER}/agentic/active/${encodeURIComponent(sessionId)}`, { signal: abortSignal })
 		if (!res) {
-			throw new Error('Failed to check active execution: no response received')
+			throw new Error("Couldn't check the active run: no response received.")
 		}
 		if (res.status === 404) return { active: false, execution: null }
 		if (!res.ok) {
 			const statusLabel = `${res.status} ${res.statusText}`.trim()
-			throw new Error(await getResponseErrorMessage(res, `Failed to check active execution (${statusLabel})`))
+			throw new Error(await getResponseErrorMessage(res, `Couldn't check the active run (${statusLabel}).`))
 		}
 		return decodeActiveExecutionResponse(await res.json())
 	} catch (error) {
@@ -1003,7 +1003,7 @@ export async function resumeAgenticStream({
 			}
 		}
 		const statusLabel = `${res.status} ${res.statusText}`.trim()
-		const message = await getResponseErrorMessage(res, `Failed to resume active execution (${statusLabel})`)
+		const message = await getResponseErrorMessage(res, `Couldn't resume the active run (${statusLabel}).`)
 		const error = new Error(message) as Error & { status?: number }
 		error.status = res.status
 		throw error

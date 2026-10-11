@@ -23,8 +23,8 @@ describe('alerts API wrappers', () => {
 	test('still throws on non-2xx responses', async () => {
 		const fetcher: AuthorizedFetch = async () => jsonResponse({ error: 'nope' }, { status: 500 })
 
-		await expect(fetchAlerts(fetcher)).rejects.toThrow('Failed to fetch alerts')
-		await expect(fetchAlertExecutions(fetcher, 'alert-1')).rejects.toThrow('Failed to fetch executions')
+		await expect(fetchAlerts(fetcher)).rejects.toThrow("Couldn't load your alerts.")
+		await expect(fetchAlertExecutions(fetcher, 'alert-1')).rejects.toThrow("Couldn't load alert runs.")
 	})
 })
 
@@ -62,6 +62,6 @@ describe('createManualAlert', () => {
 				trigger: { type: 'schedule' },
 				delivery_channel: 'email'
 			})
-		).rejects.toThrow('Failed to create alert')
+		).rejects.toThrow("Couldn't create the alert.")
 	})
 })

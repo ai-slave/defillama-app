@@ -20,7 +20,7 @@ async function submitSupportRequest(formData: FormData) {
 		method: 'POST',
 		body: formData
 	}).then((res) => res.json())
-	if (data?.message !== 'success') throw new Error('Failed to submit support request')
+	if (data?.message !== 'success') throw new Error("Couldn't submit the support request.")
 }
 
 function LiveChatCard({ userHash, email }: { userHash: string | null; email: string | null }) {
@@ -83,7 +83,7 @@ function LiveChatCard({ userHash, email }: { userHash: string | null; email: str
 					)}
 				</span>
 				<span className="body-sm text-secondary">
-					{loading ? 'Please wait' : userHash ? 'Chat with us in real time' : 'Available for paying customers'}
+					{loading ? 'Wait a moment' : userHash ? 'Chat with us in real time' : 'Available for paying customers'}
 				</span>
 			</Card>
 		</>

@@ -456,7 +456,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 			await navigator.clipboard.writeText(url)
 			report('copy-link', true, 'Link copied')
 		} catch {
-			report('copy-link', false, 'Failed to copy link')
+			report('copy-link', false, "Couldn't copy the link.")
 		}
 	}, [currentConfig, report])
 
@@ -481,7 +481,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 			await navigator.clipboard.writeText(tsv)
 			report('copy', true, 'Copied to clipboard (paste into spreadsheets)')
 		} catch {
-			report('copy', false, 'Failed to copy')
+			report('copy', false, "Couldn't copy.")
 		}
 	}, [columnMeta, cols, displayedRows, selectedCount, report])
 
@@ -605,7 +605,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 						) : failed ? (
 							<div className="flex flex-1 items-center justify-center p-4">
 								<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-									{error instanceof Error ? error.message : 'Failed to fetch data'}
+									{error instanceof Error ? error.message : "Couldn't load data."}
 								</InlineStatus>
 							</div>
 						) : columnMeta.length === 0 ? (

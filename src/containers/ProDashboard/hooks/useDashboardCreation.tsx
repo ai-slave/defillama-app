@@ -99,7 +99,7 @@ export const useDashboardCreation = () => {
 		},
 		onError: (error: unknown) => {
 			console.log('Error creating dashboard:', error)
-			toast.error(error instanceof Error ? error.message : 'Failed to create dashboard. Please try again.')
+			toast.error(error instanceof Error ? error.message : "Couldn't create the dashboard. Try again.")
 		}
 	})
 
@@ -112,7 +112,7 @@ export const useDashboardCreation = () => {
 		}
 
 		if (!isAuthenticated) {
-			toast.error('Please sign in to create dashboards')
+			toast.error('Sign in to create dashboards.')
 			return
 		}
 

@@ -166,7 +166,7 @@ export async function buildExportBlocks(
 	if (request.kind === 'chart') {
 		const entry = request.charts[request.chartId]
 		const node = entry ? buildLlamaAIChartNode(entry.config, entry.data) : null
-		if (!node) return { blocks: [], notes: ['Chart could not be exported'] }
+		if (!node) return { blocks: [], notes: ["Couldn't export a chart."] }
 		return { blocks: await saveChartsToLibrary([node], deps.saveChart), notes }
 	}
 
@@ -187,7 +187,7 @@ export async function buildExportBlocks(
 		if (uploaded) {
 			images[imageId] = uploaded
 		} else {
-			notes.push('One image could not be imported')
+			notes.push("Couldn't import one image.")
 		}
 	}
 

@@ -272,7 +272,7 @@ describe('EquityTickerPage price history', () => {
 			await waitForUi(async () => {
 				await act(async () => {})
 				expect(container.textContent).toContain(
-					result === 'empty' ? 'No price history available' : 'Failed to load price history'
+					result === 'empty' ? 'No price history available' : "Couldn't load price history"
 				)
 			})
 			expect(container.querySelector('[aria-label="Loading price history"]')).toBeNull()

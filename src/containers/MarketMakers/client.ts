@@ -118,7 +118,7 @@ async function postJson<T>(url: string, body: Record<string, unknown>): Promise<
 	if (!res.ok) {
 		if (res.status === 429) throw new Error('Too many requests. Try again in a few minutes.')
 		const message = data && typeof data.error === 'string' ? data.error : null
-		throw new Error(message ?? 'Failed to submit the request')
+		throw new Error(message ?? "Couldn't submit the request.")
 	}
 	return data as T
 }

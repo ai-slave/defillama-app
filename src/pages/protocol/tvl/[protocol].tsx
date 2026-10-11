@@ -438,11 +438,11 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			)}
 			{errors.length > 0 ? (
 				<PanelStatus variant="error" className="col-span-full">
-					Failed to fetch{' '}
+					Couldn&apos;t load{' '}
 					{Array.from(new Set(errors.map((e) => CHART_CATEGORY_LABELS[e.category])))
 						.filter(Boolean)
 						.join(', ')}{' '}
-					APIs
+					data.
 				</PanelStatus>
 			) : null}
 		</ProtocolOverviewLayout>

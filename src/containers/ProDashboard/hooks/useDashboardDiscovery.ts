@@ -67,7 +67,7 @@ export function useDashboardDiscovery(params: SearchParams) {
 	const likeMutation = useMutation({
 		mutationFn: async (dashboardId: string) => {
 			if (!isAuthenticated) {
-				throw new Error('Please sign in to star dashboards')
+				throw new Error('Sign in to star dashboards.')
 			}
 			return await dashboardAPI.likeDashboard(dashboardId, authorizedFetch)
 		},
@@ -86,7 +86,7 @@ export function useDashboardDiscovery(params: SearchParams) {
 			toast.success(data.liked ? 'Dashboard starred' : 'Star removed')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : 'Failed to update star')
+			toast.error(error instanceof Error ? error.message : "Couldn't update the star.")
 		}
 	})
 

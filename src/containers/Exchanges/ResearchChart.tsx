@@ -164,7 +164,7 @@ export function ResearchChartStatus({
 	return (
 		<ResearchChartFrame title={presentation.title} description={presentation.description} toolbar={toolbar}>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Failed to load this chart.</ChartPanelBodyError>
+				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load this chart.</ChartPanelBodyError>
 			) : (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />

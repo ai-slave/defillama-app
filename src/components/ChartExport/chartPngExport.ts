@@ -493,7 +493,7 @@ async function loadProxiedImage(url: string): Promise<HTMLImageElement | null> {
 				'loadend',
 				() => {
 					if (typeof reader.result === 'string') resolve(reader.result)
-					else reject(new Error('Failed to read icon'))
+					else reject(new Error("Couldn't read the icon."))
 				},
 				{ once: true }
 			)
@@ -706,7 +706,7 @@ async function loadCircularIcon(url: string): Promise<string | null> {
 						resolve(reader.result)
 						return
 					}
-					reject(new Error('Failed to convert icon to base64'))
+					reject(new Error("Couldn't convert the icon."))
 				},
 				{ once: true }
 			)

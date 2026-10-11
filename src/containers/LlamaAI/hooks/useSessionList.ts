@@ -49,7 +49,7 @@ export function useSessionList() {
 			try {
 				if (!user) return { sessions: [], usage: null, factCheckedUsage: null, alertsUsage: null, hasMore: false }
 				const responseData = (await authorizedFetch(`${AI_SERVER}/user/sessions?offset=${pageParam}`)
-					.then((response) => assertResponse(response, 'Failed to fetch sessions'))
+					.then((response) => assertResponse(response, "Couldn't load your chats."))
 					.then(handleSimpleFetchResponse)
 					.then((res) => res.json())) as SessionListResponse
 
@@ -60,7 +60,7 @@ export function useSessionList() {
 				return mergeOptimisticSessions(page, existingData)
 			} catch (error) {
 				console.log('Failed to fetch sessions:', error)
-				throw new Error(`Failed to fetch sessions: ${error instanceof Error ? error.message : String(error)}`, {
+				throw new Error(`Couldn't load your chats: ${error instanceof Error ? error.message : String(error)}`, {
 					cause: error
 				})
 			}

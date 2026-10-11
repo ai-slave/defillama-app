@@ -138,7 +138,7 @@ export function RWASnapshotChartPanel({
 			</ChartPanelToolbar>
 			<ChartPanelBody className={bodyClassName}>
 				{failedRead ? (
-					<ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : isLoading ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite">
 						<LoadingIndicator />

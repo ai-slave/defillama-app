@@ -14,7 +14,7 @@ export function DemoPreviewFallback() {
 					</Button>
 				}
 			>
-				The preview could not be displayed.
+				Couldn&apos;t display the preview.
 			</InlineStatus>
 		</div>
 	)

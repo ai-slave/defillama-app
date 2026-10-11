@@ -12,7 +12,7 @@ export const getStaticProps = withPerformanceLogging('oracles', async () => {
 	const data = await getOraclesListPageData()
 
 	if (!data) {
-		throw new Error('Failed to load /oracles page data')
+		throw new Error("Couldn't load the oracles page data.")
 	}
 
 	return {

@@ -396,7 +396,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</ChartPanelToolbar>
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							{queryReadFailed(priceHistory) ? (
-								<ChartPanelBodyError retry={priceHistory}>Failed to load price history.</ChartPanelBodyError>
+								<ChartPanelBodyError retry={priceHistory}>Couldn&apos;t load price history.</ChartPanelBodyError>
 							) : priceHistory.isPending ? (
 								<ChartPanelBodyFallback role="status" aria-label="Loading price history">
 									<LoadingIndicator />

@@ -105,7 +105,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		onError: (error) => {
 			if (error === PUBLISH_FAILED) return
 			setMenuError("Couldn't copy the link. Try again.")
-			if (!menuContentRef.current?.isConnected) toast.error('Failed to copy link')
+			if (!menuContentRef.current?.isConnected) toast.error("Couldn't copy the link.")
 		}
 	})
 	// Fast consecutive copies can batch away the pending render; each attempt needs a fresh timer.
@@ -126,7 +126,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forcePublic: true }) }
 						: {})
 				}),
-				'Failed to update session visibility'
+				"Couldn't update chat visibility."
 			)
 			return response.json()
 		},
@@ -134,7 +134,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		// Making the conversation private reports its failure in its own confirm dialog.
 		onError: (_error, makePublic) => {
 			if (makePublic) setMenuError("Couldn't make this conversation public. Try again.")
-			if (!session.isPublic && !menuContentRef.current?.isConnected) toast.error('Failed to make session public')
+			if (!session.isPublic && !menuContentRef.current?.isConnected) toast.error("Couldn't make the chat public.")
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		}
 	})
@@ -181,7 +181,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							)
 						)
 					}
-					throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`, { cause: error })
+					throw new Error(`Couldn't change the pin: ${getErrorMessage(error)}`, { cause: error })
 				}
 			}),
 		onError: (error) => toast.error(error.message),

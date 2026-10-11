@@ -151,7 +151,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 				) : null}
 				{result?.status === 'unavailable' ? (
 					<p role="status" className="body-md text-secondary">
-						Please check back later.
+						Check back later.
 					</p>
 				) : null}
 				{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}

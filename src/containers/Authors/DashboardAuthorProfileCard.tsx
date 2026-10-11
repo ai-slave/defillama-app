@@ -249,7 +249,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 			await toast.promise(updateMutation.mutateAsync(payload), {
 				loading: 'Saving profile…',
 				success: 'Profile saved',
-				error: (err) => (err instanceof Error ? err.message : 'Failed to save profile')
+				error: (err) => (err instanceof Error ? err.message : "Couldn't save your profile.")
 			})
 		} catch {
 			// toast.promise already showed the error; the form keeps the unsaved draft.

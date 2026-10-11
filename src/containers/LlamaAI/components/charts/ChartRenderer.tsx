@@ -463,7 +463,7 @@ function SingleChart({
 			if (messageId !== undefined) request.messageId = messageId
 			const id = await saveChartToLibrary(authorizedFetch, request)
 			if (id) toast.success('Chart saved to your library (frozen)')
-			else toast.error('Failed to save chart')
+			else toast.error("Couldn't save the chart.")
 		}
 		setSavingToLibrary(true)
 		// Promise.finally rather than a try/finally statement, which the compiler cannot lower. A throw

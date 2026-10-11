@@ -32,9 +32,9 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 				})
 			})
 			const data: { success?: boolean; pdfUrl: string; error?: string } = await response.json()
-			if (!response.ok || !data.success) throw new Error(data.error || 'Failed to generate PDF')
+			if (!response.ok || !data.success) throw new Error(data.error || "Couldn't generate the PDF.")
 			const pdfResponse = await fetch(data.pdfUrl)
-			if (!pdfResponse.ok) throw new Error(`Failed to download PDF (${pdfResponse.status})`)
+			if (!pdfResponse.ok) throw new Error(`Couldn't download the PDF (status ${pdfResponse.status}).`)
 			const url = URL.createObjectURL(await pdfResponse.blob())
 			const a = document.createElement('a')
 			a.href = url

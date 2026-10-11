@@ -94,7 +94,7 @@ async function fetchDeleteAccountJson<T>(path: string, sessionToken: string, opt
 
 	if (!response.ok) {
 		const errorData = (await response.json().catch(() => null)) as DeleteAccountErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || 'Failed to process account deletion')
+		throw new Error(errorData?.error || errorData?.message || "Couldn't process the account deletion.")
 	}
 
 	const data = (await response.json().catch(() => null)) as T | null
@@ -404,7 +404,7 @@ function DeleteAccountModal({
 					message:
 						eligibilityQuery.error instanceof Error
 							? eligibilityQuery.error.message
-							: 'Failed to load account deletion details',
+							: "Couldn't load the account deletion details.",
 					retrying: eligibilityQuery.isFetching,
 					onRetry: () => void eligibilityQuery.refetch()
 				}

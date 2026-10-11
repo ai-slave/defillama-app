@@ -208,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					clearUserSession()
 				}
 
-				throw new Error('Failed to refresh auth', { cause: error })
+				throw new Error("Couldn't refresh your sign-in.", { cause: error })
 			}
 		},
 		enabled: authStoreState.token != null && authStoreState.isValid,
@@ -410,7 +410,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					onSuccess: (data) => {
 						if (data) toast.success('Email preferences updated successfully')
 					},
-					onError: (error) => toast.error(httpErrorMessage(error, 'Failed to update email preferences'))
+					onError: (error) => toast.error(httpErrorMessage(error, "Couldn't update email preferences."))
 				}
 			)
 		},

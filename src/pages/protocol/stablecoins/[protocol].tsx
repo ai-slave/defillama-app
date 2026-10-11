@@ -114,7 +114,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					onStablecoinChange={setSelectedStablecoinId}
 				/>
 			) : (
-				<PanelStatus variant="error">Failed to fetch</PanelStatus>
+				<PanelStatus variant="error">Couldn&apos;t load data.</PanelStatus>
 			)}
 		</ProtocolOverviewLayout>
 	)

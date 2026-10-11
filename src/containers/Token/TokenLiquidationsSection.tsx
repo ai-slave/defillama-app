@@ -166,7 +166,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 			contentLabel="token liquidations"
 			isLoading={isLoading}
 			error={error}
-			errorMessage="Failed to load token liquidations."
+			errorMessage="Couldn't load token liquidations."
 			bodyClassName="flex flex-col gap-2 p-2"
 		>
 			{data ? (

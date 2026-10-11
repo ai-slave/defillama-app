@@ -56,7 +56,7 @@ export function selectBannerForCountry(
 
 async function fetchVisitorRegion(): Promise<VisitorRegionResult> {
 	const response = await fetch('/api/dynamic/visitor-region', { cache: 'no-store' })
-	if (!response.ok) throw new Error(`Failed to resolve visitor region (${response.status})`)
+	if (!response.ok) throw new Error(`Couldn't resolve the visitor region (status ${response.status}).`)
 	const data = (await response.json()) as Partial<VisitorRegionResult>
 	return {
 		country: typeof data.country === 'string' ? data.country.toUpperCase() : null,

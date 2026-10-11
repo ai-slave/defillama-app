@@ -254,7 +254,7 @@ export async function renderTableImage(input: TableImageInput): Promise<Blob> {
 	return new Promise<Blob>((resolve, reject) => {
 		canvas.toBlob((blob) => {
 			if (blob) resolve(blob)
-			else reject(new Error('Failed to encode PNG'))
+			else reject(new Error("Couldn't create the image."))
 		}, 'image/png')
 	})
 }

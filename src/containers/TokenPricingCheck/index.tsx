@@ -146,7 +146,7 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 			setResult({ status: 'done', key, details })
 		} catch {
 			if (currentRequest !== requestId.current) return
-			setResult({ status: 'error', message: 'Could not check pricing right now. Please try again.' })
+			setResult({ status: 'error', message: "Couldn't check pricing right now. Try again." })
 		}
 	}
 

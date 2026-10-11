@@ -73,7 +73,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			invalidate()
 			toast.success('Research article linked')
 		},
-		onError: (error) => toast.error(mutationMessage(error, 'Failed to link article'))
+		onError: (error) => toast.error(mutationMessage(error, "Couldn't link the article."))
 	})
 	const unlinkMutation = useMutation({
 		mutationFn: (articleId: string) => unlinkResearchSponsorReport(sponsor.id, articleId, authorizedFetch),
@@ -81,13 +81,13 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			invalidate()
 			toast.success('Research article unlinked')
 		},
-		onError: (error) => toast.error(mutationMessage(error, 'Failed to unlink article'))
+		onError: (error) => toast.error(mutationMessage(error, "Couldn't unlink the article."))
 	})
 	const relationMutation = useMutation({
 		mutationFn: ({ articleId, relation }: { articleId: string; relation: ArticleClientRelation | null }) =>
 			setArticleClient(articleId, { sponsorId: sponsor.id, relation }, authorizedFetch),
 		onSuccess: invalidate,
-		onError: (error) => toast.error(mutationMessage(error, 'Failed to update relation'))
+		onError: (error) => toast.error(mutationMessage(error, "Couldn't update the relation."))
 	})
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteResearchSponsor(sponsor.id, authorizedFetch),
@@ -244,7 +244,7 @@ export function ResearchSponsorsAdminView() {
 			setSubmitted(false)
 			toast.success('Client added')
 		},
-		onError: (mutationError) => toast.error(mutationMessage(mutationError, 'Failed to add client'))
+		onError: (mutationError) => toast.error(mutationMessage(mutationError, "Couldn't add the client."))
 	})
 
 	return (
@@ -371,7 +371,9 @@ function SponsorPageEditor({
 				Save page
 			</Button>
 			{update.error ? (
-				<InlineStatus variant="error">{mutationMessage(update.error, 'Failed to update sponsor page')}</InlineStatus>
+				<InlineStatus variant="error">
+					{mutationMessage(update.error, "Couldn't update the sponsor page.")}
+				</InlineStatus>
 			) : null}
 		</form>
 	)

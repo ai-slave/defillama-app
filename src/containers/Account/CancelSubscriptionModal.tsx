@@ -41,7 +41,8 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 		e.preventDefault()
 		const message = (new FormData(e.currentTarget).get('message') as string).trim()
 		cancelSubscriptionMutation.mutate(message || undefined, {
-			onError: (failure) => setError(failure.message || 'Failed to cancel subscription. Try again or contact support.')
+			onError: (failure) =>
+				setError(failure.message || "Couldn't cancel the subscription. Try again or contact support.")
 		})
 	}
 

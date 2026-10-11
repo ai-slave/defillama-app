@@ -85,7 +85,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			toast.success(isPublished ? 'Saved — publish to push live' : 'Saved')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to save')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't save.")
 		}
 	})
 
@@ -103,7 +103,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			toast.success('Published')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to publish')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't publish.")
 		}
 	})
 

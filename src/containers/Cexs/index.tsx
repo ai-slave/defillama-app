@@ -63,7 +63,7 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 		case 'loading':
 			return <Skeleton className="ml-auto h-4 w-16" />
 		case 'failed': {
-			const message = 'Failed to fetch inflows for this date range'
+			const message = "Couldn't load inflows for this date range."
 			return (
 				<Tooltip content={message} className="ml-auto text-error">
 					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />

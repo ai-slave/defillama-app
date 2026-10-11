@@ -531,7 +531,7 @@ export function ReserveAssetsCharts({
 		<div className="grid grid-cols-2 gap-2">
 			{errors.length > 0 ? (
 				<PanelStatus variant="error" className="col-span-full">
-					Failed to fetch reserve asset breakdown APIs
+					Couldn&apos;t load the reserve asset breakdown.
 				</PanelStatus>
 			) : null}
 			{chainBreakdown && chainsUnique.length > 1 ? (

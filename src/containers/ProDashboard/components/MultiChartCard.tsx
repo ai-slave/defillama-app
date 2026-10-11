@@ -436,7 +436,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				) : !hasAnyData ? (
 					failedItemRetries.length > 0 ? (
 						<ProCardError
-							title="Failed to load chart data"
+							title="Couldn't load chart data."
 							detail={`${failedItems.length} of ${limitedItems.length} charts failed`}
 							retry={{ refetch: retryFailedItems, isFetching: retryingFailedItems }}
 						/>

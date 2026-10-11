@@ -50,6 +50,7 @@ type RuleId =
 	| 'alert-line'
 	| 'retry-gating'
 	| 'hand-placed-retry'
+	| 'error-copy'
 	| 'next-error'
 
 const MESSAGES: Record<RuleId, string> = {
@@ -64,6 +65,8 @@ const MESSAGES: Record<RuleId, string> = {
 		'gates a retry on a query error that clears when the retry runs; gate it on queryReadFailed(query) and check it before loading (docs/focus-and-errors.md)',
 	'hand-placed-retry':
 		"places a read's Try again by hand inside a status; pass the query as `retry` and the part draws it (RetryButton)",
+	'error-copy':
+		'writes "Failed to", "could not be …ed", "Something went wrong", "Oops", "Error:" or "Please"; say "Couldn\'t <do what>." (docs/focus-and-errors.md, "Error copy")',
 	'next-error': 'renders next/error\'s Error page; render EmptyState size="lg" for a not found'
 }
 
@@ -101,12 +104,45 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 		'src/containers/Articles/editor/LlamaAIChartPicker.tsx':
 			'a retry that succeeds moves focus to the search field that stays, not to the dialog'
 	},
+	'error-copy': {
+		'src/pages/privacy-policy.tsx': 'legal prose, not an error message',
+		'src/pages/report-error.tsx': 'help prose asking readers to report data issues',
+		'src/pages/chatgptplugin.tsx': 'help prose pointing to the feedback form',
+		'src/pages/subscription/fulfillment-policies.tsx': 'refund policy prose',
+		'src/pages/_app.tsx': "matches the browser's own chunk-load error message",
+		'src/containers/Yields/domain/exitPresentation.ts':
+			"a vault's exit status from its last check, not a failed request",
+		'src/containers/Yields/VaultRisk/components/FreshnessFooter.tsx':
+			'a freshness line counting readings the last run could not refresh'
+	},
 	'next-error': {}
 }
 
 // Parts whose failure is always a read and which take `retry`; InlineStatus also holds action errors, so only a Try
 // again that refetches counts there.
 const READ_STATUS_PARTS = new Set(['PanelStatus', 'SurfaceBodyStatus', 'ChartPanelBodyError'])
+// Case-sensitive "Failed to": a lowercase 'failed to fetch' is a browser error being matched, not copy.
+const ERROR_COPY =
+	/^\s*Failed to\b|\b[Pp]lease\b|\bcould not be \w+ed\b|\b[Ss]omething went wrong\b|\bOops\b|^\s*Error: /
+const CONSOLE_CALL = /^console\.\w+$/
+
+// Server routes, server loaders and build-time helpers write for logs and API consumers, not readers.
+function isServerSource(relative: string): boolean {
+	return (
+		relative.includes('/server/') ||
+		relative.startsWith('src/pages/api/') ||
+		relative.startsWith('src/utils/metadata/') ||
+		/\.server\.tsx?$/.test(relative)
+	)
+}
+
+function inConsoleCall(node: ts.Node): boolean {
+	for (let parent = node.parent; parent && !ts.isSourceFile(parent); parent = parent.parent) {
+		if (ts.isCallExpression(parent) && CONSOLE_CALL.test(parent.expression.getText())) return true
+	}
+	return false
+}
+
 const BUTTON_LIKE = new Set(['button', 'Button', 'ProButton', 'Ariakit.Button', 'option'])
 const LOADING_TEXT = /^(?:Loading|Fetching|Searching|Waiting)\b[\s\S]*(?:…|\.\.\.)$/
 const QUERY_HOOKS = new Set(['useQuery', 'useInfiniteQuery', 'useSuspenseQuery', 'useSuspenseInfiniteQuery'])
@@ -465,6 +501,7 @@ export function scanSource(
 		violations.push({ rule, file: relative, line })
 	}
 
+	const checkCopy = !isServerSource(relative)
 	let nextErrorName: string | null = null
 	if (relative.startsWith('src/pages/')) {
 		for (const statement of sourceFile.statements) {
@@ -559,6 +596,15 @@ export function scanSource(
 				} else text += ' '
 			}
 			if (isLoadingText(text) || leaves.some(isLoadingText)) report('loading-text', opening ?? node)
+		}
+
+		if (checkCopy && node.parent && !ts.isImportDeclaration(node.parent) && !ts.isExportDeclaration(node.parent)) {
+			const copy = ts.isJsxText(node)
+				? node.text
+				: ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node)
+					? literalText(node)
+					: undefined
+			if (copy !== undefined && ERROR_COPY.test(copy) && !inConsoleCall(node)) report('error-copy', node)
 		}
 
 		if (
@@ -715,7 +761,7 @@ if (process.argv.includes('--self-test')) {
 		},
 		{
 			name: 'hand-built alert line',
-			source: 'export const F = () => <p role="alert" className="body-sm text-error">Failed to load</p>',
+			source: 'export const F = () => <p role="alert" className="body-sm text-error">Load failed</p>',
 			rule: 'alert-line'
 		},
 		{
@@ -725,7 +771,7 @@ if (process.argv.includes('--self-test')) {
 		},
 		{
 			name: 'alert role in an expression',
-			source: 'export const F = () => <p role={\'alert\'} className="body-sm text-error">Failed to load</p>',
+			source: 'export const F = () => <p role={\'alert\'} className="body-sm text-error">Load failed</p>',
 			rule: 'alert-line'
 		},
 		{
@@ -827,6 +873,34 @@ if (process.argv.includes('--self-test')) {
 			relative: 'src/pages/policy-self-test.tsx',
 			source: "import Error from 'next/error'\nexport default function P() { return <Error statusCode={404} /> }",
 			rule: 'next-error'
+		},
+		{
+			name: 'Failed to toast',
+			source: "export const f = () => toast.error('Failed to save chart')",
+			rule: 'error-copy'
+		},
+		{ name: 'Please in JSX', source: 'export const F = () => <p>Please sign in to continue.</p>', rule: 'error-copy' },
+		{
+			name: 'passive could not be loaded',
+			source: 'export const m = `Data for ${name} could not be loaded.`',
+			rule: 'error-copy'
+		},
+		{
+			name: 'Failed to thrown',
+			source: "export function f() { throw new Error('Failed to load') }",
+			rule: 'error-copy'
+		},
+		{
+			name: "Couldn't copy",
+			source: 'export const f = () => toast.error("Couldn\'t save the chart. Try again.")',
+			rule: null
+		},
+		{ name: 'console message', source: "export const f = () => console.error('Failed to load', e)", rule: null },
+		{
+			name: 'server route message',
+			relative: 'src/containers/Foo/server/api.ts',
+			source: "export const body = { error: 'Failed to fetch data' }",
+			rule: null
 		},
 		{
 			name: 'next/error outside pages',

@@ -40,6 +40,15 @@ A dialog records the control that opened it, and a click inside a dialog focuses
 | An accepted action changes data (remove, save local) | The mutation's own `onSuccess`, which runs after the view unmounts                                                                          | `deletePortfolioWithNotifications` in `src/containers/DeFiWatchlist/index.tsx` |
 | The dialog is gone when the request settles          | A toast, only then (`if (!ref.current?.isConnected) toast…`)                                                                                | `src/components/ReportIncorrectData/index.tsx`                                 |
 
+### Error copy
+
+- Say what failed, as the reader would name it: "Couldn't load your dashboards.", "Couldn't save the chart." Sentence case, ending with a period.
+- Add "Try again." only where nothing beside the message offers a retry (a toast, a line with no button). A Try again button already says it.
+- Never "Failed to …", "… could not be loaded", "Something went wrong", "Oops", "Error:", first person, or "Please". A sign-in gate reads "Sign in to save dashboards."
+- A thrown `Error` message follows the same rules: callers pass it to toasts and notices, so it is reader copy wherever it may surface.
+- Show a server's message only where the API writes it for readers (`ArticleApiError`, a field refusal). A generic fetch error's `message` ("Failed to fetch", a status text) never reaches the screen; the site writes its own line.
+- `scripts/policies/check-status-parts.ts` (`error-copy`) refuses the banned phrasings in client code. Server routes and build scripts are not scanned: their messages go to logs and API consumers.
+
 Never call `mutation.reset()` while a newer request may be pending: it detaches the running request and unlocks a pending dialog.
 
 A retry that hides its error removes the button that has focus, never shows its pending label, and moves the layout twice. Keep the error until the retry succeeds.

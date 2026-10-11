@@ -42,7 +42,7 @@ export async function prepareTokensCsv({
 			throw new Error('tokens csv export got an unexpected response schema')
 		}
 		if (!response.snapshotVersion || (snapshotVersion !== 'latest' && response.snapshotVersion !== snapshotVersion)) {
-			throw new Error('Tokens export snapshot changed. Please restart the export.')
+			throw new Error('Tokens export snapshot changed. Restart the export.')
 		}
 		snapshotVersion = response.snapshotVersion
 		for (const row of response.rows) {

@@ -35,7 +35,7 @@ export function FollowAuthorButton({
 			toast.success(data.following ? 'Following author' : 'Unfollowed author')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : 'Failed to update follow')
+			toast.error(error instanceof Error ? error.message : "Couldn't update your follow.")
 		}
 	})
 
@@ -52,7 +52,7 @@ export function FollowAuthorButton({
 			pending={mutation.isPending}
 			onClick={() => {
 				if (!isAuthenticated) {
-					toast.error('Please sign in to follow authors')
+					toast.error('Sign in to follow authors.')
 					return
 				}
 				mutation.mutate()

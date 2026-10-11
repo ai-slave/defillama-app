@@ -59,9 +59,7 @@ test('a failed delete keeps the confirmation open with the reason, and keeps the
 	await renderTab(() => new Response(null, { status: 500 }))
 	await confirmDelete()
 	await waitForUi(() =>
-		expect(confirmation()!.querySelector('[role="alert"]')?.textContent).toBe(
-			'The chart could not be deleted. Try again.'
-		)
+		expect(confirmation()!.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete the chart. Try again.")
 	)
 	expect(deleteButton('Aave TVL')).not.toBeNull()
 })

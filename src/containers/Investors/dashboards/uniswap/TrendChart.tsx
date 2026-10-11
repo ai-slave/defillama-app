@@ -219,7 +219,7 @@ export function SeriesTrendChart({
 				/>
 			</ChartPanelToolbar>
 			{failedRead ? (
-				<ChartPanelBodyError retry={failedRead}>Failed to load data</ChartPanelBodyError>
+				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load data.</ChartPanelBodyError>
 			) : isLoading ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LoadingIndicator />

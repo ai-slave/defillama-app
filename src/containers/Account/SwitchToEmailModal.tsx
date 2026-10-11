@@ -58,7 +58,7 @@ async function requestSwitchToEmailOtp({ email, sessionToken }: { email: string;
 
 	if (!response.ok) {
 		const errorData = (await response.json().catch(() => null)) as SwitchToEmailErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || 'Failed to send verification code')
+		throw new Error(errorData?.error || errorData?.message || "Couldn't send the verification code.")
 	}
 }
 
@@ -83,7 +83,7 @@ async function confirmSwitchToEmail({
 
 	if (!response.ok) {
 		const errorData = (await response.json().catch(() => null)) as SwitchToEmailErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || 'Failed to add email sign-in')
+		throw new Error(errorData?.error || errorData?.message || "Couldn't add email sign-in.")
 	}
 
 	return (await response.json()) as SwitchToEmailResponse
@@ -119,7 +119,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 			setError(null)
 		},
 		onError: (requestError) =>
-			setError({ field: 'form', message: requestError.message || 'Failed to send verification code. Try again.' })
+			setError({ field: 'form', message: requestError.message || "Couldn't send the verification code. Try again." })
 	})
 	const confirmMutation = useMutation({
 		mutationFn: confirmSwitchToEmail,
@@ -177,7 +177,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 			{ sessionToken: flowSession.token, email, otp, password, passwordConfirm },
 			{
 				onError: (confirmError) => {
-					const message = confirmError.message || 'Failed to add email sign-in. Try again.'
+					const message = confirmError.message || "Couldn't add email sign-in. Try again."
 					// The server names the code "OTP" in each of its code rejections: missing, malformed, invalid or
 					// expired. Focus moves to the code, so a screen reader reads it with the rejection.
 					if (/\bOTP\b/.test(message)) showFieldErrors(form, () => setError({ field: 'otp', message }))

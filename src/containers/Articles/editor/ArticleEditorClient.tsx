@@ -240,7 +240,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	// confirmed the "save in progress" prompt and left must not be pulled back into the editor.
 	const createDraft = useCallback(() => {
 		createArticleMutate(undefined, {
-			onError: (error) => setCreateError(errorMessageOr(error, 'Failed to create draft')),
+			onError: (error) => setCreateError(errorMessageOr(error, "Couldn't create the draft.")),
 			onSuccess: (saved) => {
 				autoRedirectingRef.current = true
 				void Router.replace(`/research/edit/${saved.id}`)
@@ -338,7 +338,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		// An edit route saves only its own loaded article; saving before it loads would create an unrelated draft.
 		if (articleId && !article.id) return false
 		if (!isAuthenticated) {
-			if (!opts.silent) toast.error('Please sign in to save research')
+			if (!opts.silent) toast.error('Sign in to save research.')
 			return false
 		}
 		if (saveInFlightRef.current) return false
@@ -384,7 +384,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			}
 		} catch (error) {
 			setSaveError(true)
-			if (!opts.silent) toast.error(errorMessageOr(error, 'Failed to save research'))
+			if (!opts.silent) toast.error(errorMessageOr(error, "Couldn't save the research."))
 		}
 		saveInFlightRef.current = false
 		return didSave
@@ -731,7 +731,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			saved = await publishMutation.mutateAsync(publishPayload)
 		} catch (error) {
 			const validationErrors = publishValidationErrors(error)
-			if (validationErrors.length === 0) return { ok: false, error: errorMessageOr(error, 'Failed to publish') }
+			if (validationErrors.length === 0) return { ok: false, error: errorMessageOr(error, "Couldn't publish.") }
 			flushSync(() => setServerPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message]))))
 			return { ok: false, error: null }
 		}
@@ -773,7 +773,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			revalidateLanding()
 			toast.success('Moved to drafts')
 		} catch (error) {
-			toast.error(errorMessageOr(error, 'Failed to unpublish'))
+			toast.error(errorMessageOr(error, "Couldn't unpublish."))
 		}
 	}
 

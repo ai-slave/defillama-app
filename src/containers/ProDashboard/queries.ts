@@ -142,7 +142,7 @@ export function getChartQueryFn(
 				if (directError) {
 					throw directError instanceof Error
 						? directError
-						: new Error(`Failed to fetch ${type} chart for ${item}`, { cause: directError })
+						: new Error(`Couldn't load the ${type} chart for ${item}.`, { cause: directError })
 				}
 				return direct
 			}

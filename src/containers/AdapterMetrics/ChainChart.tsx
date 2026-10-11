@@ -1028,7 +1028,7 @@ export function ChainsByAdapterChart({
 			</ChartPanelToolbar>
 			<ChartPanelBody className={chartBodyClassName}>
 				{queryReadFailed(baseChartQuery) ? (
-					<ChartPanelBodyError retry={baseChartQuery}>Failed to load chart data.</ChartPanelBodyError>
+					<ChartPanelBodyError retry={baseChartQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : baseChartQuery.isLoading ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite" className={chartBodyClassName}>
 						<LoadingIndicator />

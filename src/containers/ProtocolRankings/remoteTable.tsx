@@ -203,7 +203,7 @@ export function useRemoteProtocolRankingsTable({
 		if (controller.signal.aborted) return
 		setCsvLoading(false)
 		if (blob) downloadBlob(blob, exportFilename)
-		else toast.error('Failed to download CSV')
+		else toast.error("Couldn't download the CSV.")
 	}
 
 	return {

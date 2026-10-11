@@ -84,7 +84,7 @@ export const useCreateTopup = (isErrorShown: () => boolean) => {
 			}
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(httpErrorMessage(error, 'Failed to create topup'))
+				throw new Error(httpErrorMessage(error, "Couldn't create the top-up."))
 			})
 
 			return normalizedResponse.json()

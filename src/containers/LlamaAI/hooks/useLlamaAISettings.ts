@@ -265,7 +265,7 @@ export function useAdvancedProvenance(): boolean {
 
 // Throws from outside the try's own body: the compiler cannot lower a throw inside try/catch.
 function assertSettingsPersisted(response: Response | null) {
-	if (!response?.ok) throw new Error('Failed to persist LlamaAI settings')
+	if (!response?.ok) throw new Error("Couldn't save LlamaAI settings.")
 }
 
 export function useLlamaAISettings() {

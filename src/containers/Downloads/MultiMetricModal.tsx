@@ -456,7 +456,7 @@ export function MultiMetricModal({
 			await navigator.clipboard.writeText(url)
 			report('copy-link', true, 'Link copied')
 		} catch {
-			report('copy-link', false, 'Failed to copy link')
+			report('copy-link', false, "Couldn't copy the link.")
 		}
 	}, [currentConfig, report])
 

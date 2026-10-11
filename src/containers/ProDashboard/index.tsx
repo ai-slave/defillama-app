@@ -376,7 +376,7 @@ function ProDashboardContent() {
 		doneAcknowledged && !autoSaveFailed && mode === 'view' ? (autoSaving ? 'Saving…' : 'Saved') : null
 	const finishEditing = () => {
 		if (autoSaveFailed) {
-			toast.error('Changes could not be saved. Retry the save first.', { id: 'dashboard-done-blocked' })
+			toast.error("Couldn't save your changes. Retry the save first.", { id: 'dashboard-done-blocked' })
 			return
 		}
 		flushAutoSave()

@@ -234,7 +234,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					/>
 				</ChartPanelToolbar>
 				{queryReadFailed(chartDataQuery) ? (
-					<ChartPanelBodyError retry={chartDataQuery}>Failed to load chart data.</ChartPanelBodyError>
+					<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : shouldFetchChartData && chartDataQuery.isLoading ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite">
 						<LoadingIndicator />

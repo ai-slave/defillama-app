@@ -90,7 +90,9 @@ function GeneratedImageBlock({
 		return (
 			<div
 				role="img"
-				aria-label={prompt ? `Failed to load generated image for prompt: ${prompt}` : 'Failed to load generated image'}
+				aria-label={
+					prompt ? `Couldn't load the generated image for prompt: ${prompt}` : "Couldn't load the generated image"
+				}
 				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 bg-surface-elevated-2 p-6 text-center text-secondary`}
 				style={{ aspectRatio: aspect ?? '1 / 1' }}
 			>

@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging('forks/[fork]', async ({ pa
 	if (result.status === 'not-found') {
 		return { notFound: true, revalidate: maxAgeForNext([22]) }
 	}
-	if (result.status === 'unavailable') throw new Error(`Failed to load Forks data for ${forkParam}`)
+	if (result.status === 'unavailable') throw new Error(`Couldn't load forks data for ${forkParam}.`)
 
 	return {
 		props: result.data,

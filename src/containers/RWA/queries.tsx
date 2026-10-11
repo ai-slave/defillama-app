@@ -617,7 +617,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			assetGroupSlug: selectedAssetGroup ?? null
 		}
 	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to get RWA assets overview', { cause: error })
+		throw new Error(error instanceof Error ? error.message : "Couldn't load the RWA assets overview.", { cause: error })
 	}
 }
 
@@ -793,6 +793,6 @@ export async function getRWAAssetData({
 			...yieldMatch
 		}
 	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to get RWA asset data', { cause: error })
+		throw new Error(error instanceof Error ? error.message : "Couldn't load the RWA asset data.", { cause: error })
 	}
 }

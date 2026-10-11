@@ -113,7 +113,7 @@ test('restore keeps legacy message payloads and rejects request failures', async
 			messages: [{ id: 'message' }],
 			pagination: { hasMore: true, cursor: 5 }
 		})
-		await expect(mutations.loadMoreMessages('chat', 5)).rejects.toThrow('Failed to load older messages: Offline')
+		await expect(mutations.loadMoreMessages('chat', 5)).rejects.toThrow("Couldn't load older messages: Offline")
 	})
 })
 

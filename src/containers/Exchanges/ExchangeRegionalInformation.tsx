@@ -135,7 +135,7 @@ export function ProfileCountryCard({
 				</div>
 			) : view.status === 'error' ? (
 				<InlineStatus variant="error" retry={view.query}>
-					Country-specific information for {countryLabel(view.country)} could not be loaded. Showing global information.
+					Couldn&apos;t load country-specific information for {countryLabel(view.country)}. Showing global information.
 				</InlineStatus>
 			) : view.status !== 'global' && country ? (
 				<RegionalAvailability profileName={profileName} country={countryLabel(country)} regional={view.regional} />

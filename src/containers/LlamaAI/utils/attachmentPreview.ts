@@ -21,7 +21,7 @@ export async function readFilePreview(file: File): Promise<AttachmentPreview> {
 
 export async function readUrlPreview(url: string, filename: string): Promise<AttachmentPreview> {
 	const response = await fetch(url)
-	if (!response.ok || !response.body) throw new Error('Failed to load attachment')
+	if (!response.ok || !response.body) throw new Error("Couldn't load the attachment.")
 	const reader = response.body.getReader()
 	// Read one extra byte to distinguish an exact-size file from a truncated preview, then stop
 	// the download. The original URL remains available for downloading the complete file.

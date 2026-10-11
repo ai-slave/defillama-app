@@ -56,7 +56,7 @@ export async function fetchProtocolBreakdownData({
 			: `/api/public/pro-dashboard/chart-builder/adapter-metrics/breakdowns/${metric}`
 	try {
 		const response = await fetchWithPoolingOnServer(`${endpoint}?${params.toString()}`)
-		if (!response.ok) throw new Error(`Failed to fetch ${metric} breakdown data: ${response.statusText}`)
+		if (!response.ok) throw new Error(`Couldn't load ${metric} breakdown data: ${response.statusText}`)
 		return response.json()
 	} catch (error) {
 		recordRuntimeError(error, 'pageBuild')
@@ -94,7 +94,7 @@ export async function fetchProtocolChainBreakdownData({
 	try {
 		const endpoint = getProtocolChainBreakdownRoute(metric)
 		const response = await fetchWithPoolingOnServer(`${endpoint}?${params.toString()}`)
-		if (!response.ok) throw new Error(`Failed to fetch protocol chain data: ${response.statusText}`)
+		if (!response.ok) throw new Error(`Couldn't load protocol chain data: ${response.statusText}`)
 		return response.json()
 	} catch (error) {
 		recordRuntimeError(error, 'pageBuild')

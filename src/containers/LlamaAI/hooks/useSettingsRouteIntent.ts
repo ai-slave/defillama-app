@@ -36,7 +36,7 @@ function emitSlackToast(result: SlackResult, teamName: string | null, detail: st
 			break
 		case 'invalid_request':
 		case 'internal_error':
-			toast.error('Something went wrong connecting to Slack. Try again.')
+			toast.error("Couldn't connect to Slack. Try again.")
 			break
 	}
 }
@@ -84,7 +84,7 @@ export function useSettingsRouteIntent({
 						const message =
 							error?.message === 'slack_login_expired'
 								? 'Slack login link expired. Ask LlamaAI for a new link.'
-								: 'Failed to connect Slack account.'
+								: "Couldn't connect your Slack account."
 						toast.error(message)
 					})
 			}

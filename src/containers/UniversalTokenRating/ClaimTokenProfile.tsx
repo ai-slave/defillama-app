@@ -408,7 +408,7 @@ function ClaimConfirmation() {
 }
 
 function uploadErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : 'Failed to upload supporting documents'
+	return error instanceof Error ? error.message : "Couldn't upload supporting documents."
 }
 
 // Throws from outside the try's own body: the compiler cannot lower a ThrowStatement inside one.

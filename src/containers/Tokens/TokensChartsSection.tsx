@@ -189,7 +189,7 @@ export function TokensChartsSection({
 			{datasetQuery.data ? <TokensSourceAvailability sources={datasetQuery.data.unavailableSources} /> : null}
 			{queryReadFailed(datasetQuery) ? (
 				<ChartPanelBodyError retry={datasetQuery} style={{ height: MAP_HEIGHT }}>
-					Failed to load chart data.
+					Couldn&apos;t load chart data.
 				</ChartPanelBodyError>
 			) : data == null ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite" style={{ height: MAP_HEIGHT }}>

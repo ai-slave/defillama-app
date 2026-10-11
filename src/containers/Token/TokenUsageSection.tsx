@@ -183,7 +183,7 @@ export function TokenUsageSection({
 			contentLabel="token usage"
 			isLoading={isLoading}
 			error={error}
-			errorMessage="Failed to load token usage."
+			errorMessage="Couldn't load token usage."
 			emptyMessage={filteredRows.length === 0 ? 'No token usage entries found.' : null}
 			headerActions={
 				isAuthenticated && hasActiveSubscription && rows ? (

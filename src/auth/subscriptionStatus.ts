@@ -100,7 +100,7 @@ export async function fetchSubscriptionStatus({
 	if (response.status === 404) return null
 
 	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-		throw new Error(error instanceof Error && error.message ? error.message : 'Failed to load subscription')
+		throw new Error(error instanceof Error && error.message ? error.message : "Couldn't load your subscription.")
 	})
 	const data: SubscriptionResponse = await normalized.json()
 	if (data.subscription.status !== 'active') {

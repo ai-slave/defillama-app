@@ -320,7 +320,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				toast.success('Saved')
 			}
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to save')
+			toast.error(error instanceof Error ? error.message : "Couldn't save.")
 		}
 	}
 

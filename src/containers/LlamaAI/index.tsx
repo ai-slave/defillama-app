@@ -1845,7 +1845,7 @@ export function AgenticChat({
 						}
 						rememberPromptFailure(currentSessionId, {
 							kind: kind === 'temporary-connectivity' ? 'reconnect' : 'retry',
-							error: err.message || 'Failed to get response',
+							error: err.message || "Couldn't get a response.",
 							request: failedRequest
 						})
 						dispatchStream({ type: 'SET_ERROR', value: null })
@@ -2114,7 +2114,7 @@ export function AgenticChat({
 				}
 			}
 			if (outcome.kind === 'error') {
-				return { status: 'rejected' as const, message: 'Failed to queue your prompt. Please try again.' }
+				return { status: 'rejected' as const, message: "Couldn't queue your prompt. Try again." }
 			}
 
 			const result = outcome.value
@@ -2122,7 +2122,7 @@ export function AgenticChat({
 			if (result === 'session_idle') {
 				return handleSubmit(trimmed, entities, images, undefined, { modeOverride, quotedTextOverride })
 					? ({ status: 'accepted' } as const)
-					: ({ status: 'rejected', message: 'Failed to submit your prompt. Please try again.' } as const)
+					: ({ status: 'rejected', message: "Couldn't submit your prompt. Try again." } as const)
 			}
 
 			if (quotedTextOverride === undefined && effectiveQuotedText !== undefined && quotedText === effectiveQuotedText) {
@@ -2806,7 +2806,6 @@ export function AgenticChat({
 			<>
 				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 					<p className="flex items-center gap-1 text-center">
-						Please{' '}
 						<button
 							type="button"
 							onClick={() => {
@@ -2815,7 +2814,7 @@ export function AgenticChat({
 							}}
 							className="underline"
 						>
-							log in
+							Log in
 						</button>{' '}
 						to use LlamaAI.
 					</p>

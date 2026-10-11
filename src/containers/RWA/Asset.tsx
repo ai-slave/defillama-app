@@ -567,7 +567,7 @@ export function RWAAssetPage({
 						) : null}
 						{isFlowChart ? (
 							queryReadFailed(assetFlowsQuery) ? (
-								<ChartPanelBodyError retry={assetFlowsQuery}>Failed to load flow data.</ChartPanelBodyError>
+								<ChartPanelBodyError retry={assetFlowsQuery}>Couldn&apos;t load flow data.</ChartPanelBodyError>
 							) : assetFlowsQuery.isLoading ? (
 								<ChartPanelBodyFallback role="status" aria-live="polite">
 									<LoadingIndicator />

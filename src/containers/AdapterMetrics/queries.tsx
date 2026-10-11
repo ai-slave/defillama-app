@@ -170,8 +170,7 @@ export async function getAdapterChainOverview({
 		overviewData,
 		totalDataChart
 	})
-	if (earnings.status === 'unavailable')
-		throw new Error('Earnings are unavailable because emissions data could not be loaded')
+	if (earnings.status === 'unavailable') throw new Error("Earnings are unavailable. Couldn't load emissions data.")
 	return earnings.overview
 }
 

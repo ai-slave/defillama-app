@@ -167,9 +167,7 @@ const CARD_SORT_OPTIONS: Array<{ value: SectorCardSort; label: string; ranking: 
 export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesSectorsData> }) {
 	if (state.status === 'error') {
 		return (
-			<PanelStatus variant="error">
-				Equity sector data is temporarily unavailable. Please try again shortly.
-			</PanelStatus>
+			<PanelStatus variant="error">Equity sector data is temporarily unavailable. Try again in a moment.</PanelStatus>
 		)
 	}
 

@@ -115,7 +115,7 @@ export function BannerForm({ banner }: Props) {
 			toast.success(banner ? 'Banner saved' : 'Banner created')
 		},
 		onError: (error) => {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
+			toast.error(error instanceof ArticleApiError ? error.message : "Couldn't save.")
 		}
 	})
 

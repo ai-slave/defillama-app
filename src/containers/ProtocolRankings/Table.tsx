@@ -316,7 +316,7 @@ function ChainProtocolsTableInner({
 			const userInitiated = userReplacementPendingRef.current
 			userReplacementPendingRef.current = false
 			if (status === 'error' && userInitiated) {
-				toast.error("Couldn't update rankings. Please retry.", { id: 'protocol-rankings-update-error' })
+				toast.error("Couldn't update rankings. Try again.", { id: 'protocol-rankings-update-error' })
 			}
 		}
 	})

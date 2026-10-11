@@ -104,7 +104,7 @@ export function Stats(props: IStatsProps) {
 	const { mutate: downloadAndPrepareChartCsv, isPending: isDownloadingChartCsv } = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated) {
-				toast.error('Please sign in to download CSV data')
+				toast.error('Sign in to download CSV data.')
 				return
 			}
 
@@ -115,7 +115,7 @@ export function Stats(props: IStatsProps) {
 				const response = await fetch(url)
 
 				if (!response.ok) {
-					toast.error('Failed to download CSV data')
+					toast.error("Couldn't download the CSV data.")
 					return
 				}
 
@@ -124,7 +124,7 @@ export function Stats(props: IStatsProps) {
 				downloadCSV(`${props.metadata.name}.csv`, csvData)
 			} catch (error) {
 				console.log('CSV download error:', error)
-				toast.error('Failed to download CSV data')
+				toast.error("Couldn't download the CSV data.")
 			}
 		}
 	})

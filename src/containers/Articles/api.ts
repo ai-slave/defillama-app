@@ -115,7 +115,7 @@ function buildSavePayload(article: LocalArticleDocument, options: { includeStatu
 }
 
 async function parseResponse<T>(response: Response | null): Promise<T> {
-	if (!response) throw new ArticleApiError('Please sign in to continue', 401)
+	if (!response) throw new ArticleApiError('Sign in to continue.', 401)
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {

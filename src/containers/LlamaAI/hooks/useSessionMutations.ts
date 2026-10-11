@@ -177,7 +177,7 @@ export function useSessionMutations() {
 				return response
 			} catch (error) {
 				console.log('Failed to create session:', error)
-				throw new Error(`Failed to create session: ${getErrorMessage(error)}`, { cause: error })
+				throw new Error(`Couldn't create the chat: ${getErrorMessage(error)}`, { cause: error })
 			}
 		},
 		onSuccess: (_data, variables) => {
@@ -258,7 +258,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [switchActiveLeaf] failed:', getErrorMessage(error))
-					throw error instanceof Error ? error : new Error('Failed to switch branch')
+					throw error instanceof Error ? error : new Error("Couldn't switch branch.")
 				})
 		}
 	})
@@ -377,7 +377,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))
-					throw error instanceof Error ? error : new Error('Failed to restore session')
+					throw error instanceof Error ? error : new Error("Couldn't restore the chat.")
 				})
 		},
 		[restoreSessionMutation]
@@ -401,7 +401,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
-					throw new Error(`Failed to load older messages: ${getErrorMessage(error)}`)
+					throw new Error(`Couldn't load older messages: ${getErrorMessage(error)}`)
 				})
 		},
 		[restoreSessionMutation]
@@ -422,7 +422,7 @@ export function useSessionMutations() {
 				})
 				.catch((error) => {
 					if (!signal?.aborted) console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
-					throw new Error(`Failed to load newer messages: ${getErrorMessage(error)}`)
+					throw new Error(`Couldn't load newer messages: ${getErrorMessage(error)}`)
 				})
 		},
 		[restoreSessionMutation]

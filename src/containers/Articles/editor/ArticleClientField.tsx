@@ -57,7 +57,7 @@ export function ArticleClientField({
 	const error = save.error
 		? save.error instanceof ArticleApiError
 			? save.error.message
-			: 'Failed to update client'
+			: "Couldn't update the client."
 		: queryReadFailed(sponsors)
 			? "Couldn't load clients."
 			: null

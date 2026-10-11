@@ -76,7 +76,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ token: inviteToken })
 				}),
-				'Failed to accept invite'
+				"Couldn't accept the invite."
 			)
 			const data = await response.json()
 
@@ -161,7 +161,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { name: string }) => postTeam('create', 'Failed to create team', data),
+		mutationFn: (data: { name: string }) => postTeam('create', "Couldn't create the team.", data),
 		onSuccess: () => {
 			toast.success('Team created')
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
@@ -177,7 +177,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { name: string }) => postTeam('update', 'Failed to update team', data),
+		mutationFn: (data: { name: string }) => postTeam('update', "Couldn't update the team.", data),
 		onSuccess: (_data, { name }) => {
 			// A rename owns only the name; other team operations may finish while it is pending.
 			queryClient.setQueryData<Team | null>(teamQueryKey, (old) => (old ? { ...old, name } : old))
@@ -203,7 +203,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(data)
 				}),
-				'Failed to purchase seats'
+				"Couldn't purchase seats."
 			)
 			return response.json()
 		},
@@ -227,7 +227,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(data)
 				}),
-				'Failed to upgrade subscription'
+				"Couldn't upgrade the subscription."
 			)
 			return response.json()
 		},
@@ -251,7 +251,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(data)
 				}),
-				'Failed to update seats'
+				"Couldn't update seats."
 			)
 			return response.json()
 		},
@@ -267,7 +267,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		scope,
 		retry: false,
 		mutationFn: (data: { userId: string; subscriptionType: string }) =>
-			postTeam('member/assign', 'Failed to assign member', data),
+			postTeam('member/assign', "Couldn't assign the member.", data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -279,7 +279,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { userId: string }) => postTeam('member/unassign', 'Failed to unassign member', data),
+		mutationFn: (data: { userId: string }) => postTeam('member/unassign', "Couldn't unassign the member.", data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -291,7 +291,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { email: string }) => postTeam('invite', 'Failed to send invite', data),
+		mutationFn: (data: { email: string }) => postTeam('invite', "Couldn't send the invite.", data),
 		onSettled: reconcileTeam
 	})
 
@@ -300,7 +300,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { inviteId: string }) => postTeam('invite/resend', 'Failed to resend invite', data),
+		mutationFn: (data: { inviteId: string }) => postTeam('invite/resend', "Couldn't resend the invite.", data),
 		onSuccess: () => {
 			// The row's Resend button flips into its cooldown label, which is the feedback.
 			return refetch()
@@ -315,7 +315,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { inviteId: string }) => postTeam('invite/revoke', 'Failed to revoke invite', data),
+		mutationFn: (data: { inviteId: string }) => postTeam('invite/revoke', "Couldn't revoke the invite.", data),
 		onSettled: reconcileTeam
 	})
 
@@ -324,7 +324,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: (data: { userId: string }) => postTeam('member/remove', 'Failed to remove member', data),
+		mutationFn: (data: { userId: string }) => postTeam('member/remove', "Couldn't remove the member.", data),
 		onSettled: reconcileTeam
 	})
 
@@ -333,7 +333,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: () => postTeam('leave', 'Failed to leave team'),
+		mutationFn: () => postTeam('leave', "Couldn't leave the team."),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })

@@ -56,7 +56,7 @@ export async function downloadPreparedCsv(prepareCsv: PrepareCsv) {
 	downloadCSV(normalizeCsvFilename(filename), rows, { addTimestamp: false })
 }
 
-export const CSV_DOWNLOAD_ERROR = 'Couldn’t complete the CSV export. Please try again.'
+export const CSV_DOWNLOAD_ERROR = 'Couldn’t complete the CSV export. Try again.'
 
 // Export state stays local; access dialogs only decide whether it may start.
 export function useCsvDownload(free = false) {

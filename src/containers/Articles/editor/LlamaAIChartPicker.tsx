@@ -54,7 +54,7 @@ async function loadInsertableChart(
 	let detail: unknown
 	try {
 		const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`)
-		if (!res?.ok) throw new Error('Failed to load chart data')
+		if (!res?.ok) throw new Error("Couldn't load chart data.")
 		detail = await res.json()
 	} catch (error) {
 		throw new Error("Couldn't insert this chart. Try again.", { cause: error })
@@ -99,7 +99,7 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 		queryKey: ['llamaai-saved-charts-picker'],
 		queryFn: async ({ signal }) => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`, { signal })
-			if (!res?.ok) throw new Error('Failed to load saved charts')
+			if (!res?.ok) throw new Error("Couldn't load saved charts.")
 			return parseSavedChartList(await res.json())
 		},
 		staleTime: 60_000

@@ -95,7 +95,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to reorder logos')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't reorder logos.")
 		}
 	})
 
@@ -107,7 +107,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to update logo')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the logo.")
 		}
 	})
 
@@ -126,7 +126,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to reorder mentions')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't reorder mentions.")
 		}
 	})
 
@@ -138,7 +138,7 @@ export function TrustedByAdminView() {
 			revalidate()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to update mention')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the mention.")
 		}
 	})
 

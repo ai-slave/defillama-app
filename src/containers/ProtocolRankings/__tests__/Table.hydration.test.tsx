@@ -178,7 +178,7 @@ describe('Protocol Rankings hydration', () => {
 		await typeSearch('aave')
 
 		expect(requestedSearch(-1, 'search')).toBe('aave')
-		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Please retry.", {
+		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Try again.", {
 			id: 'protocol-rankings-update-error'
 		})
 	})

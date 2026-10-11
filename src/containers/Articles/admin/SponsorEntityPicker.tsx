@@ -36,7 +36,7 @@ export function SponsorEntityPicker({
 		queryKey: ['research', 'admin', 'sponsor-entities', query],
 		queryFn: async () => {
 			const response = await fetch(`/api/public/research/entities/search?q=${encodeURIComponent(query)}`)
-			if (!response.ok) throw new Error('Failed to search DefiLlama pages')
+			if (!response.ok) throw new Error("Couldn't search DefiLlama pages.")
 			return response.json()
 		},
 		enabled: open && query.length > 0,

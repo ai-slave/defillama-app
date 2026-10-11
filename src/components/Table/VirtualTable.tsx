@@ -81,7 +81,7 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 	const virtualItems = rowVirtualizer.getVirtualItems()
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
 		if ((e.ctrlKey || e.metaKey) && e.code === 'KeyF') {
-			toast.error("Native browser search isn't well supported, please use search boxes / ctrl-k / cmd-k instead", {
+			toast.error("Native browser search isn't well supported. Use the search boxes or ctrl-k / cmd-k instead.", {
 				id: 'native-search-warn',
 				icon: <Icon name="alert-triangle" className="text-error" height={16} width={16} style={{ flexShrink: 0 }} />
 			})

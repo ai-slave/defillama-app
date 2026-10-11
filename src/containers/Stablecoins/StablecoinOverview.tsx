@@ -651,7 +651,7 @@ function SelectedAssetChart({
 	onReady: (instance: echarts.ECharts | null) => void
 }) {
 	if (failedRead) {
-		return <ChartPanelBodyError retry={failedRead}>Failed to load chart data.</ChartPanelBodyError>
+		return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 	}
 	if (isLoading) {
 		return (

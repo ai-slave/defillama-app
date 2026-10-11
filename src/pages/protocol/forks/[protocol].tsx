@@ -95,7 +95,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				title={`${props.name} Forks`}
 			/>
 			{!props.forksData ? (
-				<PanelStatus variant="error">Failed to fetch</PanelStatus>
+				<PanelStatus variant="error">Couldn&apos;t load data.</PanelStatus>
 			) : (
 				<ForksByProtocol {...props.forksData} />
 			)}

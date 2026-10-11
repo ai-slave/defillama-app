@@ -44,7 +44,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 			source && !loaders.userLoading && !hasInlineData
 				? async () => {
 						const res = user ? await authorizedFetch(source.url) : await fetch(source.url)
-						if (!res?.ok) throw new Error('Failed to load chart')
+						if (!res?.ok) throw new Error("Couldn't load the chart.")
 						return res.json()
 					}
 				: skipToken,
@@ -63,7 +63,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(refreshRequest.body)
 			})
-			if (!response?.ok) throw new Error('Failed to queue chart refresh')
+			if (!response?.ok) throw new Error("Couldn't queue the chart refresh.")
 			return response.json()
 		},
 		onSuccess: async () => {

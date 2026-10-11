@@ -20,7 +20,7 @@ export default function ProjectsIndexPage() {
 					await router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
 				} catch (error) {
 					console.error('Failed to refresh GitHub installations after install', error)
-					toast.error('Failed to refresh GitHub installations.')
+					toast.error("Couldn't refresh GitHub installations.")
 				}
 			})()
 		}

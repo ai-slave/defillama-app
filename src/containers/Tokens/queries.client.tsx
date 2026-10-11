@@ -17,7 +17,7 @@ export async function fetchTokensResponse<T extends TokensPageResponse | TokensC
 	)
 	// A new client can still reach an old origin during deployment, even with a versioned URL.
 	if (data.schemaVersion !== TOKENS_PAGE_RESPONSE_SCHEMA_VERSION) {
-		throw new Error('Token data is updating. Please retry.')
+		throw new Error('Token data is updating. Try again.')
 	}
 	return data
 }

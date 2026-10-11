@@ -75,7 +75,7 @@ export function createUtrLeaderboardApi(
 				return ok(leaderboardTableResponse(await fetchLeaderboard()), PRIVATE_NO_STORE)
 			} catch (error) {
 				recordRouteRuntimeError(error, 'apiRoute')
-				return { ...upstreamError('Failed to load UTR leaderboard'), headers: PRIVATE_NO_STORE }
+				return { ...upstreamError("Couldn't load the UTR leaderboard."), headers: PRIVATE_NO_STORE }
 			}
 		}
 	})

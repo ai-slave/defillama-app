@@ -36,7 +36,7 @@ export async function uploadUtrClaimDocuments(files: ReadonlyArray<File>): Promi
 	const body = new FormData()
 	for (const file of files) body.append('file', file)
 	const response = await fetch('/api/public/utr/claim/documents', { method: 'POST', body })
-	if (!response.ok) throw await responseError(response, 'Failed to upload supporting documents')
+	if (!response.ok) throw await responseError(response, "Couldn't upload supporting documents.")
 	const receipts = await response.json()
 	if (!Array.isArray(receipts) || receipts.length !== files.length || !receipts.every(isDocumentReceipt)) {
 		throw new Error('Forgd returned an invalid document receipt')
@@ -50,7 +50,7 @@ export async function submitUtrClaim(payload: UtrClaimPayload): Promise<{ id: st
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(payload)
 	})
-	if (!response.ok) throw await responseError(response, 'Failed to submit the claim request')
+	if (!response.ok) throw await responseError(response, "Couldn't submit the claim request.")
 	const result = await response.json()
 	if (!result || typeof result.id !== 'string') throw new Error('Forgd returned an invalid claim response')
 	return result

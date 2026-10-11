@@ -42,7 +42,7 @@ export function BannersListView() {
 			revalidateLanding()
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to update')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update.")
 		}
 	})
 

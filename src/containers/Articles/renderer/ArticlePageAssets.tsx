@@ -24,7 +24,7 @@ function usePageAssetMarkets(ids: Array<string>) {
 			const res = await fetch(`/api/public/research/page-assets?ids=${ids.map(encodeURIComponent).join(',')}`, {
 				signal
 			})
-			if (!res.ok) throw new Error('Failed to load asset prices')
+			if (!res.ok) throw new Error("Couldn't load asset prices.")
 			const json = await res.json()
 			return (json?.assets ?? []) as Array<PageAssetMarket>
 		},

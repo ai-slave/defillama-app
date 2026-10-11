@@ -85,7 +85,7 @@ export function useActiveTip(): {
 			const response = await authorizedFetch(`${AI_SERVER}/user-tips/${encodeURIComponent(tipId)}/${kind}`, {
 				method: 'POST'
 			})
-			if (!response?.ok) throw new Error(`Failed to update LlamaAI tip ${kind}`)
+			if (!response?.ok) throw new Error(`Couldn't update LlamaAI tip ${kind}.`)
 		}
 	})
 

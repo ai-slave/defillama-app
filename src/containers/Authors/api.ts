@@ -22,7 +22,7 @@ export class AuthorApiError extends Error {
 }
 
 async function parseResponse<T>(response: Response | null): Promise<T> {
-	if (!response) throw new AuthorApiError('Please sign in to continue', 401)
+	if (!response) throw new AuthorApiError('Sign in to continue.', 401)
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {

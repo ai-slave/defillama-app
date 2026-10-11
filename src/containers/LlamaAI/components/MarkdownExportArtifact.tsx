@@ -36,7 +36,7 @@ function fileExtension(filename: string): string {
 async function downloadMarkdownFile({ url, filename }: { url: string; filename: string }) {
 	const response = await fetch(url)
 	if (!response.ok) {
-		throw new Error(`Failed to download markdown (${response.status})`)
+		throw new Error(`Couldn't download the markdown (status ${response.status}).`)
 	}
 
 	const blob = await response.blob()

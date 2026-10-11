@@ -263,7 +263,7 @@ export function TerminalPanel() {
 			<ChartPanel className="min-h-0 flex-1 overflow-hidden">
 				{status === 'missing' ? (
 					<SurfaceBodyStatus variant="error">
-						The charting library could not be loaded from public/assets/charting_library and public/assets/datafeeds.
+						Couldn't load the charting library from public/assets/charting_library and public/assets/datafeeds.
 					</SurfaceBodyStatus>
 				) : (
 					<div ref={containerRef} className="min-h-0 flex-1 bg-surface" />

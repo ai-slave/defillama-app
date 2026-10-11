@@ -93,7 +93,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 			toast.success(logo ? 'Logo saved' : 'Logo created')
 		},
 		onError: (error) => {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
+			toast.error(error instanceof ArticleApiError ? error.message : "Couldn't save.")
 		}
 	})
 

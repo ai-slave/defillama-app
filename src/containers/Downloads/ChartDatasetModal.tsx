@@ -875,7 +875,7 @@ export function ChartDatasetModal({
 			await navigator.clipboard.writeText(url)
 			report('copy-link', true, 'Link copied')
 		} catch {
-			report('copy-link', false, 'Failed to copy link')
+			report('copy-link', false, "Couldn't copy the link.")
 		}
 	}, [currentConfig, report])
 
@@ -900,7 +900,7 @@ export function ChartDatasetModal({
 			await navigator.clipboard.writeText(tsv)
 			report('copy', true, 'Copied to clipboard (paste into spreadsheets)')
 		} catch {
-			report('copy', false, 'Failed to copy')
+			report('copy', false, "Couldn't copy.")
 		}
 	}, [columnMeta, cols, sortedRows, selectedCount, report])
 
@@ -1112,7 +1112,7 @@ export function ChartDatasetModal({
 							) : dataFailed ? (
 								<div className="flex flex-1 items-center justify-center p-4">
 									<InlineStatus variant="error" retry={isCategoryMode ? breakdownQuery : activeQuery!}>
-										{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
+										{dataError instanceof Error ? dataError.message : "Couldn't load data."}
 									</InlineStatus>
 								</div>
 							) : columnMeta.length === 0 ? (

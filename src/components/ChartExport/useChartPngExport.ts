@@ -31,7 +31,7 @@ export function useChartPngExport({
 		const _chartInstance = chartInstance()
 
 		if (!_chartInstance) {
-			toast.error('Failed to get chart instance')
+			toast.error("Couldn't find the chart.")
 			return null
 		}
 		setIsLoading(true)
@@ -54,7 +54,7 @@ export function useChartPngExport({
 			return dataURL
 		} catch (error) {
 			console.log('Error exporting chart image:', error)
-			toast.error('Failed to export chart image')
+			toast.error("Couldn't export the chart image.")
 			document.body.removeChild(tempContainer)
 			return null
 		}
@@ -75,7 +75,7 @@ export function useChartPngExport({
 			})
 			.catch((error) => {
 				console.log('Error exporting chart image:', error)
-				toast.error('Failed to export chart image')
+				toast.error("Couldn't export the chart image.")
 			})
 			.finally(() => setIsLoading(false))
 	}
@@ -84,7 +84,7 @@ export function useChartPngExport({
 		if (isLoading) return
 		const blobPromise = (async () => {
 			const dataURL = await generateDataURL()
-			if (!dataURL) throw new Error('Failed to generate image')
+			if (!dataURL) throw new Error("Couldn't create the image.")
 			const response = await fetch(dataURL)
 			return await response.blob()
 		})()
@@ -97,7 +97,7 @@ export function useChartPngExport({
 			})
 			.catch((error) => {
 				console.log('Error copying chart image:', error)
-				toast.error('Failed to copy image to clipboard')
+				toast.error("Couldn't copy the image.")
 			})
 			.finally(() => setIsLoading(false))
 	}

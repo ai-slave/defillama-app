@@ -199,9 +199,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 
 	if (state.status === 'error') {
 		return (
-			<PanelStatus variant="error">
-				This equity sector is temporarily unavailable. Please try again shortly.
-			</PanelStatus>
+			<PanelStatus variant="error">This equity sector is temporarily unavailable. Try again in a moment.</PanelStatus>
 		)
 	}
 

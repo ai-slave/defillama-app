@@ -47,7 +47,7 @@ export function deriveSlackIntegrationState({
 	if (status?.links && status.links.length > 0) return { status: 'linked', workspaces: status.links }
 	if (isStarting) return { status: 'starting' }
 	if (isLoading) return { status: 'loading' }
-	if (statusError) return { status: 'error', message: statusError.message || 'Failed to load Slack status' }
+	if (statusError) return { status: 'error', message: statusError.message || "Couldn't load Slack status." }
 	return { status: 'idle' }
 }
 
@@ -137,7 +137,7 @@ export function useSlackIntegrationLink(opts: Options = {}) {
 		cancelPending,
 		isStarting: startMutation.isPending,
 		// Beside the state, not instead of it: the linked workspaces and the button that retries stay on screen.
-		startError: startMutation.error ? startMutation.error.message || 'Failed to start linking' : null,
+		startError: startMutation.error ? startMutation.error.message || "Couldn't start linking." : null,
 		isDisconnecting: unlinkMutation.isPending,
 		disconnectFailed: unlinkMutation.isError,
 		resetDisconnect: unlinkMutation.reset,

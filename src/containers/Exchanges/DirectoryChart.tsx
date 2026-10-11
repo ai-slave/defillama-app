@@ -224,7 +224,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 				</React.Suspense>
 			) : failedRead ? (
 				<ChartPanelBodyError retry={failedRead} style={{ minHeight: '320px' }}>
-					Failed to load the exchange overview.
+					Couldn&apos;t load the exchange overview.
 				</ChartPanelBodyError>
 			) : (
 				<ChartPanelBodyFallback className="min-h-[320px]" role="status" aria-live="polite">

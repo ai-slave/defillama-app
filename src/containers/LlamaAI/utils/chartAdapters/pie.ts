@@ -58,7 +58,7 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 			chartType: 'pie',
 			props: { title: 'Pie chart error', height: '360px' },
 			title: config.title || 'Pie chart error',
-			description: `Failed to render pie chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			description: `Couldn't render the pie chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			defaultExportKind: 'pie'
 		}
 	}

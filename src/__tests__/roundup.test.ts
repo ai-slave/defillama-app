@@ -35,5 +35,5 @@ test('parses the latest roundup into section headers and linked titles', async (
 
 test('propagates upstream failures', async () => {
 	fetchWithPoolingOnServer.mockResolvedValue(new Response(null, { status: 401, statusText: 'Unauthorized' }))
-	await expect(fetchRoundup('token')).rejects.toThrow('Failed to fetch roundup messages: 401 Unauthorized')
+	await expect(fetchRoundup('token')).rejects.toThrow("Couldn't load roundup messages: 401 Unauthorized")
 })

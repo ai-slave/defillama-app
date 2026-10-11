@@ -53,7 +53,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ rating, feedback })
 			})
-				.then((response) => assertResponse(response, 'Failed to submit feedback'))
+				.then((response) => assertResponse(response, "Couldn't submit feedback."))
 				.then(handleSimpleFetchResponse)
 				.then((res: Response) => res.json())
 

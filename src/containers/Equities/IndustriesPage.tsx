@@ -177,9 +177,7 @@ const industryColumns = industryColumnHelper.columns([
 export function IndustriesPage({ state }: { state: EquitiesPageDataState<IndustriesPageData> }) {
 	if (state.status === 'error') {
 		return (
-			<PanelStatus variant="error">
-				Equity industry data is temporarily unavailable. Please try again shortly.
-			</PanelStatus>
+			<PanelStatus variant="error">Equity industry data is temporarily unavailable. Try again in a moment.</PanelStatus>
 		)
 	}
 

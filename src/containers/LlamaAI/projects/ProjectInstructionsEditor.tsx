@@ -22,7 +22,7 @@ interface ProjectInstructionsEditorProps {
 const MAX_LENGTH = 8000
 
 function saveInstructionsError(error: unknown) {
-	return error instanceof Error ? error.message : 'Failed to save instructions'
+	return error instanceof Error ? error.message : "Couldn't save instructions."
 }
 
 export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructionsEditorProps) {

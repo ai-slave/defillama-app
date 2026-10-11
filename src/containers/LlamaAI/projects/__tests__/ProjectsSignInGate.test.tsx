@@ -35,7 +35,7 @@ afterEach(async () => {
 
 test('an open sign-in stays after a sign-in from another tab, while the prompt to sign in leaves', async () => {
 	const signIn = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'sign in')
+		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign in')
 		expect(button).toBeDefined()
 		return button!
 	})

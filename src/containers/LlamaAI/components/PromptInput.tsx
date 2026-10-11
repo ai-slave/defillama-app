@@ -342,7 +342,7 @@ export function PromptInput({
 					}
 				} catch (error) {
 					console.error('Queue failed', error)
-					setSubmitError('Failed to queue your prompt. Please try again.')
+					setSubmitError("Couldn't queue your prompt. Try again.")
 					restoreDraftIfUntouched()
 				}
 				return
@@ -367,7 +367,7 @@ export function PromptInput({
 					return
 				} catch (error) {
 					console.error('Submission failed', error)
-					setSubmitError('Failed to submit your prompt. Please try again.')
+					setSubmitError("Couldn't submit your prompt. Try again.")
 				}
 				return
 			}
@@ -381,7 +381,7 @@ export function PromptInput({
 				resetInput()
 			} catch (error) {
 				console.error('Submission failed', error)
-				setSubmitError('Failed to submit your prompt. Please try again.')
+				setSubmitError("Couldn't submit your prompt. Try again.")
 			}
 		}
 		await submit().finally(() => {

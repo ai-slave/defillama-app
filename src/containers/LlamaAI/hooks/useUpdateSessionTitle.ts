@@ -44,7 +44,7 @@ export function useUpdateSessionTitle() {
 							)
 						)
 					}
-					throw mutationActionError('Failed to update session title', error)
+					throw mutationActionError("Couldn't update the chat title.", error)
 				}
 			}),
 		onSettled: invalidateSessionWrites

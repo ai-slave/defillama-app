@@ -223,7 +223,7 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 			) : null}
 			{errors.length > 0 ? (
 				<PanelStatus variant="error" className="col-span-full">
-					Failed to fetch active loans breakdown APIs
+					Couldn&apos;t load the active loans breakdown.
 				</PanelStatus>
 			) : null}
 		</ProtocolOverviewLayout>

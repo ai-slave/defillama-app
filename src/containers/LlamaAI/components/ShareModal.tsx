@@ -70,7 +70,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ forcePublic: true })
 			})
-				.then((response) => assertResponse(response, 'Failed to share session'))
+				.then((response) => assertResponse(response, "Couldn't share the chat."))
 				.then(handleSimpleFetchResponse)
 				.then((res: Response) => res.json())) as { shareToken: string; isPublic: boolean }
 			if (!data.shareToken) throw new Error('No share link returned')

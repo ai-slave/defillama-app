@@ -52,5 +52,7 @@ test('reads small remote files completely and surfaces HTTP failures', async () 
 		content: 'a,b\n1,2',
 		truncated: false
 	})
-	await expect(readUrlPreview('https://files/missing.csv', 'missing.csv')).rejects.toThrow('Failed to load attachment')
+	await expect(readUrlPreview('https://files/missing.csv', 'missing.csv')).rejects.toThrow(
+		"Couldn't load the attachment."
+	)
 })

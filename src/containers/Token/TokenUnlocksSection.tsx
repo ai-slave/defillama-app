@@ -42,7 +42,7 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 
 	const canReadPrivateSection = isAuthenticated && hasActiveSubscription && !loaders.userLoading
 	const unlocksError =
-		error ?? (canReadPrivateSection && !isLoading && data == null ? new Error('Failed to load token unlocks.') : null)
+		error ?? (canReadPrivateSection && !isLoading && data == null ? new Error("Couldn't load token unlocks.") : null)
 
 	return (
 		<TokenPrivateSectionGate
@@ -51,7 +51,7 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 			contentLabel="token unlocks"
 			isLoading={isLoading}
 			error={unlocksError}
-			errorMessage="Failed to load token unlocks."
+			errorMessage="Couldn't load token unlocks."
 			bodyClassName="flex flex-col gap-2 p-2"
 		>
 			{data ? (

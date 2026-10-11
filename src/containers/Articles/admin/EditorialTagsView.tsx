@@ -86,7 +86,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			toast.success(`Added to ${definition.label}`)
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : `Failed to update ${definition.label}`)
+			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't update ${definition.label}.`)
 		}
 	})
 
@@ -97,7 +97,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			toast.success(`Removed from ${definition.label}`)
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : `Failed to update ${definition.label}`)
+			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't update ${definition.label}.`)
 		}
 	})
 
@@ -125,7 +125,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			if (context?.previous) {
 				queryClient.setQueryData(editorialTagQueryKey, context.previous)
 			}
-			toast.error(err instanceof ArticleApiError ? err.message : `Failed to reorder ${definition.label}`)
+			toast.error(err instanceof ArticleApiError ? err.message : `Couldn't reorder ${definition.label}.`)
 		}
 	})
 
@@ -182,7 +182,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			) : null}
 			{failed ? (
 				<InlineStatus variant="error" retry={{ refetch, isFetching }}>
-					{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}
+					{error instanceof ArticleApiError ? error.message : `Couldn't load ${definition.label}.`}
 				</InlineStatus>
 			) : isLoading ? (
 				<SurfaceBodyLoadingStatus label="Loading articles" className="min-h-32" />
@@ -283,7 +283,7 @@ export function ReportHighlightControls({
 			toast.success('Highlight text saved')
 		},
 		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to save highlight text')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't save the highlight text.")
 		}
 	})
 
@@ -301,7 +301,7 @@ export function ReportHighlightControls({
 		// left alone. Highlight text is untouched either way.
 		onError: (err, submittedLogo) => {
 			setDraft((prev) => (prev.sponsorLogo === submittedLogo ? { ...prev, sponsorLogo: saved.sponsorLogo } : prev))
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to update sponsor logo')
+			toast.error(err instanceof ArticleApiError ? err.message : "Couldn't update the sponsor logo.")
 		}
 	})
 

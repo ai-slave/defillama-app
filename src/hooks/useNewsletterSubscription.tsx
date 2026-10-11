@@ -79,14 +79,14 @@ export function useNewsletterSubscription({
 					title: 'Partially subscribed',
 					description: `Subscribed to ${ok.map((key) => NEWSLETTER_LABELS[key]).join(', ')}. Couldn't subscribe to ${failed
 						.map((key) => NEWSLETTER_LABELS[key])
-						.join(', ')} — please try again.`
+						.join(', ')} . Try again.`
 				})
 				return
 			}
-			errorToast({ title: 'Subscription failed', description: 'Please try again in a moment.' })
+			errorToast({ title: 'Subscription failed', description: 'Try again in a moment.' })
 		},
 		onError: (err) => {
-			toast.error(httpErrorMessage(err, 'Could not subscribe. Please try again.'))
+			toast.error(httpErrorMessage(err, "Couldn't subscribe. Try again."))
 		}
 	})
 }
@@ -109,7 +109,7 @@ export function useMediaKitEmail() {
 			})
 		},
 		onError: (err) => {
-			toast.error(httpErrorMessage(err, 'Could not send the media kit. Please try again.'))
+			toast.error(httpErrorMessage(err, "Couldn't send the media kit. Try again."))
 		}
 	})
 }

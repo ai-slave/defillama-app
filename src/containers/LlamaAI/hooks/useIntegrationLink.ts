@@ -84,7 +84,7 @@ export function deriveTelegramLinkState({
 		if (confirm.variables?.force && confirm.error)
 			return { status: 'error', message: confirm.error.message || 'Switch failed' }
 		if (!initialTgloginToken && !status && statusError) {
-			return { status: 'error', message: statusError.message || 'Failed to load Telegram status' }
+			return { status: 'error', message: statusError.message || "Couldn't load Telegram status." }
 		}
 	}
 	// Switch account starts from a linked account, which stays on screen while its button waits.
@@ -146,7 +146,7 @@ export function useIntegrationLink(opts: Options = {}) {
 	const [startError, setStartError] = useState<string | null>(null)
 	const startMutation = useMutation({
 		mutationFn: () => startTelegramLink(authorizedFetch),
-		onError: (error) => setStartError(error.message || 'Failed to start linking'),
+		onError: (error) => setStartError(error.message || "Couldn't start linking."),
 		onSuccess: (result) => {
 			setStartError(null)
 			const previous = queryClient.getQueryData<TelegramStatus>(statusQueryKey)

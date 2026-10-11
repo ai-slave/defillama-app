@@ -20,7 +20,7 @@ export async function fetchProtocolsByTokenClient(
 	}
 	if (!res.ok) {
 		const errorData = await res.json().catch(() => null)
-		throw new Error(errorData?.error ?? `Failed to fetch token protocols: ${res.status}`)
+		throw new Error(errorData?.error ?? `Couldn't load token protocols (status ${res.status}).`)
 	}
 	return res.json()
 }

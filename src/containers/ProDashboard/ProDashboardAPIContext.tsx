@@ -735,7 +735,7 @@ function ProDashboardAPIProviderInner({
 			options?: { allowOwnerInViewMode?: boolean }
 		): Promise<DashboardSaveNotices> => {
 			if (!isAuthenticated) {
-				throw new Error('Please sign in to save dashboards')
+				throw new Error('Sign in to save dashboards.')
 			}
 
 			if (options?.allowOwnerInViewMode ? isOwnerWriteLocked : isReadOnly) {
@@ -934,7 +934,7 @@ function ProDashboardAPIProviderInner({
 	const submitRating = useCallback(
 		async (sessionId: string, decision: DashboardRatingDecision) => {
 			if (!isAuthenticated || !user?.id || !dashboardId) {
-				throw new Error('Please sign in to rate dashboards')
+				throw new Error('Sign in to rate dashboards.')
 			}
 
 			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
@@ -1044,7 +1044,7 @@ function ProDashboardAPIProviderInner({
 	)
 	const copyDashboard = useCallback(async () => {
 		if (!isAuthenticated) {
-			throw new Error('Please sign in to copy dashboards')
+			throw new Error('Sign in to copy dashboards.')
 		}
 
 		if (!(await checkCanCreateDashboard())) {

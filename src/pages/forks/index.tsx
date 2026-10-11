@@ -12,7 +12,7 @@ export const getStaticProps = withPerformanceLogging('forks', async () => {
 	const data = await getForksListPageData()
 
 	if (!data) {
-		throw new Error('Failed to load /forks page data')
+		throw new Error("Couldn't load the forks page data.")
 	}
 
 	return {

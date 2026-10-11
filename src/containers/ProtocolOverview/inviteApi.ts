@@ -43,24 +43,24 @@ export async function revealInvite({
 	}).catch(() => {
 		throw new Error('Could not retrieve an invite code. Check your connection and try again.')
 	})
-	if (response.status >= 500) throw new Error('Invite codes are temporarily unavailable. Please try again later.')
+	if (response.status >= 500) throw new Error('Invite codes are temporarily unavailable. Try again later.')
 	const result: InviteClaim | InviteError = await response.json()
 	switch (result.status) {
 		case 'assigned':
 		case 'unavailable':
-			if (!response.ok) throw new Error('Could not retrieve an invite code. Please try again.')
+			if (!response.ok) throw new Error("Couldn't get an invite code. Try again.")
 			return result
 		case 'cooldown':
-			if (response.status !== 429) throw new Error('Could not retrieve an invite code. Please try again.')
+			if (response.status !== 429) throw new Error("Couldn't get an invite code. Try again.")
 			return result
 		case 'verification_failed':
-			throw new Error('Verification expired or failed. Please verify again.')
+			throw new Error('Verification expired or failed. Verify again.')
 		case 'invalid_request':
-			throw new Error('Could not retrieve your invite code. Please reload the page and try again.')
+			throw new Error("Couldn't get your invite code. Reload the page and try again.")
 		case 'disabled':
 		case 'not_found':
 			throw new Error('Invite codes are currently unavailable.')
 		case 'error':
-			throw new Error('Could not retrieve an invite code. Please try again.')
+			throw new Error("Couldn't get an invite code. Try again.")
 	}
 }

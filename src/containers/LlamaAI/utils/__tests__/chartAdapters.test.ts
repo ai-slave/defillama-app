@@ -86,7 +86,7 @@ describe('chart adapters', () => {
 		} satisfies ChartConfiguration
 
 		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toBe(
-			'Failed to render chart: Duplicate series name "Duplicate" is not allowed'
+			`Couldn't render the chart: Duplicate series name "Duplicate" is not allowed`
 		)
 	})
 

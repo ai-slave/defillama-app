@@ -156,7 +156,7 @@ test('a failed copy keeps its reason in the modal until the next action', async 
 	await renderChart()
 	await waitForUi(() => expect(button('Copy shareable link')).toBeTruthy())
 	await press(button('Copy shareable link'))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Failed to copy link'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't copy the link."))
 	expect(toasts.error).not.toHaveBeenCalled()
 	await press(button('Copy shareable link'))
 	await waitForUi(() => expect(announced()).toContain('Link copied'))

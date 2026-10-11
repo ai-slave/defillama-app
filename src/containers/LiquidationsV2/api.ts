@@ -28,7 +28,7 @@ async function fetchLiquidationsClient<T>(url: string, fetchFn: LiquidationsFetc
 
 	if (!res.ok) {
 		const errorData = await res.json().catch(() => null)
-		throw new Error(errorData?.error ?? `Failed to fetch liquidations data: ${res.status}`)
+		throw new Error(errorData?.error ?? `Couldn't load liquidations data (status ${res.status}).`)
 	}
 
 	return res.json()

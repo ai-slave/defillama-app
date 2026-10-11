@@ -108,7 +108,7 @@ export function loadTerminalScript(src: string): Promise<void> {
 		script.addEventListener('load', () => resolve())
 		script.addEventListener('error', () => {
 			scriptPromises.delete(src)
-			reject(new Error(`Failed to load ${src}`))
+			reject(new Error(`Couldn't load ${src}.`))
 		})
 		document.head.appendChild(script)
 	})

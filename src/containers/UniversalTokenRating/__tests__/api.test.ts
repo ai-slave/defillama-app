@@ -128,6 +128,6 @@ describe('UTR leaderboard API', () => {
 			throw new Error('Forgd unavailable')
 		}).handle(request('Bearer utr_test_secret'))
 
-		expect(result).toMatchObject({ status: 502, body: { error: 'Failed to load UTR leaderboard' } })
+		expect(result).toMatchObject({ status: 502, body: { error: "Couldn't load the UTR leaderboard." } })
 	})
 })

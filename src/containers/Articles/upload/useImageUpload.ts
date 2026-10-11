@@ -63,7 +63,7 @@ export async function postUpload<T>(
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ ...fields, dataBase64: btoa(binary) })
 	})
-	if (!response) throw new UploadError('Please sign in to continue', 401)
+	if (!response) throw new UploadError('Sign in to continue.', 401)
 	const text = await response.text()
 	const data = text ? JSON.parse(text) : null
 	if (!response.ok) {

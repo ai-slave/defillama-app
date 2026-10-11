@@ -153,7 +153,7 @@ export function AlertArtifact({
 			if (!res) throw new Error('Not authenticated')
 			if (!res.ok) {
 				const errBody = await res.json().catch(() => ({}))
-				throw new Error(errBody?.error || 'Failed to save alert')
+				throw new Error(errBody?.error || "Couldn't save the alert.")
 			}
 			return res.json()
 		},
@@ -169,7 +169,7 @@ export function AlertArtifact({
 		queryKey: ['llamaai-alert-detail', savedDbId],
 		queryFn: async () => {
 			const res = await authorizedFetch(`${AI_SERVER}/alerts/${savedDbId}`)
-			if (!res?.ok) throw new Error('Failed to load alert')
+			if (!res?.ok) throw new Error("Couldn't load the alert.")
 			return res.json()
 		},
 		enabled: !!savedDbId,

@@ -49,7 +49,7 @@ async function fetchWatchedRows<Row>(url: string, names: Array<string>): Promise
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ names })
 	})
-	if (!response.ok) throw new Error(`Failed to load watchlist rows (${response.status})`)
+	if (!response.ok) throw new Error(`Couldn't load watchlist rows (status ${response.status}).`)
 	const payload = (await response.json()) as { rows: Array<Row> }
 	return payload.rows
 }
@@ -307,7 +307,7 @@ export function PortfolioNotifications({
 		// The toasts hang on the promise, not on mutate's callbacks, so they still show after the reader leaves the page.
 		updateStatus.mutateAsync({ portfolioName: selectedPortfolio, active }).then(
 			() => toast.success(active ? 'Notification preferences enabled' : 'Notification preferences disabled'),
-			(statusError) => toast.error(httpErrorMessage(statusError, 'Failed to update notification status'))
+			(statusError) => toast.error(httpErrorMessage(statusError, "Couldn't update notification status."))
 		)
 	}
 
@@ -543,7 +543,7 @@ function NotificationSettingsForm({
 				const form = event.currentTarget
 				// The dialog locks while saving, but leaving the page unmounts it; then only a toast can tell.
 				save.mutateAsync({ portfolioName: selectedPortfolio, settings, frequency: 'weekly' }).then(onSaved, (error) => {
-					const message = httpErrorMessage(error, 'Failed to save notification preferences')
+					const message = httpErrorMessage(error, "Couldn't save notification preferences.")
 					if (form.isConnected) setFailure(message)
 					else toast.error(message)
 				})

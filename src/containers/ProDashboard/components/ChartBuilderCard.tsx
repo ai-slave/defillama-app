@@ -301,7 +301,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			})
 			if (!response) throw new Error('Sign in to download this CSV')
 			if (!response.ok) {
-				let message = 'Failed to download CSV'
+				let message = "Couldn't download the CSV."
 				try {
 					const body: { error?: string } = await response.json()
 					if (body.error) message = body.error
@@ -312,7 +312,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			}
 			downloadBlob(fileName, await response.blob())
 		},
-		onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to download CSV')
+		onError: (error) => toast.error(error instanceof Error ? error.message : "Couldn't download the CSV.")
 	})
 
 	const updateSeriesColors = (nextColors: Record<string, string>) => {

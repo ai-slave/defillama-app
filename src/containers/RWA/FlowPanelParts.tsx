@@ -19,7 +19,7 @@ export function RWAFlowValueShimmer({ label = 'Loading flow value' }: { label?: 
 
 export function RWAFlowValueUnavailable() {
 	return (
-		<Tooltip content="Flow data could not be loaded." className="text-secondary underline decoration-dotted">
+		<Tooltip content="Couldn't load flow data." className="text-secondary underline decoration-dotted">
 			Unavailable
 		</Tooltip>
 	)

@@ -46,7 +46,7 @@ export function useDashboardEngagement(dashboardId: string | null) {
 			toast.success(data.liked ? 'Dashboard starred' : 'Star removed')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : 'Failed to update star')
+			toast.error(error instanceof Error ? error.message : "Couldn't update the star.")
 		}
 	})
 
@@ -57,7 +57,7 @@ export function useDashboardEngagement(dashboardId: string | null) {
 		toggleLike: () => {
 			if (!dashboardId) return
 			if (!isAuthenticated) {
-				toast.error('Please sign in to star dashboards')
+				toast.error('Sign in to star dashboards.')
 				return
 			}
 			likeMutation.mutate(dashboardId)
