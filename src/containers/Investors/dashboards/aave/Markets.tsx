@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import {
@@ -281,7 +281,7 @@ export default function Markets() {
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={marketSizeDataset}
 							charts={MARKET_SIZE_CHART}
@@ -297,7 +297,7 @@ export default function Markets() {
 
 				{utilizationDataset.source.length > 0 && (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={utilizationDataset}
 								charts={UTILIZATION_CHART}

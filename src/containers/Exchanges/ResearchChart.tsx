@@ -7,10 +7,9 @@ import {
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
 import { researchHallmarks } from './chartHallmarks'
@@ -128,13 +127,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 	const hallmarks = React.useMemo(() => researchHallmarks(chart.metric), [chart.metric])
 	return (
 		<ResearchChartFrame title={chart.title} description={chart.description} toolbar={toolbar} updatedAt={chart.builtAt}>
-			<React.Suspense
-				fallback={
-					<ChartPanelBodyFallback>
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
-				}
-			>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<ChartPanelBody role="img" aria-label={researchChartAriaLabel(chart)}>
 					<MultiSeriesChart
 						dataset={chartModel.dataset}
@@ -166,9 +159,7 @@ export function ResearchChartStatus({
 			{failedRead ? (
 				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load this chart.</ChartPanelBodyError>
 			) : (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading />
 			)}
 		</ResearchChartFrame>
 	)

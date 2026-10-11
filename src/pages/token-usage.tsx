@@ -37,7 +37,7 @@ import { Input } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { ErrorLine, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { ErrorLine, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -240,7 +240,7 @@ export default function Tokens() {
 					{/* No ChartPanelBody: the panel fills the page and holds the table too, so a growing body (and the
 					    body fallback's auto margins) would open a gap between the treemap and the table. */}
 					{treemapTreeData.length > 0 ? (
-						<Suspense fallback={<div className="min-h-[480px]" />}>
+						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading treemap" className="min-h-[480px]" />}>
 							<TreemapChart
 								treeData={treemapTreeData}
 								variant="rwa"
@@ -252,8 +252,13 @@ export default function Tokens() {
 						</Suspense>
 					) : null}
 
+					{/* Holds the table's height so the page does not jump when it arrives. */}
 					<Suspense
-						fallback={<div style={{ minHeight: `${filteredProtocols.length * 50 + 200}px` }} className="bg-surface" />}
+						fallback={
+							<div className="flex" style={{ minHeight: `${filteredProtocols.length * 50 + 200}px` }}>
+								<SurfaceBodyLoadingStatus label="Loading table" />
+							</div>
+						}
 					>
 						<VirtualTable table={tableInstance} />
 					</Suspense>

@@ -15,7 +15,7 @@ import { SERVER_URL } from '~/constants'
 import { chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -206,7 +206,7 @@ function LanguageSeriesChart({
 					csvSource={selectedPercentage.csvSource}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={selectedPercentage.dataset}
 					charts={selectedPercentage.charts}

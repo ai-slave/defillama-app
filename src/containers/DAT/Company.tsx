@@ -18,7 +18,8 @@ import {
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -243,7 +244,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							csvSource={chartData ? { type: 'dataset', prepare: () => chartData.holdingsChart.dataset } : null}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						{chartData != null ? (
 							<MultiSeriesChart
 								containerClassName={CHART_FILL}
@@ -263,7 +264,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
 					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
@@ -283,7 +284,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				) : null}
 				{props.fdChart != null ? (
 					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
@@ -306,7 +307,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share Price</ChartPanelTitle>} />
 						{/* The candlestick sets its own height: 480px plus any indicator panels. */}
 						<ChartPanelBody className="min-h-[480px]">
-							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[480px]" />}>
+							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[480px]" />}>
 								<CandlestickChart data={props.ohlcvChartData} />
 							</Suspense>
 						</ChartPanelBody>
@@ -315,7 +316,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				) : null}
 				{props.totalAssetValueChart != null ? (
 					<ChartPanel className="col-span-full">
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={props.totalAssetValueChart.dataset}
 								charts={props.totalAssetValueChart.charts}

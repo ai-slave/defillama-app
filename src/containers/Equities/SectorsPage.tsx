@@ -11,7 +11,7 @@ import { chartColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change, formatChange } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -320,7 +320,7 @@ function SectorsReadyPage({
 				</PanelHeader>
 				{performanceRows.length > 0 ? (
 					<ChartPanelBody>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<HBarChart
 								categories={performanceRows.map(({ row }) => row.sector)}
 								values={performanceRows.map(({ value }) => value)}

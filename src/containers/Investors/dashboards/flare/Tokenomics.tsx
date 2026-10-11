@@ -6,13 +6,13 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber } from '~/utils/numberFormat'
@@ -133,7 +133,7 @@ export default function Tokenomics() {
 					</div>
 					{inf.pctChart && (
 						<ChartPanel>
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
 									dataset={inf.pctChart.dataset}
 									charts={inf.pctChart.charts}
@@ -151,7 +151,7 @@ export default function Tokenomics() {
 					<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 						{inf.circulatingChart && (
 							<ChartPanel>
-								<Suspense fallback={<ChartPanelExportShellFallback />}>
+								<Suspense fallback={<ChartPanelExportShellLoading />}>
 									<MultiSeriesChart
 										dataset={inf.circulatingChart.dataset}
 										charts={inf.circulatingChart.charts}
@@ -193,7 +193,7 @@ export default function Tokenomics() {
 										csvSource={{ type: 'dataset', prepare: () => protocolChart.dataset }}
 									/>
 								</ChartPanelToolbar>
-								<Suspense fallback={<ChartPanelBodyFallback />}>
+								<Suspense fallback={<ChartPanelBodyLoading />}>
 									<MultiSeriesChart
 										dataset={protocolChart.dataset}
 										charts={protocolChart.charts}
@@ -248,7 +248,7 @@ export default function Tokenomics() {
 						}}
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					{burnView === 'daily' ? (
 						<MultiSeriesChart
 							key="daily"
@@ -285,7 +285,7 @@ export default function Tokenomics() {
 				<StatTile label="Latest Epoch Burn" value={ek.latestEpochBurn} />
 			</div>
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={e.perEpochDataset}
 						charts={e.charts.perEpoch}
@@ -323,7 +323,7 @@ export default function Tokenomics() {
 				/>
 			</div>
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={e.burnVsEmitDataset}
 						charts={e.charts.burnVsEmit}
@@ -380,7 +380,7 @@ export default function Tokenomics() {
 								csvSource={{ type: 'dataset', prepare: () => fire.dataset }}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={fire.dataset}
 								charts={fire.charts}

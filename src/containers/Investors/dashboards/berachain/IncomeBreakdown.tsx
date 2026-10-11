@@ -5,7 +5,7 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
@@ -207,7 +207,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue (all sources)"
 							headingAs="h3"
@@ -227,7 +227,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Breakdown"
 							headingAs="h3"
@@ -247,7 +247,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Chain Fees"
 							headingAs="h3"
@@ -282,7 +282,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Revenue"
 							headingAs="h3"
@@ -301,7 +301,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue"
 							headingAs="h3"
@@ -336,7 +336,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Breakdown"
 							headingAs="h3"
@@ -356,7 +356,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Fees"
 							headingAs="h3"
@@ -375,7 +375,7 @@ export default function IncomeBreakdown() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Cumulative Revenue"
 							headingAs="h3"

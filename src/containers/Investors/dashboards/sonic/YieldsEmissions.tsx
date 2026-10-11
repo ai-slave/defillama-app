@@ -4,8 +4,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -89,7 +89,7 @@ export default function YieldsEmissions() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>S Token Emissions</SectionHeader>
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.emissions.title}
 							headingAs="h3"

@@ -14,7 +14,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -222,7 +222,7 @@ function LiquidationsDistributionChartCard({
 					smol
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}

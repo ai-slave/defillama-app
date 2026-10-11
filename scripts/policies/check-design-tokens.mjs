@@ -1048,7 +1048,7 @@ const RULES = [
 	{
 		id: 'lazy-chart-without-boundary',
 		description:
-			'a shared chart loaded with lazy() and no Suspense in the same file: the nearest boundary is a page- or tab-level one, so the whole region renders blank until the chart code arrives, then jumps. Wrap the chart in Suspense with a ChartPanelBodyFallback (or ChartPanelExportShellFallback) of its height (src/ui/ChartPanel.tsx); next/dynamic takes a sized `loading`',
+			'a shared chart loaded with lazy() and no Suspense in the same file: the nearest boundary is a page- or tab-level one, so the whole region renders blank until the chart code arrives, then jumps. Wrap the chart in Suspense with a ChartPanelBodyLoading (or ChartPanelExportShellLoading) of its height (src/ui/ChartPanel.tsx); next/dynamic takes a sized loading part as `loading`',
 		match: (content) => {
 			const lazyCharts = content.match(/\blazy\(\s*\(\)\s*=>\s*import\(\s*['"]~\/components\/ECharts\//g)
 			const dynamicCharts = content.match(/\bdynamic\(\s*\(\)\s*=>\s*import\(\s*['"]~\/components\/ECharts\//g)

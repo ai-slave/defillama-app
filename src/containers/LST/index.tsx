@@ -28,7 +28,13 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { tabTrackStyles, TabLink } from '~/ui/Tab'
@@ -421,7 +427,7 @@ export function LSTOverview({
 										/>
 									</ChartPanelToolbar>
 									<ChartPanelBody>
-										<React.Suspense fallback={<ChartPanelBodyFallback />}>
+										<React.Suspense fallback={<ChartPanelBodyLoading />}>
 											<PieChart
 												chartData={deferredPiePresentation.chartData}
 												stackColors={deferredPiePresentation.stackColors}
@@ -453,7 +459,7 @@ export function LSTOverview({
 									</ChartPanelToolbar>
 									<ChartPanelBody>
 										{selectedBreakdownPresentation ? (
-											<React.Suspense fallback={<ChartPanelBodyFallback />}>
+											<React.Suspense fallback={<ChartPanelBodyLoading />}>
 												<MultiSeriesChart
 													dataset={selectedBreakdownPresentation.dataset}
 													charts={selectedBreakdownPresentation.charts}
@@ -517,7 +523,7 @@ export function LSTOverview({
 
 								<ChartPanelBody>
 									{selectedInflowsPresentation ? (
-										<React.Suspense fallback={<ChartPanelBodyFallback />}>
+										<React.Suspense fallback={<ChartPanelBodyLoading />}>
 											<MultiSeriesChart
 												dataset={selectedInflowsPresentation.dataset}
 												charts={selectedInflowsPresentation.charts}

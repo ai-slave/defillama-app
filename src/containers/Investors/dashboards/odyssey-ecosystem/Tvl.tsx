@@ -1,8 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LoadingIndicator } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import {
@@ -205,11 +204,9 @@ export default function Tvl() {
 					}
 				/>
 				{isLoading || !ecoModel ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={ecoModel.dataset}
 							charts={ecoModel.charts}
@@ -229,11 +226,9 @@ export default function Tvl() {
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
 				/>
 				{isLoading || !ethOverlay ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={ethOverlay.dataset}
 							charts={ethOverlay.charts}
@@ -255,7 +250,7 @@ export default function Tvl() {
 							<ChartPanelToolbar
 								leading={<ChartPanelTitle subtitle="Stacked by chain">{protocol.protocol}</ChartPanelTitle>}
 							/>
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									dataset={model.dataset}
 									charts={model.charts}
@@ -374,7 +369,7 @@ export default function Tvl() {
 											</ChartPanelTitle>
 										}
 									/>
-									<Suspense fallback={<ChartPanelBodyFallback />}>
+									<Suspense fallback={<ChartPanelBodyLoading />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}

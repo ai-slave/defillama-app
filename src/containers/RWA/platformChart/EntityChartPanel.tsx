@@ -8,11 +8,10 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
-import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { parseRWAFlowGrouping, type RWAFlowGrouping } from '../flows'
 import {
@@ -153,11 +152,9 @@ export function RWAEntityChartPanel<K extends string>({
 			{failedRead ? (
 				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 			) : isLoading && deferredChart.series.every((series) => (series.data?.length ?? 0) === 0) ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading />
 			) : (
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={EMPTY_DATASET}
 						charts={deferredChart.series}

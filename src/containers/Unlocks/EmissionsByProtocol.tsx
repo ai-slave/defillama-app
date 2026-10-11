@@ -16,8 +16,8 @@ import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -1016,11 +1016,9 @@ function ChartContainer({
 							/>
 						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (
-							<ChartPanelBodyFallback role="status" aria-live="polite">
-								<LoadingIndicator />
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyLoading />
 						) : (
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
@@ -1041,7 +1039,7 @@ function ChartContainer({
 				<div className="grid grid-cols-2 gap-2">
 					{data.pieChartData[dataType].length > 0 ? (
 						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<PieChart
 									showLegend
 									title="Allocation"
@@ -1064,7 +1062,7 @@ function ChartContainer({
 
 					{unlockedPercent !== null && unlockedExportButtons !== null ? (
 						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<PieChart
 									showLegend
 									title={`Unlocked ${formatPercent(unlockedPercent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}

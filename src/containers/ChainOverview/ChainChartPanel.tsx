@@ -15,14 +15,19 @@ import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -200,11 +205,7 @@ export function ChainChartPanel({
 
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
 	// The data request and the lazy chart chunk wait behind the same indicator.
-	const chartLoading = (
-		<ChartPanelBodyFallback role="status" aria-live="polite">
-			<LoadingIndicator />
-		</ChartPanelBodyFallback>
-	)
+	const chartLoading = <ChartPanelBodyLoading />
 
 	return (
 		<ChartPanel className="col-span-2">

@@ -27,7 +27,7 @@ import { stablecoinBrandColors } from '~/containers/Stablecoins/brandColors'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
@@ -309,7 +309,7 @@ export function StablecoinsChartTab({
 
 		if (chainChartType === 'pie') {
 			return (
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<PieChart
 						chartData={chainPiePresentation.chartData}
 						stackColors={{ ...chainPiePresentation.stackColors, ...brandColors }}
@@ -330,7 +330,7 @@ export function StablecoinsChartTab({
 			chainChartType === 'usdInflows' || chainChartType === 'tokenInflows' ? BAR_EXPORT_BUTTONS : AREA_EXPORT_BUTTONS
 
 		return (
-			<Suspense fallback={<ChartPanelExportShellFallback />}>
+			<Suspense fallback={<ChartPanelExportShellLoading />}>
 				<MultiSeriesChart
 					dataset={chainChartPayload.dataset}
 					charts={chainCharts}
@@ -357,7 +357,7 @@ export function StablecoinsChartTab({
 			case 'totalCirc':
 				if (!assetDataset) return null
 				return (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={assetDataset}
 							charts={TOTAL_CIRCULATING_CHARTS}
@@ -372,7 +372,7 @@ export function StablecoinsChartTab({
 			case 'chainMcaps':
 				if (!assetDataset) return null
 				return (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={assetDataset}
 							charts={assetChainCharts}
@@ -386,7 +386,7 @@ export function StablecoinsChartTab({
 				)
 			case 'chainPie':
 				return (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
 							chartData={assetPiePresentation.chartData}
 							stackColors={assetPiePresentation.stackColors}
@@ -397,7 +397,7 @@ export function StablecoinsChartTab({
 			case 'chainDominance':
 				if (!assetDataset) return null
 				return (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							valueSymbol="%"
 							dataset={assetDataset}

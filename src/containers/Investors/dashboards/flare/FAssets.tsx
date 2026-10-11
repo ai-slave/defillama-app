@@ -5,12 +5,12 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
@@ -73,7 +73,7 @@ export default function FAssets() {
 
 			{charts.locked && (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={charts.locked.dataset}
 							charts={charts.locked.charts}
@@ -99,7 +99,7 @@ export default function FAssets() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={charts.dist.data}
 								stackColors={charts.dist.colors}
@@ -129,7 +129,7 @@ export default function FAssets() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={charts.allNetworksDist.data}
 								stackColors={charts.allNetworksDist.colors}

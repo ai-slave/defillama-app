@@ -14,11 +14,16 @@ import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
-import { ChartPanelBody, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -806,12 +811,7 @@ export function IncomeStatement({
 							>
 								<Suspense
 									fallback={
-										<ChartPanelBodyFallback
-											role="status"
-											className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)"
-										>
-											<LoadingIndicator />
-										</ChartPanelBodyFallback>
+										<ChartPanelBodyLoading className="min-h-(--sankey-height) max-[37.5rem]:min-h-(--sankey-mobile-height)" />
 									}
 								>
 									<SankeyChart

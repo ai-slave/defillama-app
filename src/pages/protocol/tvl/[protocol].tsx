@@ -29,7 +29,7 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -179,7 +179,7 @@ function USDInflowsChartCard({
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -266,7 +266,7 @@ function InflowsByTokenChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind="Inflow" />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}

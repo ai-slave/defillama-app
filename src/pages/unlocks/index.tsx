@@ -44,7 +44,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { ScopeNote } from '~/ui/ScopeNote'
@@ -258,7 +258,7 @@ function UpcomingUnlockVolumeChart({
 				<ScopeNote>This chart ignores the table filters and shows upcoming unlocks for every protocol.</ScopeNote>
 			) : null}
 			{deferredChartData.dataset.source.length > 0 ? (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
 						charts={selectedBreakdown?.charts ?? deferredChartData.charts}

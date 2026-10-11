@@ -8,7 +8,7 @@
  */
 import * as React from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { depthCurveAriaLabel, depthCurveDataset, type DepthCurveEntry } from './depthCurve'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -45,7 +45,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 
 	return (
 		<ChartPanelBody role="img" aria-label={ariaLabel}>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={{ source: dataset.source, dimensions: dataset.dimensions }}
 					charts={charts}

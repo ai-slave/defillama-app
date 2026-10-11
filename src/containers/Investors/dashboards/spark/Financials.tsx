@@ -4,7 +4,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -120,7 +120,7 @@ function AllocatedAssetsSection({
 					/* The donut is a side tile beside its list, so it keeps its own height rather than the 360 body floor. */
 					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[320px]" />}>
+							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[320px]" />}>
 								<PieChart
 									chartData={currentEntries}
 									stackColors={pieColors}
@@ -189,7 +189,7 @@ function AllocatedAssetsSection({
 						</div>
 					</div>
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={hist.dataset}
 							charts={hist.charts}
@@ -225,7 +225,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.monthlyGross.dataset}
 							charts={data.monthlyGross.charts}
@@ -247,7 +247,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.monthlyNet.dataset}
 							charts={data.monthlyNet.charts}
@@ -282,7 +282,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.supplyTotal.dataset}
 							charts={data.supplyTotal.charts}
@@ -303,7 +303,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.supplyByChain.dataset}
 							charts={data.supplyByChain.charts}
@@ -339,7 +339,7 @@ function TvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={data.tvl.dataset}
 						charts={data.tvl.charts}
@@ -373,7 +373,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.deposits.dataset}
 							charts={data.deposits.charts}
@@ -394,7 +394,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.borrows.dataset}
 							charts={data.borrows.charts}
@@ -425,7 +425,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={data.sllTvl.dataset}
 						charts={data.sllTvl.charts}
@@ -457,7 +457,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 						smol
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={data.savingsTvl.dataset}
 						charts={data.savingsTvl.charts}
@@ -529,7 +529,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.treasuryModel.dataset}
 							charts={data.treasuryModel.charts}
@@ -550,7 +550,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							smol
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.buybacksModel.dataset}
 							charts={data.buybacksModel.charts}
@@ -597,7 +597,7 @@ export default function Financials() {
 					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}
 					<div className="grid grid-cols-1 gap-4 px-2 pb-2 md:grid-cols-2">
 						<div className="min-h-[300px]">
-							<Suspense fallback={<ChartPanelBodyFallback className="min-h-[300px]" />}>
+							<Suspense fallback={<ChartPanelBodyLoading className="min-h-[300px]" />}>
 								<PieChart
 									chartData={data.projectedBreakdown.series}
 									stackColors={data.breakdownColors}

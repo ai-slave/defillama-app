@@ -41,6 +41,12 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    screen. Use `httpErrorMessage(error, "Couldn't …")`, which keeps an API's 4xx reason, or narrow to the typed
  *    error whose message is written for readers. A `.message` read from an inferred `Error` (a mutation's error) has
  *    no shape to refuse here; the doc's rule covers it.
+ * 10. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBodyFallback or a div
+ *    with no children. A fallback is a loading state: render the part for its surface with a label naming what loads
+ *    (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, or
+ *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
+ * 11. hand-built-chart-loading: a ChartPanelBodyFallback whose only child is a LoadingIndicator. That is
+ *    ChartPanelBodyLoading, which also announces it.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
  * matches fails, so the list never outlives the code it excuses.
@@ -53,6 +59,8 @@ type RuleId =
 	| 'loading-text'
 	| 'loading-dots'
 	| 'lone-spinner'
+	| 'blank-fallback'
+	| 'hand-built-chart-loading'
 	| 'error-box'
 	| 'alert-line'
 	| 'retry-gating'
@@ -67,6 +75,9 @@ const MESSAGES: Record<RuleId, string> = {
 	'loading-dots': 'renders LoadingDots outside a busy button; use LoadingIndicator',
 	'lone-spinner':
 		'draws a region loading state from a lone LoadingSpinner; use PanelLoadingStatus, SurfaceBodyLoadingStatus, ListLoading, ChartPanelBodyLoading or LoadingIndicator',
+	'blank-fallback':
+		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, ProCardLoading)',
+	'hand-built-chart-loading': 'wraps a LoadingIndicator in ChartPanelBodyFallback; use ChartPanelBodyLoading',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
@@ -101,6 +112,15 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 		'src/containers/LlamaAI/components/sidebar/AgenticSessionItem.tsx':
 			"a sidebar row's busy veil while its chat restores, too small for a labelled status"
 	},
+	'blank-fallback': {
+		'src/components/Nav/Desktop/PinnedPages.tsx':
+			'the reorder list opens on a click and its chunk lands within a frame; a loading line in the nav would only flash',
+		'src/components/Nav/Mobile/Menu.tsx':
+			'the reorder list opens on a tap and its chunk lands within a frame; a loading line in the menu would only flash',
+		'src/containers/ProDashboard/components/MetricCard.tsx':
+			'the sparkline under a metric that is already on screen; a loading line there reads as the metric still loading'
+	},
+	'hand-built-chart-loading': {},
 	'error-box': {
 		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-coloured on purpose',
 		'src/containers/Yields/poolDetail/PoolDetailView.tsx': "the exploit warning banner on a hacked pool's page"
@@ -308,6 +328,41 @@ function isMeaningful(child: ts.JsxChild): boolean {
 	if (ts.isJsxText(child)) return child.text.trim() !== ''
 	if (ts.isJsxExpression(child)) return child.expression !== undefined
 	return true
+}
+
+const BLANK_BOX_TAGS = new Set(['ChartPanelBodyFallback', 'div'])
+
+/** A ChartPanelBodyFallback or div that draws nothing inside. */
+function isBlankBox(node: ts.Expression): boolean {
+	const expression = unwrap(node)
+	if (ts.isJsxSelfClosingElement(expression)) return BLANK_BOX_TAGS.has(tagName(expression))
+	return (
+		ts.isJsxElement(expression) &&
+		BLANK_BOX_TAGS.has(tagName(expression.openingElement)) &&
+		!expression.children.some(isMeaningful)
+	)
+}
+
+/** `<Suspense fallback={…}>` or `dynamic(…, { loading: () => … })`: what renders while a lazy part loads. */
+function lazyFallback(node: ts.Node): ts.Expression | undefined {
+	if (ts.isJsxAttribute(node) && node.name.getText() === 'fallback') {
+		const opening = node.parent.parent
+		const isSuspense = ['Suspense', 'React.Suspense'].includes(tagName(opening))
+		return isSuspense && node.initializer && ts.isJsxExpression(node.initializer)
+			? node.initializer.expression
+			: undefined
+	}
+	if (
+		ts.isPropertyAssignment(node) &&
+		node.name.getText() === 'loading' &&
+		ts.isCallExpression(node.parent.parent) &&
+		node.parent.parent.expression.getText() === 'dynamic' &&
+		ts.isArrowFunction(node.initializer) &&
+		!ts.isBlock(node.initializer.body)
+	) {
+		return node.initializer.body
+	}
+	return undefined
 }
 
 function isQueryCall(node: ts.Expression | undefined, queryHooks: ReadonlySet<string>): boolean {
@@ -639,6 +694,17 @@ export function scanSource(
 
 			if (nextErrorName && tag === nextErrorName && attribute(opening, 'statusCode')) report('next-error', opening)
 
+			if (tag === 'ChartPanelBodyFallback' && ts.isJsxElement(node)) {
+				const children = node.children.filter(isMeaningful)
+				if (
+					children.length === 1 &&
+					ts.isJsxSelfClosingElement(children[0]) &&
+					tagName(children[0]) === 'LoadingIndicator'
+				) {
+					report('hand-built-chart-loading', opening)
+				}
+			}
+
 			if (ts.isJsxElement(node) && !BUTTON_LIKE.has(tag)) {
 				const children = node.children.filter(isMeaningful)
 				const isSpinner = (child: ts.JsxChild) =>
@@ -712,6 +778,9 @@ export function scanSource(
 				report('error-box', node)
 			}
 		}
+
+		const fallback = lazyFallback(node)
+		if (fallback && isBlankBox(fallback)) report('blank-fallback', fallback)
 
 		if (ts.isConditionalExpression(node)) checkRetryGating(heldBranch(node.condition, node.whenTrue, node.whenFalse))
 		if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
@@ -1075,6 +1144,53 @@ if (process.argv.includes('--self-test')) {
 			name: 'Try again with its own focus handoff',
 			source:
 				'export const F = ({ q }) => <InlineStatus variant="error" action={<Button ref={takeLostFocus} size="sm" onClick={() => void q.refetch()}>Try again</Button>}>Couldn\'t load.</InlineStatus>',
+			rule: null
+		},
+		{
+			name: 'blank chart body as a Suspense fallback',
+			source:
+				'export const F = () => <Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}><Chart /></Suspense>',
+			rule: 'blank-fallback'
+		},
+		{
+			name: 'blank div as a React.Suspense fallback',
+			source:
+				'export const F = () => <React.Suspense fallback={(<div style={{ height }}></div>)}><Chart /></React.Suspense>',
+			rule: 'blank-fallback'
+		},
+		{
+			name: 'blank div as a dynamic loading',
+			source:
+				'const C = dynamic(() => import(\'./C\'), { ssr: false, loading: () => <div className="min-h-[572px]" /> })',
+			rule: 'blank-fallback'
+		},
+		{
+			name: 'loading part as a Suspense fallback',
+			source:
+				'export const F = () => <Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}><Chart /></Suspense>',
+			rule: null
+		},
+		{
+			name: 'wrapper holding a loading part as a fallback',
+			source:
+				'export const F = () => <Suspense fallback={<div style={{ minHeight }}><SurfaceBodyLoadingStatus label="Loading table" /></div>}><T /></Suspense>',
+			rule: null
+		},
+		{
+			name: "another component's fallback prop",
+			source: 'export const F = () => <ErrorBoundary fallback={<div />}><Chart /></ErrorBoundary>',
+			rule: null
+		},
+		{
+			name: 'LoadingIndicator in a chart body box',
+			source:
+				'export const F = () => <ChartPanelBodyFallback role="status" aria-live="polite"><LoadingIndicator /></ChartPanelBodyFallback>',
+			rule: 'hand-built-chart-loading'
+		},
+		{
+			name: 'note in a chart body box',
+			source:
+				'export const F = () => <ChartPanelBodyFallback className="body-sm text-tertiary">No data</ChartPanelBodyFallback>',
 			rule: null
 		}
 	]

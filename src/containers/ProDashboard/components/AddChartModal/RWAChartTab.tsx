@@ -12,7 +12,7 @@ import {
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
@@ -336,7 +336,7 @@ function OverviewPreview({
 	return (
 		<Suspense
 			fallback={
-				<ChartPanelBodyFallback style={chartView === 'treemap' ? { minHeight: TREEMAP_PREVIEW_HEIGHT } : undefined} />
+				<ChartPanelBodyLoading style={chartView === 'treemap' ? { minHeight: TREEMAP_PREVIEW_HEIGHT } : undefined} />
 			}
 		>
 			{chartView === 'timeSeries' && timeSeriesDataset ? (
@@ -377,7 +377,7 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: A
 	}
 
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback />}>
+		<Suspense fallback={<ChartPanelBodyLoading />}>
 			<MultiSeriesChart dataset={chartDataset} charts={charts} showLegend />
 		</Suspense>
 	)

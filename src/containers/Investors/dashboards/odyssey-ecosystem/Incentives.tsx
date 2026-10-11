@@ -1,9 +1,15 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatRatio } from '~/utils/numberFormat'
 import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
@@ -185,11 +191,9 @@ export default function Incentives() {
 					/>
 				</ChartPanelToolbar>
 				{!data ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : poolModel?.dataset.source.length ? (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							key={poolTab}
 							dataset={poolModel.dataset}

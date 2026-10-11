@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -132,7 +132,7 @@ export default function CashTransactions() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Transactions by Class"
 							headingAs="h3"
@@ -152,7 +152,7 @@ export default function CashTransactions() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Users by Class"
 							headingAs="h3"
@@ -172,7 +172,7 @@ export default function CashTransactions() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Transactions"
 							headingAs="h3"
@@ -191,7 +191,7 @@ export default function CashTransactions() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Active Users"
 							headingAs="h3"
@@ -210,7 +210,7 @@ export default function CashTransactions() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Weekly Average Txns per User"
 							headingAs="h3"

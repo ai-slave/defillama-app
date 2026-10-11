@@ -31,8 +31,10 @@ import { LoadingIndicator, RetryButton } from './Status'
    Suspense fallbacks: a lazy chart inside a mounted body uses
    ChartPanelBodyLoading (360px, announced), never the bare
    ChartPanelBodyFallback box; a lazy chart that renders its own title
-   and export toolbar uses ChartPanelExportShellFallback (400px). Keep an
+   and export toolbar uses ChartPanelExportShellLoading (400px). Keep an
    external ChartPanelToolbar outside Suspense, so only the body waits.
+   check-status-parts.ts refuses a fallback that renders a childless
+   ChartPanelBodyFallback or div.
 
    A failed read renders ChartPanelBodyError where the chart would be: the
    red message and, when the chart's data comes from a query in the browser,
@@ -152,6 +154,8 @@ export function ChartPanelBodyError({
 	)
 }
 
-export function ChartPanelExportShellFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
-	return <div className={`initial:min-h-[400px] ${className ?? ''}`.trim()} {...props} />
+/** A lazy chart that draws its own title and export row, loading: ChartPanelBodyLoading over the 400px the toolbar
+    and body take together. `className` is grid placement only (col-span-*). */
+export function ChartPanelExportShellLoading({ label, className }: { label?: string; className?: string }) {
+	return <ChartPanelBodyLoading label={label} className={`min-h-[400px] ${className ?? ''}`.trim()} />
 }

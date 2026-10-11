@@ -12,7 +12,7 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { childColors } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
@@ -364,7 +364,7 @@ function IndustriesReadyPage({
 							</p>
 						</div>
 					</PanelHeader>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={companyCountDataset}
 							charts={[

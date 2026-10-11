@@ -24,11 +24,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	CHART_FILL,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -199,16 +198,7 @@ export function DimensionProtocolChartByType({
 	}
 
 	if (query.isLoading) {
-		return (
-			<ChartPanelExportShellFallback
-				role="status"
-				aria-live="polite"
-				className="col-span-2 flex flex-col items-center justify-center"
-			>
-				<LoadingIndicator />
-				<span className="sr-only">Loading chart data</span>
-			</ChartPanelExportShellFallback>
-		)
+		return <ChartPanelExportShellLoading label="Loading chart data" className="col-span-2" />
 	}
 
 	return (
@@ -360,7 +350,7 @@ function ChartByType({
 					}}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}

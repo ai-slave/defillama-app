@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -371,7 +371,7 @@ export default function SyrupActivity() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : monthlyChart.source.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly stSyrup Deposits vs Withdrawals"
 							headingAs="h3"
@@ -392,7 +392,7 @@ export default function SyrupActivity() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : migrationChart.source.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Monthly Syrup Token Migrations"
 							headingAs="h3"
@@ -432,7 +432,7 @@ export default function SyrupActivity() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : dripMonthlyChart.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Monthly Drip Claims"
 								headingAs="h3"

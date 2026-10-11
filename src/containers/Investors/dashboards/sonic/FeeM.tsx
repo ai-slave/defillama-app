@@ -9,7 +9,7 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -37,7 +37,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 	}
 	return (
 		<ChartPanelBody>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<TreemapChart
 					treeData={treeData}
 					variant="flat"
@@ -198,7 +198,7 @@ export default function FeeM() {
 				<SectionHeader>Daily Activity</SectionHeader>
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={data.dailyStatsModel.dataset}
 							charts={data.dailyStatsModel.charts}

@@ -16,10 +16,9 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -236,11 +235,9 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				{queryReadFailed(chartDataQuery) ? (
 					<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : shouldFetchChartData && chartDataQuery.isLoading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={selectedPresentation.dataset}
 							charts={selectedPresentation.charts}

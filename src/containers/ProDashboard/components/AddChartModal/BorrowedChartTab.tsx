@@ -8,7 +8,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
@@ -157,7 +157,7 @@ export function BorrowedChartTab({
 		switch (selectedBorrowedChartType) {
 			case 'chainsBorrowed':
 				chartContent = (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={visibleDataset}
 							charts={charts}
@@ -172,7 +172,7 @@ export function BorrowedChartTab({
 				break
 			case 'tokenBorrowedUsd':
 				chartContent = (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={visibleDataset}
 							charts={charts}
@@ -187,14 +187,14 @@ export function BorrowedChartTab({
 				break
 			case 'tokensBorrowedPie':
 				chartContent = (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 					</Suspense>
 				)
 				break
 			case 'tokenBorrowedRaw':
 				chartContent = (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={visibleDataset}
 							charts={charts}

@@ -17,7 +17,13 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -427,7 +433,7 @@ export function BarListCard({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<HBarChart
 					categories={items.map((item) => item.name)}
 					values={items.map((item) => item.value)}
@@ -531,7 +537,7 @@ export function TimeAreaCard({
 				{value && <p className="mono-lg tracking-tight text-primary tabular-nums">{value}</p>}
 				{control}
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}

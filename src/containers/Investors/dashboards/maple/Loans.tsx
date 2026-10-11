@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
@@ -185,7 +185,7 @@ export default function Loans() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.principalByPool.source.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Principal by Pool"
 							headingAs="h3"
@@ -205,7 +205,7 @@ export default function Loans() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.rateDistribution.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Interest Rate Distribution"
 								headingAs="h3"
@@ -224,7 +224,7 @@ export default function Loans() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.ageDistribution.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Loan Age Distribution"
 								headingAs="h3"

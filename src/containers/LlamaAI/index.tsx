@@ -130,7 +130,7 @@ import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { getABSeedFromCookie } from '~/utils/abTesting'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -2914,14 +2914,7 @@ export function AgenticChat({
 												</LlamaAIChromeContext.Provider>
 												{/* Holds the chart's share of the row while the panel loads: without it the chat
 										    paints at the left edge and jumps right when the terminal arrives. */}
-												<Suspense
-													fallback={
-														<div
-															aria-hidden="true"
-															className="hidden min-w-0 flex-1 rounded-lg border border-subtle bg-surface lg:block"
-														/>
-													}
-												>
+												<Suspense fallback={<PanelLoadingStatus label="Loading terminal" className="min-w-0" />}>
 													<TerminalPanel />
 												</Suspense>
 												{/* Only dims: the non-modal drawer already closes on a click outside it. */}

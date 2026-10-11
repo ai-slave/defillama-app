@@ -8,7 +8,7 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -107,7 +107,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 	}, [chart])
 
 	return (
-		<Suspense fallback={<ChartPanelBodyFallback />}>
+		<Suspense fallback={<ChartPanelBodyLoading />}>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}

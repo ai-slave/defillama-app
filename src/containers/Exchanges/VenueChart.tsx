@@ -10,11 +10,11 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
@@ -162,9 +162,7 @@ export function VenueChart({
 					{queryReadFailed(query) ? (
 						<ChartPanelBodyError retry={query}>Couldn&apos;t load venue history.</ChartPanelBodyError>
 					) : (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					)}
 				</VenueChartFrame>
 			)}
@@ -260,13 +258,7 @@ function VenueChartView({
 			showGlobalDataNotice={showGlobalDataNotice}
 		>
 			{/* key forces a fresh chart per metric so series and value units are replaced, not merged. */}
-			<React.Suspense
-				fallback={
-					<ChartPanelBodyFallback>
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
-				}
-			>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<ChartPanelBody role="img" aria-label={`${active.label} history for this venue.`}>
 					<MultiSeriesChart
 						key={active.id}

@@ -27,13 +27,12 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	ChartPanel,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
-import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
@@ -177,14 +176,7 @@ export function ChainsByCategory({
 						{chartReadFailed ? (
 							<ChartPanelBodyError retry={chartDataQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 						) : (
-							<ChartPanelExportShellFallback
-								role="status"
-								aria-live="polite"
-								className="flex items-center justify-center text-center body-sm text-tertiary"
-							>
-								<LoadingIndicator />
-								<span className="sr-only">Loading chart data</span>
-							</ChartPanelExportShellFallback>
+							<ChartPanelExportShellLoading label="Loading chart data" />
 						)}
 					</ChartPanel>
 				</div>
@@ -218,7 +210,7 @@ export function ChainsByCategory({
 							/>
 						</ChartPanelToolbar>
 						{chartScopeNote}
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={piePresentation.chartData}
 								stackColors={piePresentation.stackColors}
@@ -247,7 +239,7 @@ export function ChainsByCategory({
 							/>
 						</ChartPanelToolbar>
 						{chartScopeNote}
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}

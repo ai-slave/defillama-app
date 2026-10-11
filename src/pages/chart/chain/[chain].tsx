@@ -144,7 +144,7 @@ export default function ChainChartPage(props: Omit<IChainOverviewData, 'extraTvl
 			) : activeAddressesNotice === 'fill' ? (
 				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : (
-				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					{tvlSettingsFailed ? <FailedDataNote labels={['your TVL settings']} shows="TVL leaves them out." /> : null}
 					{activeAddressesNotice === 'inline' ? (
 						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />

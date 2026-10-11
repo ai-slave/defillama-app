@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { useAuthContext } from '~/auth'
 import type { ProtocolEmissionResult } from '~/containers/Unlocks/types'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 
@@ -10,7 +11,7 @@ const TOKEN_UNLOCKS_SECTION_ID = 'token-unlocks'
 const DeferredUnlocksCharts = dynamic(
 	() => import('~/containers/Unlocks/EmissionsByProtocol').then((mod) => mod.UnlocksCharts),
 	{
-		loading: () => <div className="min-h-[572px]" />
+		loading: () => <SurfaceBodyLoadingStatus label="Loading unlocks" className="min-h-[572px]" />
 	}
 )
 

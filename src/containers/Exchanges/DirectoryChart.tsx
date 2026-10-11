@@ -7,12 +7,11 @@ import {
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import type { QueryRetry } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -202,13 +201,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 			{/* Toolbar plus a 320px body matches the 360px summary card beside the chart. */}
 			{chart ? (
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */
-				<React.Suspense
-					fallback={
-						<ChartPanelBodyFallback className="min-h-[320px]">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
-					}
-				>
+				<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[320px]" />}>
 					<ChartPanelBody className="min-h-[320px]" role="img" aria-label={overviewAriaLabel(chart, resolved)}>
 						<MultiSeriesChart
 							key={tab}
@@ -227,9 +220,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 					Couldn&apos;t load the exchange overview.
 				</ChartPanelBodyError>
 			) : (
-				<ChartPanelBodyFallback className="min-h-[320px]" role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading className="min-h-[320px]" />
 			)}
 			{/* The blurb and the last-updated stamp were dropped to keep the table above the fold. */}
 		</ChartPanel>

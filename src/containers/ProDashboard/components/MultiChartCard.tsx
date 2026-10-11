@@ -444,11 +444,15 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						<ProCardEmpty message="No chart data available" />
 					)
 				) : hidesDailyAverage && chartView.charts.length === 0 ? null : showTreemap && treemapData.length > 0 ? (
-					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>
+					<Suspense
+						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
+					>
 						<BuilderTreemapChart key={multi.id} data={treemapData} height={chartHeight} onReady={handleChartReady} />
 					</Suspense>
 				) : (
-					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>
+					<Suspense
+						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
+					>
 						<MultiSeriesChart
 							height={chartHeight}
 							{...(hallmarks ? { hallmarks } : {})}

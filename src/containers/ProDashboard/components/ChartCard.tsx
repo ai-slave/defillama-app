@@ -110,7 +110,13 @@ function ChartRenderer({
 	}
 
 	return (
-		<Suspense fallback={<div style={{ height: chartHeight }} />}>
+		<Suspense
+			fallback={
+				<div className="flex flex-1 flex-col" style={{ minHeight: chartHeight }}>
+					<ProCardLoading label="Loading chart" />
+				</div>
+			}
+		>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}

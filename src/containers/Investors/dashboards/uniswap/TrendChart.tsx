@@ -4,9 +4,15 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
 import {
 	BUCKET_DAYS,
@@ -221,15 +227,13 @@ export function SeriesTrendChart({
 			{failedRead ? (
 				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load data.</ChartPanelBodyError>
 			) : isLoading ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading />
 			) : chartSeries.length === 0 ? (
 				<ChartPanelBodyFallback>
 					<p className="body-sm text-tertiary">No data</p>
 				</ChartPanelBodyFallback>
 			) : (
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={model.dataset}
 						charts={model.charts}

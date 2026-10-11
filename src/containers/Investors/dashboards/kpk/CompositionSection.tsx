@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
@@ -166,7 +166,7 @@ export function CompositionSection({
 				<ChartPanel className="min-w-0">
 					{model ? (
 						<>
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
 									dataset={model.dataset}
 									charts={model.charts}

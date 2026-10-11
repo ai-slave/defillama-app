@@ -5,13 +5,12 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
@@ -287,15 +286,9 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartPanel>
 					{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Active Accounts"
 								subtitle="Owner-deduped across chains"
@@ -311,15 +304,9 @@ export default function Growth() {
 				</ChartPanel>
 				<ChartPanel>
 					{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Active Positions"
 								subtitle="Combined open positions"
@@ -339,15 +326,9 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartPanel>
 					{isLoading ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Cumulative Accounts"
 								subtitle="Owner-deduped across chains"
@@ -363,15 +344,9 @@ export default function Growth() {
 				</ChartPanel>
 				<ChartPanel>
 					{isLoading ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Cumulative Positions"
 								subtitle="Across all chains"
@@ -392,7 +367,7 @@ export default function Growth() {
 				{perChainModels?.activeUsers && (
 					<ChartPanel>
 						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by Chain</ChartPanelTitle>} />
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
 								charts={perChainModels.activeUsers.charts}
@@ -407,7 +382,7 @@ export default function Growth() {
 				{perChainModels?.activePositions && (
 					<ChartPanel>
 						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by Chain</ChartPanelTitle>} />
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
 								charts={perChainModels.activePositions.charts}
@@ -428,7 +403,7 @@ export default function Growth() {
 						<ChartPanelToolbar
 							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
 						/>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={depositsModel.dataset}
 								charts={depositsModel.charts}
@@ -484,7 +459,7 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="MET Price"
 								subtitle="Metronome governance token"
@@ -500,7 +475,7 @@ export default function Growth() {
 				)}
 				{tokenPriceDatasets.vsp.source.length > 0 && (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="VSP Price"
 								subtitle="Vesper governance token"
@@ -527,7 +502,7 @@ export default function Growth() {
 								</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={marketComboModel.dataset}
 								charts={marketComboModel.charts}
@@ -550,7 +525,7 @@ export default function Growth() {
 								<ChartPanelTitle subtitle="Daily supply / borrow / utilization">Featured Morpho market</ChartPanelTitle>
 							}
 						/>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={morphoMarketModel.dataset}
 								charts={morphoMarketModel.charts}
@@ -578,7 +553,7 @@ export default function Growth() {
 											</ChartPanelTitle>
 										}
 									/>
-									<Suspense fallback={<ChartPanelBodyFallback />}>
+									<Suspense fallback={<ChartPanelBodyLoading />}>
 										<MultiSeriesChart
 											dataset={model.dataset}
 											charts={model.charts}
@@ -613,7 +588,7 @@ export default function Growth() {
 								onValueChange={setSpendVenue}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								key={spendVenue}
 								dataset={spendVsTvl.model.dataset}

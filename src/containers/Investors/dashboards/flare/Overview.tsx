@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { queryReadFailed } from '~/utils/query'
 import { readInvestorApiJson } from '../../api.types'
@@ -42,7 +42,7 @@ export default function Overview() {
 				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
 			</div>
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={tvl.dataset}
 						charts={tvl.charts}
@@ -131,7 +131,7 @@ export default function Overview() {
 			</div>
 
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						dataset={stables.dataset}
 						charts={stables.charts}

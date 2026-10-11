@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
@@ -76,7 +76,7 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
-					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							dataset={deferredMonthlyInvestmentChart.dataset}
 							charts={deferredMonthlyInvestmentChart.charts}

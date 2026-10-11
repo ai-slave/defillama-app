@@ -12,7 +12,7 @@ import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/Brid
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -396,7 +396,7 @@ export function BridgesOverviewByChain({
 
 							{chartView === 'netflow' && netflowsData ? (
 								<ChartPanelBody className="min-h-[600px]">
-									<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+									<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
 										<NetflowChart height={600} onReady={handleChartReady} data={netflowsData} />
 									</React.Suspense>
 								</ChartPanelBody>
@@ -475,7 +475,7 @@ export function BridgesOverviewByChain({
 								/>
 							) : activeChart?.kind === 'Net Flow' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyFallback />}>
+									<React.Suspense fallback={<ChartPanelBodyLoading />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
@@ -486,7 +486,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : activeChart?.kind === 'Net Flow (%)' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyFallback />}>
+									<React.Suspense fallback={<ChartPanelBodyLoading />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
@@ -497,7 +497,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : activeChart?.kind === 'Inflows' ? (
 								activeChart.dataset.source.length > 0 ? (
-									<React.Suspense fallback={<ChartPanelBodyFallback />}>
+									<React.Suspense fallback={<ChartPanelBodyLoading />}>
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
@@ -507,7 +507,7 @@ export function BridgesOverviewByChain({
 									</React.Suspense>
 								) : null
 							) : activeChart?.kind === '24h Tokens Deposited' ? (
-								<React.Suspense fallback={<ChartPanelBodyFallback />}>
+								<React.Suspense fallback={<ChartPanelBodyLoading />}>
 									<PieChart
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}
@@ -515,7 +515,7 @@ export function BridgesOverviewByChain({
 									/>
 								</React.Suspense>
 							) : activeChart?.kind === '24h Tokens Withdrawn' ? (
-								<React.Suspense fallback={<ChartPanelBodyFallback />}>
+								<React.Suspense fallback={<ChartPanelBodyLoading />}>
 									<PieChart
 										chartData={visibleTokenPiePresentation.chartData}
 										stackColors={visibleTokenPiePresentation.stackColors}

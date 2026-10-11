@@ -15,9 +15,9 @@ import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containe
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { FailedDataNote } from '~/ui/ScopeNote'
-import { LoadingIndicator, PanelStatus } from '~/ui/Status'
+import { PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import {
 	buildCompareChainAdapterQueryKey,
@@ -346,14 +346,12 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 				<div className="relative flex flex-col gap-1">
 					{isChartLoading || !router.isReady ? (
 						<ChartPanel>
-							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
-								<LoadingIndicator />
-							</ChartPanelExportShellFallback>
+							<ChartPanelExportShellLoading />
 						</ChartPanel>
 					) : (
 						<ChartPanel>
 							<FailedDataNote labels={failedChains} shows="The chart shows the other chains." />
-							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+							<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
 									dataset={chartData.dataset}
 									charts={chartData.charts}

@@ -15,7 +15,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -146,7 +146,7 @@ function PortfolioTrend({
 					})}
 				</span>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={PORTFOLIO_CHARTS}

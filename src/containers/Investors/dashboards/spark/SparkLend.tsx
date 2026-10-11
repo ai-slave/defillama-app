@@ -5,7 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
@@ -222,7 +222,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="TVL"
 							headingAs="h3"
@@ -241,7 +241,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : tvlByChain.charts.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="TVL by Chain"
 							headingAs="h3"
@@ -262,7 +262,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Total Borrowed"
 							headingAs="h3"
@@ -281,7 +281,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Fees"
 							headingAs="h3"
@@ -300,7 +300,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : feesByChain.charts.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Fees by Chain"
 							headingAs="h3"
@@ -320,7 +320,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Revenue"
 							headingAs="h3"
@@ -339,7 +339,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Supply Side Revenue"
 							headingAs="h3"
@@ -358,7 +358,7 @@ export default function SparkLend() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="USD Inflows"
 							headingAs="h3"

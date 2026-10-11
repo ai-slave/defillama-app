@@ -11,9 +11,9 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { LoadingIndicator } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
 import { limitRwaHorizontalBarData, type RwaNamedValue } from './chartDataset'
 import { RWA_MAX_CHART_SERIES } from './chartFold'
@@ -140,13 +140,11 @@ export function RWASnapshotChartPanel({
 				{failedRead ? (
 					<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : isLoading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : deferredSlices.length === 0 ? (
 					<ChartPanelBodyFallback className="body-sm text-tertiary">No data for this view.</ChartPanelBodyFallback>
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback className={bodyClassName} />}>
+					<Suspense fallback={<ChartPanelBodyLoading className={bodyClassName} />}>
 						{view === 'pie' ? (
 							<PieChart
 								chartData={presentation.pie}

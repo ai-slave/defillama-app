@@ -284,7 +284,11 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				<div className="flex-1">
-					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>{chartContent}</Suspense>
+					<Suspense
+						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
+					>
+						{chartContent}
+					</Suspense>
 				</div>
 			</div>
 		</div>

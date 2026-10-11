@@ -15,7 +15,7 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -230,7 +230,7 @@ export function HacksContainer({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={deferredMonthlyHacksChartData.dataset}
 								charts={deferredMonthlyHacksChartData.charts}
@@ -239,7 +239,7 @@ export function HacksContainer({
 							/>
 						</React.Suspense>
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart chartData={deferredPieChartData} onReady={handleChartReady} />
 						</React.Suspense>
 					)}

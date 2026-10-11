@@ -557,7 +557,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				) : isChartDataPending ? (
 					<ProCardLoading label="Loading chart" />
 				) : hasRenderableData ? (
-					<Suspense fallback={<div className="min-h-[calc(300px*var(--card-scale,1))]" />}>
+					<Suspense
+						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(300px*var(--card-scale,1))]" />}
+					>
 						{config.chartType === 'treemap' ? (
 							<BuilderTreemapChart data={treemapData} height={treemapHeight} onReady={handleChartReady} />
 						) : (

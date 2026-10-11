@@ -9,7 +9,7 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SurfaceBodyStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -314,7 +314,7 @@ export function TimeAreaCard({
 					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -382,7 +382,7 @@ export function TimeBarCard({
 					csvSource={{ type: 'dataset', prepare: () => ({ ...dataset, groupBy }) }}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -414,7 +414,7 @@ export function CategoryBarCard({
 			<ChartPanelToolbar
 				leading={<ChartPanelTitle subtitle={subtitle ?? chart.subtitle}>{chart.title ?? ''}</ChartPanelTitle>}
 			/>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<HBarChart
 					categories={chart.dates}
 					values={chart.series[0]?.data ?? []}
@@ -442,7 +442,7 @@ export function DonutCard({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{dist.title ?? ''}</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<PieChart
 					chartData={dist.data}
 					stackColors={colorMap(dist.data.map((d) => d.name))}

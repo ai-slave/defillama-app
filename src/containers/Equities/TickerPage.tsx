@@ -11,12 +11,18 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
-import { LoadingIndicator } from '~/ui/Status'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -51,7 +57,7 @@ import type { IEquityTickerPageProps } from './types'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const TokenUnlocksSection = dynamic(
 	() => import('~/containers/Token/TokenUnlocksSection').then((mod) => mod.TokenUnlocksSection),
-	{ loading: () => <div className="min-h-[572px]" /> }
+	{ loading: () => <PanelLoadingStatus label="Loading unlocks" className="min-h-[572px]" /> }
 )
 
 const SCALED_Y_AXIS_CHART_OPTIONS = { yAxis: { scale: true } }
@@ -394,13 +400,11 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								}}
 							/>
 						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							{queryReadFailed(priceHistory) ? (
 								<ChartPanelBodyError retry={priceHistory}>Couldn&apos;t load price history.</ChartPanelBodyError>
 							) : priceHistory.isPending ? (
-								<ChartPanelBodyFallback role="status" aria-label="Loading price history">
-									<LoadingIndicator />
-								</ChartPanelBodyFallback>
+								<ChartPanelBodyLoading label="Loading price history" />
 							) : activePriceHistoryChart ? (
 								<MultiSeriesChart
 									dataset={activePriceHistoryChart.dataset}
@@ -456,7 +460,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							}}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}

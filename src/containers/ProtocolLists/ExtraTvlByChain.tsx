@@ -14,7 +14,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -80,7 +80,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart exportButtons={exportButtons} dataset={props.dataset} charts={props.charts} />
 					</Suspense>
 				</ChartPanel>

@@ -13,7 +13,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button, StableLabel } from '~/ui/Button'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -299,7 +299,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 			</div>
 
 			{viewMode === 'Week' && selectedChart ? (
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={selectedChart.dataset}
 						charts={selectedChart.charts}
@@ -313,13 +313,13 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 			) : null}
 
 			{viewMode === 'TreeMap' ? (
-				<Suspense fallback={<div className="min-h-[600px]" />}>
+				<Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
 					<UnlocksTreemapChart unlocksData={unlocksData} height="600px" calendarDate={currentDate} />
 				</Suspense>
 			) : viewMode === 'Month' ? (
 				<>
 					{selectedChart ? (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={selectedChart.dataset}
 								charts={selectedChart.charts}

@@ -46,7 +46,8 @@ import { Panel } from './Panel'
      one by hand inside a status. See docs/focus-and-errors.md for retries.
    - scripts/policies/check-status-parts.ts refuses hand-built loading text,
      LoadingDots, a lone spinner as a region's loading state, error boxes,
-     alert lines and a retry gated on isError instead of queryReadFailed.
+     alert lines, a retry gated on isError instead of queryReadFailed, and a
+     Suspense or `dynamic()` fallback that renders a blank box.
 ---------------------------------------------------------------------------- */
 
 export type StatusVariant = 'loading' | 'empty' | 'error'

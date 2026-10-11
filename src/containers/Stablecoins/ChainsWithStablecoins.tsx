@@ -46,11 +46,11 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
@@ -378,7 +378,7 @@ export function ChainsWithStablecoins({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -386,7 +386,7 @@ export function ChainsWithStablecoins({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<HBarChart
 								categories={
 									marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.categories : EMPTY_HBAR_CATEGORIES
@@ -399,7 +399,7 @@ export function ChainsWithStablecoins({
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
 						<ChartPanelBody className="min-h-[600px]">
-							<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
 								<TreemapChart
 									treeData={
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
@@ -460,11 +460,7 @@ function SelectedChainsChart({
 		return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 	}
 	if (isLoading) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite">
-				<LoadingIndicator />
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyLoading />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
@@ -474,7 +470,7 @@ function SelectedChainsChart({
 		)
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyFallback />}>
+		<React.Suspense fallback={<ChartPanelBodyLoading />}>
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}

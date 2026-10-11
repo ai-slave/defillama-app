@@ -139,7 +139,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 			) : !hasVisibleCharts && loadingCharts.length > 0 ? (
 				<SurfaceBodyLoadingStatus label="Loading chart data" />
 			) : (
-				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
+				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 					{isActiveAddressesHidden ? (
 						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />
 					) : null}

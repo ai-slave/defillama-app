@@ -8,13 +8,12 @@ import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
@@ -277,11 +276,9 @@ export default function Ecosystem() {
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>} />
 				{isLoading || !intentModels.volume ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={intentModels.volume.dataset}
 							charts={intentModels.volume.charts}
@@ -299,11 +296,9 @@ export default function Ecosystem() {
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>} />
 					{isLoading || !intentModels.fees ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={intentModels.fees.dataset}
 								charts={intentModels.fees.charts}
@@ -319,11 +314,9 @@ export default function Ecosystem() {
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>} />
 					{isLoading || !intentModels.activity ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={intentModels.activity.dataset}
 								charts={intentModels.activity.charts}
@@ -342,11 +335,9 @@ export default function Ecosystem() {
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Token (All-Time, Top 10)</ChartPanelTitle>} />
 					{isLoading || !tokenPie ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={tokenPie}
 								valueSymbol="$"
@@ -364,11 +355,9 @@ export default function Ecosystem() {
 				<ChartPanel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>Volume by Blockchain (All-Time)</ChartPanelTitle>} />
 					{isLoading || !blockchainPie ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={blockchainPie}
 								valueSymbol="$"
@@ -388,11 +377,9 @@ export default function Ecosystem() {
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Fees by Referral Channel</ChartPanelTitle>} />
 				{isLoading || !channelBars ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<HBarChart
 							categories={channelBars.categories}
 							values={channelBars.values}
@@ -441,15 +428,9 @@ export default function Ecosystem() {
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ChartPanel>
 					{isLoading || !areaDatasets.transactions ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Daily Transactions"
 								headingAs="h3"
@@ -464,15 +445,9 @@ export default function Ecosystem() {
 				</ChartPanel>
 				<ChartPanel>
 					{isLoading || !areaDatasets.activeAccounts ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Daily Active Accounts"
 								headingAs="h3"
@@ -487,15 +462,9 @@ export default function Ecosystem() {
 				</ChartPanel>
 				<ChartPanel>
 					{isLoading || !areaDatasets.newAccounts ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="New Accounts Created"
 								headingAs="h3"
@@ -510,15 +479,9 @@ export default function Ecosystem() {
 				</ChartPanel>
 				<ChartPanel>
 					{isLoading || !areaDatasets.gasFees ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Daily Gas Fees (NEAR)"
 								headingAs="h3"
@@ -557,11 +520,9 @@ export default function Ecosystem() {
 
 			<ChartPanel>
 				{isLoading || !areaDatasets.nearPrice ? (
-					<ChartPanelExportShellFallback role="status" aria-live="polite" className="flex items-center justify-center">
-						<LoadingIndicator />
-					</ChartPanelExportShellFallback>
+					<ChartPanelExportShellLoading />
 				) : (
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="NEAR Price (USD)"
 							headingAs="h3"
@@ -578,11 +539,9 @@ export default function Ecosystem() {
 			<ChartPanel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>} />
 				{isLoading || !supplyModel ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={supplyModel.dataset}
 							charts={supplyModel.charts}

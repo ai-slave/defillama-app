@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { Button } from '~/ui/Button'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { useArticleEditable } from '../useArticleEditable'
@@ -126,7 +127,7 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 
 			<div contentEditable={false} ref={chartHostRef}>
 				{config && chartData && attached ? (
-					<Suspense fallback={<div className="h-[338px]" />}>
+					<Suspense fallback={<ChartPanelBodyLoading className="min-h-[338px]" />}>
 						<DeferredChartRenderer
 							charts={[config]}
 							chartData={chartData}

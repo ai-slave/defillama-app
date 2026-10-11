@@ -659,7 +659,7 @@ function ActiveSingleChart({
 		return (
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
 				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
-				<Suspense fallback={<div className="h-[480px]" />}>
+				<Suspense fallback={<ChartPanelBodyLoading className="min-h-[480px]" />}>
 					<CandlestickChart {...candlestickProps} />
 				</Suspense>
 			</div>

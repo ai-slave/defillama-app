@@ -16,7 +16,13 @@ import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -267,7 +273,7 @@ export function BreakdownChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind={seriesLabel} shareHeader={shareHeader} />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
@@ -369,7 +375,7 @@ export function TokensBreakdownPieChartCard({
 			{view === 'table' ? (
 				<BreakdownSnapshotTable rows={tableRows} kind="Token" shareHeader={shareHeader} />
 			) : (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading />}>
 					<PieChart
 						chartData={deferredPresentation.chartData}
 						stackColors={deferredPresentation.stackColors}

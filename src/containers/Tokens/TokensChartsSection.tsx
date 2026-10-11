@@ -8,9 +8,8 @@ import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/
 import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { ChartPanelBodyError, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -192,16 +191,14 @@ export function TokensChartsSection({
 					Couldn&apos;t load chart data.
 				</ChartPanelBodyError>
 			) : data == null ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" style={{ height: MAP_HEIGHT }}>
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />
 			) : !hasRows ? (
 				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: MAP_HEIGHT }}>
 					No tokens match the current filters
 				</ChartPanelBodyFallback>
 			) : treemap ? (
 				<>
-					<React.Suspense fallback={<div style={{ height: MAP_HEIGHT }} />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />}>
 						<MarketTreemapChart
 							treeData={treemap.treeData}
 							leaves={treemap.leaves}
@@ -290,7 +287,7 @@ function MoversChart({
 					Nothing to show
 				</div>
 			) : (
-				<React.Suspense fallback={<div style={{ height: MOVERS_HEIGHT }} />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading style={{ height: MOVERS_HEIGHT }} />}>
 					<HBarChart
 						categories={chartData.categories}
 						values={chartData.values}

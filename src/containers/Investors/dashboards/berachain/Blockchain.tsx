@@ -2,8 +2,8 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -155,7 +155,7 @@ export default function Blockchain() {
 			</div>
 
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Transactions"
 						headingAs="h3"
@@ -170,7 +170,7 @@ export default function Blockchain() {
 			</ChartPanel>
 
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Active & New Addresses"
 						headingAs="h3"
@@ -194,7 +194,7 @@ export default function Blockchain() {
 			</div>
 
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Gas Fees (USD)"
 						headingAs="h3"
@@ -209,7 +209,7 @@ export default function Blockchain() {
 			</ChartPanel>
 
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Block Utilization (%)"
 						headingAs="h3"
@@ -226,7 +226,7 @@ export default function Blockchain() {
 			{/* Contract Deployments */}
 			<SectionHeader title="Contract Deployments" />
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="New Contracts Deployed (Monthly)"
 						headingAs="h3"
@@ -243,7 +243,7 @@ export default function Blockchain() {
 			{/* Token Transfers */}
 			<SectionHeader title="Token Transfers" />
 			<ChartPanel>
-				<Suspense fallback={<ChartPanelExportShellFallback />}>
+				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Daily Token Transfer Volume (USD)"
 						headingAs="h3"

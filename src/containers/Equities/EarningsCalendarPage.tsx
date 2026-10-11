@@ -8,7 +8,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -172,7 +172,7 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 	return (
 		// Compact beside the "At stake this week" panel, which holds about 180px of content.
 		<ChartPanelBody className="min-h-[220px]">
-			<Suspense fallback={<ChartPanelBodyFallback className="min-h-[220px]" />}>
+			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[220px]" />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}

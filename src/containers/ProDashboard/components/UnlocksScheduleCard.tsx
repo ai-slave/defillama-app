@@ -146,7 +146,9 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 			/>
 			<div className="px-3 pb-3">
 				{hasChartData ? (
-					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>
+					<Suspense
+						fallback={<ProCardLoading label="Loading chart" className="min-h-[calc(360px*var(--card-scale,1))]" />}
+					>
 						<MultiSeriesChart
 							dataset={dataset}
 							height={chartHeight}

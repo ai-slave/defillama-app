@@ -7,9 +7,8 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
-import { ChartPanelBodyError, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -219,16 +218,14 @@ export function EquitiesTreemapSection({
 					Couldn&apos;t load chart data.
 				</ChartPanelBodyError>
 			) : data == null ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" style={{ height: CHART_HEIGHT }}>
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />
 			) : rankedRows.length === 0 ? (
 				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: CHART_HEIGHT }}>
 					No companies match the current filters
 				</ChartPanelBodyFallback>
 			) : (
 				<>
-					<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
+					<Suspense fallback={<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />}>
 						<MarketTreemapChart
 							treeData={treeData}
 							leaves={leaves}

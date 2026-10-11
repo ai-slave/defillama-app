@@ -12,7 +12,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBodyFallback, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -381,7 +381,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 			</ChartPanelToolbar>
 
 			{hasChartData ? (
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -124,7 +124,7 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 				}
 			/>
 			{/* Below 37.5rem SankeyChart is max(450px, 64px a node) tall, and this panel has seven nodes at most. */}
-			<Suspense fallback={<ChartPanelBodyFallback className="max-[37.5rem]:min-h-[450px]" />}>
+			<Suspense fallback={<ChartPanelBodyLoading className="max-[37.5rem]:min-h-[450px]" />}>
 				<SankeyChart nodes={nodes} links={sankey.links} nodeColors={SANKEY_COLORS} height="360px" />
 			</Suspense>
 		</ChartPanel>

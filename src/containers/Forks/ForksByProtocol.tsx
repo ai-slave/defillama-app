@@ -5,10 +5,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -95,15 +94,9 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 						/>
 					) : null}
 					{isFetchingExtraSeries ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="my-auto flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={dataset}
 								charts={charts}

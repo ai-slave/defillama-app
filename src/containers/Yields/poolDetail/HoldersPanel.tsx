@@ -14,6 +14,7 @@ import {
 import { childColors, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -139,7 +140,7 @@ function HolderDistribution({
 
 	return (
 		<div className="flex min-w-0 flex-col">
-			<Suspense fallback={<div className="min-h-[300px]" />}>
+			<Suspense fallback={<ChartPanelBodyLoading className="min-h-[300px]" />}>
 				<PieChart
 					height="300px"
 					chartData={pieData}

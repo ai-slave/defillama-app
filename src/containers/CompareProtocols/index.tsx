@@ -4,9 +4,9 @@ import * as React from 'react'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { FailedDataNote } from '~/ui/ScopeNote'
-import { LoadingIndicator, PanelStatus } from '~/ui/Status'
+import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildCompareProtocolsChartData, type CompareProtocolTvlCharts } from './chartData'
@@ -139,11 +139,9 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 					<ChartPanel>
 						<FailedDataNote labels={failedSources} shows="The chart shows the other protocols." />
 						{isLoading || !router.isReady ? (
-							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
-								<LoadingIndicator />
-							</ChartPanelExportShellFallback>
+							<ChartPanelExportShellLoading />
 						) : (
-							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+							<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 								<MultiSeriesChart
 									dataset={dataset}
 									charts={charts}

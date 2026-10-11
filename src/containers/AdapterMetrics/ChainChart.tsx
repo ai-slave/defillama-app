@@ -23,11 +23,10 @@ import {
 	ChartPanel,
 	ChartPanelBody,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
-import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { queryReadFailed, type QueryRetry } from '~/utils/query'
@@ -643,13 +642,10 @@ export function AdapterByChainChart({
 					Couldn&apos;t load the protocol breakdown.
 				</ChartPanelBodyError>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-					<span className="sr-only">Loading chart data</span>
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading label="Loading chart data" />
 			) : chartViewMode === 'Breakdown' ? (
 				<ChartPanelBody className={breakdownChartBodyClassName}>
-					<React.Suspense fallback={<ChartPanelBodyFallback className={breakdownChartBodyClassName} />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading className={breakdownChartBodyClassName} />}>
 						{deferredBreakdownPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredBreakdownPresentation.data}
@@ -692,7 +688,7 @@ export function AdapterByChainChart({
 				</ChartPanelBody>
 			) : (
 				<ChartPanelBody>
-					<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={deferredCombinedFinalCharts.dataset}
 							charts={deferredCombinedFinalCharts.charts}
@@ -1030,12 +1026,9 @@ export function ChainsByAdapterChart({
 				{queryReadFailed(baseChartQuery) ? (
 					<ChartPanelBodyError retry={baseChartQuery}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 				) : baseChartQuery.isLoading ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite" className={chartBodyClassName}>
-						<LoadingIndicator />
-						<span className="sr-only">Loading chart data</span>
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading label="Loading chart data" className={chartBodyClassName} />
 				) : (
-					<React.Suspense fallback={<ChartPanelBodyFallback className={chartBodyClassName} />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading className={chartBodyClassName} />}>
 						{deferredChartPresentation.kind === 'treemap' ? (
 							<BuilderTreemapChart
 								data={deferredChartPresentation.data}

@@ -21,7 +21,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { Change, changeTone, formatChange } from '~/ui/Change'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -185,7 +185,7 @@ function TokenPnlContent({
 						csvSource={{ type: 'dataset', prepare: () => chartData.dataset }}
 					/>
 				</PanelHeader>
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={chartData.dataset}
 						charts={chartData.charts}

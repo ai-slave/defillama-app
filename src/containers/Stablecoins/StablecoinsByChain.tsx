@@ -59,12 +59,12 @@ import {
 	ChartPanelBody,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -588,7 +588,7 @@ export function StablecoinsByChain({
 						<ScopeNote>This chart ignores the filters above and shows volume for every stablecoin.</ScopeNote>
 					) : null}
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : EMPTY_PIE_DATA}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -596,7 +596,7 @@ export function StablecoinsByChain({
 							/>
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<HBarChart
 								categories={
 									marketCapPresentation?.kind === 'hbar' ? marketCapPresentation.categories : EMPTY_HBAR_CATEGORIES
@@ -609,7 +609,7 @@ export function StablecoinsByChain({
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'treemap' ? (
 						<ChartPanelBody className="min-h-[600px]">
-							<React.Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading className="min-h-[600px]" />}>
 								<TreemapChart
 									treeData={
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
@@ -660,11 +660,7 @@ function MultiSeriesChartPanel({
 		return <ChartPanelBodyError retry={state.retry}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 	}
 	if (state.status === 'loading') {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite">
-				<LoadingIndicator />
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyLoading />
 	}
 	if (state.status === 'unavailable' || state.data.charts.length === 0 || state.data.dataset.source.length === 0) {
 		return (
@@ -674,7 +670,7 @@ function MultiSeriesChartPanel({
 		)
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyFallback />}>
+		<React.Suspense fallback={<ChartPanelBodyLoading />}>
 			<MultiSeriesChart
 				dataset={state.data.dataset}
 				charts={state.data.charts}

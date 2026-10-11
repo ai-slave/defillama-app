@@ -4,7 +4,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { FundingRoundsTable } from '~/containers/PreIPO/FundingRoundsTable'
 import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/IntegrationTables'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { StaleText } from '~/ui/StaleText'
@@ -86,7 +86,7 @@ export function PreIpoCompanyPage({
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					{chart ? (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={chart.dataset}
 								charts={chart.charts}

@@ -9,7 +9,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -106,7 +106,7 @@ function Banks() {
 			canonicalUrl="/banks"
 		>
 			<ChartPanel className="relative col-span-2">
-				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
+				<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
 						title="Assets of failed banks (inflation adjusted)"
 						dataset={chartDataset}

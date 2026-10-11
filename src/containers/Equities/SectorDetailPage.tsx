@@ -11,7 +11,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change, formatChange } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -374,7 +374,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					</PanelHeader>
 					<div className="grid gap-4 p-4 md:grid-cols-[220px_1fr]">
 						<div className="relative h-[220px]">
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: CONCENTRATION_PIE_HEIGHT }} />}>
+							<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: CONCENTRATION_PIE_HEIGHT }} />}>
 								<PieChart
 									chartData={concentrationData}
 									stackColors={{ 'Top 10': chartColor(0), 'Other companies': OTHERS_COLOR }}
@@ -447,7 +447,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 							</p>
 						</div>
 					</PanelHeader>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<HBarChart
 							categories={valuationComparisonRows.map(([label]) => label)}
 							values={[]}

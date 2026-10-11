@@ -12,12 +12,12 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
+import { SurfaceBodyStatus } from '~/ui/Status'
 import { mergeFailedReads, queryReadFailed, type QueryRetry } from '~/utils/query'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
 import { DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
@@ -157,13 +157,11 @@ function TrendCard({
 			{failedRead ? (
 				<ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 			) : isLoading ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading />
 			) : chartSeries.length === 0 ? (
 				<SurfaceBodyStatus variant="empty">No data</SurfaceBodyStatus>
 			) : (
-				<Suspense fallback={<ChartPanelBodyFallback />}>
+				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart
 						dataset={model.dataset}
 						charts={model.charts}
@@ -311,7 +309,7 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={model.subtitle}>{model.title}</ChartPanelTitle>} />
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={model.dataset}
 					charts={model.charts}

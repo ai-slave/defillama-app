@@ -21,7 +21,7 @@ import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/con
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { Change } from '~/ui/Change'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -365,7 +365,7 @@ export function BridgeInfo({
 					</ChartPanelToolbar>
 					<>
 						{chartType === 'Volume' && isAllChains && volumeDataset.source.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									dataset={volumeDataset}
 									charts={VOLUME_CHARTS}
@@ -376,7 +376,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Inflows' && !isAllChains && inflowsDataset.source.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									dataset={inflowsDataset}
 									charts={INFLOW_CHARTS}
@@ -387,7 +387,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens To' && tokenWithdrawals && tokenWithdrawals.peers.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}
@@ -396,7 +396,7 @@ export function BridgeInfo({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens From' && tokenDeposits && tokenDeposits.peers.length > 0 ? (
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<React.Suspense fallback={<ChartPanelBodyLoading />}>
 								<PieChart
 									chartData={visibleTokenPresentation.chartData}
 									stackColors={visibleTokenPresentation.stackColors}

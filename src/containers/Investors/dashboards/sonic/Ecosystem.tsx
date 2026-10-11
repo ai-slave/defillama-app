@@ -17,13 +17,13 @@ import { TablePager } from '~/containers/Investors/TablePager'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -216,7 +216,7 @@ function AssetBreakdownSection({
 			<ChartPanelToolbar leading={<ChartPanelTitle>{title}</ChartPanelTitle>} />
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
-					<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+					<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: '320px' }} />}>
 						<PieChart
 							chartData={categories}
 							stackColors={pieColors}
@@ -309,7 +309,7 @@ export default function Ecosystem() {
 				<SectionHeader>Total Value Locked</SectionHeader>
 				<StatTile label="Current TVL" value={data.tvl.currentFormatted} />
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.tvl.title}
 							headingAs="h3"
@@ -337,7 +337,7 @@ export default function Ecosystem() {
 					<StatTile label="All-Time Fees" value={data.fees.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.fees.title}
 							headingAs="h3"
@@ -370,7 +370,7 @@ export default function Ecosystem() {
 					<StatTile label="All-Time Volume" value={data.dexVolume.kpis.totalAllTime.formatted} />
 				</div>
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.dexVolume.title}
 							headingAs="h3"
@@ -398,7 +398,7 @@ export default function Ecosystem() {
 					<StatTile label="Bridged" value={data.stablecoins.kpis.currentBridged.formatted} />
 				</div>
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title={data.stablecoins.title}
 							headingAs="h3"
@@ -420,7 +420,7 @@ export default function Ecosystem() {
 					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply Breakdown</ChartPanelTitle>} />
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
-							<Suspense fallback={<ChartPanelBodyFallback style={{ minHeight: '320px' }} />}>
+							<Suspense fallback={<ChartPanelBodyLoading style={{ minHeight: '320px' }} />}>
 								<PieChart
 									chartData={data.stablecoins.breakdown}
 									stackColors={data.stablecoins.pieColors}

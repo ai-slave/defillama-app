@@ -19,7 +19,7 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_SERIES_LIMIT, chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -262,7 +262,7 @@ export function BridgedTVLByChain({
 							}}
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading />}>
 						<PieChart
 							chartData={deferredPiePresentation.chartData}
 							stackColors={deferredPiePresentation.stackColors}

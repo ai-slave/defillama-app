@@ -243,7 +243,7 @@ describe('EquityTickerPage price history', () => {
 		})
 		router.query = { timeframe: '1M' }
 		await render()
-		expect(container.querySelector('[aria-label="Loading price history"]')).not.toBeNull()
+		expect(container.textContent).toContain('Loading price history')
 		expect(button('.csv').disabled).toBe(true)
 		expect(button('.png').disabled).toBe(true)
 		await act(async () => button('.csv').click())
@@ -277,7 +277,7 @@ describe('EquityTickerPage price history', () => {
 					result === 'empty' ? [true, 0] : [false, 1]
 				)
 			})
-			expect(container.querySelector('[aria-label="Loading price history"]')).toBeNull()
+			expect(container.textContent).not.toContain('Loading price history')
 			expect(container.textContent).toContain('24H')
 			expect(button('.csv').disabled).toBe(true)
 			router.query = {}

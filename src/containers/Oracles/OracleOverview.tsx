@@ -14,13 +14,12 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { FailedDataNote } from '~/ui/ScopeNote'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getTokenDominance, slug } from '~/utils'
@@ -302,15 +301,9 @@ export function OracleOverview({
 						/>
 					) : null}
 					{isFetchingExtraSeries ? (
-						<ChartPanelExportShellFallback
-							role="status"
-							aria-live="polite"
-							className="my-auto flex items-center justify-center"
-						>
-							<LoadingIndicator />
-						</ChartPanelExportShellFallback>
+						<ChartPanelExportShellLoading />
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={dataset}
 								charts={charts}

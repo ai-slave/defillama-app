@@ -9,8 +9,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -292,7 +292,7 @@ export default function Rates() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : supplyDataset.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={supplyDataset}
 								charts={SUPPLY_APY_CHART}
@@ -311,7 +311,7 @@ export default function Rates() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : borrowDataset.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								dataset={borrowDataset}
 								charts={BORROW_APY_CHART}
@@ -358,7 +358,7 @@ export default function Rates() {
 							csvSource={{ type: 'dataset', prepare: () => rateCurveDataset }}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={rateCurveDataset}
 							charts={RATE_CURVE_CHARTS}

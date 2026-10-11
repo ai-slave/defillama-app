@@ -5,9 +5,15 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { mergeFailedReads } from '~/utils/query'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -529,11 +535,9 @@ export function RWAOverviewChartPanel({
 						flowChartFailedRead ? (
 							<ChartPanelBodyError retry={flowChartFailedRead}>Couldn&apos;t load flow data.</ChartPanelBodyError>
 						) : isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
-							<ChartPanelBodyFallback role="status" aria-live="polite">
-								<LoadingIndicator />
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyLoading />
 						) : groupedFlowChart ? (
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
@@ -545,7 +549,7 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : flowChart ? (
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyLoading />}>
 								<RWAFlowsChart
 									chart={flowChart}
 									containerClassName={CHART_FILL}
@@ -562,11 +566,9 @@ export function RWAOverviewChartPanel({
 					) : chartFailedRead ? (
 						<ChartPanelBodyError retry={chartFailedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 					) : isChartLoading ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}

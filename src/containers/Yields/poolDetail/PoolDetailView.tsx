@@ -2,11 +2,10 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
-import { LoadingIndicator } from '~/ui/Status'
 import type { MeasuredApy } from '../data/apy'
 import type { VerifiedBlock } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
@@ -123,9 +122,7 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 				<Skeleton className="h-8 w-40" />
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LoadingIndicator label="Loading chart" />
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyLoading label="Loading chart" />
 			</ChartPanelBody>
 		</ChartPanel>
 	)

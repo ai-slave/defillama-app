@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
-import { CHART_FILL, ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import {
@@ -180,7 +180,7 @@ export default function PoolsOverview() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="TVL by Pool"
 								headingAs="h3"
@@ -199,7 +199,7 @@ export default function PoolsOverview() {
 					<PanelLoadingStatus className="min-h-[400px]" />
 				) : data.utilization.source.length > 0 ? (
 					<ChartPanel>
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title="Pool Utilization"
 								headingAs="h3"
@@ -219,7 +219,7 @@ export default function PoolsOverview() {
 				<PanelLoadingStatus className="min-h-[400px]" />
 			) : data.apy.source.length > 0 ? (
 				<ChartPanel>
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							title="Spot APY by Pool"
 							headingAs="h3"

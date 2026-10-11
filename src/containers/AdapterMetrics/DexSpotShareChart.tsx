@@ -11,7 +11,14 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBody,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -101,7 +108,7 @@ export function DexSpotShareChart({
 				/>
 			</ChartPanelToolbar>
 			{hasData ? (
-				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+				<React.Suspense fallback={<ChartPanelBodyLoading />}>
 					<ChartPanelBody role="img" aria-label={chartAriaLabel(dataset, methodology)}>
 						<MultiSeriesChart
 							dataset={dataset}

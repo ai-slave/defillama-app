@@ -18,11 +18,10 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
-import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -143,7 +142,7 @@ export function OraclesByChain({
 							}}
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<React.Suspense fallback={<ChartPanelBodyLoading />}>
 						<PieChart
 							chartData={piePresentation.chartData}
 							stackColors={piePresentation.stackColors}
@@ -179,11 +178,9 @@ export function OraclesByChain({
 						/>
 					) : null}
 					{isFetchingExtraBreakdowns ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading />
 					) : (
-						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}

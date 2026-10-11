@@ -16,7 +16,7 @@ import {
 	fetchProtocolValueChart
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -232,7 +232,7 @@ export function AdvancedTvlChartTab({
 		}
 
 		return (
-			<Suspense fallback={<ChartPanelExportShellFallback />}>
+			<Suspense fallback={<ChartPanelExportShellLoading />}>
 				{chartType === 'tokensPie' ? (
 					<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 				) : (

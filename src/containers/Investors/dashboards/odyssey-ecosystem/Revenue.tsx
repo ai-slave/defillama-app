@@ -6,9 +6,15 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
-import { CHART_FILL, ChartPanel, ChartPanelBodyFallback, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
@@ -269,11 +275,9 @@ export default function Revenue() {
 					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily Claimed Revenue</ChartPanelTitle>}
 				/>
 				{isLoading || !dailyModel ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={dailyModel.dataset}
 							charts={dailyModel.charts}
@@ -304,12 +308,10 @@ export default function Revenue() {
 					/>
 				</ChartPanelToolbar>
 				{isLoading || (!holderModel && !holdersByMonthModel) ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyLoading />
 				) : holderMode === 'monthly' ? (
 					holdersByMonthModel ? (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
+						<Suspense fallback={<ChartPanelBodyLoading />}>
 							<MultiSeriesChart
 								key="hb-monthly"
 								dataset={holdersByMonthModel.dataset}
@@ -327,7 +329,7 @@ export default function Revenue() {
 						</ChartPanelBodyFallback>
 					)
 				) : holderModel ? (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							key="hb-daily"
 							dataset={holderModel.dataset}
@@ -392,7 +394,7 @@ export default function Revenue() {
 					{up.asOf && <span className="body-sm text-secondary">As of {up.asOf}</span>}
 				</ChartPanelToolbar>
 				{up.pie && (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<PieChart
 							chartData={up.pie}
 							valueSymbol="$"

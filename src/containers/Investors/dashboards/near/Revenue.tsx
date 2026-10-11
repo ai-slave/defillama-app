@@ -9,13 +9,13 @@ import { displayTableFeatures } from '~/components/Table/features/display'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelStatus, PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { queryReadFailed } from '~/utils/query'
@@ -267,7 +267,7 @@ export default function Revenue() {
 							</ChartPanelTitle>
 						}
 					/>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={chartView.feesModel.dataset}
 							charts={chartView.feesModel.charts}
@@ -294,7 +294,7 @@ export default function Revenue() {
 							</ChartPanelTitle>
 						}
 					/>
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart
 							dataset={chartView.revenueModel.dataset}
 							charts={chartView.revenueModel.charts}
@@ -327,7 +327,7 @@ export default function Revenue() {
 				<ChartPanel>
 					{/* Both views draw the title in their own header; only the percentage view adds the export buttons. */}
 					{emissionsView === 'percentage' ? (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title={EMISSIONS_TITLE}
 								subtitle="Cumulative revenue as percentage of cumulative emissions"
@@ -340,7 +340,7 @@ export default function Revenue() {
 							/>
 						</Suspense>
 					) : (
-						<Suspense fallback={<ChartPanelExportShellFallback />}>
+						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
 								title={EMISSIONS_TITLE}
 								subtitle="Cumulative revenue vs cumulative emissions"

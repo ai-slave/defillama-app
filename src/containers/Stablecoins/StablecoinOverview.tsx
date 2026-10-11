@@ -44,12 +44,17 @@ import { calcCirculating, groupBridgeData } from '~/containers/Stablecoins/hooks
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import {
+	ChartPanel,
+	ChartPanelBodyError,
+	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
@@ -525,7 +530,7 @@ export function PeggedAssetInfo({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
+						<React.Suspense fallback={<ChartPanelBodyLoading className="w-full" />}>
 							<PieChart
 								chartData={marketCapPresentation?.kind === 'pie' ? marketCapPresentation.chartData : []}
 								{...(marketCapPresentation?.kind === 'pie' ? { stackColors: marketCapPresentation.stackColors } : {})}
@@ -654,11 +659,7 @@ function SelectedAssetChart({
 		return <ChartPanelBodyError retry={failedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>
 	}
 	if (isLoading) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full">
-				<LoadingIndicator />
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyLoading className="w-full" />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
@@ -668,7 +669,7 @@ function SelectedAssetChart({
 		)
 	}
 	return (
-		<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
+		<React.Suspense fallback={<ChartPanelBodyLoading className="w-full" />}>
 			<MultiSeriesChart
 				dataset={data.dataset}
 				charts={data.charts}

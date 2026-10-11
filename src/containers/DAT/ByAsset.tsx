@@ -19,8 +19,8 @@ import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelExportShellFallback,
+	ChartPanelBodyLoading,
+	ChartPanelExportShellLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -89,7 +89,7 @@ export function DATByAsset({
 					</Button>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
+					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
 							containerClassName={CHART_FILL}
 							dataset={dailyFlowsChart.dataset}
@@ -373,7 +373,7 @@ function MNAVChart({
 					}}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<ChartPanelBodyFallback />}>
+			<Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					charts={data.charts}
 					selectedCharts={selectedCharts}

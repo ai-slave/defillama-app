@@ -376,7 +376,7 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 
 	return (
 		<div className="flex h-full w-full flex-col">
-			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
+			<Suspense fallback={<ProCardLoading label="Loading chart" className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
 					title="Spot vs Derivatives Volume"
 					dataset={dataset}
@@ -502,7 +502,7 @@ function VenueMarketShareChart({
 					/>
 				</div>
 			</div>
-			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
+			<Suspense fallback={<ProCardLoading label="Loading chart" className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
 					dataset={shareChart.dataset}
 					charts={shareChart.charts}

@@ -21,6 +21,7 @@ import {
 	ChartPanel,
 	ChartPanelBodyError,
 	ChartPanelBodyFallback,
+	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -31,7 +32,6 @@ import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
@@ -569,11 +569,9 @@ export function RWAAssetPage({
 							queryReadFailed(assetFlowsQuery) ? (
 								<ChartPanelBodyError retry={assetFlowsQuery}>Couldn&apos;t load flow data.</ChartPanelBodyError>
 							) : assetFlowsQuery.isLoading ? (
-								<ChartPanelBodyFallback role="status" aria-live="polite">
-									<LoadingIndicator />
-								</ChartPanelBodyFallback>
+								<ChartPanelBodyLoading />
 							) : flowChart ? (
-								<Suspense fallback={<ChartPanelBodyFallback />}>
+								<Suspense fallback={<ChartPanelBodyLoading />}>
 									<RWAFlowsChart
 										chart={flowChart}
 										onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
@@ -586,7 +584,7 @@ export function RWAAssetPage({
 								</ChartPanelBodyFallback>
 							)
 						) : assetChartDataset ? (
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+							<Suspense fallback={<ChartPanelBodyLoading />}>
 								<MultiSeriesChart
 									charts={timeSeriesCharts}
 									dataset={assetChartDataset}
@@ -985,11 +983,9 @@ export function RWAAssetPage({
 					</ChartPanelToolbar>
 
 					{isLoadingYieldChart ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyLoading className="flex-1" />
 					) : (
-						<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>
+						<Suspense fallback={<ChartPanelBodyLoading className="flex-1" />}>
 							<MultiSeriesChart
 								charts={NATIVE_YIELD_CHARTS}
 								dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
