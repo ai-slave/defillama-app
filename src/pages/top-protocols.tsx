@@ -14,7 +14,7 @@ import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
@@ -201,7 +201,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						className={searchFieldWrapperStyles}
 					/>
 
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={chains}
 						includeQueryKey="chain"
 						excludeQueryKey="excludeChain"
@@ -211,7 +211,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						variant="filter"
 						size="md"
 					/>
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={uniqueCategories}
 						includeQueryKey="column"
 						excludeQueryKey="excludeColumn"

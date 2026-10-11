@@ -15,7 +15,7 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import { getColumnVisibilityForSelection, getHideableColumns } from '~/components/Table/search/columnSelect'
 import {
@@ -42,6 +42,7 @@ import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -372,7 +373,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						size="md"
 					/>
 					{props.categories.length > 0 ? (
-						<SelectWithCombobox
+						<UrlSelectWithCombobox
 							allValues={props.categories}
 							includeQueryKey="category"
 							excludeQueryKey="excludeCategory"

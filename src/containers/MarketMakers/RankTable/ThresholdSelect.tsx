@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
-import { selectTriggerStyles } from '~/components/Select/types'
+import { ComboboxSelectTrigger, selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { Icon } from '~/ui/Icon'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'

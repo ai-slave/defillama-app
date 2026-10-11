@@ -4,8 +4,9 @@ export interface IHBarChartProps {
 	categories: Array<string>
 	values: Array<number>
 	valueSymbol?: string
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
-	/** Replaces the fixed height: pass CHART_FILL to grow with a stretched panel. */
+	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
 	/** One color for every bar. */
 	color?: string

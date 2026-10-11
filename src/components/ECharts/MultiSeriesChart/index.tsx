@@ -870,9 +870,9 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	return (
 		<ChartContainer
 			chartRef={chartDomRef}
-			className={containerClassName ? 'flex flex-1 flex-col' : undefined}
-			chartClassName={containerClassName ?? 'h-[360px]'}
-			chartStyle={!containerClassName && height ? { height } : undefined}
+			className={height ? undefined : 'flex flex-1 flex-col'}
+			chartClassName={height ? undefined : `flex-1 initial:min-h-[360px] ${containerClassName ?? ''}`.trim()}
+			chartStyle={height ? { height } : undefined}
 			overlay={
 				hasCategoryLogos ? (
 					<div ref={categoryLogosOverlayRef} className="pointer-events-none absolute inset-0" aria-hidden />

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -52,7 +52,6 @@ export default function Overview() {
 						subtitle={tvl.subtitle}
 						titleTooltip={tvl.titleTooltip}
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						showLegend
 						chartOptions={tvl.chartOptions}
 					/>
@@ -140,7 +139,6 @@ export default function Overview() {
 						title={stables.title}
 						subtitle="Stablecoin supply circulating on Flare: native-minted vs bridged."
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						solidChartAreaStyle
 						chartOptions={stables.chartOptions}
 					/>

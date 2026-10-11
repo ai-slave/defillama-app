@@ -11,7 +11,6 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Change, formatChange } from '~/ui/Change'
-import { CHART_FILL } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -468,7 +467,6 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								}
 							]}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 						/>
 					</Suspense>
 					<div className="flex flex-col gap-3 p-4">

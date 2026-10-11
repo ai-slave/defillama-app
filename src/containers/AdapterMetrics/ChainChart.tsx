@@ -11,16 +11,16 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { CHART_COLORS } from '~/constants/colors'
 import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { getAdapterDashboardType } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -56,7 +56,7 @@ type ChainsByAdapterValueMode = (typeof BAR_VALUE_MODES_CHAINS_BY_ADAPTER)[numbe
 const BAR_LAYOUTS_CHAINS_BY_ADAPTER = ['Stacked', 'Separate'] as const
 type ChainsByAdapterBarLayout = (typeof BAR_LAYOUTS_CHAINS_BY_ADAPTER)[number]
 /* Treemaps and ranked bars list every chain, so they keep 520px; the time series fill the 360px body floor. */
-const CHAINS_BY_ADAPTER_CHART_CLASS = `${CHART_FILL} min-h-[520px]`
+const CHAINS_BY_ADAPTER_CHART_CLASS = 'min-h-[520px]'
 const CHART_KIND_OPTIONS = [
 	{ key: 'Bar', name: 'Bar Chart' },
 	{ key: 'Dominance', name: 'Dominance Chart' },
@@ -581,7 +581,7 @@ export function AdapterByChainChart({
 				) : null}
 				{chartViewMode === 'Combined' && chain ? <AddToDashboardButton chartConfig={multiChart} smol /> : null}
 				{chartViewMode === 'Breakdown' && protocolOptions.length > 0 ? (
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={protocolOptions}
 						includeQueryKey="protocol"
 						excludeQueryKey="excludeProtocol"
@@ -663,7 +663,6 @@ export function AdapterByChainChart({
 								dataset={deferredBreakdownPresentation.dataset}
 								charts={deferredBreakdownPresentation.charts}
 								csvSource={deferredBreakdownPresentation.csvSource}
-								containerClassName={CHART_FILL}
 								valueSymbol={
 									deferredBreakdownPresentation.kind === 'bar' && deferredBreakdownPresentation.valueMode === 'absolute'
 										? '$'
@@ -696,7 +695,6 @@ export function AdapterByChainChart({
 									groupBy: deferredCombinedFinalCharts.groupBy
 								})
 							}}
-							containerClassName={CHART_FILL}
 							showLegend={deferredCombinedFinalCharts.charts.length !== 1}
 							groupBy={deferredCombinedFinalCharts.groupBy}
 							onReady={handleChartReady}
@@ -998,7 +996,7 @@ export function ChainsByAdapterChart({
 					onValueChange={onChangeChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 				/>
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					allValues={allChains}
 					includeQueryKey="chain"
 					excludeQueryKey="excludeChain"
@@ -1048,7 +1046,6 @@ export function ChainsByAdapterChart({
 								dataset={deferredChartPresentation.dataset}
 								charts={deferredChartPresentation.charts}
 								csvSource={deferredChartPresentation.csvSource}
-								containerClassName={CHART_FILL}
 								valueSymbol={
 									deferredChartPresentation.kind === 'bar' && deferredChartPresentation.valueMode === 'absolute'
 										? '$'

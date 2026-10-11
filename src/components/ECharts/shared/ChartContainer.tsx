@@ -20,7 +20,7 @@ export function ChartContainer({
 	return (
 		<div className={`relative ${className ?? ''}`} {...props}>
 			{header}
-			<div ref={chartRef} id={id} className={chartClassName ?? 'my-auto min-h-[360px]'} style={chartStyle} />
+			<div ref={chartRef} id={id} className={chartClassName} style={chartStyle} />
 			{overlay}
 		</div>
 	)

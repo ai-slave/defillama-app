@@ -1,7 +1,7 @@
-import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Select } from '~/ui/Select'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 

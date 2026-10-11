@@ -22,7 +22,6 @@ import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tan
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { Select } from '~/components/Select/Select'
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
 import {
 	compileExpression,
@@ -54,6 +53,7 @@ import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
 

@@ -4,7 +4,6 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { tvlOptionsMap } from '~/components/Filters/options'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { oldBlue } from '~/constants/colors'
@@ -29,10 +28,11 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -184,7 +184,6 @@ function USDInflowsChartCard({
 				<MultiSeriesChart
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
-					containerClassName={CHART_FILL}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
@@ -272,7 +271,6 @@ function InflowsByTokenChartCard({
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
-						containerClassName={CHART_FILL}
 						showLegend
 						valueSymbol="$"
 						selectedCharts={deferredChart.selectedCharts}

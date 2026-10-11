@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { VirtualizedMultiSelect, VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
+import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
+import { Select } from '~/ui/Select'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
+import { VirtualizedMultiSelect, VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import { DEMO_LOGO, DEMO_LOGO_ALT } from '../demoAssets'
 import { Example, type Family, type KnobValues, Row, StateGrid } from '../shared'
 
@@ -129,6 +130,19 @@ function SelectWithComboboxDemo({ values }: { values: KnobValues }) {
 	)
 }
 
+function MultiSelectComboboxDemo() {
+	const [protocols, setProtocols] = useState(['aave'])
+	return (
+		<MultiSelectCombobox
+			heading="Protocols"
+			placeholder="Search protocols…"
+			data={PROTOCOLS}
+			selectedValues={protocols}
+			setSelectedValues={setProtocols}
+		/>
+	)
+}
+
 function VirtualizedSelectDemo({ values }: { values: KnobValues }) {
 	// Starts with no pick, so the placeholder shows until the reader picks.
 	const [protocol, setProtocol] = useState<string | null>(null)
@@ -173,7 +187,7 @@ export const pickers: Family = {
 	parts: [
 		{
 			name: 'Select',
-			source: 'src/components/Select/Select.tsx',
+			source: 'src/ui/Select.tsx',
 			knobs: [
 				{ name: 'variant', values: TRIGGER_VARIANTS },
 				{ name: 'size', values: ['md', 'sm'] },
@@ -212,7 +226,7 @@ export const pickers: Family = {
 		},
 		{
 			name: 'SelectWithCombobox',
-			source: 'src/components/Select/SelectWithCombobox.tsx',
+			source: 'src/ui/SelectWithCombobox.tsx',
 			knobs: [
 				{ name: 'singleSelect', boolean: true },
 				{ name: 'list', values: ['short', 'long'], default: 'short', prop: false }
@@ -222,7 +236,7 @@ export const pickers: Family = {
 		},
 		{
 			name: 'VirtualizedSelect',
-			source: 'src/components/Select/VirtualizedSelect.tsx',
+			source: 'src/ui/VirtualizedSelect.tsx',
 			knobs: [
 				{ name: 'variant', values: ['field', 'chip'] },
 				{ name: 'state', values: STATE_VALUES, default: 'rest', prop: false }
@@ -232,7 +246,7 @@ export const pickers: Family = {
 		},
 		{
 			name: 'VirtualizedMultiSelect',
-			source: 'src/components/Select/VirtualizedSelect.tsx',
+			source: 'src/ui/VirtualizedSelect.tsx',
 			knobs: [
 				{ name: 'variant', values: ['field', 'chip'], default: 'field' },
 				{ name: 'state', values: STATE_VALUES, default: 'rest', prop: false },
@@ -240,6 +254,12 @@ export const pickers: Family = {
 			],
 			note: 'Select all leads the list while every option fits under the cap; with cap on, the rest disable at three picks.',
 			render: (values) => <VirtualizedMultiSelectDemo values={values} />
+		},
+		{
+			name: 'MultiSelectCombobox',
+			source: 'src/ui/MultiSelectCombobox.tsx',
+			note: 'Type to search; each pick becomes a chip before the input, and removing one moves focus to its neighbor.',
+			render: () => <MultiSelectComboboxDemo />
 		}
 	]
 }

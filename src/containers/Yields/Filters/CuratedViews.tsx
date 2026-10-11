@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { metricOptionChipMdStyles } from '~/ui/MetricChip'
+import { MetricOptionChip } from '~/ui/MetricChip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -225,20 +225,19 @@ export function CuratedViews({
 					{presets.map((preset) => {
 						const active = isPresetActive(preset, query, activeOptions)
 						return (
-							<button
+							<MetricOptionChip
 								key={preset.id}
-								type="button"
+								size="md"
 								aria-pressed={active}
 								onClick={() => {
 									apply(preset)
 									menu?.hideAll()
 								}}
-								className={metricOptionChipMdStyles}
 								data-active={active}
 							>
 								<Icon name={preset.icon} className="size-3.5" />
 								{preset.label}
-							</button>
+							</MetricOptionChip>
 						)
 					})}
 				</div>
@@ -281,13 +280,7 @@ export function CuratedViews({
 								</div>
 							))}
 							render={
-								<button
-									type="button"
-									aria-pressed={active}
-									onClick={() => apply(preset)}
-									className={metricOptionChipMdStyles}
-									data-active={active}
-								/>
+								<MetricOptionChip size="md" aria-pressed={active} onClick={() => apply(preset)} data-active={active} />
 							}
 						>
 							<Icon name={preset.icon} className="size-3.5" />

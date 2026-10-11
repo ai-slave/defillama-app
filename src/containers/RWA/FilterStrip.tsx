@@ -2,9 +2,9 @@ import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelect, UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { Card } from '~/ui/Card'
+import { Select } from '~/ui/Select'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from './api.types'
 import { RWAAssetsFilterPills, RWAAssetsMoreFilters, type RWAOverviewFiltersProps } from './Filters'
@@ -54,7 +54,7 @@ function RWAAssetsInlineFilters(props: RWAOverviewFiltersProps & { rows: Readonl
 				const values = getAssetsInlineValues(key, props.options)
 				if (!isRwaSelectFilterShown(key, props.modes.mode, values.length)) return null
 				return (
-					<Select
+					<UrlSelect
 						key={key}
 						allValues={getRwaAssetsInlineOptions(key, values, props.rows, props.selections)}
 						label={ASSETS_INLINE_FILTER_LABELS[key]}
@@ -89,7 +89,7 @@ function RWAPerpsInlineFilters({ definitions }: { definitions: ReadonlyArray<RWA
 				if (!definition.inline) return null
 				if (definition.kind !== 'select') return null
 				return (
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						key={definition.id}
 						allValues={getRwaPerpsPickerOptions(definition.values, definition.counts)}
 						label={definition.label}

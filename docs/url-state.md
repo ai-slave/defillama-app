@@ -2,7 +2,7 @@
 
 A choice that decides which data a page or section shows keeps its value in the URL, so a reload, the back button and a shared link open the same view. A choice about how one chart draws that data, or how one reader scans a table, stays in React state.
 
-A folder README that records a decision for its own pages wins over this page, such as Rewards keeping sort, search and pagination local in `src/containers/Rewards/README.md`. A list picker, whether it filters page data or picks one chart's series, follows `docs/charts.md` and the `src/components/Select/README.md` rules.
+A folder README that records a decision for its own pages wins over this page, such as Rewards keeping sort, search and pagination local in `src/containers/Rewards/README.md`. A list picker, whether it filters page data or picks one chart's series, follows `docs/charts.md` and the `src/components/Select/README.md` rules, and the picker parts' own headers in `src/ui`.
 
 ## Where a control's value lives
 

@@ -4,12 +4,12 @@ import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
-import { Select } from '~/components/Select/Select'
-import { selectTriggerStyles } from '~/components/Select/types'
-import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { Button } from '~/ui/Button'
+import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -150,28 +150,12 @@ export function CompareTokens({
 						<div className="mt-10 flex flex-col items-center gap-2">
 							<h2 className="flex flex-wrap items-center justify-center gap-1 body-lg">
 								<span className="flex items-center gap-1">
-									<img
-										alt=""
-										src={selectedCoins[0] ? geckoTokenIconUrl(selectedCoins[0].id) : undefined}
-										height="20px"
-										width="20px"
-										loading="lazy"
-										onError={(e) => applyLogoFallback(e.currentTarget)}
-										className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-									/>
+									<Logo src={selectedCoins[0] ? geckoTokenIconUrl(selectedCoins[0].id) : null} size={20} />
 									<span>{selectedCoins[0]?.symbol?.toUpperCase()}</span>
 								</span>
 								<span>with the {compareType.label} of</span>
 								<span className="flex items-center gap-1">
-									<img
-										alt=""
-										src={selectedCoins[1] ? geckoTokenIconUrl(selectedCoins[1].id) : undefined}
-										height="20px"
-										width="20px"
-										loading="lazy"
-										onError={(e) => applyLogoFallback(e.currentTarget)}
-										className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-									/>
+									<Logo src={selectedCoins[1] ? geckoTokenIconUrl(selectedCoins[1].id) : null} size={20} />
 									<span>{selectedCoins[1]?.symbol?.toUpperCase()}</span>
 								</span>
 							</h2>
@@ -224,15 +208,7 @@ function CoinPicker({
 			>
 				{coin != null ? (
 					<>
-						<img
-							alt=""
-							src={geckoTokenIconUrl(coin.id)}
-							height={16}
-							width={16}
-							loading="lazy"
-							onError={(e) => applyLogoFallback(e.currentTarget)}
-							className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-						/>
+						<Logo src={geckoTokenIconUrl(coin.id)} size={16} />
 						<span className="min-w-0 truncate">{coin.name}</span>
 					</>
 				) : (

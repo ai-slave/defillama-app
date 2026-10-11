@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 import { readyAsPath } from '~/utils/routerQuery'
 import type { RWAPageKind } from './pageLayout'
 import { getRwaPageTabRow } from './pageTabs'
@@ -19,7 +19,7 @@ export function RWAPageTabs({ kind, embedded = false }: { kind: RWAPageKind; emb
 			{/* Every /rwa page renders this, an embedded one without a row, so the guard of its query zone sits here. */}
 			<RWAQueryZoneGuard />
 			{row ? (
-				<nav className={tabTrackStyles} aria-label={row.label}>
+				<TabNav label={row.label}>
 					{row.tabs.map((tab) => (
 						<TabLink
 							as={BasicLink}
@@ -31,7 +31,7 @@ export function RWAPageTabs({ kind, embedded = false }: { kind: RWAPageKind; emb
 							{tab.label}
 						</TabLink>
 					))}
-				</nav>
+				</TabNav>
 			) : null}
 		</>
 	)

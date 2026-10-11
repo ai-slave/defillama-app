@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 
 // The current APY view (window + components) is
 // carried across tabs so the selection persists on navigation.
@@ -31,7 +31,7 @@ export function YieldsTabs({ active, rightSlot }: { active: YieldsTabId; rightSl
 	return (
 		<div className="grid grid-cols-[minmax(0,1fr)_auto] items-end px-2">
 			<h1 className="sr-only">Yields</h1>
-			<nav className={tabTrackStyles} aria-label="Yields views">
+			<TabNav label="Yields views">
 				{TABS.map((tab) => {
 					const href = apyQuery ? `${tab.href}?${apyQuery}` : tab.href
 					return (
@@ -40,7 +40,7 @@ export function YieldsTabs({ active, rightSlot }: { active: YieldsTabId; rightSl
 						</TabLink>
 					)
 				})}
-			</nav>
+			</TabNav>
 			{rightSlot ? (
 				<div className="hidden self-stretch border-b border-subtle pb-2 pl-4 sm:flex sm:items-end">{rightSlot}</div>
 			) : null}

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { getSelectOptionLabel, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { getSelectOptionLabel, SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import {

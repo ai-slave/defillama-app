@@ -17,9 +17,9 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanelBody, CHART_FILL } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DividedGrid } from '~/ui/DividedGrid'
-import { metricSeriesToggleStyles } from '~/ui/MetricChip'
+import { MetricSeriesToggle } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -620,10 +620,8 @@ export function PoolLiquidityChart({
 					<Tooltip
 						content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own."
 						render={
-							<button
-								type="button"
+							<MetricSeriesToggle
 								onClick={() => setQuery({ liqUnit: getLiquidityUnitQueryValue(unit === 'usd' ? 'native' : 'usd') })}
-								className={metricSeriesToggleStyles}
 								data-active={unit === 'units'}
 							/>
 						}
@@ -661,7 +659,6 @@ export function PoolLiquidityChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol={unit === 'usd' ? '$' : ''}
-							containerClassName={CHART_FILL}
 							stacked
 							stateTimeline={timeline}
 							exportButtons="hidden"

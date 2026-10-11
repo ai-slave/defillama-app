@@ -18,7 +18,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -490,7 +490,6 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 						yAxisLabel="Open Interest ($)"
 						valueSymbol="$"
 						logScale
-						containerClassName={CHART_FILL}
 						tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
 							`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
 						}

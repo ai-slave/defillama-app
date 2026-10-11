@@ -1,4 +1,4 @@
-import type { SelectOption } from '~/components/Select/types'
+import type { SelectOption } from '~/ui/Select'
 
 export const EARN_COLUMN_DEFS = {
 	volumeUsd1d: { key: 'volumeUsd1d', name: '1d Volume' },

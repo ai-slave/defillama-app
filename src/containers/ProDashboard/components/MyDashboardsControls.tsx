@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
-import { Select } from '~/components/Select/Select'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import {
 	isMyDashboardsSort,
 	MY_DASHBOARDS_SORT_OPTIONS,

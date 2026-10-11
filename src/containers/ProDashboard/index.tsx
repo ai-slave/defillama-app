@@ -14,6 +14,7 @@ import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { useMyTeam } from '~/containers/ProDashboard/hooks/useMyTeam'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
+import { DialogLoadingStatus } from '~/ui/Dialog'
 import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -72,7 +73,7 @@ import {
 	useProDashboardVariables
 } from './ProDashboardAPIContext'
 import type { SectionConfig, SqlChartConfig } from './types'
-import { InlineTextField, ProBadge, ProButton, ProDialogFallback } from './ui'
+import { InlineTextField, ProBadge, ProButton } from './ui'
 import { type DashboardItemPlacement, toastRefusal } from './useDashboardActions'
 import { generateItemId } from './utils/dashboardUtils'
 
@@ -876,7 +877,7 @@ function ProDashboardContent() {
 				<SimilarDashboards dashboardId={dashboardId} tags={dashboardTags} />
 			) : null}
 
-			<Suspense fallback={<ProDialogFallback width="xl" workspace />}>
+			<Suspense fallback={<DialogLoadingStatus size="xl" workspace />}>
 				{addModalSession ? (
 					<AddChartModal
 						key={addModalSession.key}
@@ -893,7 +894,7 @@ function ProDashboardContent() {
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={<ProDialogFallback width="md" />}>
+			<Suspense fallback={<DialogLoadingStatus size="md" />}>
 				{quickAddSession ? (
 					<QuickAddPalette
 						key={quickAddSession.key}
@@ -906,7 +907,7 @@ function ProDashboardContent() {
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={<ProDialogFallback width="xl" workspace />}>
+			<Suspense fallback={<DialogLoadingStatus size="xl" workspace />}>
 				{sqlModalSession ? (
 					<SqlChartModal
 						key={sqlModalSession.key}
@@ -932,7 +933,7 @@ function ProDashboardContent() {
 				/>
 			) : null}
 
-			<Suspense fallback={showSettingsModal && !isReadOnly ? <ProDialogFallback width="sm" /> : null}>
+			<Suspense fallback={showSettingsModal && !isReadOnly ? <DialogLoadingStatus size="sm" /> : null}>
 				<DashboardSettingsModal
 					isOpen={showSettingsModal && !isReadOnly}
 					onClose={() => setShowSettingsModal(false)}
@@ -949,7 +950,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={createDashboardDialogOpen ? <ProDialogFallback width="lg" /> : null}>
+			<Suspense fallback={createDashboardDialogOpen ? <DialogLoadingStatus size="lg" /> : null}>
 				<CreateDashboardPicker
 					dialogStore={createDashboardDialogStore}
 					onCreate={handleCreateDashboard}
@@ -957,7 +958,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={aiDialog === 'generate' ? <ProDialogFallback width="md" /> : null}>
+			<Suspense fallback={aiDialog === 'generate' ? <DialogLoadingStatus size="md" /> : null}>
 				<GenerateDashboardModal
 					isOpen={aiDialog === 'generate'}
 					onClose={() => setAiDialog(null)}
@@ -965,7 +966,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={aiDialog === 'iterate' ? <ProDialogFallback width="md" /> : null}>
+			<Suspense fallback={aiDialog === 'iterate' ? <DialogLoadingStatus size="md" /> : null}>
 				<GenerateDashboardModal
 					isOpen={aiDialog === 'iterate'}
 					onClose={() => setAiDialog(null)}

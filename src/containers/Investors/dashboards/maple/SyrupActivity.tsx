@@ -5,7 +5,7 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -377,7 +377,6 @@ export default function SyrupActivity() {
 						<MultiSeriesChart
 							title="Monthly stSyrup deposits vs withdrawals"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={monthlyChart}
 							groupBy="monthly"
 							charts={MONTHLY_ACTIVITY_CHARTS}
@@ -398,7 +397,6 @@ export default function SyrupActivity() {
 						<MultiSeriesChart
 							title="Monthly Syrup token migrations"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={migrationChart}
 							groupBy="monthly"
 							charts={MIGRATIONS_CHART}
@@ -438,7 +436,6 @@ export default function SyrupActivity() {
 							<MultiSeriesChart
 								title="Monthly drip claims"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								dataset={dripMonthlyChart}
 								groupBy="monthly"
 								charts={DRIP_CLAIMS_CHART}

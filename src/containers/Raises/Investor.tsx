@@ -14,7 +14,7 @@ import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -159,7 +159,6 @@ export function InvestorContainer({
 				<Panel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							containerClassName={CHART_FILL}
 							dataset={deferredFundingRoundsByMonthChart.dataset}
 							charts={deferredFundingRoundsByMonthChart.charts}
 							groupBy="monthly"
@@ -180,7 +179,6 @@ export function InvestorContainer({
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
 							chartData={buildRuntimePieChartPresentation({ series: deferredInvestmentByRounds }).chartData}
-							containerClassName={CHART_FILL}
 							csvSource={{
 								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredInvestmentByRounds })
@@ -200,7 +198,6 @@ export function InvestorContainer({
 					<React.Suspense fallback={<ChartPanelExportShellLoading />}>
 						<PieChart
 							chartData={buildRuntimePieChartPresentation({ series: deferredRaisesByCategory }).chartData}
-							containerClassName={CHART_FILL}
 							csvSource={{
 								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredRaisesByCategory })

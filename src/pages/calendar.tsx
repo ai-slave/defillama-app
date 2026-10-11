@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -153,7 +153,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 						className={searchFieldInlineWrapperStyles}
 					/>
 					{typeOptions.length > 1 ? (
-						<SelectWithCombobox
+						<UrlSelectWithCombobox
 							allValues={typeOptions}
 							includeQueryKey="type"
 							excludeQueryKey="excludeType"

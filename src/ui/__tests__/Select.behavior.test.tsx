@@ -3,18 +3,16 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { NestedMenu } from '~/components/NestedMenu'
+import { NestedMenu } from '../NestedMenu'
 import { Select } from '../Select'
 import { SelectWithCombobox } from '../SelectWithCombobox'
-
-vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/' }) }))
 
 const OPTIONS = [
 	{ key: 'tvl', name: 'TVL' },
 	{ key: 'fees', name: 'Fees' },
 	{ key: 'volume', name: 'Volume' }
 ]
-// Long enough that SelectWithCombobox shows its search field (isSearchable in searchThreshold.ts).
+// Long enough that SelectWithCombobox shows its search field (isSearchable in internal/searchThreshold.ts).
 const LONG_OPTIONS = [...OPTIONS, ...Array.from({ length: 9 }, (_, i) => ({ key: `metric-${i}`, name: `Metric ${i}` }))]
 
 function trigger() {

@@ -9,8 +9,8 @@ import {
 	FilterNumberInput,
 	NoActiveFilters
 } from '~/components/FilterBuilderDialog'
-import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useMedia } from '~/hooks/useMedia'
+import { describeSelection, SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { clearRwaFilterQueryKeys } from './filterState'

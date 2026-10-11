@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router'
 import { useDeferredValue, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	getColumnSelectState,
 	getColumnVisibilityForSelection,
@@ -13,6 +12,7 @@ import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from '../api.types'

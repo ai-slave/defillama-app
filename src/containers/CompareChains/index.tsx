@@ -8,16 +8,16 @@ import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
 } from '~/components/ECharts/MultiSeriesChart/types'
-import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
-import { Select } from '~/components/Select/Select'
 import { chartColor } from '~/constants/colors'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { MultiSelectCombobox } from '~/ui/MultiSelectCombobox'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { Select } from '~/ui/Select'
 import { PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import {

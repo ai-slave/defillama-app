@@ -3,11 +3,11 @@ import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { mergeFailedReads } from '~/utils/query'
@@ -545,7 +545,6 @@ export function RWAOverviewChartPanel({
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
 									groupBy={groupedFlowChart.groupBy}
-									containerClassName={CHART_FILL}
 									showLegend
 									valueSymbol="$"
 									onReady={handleMultiSeriesChartReady}
@@ -555,7 +554,6 @@ export function RWAOverviewChartPanel({
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 								<RWAFlowsChart
 									chart={flowChart}
-									containerClassName={CHART_FILL}
 									{...(flowDefaultStartTimestamp !== undefined
 										? { defaultStartTimestamp: flowDefaultStartTimestamp }
 										: {})}
@@ -577,7 +575,6 @@ export function RWAOverviewChartPanel({
 							<MultiSeriesChart
 								dataset={deferredTimeSeriesChart.dataset}
 								charts={deferredTimeSeriesChart.charts}
-								containerClassName={CHART_FILL}
 								showLegend
 								expandTo100Percent={deferredTimeSeriesChart.isShare}
 								showTotalInTooltip={

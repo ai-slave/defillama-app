@@ -1,14 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { type ReactElement, useMemo } from 'react'
-import { Button } from '~/ui/Button'
-import { popoverRowWithBorderStyles } from '~/ui/Popover'
-import { MenuSurface } from '~/ui/PopoverSurface'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import { BasicLink } from './Link'
+import { Button } from './Button'
+import { popoverRowWithBorderStyles } from './Popover'
+import { MenuSurface } from './PopoverSurface'
+
+/* Menu — a button that opens a list of strings: external URLs that open in a new tab (`isExternal`, several websites or
+   audit links behind one button), or values handed to `onItemClick`. */
 
 interface IMenuProps {
 	options: Array<string> | string
 	name: string
+	/** Each value is a URL opened in a new tab; otherwise each value goes to `onItemClick`. */
 	isExternal?: boolean
 	getItemAttributes?: (value: string) => Record<string, string>
 	onItemClick?: (value: string) => void
@@ -35,7 +38,6 @@ export function Menu({
 			_options: keyedOccurrences(typeof options === 'string' ? [options] : options, (value) => value)
 		}
 	}, [options])
-	const externalRowStyles = `${popoverRowWithBorderStyles} block`
 	const shouldPortalMenu = portal ?? true
 
 	return (
@@ -49,26 +51,18 @@ export function Menu({
 			</Ariakit.MenuButton>
 			<MenuSurface variant="panel" heading={name} hideOnInteractOutside portal={shouldPortalMenu}>
 				{_options.map(({ item: value, key }) =>
-					onItemClick ? (
-						<Ariakit.MenuItem
-							key={key}
-							onClick={() => onItemClick(value)}
-							className={`${popoverRowWithBorderStyles} text-ellipsis whitespace-nowrap`}
-						>
-							{value}
-						</Ariakit.MenuItem>
-					) : isExternal ? (
+					isExternal ? (
 						<Ariakit.MenuItem
 							render={<a href={value} target="_blank" rel="noopener noreferrer" {...getItemAttributes?.(value)} />}
 							key={key}
-							className={externalRowStyles}
+							className={`${popoverRowWithBorderStyles} block`}
 						>
 							{value}
 						</Ariakit.MenuItem>
 					) : (
 						<Ariakit.MenuItem
 							key={key}
-							render={<BasicLink href={value} />}
+							onClick={() => onItemClick(value)}
 							className={`${popoverRowWithBorderStyles} text-ellipsis whitespace-nowrap`}
 						>
 							{value}

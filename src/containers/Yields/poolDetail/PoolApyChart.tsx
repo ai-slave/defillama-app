@@ -16,7 +16,7 @@ import {
 } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle, Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -502,7 +502,6 @@ export function PoolApyChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol="%"
-							containerClassName={CHART_FILL}
 							exportButtons="hidden"
 							onReady={(inst) => {
 								chartRef.current = inst

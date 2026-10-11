@@ -10,7 +10,7 @@ import { AccentBadge, SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -717,7 +717,7 @@ export function TokenPageLive({
 																}
 															]}
 															valueSymbol="$"
-															containerClassName="min-h-0 flex-1"
+															containerClassName="min-h-0"
 															hideDataZoom
 															exportButtons="hidden"
 														/>
@@ -738,7 +738,7 @@ export function TokenPageLive({
 															]}
 															valueSymbol="$"
 															chartOptions={VOLUME_TIME_OPTIONS}
-															containerClassName="min-h-0 flex-1"
+															containerClassName="min-h-0"
 															hideDataZoom
 															exportButtons="hidden"
 														/>
@@ -802,7 +802,6 @@ export function TokenPageLive({
 																}
 															]}
 															valueSymbol="$"
-															containerClassName={CHART_FILL}
 															showLegend
 															hideDataZoom
 															exportButtons="hidden"
@@ -853,7 +852,6 @@ export function TokenPageLive({
 															}))}
 															valueSymbol="%"
 															chartOptions={PERCENT_TIME_OPTIONS}
-															containerClassName={CHART_FILL}
 															showLegend
 															hideDataZoom
 															exportButtons="hidden"
@@ -908,7 +906,6 @@ export function TokenPageLive({
 																candle.lowUsd,
 																candle.highUsd
 															])}
-															containerClassName={CHART_FILL}
 														/>
 													</ChartPanelBody>
 												</>
@@ -983,7 +980,6 @@ export function TokenPageLive({
 															}))}
 															valueSymbol="%"
 															chartOptions={PERCENT_TIME_OPTIONS}
-															containerClassName={CHART_FILL}
 															showLegend
 															hideDataZoom
 															exportButtons="hidden"
@@ -1116,7 +1112,6 @@ export function TokenPageLive({
 																])
 															}))}
 															valueSymbol="$"
-															containerClassName={CHART_FILL}
 															showLegend
 															hideDataZoom
 															exportButtons="hidden"

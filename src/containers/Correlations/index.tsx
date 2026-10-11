@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
-import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { HEAT_DOWN, HEAT_UP } from '~/constants/colors'
 import {
 	getGeckoIdFromSearchId,
@@ -15,6 +14,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -24,20 +24,6 @@ import { FAQ } from './Faq'
 import type { PricePoint } from './hooks'
 import { usePriceCharts } from './hooks'
 import { pearsonCorrelationCoefficient, toPairedLogReturns } from './util'
-
-function CoinImage({ src }: { src: string }) {
-	return (
-		<img
-			alt=""
-			src={src}
-			height="24"
-			width="24"
-			loading="lazy"
-			onError={(e) => applyLogoFallback(e.currentTarget)}
-			className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-		/>
-	)
-}
 
 interface CorrelationCellProps {
 	coinId: string
@@ -314,7 +300,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 									ref={focusNeighborOnLeave()}
 									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-hover-row focus-visible:bg-hover-row"
 								>
-									<CoinImage src={coin.logo} />
+									<Logo src={coin.logo} size={24} />
 									<span className="label-sm">
 										<span className="sr-only">Remove </span>
 										{coin.symbol}
@@ -371,7 +357,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 														key={`d-${coin.id}`}
 														className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']"
 													>
-														<CoinImage src={coin.logo} />
+														<Logo src={coin.logo} size={24} />
 													</td>
 												) : (
 													<CorrelationCell

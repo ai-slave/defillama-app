@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode, useId, useState } from 'react'
-import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { Switch } from '~/ui/Switch'
 import { AnatomyContext } from './anatomy'
 import { type ComponentRow, componentsNamedIn } from './componentTable'

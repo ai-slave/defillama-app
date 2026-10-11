@@ -16,6 +16,7 @@ import {
 	DialogDiscardGuard,
 	DialogFooter,
 	DialogHeader,
+	DialogLoadingStatus,
 	useDialogLeave
 } from '../Dialog'
 import { Tab as TabTrigger, TabPanel, Tabs } from '../Tabs'
@@ -655,3 +656,11 @@ test.each([
 		expect(document.activeElement).toBe(named('Connect'))
 	}
 )
+
+test('the placeholder for a lazy dialog tells assistive tech a dialog is loading and takes no focus', async () => {
+	await act(async () => root.render(<DialogLoadingStatus size="sm" />))
+	const busy = document.body.querySelector('[aria-busy="true"]')
+	expect(busy?.textContent).toBe('Loading dialog')
+	expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+	expect(document.activeElement).toBe(document.body)
+})

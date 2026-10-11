@@ -3,15 +3,15 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
+import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import {
 	formatPercent,
 	formatUsd,
@@ -293,7 +293,6 @@ export default function Rates() {
 								valueSymbol="%"
 								title={`${activeAsset} Supply APY \u00b7 ${primaryReserve?.chain}`}
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
@@ -312,7 +311,6 @@ export default function Rates() {
 								valueSymbol="%"
 								title={`${activeAsset} Borrow APY \u00b7 ${primaryReserve?.chain}`}
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>
@@ -357,7 +355,6 @@ export default function Rates() {
 							dataset={rateCurveDataset}
 							charts={RATE_CURVE_CHARTS}
 							valueSymbol="%"
-							containerClassName={CHART_FILL}
 							showLegend
 							chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
 							exportButtons="hidden"

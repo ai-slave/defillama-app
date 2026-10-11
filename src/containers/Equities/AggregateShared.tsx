@@ -6,7 +6,7 @@ import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedT
 import { OTHERS_COLOR, SECTOR_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -109,7 +109,7 @@ export function AggregateTreemap({
 						variant="rwa"
 						colorMode="categorical"
 						valueLabel={valueLabel}
-						containerClassName={`${CHART_FILL} min-h-[420px]`}
+						containerClassName="min-h-[420px]"
 						onReady={handleChartReady}
 						showRootLabel={false}
 					/>

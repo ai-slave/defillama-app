@@ -22,6 +22,7 @@ import {
 	DialogDiscardGuard,
 	DialogFooter,
 	DialogHeader,
+	DialogLoadingStatus,
 	DialogSearchHeader,
 	DialogToolbar,
 	SideSheet
@@ -298,6 +299,24 @@ function DialogPendingDemo() {
 	)
 }
 
+function DialogLoadingDemo({ values }: { values: KnobValues }) {
+	const [shown, setShown] = useState(false)
+	return (
+		<>
+			<Button
+				size="md"
+				onClick={() => {
+					setShown(true)
+					setTimeout(() => setShown(false), 2000)
+				}}
+			>
+				Show for 2 seconds
+			</Button>
+			{shown ? <DialogLoadingStatus size={values.size as (typeof DIALOG_SIZES)[number]} /> : null}
+		</>
+	)
+}
+
 function SideSheetDemo({ values }: { values: KnobValues }) {
 	const [open, setOpen] = useState(false)
 	const close = () => setOpen(false)
@@ -565,6 +584,13 @@ export const dialogs: Family = {
 					<DialogPendingDemo />
 				</>
 			)
+		},
+		{
+			name: 'DialogLoadingStatus',
+			source: 'src/ui/Dialog.tsx',
+			knobs: [{ name: 'size', values: DIALOG_SIZES }],
+			note: "A lazy dialog's Suspense fallback, shown here for 2 seconds. It takes no focus and announces only Loading dialog, so the dialog that loads takes focus once.",
+			render: (values) => <DialogLoadingDemo values={values} />
 		},
 		{
 			name: 'SideSheet',

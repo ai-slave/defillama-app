@@ -9,7 +9,6 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { prepareTableCsv } from '~/components/Table/utils'
@@ -22,10 +21,11 @@ import {
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
@@ -275,7 +275,7 @@ export function TokenUsageSection({
 					<TreemapChart
 						treeData={treemapTreeData}
 						variant="rwa"
-						containerClassName={`${CHART_FILL} min-h-[480px]`}
+						containerClassName="min-h-[480px]"
 						valueLabel="Amount"
 						valueSymbol="$"
 						onReady={handleTreemapChartReady}

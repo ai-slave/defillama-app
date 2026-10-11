@@ -4,7 +4,6 @@ import { useRouter } from 'next/router'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { ViewTabs } from '~/components/ViewTabs'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -16,7 +15,7 @@ import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { BusyGlyph, EmptyState } from '~/ui/Status'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	chartDatasets,
@@ -221,7 +220,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					<RecentDownloadsStrip recents={recentDownloads} onRun={handleRunPreset} onClear={clearRecents} />
 				) : null}
 
-				<ViewTabs tabs={ALL_TABS} label="Download type" />
+				<UnderlineTabList tabs={ALL_TABS} label="Download type" />
 
 				<TabPanel value={activeTab} className="flex min-w-0 flex-col gap-6">
 					{activeTab !== 'saved' ? (

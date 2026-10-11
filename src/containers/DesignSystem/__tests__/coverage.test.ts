@@ -22,8 +22,13 @@ const NOT_SHOWN_ALONE: Record<string, string> = {
 	'src/ui/PopoverSurface.tsx#NestedDrawerHeader': 'renders only in phone drawers; phone-only states get a note',
 	'src/ui/Checkbox.tsx#CheckboxIndicator':
 		'the check glyph a selectable picker row draws; shown through Checkbox, and a building piece',
-	'src/components/NestedMenu.tsx#NestedMenu':
-		'the phone filter menu ResponsiveFilterLayout renders below sm; phone-only states get a note'
+	'src/ui/NestedMenu.tsx#NestedMenu':
+		'the phone filter menu ResponsiveFilterLayout renders below sm; phone-only states get a note',
+	'src/ui/NestedMenu.tsx#NestedMenuToggle': 'an on/off row inside the phone filter menu; phone-only states get a note',
+	'src/ui/ComboboxSelectTrigger.tsx#ComboboxSelectTrigger': 'the trigger every picker renders; shown through them',
+	'src/components/Select/UrlSelect.tsx#UrlSelect': 'Select bound to the URL; the page shows Select',
+	'src/components/Select/UrlSelect.tsx#UrlSelectWithCombobox':
+		'SelectWithCombobox bound to the URL; the page shows SelectWithCombobox'
 }
 
 /** Parts no design.md row names in its Use cell, with why. Each heads no row of its family's "Which one" table. */

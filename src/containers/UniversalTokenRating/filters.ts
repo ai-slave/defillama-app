@@ -1,5 +1,4 @@
-import { readSelectionFromQuery } from '~/components/Select/query'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import { type ExcludeQueryKey, readSelectionFromQuery } from '~/components/Select/query'
 import { FDV_RANGES, LISTING_STATUS_LABELS } from './constants'
 import type { UtrLeaderboardRow } from './types'
 

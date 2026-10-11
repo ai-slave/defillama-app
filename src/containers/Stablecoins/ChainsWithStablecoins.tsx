@@ -14,8 +14,6 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { useSelectionIntent } from '~/components/Select/localSelection'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
 import {
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT,
@@ -40,10 +38,12 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -399,7 +399,7 @@ export function ChainsWithStablecoins({
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
 									}
 									variant="rwa"
-									containerClassName={`${CHART_FILL} min-h-[600px]`}
+									containerClassName="min-h-[600px]"
 									onReady={handleChartReady}
 									valueLabel="Market cap"
 								/>

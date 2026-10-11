@@ -20,8 +20,9 @@ export interface TreemapChartProps {
 	variant: TreemapVariant
 	/** 'value': each node brings its own `itemStyle.color` from `divergingColor`. 'categorical': the palette by rank. */
 	colorMode?: 'value' | 'categorical'
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
-	/** Replaces the fixed height on the inset canvas box: pass CHART_FILL to grow with a stretched panel. */
+	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	showRootLabel?: boolean

@@ -1,5 +1,11 @@
-import { Icon } from '~/ui/Icon'
-import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
+import { Icon } from '../Icon'
+import { popoverMultiSelectCheckStyles } from '../Popover'
+
+/* The tri-state "Select all" row that leads every multi-select list (Select, SelectWithCombobox,
+   VirtualizedMultiSelect): checked when every option is selected, a brand dash when some are, empty when none. A click
+   selects all unless all are selected, then clears. With a search typed, a picker that acts on the shown options reads
+   "Select all shown". Quick actions render as link-colored rows under it; there are no separate Select All / Deselect
+   All buttons. A disabled option is never part of "all". */
 
 /** Value of the row that leads a multi-select list; never part of a selection. */
 export const SELECT_ALL_VALUE = '__select_all__'

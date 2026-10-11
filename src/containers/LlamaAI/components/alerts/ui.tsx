@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
@@ -6,7 +5,6 @@ import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import type { FieldControlProps } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { TAG_GROUP_BUTTON_SIZES, TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 
 const settingsIntegrationsLinkClass =
 	'cursor-pointer underline decoration-dotted underline-offset-2 not-disabled:not-aria-disabled:hover:text-link'
@@ -90,41 +88,3 @@ export const PRICE_OPERATOR_OPTIONS = [
 	{ value: 'above', label: 'Above' },
 	{ value: 'below', label: 'Below' }
 ] as const
-
-export function SegmentedToggle<T extends string>({
-	value,
-	onChange,
-	options,
-	label
-}: {
-	value: T
-	onChange: (next: T) => void
-	options: ReadonlyArray<{ value: T; label: string }>
-	label: string
-}) {
-	return (
-		<Ariakit.RadioProvider
-			value={value}
-			setValue={(next) => {
-				const option = options.find((option) => option.value === next)
-				if (option && option.value !== value) onChange(option.value)
-			}}
-		>
-			<Ariakit.RadioGroup
-				aria-label={label}
-				className={`${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`}
-			>
-				{options.map((option) => (
-					<label
-						key={option.value}
-						data-active={value === option.value}
-						className={`${TAG_GROUP_VARIANTS.default.button} ${TAG_GROUP_BUTTON_SIZES.default.md} relative cursor-pointer capitalize has-focus-visible:focus-ring`}
-					>
-						<Ariakit.Radio value={option.value} aria-label={option.label} className="sr-only" />
-						{option.label}
-					</label>
-				))}
-			</Ariakit.RadioGroup>
-		</Ariakit.RadioProvider>
-	)
-}

@@ -7,7 +7,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -59,11 +59,11 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 							rel="noopener noreferrer"
 						/>
 					}
-					className="border-b border-subtle"
 				>
 					<Icon name="external-link" className="size-4" />
 					Google Calendar
 				</MenuItem>
+				<MenuSeparator />
 
 				<MenuItem
 					render={

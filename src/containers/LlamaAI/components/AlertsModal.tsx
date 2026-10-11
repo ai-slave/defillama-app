@@ -52,12 +52,7 @@ import type {
 	PriceTrigger,
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
-import {
-	AlertsHeaderIcon,
-	SegmentedToggle,
-	DELIVERY_OPTIONS,
-	SettingsIntegrationsLink
-} from '~/containers/LlamaAI/components/alerts/ui'
+import { AlertsHeaderIcon, DELIVERY_OPTIONS, SettingsIntegrationsLink } from '~/containers/LlamaAI/components/alerts/ui'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
 import { ChatMarkdownRenderer, SourcesList } from '~/containers/LlamaAI/components/markdown/ChatMarkdownRenderer'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
@@ -77,6 +72,7 @@ import { ListRow } from '~/ui/ListRow'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, ErrorLine, InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Switch } from '~/ui/Switch'
@@ -835,14 +831,16 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 	const deliveryFields = (showErrors: boolean) => (
 		<FieldGroup label="Deliver to" error={showErrors ? deliveryError : null}>
 			<div className="flex flex-wrap items-center gap-2">
-				<SegmentedToggle<DeliveryChannel>
+				<SegmentedControl<DeliveryChannel>
 					label="Delivery channel"
 					value={deliveryChannel}
-					onChange={(channel) => {
+					onValueChange={(channel) => {
 						setDeliveryChannel(channel)
 						onEdited()
 					}}
 					options={DELIVERY_OPTIONS}
+					variant="default"
+					size="md"
 				/>
 				{deliveryChannel === 'telegram' && !telegramLinked && (
 					<span className="body-sm text-warning">

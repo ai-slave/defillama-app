@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { Select } from '~/components/Select/Select'
+import { UrlSelect } from '~/components/Select/UrlSelect'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -27,7 +27,7 @@ function BackingType({
 	}, [availableBackings])
 
 	return (
-		<Select
+		<UrlSelect
 			allValues={backingOptions}
 			label="Backing Type"
 			nestedMenu={nestedMenu}
@@ -54,7 +54,7 @@ function PegType({
 	}, [availablePegTypes])
 
 	return (
-		<Select
+		<UrlSelect
 			allValues={pegTypeOptions}
 			label="Peg Type"
 			nestedMenu={nestedMenu}
@@ -139,7 +139,7 @@ function PeggedFiltersDropdowns({
 }) {
 	return (
 		<>
-			<Select
+			<UrlSelect
 				allValues={stablecoinAttributeOptions}
 				label="Attribute"
 				nestedMenu={!!nestedMenu}

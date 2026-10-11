@@ -7,7 +7,6 @@ import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/field
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
-import { PRICE_OPERATOR_OPTIONS, SegmentedToggle } from '../alerts/ui'
 import { CreateAlertModal } from '../CreateAlertModal'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/ai/chat' }) }))
@@ -62,7 +61,7 @@ async function press(element: HTMLElement, key: string) {
 function radio(group: string, name: string) {
 	return [
 		...document.querySelectorAll<HTMLInputElement>(`[role="radiogroup"][aria-label="${group}"] input[type="radio"]`)
-	].find((el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name)!
+	].find((el) => (el.getAttribute('aria-label') ?? el.closest('label')?.textContent?.trim()) === name)!
 }
 async function input(selector: string, value: string) {
 	await act(async () => {
@@ -242,21 +241,6 @@ test('while an alert is being created its fields cannot change what the outcome 
 		await settle()
 	})
 	expect(dialog.textContent).toContain('Fires once when BTC goes below $50,000, delivered to your email.')
-})
-
-test('segmented radios do not notify on mount or external changes, only on a pick', async () => {
-	const onChange = vi.fn()
-	const render = async (value: 'above' | 'below') =>
-		act(async () =>
-			root.render(
-				<SegmentedToggle label="Comparison" options={PRICE_OPERATOR_OPTIONS} value={value} onChange={onChange} />
-			)
-		)
-	await render('above')
-	await render('below')
-	expect(onChange).not.toHaveBeenCalled()
-	await press(radio('Comparison', 'Below'), 'ArrowLeft')
-	expect(onChange).toHaveBeenCalledExactlyOnceWith('above')
 })
 
 test('price editor saves the keyboard-selected operator and says what is wrong with an empty price', async () => {

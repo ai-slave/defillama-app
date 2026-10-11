@@ -119,6 +119,7 @@ export interface IMultiSeriesChartProps {
 	charts?: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts?: Set<string>
 	chartOptions?: MultiSeriesChartOptions
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
 	groupBy?: ChartTimeGroupingWithCumulative
 	/** Events in unix seconds, drawn on the event rail under the plot (README → Event rail). */
@@ -132,6 +133,7 @@ export interface IMultiSeriesChartProps {
 	expandTo100Percent?: boolean
 	valueSymbol?: string
 	alwaysShowTooltip?: boolean
+	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
 	stacked?: boolean
 	solidChartAreaStyle?: boolean

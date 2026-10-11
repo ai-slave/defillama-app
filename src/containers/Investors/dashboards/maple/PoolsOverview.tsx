@@ -5,7 +5,7 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -186,7 +186,6 @@ export default function PoolsOverview() {
 							<MultiSeriesChart
 								title="TVL by pool"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								dataset={data.tvl}
 								charts={TVL_CHART}
 								valueSymbol="$"
@@ -205,7 +204,6 @@ export default function PoolsOverview() {
 							<MultiSeriesChart
 								title="Pool utilization"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								dataset={data.utilization}
 								charts={UTILIZATION_CHART}
 								valueSymbol="%"
@@ -225,7 +223,6 @@ export default function PoolsOverview() {
 						<MultiSeriesChart
 							title="Spot APY by pool"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.apy}
 							charts={APY_CHART}
 							valueSymbol="%"

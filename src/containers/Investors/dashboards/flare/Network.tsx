@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -57,7 +57,6 @@ export default function Network() {
 							title={c.transactions.title ?? 'Daily Transactions'}
 							subtitle="Transactions settled on Flare each day."
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							exportButtons={CSV_ONLY_EXPORT}
 							chartOptions={c.transactions.chartOptions}
 						/>
@@ -75,7 +74,6 @@ export default function Network() {
 							title={c.activeAccounts.title ?? 'Daily Active Accounts'}
 							subtitle="Unique accounts active on Flare each day."
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							exportButtons={CSV_ONLY_EXPORT}
 							chartOptions={c.activeAccounts.chartOptions}
 						/>

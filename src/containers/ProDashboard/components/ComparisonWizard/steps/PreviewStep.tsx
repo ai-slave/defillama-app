@@ -1,11 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../dashboardTypes'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import {

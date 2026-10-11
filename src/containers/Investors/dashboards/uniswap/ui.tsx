@@ -18,7 +18,7 @@ import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -435,7 +435,6 @@ export function BarListCard({
 					colors={items.map((item, index) => seriesColor(item.name, index))}
 					valueSymbol={valueSymbol}
 					showValueLabels={showValues}
-					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
 		</Panel>
@@ -537,7 +536,6 @@ export function TimeAreaCard({
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					containerClassName={CHART_FILL}
 					showLegend={multipleSeries}
 					groupBy={groupBy}
 					exportButtons="hidden"

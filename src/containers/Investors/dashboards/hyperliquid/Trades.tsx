@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Select } from '~/components/Select/Select'
-import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { Card } from '~/ui/Card'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
+import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	pushBounded,

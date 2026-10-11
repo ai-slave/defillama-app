@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -25,7 +25,7 @@ export function FiltersByCategory({
 	const prevSelectionRef = useRef<Set<string>>(new Set(selectedCategories))
 
 	return (
-		<SelectWithCombobox
+		<UrlSelectWithCombobox
 			heading={label}
 			variant="default"
 			size="sm"

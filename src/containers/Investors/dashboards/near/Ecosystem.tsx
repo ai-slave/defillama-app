@@ -6,7 +6,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -275,7 +275,6 @@ export default function Ecosystem() {
 							dataset={intentModels.volume.dataset}
 							charts={intentModels.volume.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							showLegend
 							exportButtons="hidden"
@@ -295,7 +294,6 @@ export default function Ecosystem() {
 								dataset={intentModels.fees.dataset}
 								charts={intentModels.fees.charts}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showTotalInTooltip
 								showLegend
 								exportButtons="hidden"
@@ -313,7 +311,6 @@ export default function Ecosystem() {
 								dataset={intentModels.activity.dataset}
 								charts={intentModels.activity.charts}
 								valueSymbol=""
-								containerClassName={CHART_FILL}
 								showTotalInTooltip
 								showLegend
 								exportButtons="hidden"
@@ -333,7 +330,6 @@ export default function Ecosystem() {
 							<PieChart
 								chartData={tokenPie}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								legendPosition={{
 									orient: 'vertical',
@@ -353,7 +349,6 @@ export default function Ecosystem() {
 							<PieChart
 								chartData={blockchainPie}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								legendPosition={{
 									orient: 'vertical',
@@ -430,7 +425,6 @@ export default function Ecosystem() {
 								charts={DAILY_TRANSACTIONS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -447,7 +441,6 @@ export default function Ecosystem() {
 								charts={ACTIVE_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -464,7 +457,6 @@ export default function Ecosystem() {
 								charts={NEW_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -481,7 +473,6 @@ export default function Ecosystem() {
 								charts={GAS_FEES_CHART}
 								valueSymbol=" NEAR"
 								chartOptions={NEAR_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -522,7 +513,6 @@ export default function Ecosystem() {
 							charts={NEAR_PRICE_CHART}
 							valueSymbol="$"
 							chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-							containerClassName={CHART_FILL}
 						/>
 					</Suspense>
 				)}
@@ -538,7 +528,6 @@ export default function Ecosystem() {
 							dataset={supplyModel.dataset}
 							charts={supplyModel.charts}
 							valueSymbol=" NEAR"
-							containerClassName={CHART_FILL}
 							showLegend
 							exportButtons="hidden"
 						/>

@@ -9,7 +9,7 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -318,7 +318,6 @@ export function TimeAreaCard({
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					containerClassName={CHART_FILL}
 					chartOptions={chartOptions}
 					exportButtons="hidden"
 					onReady={handleChartReady}
@@ -386,7 +385,6 @@ export function TimeBarCard({
 					dataset={dataset}
 					charts={charts}
 					valueSymbol={resolvedValueSymbol}
-					containerClassName={CHART_FILL}
 					showLegend={charts.length > 1}
 					exportButtons="hidden"
 					onReady={handleChartReady}
@@ -419,7 +417,6 @@ export function CategoryBarCard({
 					values={chart.series[0]?.data ?? []}
 					color={THOR_TEAL}
 					valueSymbol={valueSymbol ?? (unitSymbol(chart.unit) || '$')}
-					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
 		</Panel>
@@ -447,7 +444,6 @@ export function DonutCard({
 					stackColors={colorMap(dist.data.map((d) => d.name))}
 					valueSymbol={valueSymbol}
 					radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}
-					containerClassName={CHART_FILL}
 					showLegend
 					legendPosition={
 						isSmall

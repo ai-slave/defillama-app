@@ -44,9 +44,8 @@ export interface IScatterChartProps {
 	xAxisLabel?: string
 	yAxisLabel?: string
 	valueSymbol?: string
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
-	/** `CHART_FILL` inside a ChartPanelBody: the chart fills the body instead of taking `height`. */
-	containerClassName?: string
 	tooltipFormatter?: (params: ScatterTooltipParams) => string
 	showLabels?: boolean
 	entityType?: 'protocol' | 'chain'

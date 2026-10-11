@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { ListLoading, NoResults } from '~/ui/NoResults'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { NestedDrawerHeader, MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { NestedDrawerHeader, MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { ErrorLine } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { useMoveSessionToProject, useProjectList } from './hooks'
@@ -11,8 +10,6 @@ interface MoveToProjectMenuItemProps {
 	sessionId: string
 	currentProjectId?: string | null
 }
-
-const PARENT_ITEM_CLASS = `${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0`
 
 export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: MoveToProjectMenuItemProps) {
 	const menu = Ariakit.useMenuStore()
@@ -29,11 +26,11 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 
 	return (
 		<Ariakit.MenuProvider store={menu}>
-			<Ariakit.MenuItem render={<Ariakit.MenuButton />} className={PARENT_ITEM_CLASS}>
+			<MenuItem render={<Ariakit.MenuButton />}>
 				<Icon name="folder-plus" className="size-3.5 shrink-0" />
 				<span className="flex-1 text-left">Move to project</span>
 				<Icon name="chevron-right" className="size-3.5 shrink-0 text-tertiary" />
-			</Ariakit.MenuItem>
+			</MenuItem>
 			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4}>
 				<NestedDrawerHeader
 					title="Move to project"
@@ -72,14 +69,13 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 								)
 							})}
 							{currentProjectId ? (
-								<MenuItem
-									onClick={() => void onMove(null)}
-									disabled={move.isPending}
-									className="border-t border-subtle"
-								>
-									<Icon name="x" className="size-3.5 shrink-0 opacity-70" />
-									<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>
-								</MenuItem>
+								<>
+									<MenuSeparator />
+									<MenuItem onClick={() => void onMove(null)} disabled={move.isPending}>
+										<Icon name="x" className="size-3.5 shrink-0 opacity-70" />
+										<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>
+									</MenuItem>
+								</>
 							) : null}
 						</>
 					) : null}

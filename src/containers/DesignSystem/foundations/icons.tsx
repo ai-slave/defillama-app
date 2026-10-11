@@ -1,5 +1,5 @@
-import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { Icon, ICON_GROUPS, ICON_NAMES } from '~/ui/Icon'
+import { Logo } from '~/ui/Logo'
 import { letterLogoDataUri } from '~/utils/icons'
 import { DEMO_LOGO } from '../demoAssets'
 import { Example, type Foundation, Row } from '../shared'
@@ -30,17 +30,17 @@ function IconsOverview() {
 				</div>
 			</Example>
 			<Example
-				name="TokenLogo"
-				prop="src / size"
-				note="Static sources: a bundled asset, an inline letter logo, and a missing source that falls through to the placeholder. Named kinds (token, chain, exchange, pegged, equities) load their artwork from the icon CDN."
+				name="Logo"
+				prop="src / size / variant"
+				note="Static sources: a bundled asset, an inline letter logo, a missing source that falls through to the placeholder, and company artwork on its light canvas. TokenLogo draws the same part for a named token, chain, exchange, pegged asset or equity, loading the artwork from the icon CDN."
 			>
 				<Row>
-					<TokenLogo src={DEMO_LOGO} size={14} alt="" />
-					<TokenLogo src={DEMO_LOGO} size={24} alt="" />
-					<TokenLogo src={DEMO_LOGO} size={32} alt="" />
-					<TokenLogo src={letterLogoDataUri('Ethereum')} size={24} alt="" />
-					<TokenLogo src={null} size={24} alt="" />
-					<FallbackLogo size={24} />
+					<Logo src={DEMO_LOGO} size={14} />
+					<Logo src={DEMO_LOGO} size={24} />
+					<Logo src={DEMO_LOGO} size={32} />
+					<Logo src={letterLogoDataUri('Ethereum')} size={24} />
+					<Logo src={null} size={24} />
+					<Logo src={DEMO_LOGO} size={24} variant="company" />
 				</Row>
 			</Example>
 		</>

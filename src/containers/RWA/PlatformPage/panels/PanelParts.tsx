@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { Menu } from '~/components/Menu'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Menu } from '~/ui/Menu'
 import type { RWALinkGroup, RWAPanelRow } from './panelData'
 
 /* The pieces the six panels share: the card, prose with a clamp, rows, pills, badges, link pills, tally bars. */

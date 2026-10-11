@@ -84,7 +84,7 @@
 
 ### UI
 
-- Project pages use `heading-sm` titles, 16px top padding and 16px between sections; breadcrumb and title rows use 8px gaps. Tabs use `TabLink` through the Ariakit `Tab` render prop.
+- Project pages use `heading-sm` titles, 16px top padding and 16px between sections; breadcrumb and title rows use 8px gaps. Section tabs are an `UnderlineTabList`.
 - Prose fields use `Textarea`, compact inputs `Input`; both use 16px text below `sm`. Textarea height follows content.
 - The sidebar header holds actions only: the toggles, the Chat | Terminal switch and New chat. Alerts and Projects form one row list under it, and History starts on spacing, not a divider. The switch is a `SegmentedControl` with `variant="mode"`, so New chat stays the only brand-colored control; the rail stacks the same switch as icons. It renders only for accounts with the terminal, and never in the open sidebar below `lg`, where the terminal does not open.
 - The sidebar Alerts row, with its count, is the one standing entry to the Alerts modal. The composer and landing hold no Alerts button; alerts are created by asking in chat, and contextual entries (tips, alert cards, token pages) may open the modal. Sidebar icons stay neutral.

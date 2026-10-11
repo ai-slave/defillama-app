@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 
 interface ChartTypeOption {
 	value: string

@@ -21,8 +21,6 @@ import { rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Filters/qui
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useSelectionIntent } from '~/components/Select/localSelection'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
 import {
 	groupStablecoinBarChartPayload,
@@ -53,11 +51,13 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -609,7 +609,7 @@ export function StablecoinsByChain({
 										marketCapPresentation?.kind === 'treemap' ? marketCapPresentation.treeData : EMPTY_TREEMAP_DATA
 									}
 									variant="rwa"
-									containerClassName={`${CHART_FILL} min-h-[600px]`}
+									containerClassName="min-h-[600px]"
 									onReady={handleChartReady}
 									valueLabel="Market cap"
 								/>

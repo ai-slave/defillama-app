@@ -78,8 +78,10 @@ export function Checkbox({ ref, children, variant, isLoading, ...props }: Checkb
 	)
 }
 
-/** The box alone, for a control that is itself the checkbox (a card or list row with role="checkbox"), where a
-    label around a hidden input would nest one control inside another. `className` is placement only. */
+/** The box alone, for a control that is itself the checkbox (a card or list row with role="checkbox", an Ariakit
+    Checkbox rendered as a row button), where a label around a hidden input would nest one control inside another.
+    It stays exported for those rows: `Checkbox` cannot be the row, and the row owns its own look. `className` is
+    placement only. */
 export function CheckboxIndicator({ checked, className }: { checked: boolean; className?: string }) {
 	return (
 		<span aria-hidden className={`${CHECKBOX_INDICATOR_STYLES} ${className ?? ''}`.trim()} data-checked={checked}>

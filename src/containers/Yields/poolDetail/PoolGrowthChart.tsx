@@ -14,10 +14,10 @@ import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { metricSeriesToggleStyles } from '~/ui/MetricChip'
+import { MetricSeriesToggle } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverRowStyles } from '~/ui/Popover'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
@@ -666,13 +666,11 @@ export function PoolGrowthChart({
 						<Tooltip
 							content={`Stack what ${assetName} earned by itself on top of what the pool earned, both measured onchain. Its price move is still not drawn.`}
 							render={
-								<button
-									type="button"
+								<MetricSeriesToggle
 									aria-pressed={withIntrinsic}
 									onClick={() =>
 										setQuery({ [INTRINSIC_QUERY_KEY]: getBooleanOverride(!withIntrinsic, INTRINSIC_DEFAULT_ON) })
 									}
-									className={metricSeriesToggleStyles}
 									data-active={withIntrinsic}
 								/>
 							}
@@ -721,7 +719,6 @@ export function PoolGrowthChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							exportButtons="hidden"
 							// The slider only narrows the view; options apply with `notMerge`, so a new day or deposit resets the zoom.
 							onReady={setInstance}

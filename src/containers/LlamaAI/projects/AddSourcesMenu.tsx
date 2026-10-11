@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
@@ -42,27 +42,27 @@ export function AddSourcesMenu({
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>
-							<MenuItem onClick={onAddPhotosFiles} className="w-full gap-2 text-left">
+							<MenuItem onClick={onAddPhotosFiles}>
 								<Icon name="image-plus" className="size-3.5 text-secondary" />
 								Add photos &amp; files
 							</MenuItem>
-							<Ariakit.MenuSeparator className="my-1 border-t border-subtle" />
+							<MenuSeparator />
 							<div className={SECTION_LABEL_CLASS}>Add to project</div>
 						</>
 					) : null}
-					<MenuItem onClick={() => fileInputRef.current?.click()} className="w-full gap-2 text-left">
+					<MenuItem onClick={() => fileInputRef.current?.click()}>
 						<Icon name="file-plus" className="size-3.5 text-secondary" />
 						Upload files
 					</MenuItem>
-					<MenuItem onClick={() => folderInputRef.current?.click()} className="w-full gap-2 text-left">
+					<MenuItem onClick={() => folderInputRef.current?.click()}>
 						<Icon name="file-plus" className="size-3.5 text-secondary" />
 						Upload folder
 					</MenuItem>
-					<MenuItem onClick={() => addTextStore.show()} className="w-full gap-2 text-left">
+					<MenuItem onClick={() => addTextStore.show()}>
 						<Icon name="file-text" className="size-3.5 text-secondary" />
 						Add text content
 					</MenuItem>
-					<MenuItem onClick={() => githubStore.show()} className="w-full gap-2 text-left">
+					<MenuItem onClick={() => githubStore.show()}>
 						<Icon name="github" className="size-3.5 text-secondary" />
 						Connect GitHub repo
 					</MenuItem>

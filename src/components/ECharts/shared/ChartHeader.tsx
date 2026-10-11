@@ -10,7 +10,6 @@ interface ChartHeaderProps {
 	headingAs?: 'h1' | 'h2' | 'h3' | undefined
 	customComponents?: React.ReactNode | undefined
 	exportButtons?: React.ReactNode | undefined
-	className?: string | undefined
 }
 
 export function ChartHeader({
@@ -19,12 +18,10 @@ export function ChartHeader({
 	titleTooltip,
 	headingAs: HeadingTag = 'h2',
 	customComponents,
-	exportButtons,
-	className
+	exportButtons
 }: ChartHeaderProps) {
 	return title || customComponents || exportButtons ? (
 		<ChartPanelToolbar
-			className={className ?? 'justify-end'}
 			leading={
 				title ? (
 					<ChartPanelTitle subtitle={subtitle} titleTooltip={titleTooltip} headingAs={HeadingTag}>

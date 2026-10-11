@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -137,7 +137,6 @@ export default function CashTransactions() {
 						<MultiSeriesChart
 							title="Weekly transactions by class"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={transactionsByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
@@ -157,7 +156,6 @@ export default function CashTransactions() {
 						<MultiSeriesChart
 							title="Weekly users by class"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={usersByClassDataset}
 							charts={classCharts}
 							valueSymbol=""
@@ -177,7 +175,6 @@ export default function CashTransactions() {
 						<MultiSeriesChart
 							title="Weekly transactions"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={weeklyTxnsDataset}
 							charts={WEEKLY_TXNS_CHART}
 							valueSymbol=""
@@ -196,7 +193,6 @@ export default function CashTransactions() {
 						<MultiSeriesChart
 							title="Weekly active users"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={weeklyUsersDataset}
 							charts={WEEKLY_USERS_CHART}
 							valueSymbol=""
@@ -215,7 +211,6 @@ export default function CashTransactions() {
 						<MultiSeriesChart
 							title="Weekly average txns per user"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={weeklyAvgDataset}
 							charts={WEEKLY_AVG_CHART}
 							valueSymbol=""

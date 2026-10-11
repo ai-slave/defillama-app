@@ -5,7 +5,6 @@ import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { TokenLogo } from '~/components/TokenLogo'
-import { ViewTabs } from '~/components/ViewTabs'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
@@ -19,7 +18,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { PanelLoadingStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import {
@@ -471,7 +470,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			</SummaryCardGrid>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} values={availableTabs}>
-				<ViewTabs tabs={availableTabs.map((id) => ({ id, label: TAB_LABELS[id] }))} label="Ticker sections" />
+				<UnderlineTabList tabs={availableTabs.map((id) => ({ id, label: TAB_LABELS[id] }))} label="Ticker sections" />
 				<TabPanel value={activeTab}>
 					{activeTab === 'overview' ? (
 						<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">

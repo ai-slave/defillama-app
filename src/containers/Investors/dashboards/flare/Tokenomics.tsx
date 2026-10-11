@@ -4,7 +4,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -132,7 +132,6 @@ export default function Tokenomics() {
 									title={inf.pctChart.title ?? 'Annualized Inflation Rate'}
 									subtitle={inf.pctChart.subtitle}
 									headingAs="h3"
-									containerClassName={CHART_FILL}
 									exportButtons={CSV_ONLY_EXPORT}
 									chartOptions={inf.pctChart.chartOptions}
 								/>
@@ -150,7 +149,6 @@ export default function Tokenomics() {
 										title={inf.circulatingChart.title ?? 'Circulating Supply (Monthly)'}
 										subtitle={inf.circulatingChart.subtitle}
 										headingAs="h3"
-										containerClassName={CHART_FILL}
 										exportButtons={CSV_ONLY_EXPORT}
 										chartOptions={inf.circulatingChart.chartOptions}
 									/>
@@ -189,7 +187,6 @@ export default function Tokenomics() {
 										dataset={protocolChart.dataset}
 										charts={protocolChart.charts}
 										valueSymbol=""
-										containerClassName={CHART_FILL}
 										exportButtons="hidden"
 										onReady={protocolExport.handleChartReady}
 										chartOptions={protocolChart.chartOptions}
@@ -246,7 +243,6 @@ export default function Tokenomics() {
 							dataset={b.dailyDataset}
 							charts={b.charts.daily}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 							exportButtons="hidden"
 							onReady={burnExport.handleChartReady}
 							chartOptions={b.chartOptions}
@@ -257,7 +253,6 @@ export default function Tokenomics() {
 							dataset={b.cumulativeDataset}
 							charts={b.charts.cumulative}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 							exportButtons="hidden"
 							onReady={burnExport.handleChartReady}
 							chartOptions={b.chartOptions}
@@ -283,7 +278,6 @@ export default function Tokenomics() {
 						valueSymbol=""
 						title={e.emissionsTitle}
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						exportButtons={CSV_ONLY_EXPORT}
 						chartOptions={e.perEpochChartOptions}
 					/>
@@ -321,7 +315,6 @@ export default function Tokenomics() {
 						valueSymbol=""
 						title={e.burnVsEmitTitle}
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						showLegend
 						exportButtons={CSV_ONLY_EXPORT}
 						chartOptions={e.burnVsEmitChartOptions}
@@ -376,7 +369,6 @@ export default function Tokenomics() {
 								dataset={fire.dataset}
 								charts={fire.charts}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 								onReady={fireExport.handleChartReady}

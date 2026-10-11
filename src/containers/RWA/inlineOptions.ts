@@ -1,4 +1,4 @@
-import type { SelectOption, SelectValues } from '~/components/Select/types'
+import type { SelectOption, SelectValues } from '~/ui/Select'
 import { formatNumber } from '~/utils/numberFormat'
 import type { RWAOverviewDisplayRow } from './api.types'
 import { getRwaRowFilterValues, type RWASelectFilterKey } from './filterState'

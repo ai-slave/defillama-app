@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { keepFocus } from '~/ui/focus'
 import { Input } from '~/ui/Input'
+import { VirtualizedMultiSelect } from '~/ui/VirtualizedSelect'
 import { formatNumber } from '~/utils/numberFormat'
 
 const EMPTY_CATEGORIES: Array<string> = []

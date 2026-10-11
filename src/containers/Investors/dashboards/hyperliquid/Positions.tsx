@@ -16,7 +16,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -150,7 +150,6 @@ function PortfolioTrend({
 					valueSymbol="$"
 					chartOptions={PORTFOLIO_CHART_OPTIONS}
 					hideDataZoom
-					containerClassName={CHART_FILL}
 					exportButtons="hidden"
 				/>
 			</Suspense>

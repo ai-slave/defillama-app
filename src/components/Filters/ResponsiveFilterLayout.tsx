@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { NestedMenu } from '~/components/NestedMenu'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useMedia } from '~/hooks/useMedia'
+import { NestedMenu } from '~/ui/NestedMenu'
 
 /* ----------------------------------------------------------------------------
    Page filters: a row of controls from `sm`, one "Filters" NestedMenu below

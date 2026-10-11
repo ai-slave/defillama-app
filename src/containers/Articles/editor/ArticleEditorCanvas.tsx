@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { NestedDrawerHeader, MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { NestedDrawerHeader, MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
@@ -45,9 +45,9 @@ function CalloutMenu({
 	const menu = Ariakit.useMenuStore()
 	return (
 		<Ariakit.MenuProvider store={menu}>
-			<MenuItem render={<Ariakit.MenuButton />} className="justify-between">
+			<MenuItem render={<Ariakit.MenuButton />}>
 				{children}
-				<span aria-hidden className="text-tertiary">
+				<span aria-hidden className="ml-auto text-tertiary">
 					›
 				</span>
 			</MenuItem>
@@ -381,46 +381,40 @@ export function ArticleEditorCanvas({
 							    layer. Pressing "+" sets tiptap's preventHide, so the editor blur that opening the menu causes keeps it shown. */}
 							<MenuSurface variant="actions" gutter={6} className="min-w-[200px]">
 								{blockItems.map((item) => (
-									<MenuItem key={item.label} onClick={item.run} className="justify-between">
+									<MenuItem key={item.label} onClick={item.run}>
 										<span>{item.label}</span>
-										{item.hint ? <span className="mono-sm text-tertiary">{item.hint}</span> : null}
+										{item.hint ? <span className="ml-auto mono-sm text-tertiary">{item.hint}</span> : null}
 									</MenuItem>
 								))}
-								<MenuItem onClick={onOpenChartPicker} className="justify-between border-t border-subtle">
+								<MenuSeparator />
+								<MenuItem onClick={onOpenChartPicker}>
 									<span>DefiLlama chart</span>
-									<span className="mono-sm text-tertiary">↗</span>
+									<span className="ml-auto mono-sm text-tertiary">↗</span>
 								</MenuItem>
 								<MenuItem
 									onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-									className="justify-between"
 								>
 									<span>Table</span>
-									<span className="mono-sm text-tertiary">3×3</span>
+									<span className="ml-auto mono-sm text-tertiary">3×3</span>
 								</MenuItem>
-								<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
+								<MenuItem onClick={onOpenEmbedPicker}>
 									<span>Embed</span>
-									<span className="mono-sm text-tertiary">URL</span>
+									<span className="ml-auto mono-sm text-tertiary">URL</span>
 								</MenuItem>
-								<MenuItem
-									onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-									className="justify-between"
-								>
+								<MenuItem onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}>
 									<span>Image</span>
-									<span className="mono-sm text-tertiary">Upload</span>
+									<span className="ml-auto mono-sm text-tertiary">Upload</span>
 								</MenuItem>
-								<MenuItem
-									onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-									className="justify-between"
-								>
+								<MenuItem onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}>
 									<span>People panel</span>
-									<span className="mono-sm text-tertiary">Bios</span>
+									<span className="ml-auto mono-sm text-tertiary">Bios</span>
 								</MenuItem>
 								<CalloutMenu insertCallout={insertCallout}>
 									<span>Callout</span>
 								</CalloutMenu>
-								<MenuItem onClick={insertCitation} className="justify-between">
+								<MenuItem onClick={insertCitation}>
 									<span>Citation</span>
-									<span className="mono-sm text-tertiary">[n]</span>
+									<span className="ml-auto mono-sm text-tertiary">[n]</span>
 								</MenuItem>
 							</MenuSurface>
 						</Ariakit.MenuProvider>
@@ -513,53 +507,47 @@ export function ArticleEditorCanvas({
 								<MenuSurface variant="actions" className="min-w-[200px]">
 									<MenuItem
 										onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-										className="justify-between"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="table" className="size-3.5" />
 											Table
 										</span>
-										<span className="mono-sm text-tertiary">3×3</span>
+										<span className="ml-auto mono-sm text-tertiary">3×3</span>
 									</MenuItem>
-									<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
+									<MenuItem onClick={onOpenEmbedPicker}>
 										<span className="flex items-center gap-2">
 											<Icon name="square-play" className="size-3.5" />
 											Embed
 										</span>
-										<span className="mono-sm text-tertiary">URL</span>
+										<span className="ml-auto mono-sm text-tertiary">URL</span>
 									</MenuItem>
-									<MenuItem
-										onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-										className="justify-between"
-									>
+									<MenuItem onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}>
 										<span className="flex items-center gap-2">
 											<Icon name="image" className="size-3.5" />
 											Image
 										</span>
-										<span className="mono-sm text-tertiary">Upload</span>
+										<span className="ml-auto mono-sm text-tertiary">Upload</span>
 									</MenuItem>
-									<MenuItem
-										onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-										className="justify-between border-b border-subtle"
-									>
+									<MenuItem onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}>
 										<span className="flex items-center gap-2">
 											<Icon name="users" className="size-3.5" />
 											People panel
 										</span>
-										<span className="mono-sm text-tertiary">Bios</span>
+										<span className="ml-auto mono-sm text-tertiary">Bios</span>
 									</MenuItem>
+									<MenuSeparator />
 									<CalloutMenu insertCallout={insertCallout}>
 										<span className="flex items-center gap-2">
 											<Icon name="circle-alert" className="size-3.5" />
 											Callout
 										</span>
 									</CalloutMenu>
-									<MenuItem onClick={insertCitation} className="justify-between">
+									<MenuItem onClick={insertCitation}>
 										<span className="flex items-center gap-2">
 											<Icon name="text-quote" className="size-3.5" />
 											Citation
 										</span>
-										<span className="mono-sm text-tertiary">[n]</span>
+										<span className="ml-auto mono-sm text-tertiary">[n]</span>
 									</MenuItem>
 								</MenuSurface>
 							</Ariakit.MenuProvider>

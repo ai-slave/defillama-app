@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { RailItem } from '~/ui/RailItem'
-import { tabTrackStyles, TabLink } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 
 export const MARKET_MAKER_TABS: Array<{ label: string; to: string; icon: IIcon['name'] }> = [
 	{ label: 'Performance Index', to: '/market-makers', icon: 'layers' },
@@ -59,7 +59,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 					</div>
 				</div>
 			</Card>
-			<nav className={`${tabTrackStyles} hidden min-[713px]:flex`} aria-label="Market makers pages">
+			<TabNav label="Market makers pages" className="hidden min-[713px]:flex">
 				{MARKET_MAKER_TABS.map((tab) => (
 					<TabLink
 						as={BasicLink}
@@ -72,7 +72,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 						{tab.label}
 					</TabLink>
 				))}
-			</nav>
+			</TabNav>
 		</>
 	)
 }

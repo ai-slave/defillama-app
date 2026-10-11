@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tab, tabIds } from '~/ui/Tabs'
@@ -210,6 +210,7 @@ export function QueryTabBar({
 							Convert to notebook
 						</MenuItem>
 					) : null}
+					<MenuSeparator />
 					<MenuItem
 						disabled={!canClose}
 						onClick={() => {
@@ -217,7 +218,6 @@ export function QueryTabBar({
 							onClose(menu.id)
 							menuStore.hide()
 						}}
-						className="border-t border-subtle"
 					>
 						<Icon name="x" className="size-3.5 shrink-0 text-tertiary" />
 						Close

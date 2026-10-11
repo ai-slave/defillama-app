@@ -5,7 +5,6 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import {
 	type AlertSchedule,
 	AlertScheduleFields,
@@ -41,7 +40,6 @@ import {
 	PriceInput,
 	PRICE_OPERATOR_OPTIONS,
 	DELIVERY_OPTIONS,
-	SegmentedToggle,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
@@ -66,7 +64,9 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { queryReadFailed } from '~/utils/query'
 
@@ -494,11 +494,13 @@ function CreateAlertModalForm({
 								<Field label="Fires when the price goes" error={shown?.price}>
 									{(control) => (
 										<div className="flex flex-wrap items-center gap-2">
-											<SegmentedToggle<PriceOp>
+											<SegmentedControl<PriceOp>
 												label="Price comparison"
 												value={priceOp}
-												onChange={setPriceOp}
+												onValueChange={setPriceOp}
 												options={PRICE_OPERATOR_OPTIONS}
+												variant="default"
+												size="md"
 											/>
 											<PriceInput value={priceValue} onValueChange={setPriceValue} control={control} />
 										</div>
@@ -554,11 +556,13 @@ function CreateAlertModalForm({
 						error={shown?.delivery}
 					>
 						<div className="flex flex-wrap items-center gap-2">
-							<SegmentedToggle<DeliveryChannel>
+							<SegmentedControl<DeliveryChannel>
 								label="Delivery channel"
 								value={deliveryChannel}
-								onChange={setDeliveryChannel}
+								onValueChange={setDeliveryChannel}
 								options={DELIVERY_OPTIONS}
+								variant="default"
+								size="md"
 							/>
 							{deliveryChannel === 'slack' ? (
 								<SlackTargetPickers

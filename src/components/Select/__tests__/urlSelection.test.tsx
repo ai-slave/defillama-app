@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import { SelectWithCombobox } from '../SelectWithCombobox'
+import { UrlSelectWithCombobox } from '../UrlSelect'
 
 const router = vi.hoisted(() => ({
 	pathname: '/fees',
@@ -15,7 +15,7 @@ const router = vi.hoisted(() => ({
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
 const CATEGORIES = ['Dexs', 'Lending', 'Bridge']
-// From 12 options the picker opens with a search field (searchThreshold.ts).
+// From 12 options the picker opens with a search field (src/ui/internal/searchThreshold.ts).
 const SEARCHABLE_CATEGORIES = [
 	...CATEGORIES,
 	'CDP',
@@ -35,7 +35,7 @@ let root: Root
 let labelType: 'smol' | 'regular' = 'smol'
 let categories = CATEGORIES
 const picker = () => (
-	<SelectWithCombobox
+	<UrlSelectWithCombobox
 		allValues={categories}
 		includeQueryKey="category"
 		excludeQueryKey="excludeCategory"
@@ -116,6 +116,12 @@ test('names an empty or all-except selection on the trigger, so a filter never l
 	router.query = { category: 'Dexs' }
 	await act(async () => root.render(picker()))
 	expect(trigger().textContent).toBe('Category: Dexs')
+})
+
+test('a smol trigger counts the picks, not the summary that names them', async () => {
+	router.query = { excludeCategory: 'Lending' }
+	await act(async () => root.render(picker()))
+	expect(trigger().textContent).toBe('2Category')
 })
 
 async function press(key: string) {

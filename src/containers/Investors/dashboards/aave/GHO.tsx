@@ -4,7 +4,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -219,7 +219,6 @@ export default function GHO() {
 								dataset={borrowApyDataset}
 								charts={BORROW_APY_CHART}
 								valueSymbol="%"
-								containerClassName={CHART_FILL}
 								chartOptions={AAVE_PERCENT_TIME_CHART_OPTIONS}
 								exportButtons={AAVE_AREA_EXPORT}
 							/>

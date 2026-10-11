@@ -16,12 +16,7 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 	if (normalizedChainName === 'near') {
 		if (showsInPageIr) return null
 		return (
-			<Announcement
-				announcementId="near-investor-relations"
-				version="2026-05-26-2"
-				className="border border-near-announcement-border bg-(image:--near-announcement-bg) text-near-announcement-text shadow-near-announcement"
-				contentClassName="text-center"
-			>
+			<Announcement announcementId="near-investor-relations" version="2026-05-26-2" scope="near">
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 					<span className="inline-flex items-center gap-1.5 rounded-full border border-near-announcement-badge-border bg-near-announcement-badge-bg px-2 py-0.5 title-sm text-near-announcement-badge-text">
 						<TokenLogo src={NEAR_CHAIN_ICON} size={14} alt="Logo of NEAR" />
@@ -45,12 +40,7 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 	if (chainName === 'Sonic') {
 		if (showsInPageIr) return null
 		return (
-			<Announcement
-				announcementId="sonic-investor-relations"
-				version="2026-04-23"
-				className="border border-sonic-announcement-border bg-(image:--sonic-announcement-bg) text-sonic-announcement-text shadow-sonic-announcement"
-				contentClassName="text-center"
-			>
+			<Announcement announcementId="sonic-investor-relations" version="2026-04-23" scope="sonic">
 				<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 					<span className="inline-flex items-center gap-1.5 rounded-full border border-announcement-chip-border bg-announcement-chip-bg px-2 py-0.5 title-sm text-sonic-announcement-badge-text">
 						<TokenLogo name="Sonic" kind="chain" size={14} alt="Logo of Sonic" />

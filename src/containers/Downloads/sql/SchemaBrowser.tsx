@@ -1,6 +1,5 @@
 import { matchSorter } from 'match-sorter'
 import { useCallback, useDeferredValue, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
@@ -9,6 +8,7 @@ import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
+import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import { formatNumber } from '~/utils/numberFormat'
 import {
 	chartDatasets,

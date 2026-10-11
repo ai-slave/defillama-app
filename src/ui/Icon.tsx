@@ -253,13 +253,13 @@ export const ICON_SPRITE = '/icons/v52.svg'
 
 type Name = (typeof ICON_GROUPS)[number][1][number]
 
-export interface IIcon extends SVGProps<SVGSVGElement> {
+/** No `height` or `width`: the size sits in the class list beside the icon's color, so a reader sees one scale. */
+export interface IIcon extends Omit<SVGProps<SVGSVGElement>, 'height' | 'width'> {
 	name: Name
 }
 /** A sprite icon. Size it with a `size-*` class: `size-3.5` (14px) beside a label, `size-4` (16px) icon-only
-    (design.md → Icons). Never pass `height` or `width`; scripts/policies/check-icon-size.ts fails them.
-    Icons are outlines; `fill-current` fills the ones whose symbol leaves fill open (star, bookmark, pin, play,
-    stop): an on state, or a solid play or stop button. */
+    (design.md → Icons). Icons are outlines; `fill-current` fills the ones whose symbol leaves fill open (star,
+    bookmark, pin, play, stop): an on state, or a solid play or stop button. */
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg fill="none" {...props}>

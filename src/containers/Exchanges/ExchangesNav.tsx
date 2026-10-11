@@ -1,5 +1,5 @@
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { withCountryParam } from './queryState'
 
@@ -53,7 +53,7 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 	const selectedPage = EXCHANGES_PAGES[activePage]
 	return (
 		<div className="flex flex-col gap-2 pb-2">
-			<nav className={tabTrackStyles} aria-label="Exchanges pages">
+			<TabNav label="Exchanges pages">
 				{EXCHANGES_PAGE_ORDER.map((pageId) => {
 					const page = EXCHANGES_PAGES[pageId]
 					const href =
@@ -73,7 +73,7 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 						</Tooltip>
 					)
 				})}
-			</nav>
+			</TabNav>
 			<h1 className="sr-only">{selectedPage.heading}</h1>
 			{/* Two pages drop the blurb because they already say it themselves: the directory
 			    carries a visible "Find My Exchange" heading, and charts opens on section

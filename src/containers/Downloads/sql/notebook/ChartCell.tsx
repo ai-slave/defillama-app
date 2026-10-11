@@ -1,6 +1,6 @@
-import { Select } from '~/components/Select/Select'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Select } from '~/ui/Select'
 import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../chartConfig'

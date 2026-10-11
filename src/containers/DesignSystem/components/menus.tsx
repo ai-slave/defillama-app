@@ -12,7 +12,7 @@ import {
 	popoverScrollAreaStyles
 } from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
-import { ComboboxSurface, MenuItem, MenuSurface, PopoverSurface } from '~/ui/PopoverSurface'
+import { ComboboxSurface, MenuItem, MenuSeparator, MenuSurface, PopoverSurface } from '~/ui/PopoverSurface'
 import { SearchField } from '~/ui/SearchField'
 import type { Family, KnobValues } from '../shared'
 
@@ -79,6 +79,7 @@ function ActionsMenu({ nested }: { nested: boolean }) {
 						</MenuSurface>
 					</Ariakit.MenuProvider>
 				) : null}
+				<MenuSeparator />
 				<MenuItem destructive>Delete</MenuItem>
 			</MenuSurface>
 		</Ariakit.MenuProvider>
@@ -94,15 +95,11 @@ function TreeMenu() {
 				<Ariakit.MenuButtonArrow />
 			</Ariakit.MenuButton>
 			<MenuSurface variant="actions">
-				<MenuItem row="tree" className="pl-3">
-					Aave (Combined)
-				</MenuItem>
-				<MenuItem row="tree" className="pl-8" data-active>
+				<MenuItem row="tree">Aave (Combined)</MenuItem>
+				<MenuItem row="tree-child" data-active>
 					Aave V3
 				</MenuItem>
-				<MenuItem row="tree" className="pl-8">
-					Aave V2
-				</MenuItem>
+				<MenuItem row="tree-child">Aave V2</MenuItem>
 			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)

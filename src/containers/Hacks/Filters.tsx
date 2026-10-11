@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -140,7 +140,7 @@ function Filters({
 }: FiltersInnerProps) {
 	return (
 		<>
-			<SelectWithCombobox
+			<UrlSelectWithCombobox
 				allValues={chainOptions}
 				label="Chains"
 				labelType="smol"
@@ -178,7 +178,7 @@ function Filters({
 				nestedMenu={isMobile}
 			/>
 
-			<SelectWithCombobox
+			<UrlSelectWithCombobox
 				allValues={classificationOptions}
 				label="Classification"
 				labelType="smol"
@@ -188,7 +188,7 @@ function Filters({
 				includeQueryKey="class"
 				excludeQueryKey="excludeClass"
 			/>
-			<SelectWithCombobox
+			<UrlSelectWithCombobox
 				allValues={techniqueOptions}
 				label="Techniques"
 				labelType="smol"

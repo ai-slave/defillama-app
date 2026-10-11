@@ -9,7 +9,6 @@ import {
 	getTooltipAxisValue,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -20,8 +19,9 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import {
@@ -137,7 +137,6 @@ function RatesChart({
 				charts={spec.charts}
 				chartOptions={RATES_CHART_OPTIONS}
 				valueSymbol="%"
-				containerClassName={CHART_FILL}
 				showLegend
 				exportButtons="hidden"
 				{...(onReady ? { onReady } : {})}
@@ -234,7 +233,7 @@ function ReferenceRatesSummary({
 					</p>
 				</div>
 			</PanelHeader>
-			<TableToolbar className="border-b border-subtle">
+			<TableToolbar divided>
 				<dl className="grid flex-1 grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-3">
 					<BenchmarkMetric
 						label="Supply APY"
@@ -299,7 +298,7 @@ function RatesByAssetPanel({
 }) {
 	return (
 		<Panel role="region" aria-labelledby="rates-by-asset">
-			<TableToolbar className="min-h-10 border-b border-subtle">
+			<TableToolbar divided className="min-h-10">
 				<h2 id="rates-by-asset" className="mr-auto label-md text-primary">
 					By asset
 				</h2>
@@ -345,7 +344,7 @@ function RatesByProtocolPanel({
 }) {
 	return (
 		<Panel role="region" aria-labelledby="rates-by-protocol">
-			<TableToolbar className="min-h-10 border-b border-subtle">
+			<TableToolbar divided className="min-h-10">
 				<h2 id="rates-by-protocol" className="mr-auto label-md text-primary">
 					By protocol
 				</h2>

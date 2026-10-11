@@ -10,7 +10,6 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
-import { CHART_FILL } from '~/ui/ChartPanel'
 import { buildChainChartPresentation } from './chartPresentation'
 import { buildChainYAxis } from './chartYAxis'
 import type { ChainChartLabels } from './constants'
@@ -97,7 +96,6 @@ export default function ChainCoreChart({
 			chartOptions={finalChartOptions}
 			valueSymbol={valueSymbol}
 			{...(groupBy !== undefined ? { groupBy } : {})}
-			containerClassName={CHART_FILL}
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}
 			{...(onReady !== undefined ? { onReady } : {})}

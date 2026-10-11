@@ -91,7 +91,9 @@ function CandleStickAndVolumeChart({
 	// Indicator panels take the grids after the price grid and the volume grid when there is one.
 	const firstPanelGrid = hasVolume ? 2 : 1
 
-	const chartHeight = 480 + panels.length * PANEL_HEIGHT
+	// Indicator panels keep fixed heights under the price grid, so a chart with any keeps a 480px price area above
+	// them instead of squeezing it into the slot's 360px floor.
+	const panelsFloor = panels.length > 0 ? `${480 + panels.length * PANEL_HEIGHT}px` : undefined
 
 	const defaultChartSettings = useMemo<EChartsOption>(() => {
 		const panelCount = panels.length
@@ -464,8 +466,8 @@ function CandleStickAndVolumeChart({
 	return (
 		<div
 			ref={containerRef}
-			className={containerClassName}
-			style={containerClassName ? undefined : { height: height ?? `${chartHeight}px` }}
+			className={height ? undefined : `flex-1 initial:min-h-[360px] ${containerClassName ?? ''}`.trim()}
+			style={height ? { height } : { minHeight: panelsFloor }}
 		/>
 	)
 }

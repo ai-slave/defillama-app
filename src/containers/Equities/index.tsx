@@ -15,21 +15,20 @@ import { startTransition, useCallback, useMemo, useState, type ReactNode } from 
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
 import { BasicLink } from '~/components/Link'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { getColumnVisibilityForSelection, getHideableColumns } from '~/components/Table/search/columnSelect'
 import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
-import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { StaleText } from '~/ui/StaleText'
-import { TabPanel, Tabs } from '~/ui/Tabs'
+import { TabPanel, Tabs, type UnderlineTab, UnderlineTabList } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDateTime } from '~/utils/dateFormat'
@@ -827,7 +826,7 @@ function EquitiesRankingsTable({
 	)
 }
 
-const VIEW_TABS: ReadonlyArray<ViewTab<EquitiesPageView>> = [
+const VIEW_TABS: ReadonlyArray<UnderlineTab<EquitiesPageView>> = [
 	{ id: 'table', label: 'Table' },
 	{ id: 'map', label: 'Market Map' }
 ]
@@ -990,7 +989,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 		<div className="flex flex-col gap-2">
 			<Panel>
 				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
-					<ViewTabs tabs={VIEW_TABS} label="Equities view" />
+					<UnderlineTabList tabs={VIEW_TABS} label="Equities view" />
 					<TabPanel value={view}>
 						{view === 'table' ? (
 							<EquitiesRankingsTable

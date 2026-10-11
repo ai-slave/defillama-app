@@ -2,7 +2,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -165,7 +165,6 @@ export function CompositionSection({
 									charts={model.charts}
 									chartOptions={chartOptions}
 									valueSymbol="$"
-									containerClassName={CHART_FILL}
 									solidChartAreaStyle
 								/>
 							</Suspense>

@@ -15,13 +15,13 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { useLocalSelectionWithRemainder } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -359,7 +359,6 @@ function ChartByType({
 					showTotalInTooltip
 					{...(hallmarks !== undefined ? { hallmarks } : {})}
 					onReady={handleChartReady}
-					containerClassName={CHART_FILL}
 				/>
 			</React.Suspense>
 		</>

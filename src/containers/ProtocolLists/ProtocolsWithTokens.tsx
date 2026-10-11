@@ -6,7 +6,7 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -49,7 +49,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search protocols…" />
 						{props.categories.length > 0 ? (
-							<SelectWithCombobox
+							<UrlSelectWithCombobox
 								allValues={props.categories}
 								includeQueryKey="category"
 								excludeQueryKey="excludeCategory"

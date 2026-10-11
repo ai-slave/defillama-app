@@ -8,11 +8,11 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>

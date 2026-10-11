@@ -18,7 +18,7 @@ import { neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { Tabs, Tab, TabPanel, TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
@@ -278,13 +278,13 @@ export function ProjectLanding({
 					</div>
 
 					<Tabs value={tab} onValueChange={setTab} values={projectTabs}>
-						<Ariakit.TabList aria-label="Project sections" className={tabTrackStyles}>
-							{projectTabs.map((id) => (
-								<Tab key={id} type="button" value={id} render={<TabLink as="button" />}>
-									{id === 'chats' ? 'Chats' : 'Sources'}
-								</Tab>
-							))}
-						</Ariakit.TabList>
+						<UnderlineTabList
+							label="Project sections"
+							tabs={[
+								{ id: 'chats', label: 'Chats' },
+								{ id: 'sources', label: 'Sources' }
+							]}
+						/>
 
 						<TabPanel value="sources" hidden={tab !== 'sources'} className="flex flex-col gap-4 pt-4">
 							<div>

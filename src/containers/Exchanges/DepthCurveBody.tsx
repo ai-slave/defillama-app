@@ -8,7 +8,7 @@
  */
 import * as React from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { depthCurveAriaLabel, depthCurveDataset, type DepthCurveEntry } from './depthCurve'
 
@@ -47,7 +47,6 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 					dataset={{ source: dataset.source, dimensions: dataset.dimensions }}
 					charts={charts}
 					valueSymbol="$"
-					containerClassName={CHART_FILL}
 					hideDataZoom
 					showLegend
 					exportButtons="hidden"

@@ -1,6 +1,5 @@
 import type { NextRouter } from 'next/router'
-import { readSelectionFromQuery } from '~/components/Select/query'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import { type ExcludeQueryKey, readSelectionFromQuery } from '~/components/Select/query'
 import { isTrueQueryParam, parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'

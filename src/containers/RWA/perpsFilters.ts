@@ -1,6 +1,5 @@
 import { inRange } from '~/components/Filters/quickPicks'
-import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import { type ExcludeQueryKey, getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
 import { parseNumberInput, parseNumberQueryParam } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import {

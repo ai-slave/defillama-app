@@ -53,7 +53,7 @@ import { LoadingIndicator, LoadingSpinner } from './internal/Loaders'
      blank box.
 ---------------------------------------------------------------------------- */
 
-export type StatusVariant = 'loading' | 'empty' | 'error'
+type StatusVariant = 'loading' | 'empty' | 'error'
 
 // Loading has its own parts (PanelLoadingStatus, SurfaceBodyLoadingStatus) that draw the animated LoadingIndicator;
 // the text statuses take only empty and error, so a loading state can never render as bare "Loading" text.

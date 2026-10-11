@@ -15,8 +15,7 @@ export function LlamaAIMobileAppAnnouncement({ track }: { track: AnnouncementTra
 			announcementId={LLAMAAI_MOBILE_APP_ANNOUNCEMENT.id}
 			version={LLAMAAI_MOBILE_APP_ANNOUNCEMENT.version}
 			dismissTracking={track.dismiss}
-			className="app-announcement-scope relative overflow-hidden border border-app-announcement-border bg-(image:--app-announcement-bg) text-app-announcement-text shadow-app-announcement"
-			contentClassName="text-center"
+			scope="app"
 		>
 			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-(image:--app-announcement-shimmer)" />
 			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">

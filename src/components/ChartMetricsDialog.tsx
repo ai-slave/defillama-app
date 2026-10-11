@@ -4,7 +4,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { metricOptionChipStyles } from '~/ui/MetricChip'
+import { MetricOptionChip } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { SearchField } from '~/ui/SearchField'
@@ -42,7 +42,7 @@ const SEARCH_MIN_OPTIONS = 12
     series on the chart, "N of M selected", a search from 12 options (with the full phone sheet), and Clear all or
     Reset. Choices apply as they are made, so Done only closes. Locked Pro options open the upgrade path. Pages pass
     their catalog as groups and keep their own removable chips in the toolbar. The option chips are
-    `metricOptionChipStyles`: 24px, full radius, neutral border, brand when picked. */
+    sm `MetricOptionChip`s: 24px, full radius, neutral border, brand when picked. */
 export function ChartMetricsDialog<O extends ChartMetricOption>({
 	groups,
 	onToggle,
@@ -132,20 +132,19 @@ function MetricsDialog<O extends ChartMetricOption>({
 						<div className="flex flex-wrap gap-1 sheet:gap-2">
 							{group.options.map((option) =>
 								option.locked ? (
-									<button
+									<MetricOptionChip
 										key={option.key}
-										type="button"
+										size="sm"
 										onClick={() => {
 											store.hide()
 											onUnlock?.()
 										}}
-										className={metricOptionChipStyles}
 										aria-label={`${option.label}, available on Pro`}
 									>
 										<Icon name="lock" className="size-3 text-tertiary" aria-hidden="true" />
 										<span className="text-tertiary">{option.label}</span>
 										<PromoBadge>Pro</PromoBadge>
-									</button>
+									</MetricOptionChip>
 								) : (
 									<MetricOption key={option.key} option={option} onToggle={onToggle} />
 								)
@@ -182,12 +181,11 @@ function MetricsDialog<O extends ChartMetricOption>({
 
 function MetricOption<O extends ChartMetricOption>({ option, onToggle }: { option: O; onToggle: (option: O) => void }) {
 	const button = (
-		<button
-			type="button"
+		<MetricOptionChip
+			size="sm"
 			onClick={() => onToggle(option)}
 			aria-pressed={option.active}
 			data-active={option.active}
-			className={metricOptionChipStyles}
 		/>
 	)
 	const content = (

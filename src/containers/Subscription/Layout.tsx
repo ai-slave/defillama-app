@@ -8,7 +8,7 @@ import { LinkPreviewCard, SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { StaleText } from '~/ui/StaleText'
 import { Tooltip } from '~/ui/Tooltip'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
@@ -67,10 +67,11 @@ export function SubscribeLayout({
 									{/* Portaled like every menu (an in-place drawer would be positioned inside a blurred or sticky header), so it
 									    carries this page's always-dark scope itself. */}
 									<MenuSurface variant="actions" className="theme-dark" aria-label="Account menu">
-										<MenuItem render={<BasicLink href="/" />} className="border-b border-subtle">
+										<MenuItem render={<BasicLink href="/" />}>
 											<Icon name="arrow-left" className="size-3.5 text-tertiary" aria-hidden="true" />
 											Return to main page
 										</MenuItem>
+										<MenuSeparator />
 										<MenuItem onClick={logout}>
 											<Icon name="x" className="size-3.5 text-tertiary" aria-hidden="true" />
 											Sign out

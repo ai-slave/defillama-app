@@ -5,7 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
@@ -288,7 +288,6 @@ export default function Markets() {
 							valueSymbol="$"
 							title="Market size by chain"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
 							exportButtons={AAVE_BAR_EXPORT}
 						/>
@@ -304,7 +303,6 @@ export default function Markets() {
 								valueSymbol="%"
 								title="Utilization by top assets"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}
 								exportButtons={AAVE_BAR_EXPORT}
 							/>

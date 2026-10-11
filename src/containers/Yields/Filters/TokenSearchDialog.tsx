@@ -4,11 +4,11 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
-import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogSearchHeader } from '~/ui/Dialog'
 import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
-import { metricOptionChipStyles } from '~/ui/MetricChip'
+import { MetricOptionChip } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { SearchField } from '~/ui/SearchField'
@@ -166,21 +166,20 @@ function Chip({
 	ref?: Ref<HTMLButtonElement>
 }) {
 	return (
-		<button
+		<MetricOptionChip
 			ref={ref}
-			type="button"
+			size="sm"
 			data-row
 			onClick={onClick}
 			aria-pressed={remove ? undefined : selected}
 			aria-label={remove ? `Remove ${name}` : undefined}
 			data-active={selected}
-			className={metricOptionChipStyles}
 		>
 			<LeadMark value={value} geckoId={geckoId} size={16} />
 			{name}
 			{isFamily(value) ? <span className="label-xs text-tertiary">Group</span> : null}
 			{remove ? <Icon name="x" className="-mr-1 size-3 text-tertiary" /> : null}
-		</button>
+		</MetricOptionChip>
 	)
 }
 
@@ -306,66 +305,69 @@ function TokenResults({
 	}, [activeIndex, families.length, scrollToIndex])
 
 	return (
-		<div className={`${dialogScrollableBodyStyles} px-2 pb-2`} ref={resultsRef}>
-			<div id={listId} role="listbox" aria-label={label} aria-multiselectable={multiple}>
-				<div ref={familiesRef} role="group" aria-labelledby={`${listId}-groups`} hidden={families.length === 0}>
-					<SectionHeader
-						id={`${listId}-groups`}
-						label="Groups"
-						hint="one pick covers every variant"
-						divider={hasRecent}
-					/>
-					<div className="grid gap-x-1 sm:grid-cols-2">
-						{families.map((option, index) => (
-							<TokenOptionRow
-								key={option[1]}
-								id={`${listId}-${index}`}
-								option={option}
-								selected={selectedSet.has(option[1])}
-								active={index === activeIndex}
-								multiple={multiple}
-								onToggle={onToggle}
-							/>
-						))}
+		<DialogBody kind="flush" ref={resultsRef}>
+			{/* A list body's inset without its top: the first sticky section header brings its own. */}
+			<div className="px-2 pb-2">
+				<div id={listId} role="listbox" aria-label={label} aria-multiselectable={multiple}>
+					<div ref={familiesRef} role="group" aria-labelledby={`${listId}-groups`} hidden={families.length === 0}>
+						<SectionHeader
+							id={`${listId}-groups`}
+							label="Groups"
+							hint="one pick covers every variant"
+							divider={hasRecent}
+						/>
+						<div className="grid gap-x-1 sm:grid-cols-2">
+							{families.map((option, index) => (
+								<TokenOptionRow
+									key={option[1]}
+									id={`${listId}-${index}`}
+									option={option}
+									selected={selectedSet.has(option[1])}
+									active={index === activeIndex}
+									multiple={multiple}
+									onToggle={onToggle}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div role="group" aria-labelledby={`${listId}-tokens`} hidden={assets.length === 0}>
+						<SectionHeader
+							id={`${listId}-tokens`}
+							label="Tokens"
+							count={assets.length}
+							divider={hasRecent || families.length > 0}
+						/>
+						<div className="relative" style={{ height: assetVirtualizer.totalSize }} ref={assetsRef}>
+							{assetVirtualizer.items.map((virtualRow) => {
+								const option = assets[virtualRow.index]
+								if (!option) return null
+								return (
+									<div
+										key={virtualRow.key}
+										className="absolute top-0 left-0 w-full"
+										style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
+									>
+										<TokenOptionRow
+											id={`${listId}-${families.length + virtualRow.index}`}
+											option={option}
+											selected={selectedSet.has(option[1])}
+											active={families.length + virtualRow.index === activeIndex}
+											multiple={multiple}
+											onToggle={onToggle}
+										/>
+									</div>
+								)
+							})}
+						</div>
 					</div>
 				</div>
 
-				<div role="group" aria-labelledby={`${listId}-tokens`} hidden={assets.length === 0}>
-					<SectionHeader
-						id={`${listId}-tokens`}
-						label="Tokens"
-						count={assets.length}
-						divider={hasRecent || families.length > 0}
-					/>
-					<div className="relative" style={{ height: assetVirtualizer.totalSize }} ref={assetsRef}>
-						{assetVirtualizer.items.map((virtualRow) => {
-							const option = assets[virtualRow.index]
-							if (!option) return null
-							return (
-								<div
-									key={virtualRow.key}
-									className="absolute top-0 left-0 w-full"
-									style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
-								>
-									<TokenOptionRow
-										id={`${listId}-${families.length + virtualRow.index}`}
-										option={option}
-										selected={selectedSet.has(option[1])}
-										active={families.length + virtualRow.index === activeIndex}
-										multiple={multiple}
-										onToggle={onToggle}
-									/>
-								</div>
-							)
-						})}
-					</div>
-				</div>
+				{families.length === 0 && assets.length === 0 ? (
+					<NoResults>No tokens match. Try a symbol like USDC, or a group like ETH.</NoResults>
+				) : null}
 			</div>
-
-			{families.length === 0 && assets.length === 0 ? (
-				<NoResults>No tokens match. Try a symbol like USDC, or a group like ETH.</NoResults>
-			) : null}
-		</div>
+		</DialogBody>
 	)
 }
 

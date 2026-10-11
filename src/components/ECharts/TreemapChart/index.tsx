@@ -338,17 +338,18 @@ function TreemapChart({
 		variant
 	])
 
-	const resolvedHeight = height ?? (variant === 'narrative' ? '533px' : '800px')
 	// Treemap zoom can paint outside the series rectangle, but never outside
 	// its canvas. Inset the canvas itself so zoomed nodes preserve the edge gap.
 	const chart = (
 		<div
 			className={
-				containerClassName ? `flex w-full flex-col overflow-hidden ${containerClassName}` : 'w-full overflow-hidden'
+				height
+					? 'w-full overflow-hidden'
+					: `flex w-full flex-1 flex-col overflow-hidden initial:min-h-[360px] ${containerClassName ?? ''}`.trim()
 			}
-			style={{ height: containerClassName ? undefined : resolvedHeight, padding: CHART_INSET, boxSizing: 'border-box' }}
+			style={{ height, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
-			<div ref={containerRef} className={containerClassName ? 'flex-1' : 'h-full w-full'} />
+			<div ref={containerRef} className={height ? 'h-full w-full' : 'flex-1'} />
 		</div>
 	)
 

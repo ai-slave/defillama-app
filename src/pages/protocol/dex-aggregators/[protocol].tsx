@@ -26,7 +26,7 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -233,7 +233,6 @@ export default function Protocols(props: DexAggregatorProtocolPageProps) {
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={deferredFinalCharts.groupBy}
-							containerClassName={CHART_FILL}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}

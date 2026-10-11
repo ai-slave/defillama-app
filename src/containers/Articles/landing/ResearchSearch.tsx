@@ -2,7 +2,6 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useId, useState } from 'react'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	listArticles,
 	listArticleSections,
@@ -25,6 +24,7 @@ import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/c
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'

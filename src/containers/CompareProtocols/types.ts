@@ -1,5 +1,5 @@
-import type { MultiSelectOption } from '~/components/Select/types'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
+import type { MultiSelectOption } from '~/ui/MultiSelectCombobox'
 
 export type CompareProtocolsProps = {
 	protocols: IChainOverviewData['protocols']

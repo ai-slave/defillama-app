@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { updateQueryFromSelected } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -203,7 +203,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					</span>
 				) : null}
 				<span className="max-lg:hidden">
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={FDV_OPTIONS}
 						includeQueryKey={fdvKeys.include}
 						excludeQueryKey={fdvKeys.exclude}
@@ -214,7 +214,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					/>
 				</span>
 				<span className="max-lg:hidden">
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={sectorPickerOptions}
 						includeQueryKey={sectorKeys.include}
 						excludeQueryKey={sectorKeys.exclude}
@@ -225,7 +225,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					/>
 				</span>
 				<span className="max-lg:hidden">
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={STATUS_OPTIONS}
 						includeQueryKey={listingKeys.include}
 						excludeQueryKey={listingKeys.exclude}

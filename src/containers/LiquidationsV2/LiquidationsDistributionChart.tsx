@@ -9,14 +9,14 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -230,7 +230,6 @@ function LiquidationsDistributionChartCard({
 					charts={deferredChartModel.charts}
 					selectedCharts={deferredChartModel.selectedCharts}
 					chartOptions={deferredChartModel.chartOptions}
-					containerClassName={CHART_FILL}
 					hideDataZoom={displayOptions.shouldHideDataZoom}
 					showLegend={displayOptions.showBreakdownLegend}
 					onReady={onChartReady}

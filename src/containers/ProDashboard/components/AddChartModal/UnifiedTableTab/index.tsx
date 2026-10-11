@@ -3,7 +3,6 @@ import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tan
 import { useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import {
 	UNIFIED_TABLE_PRESETS,
@@ -20,6 +19,7 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { ErrorLine } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
+import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { requestDashboardItemReveal } from '../../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'

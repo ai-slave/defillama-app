@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -18,7 +17,6 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -28,11 +26,12 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { Tab, TabPanel, Tabs, tabTrackStyles, TabLink } from '~/ui/Tabs'
+import { TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -246,10 +245,6 @@ const LST_COLUMNS_WITH_RATES_AND_APY = [
 
 const LST_CHART_TABS = ['breakdown', 'inflows'] as const
 type LstChartTab = (typeof LST_CHART_TABS)[number]
-const LST_CHART_TAB_LABELS: Record<LstChartTab, string> = {
-	breakdown: 'Breakdown',
-	inflows: 'Inflows'
-}
 
 export function LSTOverview({
 	areaChartData,
@@ -383,13 +378,13 @@ export function LSTOverview({
 
 			<Card padding="none" className="flex w-full flex-col">
 				<Tabs<LstChartTab> value={tab} values={LST_CHART_TABS} onValueChange={setTab}>
-					<Ariakit.TabList aria-label="Chart view" className={tabTrackStyles}>
-						{LST_CHART_TABS.map((value) => (
-							<Tab key={value} value={value} render={<TabLink as="button" />}>
-								{LST_CHART_TAB_LABELS[value]}
-							</Tab>
-						))}
-					</Ariakit.TabList>
+					<UnderlineTabList
+						label="Chart view"
+						tabs={[
+							{ id: 'breakdown', label: 'Breakdown' },
+							{ id: 'inflows', label: 'Inflows' }
+						]}
+					/>
 					<TabPanel value={tab} className="flex flex-col">
 						{chartPresentation.kind === 'breakdown' ? (
 							<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
@@ -425,7 +420,6 @@ export function LSTOverview({
 											<PieChart
 												chartData={deferredPiePresentation.chartData}
 												stackColors={deferredPiePresentation.stackColors}
-												containerClassName={CHART_FILL}
 												onReady={handlePieReady}
 											/>
 										</React.Suspense>
@@ -459,7 +453,6 @@ export function LSTOverview({
 												csvSource={chartPresentation.csvSource}
 												stacked
 												expandTo100Percent
-												containerClassName={CHART_FILL}
 												valueSymbol="%"
 												onReady={handleBreakdownReady}
 											/>
@@ -517,7 +510,6 @@ export function LSTOverview({
 											dataset={chartPresentation.dataset}
 											charts={chartPresentation.charts}
 											csvSource={chartPresentation.csvSource}
-											containerClassName={CHART_FILL}
 											groupBy={renderedGroupBy}
 											valueSymbol="ETH"
 											showTotalInTooltip

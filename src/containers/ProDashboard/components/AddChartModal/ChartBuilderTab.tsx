@@ -3,11 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useId, useMemo, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
-import {
-	VirtualizedMultiSelect,
-	VirtualizedSelect,
-	type VirtualizedSelectOption
-} from '~/components/Select/VirtualizedSelect'
 import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
@@ -20,6 +15,7 @@ import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { VirtualizedMultiSelect, VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../../AppMetadataContext'

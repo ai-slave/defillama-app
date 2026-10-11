@@ -1,28 +1,25 @@
-import type { ReactNode } from 'react'
+import * as Ariakit from '@ariakit/react'
 
-export type SelectOption = {
-	key: string
-	name: string
-	help?: string
-	icon?: ReactNode
-	/** Drawn grayed out: a value the page's current settings leave out. */
-	muted?: boolean
-	/** Shown but not pickable, with `help` as its visible reason (a private Slack channel the bot is not in). */
-	disabled?: boolean
-}
+/* ----------------------------------------------------------------------------
+   ComboboxSelectTrigger — the trigger every picker renders, and its look,
+   `selectTriggerStyles(variant, size)`.
 
-export type SelectValues = ReadonlyArray<SelectOption> | ReadonlyArray<string>
+   - Callers choose the trigger `variant` and `size`; product surfaces pin
+     their own values instead of inheriting a default.
+   - A picker's `className` appends placement and layout classes (`ml-auto`,
+     `w-full`, `flex-1`). `triggerProps` cannot carry a `className`, because
+     replacing the trigger's classes would override its `variant` and `size`.
+   - A picker's trigger is named `{label} dropdown` unless `triggerProps`
+     gives it an `id`: inside a `Field` the visible label names it, so never
+     also pass an `aria-label` there. With `labelType="none"`, an empty
+     single pick shows its `label` as a tertiary placeholder.
 
-export type ExcludeQueryKey = `exclude${string}`
-
-export type MultiSelectOption = {
-	value: string
-	label: string
-	selectedLabel?: string
-	disabled?: boolean
-	logo?: string
-	isChild?: boolean
-}
+   Both are exported for a product list built on Ariakit's combobox (a
+   settings row, an article field): it renders this trigger, so Escape
+   behaves as in the pickers. `selectTriggerStyles` also dresses a popover
+   disclosure that opens a picker-like panel (a date range, a row limit),
+   which no picker can be.
+---------------------------------------------------------------------------- */
 
 const SELECT_TRIGGER_VARIANTS = {
 	default:
@@ -54,4 +51,22 @@ export function selectTriggerStyles(variant: SelectTriggerVariant, size: SelectT
 		return SELECT_TRIGGER_MD_VARIANTS[variant] ?? SELECT_TRIGGER_VARIANTS[variant]
 	}
 	return SELECT_TRIGGER_VARIANTS[variant]
+}
+
+/** Ariakit's ComboboxSelect, for every picker trigger. A list without a search field keeps focus on its trigger, inside
+    any dialog around it. Ariakit closes the list on Escape and lets the key go on to that dialog, which closes too and
+    drops its draft. While the list is open, the trigger takes Escape for the list alone, before Ariakit's own handler. */
+export function ComboboxSelectTrigger(props: Ariakit.ComboboxSelectProps) {
+	const store = Ariakit.useComboboxContext()!
+	return (
+		<Ariakit.ComboboxSelect
+			{...props}
+			onKeyDownCapture={(event) => {
+				props.onKeyDownCapture?.(event)
+				if (event.key !== 'Escape' || !store.getState().open) return
+				event.stopPropagation()
+				store.hide()
+			}}
+		/>
+	)
 }

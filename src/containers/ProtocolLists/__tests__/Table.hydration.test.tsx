@@ -20,7 +20,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/recent', query: state.query, push: state.push, isReady: true })
 }))
 // Heavy toolbar controls this suite never uses.
-vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
+vi.mock('~/components/Select/UrlSelect', () => ({ UrlSelectWithCombobox: () => null }))
 vi.mock('~/components/Filters/TVLRange', () => ({ TVLRange: () => null }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
 import { RecentlyListedProtocolsTable } from '../RecentProtocolsTable'

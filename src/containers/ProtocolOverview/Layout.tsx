@@ -14,7 +14,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { InlineStatus } from '~/ui/Status'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 import { slug } from '~/utils'
 import {
 	getProtocolLayoutSeo,
@@ -162,8 +162,7 @@ export function ProtocolOverviewLayout({
 				<Announcement
 					announcementId={dashboardAnnouncement.announcementId}
 					version={dashboardAnnouncement.version}
-					className={dashboardAnnouncement.className}
-					contentClassName="text-center"
+					scope={dashboardAnnouncement.scope}
 				>
 					<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 						<span
@@ -192,7 +191,7 @@ export function ProtocolOverviewLayout({
 			) : null}
 
 			<div className="isolate flex flex-1 flex-col gap-2">
-				<nav className={tabTrackStyles} aria-label={`${name} pages`}>
+				<TabNav label={`${name} pages`}>
 					{(otherProtocols?.length ?? 0) > 1 ? (
 						<Ariakit.MenuProvider>
 							<Ariakit.MenuButton render={<Button size="sm" className="my-auto mr-4" />}>
@@ -204,17 +203,10 @@ export function ProtocolOverviewLayout({
 								{otherProtocols?.map((value, i) => (
 									<MenuItem
 										key={`navigate to /protocol/${slug(value)}`}
-										row="tree"
+										row={i === 0 ? 'tree' : 'tree-child'}
 										render={<BasicLink href={`/protocol/${slug(value)}`} />}
 										data-active={name === value}
-										className={i === 0 ? 'pl-3' : 'pl-8'}
 									>
-										{i !== 0 ? (
-											<>
-												<span className="absolute top-0 bottom-0 left-3 block h-full w-0.5 bg-border-medium group-last:h-[50%]" />
-												<span className="absolute top-1/2 left-3 h-0.5 w-5 -translate-y-1/2 bg-border-medium" />
-											</>
-										) : null}
 										<TokenLogo name={value} kind="token" size={24} alt={`Logo of ${value}`} />
 										{i === 0 ? (
 											<span className="flex flex-col">
@@ -321,7 +313,7 @@ export function ProtocolOverviewLayout({
 							</TabLink>
 						)
 					) : null}
-				</nav>
+				</TabNav>
 				{tab !== 'investorRelations' && entityQuestions ? (
 					<EntityQuestionsStrip
 						questions={entityQuestions}

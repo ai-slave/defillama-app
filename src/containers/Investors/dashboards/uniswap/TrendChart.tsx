@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -234,7 +234,6 @@ export function SeriesTrendChart({
 						charts={model.charts}
 						valueSymbol={valueSymbol}
 						groupBy={groupBy}
-						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
 						showLegend
 						exportButtons="hidden"

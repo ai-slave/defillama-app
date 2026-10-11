@@ -14,7 +14,7 @@ import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 import { slug } from '~/utils'
 import { getChainInvestorRelationsTab } from './investorRelationsTab'
 import { SmolStats } from './SmolStats'
@@ -52,10 +52,7 @@ export function ChainOverview(props: Omit<IChainOverviewData, 'extraTvlCharts'>)
 			<RowLinksWithDropdown heading="Chains" links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
 				{investorRelations ? (
-					<nav
-						className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}
-						aria-label={`${props.metadata.name} pages`}
-					>
+					<TabNav label={`${props.metadata.name} pages`} className="shrink-0">
 						<TabLink
 							as="button"
 							type="button"
@@ -82,7 +79,7 @@ export function ChainOverview(props: Omit<IChainOverviewData, 'extraTvlCharts'>)
 								active={irActive}
 							/>
 						</TabLink>
-					</nav>
+					</TabNav>
 				) : null}
 				{props.metadata.name !== 'All' && !irActive ? (
 					<EntityQuestionsStrip

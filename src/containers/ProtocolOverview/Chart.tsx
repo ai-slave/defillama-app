@@ -7,7 +7,6 @@ import type {
 	MultiSeriesYAxisOption
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
-import { CHART_FILL } from '~/ui/ChartPanel'
 import { buildProtocolChartPresentation, shouldHideProtocolDataZoom } from './chartPresentation'
 import { buildProtocolYAxis } from './chartYAxis'
 import type { IProtocolCoreChartProps } from './types'
@@ -93,7 +92,6 @@ export default function ProtocolChart({
 			{...(groupBy !== undefined ? { groupBy } : {})}
 			{...(hallmarks !== null ? { hallmarks } : {})}
 			rangeHallmarks={rangeHallmarks}
-			containerClassName={CHART_FILL}
 			hideDataZoom={effectiveHideDataZoom}
 			exportButtons="hidden"
 			isThemeDark={isThemeDark}

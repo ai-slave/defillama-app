@@ -1,13 +1,11 @@
-import { TabList } from '@ariakit/react'
 import { useState } from 'react'
 import { LinksWithDropdown } from '~/components/RowLinksWithDropdown/LinksWithDropdown'
-import { ViewTabs } from '~/components/ViewTabs'
 import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { RailItem } from '~/ui/RailItem'
 import { BusyGlyph } from '~/ui/Status'
-import { Tab, TabLink, TabPanel, Tabs, tabTrackStyles } from '~/ui/Tabs'
+import { Tab, TabLink, TabNav, TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { Cell, Example, type Family, type KnobValues, StateGrid } from '../shared'
 
 const VIEWS = ['overview', 'yields', 'risk'] as const
@@ -76,12 +74,12 @@ const PANELS = (
 	</>
 )
 
-function ViewTabsDemo() {
+function UnderlineTabListDemo() {
 	const [tab, setTab] = useState<(typeof VIEWS)[number]>('overview')
 	return (
 		<div className="w-80">
 			<Tabs<(typeof VIEWS)[number]> value={tab} onValueChange={setTab} values={VIEWS}>
-				<ViewTabs
+				<UnderlineTabList
 					label="Sections"
 					tabs={[
 						{ id: 'overview', label: 'Overview' },
@@ -100,7 +98,7 @@ function TabDemo() {
 	return (
 		<div className="w-80">
 			<Tabs<(typeof VIEWS)[number]> value={tab} onValueChange={setTab} values={VIEWS}>
-				<TabList className={tabTrackStyles} aria-label="Protocol views">
+				<UnderlineTabList label="Protocol views">
 					<Tab value="overview" render={<TabLink as="button" type="button" />}>
 						<span className="inline-flex items-center gap-1.5">
 							<Icon name="layout-grid" className="size-3.5" aria-hidden />
@@ -119,7 +117,7 @@ function TabDemo() {
 							Risk
 						</span>
 					</Tab>
-				</TabList>
+				</UnderlineTabList>
 				{PANELS}
 			</Tabs>
 		</div>
@@ -164,10 +162,10 @@ export const navigation: Family = {
 	title: 'Navigation',
 	parts: [
 		{
-			name: 'ViewTabs',
-			source: 'src/components/ViewTabs.tsx',
+			name: 'UnderlineTabList',
+			source: 'src/ui/Tabs.tsx',
 			note: 'Arrow keys move focus; Enter or Space selects.',
-			render: () => <ViewTabsDemo />
+			render: () => <UnderlineTabListDemo />
 		},
 		{
 			name: 'Tab',
@@ -179,13 +177,13 @@ export const navigation: Family = {
 			name: 'TabLink',
 			source: 'src/ui/Tabs.tsx',
 			render: () => (
-				<nav className={tabTrackStyles} aria-label="Protocol pages">
+				<TabNav label="Protocol pages">
 					<TabLink href="/yields" aria-current="page">
 						Overview
 					</TabLink>
 					<TabLink href="/yields">Fees</TabLink>
 					<TabLink href="/yields">Governance</TabLink>
-				</nav>
+				</TabNav>
 			),
 			states: () => (
 				<Example name="Interaction">

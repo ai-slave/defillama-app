@@ -12,7 +12,7 @@ import { Bookmark } from '~/components/Bookmark'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { getColumnSelectState, getColumnVisibilityForSelection } from '~/components/Table/search/columnSelect'
 import { useTableSearch } from '~/components/Table/utils'
@@ -30,6 +30,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -357,7 +358,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 					size="md"
 				/>
 
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					allValues={unlockTypeOptions}
 					includeQueryKey="unlockType"
 					excludeQueryKey="excludeUnlockType"

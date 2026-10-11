@@ -10,15 +10,15 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -272,7 +272,6 @@ export function BreakdownChartCard({
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
 						csvSource={deferredChart.csvSource}
-						containerClassName={CHART_FILL}
 						showLegend
 						valueSymbol={deferredChart.isDominance ? '%' : valueSymbol}
 						{...(deferredChart.isDominance
@@ -373,7 +372,6 @@ export function TokensBreakdownPieChartCard({
 					<PieChart
 						chartData={deferredPresentation.chartData}
 						stackColors={deferredPresentation.stackColors}
-						containerClassName={CHART_FILL}
 						onReady={handleChartReady}
 					/>
 				</React.Suspense>

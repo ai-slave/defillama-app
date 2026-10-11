@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { RaisesSearch } from '~/containers/Raises/Search'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
@@ -68,7 +68,7 @@ function Filters({
 	return (
 		<>
 			{investors.length > 0 ? (
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					label="Investors"
 					allValues={investors}
 					nestedMenu={nestedMenu}
@@ -81,7 +81,7 @@ function Filters({
 			) : null}
 
 			{chains.length > 0 ? (
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					label="Chains"
 					allValues={chains}
 					nestedMenu={nestedMenu}
@@ -94,7 +94,7 @@ function Filters({
 			) : null}
 
 			{sectors.length > 0 ? (
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					label="Sectors"
 					allValues={sectors}
 					nestedMenu={nestedMenu}
@@ -107,7 +107,7 @@ function Filters({
 			) : null}
 
 			{rounds.length > 0 ? (
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					label="Rounds"
 					allValues={rounds}
 					nestedMenu={nestedMenu}

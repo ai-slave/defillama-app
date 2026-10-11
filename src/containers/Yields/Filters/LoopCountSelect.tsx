@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
+import { Select } from '~/ui/Select'
 import { Tooltip } from '~/ui/Tooltip'
 import { pushYieldsQuery } from '../queryUpdates.client'
 

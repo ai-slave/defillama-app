@@ -3,11 +3,12 @@ import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { NestedMenuToggle } from '~/components/NestedMenu'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import type { ExcludeQueryKey } from '~/components/Select/query'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { NestedMenuToggle } from '~/ui/NestedMenu'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { CARDS_QUERY_KEYS } from './CardsTable'
 import {
@@ -89,7 +90,7 @@ function FacetFilter({
 	searchPlaceholder?: string
 }) {
 	return (
-		<SelectWithCombobox
+		<UrlSelectWithCombobox
 			allValues={options}
 			includeQueryKey={queryKey}
 			excludeQueryKey={excludeQueryKey}

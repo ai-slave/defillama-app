@@ -8,7 +8,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -133,10 +133,11 @@ export function ProjectSidebarRow({
 							<Icon name="ellipsis" className="size-4" />
 						</Ariakit.MenuButton>
 						<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`}>
-							<MenuItem onClick={renameStore.show} className="border-b border-subtle">
+							<MenuItem onClick={renameStore.show}>
 								<Icon name="pencil" className="size-3.5" />
 								Rename project
 							</MenuItem>
+							<MenuSeparator />
 							<MenuItem
 								destructive
 								onClick={() => {

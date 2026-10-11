@@ -18,10 +18,13 @@ import { SurfaceBodyLoadingStatus } from './Status'
    `exportButtons="hidden"` and its ChartExportButtons go here, so the
    chart never adds a second header row. Controls keep their natural width and wrap right
    below sm: `filter` select triggers and `default` segmented controls,
-   never `responsive`. Callers never pass `justify-*`, hand-roll the toolbar
-   div, or push groups with `ml-auto` (the `chart-toolbar-auto-margin` rule
-   in check-design-tokens.mjs). Caveats go right under the toolbar as a
-   ScopeNote (./ScopeNote.tsx).
+   never `responsive`. The toolbar takes no className: callers never
+   hand-roll the toolbar div or push groups with `ml-auto` (the
+   `chart-toolbar-auto-margin` rule in check-design-tokens.mjs). Controls
+   center on the row; beside a tall title block (a title over a
+   description, a headline stat) the toolbar passes `align="start"`, so
+   they line up with its first line instead of floating beside its middle.
+   Caveats go right under the toolbar as a ScopeNote (./ScopeNote.tsx).
 
    Body: flush; the cartesian plot inset comes from the ECharts grid
    (src/components/ECharts/shared/chartSpacing.ts), never DOM padding.
@@ -52,16 +55,18 @@ import { SurfaceBodyLoadingStatus } from './Status'
    retry and passes no `retry`.
 ---------------------------------------------------------------------------- */
 
-type ChartPanelToolbarProps = ComponentPropsWithoutRef<'div'> & {
+type ChartPanelToolbarProps = Omit<ComponentPropsWithoutRef<'div'>, 'className'> & {
 	/** What the chart shows: a title, a view switch, or the metric picker and its chips. It stays on the
 	    left as one group; every other child hugs the right, and both wrap without swapping sides. */
 	leading?: ReactNode
+	/** `start` lines the controls up with the top of a tall title block. */
+	align?: 'center' | 'start'
 }
 
-export function ChartPanelToolbar({ leading, className, children, ...props }: ChartPanelToolbarProps) {
+export function ChartPanelToolbar({ leading, align = 'center', children, ...props }: ChartPanelToolbarProps) {
 	return (
 		<div
-			className={`flex flex-wrap items-center justify-end gap-1.5 px-2 pt-2 pb-0 ${className ?? ''}`.trim()}
+			className={`flex flex-wrap ${align === 'start' ? 'items-start' : 'items-center'} justify-end gap-1.5 px-2 pt-2 pb-0`}
 			{...props}
 		>
 			{leading ? <div className="mr-auto flex min-w-0 flex-wrap items-center gap-1.5">{leading}</div> : null}
@@ -102,11 +107,10 @@ export function ChartPanelTitle({
 /* Chart panels in a row stretch to the tallest one, so the body grows with them and its 360px is a FLOOR, not a fixed
    height: a fixed body left dead space under the chart in every panel the grid stretched. A chart beside something
    that is not a chart (a summary card, a table, a list) keeps its own height: that row aligns to the top
-   (`items-start`, as SummaryCardGrid does), or the chart grows with every row its neighbor adds. Pass CHART_FILL to
-   the chart itself so it fills the body it sits in. The floor is an `initial:` default, as in Status.tsx, so a
-   deliberately tall chart (a 600px treemap) raises it with its own min-h-* class on the body and on its fallback. */
-export const CHART_FILL = 'flex-1 initial:min-h-[360px]'
-
+   (`items-start`, as SummaryCardGrid does), or the chart grows with every row its neighbor adds. A chart without
+   `height` fills the body it sits in (src/components/ECharts/README.md → Size). The floor is an `initial:` default, as
+   in Status.tsx, so a deliberately tall chart (a 600px treemap) raises it with its own min-h-* class on the body and
+   on its fallback. */
 export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return <div className={`relative flex flex-1 flex-col initial:min-h-[360px] ${className ?? ''}`.trim()} {...props} />
 }

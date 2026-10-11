@@ -4,7 +4,6 @@ import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECha
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	buildProtocolBreakdownCsvDataset,
@@ -18,6 +17,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'

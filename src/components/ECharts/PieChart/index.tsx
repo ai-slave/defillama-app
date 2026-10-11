@@ -52,7 +52,6 @@ function isChartDisposed(inst: echarts.ECharts | null) {
 
 function PieChart({
 	height,
-	containerClassName,
 	stackColors,
 	chartData,
 	title,
@@ -424,9 +423,9 @@ function PieChart({
 	return (
 		<ChartContainer
 			chartRef={chartDomRef}
-			className={containerClassName ? 'flex flex-1 flex-col' : undefined}
-			chartClassName={containerClassName ?? 'mx-0 my-auto h-[360px]'}
-			chartStyle={!containerClassName && height ? { height } : undefined}
+			className={height ? undefined : 'flex flex-1 flex-col'}
+			chartClassName={height ? undefined : 'flex-1 initial:min-h-[360px]'}
+			chartStyle={height ? { height } : undefined}
 			header={
 				title || imageExportEnabled || csvDownloadEnabled ? (
 					<ChartHeader

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -108,7 +108,6 @@ export default function CreditCard() {
 						<MultiSeriesChart
 							title="TVL"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={tvlDataset}
 							charts={TVL_CHART}
 							valueSymbol="$"
@@ -127,7 +126,6 @@ export default function CreditCard() {
 						<MultiSeriesChart
 							title="Fees"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={feesDataset}
 							charts={FEES_CHART}
 							valueSymbol="$"
@@ -146,7 +144,6 @@ export default function CreditCard() {
 						<MultiSeriesChart
 							title="Revenue"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={revenueDataset}
 							charts={REVENUE_CHART}
 							valueSymbol="$"
@@ -163,7 +160,6 @@ export default function CreditCard() {
 						<MultiSeriesChart
 							title="Holders Revenue"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={holdersRevenueDataset}
 							charts={HOLDERS_REVENUE_CHART}
 							valueSymbol="$"
@@ -182,7 +178,6 @@ export default function CreditCard() {
 						<MultiSeriesChart
 							title="USD inflows"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}
 							charts={INFLOWS_CHART}
 							valueSymbol="$"

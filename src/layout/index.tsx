@@ -3,9 +3,9 @@ import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterS
 import { MetricsAndTools } from '~/components/Metrics'
 import { Nav } from '~/components/Nav'
 import { DesktopSearch } from '~/components/Search'
-import { Select } from '~/components/Select/Select'
 import { type ISEOProps, SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
+import { Select } from '~/ui/Select'
 
 interface ILayoutProps extends ISEOProps {
 	children: React.ReactNode

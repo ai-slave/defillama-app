@@ -4,7 +4,7 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
@@ -218,7 +218,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 						className={searchFieldWrapperStyles}
 					/>
 					<TableToolbarControlGroup>
-						<SelectWithCombobox
+						<UrlSelectWithCombobox
 							allValues={sectors}
 							includeQueryKey="sector"
 							excludeQueryKey="excludeSector"

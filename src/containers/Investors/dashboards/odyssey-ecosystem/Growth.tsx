@@ -2,7 +2,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -292,7 +292,6 @@ export default function Growth() {
 								charts={ACTIVE_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -310,7 +309,6 @@ export default function Growth() {
 								charts={ACTIVE_POSITIONS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -332,7 +330,6 @@ export default function Growth() {
 								charts={CUMULATIVE_ACCOUNTS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -350,7 +347,6 @@ export default function Growth() {
 								charts={CUMULATIVE_POSITIONS_CHART}
 								valueSymbol=""
 								chartOptions={UNITLESS_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}
@@ -367,7 +363,6 @@ export default function Growth() {
 								dataset={perChainModels.activeUsers.dataset}
 								charts={perChainModels.activeUsers.charts}
 								valueSymbol=""
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -382,7 +377,6 @@ export default function Growth() {
 								dataset={perChainModels.activePositions.dataset}
 								charts={perChainModels.activePositions.charts}
 								valueSymbol=""
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -403,7 +397,6 @@ export default function Growth() {
 								dataset={depositsModel.dataset}
 								charts={depositsModel.charts}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -463,7 +456,6 @@ export default function Growth() {
 								charts={MET_PRICE_CHART}
 								valueSymbol="$"
 								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					</Panel>
@@ -479,7 +471,6 @@ export default function Growth() {
 								charts={VSP_PRICE_CHART}
 								valueSymbol="$"
 								chartOptions={DOLLAR_SINGLE_SERIES_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					</Panel>
@@ -502,7 +493,6 @@ export default function Growth() {
 								dataset={marketComboModel.dataset}
 								charts={marketComboModel.charts}
 								valueSymbol="%"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -525,7 +515,6 @@ export default function Growth() {
 								dataset={morphoMarketModel.dataset}
 								charts={morphoMarketModel.charts}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -553,7 +542,6 @@ export default function Growth() {
 											dataset={model.dataset}
 											charts={model.charts}
 											valueSymbol="$"
-											containerClassName={CHART_FILL}
 											showLegend
 											exportButtons="hidden"
 										/>
@@ -589,7 +577,6 @@ export default function Growth() {
 								dataset={spendVsTvl.model.dataset}
 								charts={spendVsTvl.model.charts}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>

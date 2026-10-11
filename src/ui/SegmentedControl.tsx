@@ -29,8 +29,7 @@ import { Tooltip } from './Tooltip'
                  it inside a scroll wrapper.
    - solid / solid-responsive: the joined toggle group, no padding, solid
                  bg-brand selection. Only for explicit scope switches such as
-                 All | Protocols | Chains. Class-only hosts compose
-                 `TAG_GROUP_VARIANTS.solid` with `TAG_GROUP_SIZES.md`.
+                 All | Protocols | Chains.
    Out of room: default and responsive cap at their container's width and
    scroll inside their own box, so never wrap them in a scroller; chips
    wrap; field never scrolls, so keep it to a few short options (stack two
@@ -63,13 +62,13 @@ import { Tooltip } from './Tooltip'
      focus and Enter or Space selects. Panels stay mounted while hidden
      unless the caller unmounts them.
    Never convert a value picker to tabs to make controls uniform. Page-level
-   route navigation is `TabLink` in ./Tabs.tsx, never this control; that
+   route navigation is `TabNav` in ./Tabs.tsx, never this control; that
    file's header says which tab look goes where.
    A phone-only pane switch (Configure | Preview in a workspace dialog)
    stays a radio: on desktop both panes show side by side, so they are not
    tab panels, and the switch only picks which one fills a phone screen.
 ---------------------------------------------------------------------------- */
-export const TAG_GROUP_VARIANTS = {
+const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
@@ -115,14 +114,14 @@ export const TAG_GROUP_VARIANTS = {
 /* The scrolling variants (default, responsive) keep each segment's touch target inside the row (chips wrap instead): a target
    reaching past a scroller's edge makes it scroll, which draws a scrollbar beside the last segment on touch screens.
    Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
-export const TAG_GROUP_SIZES = {
+const TAG_GROUP_SIZES = {
 	sm: 'min-h-6',
 	md: 'min-h-8'
 } as const
 
 /* Each size's segment padding, so a boxed row lands on its min-h: sm is 24px like sm Buttons and Selects (16px label,
    1px padding, the box's 2px inset and 1px border), md 32px. Chips keep one pill height; solid segments stretch. */
-export const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof TAG_GROUP_SIZES, string>> = {
+const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof TAG_GROUP_SIZES, string>> = {
 	default: { sm: 'py-px', md: 'py-1' },
 	responsive: { sm: 'py-px', md: 'py-1' },
 	field: { sm: 'py-px', md: 'py-1' },

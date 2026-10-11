@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { SelectOption } from '~/components/Select/types'
+import type { SelectOption } from '~/ui/Select'
 import { orderCountryOptions, resolveExchangeCountry } from '../ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from '../master.types'
 

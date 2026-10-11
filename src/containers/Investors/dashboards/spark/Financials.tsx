@@ -5,7 +5,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -194,7 +194,6 @@ function AllocatedAssetsSection({
 							valueSymbol="$"
 							stacked
 							solidChartAreaStyle
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons="hidden"
 							onReady={historical.handleChartReady}
@@ -228,7 +227,6 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							dataset={data.monthlyGross.dataset}
 							charts={data.monthlyGross.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend={data.monthlyGross.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
@@ -250,7 +248,6 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 							dataset={data.monthlyNet.dataset}
 							charts={data.monthlyNet.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend={data.monthlyNet.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
@@ -285,7 +282,6 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							dataset={data.supplyTotal.dataset}
 							charts={data.supplyTotal.charts}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 							chartOptions={UNITLESS_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={total.handleChartReady}
@@ -308,7 +304,6 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 							valueSymbol=""
 							stacked
 							solidChartAreaStyle
-							containerClassName={CHART_FILL}
 							chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={byChain.handleChartReady}
@@ -344,7 +339,6 @@ function TvlSection({ data }: { data: FinData }) {
 						valueSymbol="$"
 						stacked
 						solidChartAreaStyle
-						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={tvl.handleChartReady}
@@ -376,7 +370,6 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							dataset={data.deposits.dataset}
 							charts={data.deposits.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={deposits.handleChartReady}
@@ -397,7 +390,6 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 							dataset={data.borrows.dataset}
 							charts={data.borrows.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={borrows.handleChartReady}
@@ -430,7 +422,6 @@ function SllTvlSection({ data }: { data: FinData }) {
 						valueSymbol="$"
 						stacked
 						solidChartAreaStyle
-						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={sllTvl.handleChartReady}
@@ -462,7 +453,6 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 						valueSymbol="$"
 						stacked
 						solidChartAreaStyle
-						containerClassName={CHART_FILL}
 						chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
 						onReady={savingsTvl.handleChartReady}
@@ -532,7 +522,6 @@ function TreasurySection({ data }: { data: FinData }) {
 							dataset={data.treasuryModel.dataset}
 							charts={data.treasuryModel.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							onReady={treasury.handleChartReady}
 							showLegend
 							exportButtons="hidden"
@@ -553,7 +542,6 @@ function TreasurySection({ data }: { data: FinData }) {
 							dataset={data.buybacksModel.dataset}
 							charts={data.buybacksModel.charts}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 							onReady={buybacks.handleChartReady}
 							showLegend
 							exportButtons="hidden"

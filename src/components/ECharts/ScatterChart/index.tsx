@@ -84,8 +84,7 @@ function ScatterChart({
 	xAxisLabel,
 	yAxisLabel,
 	valueSymbol = '',
-	height = '600px',
-	containerClassName,
+	height,
 	tooltipFormatter,
 	showLabels = false,
 	entityType = 'protocol',
@@ -493,8 +492,8 @@ function ScatterChart({
 	return (
 		<div
 			ref={containerRef}
-			className={containerClassName ?? 'h-[360px]'}
-			style={containerClassName ? undefined : { height }}
+			className={height ? undefined : 'flex-1 initial:min-h-[360px]'}
+			style={height ? { height } : undefined}
 		/>
 	)
 }

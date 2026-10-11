@@ -1,3 +1,5 @@
+import * as Ariakit from '@ariakit/react'
+import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { Tooltip } from './Tooltip'
 import { tw } from './tw'
@@ -13,8 +15,9 @@ import { tw } from './tw'
    value → status map, never to classes. The badge owns the look: the status
    tint, a muted border, 6px corners and label-sm, 20px tall, the PromoBadge
    recipe in status colors. A badge that is itself a button or link (a
-   hovercard anchor) takes `statusBadgeStyles(status)`, which sets no
-   `display`. Never color a status pill by hand (hand-built-status-badge in
+   hovercard anchor) passes it as `render` and takes the hover wash:
+   <Hovercard render={<StatusBadge status="good" render={<button type="button" />} />} …>
+   Never color a status pill by hand (hand-built-status-badge in
    check-design-tokens.mjs).
 
    Not a movement (Change, ./Change.tsx), not a value from a set (Tag), not a
@@ -42,33 +45,34 @@ const STATUS_CLASSES: Record<Status, string> = {
 	neutral: tw`border-medium bg-surface-elevated-1 text-secondary`
 }
 
-export function statusBadgeStyles(status: Status) {
-	return `shrink-0 items-center rounded-md border px-2 py-px label-sm whitespace-nowrap ${STATUS_CLASSES[status]}`
-}
-
 /** `tooltip` explains the state on hover and focus. The badge is the anchor and carries no underline: the pill already
     reads as something to point at, and an underline inside a tinted pill looks like misspelled text. A column whose
-    every row would explain the same thing puts one QuestionHelper in its header instead. */
+    every row would explain the same thing puts one QuestionHelper in its header instead.
+    `render` makes the badge a button or link. As an Ariakit host's `render`, the badge takes what the host hands its
+    anchor (the label as children, handlers, a ref, layout classes), so `className` is placement only. */
 export function StatusBadge({
 	status,
 	tooltip,
-	children
-}: {
+	render,
+	className,
+	children,
+	...props
+}: Ariakit.RoleProps<'span'> & {
 	status: Status
 	tooltip?: ReactNode
-	children: ReactNode
 }) {
+	const classes = clsx(
+		`inline-flex shrink-0 items-center rounded-md border px-2 py-px label-sm whitespace-nowrap ${STATUS_CLASSES[status]}`,
+		className
+	)
 	return tooltip ? (
-		<Tooltip
-			content={tooltip}
-			render={<span />}
-			tabIndex={0}
-			className={`inline-flex cursor-help ${statusBadgeStyles(status)}`}
-		>
+		<Tooltip content={tooltip} render={<span />} tabIndex={0} className={`cursor-help ${classes}`}>
 			{children}
 		</Tooltip>
 	) : (
-		<span className={`inline-flex ${statusBadgeStyles(status)}`}>{children}</span>
+		<Ariakit.Role.span render={render} className={clsx(classes, render && 'hover-wash')} {...props}>
+			{children}
+		</Ariakit.Role.span>
 	)
 }
 

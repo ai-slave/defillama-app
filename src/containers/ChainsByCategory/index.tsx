@@ -15,7 +15,6 @@ import { inRange, rangeQuickPicks, USD_QUICK_PICK_LADDER } from '~/components/Fi
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_SERIES_LIMIT, chartColor } from '~/constants/colors'
 import {
 	CHAINS_CATEGORY_GROUP_SETTINGS,
@@ -27,6 +26,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'

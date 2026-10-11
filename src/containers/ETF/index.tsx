@@ -11,7 +11,6 @@ import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { Select } from '~/components/Select/Select'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -21,9 +20,10 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -123,7 +123,6 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							charts={finalCharts.charts}
 							selectedCharts={selectedCharts}
 							groupBy={groupBy}
-							containerClassName={CHART_FILL}
 							onReady={handleChartReady}
 						/>
 					</React.Suspense>

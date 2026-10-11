@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
-import { promoBadgeStyles } from '~/ui/PromoBadge'
 import {
 	readExperimentVariant,
 	trackExperimentAction,
@@ -11,10 +10,10 @@ import {
 
 const EXPERIMENT_ID: ExperimentId = 'llamaai-free-label-v1'
 
-// The experiment tests the word, not the look: its classes only show or hide, and the B badge is PromoBadge's brand tint.
+// The experiment tests the word, not the look: its classes only show or hide, and the B badge is a PromoBadge.
 export const freeLabelAOnly = '[html[data-ab-llamaai-free-label-v1=b]_&]:hidden'
 export const freeLabelBOnly = 'hidden [html[data-ab-llamaai-free-label-v1=b]_&]:inline'
-export const freeBadgeBOnly = `hidden ${promoBadgeStyles} [html[data-ab-llamaai-free-label-v1=b]_&]:inline-flex`
+export const freeBadgeBOnly = 'hidden [html[data-ab-llamaai-free-label-v1=b]_&]:inline-flex'
 
 export function useLlamaAIFreeLabel(enabled = true) {
 	const isClient = useIsClient()

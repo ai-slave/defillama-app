@@ -5,7 +5,7 @@ import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { EmptyState } from '~/ui/Status'
 import { formatPercent } from '~/utils/numberFormat'
@@ -128,7 +128,6 @@ export function DisclosedVestingChart({ groups }: { groups: Array<UtrDisclosedTo
 					}))}
 					valueSymbol="%"
 					chartOptions={VESTING_CHART_OPTIONS}
-					containerClassName={CHART_FILL}
 					showLegend
 					hideDataZoom
 					exportButtons="hidden"

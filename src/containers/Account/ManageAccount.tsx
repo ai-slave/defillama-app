@@ -2,13 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
-import { ViewTabs } from '~/components/ViewTabs'
 import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthorProfileCard'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { EmptyState, PanelLoadingStatus } from '~/ui/Status'
-import { TabPanel, Tabs } from '~/ui/Tabs'
+import { TabPanel, Tabs, UnderlineTabList } from '~/ui/Tabs'
 import { AuthenticationCard } from './AuthenticationCard'
 import { DeleteAccountCard } from './DeleteAccountCard'
 import { ReferralCard } from './ReferralCard'
@@ -90,7 +89,7 @@ function AccountContent({ onSignIn }: { onSignIn: () => void }) {
 			<UserHeader displayName={displayName} onLogout={logout} />
 
 			<Tabs value={selectedTabId} onValueChange={selectTab} values={ACCOUNT_TAB_IDS}>
-				<ViewTabs tabs={ACCOUNT_TABS} label="Account sections" />
+				<UnderlineTabList tabs={ACCOUNT_TABS} label="Account sections" />
 
 				<TabPanel value="account">
 					<div className="flex flex-col gap-3">

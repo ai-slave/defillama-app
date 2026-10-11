@@ -12,7 +12,7 @@ import { chartColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change, formatChange } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -344,7 +344,6 @@ function SectorsReadyPage({
 								color={chartColor(0)}
 								valueSymbol="%"
 								showValueLabels
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					</ChartPanelBody>

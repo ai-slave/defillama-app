@@ -1,13 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
-import { NestedMenu } from '~/components/NestedMenu'
-import { selectTriggerStyles } from '~/components/Select/types'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
-import { metricOptionChipStyles } from '~/ui/MetricChip'
+import { MetricOptionChip } from '~/ui/MetricChip'
+import { NestedMenu } from '~/ui/NestedMenu'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 type RangeQuickPick = { label: string; value: number }
@@ -197,16 +197,15 @@ function Form({
 				{quickPicks?.length ? (
 					<div className="flex flex-wrap gap-1.5">
 						{quickPicks.map((pick) => (
-							<button
+							<MetricOptionChip
 								key={pick.value}
-								type="button"
+								size="sm"
 								onClick={() => pickMin(pick.value)}
 								aria-pressed={Number(minValue) === pick.value}
 								data-active={Number(minValue) === pick.value}
-								className={metricOptionChipStyles}
 							>
 								{pick.label}
-							</button>
+							</MetricOptionChip>
 						))}
 					</div>
 				) : null}

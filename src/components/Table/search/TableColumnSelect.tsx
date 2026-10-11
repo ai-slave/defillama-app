@@ -1,5 +1,5 @@
 import { useSelector } from '@tanstack/react-store'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { getColumnSelectState, getColumnVisibilityForSelection } from './columnSelect'
 import { useSearchTableContext } from './context'
 
@@ -12,10 +12,7 @@ export function TableColumnSelect() {
 		<SelectWithCombobox
 			allValues={options}
 			selectedValues={selected}
-			setSelectedValues={(update) => {
-				const next = typeof update === 'function' ? update(selected) : update
-				table.setColumnVisibility(getColumnVisibilityForSelection(columns, next))
-			}}
+			setSelectedValues={(next) => table.setColumnVisibility(getColumnVisibilityForSelection(columns, next))}
 			nestedMenu={false}
 			label="Columns"
 			labelType="smol"

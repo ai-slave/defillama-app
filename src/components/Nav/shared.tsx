@@ -175,7 +175,7 @@ export function NavItemContent({
 				{attention ? (
 					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-error shadow-page-ring" />
 				) : null}
-				{freeLabel ? <span className={freeBadgeBOnly}>Free</span> : null}
+				{freeLabel ? <PromoBadge className={freeBadgeBOnly}>Free</PromoBadge> : null}
 				{isNew ? <PromoBadge icon="sparkles">New</PromoBadge> : null}
 			</span>
 		</>

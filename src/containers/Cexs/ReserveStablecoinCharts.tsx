@@ -13,7 +13,6 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel } from '~/containers/Cexs/CexChartPanel'
 import {
 	buildReserveStablecoinChartData,
@@ -24,7 +23,7 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL } from '~/ui/ChartPanel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -112,7 +111,6 @@ function MultiSeriesChartCard({
 				<MultiSeriesChart
 					dataset={presentation.dataset}
 					charts={presentation.charts}
-					containerClassName={CHART_FILL}
 					csvSource={presentation.csvSource}
 					{...(valueSymbol ? { valueSymbol } : {})}
 					showLegend
@@ -182,7 +180,6 @@ function PieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>

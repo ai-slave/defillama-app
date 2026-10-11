@@ -1,16 +1,9 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { act } from 'react'
+import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import {
-	ComboboxSurface,
-	DrawerDismiss,
-	PopoverSurface,
-	type SurfaceOwnProps,
-	MenuItem,
-	MenuSurface
-} from '../PopoverSurface'
+import { ComboboxSurface, DrawerDismiss, PopoverSurface, MenuItem, MenuSurface } from '../PopoverSurface'
 
 let root: Root
 let container: HTMLDivElement
@@ -35,7 +28,7 @@ function accessibleName(element: HTMLElement) {
 	return labelledBy ? document.getElementById(labelledBy)?.textContent : element.getAttribute('aria-label')
 }
 
-async function renderMenu(variant: SurfaceOwnProps['variant']) {
+async function renderMenu(variant: ComponentProps<typeof MenuSurface>['variant']) {
 	const items = (
 		<>
 			<MenuItem>Download image</MenuItem>

@@ -2,7 +2,6 @@ import { type CSSProperties, lazy, startTransition, Suspense, useMemo, useState 
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { sankeyMobileMinHeight } from '~/components/ECharts/SankeyChart/height'
-import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
 	TokenPageTableIncomeCell,
@@ -18,6 +17,7 @@ import { Change } from '~/ui/Change'
 import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'

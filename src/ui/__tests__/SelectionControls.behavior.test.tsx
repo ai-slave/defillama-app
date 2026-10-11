@@ -3,11 +3,10 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { ViewTabs } from '~/components/ViewTabs'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Checkbox } from '../Checkbox'
 import { SegmentedControl } from '../SegmentedControl'
-import { Tabs, TabPanel } from '../Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '../Tabs'
 
 const OPTIONS = [
 	{ value: 'table', label: 'Table' },
@@ -64,7 +63,7 @@ function Selection({
 	return (
 		<Tabs value={value ?? 'table'} onValueChange={change} values={OPTIONS.map((option) => option.value)}>
 			{kind === 'view' ? (
-				<ViewTabs tabs={OPTIONS.map((option) => ({ id: option.value, label: option.label }))} label="View" />
+				<UnderlineTabList tabs={OPTIONS.map((option) => ({ id: option.value, label: option.label }))} label="View" />
 			) : (
 				<SegmentedControl semantics="tabs" options={options} label="View" variant="default" size="md" />
 			)}

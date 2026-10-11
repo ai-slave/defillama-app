@@ -2,11 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { type ReactNode, useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
-import { Menu } from '~/components/Menu'
 import { Button, ButtonGroup, StableLabel } from '~/ui/Button'
 import { CopyHelper } from '~/ui/Copy'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
+import { Menu } from '~/ui/Menu'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
@@ -464,16 +464,14 @@ export const buttons: Family = {
 		},
 		{
 			name: 'Menu',
-			source: 'src/components/Menu.tsx',
-			knobs: [{ name: 'items', values: ['external', 'action', 'link'], prop: false }],
+			source: 'src/ui/Menu.tsx',
+			knobs: [{ name: 'items', values: ['external', 'action'], prop: false }],
 			note: 'Open it. On a phone it is a drawer headed by its name.',
 			render: (values) =>
 				values.items === 'external' ? (
 					<Menu name="Websites" options={['https://defillama.com', 'https://docs.llama.fi']} isExternal />
-				) : values.items === 'action' ? (
-					<Menu name="Sort by" options={['TVL', 'Volume', 'Fees']} onItemClick={() => {}} />
 				) : (
-					<Menu name="Pages" options={['/yields', '/stablecoins']} />
+					<Menu name="Sort by" options={['TVL', 'Volume', 'Fees']} onItemClick={() => {}} />
 				)
 		},
 		{

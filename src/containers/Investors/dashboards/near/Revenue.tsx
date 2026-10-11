@@ -7,7 +7,7 @@ import {
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -261,7 +261,6 @@ export default function Revenue() {
 							charts={chartView.feesModel.charts}
 							groupBy={aggregation}
 							valueSymbol=" NEAR"
-							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							showLegend
 							exportButtons="hidden"
@@ -288,7 +287,6 @@ export default function Revenue() {
 							charts={chartView.revenueModel.charts}
 							groupBy={aggregation}
 							valueSymbol=" NEAR"
-							containerClassName={CHART_FILL}
 							showTotalInTooltip
 							showLegend
 							exportButtons="hidden"
@@ -324,7 +322,6 @@ export default function Revenue() {
 								charts={EMISSIONS_PERCENTAGE_CHART}
 								valueSymbol="%"
 								chartOptions={EMISSIONS_PERCENTAGE_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					) : (
@@ -337,7 +334,6 @@ export default function Revenue() {
 								charts={EMISSIONS_ABSOLUTE_CHARTS}
 								valueSymbol=" NEAR"
 								chartOptions={EMISSIONS_ABSOLUTE_CHART_OPTIONS}
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>

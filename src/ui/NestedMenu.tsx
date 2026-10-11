@@ -1,14 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
+import { Button } from './Button'
+import { Icon } from './Icon'
 import {
 	nestedMenuDisclosureIconStyles,
 	nestedMenuRootRowStyles,
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles
-} from '~/ui/Popover'
-import { DrawerDismiss, NestedDrawerHeader, MenuSurface } from '~/ui/PopoverSurface'
+} from './Popover'
+import { DrawerDismiss, NestedDrawerHeader, MenuSurface } from './PopoverSurface'
 
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode

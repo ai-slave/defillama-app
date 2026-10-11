@@ -1,10 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import {
-	VirtualizedMultiSelect,
-	VirtualizedSelect,
-	type VirtualizedSelectOption
-} from '~/components/Select/VirtualizedSelect'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import { createDatasetTableConfig } from '~/containers/ProDashboard/dashboardConfig/datasetTableConfig'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
@@ -12,6 +7,7 @@ import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { VirtualizedMultiSelect, VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { CexAnalyticsDataset } from '../../../datasets/CexAnalyticsDataset'
 import { useEquitiesTickerOptions } from '../../../datasets/EquitiesDataset/useEquitiesTickerOptions'
 import { useTokenSearch } from '../../../datasets/TokenUsageDataset/useTokenSearch'

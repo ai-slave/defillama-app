@@ -7,7 +7,7 @@ import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -278,7 +278,6 @@ export default function Revenue() {
 							dataset={dailyModel.dataset}
 							charts={dailyModel.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend
 							exportButtons="hidden"
 						/>
@@ -314,7 +313,6 @@ export default function Revenue() {
 								charts={holdersByMonthModel.charts}
 								valueSymbol="$"
 								groupBy="monthly"
-								containerClassName={CHART_FILL}
 								showLegend
 								exportButtons="hidden"
 							/>
@@ -329,7 +327,6 @@ export default function Revenue() {
 							dataset={holderModel.dataset}
 							charts={holderModel.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend
 							exportButtons="hidden"
 						/>

@@ -17,7 +17,7 @@ vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({
 	ResponsiveFilterLayout: ({ children }: { children: (nested: boolean) => ReactNode }) => children(false)
 }))
 vi.mock('~/components/Filters/FilterBetweenRange', () => ({ FilterBetweenRange: () => null }))
-vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
+vi.mock('~/ui/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
 // Render the real routes table eagerly instead of through its lazy chunk.
 vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', async () => ({
 	DeferredPaginatedBorrowRoutesTable: (await import('~/containers/Yields/Tables/Borrow')).PaginatedBorrowRoutesTable

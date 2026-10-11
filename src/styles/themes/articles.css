@@ -44,6 +44,13 @@
 	}
 }
 
+/* The Research pages' navy strip is a shared Announcement (`scope="research"`). Its color lives here so the
+   Research palette stays in this file; it paints the background itself because Announcement sets
+   --announcement-bg inline, which a class cannot override. */
+.research-announcement-scope {
+	background-color: var(--research-banner);
+}
+
 @theme inline {
 	--color-research-accent-strong: var(--research-accent-strong);
 	--color-research-accent-ink: var(--research-accent-ink);

@@ -1,11 +1,10 @@
 import type { NextRouter } from 'next/router'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
-import type { ExcludeQueryKey } from './types'
 
 /*
- * How a filter picker stores its selection in the URL. Pickers write through `getQueryUpdatesFromSelected` and
- * pages read through `readSelectionFromQuery`, on the client and the server alike, so the checkmarks, rows,
- * requests and exports all see the same selection.
+ * How a filter picker stores its selection in the URL. The pickers in `./UrlSelect.tsx` write through
+ * `getQueryUpdatesFromSelected`, and they and the pages read through `readSelectionFromQuery`, on the client and the
+ * server alike, so the checkmarks, rows, requests and exports all see the same selection.
  *
  * - No keys, or an empty value: the picker's default, which is every option unless the picker passes a subset.
  * - `include=All`: every option.
@@ -17,6 +16,9 @@ import type { ExcludeQueryKey } from './types'
  * A selection that only changes what one chart draws, and should not survive a reload, lives in React state through
  * `./localSelection.ts`, which stores intent the same way.
  */
+
+export type ExcludeQueryKey = `exclude${string}`
+
 export const getQueryUpdatesFromSelected = (
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,

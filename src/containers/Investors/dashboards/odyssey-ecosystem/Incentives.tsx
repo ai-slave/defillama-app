@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -195,7 +195,6 @@ export default function Incentives() {
 							charts={poolModel.charts}
 							chartOptions={POOL_CHART_OPTIONS}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend
 							exportButtons="hidden"
 						/>

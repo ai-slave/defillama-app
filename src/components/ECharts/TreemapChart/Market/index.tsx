@@ -47,9 +47,8 @@ export interface MarketTreemapChartProps {
 	sizeLabel: string
 	colorLabel: string
 	valueSymbol?: string
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
-	/** Replaces the fixed height on the inset canvas box: pass CHART_FILL to grow with a stretched panel. */
-	containerClassName?: string
 	showMarketCapRow?: boolean
 	groupItemsLabel?: string
 	onReady?: (instance: echarts.ECharts | null) => void
@@ -289,8 +288,7 @@ export default function MarketTreemapChart({
 	sizeLabel,
 	colorLabel,
 	valueSymbol = '$',
-	height = '600px',
-	containerClassName,
+	height,
 	showMarketCapRow = true,
 	groupItemsLabel = 'Companies',
 	onReady
@@ -500,11 +498,11 @@ export default function MarketTreemapChart({
 	return (
 		<div
 			className={
-				containerClassName ? `flex w-full flex-col overflow-hidden ${containerClassName}` : 'w-full overflow-hidden'
+				height ? 'w-full overflow-hidden' : 'flex w-full flex-1 flex-col overflow-hidden initial:min-h-[360px]'
 			}
-			style={{ height: containerClassName ? undefined : height, padding: CHART_INSET, boxSizing: 'border-box' }}
+			style={{ height, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
-			<div ref={containerRef} className={containerClassName ? 'flex-1' : 'h-full w-full'} />
+			<div ref={containerRef} className={height ? 'h-full w-full' : 'flex-1'} />
 		</div>
 	)
 }

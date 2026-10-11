@@ -5,7 +5,7 @@ import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/conta
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { popoverMenuItemStyles } from '~/ui/Popover'
-import { NestedDrawerHeader, PopoverSurface, MenuSurface } from '~/ui/PopoverSurface'
+import { NestedDrawerHeader, PopoverSurface, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 
 interface MobileToolsPopoverProps {
 	mode: AgenticAnswerMode
@@ -82,7 +82,7 @@ export function MobileToolsPopover({
 					<span>Upload files</span>
 				</Ariakit.MenuItem>
 
-				<Ariakit.MenuSeparator className="border-t border-subtle" />
+				<MenuSeparator />
 
 				<Ariakit.MenuItemRadio
 					className={itemClassName}
@@ -137,7 +137,7 @@ export function MobileToolsPopover({
 					</span>
 				</Ariakit.MenuItemRadio>
 
-				<Ariakit.MenuSeparator className="border-t border-subtle" />
+				<MenuSeparator />
 
 				{/* Scoped to the menu content, so closing the menu unmounts it and each open starts at the root. */}
 				<Ariakit.PopoverProvider placement="right-start">

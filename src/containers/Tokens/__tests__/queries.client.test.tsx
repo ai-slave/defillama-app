@@ -13,8 +13,9 @@ const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
 // Heavy children the watchlist mounts; nothing below reads their output.
 vi.mock('~/components/NewPortfolioDialog', () => ({ NewPortfolioDialog: () => null }))
-vi.mock('~/components/Menu', () => ({ Menu: () => null }))
-vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
+vi.mock('~/ui/Menu', () => ({ Menu: () => null }))
+vi.mock('~/ui/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
+vi.mock('~/components/Select/UrlSelect', () => ({ UrlSelectWithCombobox: () => null }))
 vi.mock('~/containers/Yields/views/WatchlistView', () => ({ WatchListTabs: () => null }))
 vi.mock('~/containers/Token/TokenMarketsSection', () => ({ TokenMarketsSection: () => null }))
 

@@ -6,7 +6,7 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -35,7 +35,6 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 					colorMode="categorical"
 					valueLabel="Collected"
 					valueSymbol="S"
-					containerClassName={CHART_FILL}
 				/>
 			</Suspense>
 		</ChartPanelBody>
@@ -194,7 +193,6 @@ export default function FeeM() {
 							dataset={data.dailyStatsModel.dataset}
 							charts={data.dailyStatsModel.charts}
 							valueSymbol=""
-							containerClassName={CHART_FILL}
 							chartOptions={lastNDaysZoom(data.dailyStatsLength)}
 							showLegend
 							exportButtons="hidden"

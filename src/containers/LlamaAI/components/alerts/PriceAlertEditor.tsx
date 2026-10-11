@@ -2,15 +2,11 @@ import { useState, type ReactNode } from 'react'
 import { formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import { roundPriceValue, validatePrice } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
-import {
-	alertFieldLabelClass,
-	PriceInput,
-	PRICE_OPERATOR_OPTIONS,
-	SegmentedToggle
-} from '~/containers/LlamaAI/components/alerts/ui'
+import { alertFieldLabelClass, PriceInput, PRICE_OPERATOR_OPTIONS } from '~/containers/LlamaAI/components/alerts/ui'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 
 interface PriceAlertEditorProps {
@@ -59,11 +55,13 @@ export function PriceAlertEditor({
 			<Field label="Fires when the price goes" error={submitted ? priceError : null}>
 				{(control) => (
 					<div className="flex flex-wrap items-center gap-2">
-						<SegmentedToggle<'above' | 'below'>
+						<SegmentedControl<'above' | 'below'>
 							label="Price comparison"
 							value={op}
-							onChange={setOp}
+							onValueChange={setOp}
 							options={PRICE_OPERATOR_OPTIONS}
+							variant="default"
+							size="md"
 						/>
 						<PriceInput value={value} onValueChange={setValue} control={control} />
 					</div>

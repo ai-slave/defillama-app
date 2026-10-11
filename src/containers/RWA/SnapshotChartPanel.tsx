@@ -5,7 +5,7 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { QueryRetry } from '~/utils/query'
@@ -152,7 +152,6 @@ export function RWASnapshotChartPanel({
 								legendPosition={pieChartLegendPosition}
 								legendTextStyle={pieChartLegendTextStyle}
 								valueSymbol={valueSymbol}
-								containerClassName={CHART_FILL}
 								onReady={handleChartReady}
 							/>
 						) : view === 'hbar' ? (
@@ -161,14 +160,13 @@ export function RWASnapshotChartPanel({
 								values={presentation.bars.values}
 								colors={presentation.bars.colors}
 								valueSymbol={valueSymbol}
-								containerClassName={CHART_FILL}
 								onReady={handleChartReady}
 							/>
 						) : (
 							<TreemapChart
 								treeData={presentation.treemap}
 								variant="rwa"
-								containerClassName={`${CHART_FILL} min-h-[600px]`}
+								containerClassName="min-h-[600px]"
 								valueLabel={valueLabel}
 								valueSymbol={valueSymbol}
 								onReady={handleChartReady}

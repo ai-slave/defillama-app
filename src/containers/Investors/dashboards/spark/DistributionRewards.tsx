@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
@@ -52,7 +52,6 @@ export default function DistributionRewards() {
 							dataset={data.actualRevenue.dataset}
 							charts={data.actualRevenue.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend={data.actualRevenue.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
@@ -81,7 +80,6 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							stacked
 							solidChartAreaStyle
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={revProjection.handleChartReady}
@@ -109,7 +107,6 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							stacked
 							solidChartAreaStyle
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={susdsTvl.handleChartReady}
@@ -135,7 +132,6 @@ export default function DistributionRewards() {
 							dataset={data.xrSusds.dataset}
 							charts={data.xrSusds.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend={data.xrSusds.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
@@ -162,7 +158,6 @@ export default function DistributionRewards() {
 							dataset={data.xrSusdc.dataset}
 							charts={data.xrSusdc.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							showLegend={data.xrSusdc.charts.length > 1}
 							chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
@@ -191,7 +186,6 @@ export default function DistributionRewards() {
 							valueSymbol="$"
 							stacked
 							solidChartAreaStyle
-							containerClassName={CHART_FILL}
 							chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 							exportButtons={HIDDEN_EXPORT}
 							onReady={stakedUsds.handleChartReady}

@@ -5,7 +5,7 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -191,7 +191,6 @@ export default function Loans() {
 						<MultiSeriesChart
 							title="Principal by pool"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.principalByPool}
 							charts={PRINCIPAL_BY_POOL_CHART}
 							valueSymbol="$"
@@ -211,7 +210,6 @@ export default function Loans() {
 							<MultiSeriesChart
 								title="Interest rate distribution"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								dataset={data.rateDistribution}
 								charts={RATE_DISTRIBUTION_CHART}
 								valueSymbol="$"
@@ -230,7 +228,6 @@ export default function Loans() {
 							<MultiSeriesChart
 								title="Loan age distribution"
 								headingAs="h3"
-								containerClassName={CHART_FILL}
 								dataset={data.ageDistribution}
 								charts={AGE_DISTRIBUTION_CHART}
 								valueSymbol="$"

@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from 'react'
-import { Select } from '~/components/Select/Select'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -9,6 +8,7 @@ import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
+import { Select } from '~/ui/Select'
 import { EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import {

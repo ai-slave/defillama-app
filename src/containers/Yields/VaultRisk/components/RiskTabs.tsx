@@ -1,7 +1,6 @@
-import { TabList } from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { Tabs, Tab, TabPanel as RiskTabPanel, TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { Tabs, Tab, TabPanel as RiskTabPanel, TabLink, UnderlineTabList } from '~/ui/Tabs'
 import { EASE_OUT_EXPO } from '../primitives/motion'
 
 // Every panel stays in the DOM (inactive ones get `hidden`) so SSR HTML carries all of it
@@ -80,7 +79,7 @@ export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId:
 				{/* transparent borders on every segment keep sizing stable so the active edge doesn't
 			    shift layout */}
 				<div className="px-4 pt-4">
-					<TabList aria-label="Risk detail" className={`${tabTrackStyles} sm:w-auto sm:max-w-full`}>
+					<UnderlineTabList label="Risk detail" className="sm:w-auto sm:max-w-full">
 						{tabs.map((t) => {
 							const selected = t.id === active
 							return (
@@ -99,7 +98,7 @@ export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId:
 								</Tab>
 							)
 						})}
-					</TabList>
+					</UnderlineTabList>
 				</div>
 				{tabs.map((t) => (
 					<TabPanel key={t.id} tab={t} active={t.id === active} />

@@ -852,13 +852,6 @@ const RULES = [
 		}
 	},
 	{
-		// `[^<]` reads past arrow functions (`=>`) in earlier props and stops at the first child element.
-		id: 'menu-item-color-class',
-		description:
-			"status color class on a MenuItem — it never shows, because Tailwind emits the row recipe's .text-primary after it; pass `destructive` for a delete or remove row",
-		pattern: /<MenuItem\b[^<]*?className=\{?[`"'][^`"']*\btext-(?:error|data-down|data-up|warning)\b/g
-	},
-	{
 		id: 'raw-dialog-surface',
 		description:
 			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net)',
@@ -913,8 +906,6 @@ const RULES = [
 			'a search field assembled from searchFieldIconStyles and searchFieldInputPlacementStyles — render SearchField from src/ui/SearchField.tsx (the icon, the Input recipe, an accessible `label`, the clear × and its focus return), with a searchField*WrapperStyles constant as `className` for placement',
 		match: (content) => withoutComments(content).match(/\bsearchField(?:Icon|InputPlacement)Styles\b/g),
 		exceptions: {
-			'src/components/Select/VirtualizedSelect.tsx':
-				'the Combobox store owns the value, so the field renders the Input through `render` on ComboboxInput',
 			'src/containers/Articles/admin/ArticleMultiPicker.tsx':
 				'the Combobox store owns the value, so the field renders the Input through `render`',
 			'src/containers/Articles/admin/ArticlePicker.tsx':
@@ -935,7 +926,7 @@ const RULES = [
 	{
 		id: 'native-select',
 		description:
-			'native <select> — use Select (or SelectWithCombobox for a long or searchable list) from src/components/Select, which owns the trigger, the phone drawer and disabled options',
+			'native <select> — use Select (or SelectWithCombobox for a long or searchable list) from src/ui, which owns the trigger, the phone drawer and disabled options',
 		pattern: /<select\b/g,
 		skipTests: true
 	},
@@ -995,11 +986,11 @@ const RULES = [
 			/<(?:MenuSurface|PopoverSurface|ComboboxSurface)\b[^>]*?className="[^"]*(?<![\w-])(?:shadow|bg|border|rounded|p[xytblr]?)-[^\s"]*/g
 	},
 	{
+		// ChartPanelToolbar takes no className, so only the parts that keep a placement className are read.
 		id: 'toolbar-justify-override',
 		description:
-			'justify-* passed to TableToolbar/TableToolbarControlGroup/PanelHeader/ChartPanelToolbar — they own justify-end; give the left-side item (search, title, view switch) mr-auto instead',
-		pattern:
-			/<(?:TableToolbar|TableToolbarControlGroup|PanelHeader|ChartPanelToolbar)\b[^>]*?className="[^"]*(?<![\w-])justify-[a-z]+/g
+			'justify-* passed to TableToolbar/TableToolbarControlGroup/PanelHeader — they own justify-end; give the left-side item (search, title, view switch) mr-auto instead',
+		pattern: /<(?:TableToolbar|TableToolbarControlGroup|PanelHeader)\b[^>]*?className="[^"]*(?<![\w-])justify-[a-z]+/g
 	},
 	{
 		id: 'chart-toolbar-auto-margin',
@@ -1009,13 +1000,9 @@ const RULES = [
 	},
 	{
 		id: 'chart-fill-literal',
-		exceptions: {
-			'src/containers/UniversalTokenRating/TokenPageLive.tsx':
-				'two stacked charts split one ChartPanelBody, so each shrinks below the 360px floor (`min-h-0 flex-1`)'
-		},
 		description:
-			'a chart sized with a literal `containerClassName` (`flex-1 min-h-[360px]`): pass CHART_FILL from src/ui/ChartPanel.tsx, plus a min-h-* class for a deliberately taller or shorter chart, so every chart follows the shared floor',
-		match: (content) => content.match(/\bcontainerClassName="[^"]*\b(?:flex-1|min-h-\[)[^"]*"/g),
+			'a chart `containerClassName` that sizes the chart (`flex-1`, `h-[…]`): a chart without `height` already fills its slot, so `containerClassName` holds only a min-h-* class that moves the 360px floor, and a fixed size is `height` (src/components/ECharts/README.md → Size)',
+		match: (content) => content.match(/\bcontainerClassName="[^"]*(?<![\w-])(?:flex-1|h-\[)[^"]*"/g),
 		skipTests: true
 	},
 	{
@@ -1217,8 +1204,6 @@ const RULES = [
 			withoutComments(content).match(/\brounded-(?:md|lg|xl|2xl) border border-subtle bg-surface(?=[\s"'`])/g),
 		exceptions: {
 			'src/components/NotFoundPage.tsx': 'the 404 frame keeps a 4px inset around its full-bleed illustration',
-			'src/components/Select/SelectWithCombobox.tsx':
-				'the Only button inside a select row, a control rather than a card',
 			'src/containers/AttestationLanding/index.tsx': 'a venue label pill in the flow diagram',
 			'src/containers/Downloads/index.tsx': 'the API host chip in the downloads hero, set in mono',
 			'src/containers/Downloads/sql/SqlWorkspace.tsx': 'the one-line engine status strip above the editor, 8px by 12px',

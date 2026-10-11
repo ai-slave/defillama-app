@@ -38,8 +38,8 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    no shape to refuse here; the doc's rule covers it.
  * 7. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBody or a div with no
  *    children. A fallback is a loading state: render the part for its surface with a label naming what loads
- *    (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, or
- *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
+ *    (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, DialogLoadingStatus for a lazy
+ *    dialog, or ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
  *
  * The dots, spinner and indicator those parts draw live in src/ui/internal, which an oxlint import rule keeps out of app
  * code, so a hand-built loading state has only its copy left to give it away.
@@ -65,7 +65,7 @@ const MESSAGES: Record<RuleId, string> = {
 	'loading-text':
 		'renders loading text by hand; use InlineLoading, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus',
 	'blank-fallback':
-		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, ProCardLoading)',
+		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, DialogLoadingStatus, ProCardLoading)',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
@@ -80,8 +80,6 @@ const MESSAGES: Record<RuleId, string> = {
 
 const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 	'loading-text': {
-		'src/components/Select/VirtualizedSelect.tsx':
-			"the select trigger's value reads Loading… while its options load, beside the trigger's busy arrow",
 		'src/containers/LlamaAI/components/IntegrationRow.tsx':
 			'an instruction to finish the link in Telegram, followed by what to do if it did not open',
 		'src/containers/Articles/landing/ResearchSearch.tsx':

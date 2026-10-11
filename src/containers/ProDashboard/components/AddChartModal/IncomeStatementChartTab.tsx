@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 

@@ -5,7 +5,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { type Status, StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
@@ -294,15 +294,12 @@ export function ArticleEditorHeader({
 								</span>
 							</Ariakit.MenuButton>
 							<MenuSurface variant="actions" gutter={6}>
-								<MenuItem
-									render={<Link href={articleViewHref} target="_blank" rel="noreferrer" />}
-									className="justify-between"
-								>
+								<MenuItem render={<Link href={articleViewHref} target="_blank" rel="noreferrer" />}>
 									<span className="flex items-center gap-2">
 										<Icon name="eye" className="size-3.5" />
 										View live
 									</span>
-									<Icon name="external-link" className="size-3 text-tertiary" />
+									<Icon name="external-link" className="ml-auto size-3 text-tertiary" />
 								</MenuItem>
 								<MenuItem onClick={onOpenMeta}>
 									<Icon name="sliders-horizontal" className="size-3.5" />
@@ -317,10 +314,13 @@ export function ArticleEditorHeader({
 									Move to drafts
 								</MenuItem>
 								{isOwner ? (
-									<MenuItem destructive onClick={handleDeleteArticle} className="border-t border-subtle">
-										<Icon name="trash-2" className="size-3.5" />
-										Delete
-									</MenuItem>
+									<>
+										<MenuSeparator />
+										<MenuItem destructive onClick={handleDeleteArticle}>
+											<Icon name="trash-2" className="size-3.5" />
+											Delete
+										</MenuItem>
+									</>
 								) : null}
 							</MenuSurface>
 						</Ariakit.MenuProvider>

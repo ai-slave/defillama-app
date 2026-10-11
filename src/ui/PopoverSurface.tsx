@@ -92,12 +92,14 @@ import { tw } from './tw'
    `Ariakit.MenuItemCheckbox`.
 
    Rows are `MenuItem`. `row` picks the recipe: `menu` (default; px-3 py-2
-   body-sm full-bleed, hover-row wash, 44px tall on phones) or `tree` (the
-   indented hierarchy row used by the protocol switcher). Radio, checkbox
-   and select rows use the Ariakit item with a recipe from ./Popover.ts.
-   `className` is layout only, e.g. `border-b border-subtle` to group items.
-   A destructive row passes `destructive`, its own red recipe, because an
-   appended color class loses to the recipe's `text-primary`.
+   body-sm full-bleed, hover-row wash, 44px tall on phones), or the
+   hierarchy rows of the protocol switcher: `tree` for the top row and
+   `tree-child` for a row under it, indented and drawn with its connector
+   line. Radio, checkbox and select rows use the Ariakit item with a recipe
+   from ./Popover.ts. A row takes no className: its children lay out on the
+   row's 8px gap, and a trailing hint or icon takes `ml-auto` to sit on the
+   right edge. A destructive row passes `destructive`, its own red recipe.
+   Groups of rows are split by `MenuSeparator`, never a border on a row.
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with
@@ -245,7 +247,7 @@ type SurfaceChrome =
 	| { variant: 'actions' | 'nested'; heading?: never; dismiss?: never }
 	| ({ variant: 'panel' | 'list' } & DrawerChrome)
 
-export type SurfaceOwnProps = SurfaceLayout & SurfaceChrome
+type SurfaceOwnProps = SurfaceLayout & SurfaceChrome
 
 /** The three wired pieces, for the surface components in this file. */
 function surfaceProps(variant: PopoverSurfaceVariant, { className }: SurfaceLayout) {
@@ -387,19 +389,35 @@ const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error hover:
 /* The current row (`data-active`) is a selection: brand tint and link text, and it takes no hover wash. */
 const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary not-data-[active=true]:hover:bg-hover-row not-data-[active=true]:focus-visible:bg-hover-row not-data-[active=true]:data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-brand-muted data-[active=true]:text-link max-sm:min-h-11`
 
-type MenuItemRow = 'menu' | 'tree'
+type MenuItemRow = 'menu' | 'tree' | 'tree-child'
 
 const ROW_STYLES: Record<MenuItemRow, string> = {
 	menu: popoverMenuItemStyles,
-	tree: popoverTreeRowStyles
+	tree: `${popoverTreeRowStyles} pl-3`,
+	'tree-child': `${popoverTreeRowStyles} pl-8`
 }
 
-type MenuItemProps = Ariakit.MenuItemProps & {
+type MenuItemProps = Omit<Ariakit.MenuItemProps, 'className'> & {
 	row?: MenuItemRow
 	/** Deletes or removes something: red text. */ destructive?: boolean
 }
 
-export function MenuItem({ row = 'menu', destructive = false, className, ...props }: MenuItemProps) {
-	const recipe = destructive ? popoverDestructiveMenuItemStyles : ROW_STYLES[row]
-	return <Ariakit.MenuItem {...props} className={className ? `${recipe} ${className}`.trim() : recipe} />
+export function MenuItem({ row = 'menu', destructive = false, children, ...props }: MenuItemProps) {
+	return (
+		<Ariakit.MenuItem {...props} className={destructive ? popoverDestructiveMenuItemStyles : ROW_STYLES[row]}>
+			{row === 'tree-child' ? (
+				// The connector: a rail down the indent that stops at the middle of the last row, and a stub into this row.
+				<>
+					<span className="absolute top-0 bottom-0 left-3 block h-full w-0.5 bg-border-medium group-last:h-[50%]" />
+					<span className="absolute top-1/2 left-3 h-0.5 w-5 -translate-y-1/2 bg-border-medium" />
+				</>
+			) : null}
+			{children}
+		</Ariakit.MenuItem>
+	)
+}
+
+/** The rule between groups of rows in a menu. */
+export function MenuSeparator() {
+	return <Ariakit.MenuSeparator className="border-t border-subtle" />
 }

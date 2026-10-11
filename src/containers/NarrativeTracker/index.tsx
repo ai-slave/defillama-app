@@ -6,7 +6,6 @@ import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/componen
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -16,10 +15,11 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
@@ -315,7 +315,7 @@ export function CategoryPerformanceContainer({
 								charts={deferredChartData.barCharts}
 								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
-								containerClassName={`${CHART_FILL} min-h-[533px]`}
+								containerClassName="min-h-[533px]"
 								hideDataZoom={false}
 								chartOptions={barChartOptions}
 								exportButtons="hidden"
@@ -327,7 +327,7 @@ export function CategoryPerformanceContainer({
 								charts={deferredChartData.lineCharts}
 								selectedCharts={displayedSelectedCharts}
 								valueSymbol={chartValueSymbol}
-								containerClassName={`${CHART_FILL} min-h-[533px]`}
+								containerClassName="min-h-[533px]"
 								solidChartAreaStyle={false}
 								chartOptions={lineChartOptions}
 								tooltipMaxItems={30}
@@ -338,7 +338,7 @@ export function CategoryPerformanceContainer({
 							<TreemapChart
 								treeData={treemapTreeData}
 								variant="narrative"
-								containerClassName={`${CHART_FILL} min-h-[533px]`}
+								containerClassName="min-h-[533px]"
 								onReady={onChartReady}
 							/>
 						)}

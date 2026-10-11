@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -213,7 +213,6 @@ export default function Tvl() {
 							dataset={ecoModel.dataset}
 							charts={ecoModel.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							chartOptions={ecoZoom}
 							showLegend
 							exportButtons="hidden"
@@ -235,7 +234,6 @@ export default function Tvl() {
 							dataset={ethOverlay.dataset}
 							charts={ethOverlay.charts}
 							valueSymbol="$"
-							containerClassName={CHART_FILL}
 							chartOptions={ethZoom}
 							showLegend
 							exportButtons="hidden"
@@ -257,7 +255,6 @@ export default function Tvl() {
 									dataset={model.dataset}
 									charts={model.charts}
 									valueSymbol="$"
-									containerClassName={CHART_FILL}
 									chartOptions={zoom}
 									showLegend
 									exportButtons="hidden"
@@ -376,7 +373,6 @@ export default function Tvl() {
 											dataset={model.dataset}
 											charts={model.charts}
 											valueSymbol="$"
-											containerClassName={CHART_FILL}
 											showLegend
 											exportButtons="hidden"
 										/>

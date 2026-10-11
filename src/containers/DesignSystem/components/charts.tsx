@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
-import {
-	CHART_FILL,
-	ChartPanelBody,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote, ScopeNote } from '~/ui/ScopeNote'
@@ -22,7 +16,7 @@ const VIEWS = [
 // Stands in for an ECharts canvas: the shell is what this section shows, not the plot.
 function PlotPlaceholder() {
 	return (
-		<svg viewBox="0 0 600 240" preserveAspectRatio="none" aria-hidden className={`${CHART_FILL} text-link`}>
+		<svg viewBox="0 0 600 240" preserveAspectRatio="none" aria-hidden className="flex-1 text-link">
 			<path
 				d="M0 190 L60 170 L120 180 L180 120 L240 140 L300 90 L360 110 L420 60 L480 80 L540 40 L600 55"
 				fill="none"
@@ -62,6 +56,7 @@ function ChartShellDemo({ values }: { values: KnobValues }) {
 			<Panel data-anatomy="Panel">
 				<ChartPanelToolbar
 					data-anatomy="ChartPanelToolbar"
+					align={values.align as 'center' | 'start'}
 					leading={
 						<>
 							<span className="contents" data-anatomy="ChartPanelTitle">
@@ -127,9 +122,10 @@ export const charts: Family = {
 			source: 'src/ui/ChartPanel.tsx',
 			knobs: [
 				{ name: 'controls', boolean: true, prop: false },
+				{ name: 'align', values: ['center', 'start'], default: 'center' },
 				{ name: 'state', values: ['rest', 'png pending'], default: 'rest', prop: false }
 			],
-			note: 'The export buttons are plain Buttons: ChartExportButtons needs the router and an ECharts instance.',
+			note: 'The export buttons are plain Buttons: ChartExportButtons needs the router and an ECharts instance. With align start they line up with the title instead of its middle.',
 			render: (values) => <ChartShellDemo values={values} />,
 			anatomy: true
 		},

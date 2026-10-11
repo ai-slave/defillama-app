@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { Select } from '~/components/Select/Select'
 import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
-import { CHART_FILL, ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { EmptyState } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -327,7 +327,6 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 									charts={series}
 									valueSymbol={unit === 'percent' ? '%' : '$'}
 									chartOptions={unit === 'percent' ? PERCENT_TIME_OPTIONS : undefined}
-									containerClassName={CHART_FILL}
 									showLegend
 									hideDataZoom
 									exportButtons="hidden"

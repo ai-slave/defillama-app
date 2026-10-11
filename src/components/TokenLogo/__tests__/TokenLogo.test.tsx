@@ -21,52 +21,6 @@ describe('TokenLogo', () => {
 		container.remove()
 	})
 
-	test('stops requesting images after each unique source fails', async () => {
-		await act(async () =>
-			root.render(
-				<TokenLogo src="https://example.com/logo.png" fallbackSrc="https://example.com/fallback.png" size={32} />
-			)
-		)
-
-		const image = container.querySelector('img')
-		expect(image).not.toBeNull()
-		expect(image?.getAttribute('src')).toBe('https://example.com/logo.png')
-
-		await act(async () => image?.dispatchEvent(new Event('error')))
-		expect(image?.getAttribute('src')).toBe('https://example.com/fallback.png')
-
-		await act(async () => image?.dispatchEvent(new Event('error')))
-		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
-
-		await act(async () => image?.dispatchEvent(new Event('error')))
-		expect(image?.hasAttribute('src')).toBe(false)
-	})
-
-	test('resets the error state when the source props change', async () => {
-		await act(async () => root.render(<TokenLogo src="https://example.com/bad.png" />))
-
-		let image = container.querySelector('img')
-		await act(async () => image?.dispatchEvent(new Event('error')))
-		await act(async () => image?.dispatchEvent(new Event('error')))
-
-		await act(async () => root.render(<TokenLogo src="https://example.com/good.png" />))
-
-		image = container.querySelector('img')
-		expect(image?.getAttribute('src')).toBe('https://example.com/good.png')
-		expect(image?.classList.contains('hidden')).toBe(false)
-	})
-
-	test('skips a fallback URL that was already attempted', async () => {
-		await act(async () =>
-			root.render(<TokenLogo src="https://example.com/logo.png" fallbackSrc="https://example.com/logo.png" />)
-		)
-
-		const image = container.querySelector('img')
-		await act(async () => image?.dispatchEvent(new Event('error')))
-
-		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
-	})
-
 	test('resolves exchange logos from the canonical exchange namespace', async () => {
 		await act(async () => root.render(<TokenLogo name="Binance" kind="exchange" />))
 

@@ -4,7 +4,7 @@ import { Button } from '~/ui/Button'
 import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
-import { MetricChip, metricOptionChipMdStyles, metricOptionChipStyles, metricSeriesToggleStyles } from '~/ui/MetricChip'
+import { MetricChip, MetricOptionChip, MetricSeriesToggle } from '~/ui/MetricChip'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { type Status, StatusBadge, StatusDot } from '~/ui/StatusBadge'
 import { Tag, TagButton, TagLink } from '~/ui/Tag'
@@ -42,11 +42,25 @@ function RemovableChips() {
 	)
 }
 
-const RECIPES = [
-	['metricOptionChipStyles', metricOptionChipStyles, 'Fees'],
-	['metricOptionChipMdStyles', metricOptionChipMdStyles, 'Fees'],
-	['metricSeriesToggleStyles', metricSeriesToggleStyles, 'Volume']
-] as const
+const OPTION_CHIPS: ReadonlyArray<[string, (active?: boolean) => ReactNode]> = [
+	[
+		'MetricOptionChip sm',
+		(active) => (
+			<MetricOptionChip size="sm" data-active={active}>
+				Fees
+			</MetricOptionChip>
+		)
+	],
+	[
+		'MetricOptionChip md',
+		(active) => (
+			<MetricOptionChip size="md" data-active={active}>
+				Fees
+			</MetricOptionChip>
+		)
+	],
+	['MetricSeriesToggle', (active) => <MetricSeriesToggle data-active={active}>Volume</MetricSeriesToggle>]
+]
 
 const STATUS_TEXT: Record<Status, string> = {
 	good: 'All changes saved',
@@ -93,7 +107,7 @@ export const chips: Family = {
 					<Example
 						wide
 						name="Interaction"
-						note="MetricChip has no selected state; the recipes show selected as data-active."
+						note="MetricChip has no selected state; the option chips show selected as data-active."
 					>
 						<StateGrid
 							columns={['Rest', 'Hover', 'Focus', 'Selected']}
@@ -109,19 +123,15 @@ export const chips: Family = {
 										<NotApplicable />
 									</>
 								],
-								...RECIPES.map(([name, className, label]): [string, ReactNode] => [
+								...OPTION_CHIPS.map(([name, chip]): [string, ReactNode] => [
 									name,
 									<>
 										{REST_HOVER_FOCUS.map((force) => (
 											<Cell key={force ?? 'rest'} force={force}>
-												<button type="button" className={className}>
-													{label}
-												</button>
+												{chip()}
 											</Cell>
 										))}
-										<button type="button" className={className} data-active="true">
-											{label}
-										</button>
+										{chip(true)}
 									</>
 								])
 							]}

@@ -2,11 +2,11 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue } from 'react'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from './api.types'
@@ -241,7 +241,6 @@ export function RWAPerpsBreakdownChartPanel({
 					<MultiSeriesChart
 						dataset={deferredChart.dataset}
 						charts={deferredChart.charts}
-						containerClassName={CHART_FILL}
 						showLegend
 						showTotalInTooltip={deferredChart.isVolume && !deferredChart.isShare}
 						expandTo100Percent={deferredChart.isShare}

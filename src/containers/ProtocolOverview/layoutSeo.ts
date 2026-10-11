@@ -1,3 +1,4 @@
+import type { AnnouncementScope } from '~/components/Announcement'
 import {
 	getMainSiteIrDashboard,
 	isMainSiteIrVisible,
@@ -90,7 +91,7 @@ export type ProtocolDashboardAnnouncement = {
 	linkLabel: string
 	prefix: string
 	suffix: string
-	className: string
+	scope: AnnouncementScope
 	badgeClassName: string
 	logoName?: string
 	includeReferrer?: boolean
@@ -104,8 +105,7 @@ const odysseyEnterpriseDashboardAnnouncement = {
 	linkLabel: 'Enterprise Dashboard',
 	prefix: 'View the Odyssey',
 	suffix: 'for ecosystem analytics across Odyssey, Vesper, and Metronome.',
-	className:
-		'border border-odyssey-announcement-border bg-(image:--odyssey-announcement-bg) text-odyssey-announcement-text shadow-odyssey-announcement',
+	scope: 'odyssey',
 	badgeClassName:
 		'border border-announcement-chip-border bg-announcement-chip-bg text-odyssey-announcement-badge-text shadow-raised',
 	logoName: 'Odyssey Finance'
@@ -120,8 +120,7 @@ const protocolDashboardAnnouncements: Record<string, ProtocolDashboardAnnounceme
 		linkLabel: 'investor relations dashboard',
 		prefix: "View Spark's",
 		suffix: 'for deeper analytics and investor reports.',
-		className:
-			'border border-spark-announcement-border bg-(image:--spark-announcement-bg) text-spark-announcement-text shadow-spark-announcement',
+		scope: 'spark',
 		badgeClassName:
 			'border border-announcement-chip-border bg-announcement-chip-bg text-spark-announcement-badge-text shadow-raised',
 		includeReferrer: true

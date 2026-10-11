@@ -660,7 +660,7 @@ function ActiveSingleChart({
 			<div className="flex flex-col p-2" data-chart-id={config.id}>
 				{addToDashboardButton ? <div className="flex justify-end">{addToDashboardButton}</div> : null}
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
-					<CandlestickChart {...candlestickProps} />
+					<CandlestickChart {...candlestickProps} containerClassName="min-h-[480px]" />
 				</Suspense>
 			</div>
 		)

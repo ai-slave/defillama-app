@@ -13,13 +13,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanelBody,
-	ChartPanelExportShellLoading,
-	ChartPanelTitle,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
@@ -247,7 +241,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 						{chartData != null ? (
 							<MultiSeriesChart
-								containerClassName={CHART_FILL}
 								dataset={chartData.holdingsChart.dataset}
 								charts={chartData.holdingsChart.charts}
 								valueSymbol={chartData.ticker}
@@ -268,7 +261,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MultiSeriesChart
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
-								containerClassName={CHART_FILL}
 								valueSymbol=""
 								showLegend
 								title="mNAV"
@@ -288,7 +280,6 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<MultiSeriesChart
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
-								containerClassName={CHART_FILL}
 								valueSymbol=""
 								showLegend
 								title="Fully diluted shares"
@@ -305,7 +296,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				{props.ohlcvChartData != null ? (
 					<Panel className="col-span-full">
 						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share price</ChartPanelTitle>} />
-						{/* The candlestick sets its own height: 480px plus any indicator panels. */}
+						{/* 480px gives the price and volume grids room; the candlestick fills the body. */}
 						<ChartPanelBody className="min-h-[480px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>
 								<CandlestickChart data={props.ohlcvChartData} />

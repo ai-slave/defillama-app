@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { chartColor } from '~/constants/colors'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -203,7 +203,7 @@ export function DirectoryChart({ chart, range, failedRead, country }: DirectoryC
 							dataset={chartModel.dataset}
 							charts={chartModel.charts}
 							valueSymbol="$"
-							containerClassName={`${CHART_FILL} min-h-[320px]`}
+							containerClassName="min-h-[320px]"
 							showLegend
 							exportButtons="hidden"
 							hallmarks={hallmarks}

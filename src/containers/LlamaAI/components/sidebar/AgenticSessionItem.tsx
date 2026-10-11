@@ -29,7 +29,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph, ErrorLine, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -371,11 +371,11 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								onClick={() => {
 									pinSession.mutate()
 								}}
-								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								<Icon name="pin" className="size-3.5 shrink-0" />
 								{session.isPinned ? 'Unpin' : 'Pin to top'}
 							</MenuItem>
+							<MenuSeparator />
 							{/* A link only opens for others once the conversation is public, so a private one publishes first. */}
 							<MenuItem
 								onClick={() => {
@@ -400,7 +400,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 									deletion.isPending ||
 									isRestoring
 								}
-								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								{visibility.isPending || copyLink.isPending ? (
 									<BusyGlyph decorative size={14} />
@@ -419,17 +418,20 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 												? 'Copy link'
 												: 'Make public and copy link'}
 							</MenuItem>
+							<MenuSeparator />
 							{session.isPublic ? (
-								<MenuItem
-									onClick={() => setConfirmPrivate(true)}
-									hideOnClick={false}
-									accessibleWhenDisabled
-									disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
-									className="border-b border-subtle last-of-type:border-b-0"
-								>
-									<Icon name="eye" className="size-3.5 shrink-0" />
-									Make private
-								</MenuItem>
+								<>
+									<MenuItem
+										onClick={() => setConfirmPrivate(true)}
+										hideOnClick={false}
+										accessibleWhenDisabled
+										disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
+									>
+										<Icon name="eye" className="size-3.5 shrink-0" />
+										Make private
+									</MenuItem>
+									<MenuSeparator />
+								</>
 							) : null}
 							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 							<MenuItem
@@ -437,7 +439,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
 								data-deleting={deletion.isPending}
 								destructive
-								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								{deletion.isPending ? (
 									<BusyGlyph decorative size={14} />

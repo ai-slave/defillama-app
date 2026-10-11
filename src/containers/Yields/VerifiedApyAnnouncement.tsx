@@ -35,22 +35,23 @@ export function VerifiedApyAnnouncement({
 			<Announcement
 				announcementId={VERIFIED_APY_ANNOUNCEMENT.id}
 				version={VERIFIED_APY_ANNOUNCEMENT.version}
-				className="verified-announcement-scope border border-verified-announcement-border bg-(image:--verified-announcement-bg) text-verified-announcement-text shadow-verified-announcement"
-				contentClassName="flex items-center gap-x-3 gap-y-2 py-0.5 pl-1.5 text-left sm:flex-wrap"
+				scope="verified"
 				dismissLabel="Dismiss"
 				dismissTracking={track?.dismiss}
 			>
-				<Icon name="badge-check" className="size-5 shrink-0 text-verified-announcement-seal" aria-hidden />
-				<span className="flex-1 sm:min-w-48">
-					<strong className="font-semibold">Verified APY</strong>: what you would actually have earned.
-					<span className="hidden lg:inline">
-						{' '}
-						Every day we simulate a real holder withdrawing from each pool onchain and record what they received.
+				<div className="flex items-center gap-x-3 gap-y-2 py-0.5 pl-1.5 text-left sm:flex-wrap">
+					<Icon name="badge-check" className="size-5 shrink-0 text-verified-announcement-seal" aria-hidden />
+					<span className="flex-1 sm:min-w-48">
+						<strong className="font-semibold">Verified APY</strong>: what you would actually have earned.
+						<span className="hidden lg:inline">
+							{' '}
+							Every day we simulate a real holder withdrawing from each pool onchain and record what they received.
+						</span>
 					</span>
-				</span>
-				<button type="button" {...track?.cta} onClick={show} className={`ml-auto ${announcementCtaStyles}`}>
-					Unlock<span className="hidden sm:inline"> Verified APY</span>
-				</button>
+					<button type="button" {...track?.cta} onClick={show} className={`ml-auto ${announcementCtaStyles}`}>
+						Unlock<span className="hidden sm:inline"> Verified APY</span>
+					</button>
+				</div>
 			</Announcement>
 			{modal}
 		</>

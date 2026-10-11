@@ -1,9 +1,16 @@
 import * as Ariakit from '@ariakit/react'
-import { useRouter } from 'next/router'
 import * as React from 'react'
-import { NestedMenu } from '~/components/NestedMenu'
-import { CountBadge } from '~/ui/CountBadge'
-import { Icon } from '~/ui/Icon'
+import {
+	ComboboxSelectTrigger,
+	selectTriggerStyles,
+	type SelectTriggerSize,
+	type SelectTriggerVariant
+} from './ComboboxSelectTrigger'
+import { CountBadge } from './CountBadge'
+import { Icon } from './Icon'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
+import { gridRowStyles, onlyItemStyles } from './internal/selectRowStyles'
+import { NestedMenu } from './NestedMenu'
 import {
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles,
@@ -11,18 +18,30 @@ import {
 	popoverRowWithBorderStyles,
 	popoverScrollAreaStyles,
 	popoverSingleSelectCheckStyles
-} from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { Tooltip } from '~/ui/Tooltip'
-import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
-import { readSelectionFromQuery, updateQueryFromSelected } from './query'
-import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import { gridRowStyles, onlyItemStyles } from './SelectWithCombobox'
-import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
-import { selectTriggerStyles } from './types'
+} from './Popover'
+import { ComboboxSurface } from './PopoverSurface'
+import { Tooltip } from './Tooltip'
 
 /* Select — a single or multi picker for a short list. It never searches and shows every option, with no "See more",
-   in a `panel` drawer that hugs its rows. The folder README says which picker fits. */
+   in a `panel` drawer that hugs its rows. design.md "Which component for which job" says which picker fits, and
+   ./ComboboxSelectTrigger.tsx holds the trigger rules every picker shares. A selection that lives in the URL renders
+   UrlSelect (src/components/Select/UrlSelect.tsx), which reads and writes it for this picker. */
+
+export type SelectOption = {
+	key: string
+	name: string
+	help?: string
+	icon?: React.ReactNode
+	/** Drawn on the secondary tier: a value the page's current settings leave out, still selectable, with its `help`
+	    saying what brings it back. */
+	muted?: boolean
+	/** Shown but not pickable, with `help` as its visible reason under the name (a private Slack channel the bot is not
+	    in). Arrow keys still reach it, so a screen reader announces it as unavailable. Select all and a URL selection's
+	    full set leave it out. A picker never drops an option the reader would look for; it disables it and says why. */
+	disabled?: boolean
+}
+
+export type SelectValues = ReadonlyArray<SelectOption> | ReadonlyArray<string>
 
 /** With `labelType="none"` the trigger shows the current value, so `heading` names the phone drawer; otherwise the label does. */
 type SelectLabelProps =
@@ -44,36 +63,23 @@ interface ISelectBase {
 	popoverClassName?: string
 }
 
-interface ISelectWithUrlParams extends ISelectBase {
-	includeQueryKey: string
-	excludeQueryKey: ExcludeQueryKey
-	/** The picker reads its selection from the URL with `readSelectionFromQuery`, the same reader pages use. */
-	selectedValues?: never
-	setSelectedValues?: never
-}
+/** Every Select prop but the selection. */
+export type SelectBaseProps = SelectLabelProps & ISelectBase
 
-interface ISelectWithStateArray extends ISelectBase {
-	includeQueryKey?: never
-	excludeQueryKey?: never
+interface ISelectMulti {
 	selectedValues: Array<string>
 	setSelectedValues: (values: Array<string>) => void
 }
 
-interface ISelectWithStateSingle extends ISelectBase {
-	includeQueryKey?: never
-	excludeQueryKey?: never
+interface ISelectSingle {
 	selectedValues: string
 	setSelectedValues: (value: string) => void
 }
 
-type ISelect = SelectLabelProps & (ISelectWithUrlParams | ISelectWithStateArray | ISelectWithStateSingle)
+type ISelect = SelectBaseProps & (ISelectMulti | ISelectSingle)
 
-function isUrlSelect(props: ISelect): props is ISelect & ISelectWithUrlParams {
-	return typeof props.includeQueryKey === 'string'
-}
-
-function isMultiStateSelect(props: ISelect): props is ISelect & ISelectWithStateArray {
-	return !isUrlSelect(props) && Array.isArray(props.selectedValues)
+function isMultiSelect(props: ISelect): props is ISelect & ISelectMulti {
+	return Array.isArray(props.selectedValues)
 }
 
 /** An option's name. `help` is a tooltip on a pickable option; on a disabled one it is the visible reason under the
@@ -111,22 +117,7 @@ export function Select(props: ISelect) {
 		placement = 'bottom-start',
 		popoverClassName
 	} = props
-	const router = useRouter()
-	const { includeQueryKey, excludeQueryKey } = isUrlSelect(props) ? props : {}
-	const urlSelection = React.useMemo(
-		() =>
-			includeQueryKey && excludeQueryKey
-				? readSelectionFromQuery(
-						router.query,
-						includeQueryKey,
-						excludeQueryKey,
-						// The full set leaves disabled options out, as the writer does, so an empty query never selects them.
-						allValues.flatMap((v) => (typeof v === 'string' ? [v] : v.disabled ? [] : [v.key]))
-					)
-				: [],
-		[router.query, includeQueryKey, excludeQueryKey, allValues]
-	)
-	const selectedValues = props.selectedValues ?? urlSelection
+	const selectedValues = props.selectedValues
 	// Nested menus share their parent's values, so each select needs its own field.
 	const selectionName = React.useId()
 	const labelText = typeof label === 'string' ? label : typeof label === 'number' ? String(label) : 'Select'
@@ -142,8 +133,7 @@ export function Select(props: ISelect) {
 		[]
 	)
 
-	// Helper to extract keys from allValues
-	// A disabled option can never be picked, so Select all and the URL's full set leave it out.
+	// A disabled option can never be picked, so Select all leaves it out.
 	const getAllKeys = React.useCallback(
 		() => allValues.flatMap((v) => (typeof v === 'string' ? [v] : v.disabled ? [] : [v.key])),
 		[allValues]
@@ -151,51 +141,35 @@ export function Select(props: ISelect) {
 
 	const setSelectedValues = React.useCallback(
 		(values: Array<string> | string) => {
-			if (isUrlSelect(props)) {
-				updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), values)
-				return
-			}
-			if (isMultiStateSelect(props)) {
+			if (isMultiSelect(props)) {
 				props.setSelectedValues(Array.isArray(values) ? values : values ? [values] : [])
 				return
 			}
 			props.setSelectedValues(typeof values === 'string' ? values : (values[0] ?? ''))
 		},
-		[getAllKeys, props, router]
+		[props]
 	)
 	const clearAll = React.useCallback(() => {
-		if (isUrlSelect(props)) {
-			updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), 'None')
-			return
-		}
-		if (isMultiStateSelect(props)) {
+		if (isMultiSelect(props)) {
 			props.setSelectedValues([])
 			return
 		}
 		props.setSelectedValues('')
-	}, [getAllKeys, props, router])
+	}, [props])
 	const toggleAll = React.useCallback(() => {
-		if (isUrlSelect(props)) {
-			updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), null)
-			return
-		}
-		if (isMultiStateSelect(props)) {
+		if (isMultiSelect(props)) {
 			props.setSelectedValues(getAllKeys())
 		}
-	}, [getAllKeys, props, router])
+	}, [getAllKeys, props])
 	const selectOnlyOne = React.useCallback(
 		(value: string) => {
-			if (isUrlSelect(props)) {
-				updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), [value])
-				return
-			}
-			if (isMultiStateSelect(props)) {
+			if (isMultiSelect(props)) {
 				props.setSelectedValues([value])
 				return
 			}
 			props.setSelectedValues(value)
 		},
-		[getAllKeys, props, router]
+		[props]
 	)
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne

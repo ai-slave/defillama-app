@@ -5,7 +5,6 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
@@ -13,9 +12,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
@@ -1053,7 +1053,6 @@ function ChartContainer({
 									// Slightly larger pie to better utilize available canvas.
 									radius={allocationPieChartRadius}
 									exportButtons={allocationExportButtons}
-									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
 						</Panel>
@@ -1072,7 +1071,6 @@ function ChartContainer({
 									stackColors={unlockedPieChartStackColors}
 									valueSymbol="%"
 									exportButtons={unlockedExportButtons}
-									containerClassName={CHART_FILL}
 								/>
 							</Suspense>
 						</Panel>

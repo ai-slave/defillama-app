@@ -7,7 +7,7 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -109,7 +109,7 @@ export function RecentlyListedProtocolsTable({
 				/>
 
 				<HideForkedProtocols />
-				<SelectWithCombobox
+				<UrlSelectWithCombobox
 					label="Chains"
 					allValues={pages.chainList}
 					includeQueryKey="chain"
@@ -119,7 +119,7 @@ export function RecentlyListedProtocolsTable({
 					size="md"
 				/>
 				{pages.categories.length > 0 ? (
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						label="Category"
 						allValues={pages.categories}
 						includeQueryKey="category"

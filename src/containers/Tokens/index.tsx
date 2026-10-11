@@ -5,11 +5,10 @@ import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
 import { BasicLink } from '~/components/Link'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
-import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
 import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
@@ -19,8 +18,9 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
-import { TabPanel, Tabs } from '~/ui/Tabs'
+import { TabPanel, Tabs, type UnderlineTab, UnderlineTabList } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
@@ -425,7 +425,7 @@ function TokensStats({ stats, display }: { stats: TokensPageStats; display: Toke
 	return <InlineStatStrip items={items} />
 }
 
-const VIEW_TABS: ReadonlyArray<ViewTab<TokensPageView>> = [
+const VIEW_TABS: ReadonlyArray<UnderlineTab<TokensPageView>> = [
 	{ id: 'table', label: 'Table' },
 	{ id: 'map', label: 'Market Map' },
 	{ id: 'movers', label: 'Movers' }
@@ -473,7 +473,7 @@ function TokensSharedControls({
 	return (
 		<>
 			<UrlSearchInput search={search} updateSearch={updateSearch} label="Search tokens" placeholder="Search tokens…" />
-			<SelectWithCombobox
+			<UrlSelectWithCombobox
 				allValues={chainSelectOptions}
 				includeQueryKey="chains"
 				excludeQueryKey="excludeChains"
@@ -497,7 +497,7 @@ function TokensSharedControls({
 					<QuestionHelper text="Only show tokens whose primary chain matches the selected chain filter." />
 				</span>
 			) : null}
-			<SelectWithCombobox
+			<UrlSelectWithCombobox
 				allValues={categorySelectOptions}
 				includeQueryKey="categories"
 				excludeQueryKey="excludeCategories"
@@ -671,7 +671,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			{view === 'table' ? <TokensSourceAvailability sources={serverTable.data.unavailableSources} /> : null}
 			<Panel>
 				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
-					<ViewTabs tabs={VIEW_TABS} label="Tokens view" />
+					<UnderlineTabList tabs={VIEW_TABS} label="Tokens view" />
 					<TabPanel value={view}>
 						{view === 'table' ? (
 							<>

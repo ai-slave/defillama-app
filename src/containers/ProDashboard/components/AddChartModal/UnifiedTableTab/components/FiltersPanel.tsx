@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { VirtualizedMultiSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import {
 	BoundParameterChip,
 	useModalFieldBinding
@@ -10,6 +9,7 @@ import { useOracleNamesByProtocol } from '~/containers/ProDashboard/queries'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { getItemIconUrl } from '~/containers/ProDashboard/utils'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { VirtualizedMultiSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 
 const EMPTY_CATEGORIES: Array<string> = []
 const EMPTY_PROTOCOLS: Array<string> = []

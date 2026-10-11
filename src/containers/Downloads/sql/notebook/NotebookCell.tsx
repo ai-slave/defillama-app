@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
@@ -246,13 +246,10 @@ function CellMenu({
 							<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 							Run cells below
 						</MenuItem>
+						<MenuSeparator />
 					</>
 				) : null}
-				<MenuItem
-					disabled={isFirst}
-					onClick={onMoveUp}
-					className={`${cellType === 'sql' ? 'border-t border-subtle' : ''}`}
-				>
+				<MenuItem disabled={isFirst} onClick={onMoveUp}>
 					<Icon name="arrow-up" className="size-3.5 shrink-0 text-tertiary" />
 					Move up
 				</MenuItem>
@@ -260,13 +257,15 @@ function CellMenu({
 					<Icon name="arrow-down" className="size-3.5 shrink-0 text-tertiary" />
 					Move down
 				</MenuItem>
-				{otherTypes.map((t, i) => (
-					<MenuItem key={t} onClick={() => onConvertType(t)} className={i === 0 ? 'border-t border-subtle' : undefined}>
+				<MenuSeparator />
+				{otherTypes.map((t) => (
+					<MenuItem key={t} onClick={() => onConvertType(t)}>
 						<Icon name="repeat" className="size-3.5 shrink-0 text-tertiary" />
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}
 					</MenuItem>
 				))}
-				<MenuItem destructive disabled={!canDelete} onClick={onDelete} className="border-t border-subtle">
+				<MenuSeparator />
+				<MenuItem destructive disabled={!canDelete} onClick={onDelete}>
 					<Icon name="trash-2" className="size-3.5 shrink-0" />
 					Delete cell
 				</MenuItem>

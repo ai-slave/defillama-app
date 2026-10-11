@@ -67,7 +67,7 @@ test('keeps full rendering independent of virtualization and toolbar controls', 
 	const imports = runtimeImports('src/components/Table/search/SearchTableView.tsx')
 	expect(imports).not.toContain('@tanstack/react-virtual')
 	expect(imports).not.toContain('src/components/CsvDownloadButton.tsx')
-	expect(imports).not.toContain('src/components/Select/SelectWithCombobox.tsx')
+	expect(imports).not.toContain('src/ui/SelectWithCombobox.tsx')
 })
 
 test.each(['DeferredTokenMarketsTable', 'DeferredTokenLiquidationsTable'])(

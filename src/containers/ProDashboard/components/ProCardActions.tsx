@@ -14,7 +14,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { popoverMenuItemStyles } from '~/ui/Popover'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
@@ -221,7 +221,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						))}
 						{layout ? (
 							<>
-								{hasExports ? <Ariakit.MenuSeparator /> : null}
+								{hasExports ? <MenuSeparator /> : null}
 								{layout.colSpanOptions.length > 0 ? (
 									<Ariakit.MenuGroup>
 										<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Width</Ariakit.MenuGroupLabel>
@@ -289,7 +289,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						) : null}
 						{hasParameterActions ? (
 							<>
-								{hasExports || layout ? <Ariakit.MenuSeparator /> : null}
+								{hasExports || layout ? <MenuSeparator /> : null}
 								<Ariakit.MenuGroup>
 									<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Parameters</Ariakit.MenuGroupLabel>
 									{parameterActions.map((action) => (
@@ -307,7 +307,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						) : null}
 						{shareableCard ? (
 							<>
-								{hasExports || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
+								{hasExports || layout || hasParameterActions ? <MenuSeparator /> : null}
 								<MenuItem
 									onClick={copyCardLink}
 									data-umami-event="copy-card-link"
@@ -326,7 +326,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						) : null}
 						{canDuplicate ? (
 							<>
-								{hasExports || shareableCard || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
+								{hasExports || shareableCard || layout || hasParameterActions ? <MenuSeparator /> : null}
 								<Ariakit.MenuGroup>
 									<MenuItem onClick={onDuplicate}>Duplicate</MenuItem>
 								</Ariakit.MenuGroup>
@@ -335,7 +335,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						{onRemove ? (
 							<>
 								{hasExports || shareableCard || layout || canDuplicate || hasParameterActions ? (
-									<Ariakit.MenuSeparator />
+									<MenuSeparator />
 								) : null}
 								<Ariakit.MenuGroup>
 									<MenuItem destructive onClick={onRemove} data-umami-event="dashboard-card-remove">

@@ -7,9 +7,9 @@ import {
 	FilterNumberInput,
 	NoActiveFilters
 } from '~/components/FilterBuilderDialog'
-import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import {
 	activeEquityFiltersToDraft,
 	createDefaultEquityDraftFilter,

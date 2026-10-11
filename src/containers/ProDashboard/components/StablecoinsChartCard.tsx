@@ -1,7 +1,6 @@
 import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { filterChartDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/filterChartDataset'
 import {
 	STABLECOIN_DOLLAR_CHART_OPTIONS,
@@ -15,6 +14,7 @@ import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'

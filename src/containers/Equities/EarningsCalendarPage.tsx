@@ -3,16 +3,17 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
+import { ChartPanelBody } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SearchField } from '~/ui/SearchField'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { InlineStatus, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
@@ -184,7 +185,7 @@ function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, '
 					valueSymbol=""
 					exportButtons="hidden"
 					hideDataZoom
-					containerClassName={`${CHART_FILL} min-h-[220px]`}
+					containerClassName="min-h-[220px]"
 				/>
 			</Suspense>
 		</ChartPanelBody>
@@ -496,7 +497,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 					</form>
 				</PanelHeader>
 				<div className="flex flex-wrap items-center gap-2 p-2">
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={MARKET_CAP_OPTIONS}
 						includeQueryKey="marketCap"
 						excludeQueryKey="excludeMarketCap"
@@ -506,7 +507,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 						variant="filter"
 						size="md"
 					/>
-					<SelectWithCombobox
+					<UrlSelectWithCombobox
 						allValues={sectorOptions}
 						includeQueryKey="sector"
 						excludeQueryKey="excludeSector"

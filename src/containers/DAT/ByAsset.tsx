@@ -6,7 +6,6 @@ import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesC
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
@@ -16,9 +15,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -87,7 +87,6 @@ export function DATByAsset({
 				<Panel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							containerClassName={CHART_FILL}
 							dataset={dailyFlowsChart.dataset}
 							charts={dailyFlowsChart.charts}
 							valueSymbol={metadata.ticker}
@@ -375,7 +374,6 @@ function MNAVChart({
 					charts={data.charts}
 					selectedCharts={selectedCharts}
 					dataset={data.dataset}
-					containerClassName={CHART_FILL}
 					valueSymbol=""
 					hideDataZoom={data.dataset.source.length < 2}
 					onReady={handleChartReady}

@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
+import { selectTriggerStyles } from '~/ui/ComboboxSelectTrigger'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'

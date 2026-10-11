@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Select } from '~/components/Select/Select'
-import type { SelectTriggerSize } from '~/components/Select/types'
+import type { SelectTriggerSize } from '~/ui/ComboboxSelectTrigger'
+import { Select } from '~/ui/Select'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewInclusionDefaults } from './constants'
 import { getRwaInclusionQueryValue, resolveRWAOverviewInclusionFlag } from './filterState'

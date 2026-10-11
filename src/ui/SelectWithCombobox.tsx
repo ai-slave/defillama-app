@@ -1,11 +1,20 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { useRouter } from 'next/router'
 import * as React from 'react'
-import { NestedMenu } from '~/components/NestedMenu'
-import { CountBadge } from '~/ui/CountBadge'
-import { Icon } from '~/ui/Icon'
-import { Input } from '~/ui/Input'
+import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
+import {
+	ComboboxSelectTrigger,
+	selectTriggerStyles,
+	type SelectTriggerSize,
+	type SelectTriggerVariant
+} from './ComboboxSelectTrigger'
+import { CountBadge } from './CountBadge'
+import { Icon } from './Icon'
+import { Input } from './Input'
+import { isSearchable } from './internal/searchThreshold'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
+import { gridRowStyles, onlyItemStyles } from './internal/selectRowStyles'
+import { NestedMenu } from './NestedMenu'
 import {
 	nestedMenuSeeMoreStyles,
 	nestedMenuSelectRowStyles,
@@ -15,27 +24,25 @@ import {
 	popoverScrollAreaStyles,
 	popoverSeeMoreStyles,
 	popoverSingleSelectCheckStyles
-} from '~/ui/Popover'
-import { PopoverHeader } from '~/ui/PopoverHeader'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { Tooltip } from '~/ui/Tooltip'
-import { tw } from '~/ui/tw'
-import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
-import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
-import { readSelectionFromQuery, updateQueryFromSelected } from './query'
-import { isSearchable } from './searchThreshold'
-import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
-import { selectTriggerStyles } from './types'
+} from './Popover'
+import { PopoverHeader } from './PopoverHeader'
+import { ComboboxSurface } from './PopoverSurface'
+import type { SelectOption, SelectValues } from './Select'
+import { Tooltip } from './Tooltip'
 
-/* SelectWithCombobox — a single or multi picker for a mid-sized list; the folder README says which picker fits.
+/* SelectWithCombobox — a single or multi picker for a mid-sized list; design.md "Which component for which job" says
+   which picker fits. `quickActions` offer preset selections (only EVM chains) under "Select all". A selection that
+   lives in the URL renders UrlSelectWithCombobox (src/components/Select/UrlSelect.tsx), which reads and writes it for
+   this picker. A list opens scrolled to its last selected option, which is Ariakit's behavior; multi-selects keep it
+   too.
 
    A multi-select row holds two `role="option"` items: the option and its "Only" button. Code that counts or indexes
    options skips `[aria-label^="Only "]`. */
 
 interface ISelectWithComboboxBase {
 	allValues: SelectValues
-	/** What the trigger lists instead of `selectedValues`, e.g. one group name for its selected members. */
+	/** What the trigger lists after the label instead of the picked names: one group name for its selected members, or a
+	    summary such as "All except Ethereum". The `smol` count still counts `selectedValues`. */
 	selectedLabels?: Array<string>
 	singleSelect?: boolean
 	nestedMenu?: boolean
@@ -52,8 +59,6 @@ interface ISelectWithComboboxBase {
 	/** Rows under "Select all" that select a preset, e.g. only EVM chains. */
 	quickActions?: ReadonlyArray<{ label: string; onSelect: () => void }>
 	onValuesChange?: (values: Array<string>, label: string) => void
-	resetPageOnQueryChange?: boolean
-	pushQueryUpdates?: (updates: Record<string, string | Array<string> | undefined>) => void
 	popoverClassName?: string
 	searchPlaceholder?: string
 	visibleOptionLimit?: number | null
@@ -61,37 +66,18 @@ interface ISelectWithComboboxBase {
 	emptyLabel?: React.ReactNode
 }
 
-interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
-	includeQueryKey: string
-	excludeQueryKey: ExcludeQueryKey
-	/** Rendered as selected while the URL holds no selection; defaults to every option. */
-	defaultSelectedValues?: Array<string>
-	/** The picker reads its selection from the URL with `readSelectionFromQuery`, the same reader pages use. */
-	selectedValues?: never
-	setSelectedValues?: never
-}
-
-interface ISelectWithComboboxState extends ISelectWithComboboxBase {
-	includeQueryKey?: never
-	excludeQueryKey?: never
-	defaultSelectedValues?: never
-	selectedValues: Array<string>
-	setSelectedValues: (values: Array<string>) => void
-}
-
 /** With `labelType="none"` the trigger shows the current value, so `heading` names the phone drawer; otherwise the label does. */
 type SelectWithComboboxLabelProps =
 	| { label: string; labelType?: 'regular' | 'smol' | 'none'; heading: string }
 	| { label: string; labelType?: 'regular' | 'smol'; heading?: undefined }
 
-type ISelectWithCombobox = SelectWithComboboxLabelProps & (ISelectWithComboboxUrlParams | ISelectWithComboboxState)
+/** Every SelectWithCombobox prop but the selection. */
+export type SelectWithComboboxBaseProps = SelectWithComboboxLabelProps & ISelectWithComboboxBase
 
-export const gridRowStyles = tw`group relative flex border-b border-subtle last-of-type:border-b-0`
-// "Only" is a small button lying over the space its option keeps free before the check (the row's px-3, the 14px check
-// and the gap-2 put it 34px from the edge), so the check stays at the edge. It shows while either item is active, so a
-// keyboard reader sees it on reaching the row and a phone shows it on the row last tapped, and on desktop also on hover.
-// Phones get a larger tap area. `h-fit` lets my-auto center it between inset-y-0 while min-h sets its height.
-export const onlyItemStyles = tw`invisible absolute inset-y-0 right-[34px] my-auto flex h-fit min-h-6 cursor-pointer items-center rounded-md border border-subtle bg-surface px-2 label-sm text-secondary group-has-data-active-item:visible hover:border-medium hover:bg-hover-row hover:text-primary data-active-item:border-medium data-active-item:bg-hover-row data-active-item:text-primary data-focus-visible:focus-ring max-sm:min-h-8 max-sm:px-3 sm:group-hover:visible`
+type ISelectWithCombobox = SelectWithComboboxBaseProps & {
+	selectedValues: Array<string>
+	setSelectedValues: (values: Array<string>) => void
+}
 
 const getOptionKey = (option: string | SelectOption) => (typeof option === 'string' ? option : option.key)
 
@@ -130,9 +116,9 @@ export function describeSelection(allValues: SelectValues, selectedValues: Array
 
 export function SelectWithCombobox({
 	allValues,
-	selectedValues: selectedValuesProp,
+	selectedValues,
 	selectedLabels: selectedLabelsProp,
-	setSelectedValues: setSelectedValuesProp,
+	setSelectedValues,
 	label,
 	singleSelect = false,
 	nestedMenu,
@@ -145,64 +131,19 @@ export function SelectWithCombobox({
 	customFooter,
 	headerRow,
 	quickActions = EMPTY_QUICK_ACTIONS,
-	includeQueryKey,
-	excludeQueryKey,
-	resetPageOnQueryChange,
-	pushQueryUpdates,
 	onValuesChange,
-	defaultSelectedValues,
 	popoverClassName,
 	searchPlaceholder = 'Search…',
 	visibleOptionLimit = 20,
 	selectAllScope = 'all',
 	emptyLabel = 'No results found'
 }: ISelectWithCombobox) {
-	const router = useRouter()
-	const urlSelection = React.useMemo(
-		() =>
-			includeQueryKey && excludeQueryKey
-				? readSelectionFromQuery(
-						router.query,
-						includeQueryKey,
-						excludeQueryKey,
-						allValues.map((v) => (typeof v === 'string' ? v : v.key)),
-						defaultSelectedValues
-					)
-				: [],
-		[router.query, includeQueryKey, excludeQueryKey, allValues, defaultSelectedValues]
-	)
-	const selectedValues = selectedValuesProp ?? urlSelection
 	const selectedLabels = selectedLabelsProp ?? selectedValues
-	// A picker reading the URL says when nothing or "all except" is selected, so an active filter never
-	// looks like the default.
-	const urlSelectionText = includeQueryKey && !selectedLabelsProp ? describeSelection(allValues, selectedValues) : null
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = !singleSelect
-	const queryUpdateOptions = {
-		...(resetPageOnQueryChange !== undefined ? { resetPage: resetPageOnQueryChange } : {}),
-		...(pushQueryUpdates !== undefined ? { pushQueryUpdates } : {})
-	}
 	const allKeys = allValues.map(getOptionKey)
-
-	// One writer for every selection change: the URL when the picker reads it, else the caller's state.
-	const writeSelection = (values: Array<string> | 'None' | null) => {
-		if (includeQueryKey) {
-			updateQueryFromSelected(
-				router,
-				includeQueryKey,
-				excludeQueryKey,
-				allKeys,
-				values,
-				defaultSelectedValues,
-				queryUpdateOptions
-			)
-			return
-		}
-		setSelectedValuesProp!(values === 'None' ? [] : (values ?? allKeys))
-	}
-	const setSelectedValues = (values: Array<string>) => writeSelection(values)
-	const clearAll = () => writeSelection('None')
-	const selectOnlyOne = (value: string) => writeSelection([value])
+	const clearAll = () => setSelectedValues([])
+	const selectOnlyOne = (value: string) => setSelectedValues([value])
 	const firstSelectedValue = selectedValues[0]
 	const providerValue = singleSelect ? (firstSelectedValue ?? '') : selectedValues
 
@@ -235,9 +176,8 @@ export function SelectWithCombobox({
 	const matchKeys = matches.map(getOptionKey)
 
 	const toggleAll = () => {
-		if (selectAllScope === 'all') return writeSelection(includeQueryKey ? null : allKeys)
-		const nextValues = Array.from(new Set(selectedValues.concat(matchKeys)))
-		writeSelection(includeQueryKey && nextValues.length === allKeys.length ? null : nextValues)
+		if (selectAllScope === 'all') return setSelectedValues(allKeys)
+		setSelectedValues(Array.from(new Set(selectedValues.concat(matchKeys))))
 	}
 	const hasOptionLimit = visibleOptionLimit !== null
 	const visibleMatches = hasOptionLimit ? matches.slice(0, viewableMatches) : matches
@@ -427,19 +367,18 @@ export function SelectWithCombobox({
 			>
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
-						<CountBadge count={selectedLabels.length} />
+						<CountBadge count={selectedValues.length} />
 						<span>{label}</span>
 					</span>
-				) : labelType === 'regular' && (urlSelectionText || selectedLabels.length > 0) ? (
+				) : labelType === 'regular' && selectedLabels.length > 0 ? (
 					<>
 						<span>{label}: </span>
 						<span className="text-link">
-							{urlSelectionText ??
-								(singleSelect && firstSelectedValue !== undefined
-									? getSelectOptionLabel(allValues, firstSelectedValue)
-									: selectedLabels.length > 2
-										? `${selectedLabels[0]} + ${selectedLabels.length - 1} others`
-										: selectedLabels.join(', '))}
+							{singleSelect && firstSelectedValue !== undefined
+								? getSelectOptionLabel(allValues, firstSelectedValue)
+								: selectedLabels.length > 2
+									? `${selectedLabels[0]} + ${selectedLabels.length - 1} others`
+									: selectedLabels.join(', ')}
 						</span>
 					</>
 				) : (

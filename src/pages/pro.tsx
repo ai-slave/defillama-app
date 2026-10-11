@@ -41,9 +41,10 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import { ProButton, ProDialogFallback, ProMeta } from '~/containers/ProDashboard/ui'
+import { ProButton, ProMeta } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
+import { DialogLoadingStatus } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
@@ -544,7 +545,7 @@ function ProContent({
 					</TabPanel>
 				) : null}
 
-				<Suspense fallback={createDialogOpen ? <ProDialogFallback width="lg" /> : null}>
+				<Suspense fallback={createDialogOpen ? <DialogLoadingStatus size="lg" /> : null}>
 					<CreateDashboardPicker
 						dialogStore={createDashboardDialogStore}
 						onCreate={handleCreateDashboard}
@@ -552,7 +553,7 @@ function ProContent({
 					/>
 				</Suspense>
 
-				<Suspense fallback={isComparisonLink ? <ProDialogFallback width="lg" /> : null}>
+				<Suspense fallback={isComparisonLink ? <DialogLoadingStatus size="lg" /> : null}>
 					<CreateDashboardPicker
 						dialogStore={comparisonLinkDialogStore}
 						onCreate={handleCreateDashboard}
@@ -561,7 +562,7 @@ function ProContent({
 					/>
 				</Suspense>
 
-				<Suspense fallback={aiDialog === 'generate' ? <ProDialogFallback width="md" /> : null}>
+				<Suspense fallback={aiDialog === 'generate' ? <DialogLoadingStatus size="md" /> : null}>
 					<GenerateDashboardModal
 						isOpen={aiDialog === 'generate'}
 						onClose={() => setAiDialog(null)}

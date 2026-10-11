@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
-import { NestedMenuToggle } from '~/components/NestedMenu'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { NestedMenuToggle } from '~/ui/NestedMenu'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'

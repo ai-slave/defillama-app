@@ -299,7 +299,6 @@ function SankeyChart({
 	return (
 		<ChartContainer
 			chartRef={containerRef}
-			chartClassName=""
 			chartStyle={{ height, minHeight: useMobileLayout ? sankeyMobileMinHeight(nodes.length) : undefined }}
 			{...props}
 		/>

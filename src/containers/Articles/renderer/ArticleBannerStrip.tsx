@@ -109,8 +109,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 		<Announcement
 			announcementId={`research-banner-${banner.id}`}
 			version={banner.updatedAt}
-			className="min-h-0 w-full gap-3 rounded-none bg-research-banner px-4 py-2.5 text-on-brand"
-			contentClassName="flex items-center justify-center"
+			scope="research"
 			dismissLabel="Dismiss banner"
 		>
 			<p className="m-0 text-center label-xs tracking-[0.18em] uppercase">

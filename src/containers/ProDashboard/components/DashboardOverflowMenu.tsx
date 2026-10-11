@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
-import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSeparator, MenuSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
@@ -161,7 +161,7 @@ export function DashboardOverflowMenu({
 			) : null}
 			{onDelete ? (
 				<>
-					<Ariakit.MenuSeparator className="my-1 border-subtle" />
+					<MenuSeparator />
 					<MenuItem destructive data-umami-event="dashboard-delete" onClick={() => setShowDeleteConfirm(true)}>
 						<Icon name="trash-2" className="size-3.5" />
 						<span>Delete dashboard…</span>
@@ -232,9 +232,7 @@ export function DashboardOverflowMenu({
 							</MenuItem>
 						)
 					})}
-					{phoneActions.length > 0 && hasDashboardActions ? (
-						<Ariakit.MenuSeparator className="my-1 border-subtle" />
-					) : null}
+					{phoneActions.length > 0 && hasDashboardActions ? <MenuSeparator /> : null}
 					{dashboardItems}
 				</MenuSurface>
 			</Ariakit.MenuProvider>

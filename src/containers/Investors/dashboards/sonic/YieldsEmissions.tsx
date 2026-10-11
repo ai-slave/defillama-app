@@ -5,7 +5,7 @@ import type { paginatedTableFeatures } from '~/components/Table/features/paginat
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -92,7 +92,6 @@ export default function YieldsEmissions() {
 						<MultiSeriesChart
 							title={data.emissions.title}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.emissions.dataset}
 							charts={data.emissions.charts}
 							valueSymbol=""

@@ -2,11 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
-import {
-	VirtualizedMultiSelect,
-	VirtualizedSelect,
-	type VirtualizedSelectOption
-} from '~/components/Select/VirtualizedSelect'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
@@ -16,6 +11,7 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
+import { VirtualizedMultiSelect, VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'

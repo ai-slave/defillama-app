@@ -8,7 +8,7 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -163,7 +163,6 @@ function TrendCard({
 						charts={model.charts}
 						valueSymbol={valueSymbol}
 						groupBy={groupBy}
-						containerClassName={CHART_FILL}
 						chartOptions={chartOptions}
 						showLegend
 						exportButtons="hidden"
@@ -311,7 +310,6 @@ export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subti
 					charts={model.charts}
 					valueSymbol="$"
 					groupBy="daily"
-					containerClassName={CHART_FILL}
 					chartOptions={CHART_OPTIONS}
 					showLegend
 					exportButtons="hidden"

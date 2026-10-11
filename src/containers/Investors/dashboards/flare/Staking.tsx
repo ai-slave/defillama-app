@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -81,7 +81,6 @@ export default function Staking() {
 							subtitle={chart.subtitle}
 							titleTooltip={chart.titleTooltip}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							showLegend
 							chartOptions={chart.chartOptions}
 						/>
@@ -100,7 +99,6 @@ export default function Staking() {
 							subtitle={pctChart.subtitle}
 							titleTooltip={pctChart.titleTooltip}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							chartOptions={pctChart.chartOptions}
 						/>
 					</Suspense>

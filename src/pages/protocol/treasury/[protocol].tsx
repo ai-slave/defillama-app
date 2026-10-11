@@ -11,7 +11,6 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
@@ -26,9 +25,10 @@ import {
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -116,7 +116,6 @@ function TokensBreakdownPieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -156,7 +155,6 @@ function HistoricalTreasuryChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					containerClassName={CHART_FILL}
 					showLegend
 					valueSymbol="$"
 					selectedCharts={TREASURY_SERIES}
@@ -237,7 +235,6 @@ function TokensMultiSeriesChartCard({
 					dataset={dataset}
 					charts={charts}
 					csvSource={csvSource}
-					containerClassName={CHART_FILL}
 					showLegend
 					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
 					selectedCharts={selectedCharts}

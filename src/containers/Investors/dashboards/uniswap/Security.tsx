@@ -8,7 +8,7 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -113,7 +113,6 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 				dataset={dataset}
 				charts={charts}
 				valueSymbol="$"
-				containerClassName={CHART_FILL}
 				showLegend
 				exportButtons="hidden"
 				chartOptions={chartOptions}

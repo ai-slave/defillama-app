@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { type FormEvent, useId, useMemo, useState } from 'react'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
@@ -9,6 +8,7 @@ import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { tw } from '~/ui/tw'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariableKind } from '../dashboardTypes'
 import {
 	ALL_CHAINS_VARIABLE_VALUE,

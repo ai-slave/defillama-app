@@ -6,7 +6,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -223,7 +223,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="TVL"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={tvlDataset}
 							charts={TVL_CHARTS}
 							valueSymbol="$"
@@ -242,7 +241,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="TVL by chain"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={tvlByChain.dataset}
 							charts={tvlByChain.charts}
 							valueSymbol="$"
@@ -263,7 +261,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="Total Borrowed"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={borrowedDataset}
 							charts={BORROWED_CHARTS}
 							valueSymbol="$"
@@ -282,7 +279,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="Fees"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={feesDataset}
 							charts={FEES_CHARTS}
 							valueSymbol="$"
@@ -301,7 +297,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="Fees by Chain"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={feesByChain.dataset}
 							charts={feesByChain.charts}
 							valueSymbol="$"
@@ -321,7 +316,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="Revenue"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={revenueDataset}
 							charts={REVENUE_CHARTS}
 							valueSymbol="$"
@@ -340,7 +334,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="Supply Side Revenue"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={supplySideRevenueDataset}
 							charts={SUPPLY_SIDE_REVENUE_CHARTS}
 							valueSymbol="$"
@@ -359,7 +352,6 @@ export default function SparkLend() {
 						<MultiSeriesChart
 							title="USD inflows"
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}
 							charts={INFLOWS_CHARTS}
 							valueSymbol="$"

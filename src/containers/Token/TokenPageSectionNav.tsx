@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 
 type TokenPageSectionNavItem = {
 	id: string
@@ -97,7 +97,7 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 
 	return (
 		<div className="sticky top-0 z-20 bg-surface">
-			<nav className={tabTrackStyles} aria-label="Token page sections">
+			<TabNav label="Token page sections">
 				{sections.map((section) => {
 					const isActive = activeSectionId === section.id
 
@@ -117,7 +117,7 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 						</TabLink>
 					)
 				})}
-			</nav>
+			</TabNav>
 		</div>
 	)
 }

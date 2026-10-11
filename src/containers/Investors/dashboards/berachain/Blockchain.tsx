@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -157,7 +157,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="Daily transactions"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.transactions}
 						charts={TRANSACTIONS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
@@ -172,7 +171,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="Active & new addresses"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.addresses}
 						charts={ADDRESSES_CHARTS}
 						chartOptions={DEFAULT_CHART_OPTIONS}
@@ -196,7 +194,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="Daily gas fees (USD)"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.gasFees}
 						charts={GAS_FEES_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
@@ -211,7 +208,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="Block utilization (%)"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.blockUtilization}
 						charts={UTILIZATION_CHART}
 						chartOptions={PERCENT_CHART_OPTIONS}
@@ -228,7 +224,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="New contracts deployed (monthly)"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.contractDeployments}
 						charts={CONTRACTS_CHART}
 						chartOptions={DEFAULT_CHART_OPTIONS}
@@ -245,7 +240,6 @@ export default function Blockchain() {
 					<MultiSeriesChart
 						title="Daily token transfer volume (USD)"
 						headingAs="h3"
-						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.tokenTransfers}
 						charts={TRANSFERS_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}

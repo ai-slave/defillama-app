@@ -2,8 +2,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
+import { VirtualizedSelect } from '~/ui/VirtualizedSelect'
 import { virtualViewport } from '~/utils/testing/virtualLayout'
 import { waitForUi } from '~/utils/testing/waitForUi'
 

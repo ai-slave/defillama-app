@@ -1,7 +1,6 @@
 import { useAuthContext } from '~/auth'
-import { BasicLink } from '~/components/Link'
 import { useIsClient } from '~/hooks/useIsClient'
-import { promoBadgeStyles } from '~/ui/PromoBadge'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { SidebarDivider } from './shared'
 
 export function PremiumHeader() {
@@ -16,12 +15,9 @@ export function PremiumHeader() {
 			<SidebarDivider className="mt-1 mb-2 -ml-1.5 max-lg:hidden" />
 			<p className="mb-1 flex items-center gap-2">
 				<span className="label-sm tracking-wide text-secondary">PREMIUM</span>
-				<BasicLink
-					href="/subscription"
-					className={`hover-wash relative inline-flex ${promoBadgeStyles} ${showFreeTrial ? '' : 'invisible'}`.trim()}
-				>
+				<PromoBadge href="/subscription" className={showFreeTrial ? undefined : 'invisible'}>
 					7-day trial
-				</BasicLink>
+				</PromoBadge>
 			</p>
 		</>
 	)

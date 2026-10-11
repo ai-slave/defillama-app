@@ -4,7 +4,6 @@ import { type CSSProperties, lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
-import { Menu } from '~/components/Menu'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
@@ -16,11 +15,12 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { CHART_FILL, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
+import { Menu } from '~/ui/Menu'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -968,7 +968,7 @@ export function RWAAssetPage({
 						style={{ '--series': NATIVE_YIELD_CHARTS[0].color } as CSSProperties}
 					/>
 					<ChartPanelToolbar
-						className="items-start"
+						align="start"
 						leading={
 							// A headline stat like the summary cards': a secondary label over the mono-xl value.
 							asset.nativeYieldCurrent != null ? (
@@ -1001,7 +1001,6 @@ export function RWAAssetPage({
 								showLegend
 								exportButtons="hidden"
 								onReady={onNativeYieldChartReady}
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					)}

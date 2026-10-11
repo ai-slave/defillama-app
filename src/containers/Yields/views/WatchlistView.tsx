@@ -1,12 +1,12 @@
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
-import { TabLink, tabTrackStyles } from '~/ui/Tabs'
+import { TabLink, TabNav } from '~/ui/Tabs'
 
 export function WatchListTabs() {
 	const router = useRouter()
 	const isTokensTab = router.pathname === '/watchlist' && router.query.tab === 'tokens'
 	return (
-		<nav className={`${tabTrackStyles} max-w-fit`} aria-label="Watchlist">
+		<TabNav label="Watchlist" className="max-w-fit">
 			<TabLink
 				as={BasicLink}
 				href="/watchlist"
@@ -26,6 +26,6 @@ export function WatchListTabs() {
 			<TabLink as={BasicLink} href="/watchlist?tab=tokens" aria-current={isTokensTab ? 'page' : undefined}>
 				Tokens
 			</TabLink>
-		</nav>
+		</TabNav>
 	)
 }

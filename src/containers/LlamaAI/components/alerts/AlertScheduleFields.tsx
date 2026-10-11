@@ -1,10 +1,10 @@
-import { Select } from '~/components/Select/Select'
 import type { SlackChannel, SlackLink } from '~/containers/LlamaAI/api/slack'
 import type { SlackTarget } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { DAYS_OF_WEEK, getTimezoneLabel, GMT_OFFSETS } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { FieldGroup } from '~/ui/Field'
 import { takeLostFocus } from '~/ui/focus'
+import { Select } from '~/ui/Select'
 import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 

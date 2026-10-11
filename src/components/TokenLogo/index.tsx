@@ -1,15 +1,13 @@
+import { Logo } from '~/ui/Logo'
 import { chainIconUrl, equityIconUrl, exchangeIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
 /* ----------------------------------------------------------------------------
-   TokenLogo — a circular logo for a token, chain, exchange, pegged asset or
-   equity. A missing image falls through `fallbackSrc`, then the placeholder,
-   then hides.
+   TokenLogo — the logo of a token, chain, exchange, pegged asset or equity,
+   found by name: it resolves the artwork URL from the icon CDN and draws it
+   with `Logo` (src/ui/Logo.tsx), which owns the disc, sizing and the
+   broken-image fallback. A `src` passes through unresolved.
 
-   Token, chain, exchange and pegged-asset artwork fills the circle
-   (`object-cover`). Equity artwork is company art: it keeps its proportions
-   (`object-contain`) inside the circle, with a subtle border on the fixed
-   light `bg-equity-logo` canvas the source assets are drawn for. Never
-   stretch equity artwork or put it on a dark surface. `equityIconUrl` in
+   Equities draw with Logo's `company` artwork. `equityIconUrl` in
    src/utils/icons.ts may route a ticker whose asset is a poorly fitted
    wordmark to a reviewed alternative.
 ---------------------------------------------------------------------------- */
@@ -45,90 +43,18 @@ function resolveLogoUrl(props: NamedLogoProps): string {
 	}
 }
 
-export function FallbackLogo({ size = 24, 'data-lgonly': lgonly }: { size?: number; 'data-lgonly'?: boolean }) {
-	return (
-		<span
-			aria-hidden="true"
-			data-lgonly={lgonly}
-			className="inline-block shrink-0 rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
-			style={{ height: size, width: size }}
-		/>
-	)
-}
-
 export function TokenLogo(props: TokenLogoProps) {
 	const { size = 24, fallbackSrc, alt, title, 'data-lgonly': lgonly, ...rest } = props
-	const resolvedSrc = 'kind' in rest && rest.kind ? resolveLogoUrl(rest) : (rest.src ?? null)
-	const isEquity = 'kind' in rest && rest.kind === 'equities'
 
 	return (
-		<TokenLogoImg
-			key={`${resolvedSrc ?? ''}|${fallbackSrc ?? ''}`}
-			resolvedSrc={resolvedSrc}
-			size={size}
+		<Logo
+			src={'kind' in rest && rest.kind ? resolveLogoUrl(rest) : (rest.src ?? null)}
 			fallbackSrc={fallbackSrc}
+			size={size}
+			variant={rest.kind === 'equities' ? 'company' : 'fill'}
 			alt={alt}
 			title={title}
 			data-lgonly={lgonly}
-			isEquity={isEquity}
 		/>
-	)
-}
-
-function TokenLogoImg({
-	resolvedSrc,
-	size = 24,
-	fallbackSrc,
-	alt,
-	title,
-	'data-lgonly': lgonly,
-	isEquity
-}: {
-	resolvedSrc: string | null
-	size?: number
-	fallbackSrc: string | null | undefined
-	alt: string | undefined
-	title?: string | undefined
-	'data-lgonly': boolean | undefined
-	isEquity: boolean
-}) {
-	const placeholderSrc = '/assets/placeholder.png'
-	const sources = [
-		...new Set([resolvedSrc, fallbackSrc, placeholderSrc].filter((source): source is string => !!source))
-	]
-
-	return (
-		<span
-			data-lgonly={lgonly}
-			className={`inline-block shrink-0 overflow-hidden rounded-full data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${
-				isEquity ? 'border border-subtle bg-equity-logo' : 'bg-surface-elevated-2'
-			}`}
-			style={{ height: size, width: size }}
-			title={title}
-		>
-			<img
-				alt={alt ?? ''}
-				src={sources[0]}
-				height={size}
-				width={size}
-				data-logo-source-index="0"
-				className={`block size-full text-transparent ${isEquity ? 'object-contain' : 'object-cover'}`}
-				loading="lazy"
-				onError={(event) => {
-					const image = event.currentTarget
-					const sourceIndex = Number(image.dataset.logoSourceIndex)
-					const nextSourceIndex = sourceIndex + 1
-
-					if (nextSourceIndex < sources.length) {
-						image.dataset.logoSourceIndex = String(nextSourceIndex)
-						image.src = sources[nextSourceIndex]!
-						return
-					}
-
-					image.removeAttribute('src')
-					image.classList.add('hidden')
-				}}
-			/>
-		</span>
 	)
 }

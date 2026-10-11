@@ -3,8 +3,6 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	type StablecoinAssetInfo,
@@ -29,7 +27,9 @@ import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablec
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { EmptyState, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'

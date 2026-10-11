@@ -7,7 +7,6 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import type { IAdapterChart } from '~/containers/AdapterMetrics/api.types'
@@ -29,9 +28,10 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { Select } from '~/ui/Select'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -325,7 +325,6 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
 							groupBy={deferredFinalCharts.groupBy}
-							containerClassName={CHART_FILL}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}

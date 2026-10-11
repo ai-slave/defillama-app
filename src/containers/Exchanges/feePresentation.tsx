@@ -1,5 +1,5 @@
 import { Hovercard } from '~/ui/Hovercard'
-import { type Status, StatusBadge, statusBadgeStyles } from '~/ui/StatusBadge'
+import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface MakerTakerFee {
@@ -38,13 +38,7 @@ export function ValueBadge({
 	return (
 		<Hovercard
 			placement="left-start"
-			render={
-				<button
-					type="button"
-					aria-label={ariaLabel}
-					className={`hover-wash inline-flex ${statusBadgeStyles(status)}`}
-				/>
-			}
+			render={<StatusBadge status={status} render={<button type="button" aria-label={ariaLabel} />} />}
 			contentClassName={contentClassName}
 			content={content}
 		>

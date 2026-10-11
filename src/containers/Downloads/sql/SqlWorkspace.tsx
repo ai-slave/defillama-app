@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
-import { ViewTabs } from '~/components/ViewTabs'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
@@ -11,7 +10,7 @@ import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
 import { BusyGlyph, EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
@@ -894,7 +893,7 @@ function SqlWorkspaceInner({
 			) : null}
 
 			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS}>
-				<ViewTabs
+				<UnderlineTabList
 					label="SQL workspace section"
 					tabs={[
 						{ id: 'editor', label: 'Editor' },

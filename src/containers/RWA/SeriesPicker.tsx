@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getRwaSeriesPickQuery } from './seriesPick'
 

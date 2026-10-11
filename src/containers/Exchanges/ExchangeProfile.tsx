@@ -2,10 +2,9 @@ import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
-import { ViewTabs } from '~/components/ViewTabs'
 import { Card } from '~/ui/Card'
 import { ScopeNote } from '~/ui/ScopeNote'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { Tabs, TabPanel, UnderlineTabList } from '~/ui/Tabs'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { useExchangeCountry } from './ExchangeCountrySelect'
 import {
@@ -282,7 +281,7 @@ export function ProfileSectionTabs({
 	const tabs = visibleProfileTabs(!!hasReserves, hasInformation, !!hasHistory, !!hasExecution)
 	return (
 		<Tabs value={activeTab} onValueChange={onTabChange} values={tabs}>
-			<ViewTabs tabs={tabs.map((id) => ({ id, label: PROFILE_TAB_LABELS[id] }))} label="Exchange sections" />
+			<UnderlineTabList tabs={tabs.map((id) => ({ id, label: PROFILE_TAB_LABELS[id] }))} label="Exchange sections" />
 			<TabPanel id={panelId} value={activeTab}>
 				{children}
 			</TabPanel>

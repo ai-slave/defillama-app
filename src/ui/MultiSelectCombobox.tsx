@@ -1,15 +1,28 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
-import { Button } from '~/ui/Button'
-import { focusNeighborOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { ListLoading } from '~/ui/NoResults'
-import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
-import type { MultiSelectOption } from './types'
+import { Button } from './Button'
+import { focusNeighborOnLeave } from './focus'
+import { Icon } from './Icon'
+import { Logo } from './Logo'
+import { ListLoading } from './NoResults'
+import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from './Popover'
+import { ComboboxSurface } from './PopoverSurface'
+
+/* MultiSelectCombobox — a search with its input on the page and the picks as removable chips in front of it; the
+   results open in the `search-results` surface under the whole control. Removing a chip hands focus to its neighbor,
+   else to the input. */
+
+export type MultiSelectOption = {
+	value: string
+	label: string
+	selectedLabel?: string
+	disabled?: boolean
+	/** Image URL, drawn round on the option's row. */
+	logo?: string
+	isChild?: boolean
+}
 
 const DEFAULT_VIEWABLE_MATCHES = 10
 
@@ -143,7 +156,7 @@ export function MultiSelectCombobox({
 							hideOnClick
 							className={`${popoverRowWithBorderStyles} group justify-start gap-2`}
 						>
-							{item.logo ? <TokenLogo src={item.logo} size={20} /> : null}
+							{item.logo ? <Logo src={item.logo} size={20} /> : null}
 							<span>{item.label}</span>
 							<Ariakit.ComboboxItemSelected>
 								{(selected) => (

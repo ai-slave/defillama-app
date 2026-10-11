@@ -12,7 +12,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
-import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogSearchHeader } from '~/ui/Dialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -135,9 +135,9 @@ function SiteSearchPalette({ onSelect }: { onSelect: () => void }) {
 			<DialogSearchHeader title="Search">
 				<Ariakit.Combobox placeholder="Search…" aria-label="Search" render={<Input />} />
 			</DialogSearchHeader>
-			<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} p-2`} alwaysVisible>
+			<DialogBody kind="list" render={<Ariakit.ComboboxList alwaysVisible />}>
 				<SearchResults searchValue={searchValue} onSelect={onSelect} />
-			</Ariakit.ComboboxList>
+			</DialogBody>
 		</Ariakit.ComboboxProvider>
 	)
 }

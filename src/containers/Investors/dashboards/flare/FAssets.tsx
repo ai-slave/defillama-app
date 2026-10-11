@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -76,7 +76,6 @@ export default function FAssets() {
 							subtitle={charts.locked.subtitle}
 							titleTooltip={charts.locked.titleTooltip}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							chartOptions={charts.locked.chartOptions}
 						/>
 					</Suspense>
@@ -105,7 +104,6 @@ export default function FAssets() {
 									top: 'middle'
 								}}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					</Panel>
@@ -135,7 +133,6 @@ export default function FAssets() {
 									top: 'middle'
 								}}
 								valueSymbol="$"
-								containerClassName={CHART_FILL}
 							/>
 						</Suspense>
 					</Panel>

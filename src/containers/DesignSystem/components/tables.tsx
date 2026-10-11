@@ -1,24 +1,24 @@
 import { useState } from 'react'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { Select } from '~/components/Select/Select'
 import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SearchField } from '~/ui/SearchField'
+import { Select } from '~/ui/Select'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import type { Family, KnobValues } from '../shared'
 
 const CHAINS = ['All chains', 'Ethereum', 'Arbitrum', 'Base', 'Solana']
 
-function TableToolbarDemo() {
+function TableToolbarDemo({ divided }: { divided: boolean }) {
 	const [chain, setChain] = useState('Ethereum')
 	const [search, setSearch] = useState('aave')
 	return (
 		<div className="w-full max-w-3xl">
 			<Card padding="none">
-				<TableToolbar>
+				<TableToolbar divided={divided}>
 					<h4 className="mr-auto label-md">Protocols</h4>
 					<SearchField
 						label="Search protocols"
@@ -130,8 +130,9 @@ export const tables: Family = {
 		{
 			name: 'TableToolbar',
 			source: 'src/ui/Toolbar.tsx',
-			note: 'The title takes the free space (mr-auto), the search keeps 280px, and a TableToolbarControlGroup keeps its controls together when the row wraps.',
-			render: () => <TableToolbarDemo />
+			knobs: [{ name: 'divided', boolean: true }],
+			note: 'The title takes the free space (mr-auto), the search keeps 280px, and a TableToolbarControlGroup keeps its controls together when the row wraps. A row stacked over another row is divided.',
+			render: (values) => <TableToolbarDemo divided={values.divided === true} />
 		},
 		{
 			name: 'TablePager',

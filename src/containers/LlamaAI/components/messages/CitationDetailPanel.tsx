@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBackButton, DialogBody, DialogHeader, dialogScrollableBodyStyles } from '~/ui/Dialog'
+import { Dialog, DialogBackButton, DialogBody, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
@@ -174,7 +174,9 @@ export function CitationDetailPanel({
 						</Tooltip>
 					</div>
 				</div>
-				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-2.5 px-4 py-3.5`}>{verification}</div>
+				<div className="flex min-h-0 flex-auto flex-col gap-2.5 overflow-y-auto overscroll-contain px-4 py-3.5">
+					{verification}
+				</div>
 			</Panel>
 		</div>
 	)

@@ -8,7 +8,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCa
 import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { metricOptionChipStyles } from '~/ui/MetricChip'
+import { MetricOptionChip } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SearchField } from '~/ui/SearchField'
@@ -215,9 +215,9 @@ export function FilterBrowser<I extends string>({
 						</p>
 						<div className="flex flex-wrap gap-1 sheet:gap-2">
 							{group.filters.map((filter) => (
-								<button
+								<MetricOptionChip
 									key={filter.id}
-									type="button"
+									size="sm"
 									onClick={(event) => {
 										// The chip leaves the list once its filter is added. Focus moves to the chip that takes its
 										// place, so a keyboard can add several in a row; with no chip left, the dialog's net takes it.
@@ -234,11 +234,10 @@ export function FilterBrowser<I extends string>({
 										)
 									}}
 									data-filter-chip
-									className={metricOptionChipStyles}
 								>
 									<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" aria-hidden="true" />
 									<span>{filter.label}</span>
-								</button>
+								</MetricOptionChip>
 							))}
 						</div>
 					</section>

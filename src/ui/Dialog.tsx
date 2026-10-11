@@ -8,20 +8,24 @@ import {
 	useState,
 	type ComponentProps,
 	type ComponentPropsWithoutRef,
-	type ReactNode
+	type ReactElement,
+	type ReactNode,
+	type Ref
 } from 'react'
+import { createPortal } from 'react-dom'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { catchLostFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
-import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    Dialog — modal surfaces: Dialog, SideSheet, and ConfirmDialog
-   (./ConfirmDialog.tsx). Build new dialogs from these components, not the
-   class strings; a raw Ariakit.Dialog passes `ref={catchLostFocus}`. Never
-   reuse the popover drawer helpers for a task dialog.
+   (./ConfirmDialog.tsx). Build new dialogs from these components; a raw
+   Ariakit.Dialog passes `ref={catchLostFocus}`. Never reuse the popover
+   drawer helpers for a task dialog.
 
    Surface: below sm, a bottom sheet (full width, rounded top corners, no
             bottom radius, safe-area pad) that hugs its content up to
@@ -42,6 +46,8 @@ import { tw } from './tw'
             built inside hydration. A heavy body renders behind one more
             deferred value, as the Metrics grid does: an early tap paints the
             header and search first, and the body fills in during the fade.
+            A lazy dialog's Suspense fallback is DialogLoadingStatus with the
+            dialog's size.
    Fill:    bg-overlay. `canvas` gives the elevated-1 fill, only for a body
             of bg-surface cards. Emphasis boxes inside a content dialog use
             bg-surface-elevated-1; an empty state is EmptyState (src/ui/Status.tsx).
@@ -58,7 +64,7 @@ import { tw } from './tw'
 const dialogSurfaceBaseStyles =
 	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog max-sm:bottom-(--keyboard-inset,0px) max-sm:drawer sm:top-0 sm:mb-auto sm:h-(--dialog-height,fit-content) sm:max-h-(--dialog-max-height,min(720px,calc(100%-32px))) sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0  sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
 
-export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
+const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 
 /** Below sm, keep the full sheet height, for content that changes height in use. */
 const dialogFullSheetSurfaceStyles = `${dialogSurfaceStyles} max-sm:h-(--sheet-height)`
@@ -67,7 +73,7 @@ const dialogFullSheetSurfaceStyles = `${dialogSurfaceStyles} max-sm:h-(--sheet-h
 const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`
 
 /** Use a content basis so Safari includes the body when sizing a fit-content dialog. */
-export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto overscroll-contain`
+const dialogScrollableBodyStyles = 'min-h-0 flex-auto overflow-y-auto overscroll-contain'
 
 /* ----------------------------------------------------------------------------
    Dialog / SideSheet sizes. Pick a size, never an arbitrary --dialog-width
@@ -355,11 +361,10 @@ export function useDialogLeave() {
 	}
 }
 
-export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
+type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
 type SideSheetSize = Exclude<DialogSize, 'xl'>
 
-/** Width per size, also for a surface that is not a Dialog itself (a Suspense placeholder shaped like one). */
-export const dialogWidthStyles: Record<DialogSize, string> = {
+const dialogWidthStyles: Record<DialogSize, string> = {
 	sm: '[--dialog-width:448px]',
 	md: '[--dialog-width:600px]',
 	lg: '[--dialog-width:880px]',
@@ -367,7 +372,7 @@ export const dialogWidthStyles: Record<DialogSize, string> = {
 }
 
 /** The workspace height: fixed on desktop and the full sheet on phones, so panes that change never resize it. */
-export const dialogWorkspaceStyles =
+const dialogWorkspaceStyles =
 	'[--dialog-height:min(900px,calc(100dvh-32px))] [--dialog-max-height:none] max-sm:h-(--sheet-height)'
 
 type SurfaceProps = {
@@ -423,6 +428,39 @@ function ClosedReportingSurfaceDialog({
 		}
 	})
 	return <SurfaceDialog store={store} {...props} />
+}
+
+/** A lazy dialog's Suspense fallback while its code loads: the dialog's shape (DialogHeader's row with its ×, then a
+    p-4 body) over the backdrop. It is not a dialog: a real one would take focus and announce a modal, then hand both
+    to the loaded dialog. Readers hear "Loading dialog" once, and focus moves only when the loaded dialog opens. */
+export function DialogLoadingStatus({ size, workspace = false }: { size: DialogSize; workspace?: boolean }) {
+	// useIsClient, not ClientOnly: createPortal reads document.body in this render, before ClientOnly could skip it.
+	const isClient = useIsClient()
+	if (!isClient) return null
+	return createPortal(
+		<>
+			<div aria-hidden="true" className="fixed inset-0 z-50 animate-fadein bg-screen-dim" />
+			<div
+				aria-busy="true"
+				data-enter
+				className={`${dialogSurfaceStyles} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''} animate-fadein`}
+			>
+				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<Skeleton className="h-5 w-44 max-w-full" />
+					<Skeleton className="size-8" />
+				</div>
+				<div className="flex flex-1 flex-col gap-3 p-4">
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-5/6" />
+					<Skeleton className="h-4 w-2/3" />
+				</div>
+				<span role="status" className="sr-only">
+					Loading dialog
+				</span>
+			</div>
+		</>,
+		document.body
+	)
 }
 
 /** A key that changes each time `open` turns true. Key a dialog's stateful component by it instead of resetting
@@ -520,18 +558,28 @@ const DIALOG_BODY_KIND = {
 } as const
 
 /** The scrolling body. content: p-4 with 16px between blocks; list: p-2, rows bring their own inset;
-    flush: no padding, for panes, tables and bodies that own their layout. */
+    flush: no padding, for panes, tables and bodies that own their layout. `render` makes another element the
+    scroller (a palette's Ariakit ComboboxList), and `ref` reaches it (a virtualizer's scroll element). */
 export function DialogBody({
 	kind = 'content',
+	render,
+	ref,
 	children
 }: {
 	kind?: keyof typeof DIALOG_BODY_KIND
+	render?: ReactElement
+	ref?: Ref<HTMLDivElement>
 	children: ReactNode
 }) {
 	return (
-		<div data-sheet className={`${dialogScrollableBodyStyles} ${DIALOG_BODY_KIND[kind]}`.trim()}>
+		<Ariakit.Role.div
+			render={render}
+			ref={ref}
+			data-sheet
+			className={`${dialogScrollableBodyStyles} ${DIALOG_BODY_KIND[kind]}`.trim()}
+		>
 			{children}
-		</div>
+		</Ariakit.Role.div>
 	)
 }
 

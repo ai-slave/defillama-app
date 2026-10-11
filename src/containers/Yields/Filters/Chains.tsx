@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
 import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { SelectTriggerSize } from '~/components/Select/types'
+import { UrlSelectWithCombobox } from '~/components/Select/UrlSelect'
+import type { SelectTriggerSize } from '~/ui/ComboboxSelectTrigger'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -33,7 +33,7 @@ export function FilterByChain({ chainList = EMPTY_ARRAY, evmChains, nestedMenu, 
 	}
 
 	return (
-		<SelectWithCombobox
+		<UrlSelectWithCombobox
 			heading="Chains"
 			variant="default"
 			label="Chains"

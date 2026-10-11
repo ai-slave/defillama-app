@@ -1,4 +1,4 @@
-import { Select } from '~/components/Select/Select'
+import { Select } from '~/ui/Select'
 import type { RWAPageKind } from '../../layout/pageLayout'
 import { getRwaGroupByLabel, getRwaGroupByOptions, type RWAGroupBy } from '../groupBy'
 

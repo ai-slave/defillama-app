@@ -10,7 +10,6 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
 import { CexChartPanel } from '~/containers/Cexs/CexChartPanel'
 import type { ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
@@ -20,7 +19,7 @@ import {
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL } from '~/ui/ChartPanel'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -119,7 +118,6 @@ function ChainsChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					showLegend
 					valueSymbol="$"
@@ -191,7 +189,6 @@ function TokenValuesUSDChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					showLegend
 					valueSymbol="$"
@@ -275,7 +272,6 @@ function TokensBreakdownPieChartCard({
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
-					containerClassName={CHART_FILL}
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
@@ -345,7 +341,6 @@ function TokenBalancesRawChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					showLegend
 					valueSymbol=""
@@ -380,7 +375,6 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
-					containerClassName={CHART_FILL}
 					valueSymbol="$"
 					selectedCharts={USD_INFLOWS_SERIES}
 					onReady={handleChartReady}
@@ -450,7 +444,6 @@ function InflowsByTokenChartCard({
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
-					containerClassName={CHART_FILL}
 					csvSource={csvSource}
 					showLegend
 					valueSymbol="$"

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { preparePieChartData } from '~/components/ECharts/PieChart/data'
-import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
@@ -15,6 +14,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'

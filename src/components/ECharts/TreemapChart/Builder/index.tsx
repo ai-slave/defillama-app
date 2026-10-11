@@ -23,8 +23,9 @@ interface BuilderTreemapChartProps {
 		value: number
 		itemStyle?: { color: string }
 	}>
+	/** A fixed height. Left out, the chart fills its slot from a 360px floor (README → Size). */
 	height?: string
-	/** Replaces the fixed height on the inset canvas box: pass CHART_FILL to grow with a stretched panel. */
+	/** A min-h-* class that moves the 360px floor of a chart without `height`. */
 	containerClassName?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 }
@@ -41,7 +42,7 @@ function normalizeTreemapFormatterParams(params: unknown): TreemapFormatterParam
 	return params && typeof params === 'object' ? (params as TreemapFormatterParams) : {}
 }
 
-function BuilderTreemapChart({ data, height = '450px', containerClassName, onReady }: BuilderTreemapChartProps) {
+function BuilderTreemapChart({ data, height, containerClassName, onReady }: BuilderTreemapChartProps) {
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
@@ -193,13 +194,13 @@ function BuilderTreemapChart({ data, height = '450px', containerClassName, onRea
 	return (
 		<div
 			className={
-				containerClassName
-					? `relative flex w-full flex-col overflow-hidden ${containerClassName}`
-					: 'relative w-full overflow-hidden'
+				height
+					? 'relative w-full overflow-hidden'
+					: `relative flex w-full flex-1 flex-col overflow-hidden initial:min-h-[360px] ${containerClassName ?? ''}`.trim()
 			}
-			style={{ height: containerClassName ? undefined : height, padding: CHART_INSET_PX }}
+			style={{ height, padding: CHART_INSET_PX }}
 		>
-			<div ref={containerRef} className={containerClassName ? 'flex-1' : 'h-full w-full'} />
+			<div ref={containerRef} className={height ? 'h-full w-full' : 'flex-1'} />
 			{data.length === 0 ? (
 				<div className="absolute inset-0 flex items-center justify-center">
 					<p className="body-sm text-tertiary">No data available for treemap</p>

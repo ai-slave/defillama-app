@@ -4,7 +4,6 @@ import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { BasicLink } from '~/components/Link'
-import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
@@ -13,6 +12,7 @@ import { Field } from '~/ui/Field'
 import { focusNeighborOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { NestedMenu } from '~/ui/NestedMenu'
 import { Panel } from '~/ui/Panel'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -278,7 +278,7 @@ export function YieldFilters({
 	if (phone) {
 		return (
 			<Panel>
-				<TableToolbar className="gap-2">
+				<TableToolbar>
 					{apyControls}
 					{showSearchOnMobile ? tokenSearch : null}
 					{filterMenu}
@@ -299,7 +299,7 @@ export function YieldFilters({
 	if (!tokenSearch && !curatedViews) {
 		return (
 			<Panel>
-				<TableToolbar className="gap-2">
+				<TableToolbar>
 					{apyControls}
 					{apyControls ? <span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden /> : null}
 					{filterDropdowns}
@@ -318,7 +318,7 @@ export function YieldFilters({
 		<Panel>
 			{/* View row: APY composition + window dials, then preset chips, view actions right. */}
 			{hasViewControls || curatedViews ? (
-				<TableToolbar className="gap-2 border-b border-subtle">
+				<TableToolbar divided>
 					{apyControls}
 					{apyControls && curatedViews ? (
 						<span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
@@ -329,7 +329,7 @@ export function YieldFilters({
 			) : null}
 
 			{/* Query controls stay together as the final row governing the table below. */}
-			<TableToolbar className="gap-2">
+			<TableToolbar>
 				{tokenSearch}
 				{filterDropdowns}
 				{resetButton ? <div className="ml-auto hidden sm:block">{resetButton}</div> : null}

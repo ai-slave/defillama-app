@@ -2,7 +2,7 @@ import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ASSET_BRAND_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -128,7 +128,6 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 						dataset={chartModel.dataset}
 						charts={chartModel.charts}
 						valueSymbol={chart.valueSymbol}
-						containerClassName={CHART_FILL}
 						showLegend
 						exportButtons="hidden"
 						hallmarks={hallmarks}
@@ -177,7 +176,7 @@ function ResearchChartFrame({
 }) {
 	return (
 		<Panel className="flex-1">
-			<ChartPanelToolbar className="items-start">
+			<ChartPanelToolbar align="start">
 				<div className="mr-auto flex min-w-0 basis-full flex-col">
 					<h2 className="heading-xs">{title}</h2>
 					<p className="body-sm text-secondary">{description}</p>

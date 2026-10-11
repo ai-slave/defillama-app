@@ -2,23 +2,22 @@ import * as Ariakit from '@ariakit/react'
 import { defaultRangeExtractor } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { ComboboxSelectTrigger, selectTriggerStyles } from './ComboboxSelectTrigger'
+import { Icon } from './Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from './Input'
+import { isSearchable } from './internal/searchThreshold'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './internal/SelectAll'
+import { Logo } from './Logo'
 import {
 	popoverMeasuredRowStyles,
 	popoverMultiSelectCheckStyles,
 	popoverScrollAreaStyles,
 	popoverSingleSelectCheckStyles
-} from '~/ui/Popover'
-import { PopoverHeader } from '~/ui/PopoverHeader'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { BusyGlyph, InlineLoading } from '~/ui/Status'
-import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
-import { isSearchable } from './searchThreshold'
-import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
-import { selectTriggerStyles } from './types'
+} from './Popover'
+import { PopoverHeader } from './PopoverHeader'
+import { ComboboxSurface } from './PopoverSurface'
+import { BusyGlyph, InlineLoading } from './Status'
 
 /* ----------------------------------------------------------------------------
    Pickers for long option lists (protocols, chains, tokens, Downloads
@@ -36,7 +35,7 @@ import { selectTriggerStyles } from './types'
    Triggers: `field` is an input-style trigger under a visible label-sm
    text-secondary label, with an optional `labelAction` at the end of the
    label row; `chip` is a toolbar trigger that reads "Label: value". An
-   option's `logo` draws with TokenLogo on its row and, once picked, on the
+   option's `logo` URL draws round on its row and, once picked, on the
    trigger. A server-searched picker passes `onSearchChange` and lists the
    options it is given unfiltered. A `field` takes `error` the way Field does
    (src/ui/Field.tsx): the message under the trigger in body-sm text-error,
@@ -51,7 +50,7 @@ import { selectTriggerStyles } from './types'
 export type VirtualizedSelectOption<T extends string = string> = {
 	value: T
 	label: string
-	/** Image URL, drawn with TokenLogo on the row and, once picked, on the trigger. */
+	/** Image URL, drawn round on the row and, once picked, on the trigger. */
 	logo?: string | null
 	/** A second line under the label. */
 	description?: string
@@ -153,8 +152,8 @@ function SearchInput({ label }: { label: string }) {
 	)
 }
 
-function OptionLogo({ option, size, reserve }: { option: VirtualizedSelectOption; size: number; reserve: boolean }) {
-	if (option.logo) return <TokenLogo src={option.logo} size={size} />
+function LogoSlot({ option, size, reserve }: { option: VirtualizedSelectOption; size: number; reserve: boolean }) {
+	if (option.logo) return <Logo src={option.logo} size={size} />
 	// Rows without a logo keep the logo's slot, so labels in a list with logos line up.
 	return reserve ? <span aria-hidden className="shrink-0" style={{ width: size, height: size }} /> : null
 }
@@ -172,7 +171,7 @@ function OptionList({
 	matches: ReadonlyArray<VirtualizedSelectOption>
 	multiple: boolean
 	selectedValues: ReadonlyArray<string>
-	/** Leads a multi-select list with the tri-state Select all row (./SelectAll.tsx). */
+	/** Leads a multi-select list with the tri-state Select all row (./internal/SelectAll.tsx). */
 	selectAll: { label: string; state: ReturnType<typeof getSelectAllState>; onToggle: () => void } | null
 	isSearching: boolean
 	search: string
@@ -303,7 +302,7 @@ function OptionContent({ option, reserveLogo }: { option: VirtualizedSelectOptio
 	const description = option.description ?? (option.isChild ? 'Child protocol' : null)
 	return (
 		<span className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
-			<OptionLogo option={option} size={20} reserve={reserveLogo} />
+			<LogoSlot option={option} size={20} reserve={reserveLogo} />
 			<span className="flex min-w-0 flex-col">
 				<span className="break-words">{option.label}</span>
 				{description ? <span className="break-words text-tertiary">{description}</span> : null}
@@ -353,7 +352,7 @@ function PickerTrigger({
 		<>
 			{/* The space keeps the accessible name "Label: value"; flex items join their text without one. */}
 			{variant === 'chip' ? <span className="shrink-0">{label}: </span> : null}
-			{logo ? <OptionLogo option={logo} size={16} reserve={false} /> : null}
+			{logo ? <LogoSlot option={logo} size={16} reserve={false} /> : null}
 			<span className={`truncate ${!picked ? 'text-tertiary' : variant === 'chip' ? 'text-link' : ''}`}>
 				{isLoading ? 'Loading…' : text}
 			</span>

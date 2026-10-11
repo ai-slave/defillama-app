@@ -11,8 +11,8 @@ import {
 	TOOLTIP_POINTED_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
 import { useLocalSelection } from '~/components/Select/localSelection'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { SelectWithCombobox } from '~/ui/SelectWithCombobox'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'

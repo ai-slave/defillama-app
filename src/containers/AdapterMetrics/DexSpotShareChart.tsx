@@ -11,7 +11,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL, ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -81,7 +81,7 @@ export function DexSpotShareChart({
 
 	return (
 		<Panel>
-			<ChartPanelToolbar className="items-start">
+			<ChartPanelToolbar align="start">
 				<div className="mr-auto flex min-w-0 flex-col">
 					<h2 className="heading-xs">{CHART_TITLE}</h2>
 					<p className="body-sm text-secondary">{methodology}</p>
@@ -111,7 +111,6 @@ export function DexSpotShareChart({
 							chartOptions={{ yAxis: { min: 0 } }}
 							valueSymbol="%"
 							groupBy={groupBy}
-							containerClassName={CHART_FILL}
 							exportButtons="hidden"
 							onReady={handleChartReady}
 						/>

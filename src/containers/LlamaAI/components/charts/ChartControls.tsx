@@ -1,8 +1,8 @@
-import { Select } from '~/components/Select/Select'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Select } from '~/ui/Select'
 import { capitalizeFirstLetter } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

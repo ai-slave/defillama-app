@@ -16,8 +16,7 @@ export function EnterpriseDataAnnouncement({ track }: { track: AnnouncementTrack
 			announcementId={ENTERPRISE_DATA_ANNOUNCEMENT.id}
 			version={ENTERPRISE_DATA_ANNOUNCEMENT.version}
 			dismissTracking={track.dismiss}
-			className="data-announcement-scope border border-data-announcement-border bg-(image:--data-announcement-bg) text-data-announcement-text shadow-data-announcement"
-			contentClassName="text-center"
+			scope="data"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
 				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-data-announcement-badge-text">

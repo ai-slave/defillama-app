@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Select } from '~/components/Select/Select'
+import { Select } from '~/ui/Select'
 import type { IRWAAssetsOverview, RWAChartMetricKey } from './api.types'
 import type { RwaChartAxis } from './chartBreakdown'
 import {

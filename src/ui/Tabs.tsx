@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import clsx from 'clsx'
 import { type ComponentPropsWithRef, type ElementType, type ReactNode, useId } from 'react'
 import { tw } from './tw'
 
@@ -12,26 +13,68 @@ import { tw } from './tw'
 
    Two looks, picked by where the tabs sit:
    - Underline (`TabLink`): tabs that head a page section. Route navigation
-     between pages, and full-width panel tabs over a page section
-     (`ViewTabs`, or `Tab` with `render={<TabLink as="button" />}`).
+     between pages (`TabNav`), and full-width panel tabs over a page section
+     (`UnderlineTabList`).
    - Segmented (`SegmentedControl semantics="tabs"`): panel tabs that belong
      to a card, panel, dialog or toolbar header.
    A value picker is never drawn as tabs; it is a radio `SegmentedControl`.
-   Underline panel tabs are `ViewTabs`; render `Tab` with `TabLink` by hand
-   only when the items carry icons or counts, need per-tab props (an
-   analytics event, a ref) or sit on their own track.
+   Underline panel tabs with plain text labels pass `tabs` to
+   `UnderlineTabList`; it takes `Tab` children rendered as `TabLink` buttons
+   only when the items carry icons or counts or need per-tab props (an
+   analytics event, a ref, a width).
 
    Item: label-md, px-3 py-2, inactive text-secondary (primary on hover),
    active = text-primary + 2px bg-brand underline bar with rounded top
    corners, inset 4px from the edges.
 
-   Route navigation: a `<nav aria-label>` draws the track, and the current
+   Track: the subtle bottom border the items sit on, scrolling sideways when
+   they overflow, with no scrollbar, like the app's other sideways strips
+   (a trackpad, touch, or focus moving to a tab scrolls it). `TabNav` draws it
+   for route navigation and `UnderlineTabList` for panel tabs; pages never
+   draw it themselves. Their `className` places it or sets its display (a
+   nav hidden below a breakpoint): `flex` is an `initial:` default.
+
+   Route navigation: `TabNav` is the labeled `<nav>`, and the current
    page's item carries `aria-current="page"`, which also draws it active:
-   <nav className={tabTrackStyles} aria-label="…"> <TabLink href … aria-current={…}> </nav>
+   <TabNav label="…"> <TabLink href … aria-current={…}> </TabNav>
+   A nav holds TabLinks, links or buttons, and may lead with a control that
+   switches what the tabs belong to (a protocol picker).
    Panel tabs get `data-active` from `Tab` instead.
 ---------------------------------------------------------------------------- */
 
-export const tabTrackStyles = tw`flex w-full flex-nowrap overflow-x-auto border-b border-subtle`
+const tabTrackStyles = tw`scrollbar-none w-full flex-nowrap overflow-x-auto border-b border-subtle initial:flex`
+
+/** Route tabs: the labeled nav and its track. `className` is placement and display only. */
+export function TabNav({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+	return (
+		<nav aria-label={label} className={clsx(tabTrackStyles, className)}>
+			{children}
+		</nav>
+	)
+}
+
+/** One underline panel tab: the value of its panel and a plain text label. */
+export type UnderlineTab<T extends string> = { id: T; label: string }
+
+/** Panel tabs on the underline track, inside a `Tabs` provider. Plain text labels pass `tabs`; items with icons, counts
+    or per-tab props are `Tab` children rendered as `TabLink` buttons. `className` is placement and display only. */
+export function UnderlineTabList({
+	label,
+	className,
+	...items
+}: { label: string; className?: string } & ({ tabs: ReadonlyArray<UnderlineTab<string>> } | { children: ReactNode })) {
+	return (
+		<Ariakit.TabList aria-label={label} className={clsx(tabTrackStyles, className)}>
+			{'tabs' in items
+				? items.tabs.map((tab) => (
+						<Tab key={tab.id} value={tab.id} render={<TabLink as="button" type="button" />}>
+							{tab.label}
+						</Tab>
+					))
+				: items.children}
+		</Ariakit.TabList>
+	)
+}
 
 type TabLinkProps<T extends ElementType> = {
 	as?: T

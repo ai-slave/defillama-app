@@ -15,7 +15,7 @@ import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/components/Table/TablePager'
 import { Card } from '~/ui/Card'
-import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelExportShellLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -298,7 +298,6 @@ export default function Ecosystem() {
 						<MultiSeriesChart
 							title={data.tvl.title}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.tvl.dataset}
 							charts={data.tvl.charts}
 							valueSymbol="$"
@@ -326,7 +325,6 @@ export default function Ecosystem() {
 						<MultiSeriesChart
 							title={data.fees.title}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.fees.dataset}
 							charts={data.fees.charts}
 							valueSymbol="$"
@@ -359,7 +357,6 @@ export default function Ecosystem() {
 						<MultiSeriesChart
 							title={data.dexVolume.title}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.dexVolume.dataset}
 							charts={data.dexVolume.charts}
 							valueSymbol="$"
@@ -387,7 +384,6 @@ export default function Ecosystem() {
 						<MultiSeriesChart
 							title={data.stablecoins.title}
 							headingAs="h3"
-							containerClassName={CHART_FILL}
 							dataset={data.stablecoins.dataset}
 							charts={data.stablecoins.charts}
 							valueSymbol="$"

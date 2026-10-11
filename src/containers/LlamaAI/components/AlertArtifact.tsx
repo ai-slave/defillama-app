@@ -31,7 +31,6 @@ import type { DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/compone
 import {
 	alertFieldLabelClass,
 	PriceInput,
-	SegmentedToggle,
 	PRICE_OPERATOR_OPTIONS,
 	DELIVERY_OPTIONS,
 	SettingsIntegrationsLink
@@ -47,6 +46,7 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -447,11 +447,13 @@ export function AlertArtifact({
 							{(control) => (
 								<div className="flex flex-wrap items-center gap-2">
 									<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
-									<SegmentedToggle<'above' | 'below'>
+									<SegmentedControl<'above' | 'below'>
 										label="Price comparison"
 										value={priceOp}
-										onChange={setPriceOp}
+										onValueChange={setPriceOp}
 										options={PRICE_OPERATOR_OPTIONS}
+										variant="default"
+										size="md"
 									/>
 									<PriceInput value={priceValue} onValueChange={setPriceValue} control={control} />
 								</div>
@@ -476,11 +478,13 @@ export function AlertArtifact({
 						error={shown?.delivery}
 					>
 						<div className="flex flex-wrap items-center gap-2">
-							<SegmentedToggle<DeliveryChannel>
+							<SegmentedControl<DeliveryChannel>
 								label="Delivery channel"
 								value={deliveryChannel}
-								onChange={setDeliveryChannel}
+								onValueChange={setDeliveryChannel}
 								options={DELIVERY_OPTIONS}
+								variant="default"
+								size="md"
 							/>
 							{isSlack ? (
 								<SlackTargetPickers

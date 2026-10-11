@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
-import type { VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import type { VirtualizedSelectOption } from '~/ui/VirtualizedSelect'
 import type { DashboardVariable, DashboardVariableKind } from '../../dashboardTypes'
 import { useProDashboardVariables } from '../../ProDashboardAPIContext'
 import type { DashboardBindableField, DashboardItemBindings } from '../../types'
