@@ -881,7 +881,7 @@ const RULES = [
 	{
 		id: 'implicit-border-color',
 		exceptions: {
-			'src/ui/MetricChip.tsx': "the chip's outline is its series colour, which every caller sets inline",
+			'src/ui/MetricChip.tsx': "the chip's outline is its series colour, set inline from its `color` prop",
 			'src/containers/LlamaAI/components/messages/CitationPill.tsx':
 				'a shared citation box constant; both of its uses add the border colour',
 			'src/containers/Subscription/components.tsx':

@@ -128,10 +128,9 @@ const heroStamp = (root: ParentNode) =>
 
 /** The series the APY chart draws, as its removable chips name them. */
 const chartSeries = (root: ParentNode) =>
-	Array.from(root.querySelectorAll('button')).flatMap((button) => {
-		const name = /Remove (.+)$/.exec(button.textContent)?.[1]
-		return name ? [name] : []
-	})
+	Array.from(root.querySelectorAll('button[aria-label^="Remove "]'), (button) =>
+		button.getAttribute('aria-label')!.slice('Remove '.length)
+	)
 
 let rendered: HydrationResult | null = null
 

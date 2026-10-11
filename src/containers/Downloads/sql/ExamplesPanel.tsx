@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useMemo, useRef, useState, type RefObject } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
 
@@ -69,8 +70,6 @@ function ExpandedExamplesPanel({
 	toggleRef: RefObject<HTMLButtonElement | null>
 }) {
 	const [filter, setFilter] = useState('')
-	const filterId = useId()
-	const filterRef = useRef<HTMLInputElement>(null)
 	const [hoveredGroup, setHoveredGroup] = useState<ExampleSubcategory | null>(null)
 
 	const filteredGroups = useMemo(() => {
@@ -138,45 +137,7 @@ function ExpandedExamplesPanel({
 				</div>
 			</header>
 
-			{/* An underline field, not SearchField: a boxed field outweighs this dense 256px rail. */}
-			<div className="flex flex-col gap-1">
-				<label htmlFor={filterId} className="label-sm text-secondary">
-					Filter
-				</label>
-				<div className="relative">
-					<Icon
-						name="search"
-						className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-tertiary"
-					/>
-					<input
-						ref={filterRef}
-						id={filterId}
-						type="text"
-						value={filter}
-						onChange={(e) => setFilter(e.target.value)}
-						placeholder="Filter queries…"
-						className="w-full border-b border-medium bg-transparent pr-6 pb-1.5 pl-5 body-sm text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
-					/>
-					{filter ? (
-						<Button
-							variant="ghost"
-							size="sm"
-							square
-							// The button leaves with the text, so focus goes back to the field.
-							onClick={() =>
-								keepFocus(
-									() => setFilter(''),
-									() => filterRef.current
-								)
-							}
-							aria-label="Clear filter"
-							className="absolute top-1/2 right-0 -translate-y-1/2"
-						>
-							<Icon name="x" className="size-4" />
-						</Button>
-					) : null}
-				</div>
-			</div>
+			<SearchField label="Filter queries" placeholder="Filter queries…" value={filter} onChange={setFilter} />
 
 			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
 				{filteredGroups.length === 0 ? (

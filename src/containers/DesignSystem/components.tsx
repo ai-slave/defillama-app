@@ -18,7 +18,7 @@ import { Keycap } from '~/ui/Keycap'
 import { ListRow } from '~/ui/ListRow'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { metricChipStyles, metricOptionChipStyles, metricSeriesToggleStyles } from '~/ui/MetricChip'
+import { MetricChip, metricOptionChipStyles, metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { OptionTile } from '~/ui/OptionTile'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -721,9 +721,7 @@ export function ChipsGroup() {
 							<>
 								{CHIP_FORCES.map((force) => (
 									<Cell key={force ?? 'rest'} force={force}>
-										<button type="button" className={metricChipStyles} style={{ borderColor: CHART_COLORS[0] }}>
-											TVL <Icon name="x" className="size-4" aria-hidden />
-										</button>
+										<MetricChip label="TVL" color={CHART_COLORS[0]} onRemove={() => {}} />
 									</Cell>
 								))}
 								<NotApplicable />

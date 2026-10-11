@@ -13,9 +13,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { focusNeighbourOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryChange } from '~/ui/SummaryStats'
@@ -33,12 +31,6 @@ import {
 } from './contractPageUtils'
 import { perpsDefinitions as d } from './definitions'
 import type { IRWAPerpsContractData } from './types'
-
-// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
-// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
-	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
-)
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -336,26 +328,14 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 							if (!metric) return null
 
 							return (
-								<label
-									data-row
-									className="relative flex cursor-pointer flex-nowrap items-center gap-1 label-sm"
+								<MetricChip
 									key={metric.key}
-								>
-									<input
-										ref={focusNeighbourChipOnLeave}
-										type="checkbox"
-										value={metric.key}
-										checked
-										onChange={() => {
-											void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
-										}}
-										className="peer absolute size-[1em] opacity-[0.00001]"
-									/>
-									<span className={metricChipStyles} style={{ borderColor: metric.color }}>
-										<span>{metric.label}</span>
-										<Icon name="x" className="size-3.5" />
-									</span>
-								</label>
+									label={metric.label}
+									color={metric.color}
+									onRemove={() =>
+										void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
+									}
+								/>
 							)
 						})}
 					</>

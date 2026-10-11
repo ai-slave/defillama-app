@@ -3,6 +3,7 @@ import { Fragment, useDeferredValue, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import { CopyTextButton } from './CopyTextButton'
 import {
@@ -16,7 +17,6 @@ import {
 	type CookbookTag,
 	type TechniqueName
 } from './dialectDocs'
-import { SearchField } from './SchemaBrowser'
 
 // ─── Cookbook tab ───────────────────────────────────────────────────────────
 

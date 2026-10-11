@@ -38,8 +38,7 @@ function Picker() {
 	)
 }
 
-const chip = (label: string) =>
-	[...container.querySelectorAll('button')].find((button) => button.textContent?.endsWith(`Remove ${label}`))
+const chip = (label: string) => container.querySelector<HTMLButtonElement>(`button[aria-label="Remove ${label}"]`)
 
 async function removeChip(label: string) {
 	await act(async () => {
@@ -52,7 +51,7 @@ test('removing a metric chip hands focus to the next chip, else the previous one
 	await act(async () => root.render(<Picker />))
 
 	await removeChip('Base APY')
-	expect(chip('Base APY')).toBeUndefined()
+	expect(chip('Base APY')).toBeNull()
 	expect(document.activeElement).toBe(chip('TVL'))
 
 	await removeChip('TVL')

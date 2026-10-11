@@ -16,10 +16,7 @@ import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/L
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { focusNeighbourOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
@@ -38,12 +35,6 @@ import type { IProtocolOverviewPageData } from './types'
 import { useFetchProtocolChartData } from './useFetchProtocolChartData'
 
 const getQueryValueOnRemove = (isDefaultEnabled: boolean) => (isDefaultEnabled ? 'false' : undefined)
-
-// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
-// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
-	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
-)
 
 const ProtocolChart = lazy(() => import('./Chart'))
 
@@ -207,64 +198,24 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							/>
 						) : null}
 						{toggledCharts.map((tchart) => (
-							<label
-								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
+							<MetricChip
 								key={`add-or-remove-metric-${tchart}`}
-								data-row
-							>
-								<input
-									ref={focusNeighbourChipOnLeave}
-									type="checkbox"
-									value={tchart}
-									checked
-									onChange={() => {
-										void pushShallowQuery(router, {
-											[protocolCharts[tchart]]: getQueryValueOnRemove(defaultEnabledCharts[tchart] === true)
-										})
-									}}
-									className="peer absolute size-[1em] opacity-[0.00001]"
-								/>
-								<span
-									className={metricChipStyles}
-									style={{
-										borderColor: props.chartColors[tchart]
-									}}
-								>
-									<span>{tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}</span>
-									{loadingChartSet.has(tchart) ? (
-										<span aria-label={`${tchart} is loading`} role="status">
-											<LoadingSpinner size={14} />
-										</span>
-									) : (
-										<Icon name="x" className="size-3.5" />
-									)}
-								</span>
-							</label>
+								label={tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}
+								color={props.chartColors[tchart]}
+								loading={loadingChartSet.has(tchart)}
+								onRemove={() =>
+									void pushShallowQuery(router, {
+										[protocolCharts[tchart]]: getQueryValueOnRemove(defaultEnabledCharts[tchart] === true)
+									})
+								}
+							/>
 						))}
 						{shouldShowEnabledEventsChip ? (
-							<label className="relative flex cursor-pointer flex-nowrap items-center gap-1" data-row>
-								<input
-									ref={focusNeighbourChipOnLeave}
-									type="checkbox"
-									value="events"
-									checked
-									onChange={() => {
-										void pushShallowQuery(router, {
-											events: getQueryValueOnRemove(true)
-										})
-									}}
-									className="peer absolute size-[1em] opacity-[0.00001]"
-								/>
-								<span
-									className={metricChipStyles}
-									style={{
-										borderColor: OTHERS_COLOR
-									}}
-								>
-									<span>Events</span>
-									<Icon name="x" className="size-3.5" />
-								</span>
-							</label>
+							<MetricChip
+								label="Events"
+								color={OTHERS_COLOR}
+								onRemove={() => void pushShallowQuery(router, { events: getQueryValueOnRemove(true) })}
+							/>
 						) : null}
 					</>
 				}

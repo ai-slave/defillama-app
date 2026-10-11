@@ -22,10 +22,7 @@ import {
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
-import { focusNeighbourOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
@@ -73,12 +70,6 @@ for (const category of chainChartCategoryOrder) {
 
 const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | undefined =>
 	isDefaultEnabled ? 'false' : undefined
-
-// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
-// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
-	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
-)
 
 interface ChainChartPanelProps {
 	charts: IChainOverviewData['charts']
@@ -220,39 +211,17 @@ export function ChainChartPanel({
 							/>
 						) : null}
 						{toggledCharts.map((tchart) => (
-							<label
-								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
+							<MetricChip
 								key={`add-or-remove-metric-${chainCharts[tchart]}`}
-								data-row
-							>
-								<input
-									ref={focusNeighbourChipOnLeave}
-									type="checkbox"
-									value={tchart}
-									checked
-									onChange={() => {
-										void pushShallowQuery(router, {
-											[chainCharts[tchart]]: getQueryValueOnRemove(charts[0] === tchart)
-										})
-									}}
-									className="peer absolute size-[1em] opacity-[0.00001]"
-								/>
-								<span
-									className={metricChipStyles}
-									style={{
-										borderColor: chartColors[tchart]
-									}}
-								>
-									<span>{selectedChartLabel(tchart)}</span>
-									{loadingCharts.includes(tchart) ? (
-										<span aria-label={`${tchart} is loading`} role="status">
-											<LoadingSpinner size={14} />
-										</span>
-									) : (
-										<Icon name="x" className="size-3.5" />
-									)}
-								</span>
-							</label>
+								label={selectedChartLabel(tchart)}
+								color={chartColors[tchart]}
+								loading={loadingCharts.includes(tchart)}
+								onRemove={() =>
+									void pushShallowQuery(router, {
+										[chainCharts[tchart]]: getQueryValueOnRemove(charts[0] === tchart)
+									})
+								}
+							/>
 						))}
 					</>
 				}

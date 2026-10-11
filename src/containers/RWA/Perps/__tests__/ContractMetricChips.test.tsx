@@ -41,7 +41,12 @@ afterEach(async () => {
 	container.remove()
 })
 
-const chip = (metric: string) => container.querySelector<HTMLInputElement>(`input[type="checkbox"][value="${metric}"]`)
+// A chip is the button named "Remove <metric>".
+const chip = (label: string) => container.querySelector<HTMLButtonElement>(`button[aria-label="Remove ${label}"]`)
+const chips = () =>
+	[...container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Remove "]')].map((button) =>
+		button.getAttribute('aria-label')
+	)
 async function click(el: HTMLElement) {
 	await act(async () => {
 		el.focus()
@@ -52,17 +57,16 @@ async function click(el: HTMLElement) {
 test('a metric chip that turns its metric off hands focus to the next chip, else the previous, else Add Metrics', async () => {
 	asPath = '/rwa/perps/contract/xyz-meta?vol24h=true'
 	await act(async () => root.render(page()))
-	const chips = () => [...container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map((el) => el.value)
-	expect(chips()).toEqual(['openInterest', 'volume24h', 'price'])
+	expect(chips()).toEqual(['Remove Open Interest', 'Remove Volume 24h', 'Remove Price'])
 
-	await click(chip('volume24h')!)
-	expect(chips()).toEqual(['openInterest', 'price'])
-	expect(document.activeElement).toBe(chip('price'))
+	await click(chip('Volume 24h')!)
+	expect(chips()).toEqual(['Remove Open Interest', 'Remove Price'])
+	expect(document.activeElement).toBe(chip('Price'))
 
-	await click(chip('price')!)
-	expect(document.activeElement).toBe(chip('openInterest'))
+	await click(chip('Price')!)
+	expect(document.activeElement).toBe(chip('Open Interest'))
 
-	await click(chip('openInterest')!)
+	await click(chip('Open Interest')!)
 	expect(chips()).toEqual([])
 	expect(document.activeElement?.textContent).toBe('Add Metrics')
 })

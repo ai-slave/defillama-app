@@ -100,8 +100,8 @@ test('marks the chip of a metric that is still loading', async () => {
 		toggledCharts: ['TVL', 'Stablecoins Mcap'],
 		loadingCharts: ['Stablecoins Mcap']
 	})
-	const loading = [...container.querySelectorAll('[role="status"][aria-label$="is loading"]')]
-	expect(loading.map((status) => status.getAttribute('aria-label'))).toEqual(['Stablecoins Mcap is loading'])
+	const loading = [...container.querySelectorAll('button[aria-label$=", loading"]')]
+	expect(loading.map((chip) => chip.getAttribute('aria-label'))).toEqual(['Remove Stablecoins Mcap, loading'])
 })
 
 test('a TVL setting whose series failed to load shows an alert in the panel', async () => {

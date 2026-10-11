@@ -1,8 +1,6 @@
 // "Add Metrics" picker: the shared metrics dialog, and the selected series as removable chips beside it.
 import { ChartMetricsDialog, type ChartMetricOption as SharedChartMetricOption } from '~/components/ChartMetricsDialog'
-import { focusNeighbourOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { SealGlyph } from '../Tables/Measured'
 
 export interface ChartMetricOption extends SharedChartMetricOption {
@@ -46,22 +44,13 @@ export function ChartMetricsPicker({
 			/>
 
 			{selected.map((option) => (
-				<button
+				<MetricChip
 					key={option.key}
-					type="button"
-					onClick={() => onToggle(option)}
-					// The chip leaves once the chart drops its series. The Add Metrics button sits before the first chip, so it
-					// is that chip's previous row.
-					data-row
-					ref={focusNeighbourOnLeave()}
-					className={metricChipStyles}
-					style={{ borderColor: option.color }}
-				>
-					{option.verified ? <SealGlyph size={14} className="mr-1 text-verified" /> : null}
-					<span>{option.label}</span>
-					<Icon name="x" className="size-4" />
-					<span className="sr-only">Remove {option.label}</span>
-				</button>
+					label={option.label}
+					color={option.color}
+					onRemove={() => onToggle(option)}
+					prefix={option.verified ? <SealGlyph size={14} className="mr-1 text-verified" /> : null}
+				/>
 			))}
 		</>
 	)

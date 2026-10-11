@@ -9,9 +9,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { CHART_FILL, ChartPanel, ChartPanelBodyError, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { focusNeighbourOnLeave } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { parseRWAFlowGrouping, type RWAFlowGrouping } from '../flows'
 import {
@@ -23,12 +21,6 @@ import {
 	type RWAEntityChartData
 } from './entityChart'
 import { buildRwaPlatformEntityCsvDataset } from './metrics'
-
-// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip's checkbox, else the
-// previous one's; after the last chip, Add Metrics, the toolbar's button before the chips.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave((input) =>
-	input.closest('[data-row]')!.parentElement!.querySelector<HTMLElement>('button')
-)
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -107,27 +99,12 @@ export function RWAEntityChartPanel<K extends string>({
 						{catalogue.metrics
 							.filter((metric) => selected.includes(metric.key))
 							.map((metric) => (
-								<label
+								<MetricChip
 									key={metric.key}
-									data-row
-									className="relative flex cursor-pointer flex-nowrap items-center gap-1"
-								>
-									<input
-										ref={focusNeighbourChipOnLeave}
-										type="checkbox"
-										value={metric.key}
-										checked
-										onChange={() => toggle(metric.key)}
-										className="peer absolute size-[1em] opacity-[0.00001]"
-									/>
-									<span
-										className={metricChipStyles}
-										style={{ borderColor: colorByName.get(metric.label) ?? 'var(--text-tertiary)' }}
-									>
-										<span>{metric.label}</span>
-										<Icon name="x" className="size-3.5" />
-									</span>
-								</label>
+									label={metric.label}
+									color={colorByName.get(metric.label) ?? 'var(--text-tertiary)'}
+									onRemove={() => toggle(metric.key)}
+								/>
 							))}
 					</>
 				}

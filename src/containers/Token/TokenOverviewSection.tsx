@@ -27,10 +27,9 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
-import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
-import { metricChipStyles } from '~/ui/MetricChip'
+import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
@@ -569,20 +568,12 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 							/>
 						) : null}
 						{activeCharts.map((chart) => (
-							<button
+							<MetricChip
 								key={chart}
-								type="button"
-								aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
-								// The Add Metrics button sits before the first chip, so it is that chip's previous row.
-								data-row
-								ref={focusNeighbourOnLeave()}
-								onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
-								className={metricChipStyles}
-								style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}
-							>
-								<span>{getChartLabel(chart, overview.symbol)}</span>
-								<Icon name="x" aria-hidden="true" className="size-3.5" />
-							</button>
+								label={getChartLabel(chart, overview.symbol)}
+								color={TOKEN_OVERVIEW_CHART_COLORS[chart]}
+								onRemove={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
+							/>
 						))}
 					</>
 				}

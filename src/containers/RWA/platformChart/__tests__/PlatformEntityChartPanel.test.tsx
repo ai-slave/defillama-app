@@ -115,8 +115,12 @@ async function render(query: Record<string, string | Array<string>>) {
 	)
 }
 
+// A chip is the button named "Remove <metric>".
+const chip = (label: string) => container.querySelector<HTMLButtonElement>(`button[aria-label="Remove ${label}"]`)!
 const chips = () =>
-	[...container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map((input) => input.value)
+	[...container.querySelectorAll<HTMLButtonElement>('button[aria-label^="Remove "]')].map((button) =>
+		button.getAttribute('aria-label')
+	)
 const shallowPush = (query: Record<string, string>) => [
 	{ pathname: '/rwa/platform/ondo', query },
 	undefined,
@@ -126,9 +130,9 @@ const shallowPush = (query: Record<string, string>) => [
 describe('RWAPlatformEntityChartPanel', () => {
 	test('shows a chip per metric in ?metrics= and removing one writes the rest to the URL', async () => {
 		await render({ metrics: 'activeMcap,liveAssets,events' })
-		expect(chips()).toEqual(['activeMcap', 'liveAssets', 'events'])
+		expect(chips()).toEqual(['Remove Active AUM', 'Remove Live Assets', 'Remove Events'])
 
-		await act(async () => container.querySelector<HTMLInputElement>('input[value="liveAssets"]')!.click())
+		await act(async () => chip('Live Assets').click())
 		expect(push.mock.calls).toEqual([shallowPush({ metrics: 'activeMcap,events' })])
 	})
 
@@ -137,26 +141,25 @@ describe('RWAPlatformEntityChartPanel', () => {
 			await render(url.query)
 			return true
 		})
-		const chip = (metric: string) => container.querySelector<HTMLInputElement>(`input[value="${metric}"]`)!
-		const remove = async (metric: string) =>
+		const remove = async (label: string) =>
 			act(async () => {
-				chip(metric).focus()
-				chip(metric).click()
+				chip(label).focus()
+				chip(label).click()
 			})
 		await render({ metrics: 'activeMcap,liveAssets,events' })
 
-		await remove('liveAssets')
-		expect(chips()).toEqual(['activeMcap', 'events'])
-		expect(document.activeElement).toBe(chip('events'))
+		await remove('Live Assets')
+		expect(chips()).toEqual(['Remove Active AUM', 'Remove Events'])
+		expect(document.activeElement).toBe(chip('Events'))
 
-		await remove('events')
-		expect(chips()).toEqual(['activeMcap'])
-		expect(document.activeElement).toBe(chip('activeMcap'))
+		await remove('Events')
+		expect(chips()).toEqual(['Remove Active AUM'])
+		expect(document.activeElement).toBe(chip('Active AUM'))
 	})
 
 	test('adds a metric from the Add Metrics dialog', async () => {
 		await render({})
-		expect(chips()).toEqual(['activeMcap'])
+		expect(chips()).toEqual(['Remove Active AUM'])
 
 		const disclosure = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Add Metrics')!
 		await act(async () => disclosure.click())

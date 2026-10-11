@@ -5,7 +5,7 @@ import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
@@ -251,54 +251,6 @@ function BrowserHeader({
 					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable} tables`}
 				</p>
 			</div>
-		</div>
-	)
-}
-
-/** The search field used by every SQL reference tab. */
-export function SearchField({
-	value,
-	onChange,
-	label,
-	placeholder
-}: {
-	value: string
-	onChange: (v: string) => void
-	label: string
-	placeholder: string
-}) {
-	const inputRef = useRef<HTMLInputElement>(null)
-	return (
-		<div className="relative">
-			<Icon name="search" className={searchFieldIconStyles} />
-			<Input
-				ref={inputRef}
-				type="text"
-				inputMode="search"
-				aria-label={label}
-				placeholder={placeholder}
-				value={value}
-				onInput={(e) => onChange(e.currentTarget.value)}
-				className="w-full pr-9 pl-8"
-			/>
-			{value ? (
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					square
-					onClick={() =>
-						keepFocus(
-							() => onChange(''),
-							() => inputRef.current
-						)
-					}
-					aria-label="Clear search"
-					className="absolute top-1/2 right-1.5 -translate-y-1/2"
-				>
-					<Icon name="x" className="size-3.5" aria-hidden="true" />
-				</Button>
-			) : null}
 		</div>
 	)
 }

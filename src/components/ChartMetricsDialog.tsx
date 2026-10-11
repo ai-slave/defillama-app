@@ -147,7 +147,7 @@ function MetricsDialog<O extends ChartMetricOption>({
 										<PromoBadge>Pro</PromoBadge>
 									</button>
 								) : (
-									<MetricChip key={option.key} option={option} onToggle={onToggle} />
+									<MetricOption key={option.key} option={option} onToggle={onToggle} />
 								)
 							)}
 						</div>
@@ -180,7 +180,7 @@ function MetricsDialog<O extends ChartMetricOption>({
 	)
 }
 
-function MetricChip<O extends ChartMetricOption>({ option, onToggle }: { option: O; onToggle: (option: O) => void }) {
+function MetricOption<O extends ChartMetricOption>({ option, onToggle }: { option: O; onToggle: (option: O) => void }) {
 	const button = (
 		<button
 			type="button"
