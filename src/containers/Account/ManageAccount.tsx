@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -6,7 +7,7 @@ import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthor
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { EmptyState, PanelLoadingStatus } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { AuthenticationCard } from './AuthenticationCard'
 import { DeleteAccountCard } from './DeleteAccountCard'
@@ -27,6 +28,18 @@ type AccountTab = (typeof ACCOUNT_TABS)[number]['id']
 const ACCOUNT_TAB_IDS = ACCOUNT_TABS.map((tab) => tab.id)
 
 export function ManageAccount() {
+	const signInDialogStore = Ariakit.useDialogStore()
+	// Mounted beside the page, not in the signed-out gate, so a sign-in from another tab keeps the dialog's "You're
+	// signed in" step.
+	return (
+		<>
+			<AccountContent onSignIn={signInDialogStore.show} />
+			<SignInModal store={signInDialogStore} />
+		</>
+	)
+}
+
+function AccountContent({ onSignIn }: { onSignIn: () => void }) {
 	const isClient = useIsClient()
 	const router = useRouter()
 	const { user, logout, isAuthenticated, loaders } = useAuthContext()
@@ -53,20 +66,19 @@ export function ManageAccount() {
 		}
 
 		return (
-			<div className="flex flex-col items-center gap-6 py-16">
-				<img src="/assets/account_avatar.png" alt="" className="size-16 rounded-full" />
-				<div className="flex flex-col gap-2 text-center">
-					<h2 className="heading-sm text-primary">Account access required</h2>
-					<p className="max-w-md body-md text-tertiary">Sign in to view and manage your account and subscription.</p>
-				</div>
-				<SignInModal
-					trigger={
-						<Button variant="primary" size="md">
-							Sign in
-						</Button>
-					}
-				/>
-			</div>
+			<EmptyState
+				size="lg"
+				icon="user"
+				title="Account access required"
+				headingAs="h1"
+				actions={
+					<Button variant="primary" size="md" onClick={onSignIn}>
+						Sign in
+					</Button>
+				}
+			>
+				Sign in to view and manage your account and subscription.
+			</EmptyState>
 		)
 	}
 

@@ -1,13 +1,15 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
@@ -28,8 +30,20 @@ interface LlamaAITabProps {
 	onChartSelect: (chart: SavedChart | null) => void
 }
 
+/** The sign-in dialog stays mounted through every auth state, so a sign-in that sets the user ends on its own step
+    instead of vanishing when the tab swaps the gate for the chart list. */
 export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
-	const { authorizedFetch, user, hasActiveSubscription } = useAuthContext()
+	const signInDialogStore = Ariakit.useDialogStore()
+	return (
+		<>
+			<SavedCharts selectedChart={selectedChart} onChartSelect={onChartSelect} onSignIn={signInDialogStore.show} />
+			<SignInModal store={signInDialogStore} />
+		</>
+	)
+}
+
+function SavedCharts({ selectedChart, onChartSelect, onSignIn }: LlamaAITabProps & { onSignIn: () => void }) {
+	const { authorizedFetch, user, hasActiveSubscription, loaders } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [searchQuery, setSearchQuery] = useState('')
 	const deferredSearchQuery = useDeferredValue(searchQuery)
@@ -62,8 +76,24 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	})
 	const data = savedCharts.data
 
+	// A stored session is still loading: the sign-in gate would flash before the list.
+	if (loaders.userLoading) return <SurfaceBodyLoadingStatus label="Loading saved charts" />
+
 	if (!user) {
-		return <SurfaceBodyStatus variant="empty">Sign in to access your saved LlamaAI charts</SurfaceBodyStatus>
+		return (
+			<EmptyState
+				size="md"
+				icon="bookmark"
+				title="Saved charts need an account"
+				actions={
+					<Button size="sm" variant="primary" onClick={onSignIn}>
+						Sign in
+					</Button>
+				}
+			>
+				Sign in to add charts you saved in LlamaAI to this dashboard.
+			</EmptyState>
+		)
 	}
 
 	if (!hasActiveSubscription) {
@@ -87,9 +117,9 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 
 	if (!data?.length) {
 		return (
-			<SurfaceBodyStatus variant="empty">
-				No saved charts yet. Save a chart from LlamaAI to add it to your dashboard.
-			</SurfaceBodyStatus>
+			<EmptyState size="md" icon="bookmark" title="No saved charts yet">
+				Save a chart from LlamaAI to add it to your dashboard.
+			</EmptyState>
 		)
 	}
 
@@ -170,6 +200,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 			</div>
 
 			{filteredCharts.length === 0 ? (
+				// Not NoResults: this line announces itself while the reader types, and NoResults has no live region.
 				<p role="status" className="py-8 text-center body-sm text-tertiary">
 					No charts match your search
 				</p>

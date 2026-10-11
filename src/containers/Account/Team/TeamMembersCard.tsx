@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { EmptyState } from '~/ui/Status'
 import { MemberRow } from './MemberRow'
 import { useTeam } from './useTeam'
 
@@ -18,7 +19,9 @@ export function TeamMembersCard() {
 			</div>
 
 			{members.length === 0 ? (
-				<p className="body-md text-tertiary">No members yet. Send invites to add team members.</p>
+				<EmptyState size="md" icon="users" title="No members yet">
+					Send invites to add team members.
+				</EmptyState>
 			) : (
 				<div className="flex flex-col gap-2">
 					{members.map((member) => (

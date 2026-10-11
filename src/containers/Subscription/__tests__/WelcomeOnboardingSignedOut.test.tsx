@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 const session = installSubscriberSession('visitor', { account: 'signed-out' })
@@ -43,12 +44,14 @@ afterEach(async () => {
 	document.body.innerHTML = ''
 })
 
-const signInControls = () => [...document.querySelectorAll('button')].filter((el) => /sign in/i.test(el.textContent!))
+const signInControls = () =>
+	[...document.querySelectorAll('button')].filter((el) => /sign in/i.test(accessibleName(el)))
 
 test('signed out, /welcome asks to sign in once, in the page and not again in the header', async () => {
-	await waitForUi(() => expect(document.querySelector('main h2')?.textContent).toBe('Sign in to continue'))
+	// The sign-in gate stands in for the page's heading until the reader signs in.
+	await waitForUi(() => expect(document.querySelectorAll('main h1')).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('activated')
-	expect(signInControls().map((el) => el.textContent)).toEqual(['Sign in'])
+	expect(signInControls().map(accessibleName)).toEqual(['Sign in'])
 })
 
 test('the sign-in opened from /welcome stays open after a sign-in from another tab', async () => {

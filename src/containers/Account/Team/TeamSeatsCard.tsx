@@ -6,7 +6,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { InlineLoading, InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineLoading, InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { clearPendingTeamCheckout } from './pendingTeamCheckout'
@@ -287,9 +287,10 @@ export function TeamSeatsCard() {
 			) : null}
 
 			{teamSubscriptions.length === 0 ? (
-				<p className="body-sm text-tertiary">
-					No seats purchased yet. Purchase seats to assign subscriptions to team members.
-				</p>
+				// Purchase seats sits in the card's header, so the empty state takes no action of its own.
+				<EmptyState size="md" icon="users" title="No seats purchased yet">
+					Purchase seats to assign subscriptions to team members.
+				</EmptyState>
 			) : (
 				<>
 					<div className="flex flex-col gap-3">

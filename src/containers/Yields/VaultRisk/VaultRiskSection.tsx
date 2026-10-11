@@ -139,6 +139,7 @@ export function VaultRiskUnmapped({
 				) : undefined
 			}
 		>
+			{/* Not EmptyState: the scanning radar is this section's own illustration, and EmptyState only takes an icon. */}
 			<div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
 				<ScanningRadar />
 				<p className="label-md text-primary">Risk scenarios for this pool aren&apos;t mapped yet</p>

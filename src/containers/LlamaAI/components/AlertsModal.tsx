@@ -74,10 +74,10 @@ import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
-import { ListLoading } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { ErrorLine, InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { EmptyState, ErrorLine, InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
@@ -167,20 +167,16 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 							? 'upsell'
 							: 'empty'
 	const footerAction =
-		view === 'sign-in' ? (
-			<Button type="button" variant="primary" size="md" onClick={signInModalStore.show}>
-				Sign in
-			</Button>
-		) : view === 'upsell' || (view === 'list' && upsellActive) ? (
+		view !== 'list' ? null : upsellActive ? (
 			<Button as={BasicLink} href="/subscription" variant="primary" size="md">
 				Upgrade to Pro
 			</Button>
-		) : view === 'list' ? (
+		) : (
 			<Button type="button" variant="primary" size="md" onClick={() => openCreateModal('schedule')}>
 				<Icon name="plus" className="size-3.5" />
 				New alert
 			</Button>
-		) : null
+		)
 
 	return (
 		<>
@@ -223,17 +219,35 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 							{view === 'loading' ? (
 								<SurfaceBodyLoadingStatus label="Loading alerts" className="min-h-40" />
 							) : view === 'sign-in' ? (
-								<p className="body-sm text-secondary">
+								<EmptyState
+									size="md"
+									icon="calendar-plus"
+									title="Alerts need an account"
+									actions={
+										<Button size="sm" variant="primary" onClick={signInModalStore.show}>
+											Sign in
+										</Button>
+									}
+								>
 									Sign in to use alerts and manage their delivery from one place.
-								</p>
+								</EmptyState>
 							) : view === 'error' ? (
 								<InlineStatus variant="error" retry={alertsQuery}>
 									Couldn&apos;t load alerts.
 								</InlineStatus>
 							) : (
-								<p className="body-sm text-secondary">
+								<EmptyState
+									size="md"
+									icon="sparkles"
+									title="Alerts need Pro"
+									actions={
+										<Button as={BasicLink} href="/subscription" size="sm" variant="primary">
+											Upgrade to Pro
+										</Button>
+									}
+								>
 									{getUpsellCopy(alertsUsage ?? null)}. Upgrade to Pro to create alerts.
-								</p>
+								</EmptyState>
 							)}
 						</DialogBody>
 					)}
@@ -659,7 +673,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 						) : executionsQuery.isLoading ? (
 							<ListLoading label="Loading history" />
 						) : !executionsQuery.data || executionsQuery.data.length === 0 ? (
-							<p className="text-center body-sm text-tertiary">No runs yet.</p>
+							<NoResults>No runs yet.</NoResults>
 						) : (
 							<div className="flex flex-col">
 								{executionsQuery.data.map((exec) => (

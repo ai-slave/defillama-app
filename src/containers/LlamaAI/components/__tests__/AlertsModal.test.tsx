@@ -134,12 +134,14 @@ test('pending toggles block repeats, even after opening edit, and roll back on f
 	expect(alertTexts(dialog())).toHaveLength(1)
 })
 
-test('signed out, the modal asks to sign in without an empty alert state or an alerts request', async () => {
+test('signed out, the modal offers one Sign in button without an empty alert state or an alerts request', async () => {
 	pb.authStore.clear()
 	await render()
-	expect(document.body.textContent).toContain('Sign in to use alerts')
-	expect(document.querySelector('[role="status"]')).toBeNull()
-	expect(document.body.textContent).not.toContain('Create your first')
+	const buttons = [...dialog().querySelectorAll('button, a')].map(accessibleName)
+	expect(buttons.filter((name) => name === 'Sign in')).toHaveLength(1)
+	expect(buttons).not.toContain('New alert')
+	// The empty alert state's own heading.
+	expect(dialog().querySelector('h3')).toBeNull()
 	expect(alertRequests()).toEqual([])
 })
 

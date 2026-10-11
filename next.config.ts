@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
 		proxyPrefetch: 'strict'
 	},
 	reactStrictMode: true,
+	// The Babel compiler, not `experimental.turbopackRustReactCompiler`: Vercel builds with webpack
+	// (runPreparedNext.mjs), where Next refuses that flag, and the compiler baseline, the table data identity policy
+	// and the compiled test project all check Babel's output.
 	reactCompiler: true,
 	// Increase timeout for static page generation (default is 60 seconds)
 	staticPageGenerationTimeout: 300, // 5 minutes

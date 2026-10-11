@@ -351,7 +351,7 @@ const EMPTY_STATE_SIZE = {
 } as const
 
 /** Where content would be and there is none: nothing created yet (no dashboards, no API key), nothing matched with a
-    way back (Clear filters), a choice to make first (pick a token), or a locked feature (Upgrade). Not an error, which
+    way back (Clear filters), a choice to make first (pick a token), or a locked feature (Sign in, Upgrade). Not an error, which
     keeps PanelStatus or InlineStatus so it reads as broken, and not a quick no-match inside a table, list or popover,
     which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus.
     `md` sits inside a Panel, Card or dialog body and takes sm buttons; `lg` fills a page or tab and takes md buttons,

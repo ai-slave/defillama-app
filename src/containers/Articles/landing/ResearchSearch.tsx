@@ -317,6 +317,7 @@ function Pagination({
 	)
 }
 
+// Not the shared EmptyState: the research landing keeps its own type and icons (research navy, ResearchIcon).
 function EmptyState({ query, tag, section, client }: { query: string; tag: string; section: string; client: string }) {
 	const hasFilters = Boolean(query || tag || section || client)
 	return (

@@ -28,6 +28,7 @@ function BodyRows() {
 }
 
 export function ProDialogFallback({ width = 'sm', workspace = false }: ProDialogFallbackProps) {
+	// useIsClient, not ClientOnly: createPortal reads document.body in this render, before ClientOnly could skip it.
 	const isClient = useIsClient()
 	if (!isClient) return null
 

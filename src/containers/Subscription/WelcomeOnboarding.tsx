@@ -20,7 +20,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { OptionTile } from '~/ui/OptionTile'
 import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
-import { InlineLoading, PanelLoadingStatus } from '~/ui/Status'
+import { EmptyState, InlineLoading, PanelLoadingStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const ONBOARDING_OPTIONS = [
@@ -320,15 +320,20 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 
 	if (!isAuthenticated) {
 		return (
-			<div className="flex min-h-[60vh] items-center justify-center px-4">
-				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-primary">Sign in to continue</h2>
-					<p className="body-md text-tertiary">Sign in with the account you subscribed with to see your plan.</p>
-					<Button size="md" onClick={onSignIn}>
+			<EmptyState
+				size="lg"
+				icon="user"
+				title="Welcome to DefiLlama"
+				headingAs="h1"
+				className="min-h-[60vh]"
+				actions={
+					<Button size="md" variant="primary" onClick={onSignIn}>
 						Sign in
 					</Button>
-				</div>
-			</div>
+				}
+			>
+				Sign in with the account you subscribed with to see your plan.
+			</EmptyState>
 		)
 	}
 

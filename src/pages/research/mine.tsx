@@ -17,13 +17,13 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl } from '~/ui/focus'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
-import { InlineStatus } from '~/ui/Status'
+import { EmptyState, InlineStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
@@ -63,6 +63,7 @@ function MyArticlesContent() {
 	} | null>(null)
 	const returnFocusRef = useRef<HTMLElement | null>(null)
 	const newArticleRef = useRef<HTMLAnchorElement>(null)
+	const searchInputRef = useRef<HTMLInputElement>(null)
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -250,6 +251,7 @@ function MyArticlesContent() {
 					<div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
 						<SearchField
 							label="Search articles"
+							ref={searchInputRef}
 							value={searchInput}
 							onChange={setSearchInput}
 							placeholder="Search title, slug…"
@@ -305,24 +307,47 @@ function MyArticlesContent() {
 						</li>
 					))}
 				</ul>
-			) : filtered.length === 0 ? (
-				<div className="grid gap-3 px-4 py-16 text-center">
-					<h2 className="heading-sm tracking-tight text-primary">
-						{totalCount === 0 ? 'Nothing here yet' : 'No matches'}
-					</h2>
-					<p className="mx-auto max-w-md body-md text-secondary">
-						{totalCount === 0
-							? "Notes turn into drafts the moment you start typing. Publish when you're ready."
-							: search || sectionFilter !== 'all' || statusFilter !== 'all'
-								? 'Try adjusting the filters or clearing the search.'
-								: 'Nothing here.'}
-					</p>
-					{totalCount === 0 ? (
-						<Button as={Link} variant="primary" size="md" href="/research/new" className="mx-auto mt-3">
+			) : totalCount === 0 ? (
+				<EmptyState
+					size="lg"
+					icon="file-plus"
+					title="Nothing here yet"
+					headingAs="h2"
+					framed
+					actions={
+						<Button as={Link} variant="primary" size="md" href="/research/new">
 							Write your first
 						</Button>
-					) : null}
-				</div>
+					}
+				>
+					Notes turn into drafts the moment you start typing. Publish when you're ready.
+				</EmptyState>
+			) : filtered.length === 0 ? (
+				// With every filter at its default the list is all articles, so an empty list here always has a filter set.
+				<EmptyState
+					size="lg"
+					icon="search"
+					title="No matches"
+					headingAs="h2"
+					framed
+					actions={
+						<Button
+							// The list replaces this button once the debounced search catches up, so focus moves to the search field.
+							ref={passFocusOnLeave(() => searchInputRef.current)}
+							variant="secondary"
+							size="md"
+							onClick={() => {
+								setSearchInput('')
+								setSectionFilter('all')
+								setStatusFilter('all')
+							}}
+						>
+							Clear filters
+						</Button>
+					}
+				>
+					Try other filters or clear the search.
+				</EmptyState>
 			) : (
 				<>
 					<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">

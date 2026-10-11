@@ -20,7 +20,9 @@ import {
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { EmptyState } from '~/ui/Status'
 
 function LlamaAIPage() {
 	const { user, loaders } = useAuthContext()
@@ -95,14 +97,19 @@ function SignedOutChat() {
 	return (
 		<>
 			{isSession ? (
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-					<p className="flex items-center gap-1 text-center">
-						<button type="button" onClick={() => askToSignIn(null)} className="underline">
+				<EmptyState
+					size="lg"
+					icon="message-square"
+					title="This chat needs an account"
+					headingAs="h1"
+					actions={
+						<Button size="md" variant="primary" onClick={() => askToSignIn(null)}>
 							Sign in
-						</button>{' '}
-						to access this page.
-					</p>
-				</div>
+						</Button>
+					}
+				>
+					Sign in to open chats saved to your account.
+				</EmptyState>
 			) : (
 				<LlamaAIChromeContext.Provider
 					value={{

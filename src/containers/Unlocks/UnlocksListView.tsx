@@ -6,6 +6,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
+import { EmptyState } from '~/ui/Status'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -32,11 +33,7 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 	}, [events])
 
 	if (events.length === 0) {
-		return (
-			<Card padding="md" className="flex min-h-[200px] items-center justify-center text-center body-sm text-secondary">
-				No unlocks found for the next 30 days.
-			</Card>
-		)
+		return <EmptyState size="md" icon="calendar" title="No unlocks in the next 30 days" className="min-h-[200px]" />
 	}
 
 	return (

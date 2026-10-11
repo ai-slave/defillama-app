@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { useIsClient } from '~/hooks/useIsClient'
 
 export function Toast() {
+	// useIsClient, not ClientOnly: createPortal reads document.body in this render, before ClientOnly could skip it.
 	const isClient = useIsClient()
 	if (!isClient) return null
 
