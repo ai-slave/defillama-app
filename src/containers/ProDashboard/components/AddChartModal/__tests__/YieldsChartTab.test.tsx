@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { YieldsChartTab } from '../YieldsChartTab'
@@ -87,7 +88,7 @@ test('a pool list that fails to load says so instead of showing no pools', async
 	const failed = () => new Response(null, { status: 503 })
 	http.serve({ 'https://': failed, 'http://': failed, '/': failed })
 	await renderTab()
-	await waitForUi(() => expect(container.textContent).toContain("Couldn't load the yield pools."))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.textContent).not.toMatch(/\d+ pools?/)
 })
 

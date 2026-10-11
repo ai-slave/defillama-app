@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../../AppMetadataContext'
@@ -149,7 +150,7 @@ test('the card name field is found by its visible label and edits the name', asy
 test('a preview that fails to load says so and offers a retry, and an empty one says there is no data', async () => {
 	const config = normalizeChartBuilderConfig({ ...initializeFromEditItem(null).chartBuilder, metric: 'fees' })
 	await renderBuilder(config, 503)
-	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load the preview."))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('Configure chart settings to see preview')
 	await act(async () => root.unmount())
 	client.clear()

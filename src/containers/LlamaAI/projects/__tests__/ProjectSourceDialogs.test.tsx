@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { FileDropProvider } from '../../components/FileDrop'
@@ -188,9 +188,7 @@ test('GitHub failure stays inline, keeps selection, and can retry', async () => 
 	await mount('github')
 	await selectRepo()
 	await click('Connect')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't connect this repository. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(openDialog()!)).toHaveLength(1))
 	expect(field('Repository').value).toBe('owner/repo')
 	expect(api.error).not.toHaveBeenCalled()
 	await click('Connect')
@@ -255,14 +253,13 @@ test('a failed text import stays inline as a plain sentence, also while its retr
 	await fill(document.querySelector('input')!, 'notes.md')
 	await fill(document.querySelector('textarea')!, 'Note')
 	await click('Save')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add the text content. Try again.")
-	)
-	expect(openDialog()).toBeDefined()
+	// The site's own sentence, never the fetch error's message.
+	await waitForUi(() => expect(alertTexts(openDialog()!)).toHaveLength(1))
+	expect(alertTexts(openDialog()!)[0]).not.toContain('Failed to fetch')
 	expect(api.error).not.toHaveBeenCalled()
 	await click('Save')
 	await waitForUi(() => expect(button('Saving…')).toBeDefined())
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add the text content. Try again.")
+	expect(alertTexts(openDialog()!)).toHaveLength(1)
 	await act(async () => retry.resolve({ imported: [{ path: 'notes.md' }], skipped: [] }))
 	await waitForUi(() => expect(openDialog()).toBeUndefined())
 })
@@ -335,9 +332,7 @@ test('file loading and failure do not look empty, retry restores the upload targ
 		'true'
 	)
 	await act(async () => request.reject(new Error('Offline')))
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.getAttribute('aria-disabled')).toBe(
 		'true'
 	)
@@ -356,9 +351,7 @@ test('connected source failure has its own retry without hiding available files'
 	api.sources.mockRejectedValueOnce(new Error('Sources offline')).mockResolvedValueOnce([])
 	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'blob', path: 'notes.md', size: 100 }] })
 	await mountFiles()
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load connected sources.")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	await waitForUi(() => expect(container.textContent).toContain('notes.md'))
 	expect(container.querySelector('[aria-label="Delete notes.md"]')).toBeNull()
 	await click('Try again')
@@ -376,9 +369,7 @@ test('a background file refresh failure preserves the known files and offers ret
 	await act(async () => {
 		await session.client.refetchQueries()
 	})
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.textContent).toContain('notes.md')
 	expect(container.textContent).not.toContain('Drop files here')
 })

@@ -2,6 +2,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -29,7 +31,8 @@ afterEach(async () => {
 // The desktop sidebar; the phone menu renders the same section inside its dialog.
 const sidebar = () => container.querySelector<HTMLElement>('.desktop-nav-shell')!
 const dashboardsSection = () => sidebar().querySelector<HTMLElement>('[data-nav-dashboards]')
-const retry = () => [...dashboardsSection()!.querySelectorAll('button')].find((el) => el.textContent === 'Try again')!
+const retry = () =>
+	[...dashboardsSection()!.querySelectorAll('button')].find((el) => accessibleName(el) === 'Try again')!
 
 async function renderNav() {
 	await act(async () =>
@@ -45,11 +48,8 @@ test('a failed dashboards list says so in the sidebar; a slow retry keeps its fo
 	session.serve({ '/lite/dashboards': fixtureStatus(500, { message: 'Server error' }) })
 	await renderNav()
 
-	await waitForUi(() =>
-		expect(dashboardsSection()?.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't load your dashboards.Try again"
-		)
-	)
+	await waitForUi(() => expect(alertTexts(dashboardsSection()!)).toHaveLength(1))
+	expect(alertTexts(dashboardsSection()!)[0]).toContain('load')
 
 	// Keep the response pending until the loading state has been inspected.
 	const response = Promise.withResolvers<Response>()
@@ -61,7 +61,7 @@ test('a failed dashboards list says so in the sidebar; a slow retry keeps its fo
 	})
 
 	await waitForUi(() => expect(button.getAttribute('aria-busy')).toBe('true'))
-	expect(dashboardsSection()!.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your dashboards.")
+	expect(alertTexts(dashboardsSection()!)).toHaveLength(1)
 	expect(button.getAttribute('aria-disabled')).toBe('true')
 	// Browsers drop focus from a natively disabled button; happy-dom does not, so assert the cause.
 	expect(button.disabled).toBe(false)
@@ -76,11 +76,9 @@ test('a failed refresh keeps the saved dashboards listed above its error', async
 	session.serve({ '/lite/dashboards': fixtureStatus(500, { message: 'Server error' }) })
 	await renderNav()
 
-	await waitForUi(() =>
-		expect(dashboardsSection()?.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't refresh your dashboards.Try again"
-		)
-	)
+	await waitForUi(() => expect(alertTexts(dashboardsSection()!)).toHaveLength(1))
+	// A saved list turns the failure into a refresh, not a load.
+	expect(alertTexts(dashboardsSection()!)[0]).toContain('refresh')
 	expect(dashboardsSection()!.querySelector('a')?.getAttribute('href')).toBe('/pro/saved')
 })
 

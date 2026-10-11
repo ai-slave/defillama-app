@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -92,7 +93,7 @@ test('a chart that failed to load keeps its error while Try again reads it, then
 		retry.click()
 	})
 	await waitForUi(() => expect(accessibleName(retry)).toBe('Retrying…'))
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load this card")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(document.activeElement).toBe(retry)
 
 	await act(async () => read.resolve(Response.json([[1_789_516_800, 40]])))

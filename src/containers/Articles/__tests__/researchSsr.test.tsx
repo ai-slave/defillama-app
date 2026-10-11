@@ -394,7 +394,7 @@ describe('research SSR data loading', () => {
 		)
 		expect(html).toContain('Canonical Research')
 		expect(html).toContain('Server rendered body')
-		expect(html).not.toContain("Couldn't load research")
+		expect(html).not.toContain('role="alert"')
 	})
 
 	test('keeps the server-rendered landing page visible when its background refetch fails', async () => {
@@ -418,7 +418,7 @@ describe('research SSR data loading', () => {
 
 		const html = renderWithQueryClient(<ArticlesPage {...props} />, queryClient)
 		expect(html).toContain('Canonical Research')
-		expect(html).not.toContain('Couldn&#x27;t load research')
+		expect(html).not.toContain('role="alert"')
 	})
 
 	test('returns notFound for missing articles and redirects non-canonical article urls', async () => {

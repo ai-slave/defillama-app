@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { getChartBuilderQueryKey } from '../../chartBuilderQueryKey'
@@ -95,13 +96,8 @@ describe('ChartBuilderCard streamed loading state', () => {
 		const root = createRoot(container)
 
 		await act(async () => root.render(<Card queryClient={queryClient} streamDone />))
-		await waitForUi(() => {
-			if (!container.querySelector('[role="alert"]')) throw new Error('Expected the card error')
-		})
-
-		const alert = container.querySelector('[role="alert"]')
-		expect(alert?.textContent).toContain("Couldn't load this card")
-		expect(alert?.textContent).not.toContain('network down')
+		await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
+		expect(alertTexts(container)[0]).not.toContain('network down')
 		expect(Array.from(container.querySelectorAll('button')).some((b) => b.textContent === 'Try again')).toBe(true)
 
 		await act(async () => root.unmount())

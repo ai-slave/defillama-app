@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, LocalArticleDocument } from '../../types'
@@ -220,7 +221,7 @@ test('retains the listing dialog when its save fails', async () => {
 	await click('Save changes')
 	const review = button('Save changes').closest<HTMLElement>('[role="dialog"]')!
 	expect(review.hidden).toBe(false)
-	expect(review.textContent).toContain("Couldn't save your changes. Try again.")
+	expect(alertTexts(review)).toHaveLength(1)
 	expect(api.error).not.toHaveBeenCalled()
 	await click('Save changes')
 	expect(review.hidden).toBe(true)

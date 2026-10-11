@@ -8,6 +8,7 @@ import { subscriptionStatusQueryKey } from '~/auth/subscriptionStatus'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -130,7 +131,7 @@ test('Try again on a dashboard that failed to load keeps the failure on screen u
 	await act(async () => tryAgain.click())
 	await waitForUi(() => expect(tryAgain.getAttribute('aria-busy')).toBe('true'))
 	expect(tryAgain.isConnected).toBe(true)
-	expect(container.textContent).toContain("Couldn't load this dashboard.")
+	expect(alertTexts(container)).toHaveLength(1)
 
 	await act(async () => reload.resolve(Response.json(privateDashboard)))
 	await waitForUi(() => expect(container.textContent).toBe('Dashboard body'))

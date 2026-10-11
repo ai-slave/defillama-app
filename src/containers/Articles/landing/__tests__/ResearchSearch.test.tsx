@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { createEmptyLocalArticle } from '../../document'
@@ -130,7 +131,7 @@ test('paging keeps the results and the pressed Next on screen until the next pag
 test('a failed search announces its error in the results with a Try again, keeps the search box, and shows no count', async () => {
 	http.serve({ [`${FEATURES_SERVER}/articles`]: fixtureStatus(500, { error: 'Search is down' }) })
 	await render()
-	await waitForUi(() => expect(container.textContent).toContain("Couldn't load research"))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.querySelector('[role="alert"]')?.textContent).toContain('Search is down')
 	expect(container.textContent).not.toContain('0 results')
 	expect(input().value).toBe('aave')
@@ -138,7 +139,7 @@ test('a failed search announces its error in the results with a Try again, keeps
 	http.serve({ [`${FEATURES_SERVER}/articles`]: pageOf(1) })
 	await act(async () => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Try again')!.click())
 	await waitForUi(() => expect(container.textContent).toContain('Article on page 1'))
-	expect(container.textContent).not.toContain("Couldn't load research")
+	expect(alertTexts(container)).toEqual([])
 })
 
 test('a page that fails to load hands focus from the pressed Next to the page, and the retry that loads it does too', async () => {
@@ -156,7 +157,7 @@ test('a page that fails to load hands focus from the pressed Next to the page, a
 		nextButton().click()
 	})
 	await navigate(router.push.mock.calls[0][0])
-	await waitForUi(() => expect(container.textContent).toContain("Couldn't load research"))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(document.activeElement).toBe(main)
 
 	http.serve({ [`${FEATURES_SERVER}/articles`]: pageOf(2) })

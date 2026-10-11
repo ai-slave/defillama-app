@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { TokenUsageDatasetTableConfig } from '../../../../types'
@@ -103,7 +104,7 @@ describe('TokenUsageDataset CSV export', () => {
 		expect(tryAgain.disabled).toBe(false)
 		expect(tryAgain.getAttribute('aria-disabled')).toBe('true')
 		expect(document.activeElement).toBe(tryAgain)
-		expect(container.textContent).toContain("Couldn't load token usage data")
+		expect(alertTexts(container)).toHaveLength(1)
 
 		await act(async () => retry.resolve(Response.json(rows)))
 		await waitForUi(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))

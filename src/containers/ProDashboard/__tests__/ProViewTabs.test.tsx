@@ -7,6 +7,7 @@ import { FEATURES_SERVER } from '~/constants'
 import HomePage from '~/pages/pro'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -240,9 +241,10 @@ test('a failed My Dashboards load shows an error with a retry instead of an empt
 	session.serve({ [`${FEATURES_SERVER}/dashboards`]: fixtureStatus(500, { message: 'Unavailable' }) })
 	router.query = { tab: 'my-dashboards' }
 	await render()
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your dashboards")
-	)
+	await waitForUi(() => {
+		const myDashboards = tabs().find((tab) => tab.textContent === 'My Dashboards')!
+		expect(alertTexts(panel(myDashboards))).toHaveLength(1)
+	})
 	expect(container.textContent).not.toContain('Showing 0 of 0 dashboards')
 
 	session.serve({ [`${FEATURES_SERVER}/dashboards`]: emptyPage })

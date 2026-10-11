@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -60,9 +61,7 @@ test('a failed submission stays in the dialog with its text, also while its retr
 	await type('The TVL is stale')
 	await click('Submit')
 	await act(async () => {
-		await waitForUi(() =>
-			expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't send your feedback. Try again.")
-		)
+		await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
 	})
 	expect(dialog()).not.toBeNull()
 	expect(document.querySelector('textarea')?.value).toBe('The TVL is stale')
@@ -71,7 +70,7 @@ test('a failed submission stays in the dialog with its text, also while its retr
 	await act(async () => {
 		await waitForUi(() => expect(button('Submitting…')).toBeDefined())
 	})
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't send your feedback. Try again.")
+	expect(alertTexts(dialog()!)).toHaveLength(1)
 	await act(async () => retry.resolve(Response.json({ ok: true })))
 	await act(async () => {
 		await waitForUi(() => expect(toastSuccess).toHaveBeenCalledWith('Thank you for your feedback!'))

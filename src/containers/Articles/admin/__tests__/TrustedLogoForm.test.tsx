@@ -4,6 +4,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -34,7 +36,7 @@ test('a logo list that fails to load says so with a Try again, not that the logo
 			</session.Wrapper>
 		)
 	)
-	await waitForUi(() => expect(container.textContent).toContain("Couldn't load the logos"))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.textContent).not.toContain('Logo not found')
 
 	session.serve({
@@ -53,7 +55,9 @@ test('a logo list that fails to load says so with a Try again, not that the logo
 			]
 		}
 	})
-	await act(async () => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Try again')!.click())
-	await waitForUi(() => expect(container.textContent).not.toContain("Couldn't load the logos"))
+	await act(async () =>
+		[...container.querySelectorAll('button')].find((b) => accessibleName(b) === 'Try again')!.click()
+	)
+	await waitForUi(() => expect(alertTexts(container)).toEqual([]))
 	expect(container.textContent).not.toContain('Logo not found')
 })

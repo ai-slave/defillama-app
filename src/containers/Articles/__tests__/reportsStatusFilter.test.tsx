@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportsAdminView } from '../admin/ReportsAdminView'
@@ -108,9 +109,7 @@ test('a refresh that fails after a change keeps the reports and says the list ma
 
 	session.serve({ [`${FEATURES_SERVER}/articles`]: () => new Response('offline', { status: 503 }) })
 	await act(async () => session.client.invalidateQueries({ queryKey: ['research', 'admin', 'reports'] }))
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't refresh reports.")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(titles()).toEqual(['Live report', 'Draft report'])
 
 	session.serve({

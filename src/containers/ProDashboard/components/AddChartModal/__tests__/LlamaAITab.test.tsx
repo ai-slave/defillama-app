@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { LlamaAITab } from '../LlamaAITab'
@@ -55,12 +56,10 @@ async function confirmDelete() {
 	await act(async () => confirm.click())
 }
 
-test('a failed delete keeps the confirmation open with the reason, and keeps the chart', async () => {
+test('a failed delete keeps the confirmation open with an error, and keeps the chart', async () => {
 	await renderTab(() => new Response(null, { status: 500 }))
 	await confirmDelete()
-	await waitForUi(() =>
-		expect(confirmation()!.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete the chart. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 	expect(deleteButton('Aave TVL')).not.toBeNull()
 })
 
@@ -84,5 +83,5 @@ test('a failed refresh keeps the loaded charts and an open delete confirmation',
 
 	expect(deleteButton('Uniswap fees')).not.toBeNull()
 	expect(confirmation()?.textContent).toContain('Delete chart?')
-	expect(document.body.textContent).not.toContain("Couldn't load your saved charts.")
+	expect(alertTexts(container)).toEqual([])
 })

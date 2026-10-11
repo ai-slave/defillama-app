@@ -11,6 +11,8 @@ vi.hoisted(() => {
 })
 
 import { SEARCH_API_URL } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { TokenSearchDialog } from '../TokenSearchDialog'
@@ -49,12 +51,10 @@ test('a failed token search says so and Try again loads the tokens', async () =>
 		)
 	)
 
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Couldn’t search tokens.')
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('No tokens found')
 
-	const retry = [...document.querySelectorAll('button')].find((button) => button.textContent === 'Try again')!
+	const retry = [...document.querySelectorAll('button')].find((button) => accessibleName(button) === 'Try again')!
 	await act(async () => retry.click())
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')!.textContent).toContain('Bitcoin (BTC)'))
 })

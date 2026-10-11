@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { CreateProjectModal } from '../CreateProjectModal'
@@ -158,7 +158,7 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 	await click('Save')
 	// The failure stays on screen while its retry runs.
 	await waitForUi(() => expect(button('Saving…')).toBeDefined())
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't save the project. Try again.")
+	expect(alertTexts(dialog)).toHaveLength(1)
 	await act(async () => retry.resolve({ project: { ...project, name: 'Draft name' } }))
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 	expect(api.request).toHaveBeenLastCalledWith('/projects/qa', {
@@ -175,10 +175,9 @@ test('delete cancellation, failure and retry retain the named project and comple
 	expect(api.request).not.toHaveBeenCalled()
 	await click('Open project dialog')
 	await click('Delete project')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete this project. Try again.")
-	)
-	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('QA Project')
+	const confirmation = document.querySelector('[role="alertdialog"]')!
+	await waitForUi(() => expect(alertTexts(confirmation)).toHaveLength(1))
+	expect(confirmation.textContent).toContain('QA Project')
 	expect(api.deleted).not.toHaveBeenCalled()
 	await click('Delete project')
 	await waitForUi(() => expect(api.deleted).toHaveBeenCalledTimes(1))

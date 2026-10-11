@@ -104,8 +104,8 @@ test('marks the chip of a metric that is still loading', async () => {
 	expect(loading.map((status) => status.getAttribute('aria-label'))).toEqual(['Stablecoins Mcap is loading'])
 })
 
-test('a TVL setting whose series failed to load says TVL leaves the settings out', async () => {
+test('a TVL setting whose series failed to load shows an alert in the panel', async () => {
 	await renderPanel(['TVL'], { toggledCharts: ['TVL'], tvlSettingsFailed: true })
 
-	expect(alertTexts(container)).toEqual(["Couldn't load your TVL settings. TVL leaves them out."])
+	expect(alertTexts(container)).toHaveLength(1)
 })

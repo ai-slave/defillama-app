@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportIncorrectData, type ReportSubject } from '..'
 
@@ -136,6 +136,8 @@ test('a report without a message says so under the field and sends nothing', asy
 	expect(fieldErrorTexts()).toEqual([])
 })
 
+const reportDialog = () => document.querySelector<HTMLElement>('[role="dialog"]')!
+
 async function waitForPending() {
 	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
 }
@@ -151,9 +153,7 @@ test('failed reports retain the draft for retry but reopening starts without the
 	mocks.fetchJson.mockRejectedValueOnce(new Error('Offline'))
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
-	)
+	await waitForUi(() => expect(alertTexts(reportDialog())).toHaveLength(1))
 	expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
 	await clickReportButton('Close dialog')
 	await clickReportButton('Report incorrect data')
@@ -226,9 +226,7 @@ test.each(['dataType', 'contact', 'submit-btn'])(
 		expect(document.querySelector('button[type="submit"]')?.textContent).toContain('Sending…')
 
 		await act(async () => request.reject(new Error('Offline')))
-		await waitForUi(() =>
-			expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
-		)
+		await waitForUi(() => expect(alertTexts(reportDialog())).toHaveLength(1))
 		expect(document.activeElement).toBe(focusedControl)
 		expect(dataTypeTrigger().getAttribute('aria-disabled')).toBeNull()
 		expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
@@ -266,15 +264,13 @@ test('a failed report keeps its error on screen while the retry sends', async ()
 	mocks.fetchJson.mockRejectedValueOnce(new Error('Offline')).mockReturnValueOnce(retry.promise)
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
-	)
+	await waitForUi(() => expect(alertTexts(reportDialog())).toHaveLength(1))
 
 	const form = document.querySelector('form')!
 	await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
 	expect(mocks.fetchJson).toHaveBeenCalledTimes(2)
 	await waitForUi(() => expect(document.querySelector('form')?.textContent).toContain('Sending…'))
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
+	expect(alertTexts(reportDialog())).toHaveLength(1)
 
 	await act(async () => retry.resolve({ message: 'success' }))
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Report sent'))

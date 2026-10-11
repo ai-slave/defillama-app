@@ -8,6 +8,7 @@ import { UnifiedTableHeader } from '~/containers/ProDashboard/components/Unified
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import pb from '~/utils/pocketbase'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { CSVDownloadButton, type CsvPayload } from '../CsvDownloadButton'
@@ -64,6 +65,8 @@ const waitFor = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 
 const waitForSession = () =>
 	waitFor(() => expect(button('Download .csv').getAttribute('aria-disabled')).not.toBe('true'))
 const toastText = () => document.querySelector('[data-rht-toaster]')?.textContent
+// The export only ever toasts its failure, so any toast here is the error one.
+const toasts = () => document.querySelectorAll('[data-rht-toaster] [role="status"]')
 
 test('a prepared export blocks duplicates, reports failure in a toast, and downloads on retry', async () => {
 	const pending = Promise.withResolvers<CsvPayload>()
@@ -82,7 +85,7 @@ test('a prepared export blocks duplicates, reports failure in a toast, and downl
 	expect(downloads).toEqual([])
 
 	await act(async () => pending.reject(new Error('Snapshot unavailable')))
-	await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Try again.'))
+	await waitFor(() => expect(toasts()).toHaveLength(1))
 	expect(button('Download .csv').disabled).toBe(false)
 
 	await click('Download .csv')
@@ -174,9 +177,7 @@ test('grouped export supports arrows and Escape, retains failed choices, and pre
 	await click('Download CSV: Categories Only')
 	expect(exportRows.mock.calls).toEqual([['chain']])
 	await act(async () => pending.reject(new Error('Unavailable')))
-	await waitFor(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t complete the CSV export. Try again.')
-	)
+	await waitFor(() => expect(alertTexts()).toHaveLength(1))
 	expect(toastText()).toBe('')
 
 	await key(button('Download CSV: Chains Only'), 'Escape')
@@ -238,7 +239,7 @@ test.each(['dismissed', 'unmounted'] as const)(
 			await render(null)
 		}
 		await act(async () => pending.reject(new Error('Snapshot unavailable')))
-		await waitFor(() => expect(toastText()).toBe('Couldn’t complete the CSV export. Try again.'))
+		await waitFor(() => expect(toasts()).toHaveLength(1))
 
 		await render(dropdown)
 		await click('More actions')

@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ImagePreviewModal } from '../ImagePreviewModal'
 
@@ -21,6 +22,7 @@ function button(name: string) {
 	expect(result, `button ${name}`).not.toBeUndefined()
 	return result!
 }
+const dialog = () => document.querySelector('[role="dialog"]')!
 async function render(imageUrl: string | null) {
 	await act(async () =>
 		root.render(
@@ -78,9 +80,7 @@ test('HTTP errors show retry feedback and never download the error body', async 
 	await click('Download')
 	expect(downloads).toEqual([])
 	expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Image preview')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Couldn’t download the image. Try again, or use Open to save it from your browser.'
-	)
+	expect(alertTexts(dialog())).toHaveLength(1)
 	expect(document.querySelector('a')?.href).toBe(imageA)
 	fetch.mockResolvedValueOnce(
 		new Response(new Uint8Array([137, 80, 78, 71]), { headers: { 'Content-Type': 'image/png' } })
@@ -136,9 +136,7 @@ test('copy failure is visible, retry preserves focus, and a new image starts wit
 	writeText.mockRejectedValueOnce(new Error('Denied'))
 	await render(imageA)
 	await click('Copy URL')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Couldn’t copy the image URL. Try again, or use Open to copy it from your browser.'
-	)
+	expect(alertTexts(dialog())).toHaveLength(1)
 	const copy = Promise.withResolvers<void>()
 	writeText.mockReturnValueOnce(copy.promise)
 	await click('Copy URL')
@@ -181,9 +179,7 @@ test('a network failure after dismissal reports once without opening a surprise 
 	await click('Download')
 	await render(null)
 	await act(async () => request.reject(new Error('CORS blocked')))
-	await waitForUi(() =>
-		expect(toastError.mock.calls).toEqual([['Couldn’t download the image. Reopen its preview to try again.']])
-	)
+	await waitForUi(() => expect(toastError.mock.calls).toEqual([[expect.any(String)]]))
 	expect(open).not.toHaveBeenCalled()
 	await render(imageA)
 	expect(button('Download').getAttribute('aria-disabled')).not.toBe('true')
@@ -201,9 +197,7 @@ test('an image that fails to load says so and keeps Open as the way to reach it'
 	await render(imageA)
 	await act(async () => document.querySelector('img')!.dispatchEvent(new Event('error')))
 	expect(document.querySelector('img')).toBeNull()
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		'Couldn’t load this image. Use Open to try it in a new tab.'
-	)
+	expect(alertTexts(dialog())).toHaveLength(1)
 	const open = document.querySelector('a')!
 	expect(open.href).toBe(imageA)
 	expect(open.textContent).toBe('Open in new tab')

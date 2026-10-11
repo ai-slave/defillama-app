@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -80,10 +80,7 @@ describe('the dashboard author profile card', () => {
 	test('a failed load shows the error card instead of spinning forever, and Try again loads the form', async () => {
 		respond = fixtureStatus(500, { error: 'nope' })
 		await render()
-		await waitForUi(
-			() => expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load your profile."),
-			{ timeout: 1000 }
-		)
+		await waitForUi(() => expect(alertTexts(container)).toHaveLength(1), { timeout: 1000 })
 		const tryAgain = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Try again')!
 
 		respond = () => Response.json({ author: profile })

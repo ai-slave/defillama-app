@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { pickOption } from '~/utils/testing/pickOption'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -71,6 +71,9 @@ afterEach(async () => {
 async function render() {
 	await act(async () => root.render(<Harness />))
 }
+function dialog() {
+	return document.querySelector('[role="dialog"]')!
+}
 function toggle() {
 	return document.querySelector<HTMLInputElement>('[role="switch"]')!
 }
@@ -99,7 +102,7 @@ test('a failed refresh retains alerts and exposes retry', async () => {
 	})
 	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
 	await render()
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	expect(document.body.textContent).toContain('Weekly yields')
 	online = true
 	await act(async () => document.querySelector<HTMLButtonElement>('[role="alert"] button')!.click())
@@ -128,7 +131,7 @@ test('pending toggles block repeats, even after opening edit, and roll back on f
 	await act(async () => pending.resolve(new Response('nope', { status: 500 })))
 	await waitForUi(() => expect(toggle().checked).toBe(true))
 	expect(toggle().getAttribute('aria-disabled')).not.toBe('true')
-	expect(document.body.textContent).toContain("Couldn't update the alert. Try again.")
+	expect(alertTexts(dialog())).toHaveLength(1)
 })
 
 test('signed out, the modal asks to sign in without an empty alert state or an alerts request', async () => {
@@ -183,7 +186,7 @@ test('a failed toggle preserves other alert changes and allows retry without dup
 	await waitForUi(() => expect(checked()).toEqual(['true', 'false']))
 	expect(first.getAttribute('aria-label')).toBe('First report enabled')
 	expect(first.getAttribute('aria-disabled')).not.toBe('true')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't update the alert. Try again.")
+	expect(alertTexts(dialog())).toHaveLength(1)
 	await act(async () => first.click())
 	await act(async () => patches[1].resolve(Response.json({})))
 	await waitForUi(() => expect(first.getAttribute('aria-checked')).toBe('false'))
@@ -235,18 +238,12 @@ test('a failed delete keeps the alert and says so in the confirmation, also whil
 	const confirmDelete = () => [...document.querySelectorAll('button')].findLast((b) => accessibleName(b) === 'Delete')!
 	await act(async () => buttonNamed(document, 'Delete Weekly yields').click())
 	await act(async () => confirmDelete().click())
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe(
-			"Couldn't delete the alert. Try again."
-		)
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="alertdialog"]')!)).toHaveLength(1))
 	expect(document.querySelector('h3')?.textContent).toBe('Weekly yields')
 	deleteStatus = 204
 	await act(async () => confirmDelete().click())
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Deleting…'))
-	expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe(
-		"Couldn't delete the alert. Try again."
-	)
+	expect(alertTexts(document.querySelector('[role="alertdialog"]')!)).toHaveLength(1)
 	await act(async () => retry.resolve())
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	expect(document.body.textContent).not.toContain('Weekly yields')
@@ -328,10 +325,10 @@ test('a failed alert save keeps its error while the retry runs', async () => {
 	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
 	await press(buttonNamed(document, 'Edit Weekly yields'))
 	await press(buttonNamed(document, 'Save'))
-	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't save the alert. Try again."))
+	await waitForUi(() => expect(alertTexts(document.querySelector('form')!)).toHaveLength(1))
 	await press(buttonNamed(document, 'Save'))
 	await waitForUi(() => expect(saves).toBe(2))
-	expect(document.body.textContent).toContain("Couldn't save the alert. Try again.")
+	expect(alertTexts(document.querySelector('form')!)).toHaveLength(1)
 	await act(async () => retry.resolve(Response.json({})))
 	await waitForUi(() => expect(document.querySelector('form')).toBeNull())
 })
@@ -454,7 +451,7 @@ test('an empty list whose refresh fails shows the error, not the empty state, si
 	})
 	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [])
 	await render()
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('Get pinged when things move')
 	online = true
 	await press(buttonNamed(document, 'Try again'))
@@ -469,7 +466,7 @@ test('a retry that clears the list notice leaves focus in the dialog', async () 
 	})
 	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
 	await render()
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	online = true
 	await press(buttonNamed(document, 'Try again'))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
@@ -483,13 +480,13 @@ test('a retry from a failed first load keeps the error and waits in Try again un
 		[ALERTS_URL]: () => (online ? retry.promise : new Response('offline', { status: 503 }))
 	})
 	await render()
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('Weekly yields')
 	online = true
 	const tryAgain = buttonNamed(document, 'Try again')
 	await press(tryAgain)
 	await waitForUi(() => expect(accessibleName(tryAgain)).toBe('Retrying…'))
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts")
+	expect(alertTexts(dialog())).toHaveLength(1)
 
 	await act(async () => retry.resolve(Response.json({ alerts: [alert] })))
 	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))

@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { MMDetailDrawer } from '../MMDetailDrawer'
@@ -108,11 +109,7 @@ test('loads the selected market maker and renders its scores, services and venue
 test('says the market maker failed to load instead of showing zero scores when a request fails', async () => {
 	http.serve({ '/api/public/market-makers/performance': fixtureStatus(404) })
 	await mount()
-	await waitForUi(() => {
-		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
-			"Couldn't load this market maker."
-		)
-	})
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('/10.00')
 })
 

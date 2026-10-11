@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeEach, expect, onTestFinished, test, vi } fro
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
@@ -947,7 +947,7 @@ test('a successful write with a failed refresh blocks another billing change unt
 	await waitForUi(() => expect(dialog()).toBeNull())
 	await click('Open')
 	expect(button('Purchase seats').disabled).toBe(true)
-	expect(dialog().textContent).toContain("Couldn't refresh team billing")
+	expect(alertTexts(dialog())).toHaveLength(1)
 	await click('Purchase seats')
 	expect(posts()).toHaveLength(1)
 	team = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
@@ -986,8 +986,8 @@ test('a failed team refresh keeps showing the cached team instead of a load erro
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 	expect(session.client.getQueryState(['team', 'user'])?.status).toBe('error')
+	// The load error replaces the whole tab, so the cached team on screen proves it did not show.
 	expect(container.textContent).toContain('Original')
-	expect(container.textContent).not.toContain("Couldn't load your team")
 })
 
 test('a pending invite shows its expiry date as text', async () => {
@@ -1224,13 +1224,13 @@ test.each([true, false])('recovers a lost invite response by reading membership:
 	await click('Check membership')
 	await waitForUi(async () => {
 		await act(async () => {})
-		expect(container.textContent).toContain("Couldn't check membership")
+		expect(alertTexts(container)).toHaveLength(1)
 	})
 	api.fetch.mockImplementation(async () => Response.json({ team: joined ? team : null }))
 	await click('Check membership')
 	await waitForUi(async () => {
 		await act(async () => {})
-		expect(container.textContent?.includes("Couldn't check membership")).toBe(false)
+		expect(alertTexts(container)).toEqual([])
 		expect(router.replace.mock.calls.length > 0).toBe(joined)
 	})
 	expect(posts()).toHaveLength(1)

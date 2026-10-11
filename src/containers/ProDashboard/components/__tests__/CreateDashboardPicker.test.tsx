@@ -8,7 +8,7 @@ import { FEATURES_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
@@ -339,7 +339,7 @@ describe('a subscriber', () => {
 		expect(next.getAttribute('aria-busy')).toBe('true')
 		expect(accessibleName(next)).toBe('Checking metrics…')
 		await act(async () => fail())
-		await waitFor(() => expect(document.body.textContent).toContain('Could not check which metrics'))
+		await waitFor(() => expect(alertTexts(next.closest('[role="dialog"]')!)).toHaveLength(1))
 		expect(next.getAttribute('aria-disabled')).toBe('true')
 		await act(async () => next.click())
 		// No error under a list that is not there: the failure and its Try again are the reason.

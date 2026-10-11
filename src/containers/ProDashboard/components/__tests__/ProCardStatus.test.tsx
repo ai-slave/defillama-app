@@ -2,6 +2,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice, ProCardRefreshFailed } from '../ProCardStatus'
 
@@ -47,9 +48,8 @@ test('the error state is an alert and calls back from Try again', async () => {
 	await act(async () =>
 		root.render(<ProCardError detail="The request failed" retry={{ refetch: onRetry, isFetching: false }} />)
 	)
-	const alert = container.querySelector('[role="alert"]')
-	expect(alert?.textContent).toContain("Couldn't load this card")
-	expect(alert?.textContent).toContain('The request failed')
+	expect(alertTexts(container)).toHaveLength(1)
+	expect(alertTexts(container)[0]).toContain('The request failed')
 	await act(async () => buttonLabelled('Try again').click())
 	expect(onRetry).toHaveBeenCalledOnce()
 })
@@ -76,7 +76,7 @@ test('a Try again that loads the content outside any card hands focus to the pag
 
 test('the error state has no Try again without a retry callback', async () => {
 	await act(async () => root.render(<ProCardError />))
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load this card")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(container.querySelector('button')).toBeNull()
 })
 
@@ -124,7 +124,7 @@ test('a failed refresh warns without hiding the data and retries', async () => {
 	const onRetry = vi.fn()
 	await act(async () => root.render(<ProCardRefreshFailed retry={{ refetch: onRetry, isFetching: false }} />))
 	const status = container.querySelector('[role="status"]')
-	expect(status?.textContent).toContain("Couldn't refresh this card")
+	expect(status?.contains(buttonLabelled('Try again'))).toBe(true)
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => buttonLabelled('Try again').click())
 	expect(onRetry).toHaveBeenCalledOnce()

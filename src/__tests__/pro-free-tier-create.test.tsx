@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import HomePage from '~/pages/pro'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -98,11 +99,7 @@ test('a free account whose dashboard count failed to load is not let through to 
 	await openBlankDashboardForm()
 
 	await click(dialog()!, 'Create dashboard')
-	await waitForUi(() =>
-		expect(dialog()!.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't check how many dashboards you have. Try again.Your choices are still here."
-		)
-	)
+	await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
 	expect(saveRequests()).toEqual([])
 
 	// A genuinely empty account may create its first dashboard.

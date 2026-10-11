@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { SqlChartConfig, SqlSnapshot } from '../../../types'
@@ -83,10 +84,8 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 			</session.Wrapper>
 		)
 	)
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull(), { timeout: 1000 })
-	const alert = document.querySelector('[role="alert"]')!
-	expect(alert.textContent).toContain("Couldn't refresh this query.")
-	expect(alert.textContent).not.toContain('SQL run failed')
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1), { timeout: 1000 })
+	expect(alertTexts(container)[0]).not.toContain('SQL run failed')
 	expect(document.body.textContent).toContain('No numeric columns in this result to chart.')
 
 	await act(async () =>

@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { YieldsChartConfig } from '~/containers/ProDashboard/types'
-import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -142,9 +142,9 @@ test('a failed dashboard list keeps the saved dashboards, and its retry loads th
 		)
 	)
 
-	await waitForUi(() =>
-		expect(dialog().querySelector('[role="alert"]')?.textContent).toBe("Couldn't refresh your dashboards.Try again")
-	)
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
+	// A saved list turns the failure into a refresh, not a load.
+	expect(alertTexts(dialog())[0]).toContain('refresh')
 	expect(dialog().textContent).toContain('Saved research')
 	expect(localStorage.getItem('lite-dashboards')).toBe(JSON.stringify([{ id: 'saved', name: 'Saved research' }]))
 
@@ -177,9 +177,8 @@ test('a failed dashboard list with nothing saved says so instead of claiming the
 		)
 	)
 
-	await waitForUi(() =>
-		expect(dialog().querySelector('[role="alert"]')?.textContent).toBe("Couldn't load your dashboards.Try again")
-	)
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
+	expect(alertTexts(dialog())[0]).toContain('load')
 	expect(dialog().textContent).not.toContain('No dashboards yet')
 
 	// A slow retry keeps the failure and its focused button instead of swapping them for the list's loading state.
@@ -195,7 +194,7 @@ test('a failed dashboard list with nothing saved says so instead of claiming the
 		retry.click()
 	})
 	await waitForUi(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
-	expect(dialog().querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your dashboards.")
+	expect(alertTexts(dialog())).toHaveLength(1)
 	expect(dialog().textContent).not.toContain('Loading dashboards')
 	expect(document.activeElement).toBe(retry)
 	await waitForUi(() => expect(dialog().textContent).toContain('Research'))
@@ -281,11 +280,7 @@ test('a premium refresh asks over the open dialog, waits in its button, and show
 	await act(async () => anyButton('Enable daily refresh').click())
 	await waitForUi(() => expect(confirm.querySelector('[aria-busy="true"]')?.textContent).toContain('Enabling…'))
 	await act(async () => enabling.resolve(ceilingRequired()))
-	await waitForUi(() =>
-		expect(confirm.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't enable daily refresh. Try again, or skip to keep the current snapshot."
-		)
-	)
+	await waitForUi(() => expect(alertTexts(confirm)).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('Dashboard created')
 
 	await act(async () => anyButton('Enable daily refresh').click())

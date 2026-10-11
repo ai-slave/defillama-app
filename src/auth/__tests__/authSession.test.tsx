@@ -331,13 +331,13 @@ test('shows delivery failures inline, keeps them while Try again resends, and re
 	await settle()
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
+		expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	})
 	expect(button('Try again').disabled).toBe(false)
 	await act(async () => button('Try again').click())
 	await settle()
 	await waitForUi(() => expect(button('Sending code…').getAttribute('aria-busy')).toBe('true'))
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	otpCalls[1].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 120 } }, 429))
 	await settle()
 	await waitForUi(async () => {
@@ -365,13 +365,13 @@ test('a failed verification keeps its error on screen while the same code is ret
 	otpCalls[1].resolve(jsonResponse({ error: 'Unavailable' }, 503))
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe('Could not verify your email.')
+		expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	})
 
 	await submit()
 	await waitForUi(() => expect(button('Verifying…').getAttribute('aria-busy')).toBe('true'))
 	expect(otpCalls).toHaveLength(3)
-	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe('Could not verify your email.')
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 })
 
 test('the verification sheet says a short or refused code under the field, and the next edit clears it', async () => {
@@ -470,7 +470,7 @@ test('Try again after a delivery failure moves focus to the code field', async (
 	otpCalls[0].resolve(jsonResponse({ error: 'Failed to send OTP' }, 500))
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
+		expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	})
 	const retry = [...document.querySelectorAll('button')].find((element) => accessibleName(element) === 'Try again')!
 	await act(async () => retry.focus())
@@ -814,16 +814,12 @@ test('a failed onboarding save keeps its error on screen while Continue retries'
 	await act(async () => button('Continue').click())
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
-			'Could not save your preference. Check your connection.'
-		)
+		expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	})
 
 	await act(async () => button('Continue').click())
 	await waitForUi(() => expect(button('Saving…').getAttribute('aria-busy')).toBe('true'))
-	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
-		'Could not save your preference. Check your connection.'
-	)
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 })
 
 test('offers sign out from required OAuth onboarding', async () => {

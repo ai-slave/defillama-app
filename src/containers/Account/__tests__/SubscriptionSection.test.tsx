@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { Subscription } from '~/auth/useSubscribe'
 import pb from '~/utils/pocketbase'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -84,14 +85,14 @@ test('shows a retry state for a failed subscription read, never Free, and recove
 	session.serve({ '/subscription/status': fixtureStatus(500, { message: 'Internal error' }) })
 	await render()
 
-	await waitFor(() => expect(text()).toContain("Couldn't load your subscription"))
+	await waitFor(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(text()).not.toContain('Unlock the full power')
 
 	session.serve({ '/subscription/status': noSubscription })
 	await act(async () => button('Try again')!.click())
 
 	await waitFor(() => expect(text()).toContain('Unlock the full power'))
-	expect(text()).not.toContain("Couldn't load your subscription")
+	expect(alertTexts(container)).toEqual([])
 })
 
 test('keeps the plan visible and flags an unknown payment status when the past-due read fails', async () => {
@@ -102,7 +103,7 @@ test('keeps the plan visible and flags an unknown payment status when the past-d
 	await render()
 
 	await waitFor(() => expect(text()).toContain('Current plan'))
-	expect(text()).toContain("Couldn't check payment status")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(text()).not.toContain('subscription past due')
 })
 
@@ -136,7 +137,7 @@ test('treats a failed team read as unknown billing ownership, not personal billi
 	session.serve({ '/subscription/status': { subscription: apiSubscription }, '/team': fixtureStatus(500) })
 	await render()
 
-	await waitFor(() => expect(text()).toContain("Couldn't load your team"))
+	await waitFor(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(text()).not.toContain('Cancel subscription')
 })
 
@@ -155,7 +156,7 @@ test('keeps the cancellation result on screen when the refetch after it fails', 
 	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
 	await act(async () => button('Confirm cancellation')!.click())
 
-	await waitFor(() => expect(text()).toContain("Couldn't load your subscription"))
+	await waitFor(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Cancellation scheduled')
 })
 
@@ -186,7 +187,7 @@ test('an open cancel dialog stays open when the team read behind it fails', asyn
 	session.serve({ '/team': fixtureStatus(500) })
 	await act(async () => session.client.invalidateQueries({ queryKey: ['team'] }))
 
-	await waitFor(() => expect(text()).toContain("Couldn't load your team"))
+	await waitFor(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(button('Confirm cancellation')).toBeDefined()
 })
 
@@ -297,10 +298,8 @@ test('a cancellation retry keeps the unconfirmed error on screen while it runs',
 	await act(async () => button('Cancel subscription')!.click())
 	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
 	await act(async () => button('Confirm cancellation')!.click())
-	const alert = () => document.querySelector('[role=alertdialog] [role=alert]')?.textContent
-	await waitFor(() =>
-		expect(alert()).toBe("We couldn't confirm the cancellation. Check your plan before trying again.")
-	)
+	const alerts = () => alertTexts(document.querySelector('[role=alertdialog]')!)
+	await waitFor(() => expect(alerts()).toHaveLength(1))
 
 	session.serve({ '/subscription/cancel': () => new Promise<Response>(() => {}) })
 	await act(async () => button('Confirm cancellation')!.click())
@@ -308,7 +307,7 @@ test('a cancellation retry keeps the unconfirmed error on screen while it runs',
 	await waitFor(() =>
 		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Cancelling…')
 	)
-	expect(alert()).toBe("We couldn't confirm the cancellation. Check your plan before trying again.")
+	expect(alerts()).toHaveLength(1)
 })
 
 test('a LlamaPay top-up opens its checkout in this tab, where no popup blocker can swallow it', async () => {

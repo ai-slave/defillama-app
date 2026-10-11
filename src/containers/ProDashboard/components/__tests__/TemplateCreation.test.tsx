@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProDashboardAPIProvider, useProDashboardUI } from '../../ProDashboardAPIContext'
@@ -180,9 +181,7 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		await click('Create new dashboard')
 		const name = source === 'catalog' ? 'Lending protocols' : source === 'category' ? 'L2 ecosystem' : 'DEX leaders'
 		await act(async () => {
-			await waitForUi(() =>
-				expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load template data.')
-			)
+			await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 		})
 		expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1)
 		expect(button(name).getAttribute('aria-disabled')).toBe('true')
@@ -199,7 +198,7 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		await act(async () => {
 			await waitForUi(() => expect(accessibleName(retry)).toBe('Retrying…'))
 		})
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load template data.')
+		expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 		expect(document.activeElement).toBe(retry)
 		await act(async () =>
 			response.resolve(

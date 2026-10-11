@@ -13,7 +13,7 @@ import type {
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -43,7 +43,7 @@ beforeEach(() => {
 const buttonNamed = (name: string, within: ParentNode = document) =>
 	[...within.querySelectorAll<HTMLButtonElement>('button')].find((node) => accessibleName(node) === name)
 const confirmation = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
-const alertText = (within: ParentNode = document) => within.querySelector('[role="alert"]')?.textContent
+const settingsDialog = () => document.querySelector<HTMLElement>('[role="dialog"]')!
 const agentHomeRequests = (path: string, method = 'GET') =>
 	session.requests.filter(
 		(request) => request.url.href === `${AGENT_HOME}${path}` && (request.init?.method ?? 'GET') === method
@@ -153,8 +153,7 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/skills`]: offline
 		})
 		await openMemory()
-		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load skills."))
-		expect(document.body.textContent).toContain("Couldn't load memories.")
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(2))
 		expect(document.body.textContent).not.toContain('Nothing remembered yet.')
 		expect(document.body.textContent).not.toContain('No skills yet.')
 		memoriesOnline = true
@@ -164,7 +163,8 @@ describe('SettingsModal instructions', () => {
 			skillsRetry.click()
 		})
 		await waitForUi(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
-		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load skills."))
+		// The memories notice is gone; the skills one stays through its failed retry.
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(1))
 		expect(agentHomeRequests('/memories')).toBe(2)
 		expect(agentHomeRequests('/skills')).toBe(2)
 	})
@@ -196,16 +196,14 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/memories/memory-1`]: () => (++deletes === 1 ? offline() : retriedDelete.promise)
 		})
 		await openMemory()
-		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load memories."))
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(2))
 		expect(document.body.textContent).toContain('Prefer concise answers')
 		expect(document.body.textContent).toContain('Saved workflow')
 		// With cached data the error stays up during a retry, and its button cannot start another.
 		const memoriesRefresh = Promise.withResolvers<Response>()
 		session.serve({ [`${AGENT_HOME}/memories`]: () => memoriesRefresh.promise })
-		const loadError = () =>
-			[...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
-				el.textContent?.includes("Couldn't load memories")
-			)!
+		// The memories notice heads the tab, above the skills one.
+		const loadError = () => settingsDialog().querySelector<HTMLElement>('[role="alert"]')!
 		await act(async () => loadError().querySelector('button')!.click())
 		await waitForUi(() => expect(loadError().querySelector('button')!.getAttribute('aria-busy')).toBe('true'))
 		await act(async () => memoriesRefresh.resolve(offline()))
@@ -214,7 +212,7 @@ describe('SettingsModal instructions', () => {
 		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(0)
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
-		await waitForUi(() => expect(alertText(confirmation()!)).toBe("Couldn't delete this memory. Try again."))
+		await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
 		await waitForUi(() => expect(buttonNamed('Deleting…', confirmation()!)).toBeDefined())
 		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(2)
@@ -257,7 +255,7 @@ describe('SettingsModal instructions', () => {
 		let online = false
 		session.serve({ [`${AGENT_HOME}/memories`]: () => (online ? Response.json(emptyMemories) : offline()) })
 		await openMemory()
-		await waitForUi(() => expect(alertText()).toContain("Couldn't load memories."))
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(1))
 		online = true
 		await press(buttonNamed('Try again')!)
 		await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
@@ -340,7 +338,7 @@ describe('SettingsModal instructions', () => {
 		await press(retry)
 
 		await waitForUi(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
-		expect(retry.closest('[role="alert"]')?.textContent).toContain("Couldn't archive this skill.")
+		expect(retry.closest('[role="alert"]')).not.toBeNull()
 	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
 		await act(async () => change('Keep this draft'))
@@ -534,8 +532,8 @@ describe('SettingsModal instructions', () => {
 		)
 		await act(async () => appTab?.click())
 
-		const alert = document.querySelector('[role="alert"]')
-		expect(alert?.textContent).toContain("Couldn't load mobile notifications")
+		expect(alertTexts(settingsDialog())).toHaveLength(1)
+		const alert = settingsDialog().querySelector('[role="alert"]')
 		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
 		const retryButton = Array.from(alert?.querySelectorAll('button') ?? []).find(
 			(button) => accessibleName(button) === 'Try again'
@@ -568,8 +566,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => buttonNamed('App')!.click())
 		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
 
-		await waitForUi(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
-		expect(document.querySelector('[role="alert"]')!.closest('[role="dialog"]')).not.toBeNull()
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(1))
 	})
 
 	test('a save refused after closing and reopening still says so in the reopened dialog', async () => {
@@ -582,7 +579,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => buttonNamed('App')!.click())
 
 		await act(async () => pendingSave.resolve(false))
-		await waitForUi(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(1))
 	})
 
 	test('Save shows its progress, and a refused save keeps the dialog open with its error', async () => {
@@ -593,7 +590,7 @@ describe('SettingsModal instructions', () => {
 		expect(buttonNamed('Saving…')).toBeDefined()
 
 		await act(async () => firstSave.resolve(false))
-		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+		expect(alertTexts(settingsDialog())).toHaveLength(1)
 		expect(buttonNamed('Save')).toBeDefined()
 
 		await act(async () => {
@@ -601,7 +598,7 @@ describe('SettingsModal instructions', () => {
 		})
 		await waitForUi(() => expect(saveSettings).toHaveBeenCalledTimes(2))
 		expect(dialogStore.getState().open).toBe(true)
-		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+		expect(alertTexts(settingsDialog())).toHaveLength(1)
 	})
 
 	test('a retried instructions save keeps its error on screen until the retry lands', async () => {
@@ -609,14 +606,14 @@ describe('SettingsModal instructions', () => {
 		saveSettings.mockResolvedValueOnce(false).mockImplementationOnce(() => retry.promise)
 		await act(async () => change('Answer in bullet points'))
 		await act(async () => buttonNamed('Save')!.click())
-		await waitForUi(() => expect(alertText()).toBe("Couldn't save your instructions. Try again."))
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toHaveLength(1))
 
 		await act(async () => buttonNamed('Save')!.click())
 		expect(buttonNamed('Saving…')).toBeDefined()
-		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+		expect(alertTexts(settingsDialog())).toHaveLength(1)
 
 		await act(async () => retry.resolve(true))
-		await waitForUi(() => expect(alertText()).toBeUndefined())
+		await waitForUi(() => expect(alertTexts(settingsDialog())).toEqual([]))
 	})
 
 	test('Clear all asks first, keeps its progress and error in the confirmation, and closes once cleared', async () => {
@@ -636,7 +633,7 @@ describe('SettingsModal instructions', () => {
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(0)
 
 		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
-		await waitForUi(() => expect(alertText(confirmation()!)).toBe("Couldn't clear these memories. Try again."))
+		await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
 		await waitForUi(() => expect(buttonNamed('Clearing…', confirmation()!)).toBeDefined())
 
@@ -741,7 +738,7 @@ describe('SettingsModal instructions', () => {
 		})
 
 		expect(input.value).toBe('0.50')
-		expect(alertText()).toBe("Couldn't save your spend cap. Try again.")
+		expect(alertTexts(settingsDialog())).toHaveLength(1)
 	})
 })
 

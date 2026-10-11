@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -91,9 +92,7 @@ test('a confirmed refresh waits in its button, explains a failure inside the dia
 		expect(confirmation()!.querySelector('[aria-busy="true"]')?.textContent).toContain('Refreshing…')
 	)
 	await act(async () => queueing.resolve(fixtureStatus(503)()))
-	await waitForUi(() =>
-		expect(confirmation()!.querySelector('[role="alert"]')?.textContent).toBe("Couldn't queue the refresh. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 	// The failure belongs to the open dialog, not to the card behind it.
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 
@@ -111,9 +110,10 @@ test('an accepted refresh whose chart read fails closes as queued, keeps the cha
 	await act(async () => confirmation()!.querySelectorAll('button')[1]!.click())
 	await waitForUi(() => expect(confirmation()).toBeNull())
 	expect(container.querySelector('h3')?.textContent).toBe('Premium fees')
-	expect(container.querySelector('[role="status"]')?.textContent).toBe(
-		"Couldn't refresh this card. Showing the last loaded data.Try again"
-	)
+	// A failed read is a notice over the kept chart that retries it, not an alert in its place.
+	const notice = container.querySelector('[role="status"]')!
+	expect(accessibleName(notice.querySelector('button')!)).toBe('Try again')
+	expect(container.querySelector('[role="alert"]')).toBeNull()
 	await waitForUi(() => expect(document.activeElement).toBe(refresh))
 
 	await act(async () => button('Try again').click())

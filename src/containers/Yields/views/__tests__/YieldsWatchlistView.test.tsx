@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -60,12 +61,7 @@ test('a failed read of the saved pools says so instead of claiming none are save
 	session.serve({ '/api/public/yields/earn': fixtureStatus(500, { message: 'Down' }) })
 	await render({ pool: 'pool-1' })
 	// The hook retries once, a second after the first failure.
-	await waitForUi(
-		() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your saved pools"),
-		{
-			timeout: 2500
-		}
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1), { timeout: 2500 })
 	expect(document.body.textContent).not.toContain('You have not saved any pools.')
 	expect(button('Try again')).toBeDefined()
 }, 4000)

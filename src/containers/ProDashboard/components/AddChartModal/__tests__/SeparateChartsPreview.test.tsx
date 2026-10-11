@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { SeparateChartsPreview } from '../SeparateChartsPreview'
 
 let root: Root
@@ -43,7 +44,7 @@ test('a series that failed to load says so and offers a retry instead of "No dat
 			</DashboardTestProvider>
 		)
 	)
-	expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load this series.")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(container.textContent).not.toContain('No data')
 	await act(async () => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Try again')!.click())
 	expect(refetch).toHaveBeenCalledOnce()

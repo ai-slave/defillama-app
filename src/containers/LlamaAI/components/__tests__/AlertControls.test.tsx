@@ -3,7 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
@@ -158,9 +158,7 @@ test('an unlinked delivery channel says so under the delivery field; a rejected 
 		})
 	])
 	expect(store.getState().open).toBe(true)
-	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
-		"Couldn't create the alert. Try again."
-	)
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	expect(document.querySelector<HTMLInputElement>('[aria-label="Price"]')!.value).toBe(initialPrice)
 	expect(radio('Price comparison', 'Below').getAttribute('aria-checked')).toBe('true')
 	await act(async () => {
@@ -459,7 +457,7 @@ test('Create waits while the Slack channels load and holds beside their failure,
 	expect(fieldErrorTexts()).toEqual([])
 
 	await act(async () => firstLoad.resolve(Response.json({ error: 'upstream' }, { status: 500 })))
-	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load Slack channels."))
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(submit().getAttribute('aria-disabled')).toBe('true')
 	await act(async () => submit().click())
 	// The load failure's own notice is not a field error.

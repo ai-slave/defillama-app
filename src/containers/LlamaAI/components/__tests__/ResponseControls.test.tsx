@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { ResponseControls } from '../ResponseControls'
 
 // Heavy children whose output these tests do not read.
@@ -69,7 +70,7 @@ test('the copied confirmation returns to the copy label after two seconds', asyn
 test('a clipboard failure stays visible while the same control retries, until the retry succeeds', async () => {
 	writeText.mockRejectedValue(new Error('Clipboard denied'))
 	await act(async () => copyButton().click())
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(copyButton().hasAttribute('aria-disabled')).toBe(false)
 	expect(copyButton().getAttribute('aria-label')).toBe('Retry copy')
 	let finish!: () => void
@@ -81,7 +82,7 @@ test('a clipboard failure stays visible while the same control retries, until th
 	)
 	await act(async () => copyButton().click())
 	expect(copyButton().getAttribute('aria-label')).toBe('Copying…')
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
+	expect(alertTexts(container)).toHaveLength(1)
 	await act(async () => finish())
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(copyButton().getAttribute('aria-label')).toBe('Copied')

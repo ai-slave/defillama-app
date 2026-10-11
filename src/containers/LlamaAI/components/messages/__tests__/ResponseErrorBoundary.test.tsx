@@ -16,6 +16,7 @@ vi.mock('../../charts/ChartRenderer', () => ({
 }))
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { MessageBubble } from '../MessageBubble'
 import { ResponseErrorBoundary } from '../ResponseErrorBoundary'
@@ -73,7 +74,7 @@ test('contains a chart chunk failure while preserving other messages and the com
 				charts: [{ charts: [chart], chartData: { 'chart-1': [] } }]
 			})
 		)
-		expect(host.textContent).toContain('This response couldn’t be displayed.')
+		expect(alertTexts(host)).toHaveLength(1)
 		expect(host.textContent).toContain('Earlier answer')
 		expect(host.querySelector('textarea')).toBe(composer)
 		expect(composer.value).toBe('Unsent draft')

@@ -5,6 +5,7 @@ import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { PageClockProvider } from '~/hooks/usePageClock'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import {
 	protocolListRequestQuery,
@@ -158,11 +159,16 @@ describe('RecentlyListedProtocolsTable', () => {
 		await act(async () => root.render(table()))
 		expect(requestedUrl().searchParams.get('chain')).toBe('Base')
 		await act(async () => pending.shift()!(new Response('', { status: 500 })))
-		expect(container.textContent).toContain("Couldn't update results.")
+		// The footer reports a failed page as a status beside its Try again, not as an alert.
+		const retry = Array.from(container.querySelectorAll('[role="status"] button')).find(
+			(button) => accessibleName(button) === 'Try again'
+		)
+		expect(retry).toBeInstanceOf(HTMLButtonElement)
+		// A failed filter change says the rows on screen are stale, unlike a failed next page.
+		expect(retry!.closest('[role="status"]')!.textContent).toContain("Couldn't update results.")
 		expect(container.textContent).toContain('Newest')
 		expect(container.textContent).toContain('Older')
-		const retry = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Try again')!
-		await act(async () => retry.click())
+		await act(async () => retry!.click())
 		await resolvePage(['Base Match'])
 		expect(container.textContent).toContain('Base Match')
 		expect(container.textContent).not.toContain('Older')

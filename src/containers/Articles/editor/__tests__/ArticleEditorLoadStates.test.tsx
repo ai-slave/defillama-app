@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -131,7 +132,7 @@ test('Try again on an article that failed to load keeps the error on screen whil
 	const retry = [...container.querySelectorAll('button')].find((el) => accessibleName(el) === 'Try again')!
 	await act(async () => retry.click())
 	await waitForUi(() => expect(container.querySelector('button[aria-busy="true"]')).not.toBeNull())
-	expect(alertText()).toContain("Couldn't load this research.")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(container.querySelector('[role="textbox"][aria-label="Article body"]')).toBeNull()
 })
 

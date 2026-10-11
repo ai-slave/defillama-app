@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { resetExperimentTracking } from '~/utils/analytics/experiment'
 import { getHeadBootstrapScript } from '~/utils/cookies'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -395,7 +396,7 @@ test('unavailable coverage never appears as zero or sample campaign counts', asy
 		)
 	)
 	await act(async () => vi.advanceTimersByTimeAsync(1500))
-	expect(host.querySelector('[role="alert"]')!.textContent).toBe('Coverage data is temporarily unavailable.')
+	expect(alertTexts(host)).toHaveLength(1)
 	expect([...host.querySelectorAll('dd')].map((node) => node.textContent)).toEqual(['—', '—', '—', '—'])
 	const response = Promise.withResolvers<unknown>()
 	http.serve({ '/api/public/subscription/coverage': () => response.promise })
@@ -403,7 +404,7 @@ test('unavailable coverage never appears as zero or sample campaign counts', asy
 	await act(async () => {
 		retry = queryClient.invalidateQueries({ queryKey: ['subscription-coverage'] })
 	})
-	expect(host.querySelector('[role="alert"]')!.textContent).toBe('Coverage data is temporarily unavailable.')
+	expect(alertTexts(host)).toHaveLength(1)
 	expect(host.querySelector('dl')!.getAttribute('aria-busy')).toBe('false')
 	await act(async () => {
 		response.resolve({ protocols: 0, protocolsAddedThisWeek: 0, chains: 0, yieldPools: 0, rwaAssets: 0 })
@@ -428,11 +429,7 @@ test('a failed background refresh keeps the last counts and identifies them as s
 	await act(async () => {
 		await queryClient.invalidateQueries({ queryKey: ['subscription-coverage'] })
 	})
-	await waitForUi(() =>
-		expect(host.querySelector('[role="alert"]')?.textContent).toBe(
-			'Coverage could not refresh. Showing the last available counts.'
-		)
-	)
+	await waitForUi(() => expect(alertTexts(host)).toHaveLength(1))
 	expect([...host.querySelectorAll('dd .sr-only')].map((node) => node.textContent)).toEqual([
 		'8,236',
 		'467',

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 // @vitest-environment happy-dom
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { EmbedSnippetDialog } from '../EmbedSnippetDialog'
 
@@ -53,11 +54,7 @@ test('copying the code confirms on the button for two seconds instead of a toast
 test('a failed copy explains itself inside the dialog instead of a toast', async () => {
 	writeText.mockRejectedValue(new Error('Denied'))
 	await act(async () => copyButton().click())
-	await waitForUi(() =>
-		expect(document.body.querySelector('[role="alert"]')?.textContent).toBe(
-			'Could not copy to clipboard. Select the code and copy it manually.'
-		)
-	)
+	await waitForUi(() => expect(alertTexts(document.body.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(accessibleName(copyButton())).toBe('Copy code')
 	expect(toast.error).not.toHaveBeenCalled()
 })

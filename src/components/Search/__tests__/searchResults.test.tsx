@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { SEARCH_API_URL } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -72,14 +73,14 @@ test('a See more retry waits in its Try again, with the error on screen, until t
 		return button('See more')!
 	})
 	await act(async () => seeMore.click())
-	await waitForUi(() => expect(document.body.textContent).toContain('Couldn’t load search results.'))
+	await waitForUi(() => expect(alertTexts()).toHaveLength(1))
 	expect(document.body.textContent).toContain('Protocol 20')
 	await act(async () => button('Try again')!.click())
 	await waitForUi(() => expect(button('Retrying…')?.getAttribute('aria-busy')).toBe('true'))
-	expect(document.body.textContent).toContain('Couldn’t load search results.')
+	expect(alertTexts()).toHaveLength(1)
 	await act(async () => retry.resolve(Response.json({ results: [{ hits: [hit(21)] }] })))
 	await waitForUi(() => expect(document.body.textContent).toContain('Protocol 21'))
-	expect(document.body.textContent).not.toContain('Couldn’t load search results.')
+	expect(alertTexts()).toEqual([])
 })
 
 test('token results show their symbol and protocol results do not', async () => {

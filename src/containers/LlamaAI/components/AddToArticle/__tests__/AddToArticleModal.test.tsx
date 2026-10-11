@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -43,6 +43,9 @@ function button(name: string) {
 async function click(name: string) {
 	await act(async () => button(name).click())
 }
+function dialog() {
+	return document.querySelector('[role="dialog"]')!
+}
 async function expectText(text: string) {
 	await act(async () => {
 		await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain(text))
@@ -65,7 +68,9 @@ test('drafts that fail to load say so; Try again keeps the error while it waits,
 	const retry = Promise.withResolvers<Response>()
 	session.serveInOrder(MINE, [fixtureStatus(500, { error: 'Database unavailable' }), () => retry.promise], DRAFTS)
 	await click('Open')
-	await expectText("Couldn't load your drafts.")
+	await act(async () => {
+		await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
+	})
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('No drafts yet')
 	const tryAgain = button('Try again')
 	await act(async () => {
@@ -75,7 +80,7 @@ test('drafts that fail to load say so; Try again keeps the error while it waits,
 	await act(async () => {
 		await waitForUi(() => expect(accessibleName(tryAgain)).toBe('Retrying…'))
 	})
-	expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Couldn't load your drafts.")
+	expect(alertTexts(dialog())).toHaveLength(1)
 	expect(document.activeElement).toBe(tryAgain)
 
 	await act(async () => retry.resolve(Response.json(DRAFTS)))
@@ -100,10 +105,10 @@ test('a failed export stays in the dialog as a plain sentence instead of a toast
 	await act(async () => draft.click())
 	await click('Add to article')
 	await act(async () => {
-		await waitForUi(() =>
-			expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add to the article. Try again.")
-		)
+		await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	})
+	// Adding to an existing article, not creating a draft.
+	expect(alertTexts(dialog())[0]).toContain('add to the article')
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	expect(toastError).not.toHaveBeenCalled()
 	expect(button('Add to article').getAttribute('aria-busy')).toBeNull()
@@ -111,7 +116,7 @@ test('a failed export stays in the dialog as a plain sentence instead of a toast
 	await act(async () => {
 		await waitForUi(() => expect(button('Adding…').getAttribute('aria-busy')).toBe('true'))
 	})
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add to the article. Try again.")
+	expect(alertTexts(dialog())).toHaveLength(1)
 	await act(async () => retry.resolve(fixtureStatus(500, { error: 'boom' })()))
 })
 

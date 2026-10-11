@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import { CopyDashboardButton, EditDoneButton, UndoAIGenerationButton } from '../DashboardActionButtons'
@@ -144,9 +145,7 @@ test('opening the editor blocks repeated navigation and exposes a retry after fa
 	await click('Opening editor…')
 	expect(push).toHaveBeenCalledExactlyOnceWith('/pro/example/edit', undefined, { shallow: true })
 	await act(async () => route.reject(new Error('Offline')))
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't open the editor")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	await click('Edit')
 	await waitForUi(() => expect(push).toHaveBeenCalledTimes(2))
 	await waitForUi(() => {

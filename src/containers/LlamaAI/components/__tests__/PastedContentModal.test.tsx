@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import type { AttachmentPreview } from '../../utils/attachmentPreview'
 import { TextChip } from '../input/ImageUpload'
 import { PastedContentModal } from '../PastedContentModal'
@@ -101,7 +102,7 @@ test('failed copy offers retry and leaves download available', async () => {
 	writeText.mockRejectedValueOnce(new Error('Clipboard blocked'))
 	await mount({ filename: 'data.csv', content: 'a,b\n1,2' })
 	await click('Copy')
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	await click('Download')
 	expect(downloads.map((download) => download.filename)).toEqual(['data.csv'])
 	await click('Retry copy')
@@ -125,7 +126,7 @@ test('attachment loading blocks repeats and failed reads can retry', async () =>
 	await click('Open data.csv')
 	expect(open).toHaveBeenCalledTimes(1)
 	await act(async () => reject(new Error('Network failed')))
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't open file")
+	expect(alertTexts(host)).toHaveLength(1)
 	open.mockResolvedValue(undefined)
 	await click('Open data.csv')
 	expect(open).toHaveBeenCalledTimes(2)

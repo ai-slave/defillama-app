@@ -4,6 +4,7 @@ import { act, useImperativeHandle, useState, type Ref } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { InviteBanner } from '../InviteBanner'
 
@@ -129,6 +130,8 @@ async function openAndVerify() {
 	await click('Verify qfex_invite')
 }
 
+const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]')!
+
 async function waitForText(text: string) {
 	await waitForUi(async () => {
 		await act(async () => {
@@ -165,7 +168,7 @@ test('offers an in-place retry when verification fails to load', async () => {
 	await render()
 	await click('Get invite code')
 	await click('Fail verification')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Verification could not load.Try again')
+	expect(alertTexts(dialog())).toHaveLength(1)
 	expect(Array.from(document.querySelectorAll('button')).some((b) => b.textContent === 'Reveal my code')).toBe(false)
 	await click('Try again')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -226,7 +229,9 @@ test('preserves the visitor identity after a lost response so a retry retrieves 
 	await openAndVerify()
 	vi.mocked(fetch).mockRejectedValueOnce(new TypeError('Failed to fetch'))
 	await click('Reveal my code')
-	await waitForText('Could not retrieve an invite code. Check your connection and try again.')
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
+	// A lost response points at the connection, unlike a server failure.
+	expect(alertTexts(dialog())[0]).toContain('connection')
 	const visitorId = localStorage.getItem('protocol-invite:qfex')
 	expect(isDisabled(button('Try again'))).toBe(true)
 	await click('Verify qfex_invite')

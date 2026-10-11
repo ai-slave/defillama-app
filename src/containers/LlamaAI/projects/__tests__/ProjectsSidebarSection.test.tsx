@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectsSidebarSection } from '../ProjectsSidebarSection'
@@ -92,7 +93,7 @@ const sessionRequests = (projectId: string) =>
 test('failed project queries differ from empty results and can retry', async () => {
 	projectsReply = failure
 	await render()
-	await until(() => expect(container.textContent).toContain("Couldn't load projects"))
+	await until(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.textContent).not.toContain('No projects yet')
 	projectsReply = () => ({ projects: [] })
 	await act(async () => container.querySelector<HTMLButtonElement>('[role="alert"] button')!.click())
@@ -104,14 +105,14 @@ test('a failed refresh retains projects and exposes nested chat failures separat
 	projectsReply = () => projects(['project', 'Research'])
 	sessionsReply = failure
 	await render()
-	await until(() => expect(container.textContent).toContain("Couldn't load project chats"))
+	const projectRow = () => [...container.querySelectorAll('li')].find((li) => li.textContent?.includes('Research'))!
+	await until(() => expect(alertTexts(projectRow())).toHaveLength(1))
 	projectsReply = failure
 	await act(async () => session.client.refetchQueries({ queryKey: PROJECTS_KEY, exact: true }))
-	await until(() => expect(container.textContent).toContain("Couldn't load projects"))
-	expect(container.textContent).toContain('Research')
-	const chatsError = [...container.querySelectorAll('[role="alert"]')].find((el) =>
-		el.textContent?.includes('project chats')
-	)!
+	// The list's own failure shows above the kept row; the row keeps only its chats failure.
+	await until(() => expect(alertTexts(container)).toHaveLength(2))
+	expect(alertTexts(projectRow())).toHaveLength(1)
+	const chatsError = projectRow().querySelector('[role="alert"]')!
 	sessionsReply = () => ({ sessions: [] })
 	await act(async () => chatsError.querySelector<HTMLButtonElement>('button')!.click())
 	await until(() => expect(sessionRequests('project')).toBe(2))

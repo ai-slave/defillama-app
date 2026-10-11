@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterAll, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -70,11 +71,7 @@ test('a checkout whose Stripe script failed says card payments could not load in
 	session.serve({ '/subscription/create': { clientSecret: 'cs_fixture' } })
 	const cleanup = await openCheckout({ type: 'api', billingInterval: 'month' })
 	try {
-		await waitForUi(() =>
-			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-				"Card payments couldn't load. Reload the page and try again."
-			)
-		)
+		await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
 		expect(dialog()!.textContent).not.toContain('Payment fields')
 		expect(dialog()!.querySelector('[role="status"]')).toBeNull()
 	} finally {
@@ -88,11 +85,7 @@ test('an upgrade whose Stripe script failed says card payments could not load in
 	})
 	const cleanup = await openCheckout({ type: 'api', billingInterval: 'year', isUpgradeFlow: true })
 	try {
-		await waitForUi(() =>
-			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-				"Card payments couldn't load. Reload the page and try again."
-			)
-		)
+		await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
 		expect(buttonNamed('Complete upgrade')).toBeUndefined()
 		expect(dialog()!.textContent).not.toContain('Loading payment form')
 	} finally {

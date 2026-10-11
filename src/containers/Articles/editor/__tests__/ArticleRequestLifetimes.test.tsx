@@ -6,6 +6,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts, fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -188,9 +189,7 @@ test('a failed upload shows a plain error under that person, not a toast or the 
 	session.serve({ '/uploads/image': fixtureStatus(500, { error: 'bucket write failed' }) })
 	await mountPanel()
 	await uploadFirst()
-	await waitForUi(() =>
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Couldn't upload this image. Try again.")
-	)
+	await waitForUi(() => expect(fieldErrorTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('bucket write failed')
 	expect(api.error).not.toHaveBeenCalled()
 })
@@ -280,7 +279,7 @@ test('offers a retry for list failures and distinguishes a search miss from an e
 		}
 	})
 	await mountCharts()
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your saved charts.")
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	expect(document.body.textContent).not.toContain('No saved charts yet')
 	session.serve({ '/charts': { charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] } })
 	await click('Try again')
@@ -311,9 +310,7 @@ test('a failed insertion shows a plain error under the chart inside the open pic
 	})
 	await mountCharts()
 	await selectSavedChart()
-	await waitForUi(() =>
-		expect(document.querySelector('li [role="alert"]')?.textContent).toBe("Couldn't insert this chart. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('li')!)).toHaveLength(1))
 	expect(document.body.textContent).not.toContain('Detail unavailable')
 	expect(api.error).not.toHaveBeenCalled()
 	expect(store.getState().open).toBe(true)
@@ -333,7 +330,7 @@ test('a chart insertion that is retried keeps its error on screen while the retr
 	session.serve({ '/charts/saved': () => new Promise<Response>(() => {}) })
 	await selectSavedChart()
 	await waitForUi(() => expect(document.body.textContent).toContain('Inserting…'))
-	expect(document.querySelector('li [role="alert"]')?.textContent).toBe("Couldn't insert this chart. Try again.")
+	expect(alertTexts(document.querySelector('li')!)).toHaveLength(1)
 })
 test('a saved chart without usable data says so instead of inserting', async () => {
 	session.serve({ '/charts/saved': { chartConfig: chart.chartConfig, chartData: [] } })

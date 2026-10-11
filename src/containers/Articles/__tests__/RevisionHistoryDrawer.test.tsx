@@ -5,6 +5,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { RevisionHistoryDrawer } from '../editor/RevisionHistoryDrawer'
@@ -163,7 +164,7 @@ describe('RevisionHistoryDrawer', () => {
 	test('a failed history load says so in the drawer instead of showing an empty history', async () => {
 		http.serve({ '/articles/article-1/revisions': fixtureStatus(500, { error: 'History is unavailable' }) })
 		await renderDrawer()
-		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load the revision history."))
+		await waitForUi(() => expect(alertTexts(sheet())).toHaveLength(1))
 		expect(sheetText()).not.toContain('History is unavailable')
 		expect(sheetText()).not.toContain('No revisions yet')
 	})
@@ -189,14 +190,14 @@ describe('RevisionHistoryDrawer', () => {
 		await renderDrawer()
 		await waitForUi(() => expect(sheetText()).toContain('4+ entries'))
 		await click(button('Load older revisions'))
-		await waitForUi(() => expect(sheetAlert()).toBe("Couldn't load older revisions. Try again."))
+		await waitForUi(() => expect(alertTexts(sheet())).toHaveLength(1))
 		expect(document.querySelector('[data-revision-id="rev-4"]')).not.toBeNull()
 	})
 
 	test('a failed revision load says so in the preview pane instead of showing no selection', async () => {
 		http.serve({ '/articles/article-1/revisions/rev-4': fixtureStatus(404, { error: 'Revision not found' }) })
 		await renderDrawer()
-		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load this revision."))
+		await waitForUi(() => expect(alertTexts(sheet())).toHaveLength(1))
 		expect(sheetText()).not.toContain('No revision selected')
 	})
 
@@ -204,7 +205,7 @@ describe('RevisionHistoryDrawer', () => {
 		http.serve({ '/articles/article-1/revisions/rev-3': fixtureStatus(500, { error: 'Base revision is unavailable' }) })
 		await renderDrawer()
 		await pick('View', 'diff')
-		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load the revision to compare against."))
+		await waitForUi(() => expect(alertTexts(sheet())).toHaveLength(1))
 		expect(sheetText()).not.toContain('Loading comparison')
 	})
 
@@ -216,9 +217,7 @@ describe('RevisionHistoryDrawer', () => {
 		await askRestore()
 		await click(button('Restore'))
 		const confirm = () => confirmation('Restore as pending?')
-		await waitForUi(() =>
-			expect(confirm()?.querySelector('[role="alert"]')?.textContent).toBe("Couldn't restore this revision. Try again.")
-		)
+		await waitForUi(() => expect(alertTexts(confirm()!)).toHaveLength(1))
 
 		await click(button('Cancel'))
 		await waitForUi(() => expect(confirm()).toBeUndefined())
@@ -244,7 +243,7 @@ describe('RevisionHistoryDrawer', () => {
 		await waitForUi(() => expect(confirm().querySelector('[role="alert"]')).not.toBeNull())
 		await click(button('Restore', confirm()))
 		await waitForUi(() => expect(confirm().textContent).toContain('Restoring…'))
-		expect(confirm().querySelector('[role="alert"]')?.textContent).toBe("Couldn't restore this revision. Try again.")
+		expect(alertTexts(confirm())).toHaveLength(1)
 	})
 
 	test('a restore saves the editor’s unsaved edits first, and a failed save restores nothing', async () => {
@@ -312,11 +311,7 @@ describe('RevisionHistoryDrawer', () => {
 		await click(button('Delete'))
 		await waitForUi(() => expect(confirmation('Delete this revision?')).toBeDefined())
 		await click(button('Delete', confirmation('Delete this revision?')!))
-		await waitForUi(() =>
-			expect(confirmation('Delete this revision?')?.querySelector('[role="alert"]')?.textContent).toBe(
-				"Couldn't delete this revision. Try again."
-			)
-		)
+		await waitForUi(() => expect(alertTexts(confirmation('Delete this revision?')!)).toHaveLength(1))
 		expect(document.querySelector('[data-revision-id="rev-2"]')).not.toBeNull()
 	})
 

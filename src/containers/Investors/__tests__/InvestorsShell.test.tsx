@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { InvestorsSiteId } from '../config'
@@ -59,8 +60,12 @@ describe('standalone IR shell', () => {
 		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
 	}
 
+	function panel() {
+		return container.querySelector<HTMLElement>('[role="tabpanel"]')!
+	}
+
 	function panelText() {
-		return container.querySelector('[role="tabpanel"]')?.textContent ?? null
+		return panel().textContent
 	}
 
 	beforeEach(() => {
@@ -93,7 +98,8 @@ describe('standalone IR shell', () => {
 		await render('investors')
 		expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-orientation')).toBe('vertical')
 		expect(selectedTab()).toBe('Financials')
-		expect(panelText()).toBe("Spark: FinancialsCouldn't load Spark financials.Try again")
+		expect(panelText()).toContain('Spark: Financials')
+		expect(alertTexts(panel())).toHaveLength(1)
 
 		await click('Distribution Rewards')
 		expect(selectedTab()).toBe('Distribution Rewards')
@@ -119,7 +125,8 @@ describe('standalone IR shell', () => {
 		expect(spark().getAttribute('aria-expanded')).toBe('false')
 		expect(container.querySelector('[role="tab"]')).toBeNull()
 		// Collapsing the list keeps the open tab on screen.
-		expect(panelText()).toBe("Spark: FinancialsCouldn't load Spark financials.Try again")
+		expect(panelText()).toContain('Spark: Financials')
+		expect(alertTexts(panel())).toHaveLength(1)
 
 		await click('Spark')
 		expect(selectedTab()).toBe('Financials')

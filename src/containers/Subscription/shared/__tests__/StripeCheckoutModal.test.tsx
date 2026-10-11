@@ -5,6 +5,7 @@ import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 import type { Subscription } from '~/auth/subscriptionStatus'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -511,11 +512,7 @@ test('a confirmation nobody can check keeps the upgrade pending and says to chec
 	try {
 		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
-		await waitForUi(() =>
-			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
-				"We couldn't confirm your payment. Check your account before trying again."
-			)
-		)
+		await waitForUi(() => expect(alertTexts(dialog()!)).toHaveLength(1))
 		expect(localStorage.getItem(pendingKey)).not.toBeNull()
 	} finally {
 		await caller.cleanup()

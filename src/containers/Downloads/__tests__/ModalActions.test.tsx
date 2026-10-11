@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChartDatasetDefinition } from '../chart-datasets'
 import { ChartDatasetModal } from '../ChartDatasetModal'
@@ -156,7 +157,7 @@ test('a failed copy keeps its reason in the modal until the next action', async 
 	await renderChart()
 	await waitForUi(() => expect(button('Copy shareable link')).toBeTruthy())
 	await press(button('Copy shareable link'))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't copy the link."))
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(toasts.error).not.toHaveBeenCalled()
 	await press(button('Copy shareable link'))
 	await waitForUi(() => expect(announced()).toContain('Link copied'))

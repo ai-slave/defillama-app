@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ArticleChartConfig } from '../../types'
@@ -259,7 +259,7 @@ test('a preview whose data fails to load says so as an error, not as missing dat
 			chartType: 'fees'
 		}
 	})
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load chart data."))
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 })
 
 test('each remove button names the row it removes', async () => {

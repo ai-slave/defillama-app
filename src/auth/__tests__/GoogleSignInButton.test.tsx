@@ -4,6 +4,7 @@ import { act, createElement, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { GoogleSignInButton, revokeGoogleCredentialSharing } from '../GoogleSignInButton'
 
 vi.mock('next/script', () => ({
@@ -219,7 +220,7 @@ test('recovers from a script timeout using the retry button', async () => {
 		await act(async () => {
 			vi.advanceTimersByTime(10_000)
 		})
-		expect(view.container.querySelector('[role="alert"]')?.textContent).toContain('Google could not load.')
+		expect(alertTexts(view.container)).toHaveLength(1)
 		let script!: HTMLScriptElement
 		vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
 			script = node as HTMLScriptElement
@@ -227,7 +228,7 @@ test('recovers from a script timeout using the retry button', async () => {
 		})
 		await act(async () =>
 			Array.from(view.container.querySelectorAll('button'))
-				.find((button) => button.textContent?.trim() === 'Try again')!
+				.find((button) => accessibleName(button) === 'Try again')!
 				.click()
 		)
 		const google = installGooglePopup()

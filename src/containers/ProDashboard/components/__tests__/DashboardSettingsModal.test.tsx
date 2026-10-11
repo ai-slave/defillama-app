@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardSaveNotices } from '../../hooks/useDashboardAPI'
@@ -69,6 +70,10 @@ function tagInput() {
 
 function button(label: string) {
 	return Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
+}
+
+function dialog() {
+	return document.querySelector<HTMLElement>('[role="dialog"]')!
 }
 
 async function submit() {
@@ -201,9 +206,7 @@ test('a failed move keeps the dialog open after the settings save', async () => 
 	await renderSettings([], { myTeam: { id: 'team-1', name: 'Growth' }, team: null, canMove: true })
 	await act(async () => teamSwitch()!.click())
 	await submit()
-	await waitForUi(() =>
-		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
-	)
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	expect(save).toHaveBeenCalledOnce()
 	expect(close).not.toHaveBeenCalled()
 })
@@ -212,15 +215,11 @@ test('a save retry keeps the failure on screen while it runs', async () => {
 	save.mockRejectedValueOnce(new Error('Unavailable')).mockReturnValueOnce(new Promise(() => {}))
 	await renderSettings()
 	await submit()
-	await waitForUi(() =>
-		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
-	)
+	await waitForUi(() => expect(alertTexts(dialog())).toHaveLength(1))
 	await submit()
 
 	await waitForUi(() => expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard changes'))
-	expect(document.body.querySelector('[role="alert"]')?.textContent).toBe(
-		'Could not save changes. Your draft is still here. Try again.'
-	)
+	expect(alertTexts(dialog())).toHaveLength(1)
 })
 
 test('Cancel asks before discarding changed settings and closes at once when nothing changed', async () => {

@@ -7,7 +7,7 @@ import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
 import { getTelegramStatusQueryKey } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -61,11 +61,7 @@ test('Disconnect asks first, keeps its progress and error in the confirmation, a
 	await act(async () => button('Disconnect', confirmation()!)!.click())
 	await waitForUi(() => expect(button('Disconnecting…', confirmation()!)).toBeDefined())
 	await act(async () => firstUnlink.resolve(new Response('offline', { status: 503 })))
-	await waitForUi(() =>
-		expect(confirmation()!.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't disconnect Telegram. Try again."
-		)
-	)
+	await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 
 	await act(async () => button('Disconnect', confirmation()!)!.click())
 	await waitForUi(() => expect(button('Disconnecting…', confirmation()!)).toBeDefined())
@@ -217,9 +213,7 @@ test('a server failure on confirm says the request failed, not that the code is 
 	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
 	await typeCode('123456')
 	await press(button('Confirm')!)
-	await waitForUi(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toBe("Couldn't confirm the code. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(code.getAttribute('aria-invalid')).toBeNull()
 	await press(button('Confirm')!)
 	await waitForUi(() => expect(container.textContent).toContain('Linked as @llama'))

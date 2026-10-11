@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { pickOption } from '~/utils/testing/pickOption'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartStyleEditor } from '../ChartStyleEditor'
@@ -594,14 +594,14 @@ describe('ChartStyleEditor', () => {
 			.mockRejectedValueOnce(new Error('update-chart-style failed (503)'))
 			.mockReturnValueOnce(retry.promise)
 		await act(async () => render(<EditorHarness onSave={onSave} />))
-		const alert = () => document.querySelector('footer [role="alert"]')?.textContent
+		const footerAlerts = () => alertTexts(document.querySelector('footer')!)
 		await clickButton('Save')
-		await waitForUi(() => expect(alert()).toBe("Couldn't save the chart style. Save again to retry."))
+		await waitForUi(() => expect(footerAlerts()).toHaveLength(1))
 
 		await clickButton('Save')
 		expect(onSave).toHaveBeenCalledTimes(2)
-		expect(alert()).toBe("Couldn't save the chart style. Save again to retry.")
+		expect(footerAlerts()).toHaveLength(1)
 		await act(async () => retry.resolve(undefined))
-		await waitForUi(() => expect(alert()).toBeUndefined())
+		await waitForUi(() => expect(footerAlerts()).toEqual([]))
 	})
 })

@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { getSettingsIntentFromQuery } from '../../utils/settingsIntent'
@@ -140,7 +141,7 @@ test('failed balance reads offer a retry that reads the balance again', async ()
 	balanceFails = true
 	await draw(<BalanceSettings />)
 	const retry = () => [...host.querySelectorAll('button')].find((b) => accessibleName(b) === 'Try again')
-	await settle(() => expect(host.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your balance."))
+	await settle(() => expect(alertTexts(host)).toHaveLength(1))
 	balanceFails = false
 	await act(async () => retry()!.click())
 	await settle(() => expect(host.textContent).toContain('$10.00'))

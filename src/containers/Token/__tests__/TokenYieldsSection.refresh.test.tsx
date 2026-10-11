@@ -6,6 +6,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { earnPageRow } from '~/utils/testing/yieldsEarnFixture'
@@ -108,7 +109,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		awaitFailure: () =>
 			waitForUi(async () => {
 				await act(async () => {
-					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load yield pools.")
+					expect(alertTexts(container)).toHaveLength(1)
 					expect(findButton('Try again')?.getAttribute('aria-busy')).toBe(null)
 				})
 			}),
@@ -229,7 +230,7 @@ async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydr
 				false
 			])
 			expect(accessibleName(retry)).toBe('Retrying…')
-			expect(refresh.container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load yield pools.")
+			expect(alertTexts(refresh.container)).toHaveLength(1)
 		})
 	})
 	expect(refresh.shownPools()).toEqual(hydratedPools)

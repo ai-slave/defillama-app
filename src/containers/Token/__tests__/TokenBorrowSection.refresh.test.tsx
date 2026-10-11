@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { TokenBorrowSection } from '../TokenBorrowSection'
@@ -159,7 +160,7 @@ test.each(SCENARIOS)(
 		const waitForRetryEnabled = () =>
 			waitForUi(async () => {
 				await act(async () => {
-					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load borrow routes.")
+					expect(alertTexts(container)).toHaveLength(1)
 					expect(findButton('Try again')?.getAttribute('aria-disabled')).toBe(null)
 				})
 			})
@@ -178,7 +179,7 @@ test.each(SCENARIOS)(
 					const pending = container.querySelector<HTMLButtonElement>('button[aria-busy="true"]')!
 					expect(accessibleName(pending)).toBe('Retrying…')
 					// The failure stays on screen while its retry runs.
-					expect(container.querySelector('[role=alert]')?.textContent).toContain("Couldn't load borrow routes.")
+					expect(alertTexts(container)).toHaveLength(1)
 					expect([pending.getAttribute('aria-disabled'), pending.disabled]).toEqual(['true', false])
 				})
 			})

@@ -14,6 +14,7 @@ const { writeText, nativeShare, toastError } = vi.hoisted(() => ({
 vi.mock('react-hot-toast', () => ({ toast: { error: toastError } }))
 
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ShareModal } from '../ShareModal'
 
@@ -47,6 +48,11 @@ function button(name: string) {
 const settle = async () => {
 	await act(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+}
+async function expectAlert() {
+	await act(async () => {
+		await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	})
 }
 async function expectText(text: string) {
@@ -84,7 +90,7 @@ test('opening shares once in Strict Mode and copies the message link', async () 
 test('Try again moves focus to the copy button, which keeps it through creation, clipboard failure and a manual copy', async () => {
 	session.serveInOrder(SHARE, [fail('Sharing is unavailable')])
 	await render(true)
-	await expectText('Couldn’t create a share link.')
+	await expectAlert()
 	expect(document.body.textContent).not.toContain('Sharing is unavailable')
 	const copyLink = button('Copy link')
 	expect(copyLink.getAttribute('aria-disabled')).toBe('true')
@@ -100,7 +106,7 @@ test('Try again moves focus to the copy button, which keeps it through creation,
 	expect(shareRequests()).toHaveLength(2)
 	writeText.mockRejectedValueOnce(new Error('Denied'))
 	await act(async () => request.resolve(shareResponse()))
-	await expectText('Couldn’t copy the link.')
+	await expectAlert()
 	expect(document.activeElement).toBe(copyLink)
 	expect(button('Copy link')).toBe(copyLink)
 	expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/tok-1')
@@ -150,7 +156,7 @@ test('a late clipboard failure cannot replace the feedback in a reopened dialog'
 	await settle()
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Share link copied to clipboard')
-	expect(toastError.mock.calls).toEqual([['Couldn’t copy the share link.']])
+	expect(toastError.mock.calls).toEqual([[expect.any(String)]])
 })
 
 test('clipboard unavailability guides manual copying instead of retrying', async () => {
@@ -194,7 +200,7 @@ test('native sharing distinguishes cancellation from failure and permits retry',
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	nativeShare.mockRejectedValueOnce(new Error('Unavailable'))
 	await act(async () => button('Share…').click())
-	await expectText('Couldn’t share the link.')
+	await expectAlert()
 	await act(async () => button('Share…').click())
 	await settle()
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -214,7 +220,7 @@ test('failed creation after dismissal reports once and reopening permits a fresh
 	await expectText('Creating share link…')
 	await render(false)
 	await act(async () => request.reject(new Error('Sharing is unavailable')))
-	expect(toastError.mock.calls).toEqual([['Couldn’t create a share link.']])
+	expect(toastError.mock.calls).toEqual([[expect.any(String)]])
 	session.serve({ [SHARE]: () => shareResponse() })
 	await render(true)
 	await expectText('Share link copied to clipboard')

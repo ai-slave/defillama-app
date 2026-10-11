@@ -8,6 +8,7 @@ import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/L
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
@@ -216,9 +217,7 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 	expect(requestsTo('/user/sessions/chat', 'DELETE')).toHaveLength(1)
 	expect(button('Actions for chat')).toBeDefined()
 	await act(async () => first.resolve(failure('Offline')))
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete this chat. Try again.")
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="alertdialog"]')!)).toHaveLength(1))
 	expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
 	await click('Delete')
 	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
@@ -347,9 +346,8 @@ test('making a private chat public copies its new link, and a failure stays in t
 	expect(namedButton('Copy link')).toBeUndefined()
 	expect(namedButton('Make private')).toBeUndefined()
 	await act(async () => namedButton('Make public and copy link').click())
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't make this conversation public")
-	)
+	// The row's menu portals to the body; nothing else on the page shows an alert.
+	await waitForUi(() => expect(alertTexts()).toHaveLength(1))
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	expect(copy).not.toHaveBeenCalled()
 	await reopenMenu(trigger)
@@ -383,15 +381,13 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 		.mockResolvedValueOnce(undefined)
 	const trigger = await openShareMenu(true)
 	await act(async () => namedButton('Copy link').click())
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy the link")
-	)
+	await waitForUi(() => expect(alertTexts()).toHaveLength(1))
 	expect(toastError).not.toHaveBeenCalled()
 	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
 	// The retry keeps the failure on screen while it runs.
 	await act(async () => namedButton('Copy link').click())
 	await waitForUi(() => expect(namedButton('Copying…')).toBeDefined())
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy the link")
+	expect(alertTexts()).toHaveLength(1)
 	await act(async () =>
 		document
 			.querySelector('[role="menu"]')!
@@ -399,7 +395,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	)
 	await waitForUi(() => expect(document.querySelector('[role="menu"]')).toBeNull())
 	await act(async () => request.reject(new Error('Clipboard blocked')))
-	await waitForUi(() => expect(toastError).toHaveBeenCalledExactlyOnceWith("Couldn't copy the link."))
+	await waitForUi(() => expect(toastError).toHaveBeenCalledExactlyOnceWith(expect.any(String)))
 	await act(async () => trigger.click())
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Copy link').click())

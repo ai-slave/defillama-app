@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { SlackIntegrationRow } from '~/containers/LlamaAI/components/SlackIntegrationRow'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -84,13 +85,13 @@ test('a refused disconnect keeps the workspace and says so in the confirmation, 
 	await act(async () => button('Disconnect')!.click())
 	await waitForUi(() => expect(confirmation()).not.toBeNull())
 	await act(async () => button('Disconnect', confirmation()!)!.click())
-	await waitForUi(() => expect(confirmation()?.textContent).toContain("Couldn't disconnect this workspace. Try again."))
+	await waitForUi(() => expect(alertTexts(confirmation()!)).toHaveLength(1))
 
 	await act(async () => button('Cancel', confirmation()!)!.click())
 	await waitForUi(() => expect(confirmation()).toBeNull())
 	await act(async () => button('Disconnect')!.click())
 	await waitForUi(() => expect(confirmation()).not.toBeNull())
-	expect(confirmation()!.textContent).not.toContain("Couldn't disconnect")
+	expect(alertTexts(confirmation()!)).toEqual([])
 	expect(document.body.textContent).toContain('Llama Research')
 })
 

@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 const session = installSubscriberSession('equity-ticker')
@@ -271,8 +272,9 @@ describe('EquityTickerPage price history', () => {
 			await render()
 			await waitForUi(async () => {
 				await act(async () => {})
-				expect(container.textContent).toContain(
-					result === 'empty' ? 'No price history available' : "Couldn't load price history"
+				// Empty says so without an alert; a failure is an alert, never the empty line.
+				expect([container.textContent.includes('No price history available'), alertTexts(container).length]).toEqual(
+					result === 'empty' ? [true, 0] : [false, 1]
 				)
 			})
 			expect(container.querySelector('[aria-label="Loading price history"]')).toBeNull()

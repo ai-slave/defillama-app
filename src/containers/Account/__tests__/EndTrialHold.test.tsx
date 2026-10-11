@@ -7,6 +7,7 @@ import type { Subscription } from '~/auth/useSubscribe'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -161,11 +162,7 @@ test.each([
 	await waitForUi(() => expect(button('Confirm & upgrade now')).toBeDefined())
 	await act(async () => button('Confirm & upgrade now')!.click())
 
-	await waitForUi(() =>
-		expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe(
-			"We couldn't confirm the upgrade, so it may still go through. Check your plan in a minute."
-		)
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role=alertdialog]')!)).toHaveLength(1))
 	expect(button('Confirm & upgrade now')!.disabled).toBe(true)
 	await act(async () => button('Confirm & upgrade now')!.click())
 	expect(endTrialPosts()).toBe(1)

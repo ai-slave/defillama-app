@@ -7,7 +7,7 @@ import { FEATURES_SERVER } from '~/constants'
 import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchSponsorsAdminView'
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
 import { accessibleName } from '~/utils/testing/accessibleName'
-import { fieldErrorOf } from '~/utils/testing/fieldErrors'
+import { alertTexts, fieldErrorOf } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -118,7 +118,7 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	// The done label is laid out but hidden until the copy succeeds, so no button is named Copied yet.
 	expect([...container.querySelectorAll('button')].some((el) => accessibleName(el) === 'Copied')).toBe(false)
 	await act(async () => request.reject(new Error('Permission denied')))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
+	await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 	await click('Copy')
 	await waitForUi(() => expect(button('Copied')).toBeDefined())
 	expect(copy).toHaveBeenCalledWith('old-test-key')
@@ -158,7 +158,7 @@ test('each successful copy gets a fresh feedback interval, while a later failure
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(2100)
 	})
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy')
+	expect(alertTexts(container)).toHaveLength(1)
 })
 test('regeneration keeps confirmation and old key on failure, retries, and closes on success', async () => {
 	const request = Promise.withResolvers<string>()

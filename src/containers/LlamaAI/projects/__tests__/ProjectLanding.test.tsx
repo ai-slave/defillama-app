@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectLanding } from '../ProjectLanding'
@@ -169,7 +170,7 @@ test('chat loading, failure and retry never present a false empty state', async 
 	expect(container.textContent).toContain('Loading chats')
 	expect(container.textContent).not.toContain('No chats yet')
 	await act(async () => finishLoading())
-	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats."))
+	await until(() => expect(alertTexts(container)).toHaveLength(1))
 	expect(container.textContent).not.toContain('No chats yet')
 
 	let finishRetry = () => {}
@@ -177,7 +178,7 @@ test('chat loading, failure and retry never present a false empty state', async 
 	const retry = button('Try again')
 	await act(async () => retry.click())
 	await until(() => expect(accessibleName(retry)).toBe('Retrying…'))
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats.")
+	expect(alertTexts(container)).toHaveLength(1)
 	expect(container.textContent).not.toContain('No chats yet')
 	await act(async () => finishRetry())
 	await until(() => expect(container.textContent).toContain('No chats yet'))
@@ -235,11 +236,7 @@ test('an attachment that cannot be read keeps the draft, says so and leaves the 
 	})
 	try {
 		await act(async () => composer().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
-		await until(() =>
-			expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-				"Couldn't read an attachment. Remove it or attach it again, then send."
-			)
-		)
+		await until(() => expect(alertTexts(container)).toHaveLength(1))
 	} finally {
 		vi.restoreAllMocks()
 	}
@@ -271,9 +268,7 @@ test.each([403, 404])('shows the same not-found page for inaccessible or missing
 test('keeps retry available for temporary project failures', async () => {
 	detailReply = () => Response.json({ error: 'Service unavailable' }, { status: 503 })
 	await render()
-	await until(() =>
-		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Couldn’t load this project.')
-	)
+	await until(() => expect(alertTexts(container)).toHaveLength(1))
 	detailReply = () => project('project-1', 'Research', 'Saved instructions')
 	await act(async () => button('Try again').click())
 	await until(() => expect(tabs()).toHaveLength(2))

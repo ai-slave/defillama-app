@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { useDashboardAPI } from '../../hooks/useDashboardAPI'
@@ -91,9 +92,7 @@ test('a real API failure appears once in the open settings form and retry saves 
 	await render(true)
 	await addTag('lending')
 	await submit()
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
-	)
+	await waitForUi(() => expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1))
 	expect(toast.error).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	await submit()

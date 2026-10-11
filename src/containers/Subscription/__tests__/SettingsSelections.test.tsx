@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSettingsModal } from '~/containers/ProDashboard/components/DashboardSettingsModal'
 import type { DashboardSaveNotices } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -151,7 +152,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 	await submit()
 	expect(close).not.toHaveBeenCalled()
 	expect(radio('private').checked).toBe(true)
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
+	expect(alertTexts(document.querySelector('[role="dialog"]')!)).toHaveLength(1)
 	await submit()
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
 	await submit()

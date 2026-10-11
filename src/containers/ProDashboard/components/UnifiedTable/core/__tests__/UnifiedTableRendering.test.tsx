@@ -5,6 +5,7 @@ import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { alertTexts } from '~/utils/testing/fieldErrors'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { UnifiedTableConfig } from '../../../../unifiedTable/config/current'
@@ -493,13 +494,14 @@ describe('UnifiedTable rendering', () => {
 				</QueryClientProvider>
 			)
 		)
-		await waitForContent(container, "Couldn't load this table")
+		await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 		expect(container.textContent).not.toContain('No rows match your scope or filters.')
-		expect(container.textContent).not.toContain("Couldn't refresh this card")
+		// The retry belongs to the alert in place of the table, not to a refresh notice over stale rows.
+		expect(button('Try again').closest('[role="alert"]')).not.toBeNull()
 
 		const attemptsBeforeRetry = rowRequests()
 		await act(async () => button('Try again').click())
-		await waitForContent(container, "Couldn't load this table")
+		await waitForUi(() => expect(alertTexts(container)).toHaveLength(1))
 		expect(rowRequests()).toBeGreaterThan(attemptsBeforeRetry)
 	})
 
@@ -524,14 +526,19 @@ describe('UnifiedTable rendering', () => {
 		await act(async () => {
 			await queryClient.invalidateQueries()
 		})
-		await waitForContent(container, "Couldn't refresh this card. Showing the last loaded data.")
+		// A failed refresh is a warning over the stale rows, not an alert in their place.
+		const notice = await waitForUi(() => {
+			const status = button('Try again').closest('[role="status"]')
+			expect(status).not.toBeNull()
+			return status!
+		})
 		expect(container.textContent).toContain('Aave')
-		expect(container.textContent).not.toContain("Couldn't load this table")
+		expect(alertTexts(container)).toEqual([])
 
 		shouldFail = false
 		const attemptsBeforeRetry = rowRequests()
 		await act(async () => button('Try again').click())
-		await waitForUi(() => expect(container.textContent).not.toContain("Couldn't refresh this card"))
+		await waitForUi(() => expect(notice.isConnected).toBe(false))
 		expect(rowRequests()).toBeGreaterThan(attemptsBeforeRetry)
 		expect(container.textContent).toContain('Aave')
 	})
