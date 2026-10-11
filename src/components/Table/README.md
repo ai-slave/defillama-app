@@ -39,6 +39,7 @@ Choose the renderer independently of how rows are fetched or paginated. Import e
 - Keep an explicit table owner when narrower features, server or controlled state, or row-dependent callbacks need one. Do not enable extra features just to share a provider.
 - Row-dependent callbacks stay at the typed owner; context erases the row type.
 - `initialState` supplies mount defaults. New data or column definitions keep current sorting, filters, visibility and expansion; only a `key` resets them.
+- New `data` resets the page to 1 and collapses expanded rows, so `data` keeps its identity until the rows change. A component that compiles can still leave the rows uncached; `scripts/policies/check-table-data-identity.ts` reads the compiled output and fails such a table. Build those rows in a memo hook that takes its inputs as parameters (`useIndustryRows` in `src/containers/Equities/IndustriesPage.tsx`).
 - Search deferral keeps typing responsive, but it is not a worker or a debounce: the filter still runs synchronously once applied.
 - An external reset cancels pending search text, even when the filter it resets is already empty.
 - Hiding a column keeps its definition, so search and sorting still work on it.

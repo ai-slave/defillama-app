@@ -489,3 +489,4 @@ Controls that share a row must share a height and a centre line, and only the re
 - [`scripts/policies/check-form-validation.ts`](scripts/policies/check-form-validation.ts) refuses the browser's own validation: a form without `noValidate`, `setCustomValidity`/`reportValidity`, and `user-invalid` styles.
 - [`scripts/policies/check-column-pickers.ts`](scripts/policies/check-column-pickers.ts) fails a Columns picker that does not keep the identity column out of its options.
 - [`scripts/policies/check-image-size.ts`](scripts/policies/check-image-size.ts) fails an `<img>` whose box waits for the file, including a `w-auto` logo.
+- [`scripts/policies/check-table-data-identity.ts`](scripts/policies/check-table-data-identity.ts) compiles every file that creates a table and fails one whose `data` is rebuilt on every render, which sends the table back to page 1 and collapses expanded rows.

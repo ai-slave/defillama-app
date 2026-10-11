@@ -61,6 +61,9 @@ jobs:
       - name: Check image size policy
         run: bun scripts/policies/check-image-size.ts --self-test && bun scripts/policies/check-image-size.ts
 
+      - name: Check table data identity policy
+        run: bun scripts/policies/check-table-data-identity.ts --self-test && bun scripts/policies/check-table-data-identity.ts
+
       - name: Check focus handoff policy
         run: bun scripts/policies/check-focus-handoff.ts --self-test && bun scripts/policies/check-focus-handoff.ts
 

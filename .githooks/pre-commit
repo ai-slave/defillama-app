@@ -86,6 +86,11 @@ if [ -s "$staged_files" ]; then
 		echo "Checking image size policy on staged files..."
 		xargs -0 bun scripts/policies/check-image-size.ts < "$policy_files" || status=$?
 	fi
+
+	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
+		echo "Checking table data identity policy on staged files..."
+		xargs -0 bun scripts/policies/check-table-data-identity.ts < "$policy_files" || status=$?
+	fi
 else
 	echo "No staged source files to format or lint."
 fi

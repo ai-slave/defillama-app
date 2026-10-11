@@ -162,3 +162,42 @@ test('the industry map By sector toggle round-trips through the URL', async () =
 	await act(async () => bySector().click())
 	expect(pushedQuery()).toEqual({})
 })
+
+test('the industries table keeps its page through re-renders until its rows change', async () => {
+	const updatedAt = '2026-10-09T00:00:00Z'
+	const data = {
+		overview: { marketCap: 2, companyCount: 1, sectorCount: 1 },
+		industries: [
+			...Array.from({ length: 30 }, (_, index) => ({
+				...industry({ industry: `Large ${index}`, industrySlug: `large-${index}` }),
+				updatedAt
+			})),
+			// Fewer than 3 companies puts an industry in the tail, so showing the tail adds a page.
+			...Array.from({ length: 30 }, (_, index) => ({
+				...industry({ industry: `Small ${index}`, industrySlug: `small-${index}`, companyCount: 1 }),
+				updatedAt
+			}))
+		]
+	}
+	// A fresh `state` with the same data, as a shallow route change re-renders the page with unchanged props.
+	const render = async (query: ParsedUrlQuery) => {
+		router.query = query
+		await act(async () => root.render(<IndustriesPage state={{ status: 'ready', stale: false, data }} />))
+	}
+	const pagerLabel = () => container.textContent!.match(/Page \d+ of \d+/)![0]
+
+	await render({})
+	expect(pagerLabel()).toBe('Page 1 of 2')
+	await act(async () =>
+		[...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Go to next page')!.click()
+	)
+	expect(pagerLabel()).toBe('Page 2 of 2')
+
+	// By sector writes `mapGroup` with a shallow push; the rows stay the same.
+	await render({ mapGroup: 'sector' })
+	expect(pagerLabel()).toBe('Page 2 of 2')
+
+	// Showing the tail changes the rows, so the pager starts over.
+	await render({ mapGroup: 'sector', showTail: 'true' })
+	expect(pagerLabel()).toBe('Page 1 of 3')
+})

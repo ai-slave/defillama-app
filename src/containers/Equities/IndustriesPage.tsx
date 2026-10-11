@@ -1,7 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
@@ -184,6 +184,39 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 	return <IndustriesReadyPage state={state} />
 }
 
+/**
+ * The rows memo lives in a hook so the compiler preserves it. In the page body, calls in the JSX such as
+ * `formatMetric(summary.…)` run after `usePaginatedTable` and may mutate the rows for all the compiler knows,
+ * so it drops the memo; TanStack then gets new rows on every render and resets the pager to page 1.
+ * Parameters carry no such range.
+ *
+ * Only the sector keys are inputs, so a shallow push of another key, such as `mapGroup`, keeps the page.
+ * A key repeated in the URL arrives as a new array on each route change and resets it; the sector chips
+ * only ever write one value.
+ */
+function useIndustryRows(
+	industries: IndustriesPageData['industries'],
+	sector: string | Array<string> | undefined,
+	excludeSector: string | Array<string> | undefined,
+	hideTail: boolean
+) {
+	return useMemo(() => {
+		const classifiedIndustries = filterKnownAggregates(industries)
+		const sectorSlugs = [...new Set(classifiedIndustries.map((row) => row.sectorSlug))]
+		const selectedSectors = new Set(
+			readSelectionFromQuery({ sector, excludeSector }, 'sector', 'excludeSector', sectorSlugs)
+		)
+		const sectorRows = classifiedIndustries.filter((row) => selectedSectors.has(row.sectorSlug))
+		return {
+			classifiedIndustries,
+			sectorSlugs,
+			selectedSectors,
+			sectorRows,
+			...filterIndustryTail(sectorRows, { hideTail })
+		}
+	}, [industries, sector, excludeSector, hideTail])
+}
+
 function IndustriesReadyPage({
 	state
 }: {
@@ -195,15 +228,14 @@ function IndustriesReadyPage({
 	const hideTail = !isTrueQueryParam(router.query.showTail)
 
 	const { overview, industries } = state.data
-	const classifiedIndustries = filterKnownAggregates(industries)
-	const sectorSlugs = [...new Set(classifiedIndustries.map((row) => row.sectorSlug))]
-	const selectedSectors = new Set(readSelectionFromQuery(router.query, 'sector', 'excludeSector', sectorSlugs))
-	const globalSummary = buildIndustrySummary(classifiedIndustries, overview.marketCap)
-	const sectorRows = classifiedIndustries.filter((row) => selectedSectors.has(row.sectorSlug))
-	const summary = buildIndustrySummary(sectorRows, overview.marketCap)
-	const { visibleRows, hiddenRows } = filterIndustryTail(sectorRows, {
+	const { classifiedIndustries, sectorSlugs, selectedSectors, sectorRows, visibleRows, hiddenRows } = useIndustryRows(
+		industries,
+		router.query.sector,
+		router.query.excludeSector,
 		hideTail
-	})
+	)
+	const globalSummary = buildIndustrySummary(classifiedIndustries, overview.marketCap)
+	const summary = buildIndustrySummary(sectorRows, overview.marketCap)
 	const industryTable = usePaginatedTable({
 		data: visibleRows,
 		columns: industryColumns,

@@ -1,7 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
@@ -183,6 +183,15 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 	return <SectorsReadyPage state={state} />
 }
 
+/**
+ * The rows memo lives in a hook so the compiler preserves it: in the page body, calls in the JSX after
+ * `usePaginatedTable` may mutate the rows for all the compiler knows, so it drops the memo and the table
+ * gets new rows, and goes back to page 1, on every render. A parameter carries no such range.
+ */
+function useClassifiedSectors(sectors: IEquitiesSectorsData['sectors']) {
+	return useMemo(() => filterKnownAggregates(sectors), [sectors])
+}
+
 function SectorsReadyPage({
 	state
 }: {
@@ -196,7 +205,7 @@ function SectorsReadyPage({
 		PERFORMANCE_PERIOD_OPTIONS.find((option) => option.value === router.query.period)?.value ?? '1d'
 
 	const { overview, sectors } = state.data
-	const classifiedSectors = filterKnownAggregates(sectors)
+	const classifiedSectors = useClassifiedSectors(sectors)
 	const sectorsUp = classifiedSectors.filter((row) => (row.priceChangePercentage1d ?? 0) > 0).length
 	const treemap = buildSectorTreemapData(sectors, treemapMetric, overview)
 	const treemapNodes: Array<TreemapNode> = treemap.rows

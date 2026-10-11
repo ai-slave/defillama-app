@@ -33,24 +33,9 @@ const positional = cachedIndex === -1 ? argv : [...argv.slice(0, cachedIndex), .
 const root = path.resolve(positional[0] ?? '.')
 const files = positional.slice(1)
 
-const { reactCompilerBabel } = require('./reactCompilerBabel.cjs')
+const { reactCompilerBabel, insideCacheGuard } = require('./reactCompilerBabel.cjs')
 
-const { babel, plugins } = reactCompilerBabel(root)
-
-/** True when the node is inside `if ($[n] !== dep)`, the guard the compiler emits around a memo scope. */
-function insideCacheGuard(nodePath) {
-	for (let current = nodePath; current; current = current.parentPath) {
-		if (!current.isIfStatement()) continue
-		let guarded = false
-		current.get('test').traverse({
-			MemberExpression(member) {
-				if (member.node.object.type === 'Identifier' && member.node.object.name === '$') guarded = true
-			}
-		})
-		if (guarded) return true
-	}
-	return false
-}
+const { babel, syntaxPlugins, plugins } = reactCompilerBabel(root)
 
 let problems = 0
 for (const relativePath of files) {
@@ -116,7 +101,7 @@ for (const relativePath of files) {
 		filename: `${file}.compiled.tsx`,
 		babelrc: false,
 		configFile: false,
-		plugins: [[syntaxTs, { isTSX: true }], syntaxJsx, countCalls]
+		plugins: [...syntaxPlugins, countCalls]
 	})
 	for (const [name, counts] of seen) {
 		if (counts.cached === 0 && counts.uncached === 0) continue
