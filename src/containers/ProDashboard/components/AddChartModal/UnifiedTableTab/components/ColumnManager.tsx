@@ -48,10 +48,11 @@ import { CountBadge } from '~/ui/CountBadge'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
@@ -658,15 +659,7 @@ export function ColumnManager({
 				</div>
 
 				<div className="border-b border-subtle p-2">
-					<div className="relative">
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							aria-label="Search columns"
-							placeholder="Search columns…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</div>
+					<SearchField label="Search columns" value={search} onChange={setSearch} placeholder="Search columns…" />
 				</div>
 
 				<div className="max-h-[240px] overflow-y-auto p-2">

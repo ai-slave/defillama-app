@@ -1,14 +1,12 @@
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useId, useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { LinkToMetricOrToolPage, usePinnedRoutes } from '~/components/Metrics'
 import Layout from '~/layout'
 import defillamaPages from '~/public/pages.json'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 
 export default function Tools() {
-	const searchInputId = useId()
 	const [searchValue, setSearchValue] = useState('')
 	const deferredSearchValue = useDeferredValue(searchValue)
 
@@ -30,16 +28,7 @@ export default function Tools() {
 		>
 			<Card padding="sm" className="flex flex-col gap-2">
 				<h1 className="heading-sm">Tools</h1>
-				<div className="relative">
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						id={searchInputId}
-						type="text"
-						placeholder="Search…"
-						className={searchFieldInputPlacementStyles}
-						onInput={(e) => setSearchValue(e.currentTarget.value)}
-					/>
-				</div>
+				<SearchField label="Search tools" value={searchValue} onChange={setSearchValue} placeholder="Search…" />
 			</Card>
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 				{pages.map((tool: any) => (

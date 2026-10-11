@@ -10,7 +10,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -443,15 +444,14 @@ export function YieldsChartTab({
 								<div className="overflow-hidden rounded-lg border border-subtle">
 									<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
 										<div className="flex items-center gap-3">
-											<div className="relative">
-												<Icon name="search" className={searchFieldIconStyles} />
-												<Input
-													{...control}
-													onInput={(e) => setPoolSearch(e.currentTarget.value)}
-													placeholder="Search pools…"
-													className="w-36 pl-8 sm:w-48"
-												/>
-											</div>
+											<SearchField
+												{...control}
+												label="Search pools"
+												value={poolSearch}
+												onChange={setPoolSearch}
+												placeholder="Search pools…"
+												className="w-36 sm:w-48"
+											/>
 											<span className="label-sm text-tertiary">
 												{filteredPools.length} pool
 												{filteredPools.length !== 1 ? 's' : ''}

@@ -8,13 +8,9 @@ import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldFlexibleWrapperStyles,
-	searchFieldIconStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldFlexibleWrapperStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SearchField } from '~/ui/SearchField'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -51,7 +47,7 @@ export function ProjectsGrid() {
 	const projectList = useProjectList(!isLocked)
 	const { data } = projectList
 	const [query, setQuery] = useState('')
-	// Both clear controls leave once the search is empty; the search field takes focus.
+	// The empty state's Clear search leaves once the search is empty; the search field takes focus.
 	const clearSearch = () => {
 		setQuery('')
 		searchRef.current?.focus()
@@ -166,30 +162,14 @@ export function ProjectsGrid() {
 			</header>
 
 			{hasProjects ? (
-				<div className={searchFieldFlexibleWrapperStyles}>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						ref={searchRef}
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-						aria-label="Search projects"
-						placeholder="Search projects"
-						className={`${searchFieldInputPlacementStyles} ${query ? 'pr-9' : ''}`}
-					/>
-					{query ? (
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							square
-							aria-label="Clear project search"
-							onClick={clearSearch}
-							className="absolute top-0 right-1 bottom-0 my-auto"
-						>
-							<Icon name="x" className="size-3.5" />
-						</Button>
-					) : null}
-				</div>
+				<SearchField
+					ref={searchRef}
+					label="Search projects"
+					value={query}
+					onChange={setQuery}
+					placeholder="Search projects"
+					className={searchFieldFlexibleWrapperStyles}
+				/>
 			) : null}
 
 			{/* The same copy as the sidebar's notice for this query. */}

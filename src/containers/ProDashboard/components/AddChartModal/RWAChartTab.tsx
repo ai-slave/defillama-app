@@ -12,6 +12,7 @@ import {
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -197,7 +198,7 @@ function RWAChartTabInner({
 				/>
 			)}
 
-			<div className="min-h-[320px] rounded-md border border-subtle bg-surface">
+			<Card padding="none" className="min-h-[320px]">
 				{rwaMode === 'overview' ? (
 					<OverviewPreview
 						breakdown={selectedRwaBreakdown}
@@ -208,7 +209,7 @@ function RWAChartTabInner({
 				) : (
 					<AssetPreview assetId={selectedRwaAssetId} metrics={selectedRwaAssetMetrics} />
 				)}
-			</div>
+			</Card>
 		</div>
 	)
 }

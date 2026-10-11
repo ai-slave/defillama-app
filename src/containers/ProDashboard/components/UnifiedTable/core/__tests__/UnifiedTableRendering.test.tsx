@@ -394,7 +394,7 @@ describe('UnifiedTable rendering', () => {
 		)
 		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!
 		await act(async () => {
-			input.value = 'aave'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'aave')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		await waitForUi(() => expect(container.textContent).not.toContain('Compound'))
@@ -419,7 +419,7 @@ describe('UnifiedTable rendering', () => {
 		)
 		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!
 		await act(async () => {
-			input.value = 'aave'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'aave')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		await act(async () => {

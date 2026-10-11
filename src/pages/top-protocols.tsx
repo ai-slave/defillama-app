@@ -26,9 +26,9 @@ import { selectTopProtocolsView } from '~/containers/ProtocolTaxonomy/topProtoco
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -179,7 +179,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'chain' })
+	const [searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'chain' })
 
 	return (
 		<Layout
@@ -193,15 +193,13 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 			</Card>
 			<Panel>
 				<TableToolbar>
-					<label className={searchFieldWrapperStyles}>
-						<span className="sr-only">Search chains</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							placeholder="Search chains…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search chains"
+						value={searchValue}
+						onChange={setSearchValue}
+						placeholder="Search chains…"
+						className={searchFieldWrapperStyles}
+					/>
 
 					<SelectWithCombobox
 						allValues={chains}

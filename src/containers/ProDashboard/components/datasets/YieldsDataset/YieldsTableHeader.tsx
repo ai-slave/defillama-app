@@ -1,12 +1,8 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
 
@@ -54,17 +50,13 @@ export function YieldsTableHeader({
 	return (
 		<div className="mb-3 text-primary">
 			<div className="mb-3 flex items-center justify-end gap-4">
-				<div className={searchFieldInlineWrapperStyles}>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						type="text"
-						aria-label="Search pools"
-						placeholder="Search pools…"
-						value={poolName}
-						onChange={(e) => setPoolName(e.target.value)}
-						className={searchFieldInputPlacementStyles}
-					/>
-				</div>
+				<SearchField
+					label="Search pools"
+					value={poolName}
+					onChange={setPoolName}
+					placeholder="Search pools…"
+					className={searchFieldInlineWrapperStyles}
+				/>
 			</div>
 
 			{/* Wraps on a phone so the presets and the table actions each get a full row. */}

@@ -10,9 +10,9 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -134,25 +134,16 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 		<Dialog store={dialogStore} size="md" fullSheet unmountOnHide portal>
 			<DialogHeader title="Insert from LlamaAI" />
 			<DialogToolbar>
-				<label className="relative block">
-					<span className="sr-only">Search saved charts</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
-					<Ariakit.Focusable
-						autoFocus={!isSmallScreen}
-						render={
-							<Input
-								ref={searchRef}
-								name="llamaai-chart-search"
-								inputMode="search"
-								placeholder="Search your saved charts…"
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						}
-					/>
-				</label>
+				<SearchField
+					ref={searchRef}
+					label="Search saved charts"
+					name="llamaai-chart-search"
+					// Phones skip the autofocus: the keyboard would cover the list before anyone asked to search.
+					autoFocus={!isSmallScreen}
+					value={search}
+					onChange={setSearch}
+					placeholder="Search your saved charts…"
+				/>
 			</DialogToolbar>
 			<DialogBody kind="list">
 				{queryReadFailed(chartsQuery) ? (

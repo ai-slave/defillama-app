@@ -29,18 +29,18 @@ import { LoadingIndicator, RetryButton } from './Status'
    (src/components/ECharts/shared/chartSpacing.ts), never DOM padding.
 
    Suspense fallbacks: a lazy chart inside a mounted body uses
-   ChartPanelBodyLoading (360px, announced), never the bare
-   ChartPanelBodyFallback box; a lazy chart that renders its own title
-   and export toolbar uses ChartPanelExportShellLoading (400px). Keep an
-   external ChartPanelToolbar outside Suspense, so only the body waits.
-   check-status-parts.ts refuses a fallback that renders a childless
-   ChartPanelBodyFallback or div.
+   ChartPanelBodyLoading (360px, announced); a lazy chart that renders its
+   own title and export toolbar uses ChartPanelExportShellLoading (400px).
+   Keep an external ChartPanelToolbar outside Suspense, so only the body
+   waits. check-status-parts.ts refuses a fallback that renders a
+   childless ChartPanelBody or div.
 
    A chart with nothing to plot (no data in the range, no metric picked, a
    filter that matches nothing) renders ChartPanelBodyEmpty with a sentence
    naming what is missing. It announces itself, so a reader who changes a
-   range or filter hears the chart empty. ChartPanelBodyFallback is only the
-   box; check-status-parts.ts refuses text inside it.
+   range or filter hears the chart empty. A branch with nothing to show
+   renders one of these parts, never an empty box: the body's 360px floor
+   would stand blank and silent.
 
    A failed read renders ChartPanelBodyError where the chart would be: the
    red message and, when the chart's data comes from a query in the browser,
@@ -114,7 +114,8 @@ export function ChartPanelBody({ className, ...props }: ComponentPropsWithoutRef
 	return <div className={`relative flex flex-1 flex-col initial:min-h-[360px] ${className ?? ''}`.trim()} {...props} />
 }
 
-export function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+/** The body-sized centring box the loading, empty and error parts draw in. */
+function ChartPanelBodyFallback({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return (
 		<div
 			className={`m-auto flex items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}

@@ -21,10 +21,11 @@ import { useTablePages } from '~/hooks/useTablePages'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SearchField } from '~/ui/SearchField'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -99,16 +100,13 @@ export function RecentlyListedProtocolsTable({
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search protocols</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						value={nameSearch}
-						onChange={(e) => void pushShallowQuery(router, { search: e.currentTarget.value })}
-						placeholder="Search protocols…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search protocols"
+					value={nameSearch}
+					onChange={(value) => void pushShallowQuery(router, { search: value })}
+					placeholder="Search protocols…"
+					className={searchFieldWrapperStyles}
+				/>
 
 				<HideForkedProtocols />
 				<SelectWithCombobox

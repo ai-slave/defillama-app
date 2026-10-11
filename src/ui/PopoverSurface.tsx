@@ -128,7 +128,7 @@ const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! ma
 // The row's 4px plus the close button's 8px inset puts the x on the 12px content edge.
 const drawerTitleRowStyles = tw`flex min-h-12 shrink-0 items-center gap-2 pt-2 pr-1 pl-3 sm:hidden`
 
-export type PopoverSurfaceVariant = 'actions' | 'panel' | 'list' | 'nested'
+type PopoverSurfaceVariant = 'actions' | 'panel' | 'list' | 'nested'
 
 const VARIANT_SURFACE_STYLES: Record<PopoverSurfaceVariant, string> = {
 	actions: menuSurfaceStyles,

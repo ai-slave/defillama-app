@@ -1,7 +1,7 @@
 import { useSelector } from '@tanstack/react-store'
 import { useDeferredValue, useEffect, useState } from 'react'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { useSearchTableScope } from './context'
 
 /**
@@ -75,23 +75,20 @@ export function TableSearchInput({
 		)
 	}, [appliedValue, columnId, deferred, draft, filterChanges, table])
 	return (
-		<label className={className}>
-			<span className="sr-only">{placeholder}</span>
-			<Icon name="search" className={searchFieldIconStyles} />
-			<Input
-				value={draft.value}
-				onInput={(event) =>
-					setDraft({
-						value: event.currentTarget.value,
-						filters: table.atoms.columnFilters.get(),
-						columnId,
-						change: filterChanges.get(),
-						pending: true
-					})
-				}
-				placeholder={placeholder}
-				className={searchFieldInputPlacementStyles}
-			/>
-		</label>
+		<SearchField
+			label={placeholder}
+			value={draft.value}
+			onChange={(value) =>
+				setDraft({
+					value,
+					filters: table.atoms.columnFilters.get(),
+					columnId,
+					change: filterChanges.get(),
+					pending: true
+				})
+			}
+			placeholder={placeholder}
+			className={className}
+		/>
 	)
 }

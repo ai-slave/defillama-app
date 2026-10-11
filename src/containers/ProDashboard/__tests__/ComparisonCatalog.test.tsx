@@ -127,7 +127,7 @@ test.each(['chains', 'protocols'] as const)(
 		expect(chainListReads()).toBe(1)
 		const search = container.querySelector<HTMLInputElement>('input[type="text"]')!
 		await act(async () => {
-			search.value = label
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, label)
 			search.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		await click(label)

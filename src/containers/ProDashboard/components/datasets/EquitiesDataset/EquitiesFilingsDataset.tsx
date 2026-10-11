@@ -24,12 +24,8 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
@@ -184,7 +180,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		autoResetPageIndex: true
 	})
 
-	const [_searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'documentDescription' })
+	const [searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'documentDescription' })
 
 	if (!ticker) {
 		return (
@@ -256,16 +252,13 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search filings"
-								placeholder="Search filings…"
-								onInput={(e) => setSearchValue(e.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search filings"
+							value={searchValue}
+							onChange={setSearchValue}
+							placeholder="Search filings…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

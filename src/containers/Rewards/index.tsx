@@ -19,14 +19,9 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { getABGroupFromCookie } from '~/utils/abTesting'
 import { REWARDS_EVENTS, trackRewardsEvent } from '~/utils/analytics/rewards'
@@ -144,17 +139,13 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Rewards</PanelTitle>
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search protocols or programs</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							type="search"
-							value={search}
-							onChange={(event) => changeSearch(event.currentTarget.value)}
-							placeholder="Search protocols or programs…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search protocols or programs"
+						value={search}
+						onChange={changeSearch}
+						placeholder="Search protocols or programs…"
+						className={searchFieldInlineWrapperStyles}
+					/>
 					{/* filter, not inline: it sits between the search field and Reset, so it
 					    takes the same 32px bordered control shape as the other toolbar controls. */}
 					<Checkbox

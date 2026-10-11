@@ -16,10 +16,10 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SearchField } from '~/ui/SearchField'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -39,7 +39,6 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const router = useRouter()
-	const searchInputRef = React.useRef<HTMLInputElement | null>(null)
 	const initialSearchAppliedRef = React.useRef(false)
 
 	const instance = useTable({
@@ -58,7 +57,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	React.useEffect(() => {
 		if (!router.isReady || initialSearchAppliedRef.current) return
@@ -67,24 +66,20 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 		if (typeof value === 'string' && value.trim()) {
 			initialSearchAppliedRef.current = true
 			setProjectName(value.trim())
-			if (searchInputRef.current) searchInputRef.current.value = value.trim()
 		}
 	}, [router.isReady, router.query.search, setProjectName])
 
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects…</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						ref={searchInputRef}
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search projects"
+					name="search"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search projects…"
+					className={searchFieldWrapperStyles}
+				/>
 
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'hacks' })} smol free size="md" />
 			</TableToolbar>
@@ -93,7 +88,10 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	)
 }
 
-const chartTypeList = ['Monthly Sum', 'Total Hacked by Technique']
+const CHART_TYPE_OPTIONS: ReadonlyArray<SegmentedControlOption<string>> = [
+	{ value: 'Monthly Sum', label: 'Monthly Sum' },
+	{ value: 'Total Hacked by Technique', label: 'Total Hacked by Technique' }
+]
 
 const getTimeSinceSeconds = (timeQuery: string | undefined, endSec: number): number | null => {
 	if (typeof timeQuery !== 'string') return null
@@ -204,13 +202,14 @@ export function HacksContainer({
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar>
-						<TagGroup
+						<SegmentedControl
 							variant="default"
 							size="md"
 							className="mr-auto"
-							setValue={setChartType}
-							selectedValue={chartType}
-							values={chartTypeList}
+							onValueChange={setChartType}
+							value={chartType}
+							options={CHART_TYPE_OPTIONS}
+							label="Chart type"
 						/>
 						<ChartExportButtons
 							chartInstance={exportChartInstance}

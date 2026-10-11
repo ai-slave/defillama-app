@@ -11,9 +11,9 @@ import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { StaleText } from '~/ui/StaleText'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -207,18 +207,16 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 			</Card>
 			<Panel>
 				<TableToolbar>
-					<label className={searchFieldWrapperStyles}>
-						<span className="sr-only">Search companies, IDs, or sectors</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							onInput={(event) => {
-								setSearchValue(event.currentTarget.value)
-								resetPage()
-							}}
-							placeholder="Search companies…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search companies, IDs, or sectors"
+						value={searchValue}
+						onChange={(value) => {
+							setSearchValue(value)
+							resetPage()
+						}}
+						placeholder="Search companies…"
+						className={searchFieldWrapperStyles}
+					/>
 					<TableToolbarControlGroup>
 						<SelectWithCombobox
 							allValues={sectors}

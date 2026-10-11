@@ -1,6 +1,7 @@
 import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { downloadCSV } from '~/utils/download'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
@@ -440,15 +441,18 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{unifiedTable.loadError === 'initial' ? (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-subtle bg-surface">
+					<Card padding="none" className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden">
 						<ProCardError title="Couldn't load this table" retry={unifiedTable} />
-					</div>
+					</Card>
 				) : unifiedTable.isLoading ? (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-subtle bg-surface p-3">
+					<Card padding="base" className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden">
 						<ProCardLoading variant="table" />
-					</div>
+					</Card>
 				) : (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden rounded-md border border-subtle bg-surface">
+					<Card
+						padding="none"
+						className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden"
+					>
 						<UnifiedVirtualTable
 							rows={unifiedTable.rows}
 							headerGroups={unifiedTable.headerGroups}
@@ -459,15 +463,12 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 						/>
 						{unifiedTable.leafRows.length === 0 ? (
 							<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-(--bg-surface-glass) to-surface">
-								<div
-									role="status"
-									className="pointer-events-auto rounded-md border border-subtle bg-surface px-4 py-3 body-md text-secondary"
-								>
-									No rows match your scope or filters.
-								</div>
+								<Card role="status" padding="strip" className="pointer-events-auto">
+									<p className="body-md text-secondary">No rows match your scope or filters.</p>
+								</Card>
 							</div>
 						) : null}
-					</div>
+					</Card>
 				)}
 				<TablePager
 					pageIndex={unifiedTable.pageIndex}

@@ -15,7 +15,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatRatio } from '~/utils/numberFormat'
@@ -286,12 +286,13 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 		<>
 			<Card padding="strip" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Correlations Matrix</h1>
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={period}
-					setValue={setPeriod}
-					values={PERIODS}
+					value={period}
+					onValueChange={setPeriod}
+					options={PERIODS.map((value) => ({ value, label: value }))}
+					label="Period"
 					className="ml-auto"
 				/>
 			</Card>

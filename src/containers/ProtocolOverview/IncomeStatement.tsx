@@ -23,7 +23,7 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -581,15 +581,15 @@ export function IncomeStatement({
 				) : null}
 				{showTable ? (
 					<TableToolbarControlGroup className="ml-auto">
-						<TagGroup
+						<SegmentedControl
 							variant="default"
 							size="md"
-							values={incomeStatementGroupByOptions}
-							selectedValue={groupBy}
-							setValue={(groupOption) => {
+							options={incomeStatementGroupByOptions.map((value) => ({ value, label: value }))}
+							value={groupBy}
+							onValueChange={(groupOption) => {
 								startTransition(() => setGroupBy(groupOption))
 							}}
-							className="min-h-8"
+							label="Time grouping"
 						/>
 						<CSVDownloadButton prepareCsv={prepareTableCsv} smol size="md" />
 					</TableToolbarControlGroup>
@@ -766,18 +766,18 @@ export function IncomeStatement({
 							<ChartPanelToolbar
 								leading={showTitles ? <ChartPanelTitle>Income Flow Visualization</ChartPanelTitle> : undefined}
 							>
-								<TagGroup
+								<SegmentedControl
 									variant="default"
 									size="md"
-									values={incomeStatementGroupByOptions}
-									selectedValue={sankeyGroupBy}
-									setValue={(groupOption) => {
+									options={incomeStatementGroupByOptions.map((value) => ({ value, label: value }))}
+									value={sankeyGroupBy}
+									onValueChange={(groupOption) => {
 										startTransition(() => {
 											setSankeyGroupBy(groupOption)
 											setSelectedSankeyPeriod(null)
 										})
 									}}
-									className="min-h-8"
+									label="Flow time grouping"
 								/>
 								{sankeyGroupBy !== 'Cumulative' && sankeyPeriodSelectOptions.length > 0 ? (
 									<Select

@@ -25,7 +25,7 @@ import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/Chart
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { SegmentedControl, TagGroup, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -333,12 +333,13 @@ export function BridgeInfo({
 
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar>
-						<TagGroup
+						<SegmentedControl
 							variant="default"
 							size="md"
-							selectedValue={chartType}
-							setValue={(v) => setChartType(v)}
-							values={chartTypes}
+							value={chartType}
+							onValueChange={(v) => setChartType(v)}
+							options={chartTypes.map((value) => ({ value, label: value }))}
+							label="Chart type"
 							className="mr-auto"
 						/>
 						{activeTokenSeries && activeTokenSeriesNames.length > 1 ? (

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { Card } from '~/ui/Card'
 import { Skeleton } from '~/ui/Skeleton'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartRuntimeView } from '../../chartRuntime'
@@ -53,11 +54,11 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 	if (chartView.charts.length === 0 && composerItems.length > 0) {
 		return (
 			<div className="flex size-full items-center justify-center">
-				<div className="rounded-md border border-subtle bg-surface p-4 text-center">
+				<Card padding="md">
 					{anyLoading ? (
 						<SurfaceBodyLoadingStatus label="Loading chart data" className="min-h-0" />
 					) : (
-						<>
+						<div className="text-center">
 							<p className="mb-2 body-md text-secondary">Chart preview</p>
 							<p className="body-sm text-tertiary">
 								{composerItems.length} chart
@@ -71,9 +72,9 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 									</div>
 								))}
 							</div>
-						</>
+						</div>
 					)}
-				</div>
+				</Card>
 			</div>
 		)
 	}

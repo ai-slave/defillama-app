@@ -26,8 +26,9 @@ import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHea
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -437,17 +438,14 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 						<div ref={searchRegionRef} role="search">
 							<Field hideLabel label={tab === 'protocol' ? 'Search protocols' : 'Search chains'} error={seriesError}>
 								{(control) => (
-									<div className="relative">
-										<Icon name="search" aria-hidden className={searchFieldIconStyles} />
-										<Input
-											{...control}
-											ref={searchRef}
-											value={query}
-											onChange={(event) => setQuery(event.target.value)}
-											placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-											className={searchFieldInputPlacementStyles}
-										/>
-									</div>
+									<SearchField
+										{...control}
+										ref={searchRef}
+										label={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
+										value={query}
+										onChange={setQuery}
+										placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
+									/>
 								)}
 							</Field>
 						</div>

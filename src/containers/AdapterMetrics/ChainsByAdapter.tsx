@@ -16,8 +16,9 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -69,7 +70,7 @@ export function ChainsByAdapter(props: IProps) {
 		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance
 	})
@@ -99,15 +100,13 @@ export function ChainsByAdapter(props: IProps) {
 			) : null}
 			<Panel>
 				<TableToolbar>
-					<label className={searchFieldWrapperStyles}>
-						<span className="sr-only">Search chains</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search chains"
+						value={projectName}
+						onChange={setProjectName}
+						placeholder="Search…"
+						className={searchFieldWrapperStyles}
+					/>
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: `${props.type}-chains-protocols` })}
 						smol

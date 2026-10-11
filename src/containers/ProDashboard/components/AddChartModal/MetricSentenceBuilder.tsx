@@ -24,6 +24,7 @@ import {
 } from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
@@ -455,16 +456,12 @@ export function MetricSentenceBuilder({
 					<>
 						<PopoverHeader
 							search={
-								<div className="relative">
-									<Icon name="search" className={searchFieldIconStyles} />
-									<Input
-										value={searchTerm}
-										onChange={(event) => setSearchTerm(event.target.value)}
-										aria-label="Search metrics"
-										placeholder="Search metrics…"
-										className={searchFieldInputPlacementStyles}
-									/>
-								</div>
+								<SearchField
+									label="Search metrics"
+									value={searchTerm}
+									onChange={setSearchTerm}
+									placeholder="Search metrics…"
+								/>
 							}
 						/>
 						<div className={popoverScrollAreaStyles}>

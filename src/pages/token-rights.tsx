@@ -20,8 +20,9 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -488,17 +489,13 @@ function TokenRightsPage({
 
 				<Panel>
 					<TableToolbar>
-						<label className={searchFieldWrapperStyles}>
-							<span className="sr-only">Search protocol</span>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								onInput={(event) => {
-									setSearchValue(event.currentTarget.value)
-								}}
-								placeholder="Search protocol…"
-								className={searchFieldInputPlacementStyles}
-							/>
-						</label>
+						<SearchField
+							label="Search protocol"
+							value={searchValue}
+							onChange={setSearchValue}
+							placeholder="Search protocol…"
+							className={searchFieldWrapperStyles}
+						/>
 						<ExternalLinkButton
 							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
 							icon="plus"

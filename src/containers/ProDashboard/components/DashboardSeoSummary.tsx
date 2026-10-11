@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { Card } from '~/ui/Card'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -35,10 +36,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 	]
 
 	return (
-		<section
-			aria-labelledby="dashboard-title"
-			className="isolate overflow-hidden rounded-md border border-subtle bg-surface"
-		>
+		<Card aria-labelledby="dashboard-title" as="section" padding="none" className="isolate overflow-hidden">
 			<div className="grid gap-5 px-4 py-4 md:px-5 md:py-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] xl:items-start">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -76,7 +74,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 
 				{/* One dl whose groups are the grid cells. DividedGrid's grid is its own div, so this dl keeps its own dividers
 				    per breakpoint. */}
-				<dl className="grid grid-cols-2 overflow-hidden rounded-md border border-subtle bg-surface-elevated-1 body-md sm:grid-cols-4 xl:grid-cols-2">
+				<dl className="grid grid-cols-2 overflow-hidden rounded-lg border border-subtle bg-surface-elevated-1 body-md sm:grid-cols-4 xl:grid-cols-2">
 					{metrics.map((metric, index) => (
 						<div
 							key={metric.label}
@@ -125,6 +123,6 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 					<p className="body-md text-secondary">This public dashboard does not have any cards yet.</p>
 				)}
 			</div>
-		</section>
+		</Card>
 	)
 }

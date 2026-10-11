@@ -124,7 +124,7 @@ const tabs = () => [...container.querySelectorAll<HTMLButtonElement>('[role="tab
 const search = () => container.querySelector<HTMLInputElement>('[role="tabpanel"] input')!
 async function type(value: string) {
 	await act(async () => {
-		search().value = value
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search(), value)
 		search().dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }

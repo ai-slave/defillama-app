@@ -95,7 +95,7 @@ export function VerifiedApyPanel({
 				{verified.apy_note ? <p className="body-sm text-secondary">{verified.apy_note}</p> : null}
 				<span className="label-sm text-primary">Calls executed as the holder</span>
 				{verified.methods?.length ? (
-					<ol className="flex flex-col overflow-hidden rounded-md border border-subtle bg-surface-elevated-1">
+					<ol className="flex flex-col overflow-hidden rounded-lg border border-subtle bg-surface-elevated-1">
 						{verified.methods.map((method, index) => {
 							const call = describeCall(method)
 							return (

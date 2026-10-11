@@ -32,13 +32,8 @@ import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPICo
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
@@ -276,7 +271,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 		autoResetPageIndex: true
 	})
 
-	const [_venueName, setVenueName] = useTableSearch({ instance, columnToSearch: 'venue' })
+	const [venueName, setVenueName] = useTableSearch({ instance, columnToSearch: 'venue' })
 
 	return (
 		<div className="flex h-full w-full flex-col">
@@ -321,16 +316,13 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search CEXs"
-								placeholder="Search CEXs…"
-								onInput={(event) => setVenueName(event.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search CEXs"
+							value={venueName}
+							onChange={setVenueName}
+							placeholder="Search CEXs…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

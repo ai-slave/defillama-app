@@ -132,7 +132,7 @@ export const TAG_GROUP_BUTTON_SIZES: Record<TagGroupVariant, Record<keyof typeof
 	'solid-responsive': { sm: '', md: '' }
 }
 
-export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
+type TagGroupSize = keyof typeof TAG_GROUP_SIZES
 
 type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
 
@@ -261,50 +261,5 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 				{content}
 			</Ariakit.RadioGroup>
 		</Ariakit.RadioProvider>
-	)
-}
-
-type TagGroupProps<V extends ReadonlyArray<string> = ReadonlyArray<string>> = React.ComponentProps<'div'> & {
-	selectedValue: V[number] | null
-	setValue: (value: V[number]) => void
-	values: V
-	variant: TagGroupVariant
-	size: TagGroupSize
-	label?: string
-	ariaLabel?: string
-	disabledValues?: ReadonlyArray<V[number]>
-}
-
-/** SegmentedControl adapter for plain string-list options; labels are the capitalized values. */
-export function TagGroup<V extends ReadonlyArray<string>>({
-	selectedValue,
-	setValue,
-	values,
-	style,
-	className,
-	variant,
-	size,
-	label,
-	ariaLabel,
-	disabledValues,
-	...props
-}: TagGroupProps<V>) {
-	return (
-		<SegmentedControl
-			value={selectedValue}
-			onValueChange={setValue}
-			options={values.map((value) => ({
-				value,
-				label: `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`,
-				disabled: disabledValues?.includes(value)
-			}))}
-			label={ariaLabel ?? label ?? 'Options'}
-			leading={label}
-			variant={variant}
-			size={size}
-			className={className}
-			style={style}
-			{...props}
-		/>
 	)
 }

@@ -24,8 +24,10 @@ import { LoadingSpinner } from './Loaders'
 
    `shape`: wide (full width, 112px tall), cover (full width at the 7:4 cover
    ratio), round (a 96px avatar circle).
-   The file input stays with the caller (or use FileButton for a plain
-   button); these tiles are the visible control that opens it.
+   The hidden file input stays with the caller, one per flow: the tile, a
+   Replace button and a menu item often open the same picker, and a menu
+   item unmounts before its input reports the pick. These tiles are the
+   visible control that opens it; a lone plain button is FileButton.
 ---------------------------------------------------------------------------- */
 
 const SHAPE = {

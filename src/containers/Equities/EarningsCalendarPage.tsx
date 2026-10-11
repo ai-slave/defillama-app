@@ -11,8 +11,8 @@ import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
@@ -483,16 +483,13 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 						</Button>
 					</div>
 					<form noValidate onSubmit={submitSearch} className="flex w-full min-w-0 gap-1.5 sm:w-auto">
-						<label className="relative min-w-0 flex-1 sm:w-[280px]">
-							<span className="sr-only">Search ticker or company</span>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								value={searchQuery}
-								onChange={(event) => setSearchQuery(event.target.value)}
-								placeholder="Search ticker or company"
-								className={searchFieldInputPlacementStyles}
-							/>
-						</label>
+						<SearchField
+							label="Search ticker or company"
+							value={searchQuery}
+							onChange={setSearchQuery}
+							placeholder="Search ticker or company"
+							className="min-w-0 flex-1 sm:w-[280px]"
+						/>
 						<Button type="submit" variant="secondary" size="md" disabled={!companies}>
 							Search
 						</Button>

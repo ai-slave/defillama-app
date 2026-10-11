@@ -18,7 +18,7 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { SegmentedControl, TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import {
@@ -259,22 +259,22 @@ export function CategoryPerformanceContainer({
 						/>
 					}
 				>
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						ariaLabel="Period"
-						values={PERIODS}
-						selectedValue={groupBy}
-						setValue={(val) => setGroupBy(val)}
+						label="Period"
+						options={PERIODS.map((value) => ({ value, label: value }))}
+						value={groupBy}
+						onValueChange={(val) => setGroupBy(val)}
 					/>
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						values={DENOMS}
-						selectedValue={groupByDenom}
-						setValue={(val) => setGroupByDenom(val)}
-						label="Denom (vs):"
-						disabledValues={disabledDenoms}
+						options={DENOMS.map((value) => ({ value, label: value, disabled: disabledDenoms.includes(value) }))}
+						value={groupByDenom}
+						onValueChange={(val) => setGroupByDenom(val)}
+						label="Denom (vs)"
+						leading="Denom (vs):"
 					/>
 					{availableSeries.length > 1 ? (
 						<SelectWithCombobox

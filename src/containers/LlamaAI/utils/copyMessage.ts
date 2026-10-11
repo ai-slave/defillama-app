@@ -1,3 +1,4 @@
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
 	describeFigure,
 	findCitedCell,
@@ -24,10 +25,6 @@ export interface CopyMessageSource {
 	fetchText: (url: string) => Promise<string>
 	captureChart?: (chartId: string) => Promise<string | null>
 	citations?: Array<UnifiedCitationReference>
-}
-
-function escapeHtml(value: string): string {
-	return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 }
 
 /**

@@ -13,13 +13,8 @@ import * as React from 'react'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { TablePager } from '~/components/Table/TablePager'
 import { useTableSearch } from '~/components/Table/utils'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -92,7 +87,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 		autoResetPageIndex: true
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	if (queryReadFailed(stablecoinsQuery)) {
 		return (
@@ -142,16 +137,13 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search stablecoins"
-								placeholder="Search stablecoins…"
-								onInput={(e) => setProjectName(e.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search stablecoins"
+							value={projectName}
+							onChange={setProjectName}
+							placeholder="Search stablecoins…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

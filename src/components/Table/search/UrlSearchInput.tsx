@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 
 /**
- * The search field of a table whose search lives in the URL. Uncontrolled so typing stays instant; the URL
- * (and the fetch) update after a debounce, or at once on Enter.
+ * The search field of a table whose search lives in the URL. Typing shows at once; the URL (and the fetch) update
+ * after a debounce, or at once on Enter.
  */
 export function UrlSearchInput({
 	search,
@@ -19,22 +19,22 @@ export function UrlSearchInput({
 	label: string
 	placeholder: string
 }) {
-	const inputRef = useRef<HTMLInputElement>(null)
-	// The search this field last sent. The URL catches up a render or more later, so a search equal to it is
-	// the field's own echo; any other search came from outside (back navigation, a removed pill).
-	const sentRef = useRef(search)
+	// `sent` is the search this field last sent; `search` is the URL's search at the last render. The URL catches up
+	// a render or more later, so a new search equal to `sent` is the field's own echo and keeps the text; any other
+	// search came from outside (back navigation, a removed pill) and replaces it.
+	const [field, setField] = useState({ text: search, sent: search, search })
+	if (search !== field.search) {
+		setField({ text: search === field.sent ? field.text : search, sent: search, search })
+	}
 	const send = (value: string) => {
-		sentRef.current = value
+		setField((current) => ({ ...current, sent: value }))
 		updateSearch(value)
 	}
-	const debouncedSend = useDebouncedCallback(send, 300)
-
-	useEffect(() => {
-		if (search === sentRef.current) return
-		sentRef.current = search
-		debouncedSend.cancel()
-		if (inputRef.current) inputRef.current.value = search
-	}, [search, debouncedSend])
+	// Reads the text when the timer fires, so an outside search that replaced it meanwhile drops the pending typing.
+	const debouncedSend = useDebouncedCallback(() => {
+		const value = field.text.trim()
+		if (value !== field.sent) send(value)
+	}, 300)
 
 	return (
 		<form
@@ -42,22 +42,21 @@ export function UrlSearchInput({
 			onSubmit={(event) => {
 				event.preventDefault()
 				debouncedSend.cancel()
-				send(inputRef.current?.value.trim() ?? '')
+				send(field.text.trim())
 			}}
 			className={searchFieldWrapperStyles}
 		>
-			<label className="relative block min-w-0">
-				<span className="sr-only">{label}</span>
-				<Icon name="search" className={searchFieldIconStyles} />
-				<Input
-					ref={inputRef}
-					name="search"
-					defaultValue={search}
-					onInput={(event) => debouncedSend(event.currentTarget.value.trim())}
-					placeholder={placeholder}
-					className={searchFieldInputPlacementStyles}
-				/>
-			</label>
+			<SearchField
+				label={label}
+				name="search"
+				value={field.text}
+				onChange={(text) => {
+					setField((current) => ({ ...current, text }))
+					// The × and the last deleted letter wait out the debounce too, so retyping a search is one URL change.
+					debouncedSend()
+				}}
+				placeholder={placeholder}
+			/>
 		</form>
 	)
 }

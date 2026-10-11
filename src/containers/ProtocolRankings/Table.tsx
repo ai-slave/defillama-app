@@ -38,16 +38,12 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SearchField } from '~/ui/SearchField'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -539,29 +535,25 @@ function ChainProtocolsTableInner({
 	}
 	const primaryToolbarControls = (
 		<>
-			<label className={searchFieldInlineWrapperStyles}>
-				<span className="sr-only">Search protocols by name</span>
-				<Icon name="search" className={searchFieldIconStyles} />
-				<Input
-					type="search"
-					value={nameSearch}
-					onChange={(event) => {
-						userReplacementPendingRef.current = true
-						setNameSearch(event.currentTarget.value)
-						// Each edit starts a fresh search, which opens its own parents even when the text repeats an earlier one.
-						setSearchExpandedPick(null)
-					}}
-					placeholder="Search protocols…"
-					autoComplete="off"
-					className={searchFieldInputPlacementStyles}
-				/>
-			</label>
-			<TagGroup
+			<SearchField
+				label="Search protocols by name"
+				value={nameSearch}
+				onChange={(value) => {
+					userReplacementPendingRef.current = true
+					setNameSearch(value)
+					// Each edit starts a fresh search, which opens its own parents even when the text repeats an earlier one.
+					setSearchExpandedPick(null)
+				}}
+				placeholder="Search protocols…"
+				autoComplete="off"
+				className={searchFieldInlineWrapperStyles}
+			/>
+			<SegmentedControl
 				variant="default"
-				setValue={setPeriod}
-				selectedValue={selectedPeriod}
-				values={TABLE_PERIODS_VALUES}
-				ariaLabel="Period"
+				onValueChange={setPeriod}
+				value={selectedPeriod}
+				options={TABLE_PERIODS_VALUES.map((value) => ({ value, label: value }))}
+				label="Period"
 				size="md"
 			/>
 
@@ -654,12 +646,12 @@ function ChainProtocolsTableInner({
 	const secondaryToolbarControls = (
 		<div className="flex w-full items-center gap-2">
 			<div className="min-w-0 flex-1">
-				<TagGroup
+				<SegmentedControl
 					variant="chips"
-					setValue={setMetricPreset}
-					selectedValue={selectedMetricPreset}
-					values={tablePresets}
-					ariaLabel="Metric view"
+					onValueChange={setMetricPreset}
+					value={selectedMetricPreset}
+					options={tablePresets.map((value) => ({ value, label: value }))}
+					label="Metric view"
 					size="md"
 				/>
 			</div>

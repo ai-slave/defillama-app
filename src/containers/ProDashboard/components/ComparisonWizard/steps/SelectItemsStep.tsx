@@ -10,7 +10,7 @@ import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl } from '~/utils/icons'
@@ -278,21 +278,18 @@ export function SelectItemsStep() {
 									maxSelections={5}
 								/>
 							</div>
-							<div className="relative">
-								<Icon name="search" className={searchFieldIconStyles} />
-								<Input
-									{...control}
-									ref={searchRef}
-									type="text"
-									onInput={(e) => setSearch(e.currentTarget.value)}
-									// Enter in the search never submits the wizard's step.
-									onKeyDown={(e) => {
-										if (e.key === 'Enter') e.preventDefault()
-									}}
-									placeholder={`Search ${typeLabel.toLowerCase()}…`}
-									className={searchFieldInputPlacementStyles}
-								/>
-							</div>
+							<SearchField
+								{...control}
+								ref={searchRef}
+								label={`Search ${typeLabel.toLowerCase()}`}
+								value={search}
+								onChange={setSearch}
+								// Enter in the search never submits the wizard's step.
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') e.preventDefault()
+								}}
+								placeholder={`Search ${typeLabel.toLowerCase()}…`}
+							/>
 						</div>
 
 						<div ref={listRef} className="h-[280px] overflow-y-auto">

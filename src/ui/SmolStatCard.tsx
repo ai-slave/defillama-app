@@ -62,9 +62,10 @@ export function SmolStatCard({
 			<Watermark className={layout === 'split' ? 'shrink-0 xl:hidden' : 'shrink-0'} />
 		</div>
 	)
-	// min-h-0 drops the parts' 360px panel floor: the grid sets the card's height.
+	// min-h-0 drops the parts' 360px panel floor: the grid sets the card's height. p-0 drops the status inset, since
+	// the card's own padding already keeps the text off its edge.
 	const body = failedRead ? (
-		<SurfaceBodyStatus variant="error" retry={failedRead} className="min-h-0">
+		<SurfaceBodyStatus variant="error" retry={failedRead} className="min-h-0 p-0">
 			Couldn&apos;t load card data.
 		</SurfaceBodyStatus>
 	) : isLoading ? (

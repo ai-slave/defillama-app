@@ -11,8 +11,8 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *
  * 1. loading-text: an element whose text children read "Loading…", "Fetching…", "Searching…" or "Waiting…" (ending
  *    in …, ... or &hellip;, with `{expr}` pieces allowed between), or a string literal rendered as its child. Use
- *    LoadingIndicator, ListLoading, ChartPanelBodyLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus
- *    (ChartPanelBodyFallback is only the box). Text under `sr-only`, a busy button's label (BUTTON_LIKE) and attribute
+ *    LoadingIndicator, ListLoading, ChartPanelBodyLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus.
+ *    Text under `sr-only`, a busy button's label (BUTTON_LIKE) and attribute
  *    values (pendingLabel, aria-label, label) are not checked.
  * 2. loading-dots: `<LoadingDots>`. Use LoadingIndicator; a busy button label (inside BUTTON_LIKE) may keep the dots.
  * 3. lone-spinner: a `justify-center` element whose only child is a LoadingSpinner, or a `flex-col items-center`
@@ -41,14 +41,10 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    screen. Use `httpErrorMessage(error, "Couldn't …")`, which keeps an API's 4xx reason, or narrow to the typed
  *    error whose message is written for readers. A `.message` read from an inferred `Error` (a mutation's error) has
  *    no shape to refuse here; the doc's rule covers it.
- * 10. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBodyFallback or a div
- *    with no children. A fallback is a loading state: render the part for its surface with a label naming what loads
+ * 10. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBody or a div with no
+ *    children. A fallback is a loading state: render the part for its surface with a label naming what loads
  *    (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, or
  *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
- * 11. hand-built-chart-loading: a ChartPanelBodyFallback whose only child is a LoadingIndicator. That is
- *    ChartPanelBodyLoading, which also announces it.
- * 12. hand-built-chart-note: anything but a loading indicator inside a ChartPanelBodyFallback. A chart with nothing to plot is
- *    ChartPanelBodyEmpty, which announces it in the shared look; the bare box is only for sizing.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
  * matches fails, so the list never outlives the code it excuses.
@@ -62,8 +58,6 @@ type RuleId =
 	| 'loading-dots'
 	| 'lone-spinner'
 	| 'blank-fallback'
-	| 'hand-built-chart-loading'
-	| 'hand-built-chart-note'
 	| 'error-box'
 	| 'alert-line'
 	| 'retry-gating'
@@ -80,9 +74,6 @@ const MESSAGES: Record<RuleId, string> = {
 		'draws a region loading state from a lone LoadingSpinner; use PanelLoadingStatus, SurfaceBodyLoadingStatus, ListLoading, ChartPanelBodyLoading or LoadingIndicator',
 	'blank-fallback':
 		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, ProCardLoading)',
-	'hand-built-chart-loading': 'wraps a LoadingIndicator in ChartPanelBodyFallback; use ChartPanelBodyLoading',
-	'hand-built-chart-note':
-		'puts a note inside ChartPanelBodyFallback; use ChartPanelBodyEmpty, or ChartPanelBodyError for a failure',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
@@ -124,11 +115,6 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 			'the reorder list opens on a tap and its chunk lands within a frame; a loading line in the menu would only flash',
 		'src/containers/ProDashboard/components/MetricCard.tsx':
 			'the sparkline under a metric that is already on screen; a loading line there reads as the metric still loading'
-	},
-	'hand-built-chart-loading': {},
-	'hand-built-chart-note': {
-		'src/containers/LlamaAI/components/charts/ChartRenderer.tsx':
-			"a chart that failed to draw shows the error notice box, like the chat's other failures"
 	},
 	'error-box': {
 		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-coloured on purpose',
@@ -339,9 +325,9 @@ function isMeaningful(child: ts.JsxChild): boolean {
 	return true
 }
 
-const BLANK_BOX_TAGS = new Set(['ChartPanelBodyFallback', 'div'])
+const BLANK_BOX_TAGS = new Set(['ChartPanelBody', 'div'])
 
-/** A ChartPanelBodyFallback or div that draws nothing inside. */
+/** A ChartPanelBody or div that draws nothing inside. */
 function isBlankBox(node: ts.Expression): boolean {
 	const expression = unwrap(node)
 	if (ts.isJsxSelfClosingElement(expression)) return BLANK_BOX_TAGS.has(tagName(expression))
@@ -706,19 +692,6 @@ export function scanSource(
 			if (actionRetry) report('hand-placed-retry', actionRetry)
 
 			if (nextErrorName && tag === nextErrorName && attribute(opening, 'statusCode')) report('next-error', opening)
-
-			if (tag === 'ChartPanelBodyFallback' && ts.isJsxElement(node)) {
-				const children = node.children.filter(isMeaningful)
-				if (
-					children.length === 1 &&
-					ts.isJsxSelfClosingElement(children[0]) &&
-					tagName(children[0]) === 'LoadingIndicator'
-				) {
-					report('hand-built-chart-loading', opening)
-				} else if (children.length > 0) {
-					report('hand-built-chart-note', opening)
-				}
-			}
 
 			if (ts.isJsxElement(node) && !BUTTON_LIKE.has(tag)) {
 				const children = node.children.filter(isMeaningful)
@@ -1176,7 +1149,7 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'blank chart body as a Suspense fallback',
 			source:
-				'export const F = () => <Suspense fallback={<ChartPanelBodyFallback className="min-h-[600px]" />}><Chart /></Suspense>',
+				'export const F = () => <Suspense fallback={<ChartPanelBody className="min-h-[600px]" />}><Chart /></Suspense>',
 			rule: 'blank-fallback'
 		},
 		{
@@ -1207,30 +1180,6 @@ if (process.argv.includes('--self-test')) {
 			name: "another component's fallback prop",
 			source: 'export const F = () => <ErrorBoundary fallback={<div />}><Chart /></ErrorBoundary>',
 			rule: null
-		},
-		{
-			name: 'LoadingIndicator in a chart body box',
-			source:
-				'export const F = () => <ChartPanelBodyFallback role="status" aria-live="polite"><LoadingIndicator /></ChartPanelBodyFallback>',
-			rule: 'hand-built-chart-loading'
-		},
-		{
-			name: 'note in a chart body box',
-			source:
-				'export const F = () => <ChartPanelBodyFallback className="body-sm text-tertiary">No data</ChartPanelBodyFallback>',
-			rule: 'hand-built-chart-note'
-		},
-		{
-			name: 'computed note in a chart body box',
-			source:
-				"export const F = () => <ChartPanelBodyFallback role=\"status\">{empty ? 'Pick metrics to plot' : 'No data'}</ChartPanelBodyFallback>",
-			rule: 'hand-built-chart-note'
-		},
-		{
-			name: 'paragraph note in a chart body box',
-			source:
-				'export const F = () => <ChartPanelBodyFallback><p className="body-sm text-tertiary">No data</p></ChartPanelBodyFallback>',
-			rule: 'hand-built-chart-note'
 		},
 		{
 			name: 'empty note through the part',

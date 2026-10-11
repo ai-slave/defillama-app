@@ -21,7 +21,7 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
@@ -151,6 +151,10 @@ const formatUnlockLabel = (label: string) =>
 
 const DATA_TYPES = ['documented', 'realtime'] as const
 type DataType = (typeof DATA_TYPES)[number]
+const DATA_TYPE_OPTIONS = [
+	{ value: 'documented', label: 'Documented' },
+	{ value: 'realtime', label: 'Realtime' }
+] as const
 
 const TIME_GROUPINGS = ['D', 'W', 'M', 'Q', 'Y'] as const
 type TimeGrouping = (typeof TIME_GROUPINGS)[number]
@@ -919,14 +923,15 @@ function ChartContainer({
 			)}
 
 			{data.chartData.realtime.length > 0 ? (
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={dataType}
-					setValue={(period) => {
+					value={dataType}
+					onValueChange={(period) => {
 						void setQueryParam('dataType', period === 'documented' ? undefined : period)
 					}}
-					values={DATA_TYPES}
+					options={DATA_TYPE_OPTIONS}
+					label="Data type"
 					className="ml-auto"
 				/>
 			) : null}
@@ -984,15 +989,15 @@ function ChartContainer({
 									/>
 								</>
 							) : null}
-							<TagGroup
+							<SegmentedControl
 								variant="default"
 								size="md"
-								selectedValue={timeGrouping}
-								setValue={(v) => {
+								value={timeGrouping}
+								onValueChange={(v) => {
 									void setQueryParam('groupBy', v === 'D' ? undefined : v)
 								}}
-								values={TIME_GROUPINGS}
-								className="min-h-8"
+								options={TIME_GROUPINGS.map((value) => ({ value, label: value }))}
+								label="Time grouping"
 							/>
 							{availableCategories.length > 1 ? (
 								<SelectWithCombobox

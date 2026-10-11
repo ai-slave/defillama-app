@@ -1,7 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
-import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 
 /* ----------------------------------------------------------------------------
@@ -100,44 +98,28 @@ const metricSummaryStyles =
 	'flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold'
 
 export function MetricSection({ label, tooltip, value, extra, children, defaultOpen = false }: MetricSectionProps) {
-	const summaryContent = (
-		<>
-			<span
-				className={`body-md text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}
-				data-metric-label
-			>
-				{label}
-			</span>
-			<Icon
-				name="chevron-down"
-				className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
-			/>
-			{extra}
-			{value != null ? (
-				<span className="ml-auto mono-md-bold" data-metric-value>
-					{value}
-				</span>
-			) : null}
-		</>
-	)
-
 	return (
 		<details className="group/metric" open={defaultOpen}>
-			{tooltip ? (
-				/* A <summary> must not contain interactive descendants, so the
-				   summary itself is the tooltip anchor — hover or focus on the
-				   row shows the definition; click still toggles the accordion. */
-				<Ariakit.TooltipProvider placement="top-start">
-					<Ariakit.TooltipAnchor render={<summary className={metricSummaryStyles} />}>
-						{summaryContent}
-					</Ariakit.TooltipAnchor>
-					<Ariakit.Tooltip className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap`} unmountOnHide portal>
-						<div className="p-2">{tooltip}</div>
-					</Ariakit.Tooltip>
-				</Ariakit.TooltipProvider>
-			) : (
-				<summary className={metricSummaryStyles}>{summaryContent}</summary>
-			)}
+			{/* A <summary> must not contain interactive descendants, so the summary itself is the tooltip anchor: hover
+			    or focus on the row shows the definition, and a click or tap still toggles the accordion. */}
+			<Tooltip content={tooltip} render={<summary className={metricSummaryStyles} />}>
+				<span
+					className={`body-md text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}
+					data-metric-label
+				>
+					{label}
+				</span>
+				<Icon
+					name="chevron-down"
+					className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
+				/>
+				{extra}
+				{value != null ? (
+					<span className="ml-auto mono-md-bold" data-metric-value>
+						{value}
+					</span>
+				) : null}
+			</Tooltip>
 			{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
 		</details>
 	)

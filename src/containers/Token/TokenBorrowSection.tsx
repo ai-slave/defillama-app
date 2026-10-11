@@ -356,7 +356,7 @@ export function TokenBorrowSection({
 					) : showRetry && rows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center">{retryStatus}</div>
 					) : rows.length === 0 ? (
-						<SurfaceBodyStatus variant="empty" className="px-4">
+						<SurfaceBodyStatus variant="empty">
 							{activeTab === 'use'
 								? `No borrow routes found using ${tokenSymbol} as collateral.`
 								: `No routes found to borrow ${tokenSymbol} with supported collateral.`}

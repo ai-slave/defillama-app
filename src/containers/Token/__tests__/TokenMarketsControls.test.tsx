@@ -156,7 +156,7 @@ test('arrow keys move through market filters without losing focus while the tabl
 	expect(all.name).not.toBe(spot.name)
 
 	await act(async () => {
-		search()!.value = 'binance'
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search()!, 'binance')
 		search()!.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 	await press(spot, 'ArrowRight')

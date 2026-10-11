@@ -24,13 +24,9 @@ import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { Input, searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -839,16 +835,13 @@ function TransactionsTable({
 					{truncated ? <span className="ml-2 text-warning">· newest loaded rows</span> : null}
 				</h2>
 				<TableToolbarControlGroup>
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search transactions</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							value={globalFilter}
-							onChange={(e) => setGlobalFilter(e.target.value)}
-							placeholder="Search hash, address, token, chain…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search transactions"
+						value={globalFilter}
+						onChange={setGlobalFilter}
+						placeholder="Search hash, address, token, chain…"
+						className={searchFieldInlineWrapperStyles}
+					/>
 					<span className="body-sm whitespace-nowrap text-secondary">
 						{filteredCount === data.length
 							? `${formatCompactNumber(filteredCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} rows`

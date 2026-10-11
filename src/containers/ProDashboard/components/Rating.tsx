@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -53,14 +54,16 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 	const handleSkip = () => submission.mutate({ skipped: true })
 
 	return (
-		<form
+		<Card
 			ref={(node) => {
 				formRef.current = node
 				return focusPageOnLeave(node)
 			}}
 			noValidate
 			onSubmit={handleSubmit}
-			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-subtle bg-surface p-4"
+			as="form"
+			padding="md"
+			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6"
 		>
 			<div className="flex flex-wrap items-center gap-4">
 				<h3 className="heading-xs">
@@ -147,7 +150,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				{submission.isPending ? (skipping ? 'Dismissing rating' : 'Saving rating') : ''}
 			</span>
 			{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
-		</form>
+		</Card>
 	)
 }
 

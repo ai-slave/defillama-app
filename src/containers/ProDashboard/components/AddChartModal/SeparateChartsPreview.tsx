@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { Card } from '~/ui/Card'
 import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
 import type { ChartRuntimeView } from '../../chartRuntime'
@@ -42,7 +43,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 						stackSeries: false
 					})
 					return (
-						<div key={item.id} className="flex flex-col gap-1 rounded-md border border-subtle bg-surface p-2">
+						<Card key={item.id} padding="sm" className="flex flex-col gap-1">
 							<span className="truncate body-sm text-secondary">{series.name}</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
@@ -67,7 +68,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 									<ChartPanelBodyEmpty className="size-full min-h-0">No data.</ChartPanelBodyEmpty>
 								)}
 							</div>
-						</div>
+						</Card>
 					)
 				})}
 			</div>

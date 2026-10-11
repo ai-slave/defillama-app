@@ -6,7 +6,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } fr
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
 import { useTeam } from './useTeam'
@@ -47,25 +47,23 @@ export function InviteMemberModal({ onClose }: { onClose: () => void }) {
 					</p>
 					<Field label="Email address" error={submitted ? emailMessage : null}>
 						{(control) => (
-							<div className="relative">
-								<Icon name="mail" className={searchFieldIconStyles} />
-								{/* Ariakit's autoFocus, so the dialog starts on the field instead of its first button, the ×. */}
-								<Ariakit.Focusable
-									autoFocus
-									render={
-										<Input
-											{...control}
-											type="email"
-											required
-											readOnly={pending}
-											value={email}
-											onChange={(e) => setEmail(e.target.value)}
-											placeholder="colleague@example.com"
-											className="w-full pl-8"
-										/>
-									}
-								/>
-							</div>
+							// Ariakit's autoFocus, so the dialog starts on the field instead of its first button, the ×.
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										{...control}
+										prefix={<Icon name="mail" className="size-4" aria-hidden="true" />}
+										type="email"
+										required
+										readOnly={pending}
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										placeholder="colleague@example.com"
+										className="w-full"
+									/>
+								}
+							/>
 						)}
 					</Field>
 					{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}

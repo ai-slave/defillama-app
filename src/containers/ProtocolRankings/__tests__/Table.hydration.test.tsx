@@ -82,7 +82,7 @@ describe('Protocol Rankings hydration', () => {
 
 	// Types into the search box and lets its debounce fire without waiting in real time.
 	const typeSearch = async (value: string) => {
-		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
+		const search = container.querySelector<HTMLInputElement>('input[aria-label="Search protocols by name"]')
 		if (!search) throw new Error('Expected protocol search input')
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 		try {

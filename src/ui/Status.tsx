@@ -228,29 +228,21 @@ type SurfaceBodyStatusProps = {
 	/** The query whose failure this is, as on PanelStatus. */
 	retry?: QueryRetry
 	className?: string
-	contentClassName?: string
-	textClassName?: string
 }
 
-export function SurfaceBodyStatus({
-	children,
-	variant,
-	retry,
-	className,
-	contentClassName,
-	textClassName
-}: SurfaceBodyStatusProps) {
+export function SurfaceBodyStatus({ children, variant, retry, className }: SurfaceBodyStatusProps) {
 	const role = variant === 'error' ? 'alert' : 'status'
-	const statusTextClassName = textClassName ?? `body-sm ${STATUS_TEXT[variant]}`
 
 	return (
+		// The inset keeps the text off a narrow body's edges, as the chart body parts do (./ChartPanel.tsx); a body
+		// that brings its own padding replaces it.
 		<div
-			className={`flex flex-1 flex-col items-center justify-center gap-2 initial:min-h-[360px] ${className ?? ''}`.trim()}
+			className={`flex flex-1 flex-col items-center justify-center gap-2 initial:min-h-[360px] initial:p-4 ${className ?? ''}`.trim()}
 		>
 			<div
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
-				className={`text-center ${statusTextClassName} ${contentClassName ?? ''}`.trim()}
+				className={`text-center body-sm ${STATUS_TEXT[variant]}`}
 			>
 				{children}
 			</div>

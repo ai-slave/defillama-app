@@ -10,14 +10,9 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { getInvestorsPageData } from '~/containers/Raises/queries'
 import type { IInvestorsPageData, IInvestorTimespan } from '~/containers/Raises/types'
 import Layout from '~/layout'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -170,7 +165,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_investorName, setInvestorName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [investorName, setInvestorName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
 		<Layout
@@ -182,16 +177,14 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search investors…</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							name="search"
-							onInput={(e) => setInvestorName(e.currentTarget.value)}
-							placeholder="Search investors…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search investors"
+						name="search"
+						value={investorName}
+						onChange={setInvestorName}
+						placeholder="Search investors…"
+						className={searchFieldInlineWrapperStyles}
+					/>
 					<SegmentedControl
 						value={selectedPeriod}
 						onValueChange={(value) => {

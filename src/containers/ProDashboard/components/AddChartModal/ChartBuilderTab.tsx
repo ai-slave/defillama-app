@@ -13,6 +13,7 @@ import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/das
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -545,8 +546,9 @@ export function ChartBuilderTab({
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
-				<div
-					className={`w-full space-y-1.5 overflow-y-auto rounded-md border border-subtle bg-surface p-2 max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
+				<Card
+					padding="sm"
+					className={`w-full space-y-1.5 overflow-y-auto max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
 				>
 					<h3 className="title-sm text-primary">Chart configuration</h3>
 
@@ -782,10 +784,11 @@ export function ChartBuilderTab({
 							size="md"
 						/>
 					</div>
-				</div>
+				</Card>
 
-				<div
-					className={`min-h-0 flex-1 flex-col overflow-y-auto rounded-md border border-subtle bg-surface p-3 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
+				<Card
+					padding="base"
+					className={`min-h-0 flex-1 flex-col overflow-y-auto lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
 				>
 					<div className="mb-2 flex shrink-0 items-center justify-between">
 						<h3 className="title-sm text-primary">Preview</h3>
@@ -795,8 +798,9 @@ export function ChartBuilderTab({
 						</div>
 					</div>
 
-					<div
-						className="relative flex flex-1 items-center justify-center rounded-md border border-subtle bg-surface"
+					<Card
+						padding="none"
+						className="relative flex flex-1 items-center justify-center"
 						style={{ minHeight: '450px' }}
 					>
 						{queryReadFailed(preview) ? (
@@ -832,7 +836,7 @@ export function ChartBuilderTab({
 								Select a metric to generate chart (all chains by default).
 							</EmptyState>
 						)}
-					</div>
+					</Card>
 
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
@@ -847,7 +851,7 @@ export function ChartBuilderTab({
 									Reset all
 								</Button>
 							</div>
-							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-subtle bg-surface p-2">
+							<Card padding="sm" className="flex items-center gap-2 overflow-x-auto">
 								{visibleSeries.map((series) => {
 									const activeColor = resolveSeriesColor(series.name, series.color)
 									const hasOverride = !!seriesColors?.[series.name]
@@ -878,7 +882,7 @@ export function ChartBuilderTab({
 										</div>
 									)
 								})}
-							</div>
+							</Card>
 						</div>
 					) : null}
 
@@ -926,7 +930,7 @@ export function ChartBuilderTab({
 							</p>
 						</div>
 					</div>
-				</div>
+				</Card>
 			</div>
 		</div>
 	)

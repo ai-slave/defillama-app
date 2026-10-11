@@ -24,7 +24,7 @@ export function ScopeNote({ children, role }: { children: ReactNode; role?: 'sta
 }
 
 /** "A", "A and B", "A, B and C". */
-export function listPhrase(labels: ReadonlyArray<string>): string {
+function listPhrase(labels: ReadonlyArray<string>): string {
 	if (labels.length === 1) return labels[0]
 	return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
 }
@@ -33,11 +33,6 @@ export function listPhrase(labels: ReadonlyArray<string>): string {
 export function ignoredFiltersPhrase(labels: ReadonlyArray<string>): string {
 	if (labels.length === 1) return `the ${labels[0]} filter`
 	return `the ${listPhrase(labels)} filters`
-}
-
-/** "Couldn't load Stablecoins Mcap and Token Price. The chart shows the other metrics." */
-export function failedDataNote(labels: ReadonlyArray<string>, shows: string): string {
-	return `Couldn't load ${listPhrase(labels)}. ${shows}`
 }
 
 /**
@@ -49,7 +44,7 @@ export function FailedDataNote({ labels, shows }: { labels: ReadonlyArray<string
 	if (labels.length === 0) return null
 	return (
 		<p role="alert" className="px-2 pt-2 body-sm text-error">
-			{failedDataNote(labels, shows)}
+			Couldn&apos;t load {listPhrase(labels)}. {shows}
 		</p>
 	)
 }

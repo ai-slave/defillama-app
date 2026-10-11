@@ -25,6 +25,7 @@ import {
 import { getDashboardEmbedPageProps } from '~/containers/ProDashboard/server/embedPageProps'
 import { dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { EmptyState } from '~/ui/Status'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -135,13 +136,14 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 	const unavailable = unavailableByItemId.get(itemId)
 	return (
 		<ChartWatermarkContext.Provider value="export-only">
-			<div
+			<Card
 				id={dashboardItemElementId(itemId)}
 				data-item-id={itemId}
 				// A card control that leaves while it has focus, such as a retry that succeeds, hands focus to its card.
 				tabIndex={-1}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
-				className="flex flex-1 flex-col rounded-md border border-subtle bg-surface"
+				padding="none"
+				className="flex flex-1 flex-col"
 			>
 				<DashboardCardContext.Provider value={cardContextValue}>
 					<CardHeightScaleContext.Provider value={cardHeightScale}>
@@ -154,7 +156,7 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 						</DashboardCardStreamScope>
 					</CardHeightScaleContext.Provider>
 				</DashboardCardContext.Provider>
-			</div>
+			</Card>
 		</ChartWatermarkContext.Provider>
 	)
 }

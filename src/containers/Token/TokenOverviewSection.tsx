@@ -31,7 +31,7 @@ import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricChip } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
@@ -578,13 +578,13 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					</>
 				}
 			>
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={activeTimeframe}
-					setValue={setActiveTimeframe}
-					values={PRICE_CHART_TIMEFRAMES}
-					ariaLabel="Price history timeframe"
+					value={activeTimeframe}
+					onValueChange={setActiveTimeframe}
+					options={PRICE_CHART_TIMEFRAMES.map((value) => ({ value, label: value }))}
+					label="Price history timeframe"
 				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>

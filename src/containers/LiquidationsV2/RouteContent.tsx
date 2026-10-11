@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthContext } from '~/auth'
 import { httpErrorMessage } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 import { LiquidationsAccessGate, LiquidationsShellError, LiquidationsShellLoader } from './AccessGate'
 import { fetchLiquidationsChainClient, fetchLiquidationsOverviewClient, fetchLiquidationsProtocolClient } from './api'
 import type { LiquidationsChainShell, LiquidationsOverviewShell, LiquidationsProtocolShell } from './api.types'
@@ -27,18 +28,19 @@ export function LiquidationsOverviewRouteContent({ shell }: { shell: Liquidation
 		return <LiquidationsAccessGate protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
 	}
 
-	if (query.isLoading) {
-		return <LiquidationsShellLoader protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
-	}
-
-	if (query.error) {
+	if (queryReadFailed(query)) {
 		return (
 			<LiquidationsShellError
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink="Overview"
-				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data.")}
+				retry={query}
 			/>
 		)
+	}
+
+	if (query.isLoading) {
+		return <LiquidationsShellLoader protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
 	}
 
 	if (!query.data) {
@@ -71,6 +73,19 @@ export function LiquidationsProtocolRouteContent({ shell }: { shell: Liquidation
 		)
 	}
 
+	if (queryReadFailed(query)) {
+		return (
+			<LiquidationsShellError
+				protocolLinks={shell.protocolLinks}
+				activeProtocolLink={shell.protocolName}
+				chainLinks={shell.chainLinks}
+				activeChainLink="All Chains"
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data.")}
+				retry={query}
+			/>
+		)
+	}
+
 	if (query.isLoading) {
 		return (
 			<LiquidationsShellLoader
@@ -78,18 +93,6 @@ export function LiquidationsProtocolRouteContent({ shell }: { shell: Liquidation
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
 				activeChainLink="All Chains"
-			/>
-		)
-	}
-
-	if (query.error) {
-		return (
-			<LiquidationsShellError
-				protocolLinks={shell.protocolLinks}
-				activeProtocolLink={shell.protocolName}
-				chainLinks={shell.chainLinks}
-				activeChainLink="All Chains"
-				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
 			/>
 		)
 	}
@@ -131,6 +134,19 @@ export function LiquidationsChainRouteContent({ shell }: { shell: LiquidationsCh
 		)
 	}
 
+	if (queryReadFailed(query)) {
+		return (
+			<LiquidationsShellError
+				protocolLinks={shell.protocolLinks}
+				activeProtocolLink={shell.protocolName}
+				chainLinks={shell.chainLinks}
+				activeChainLink={shell.chainName}
+				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data.")}
+				retry={query}
+			/>
+		)
+	}
+
 	if (query.isLoading) {
 		return (
 			<LiquidationsShellLoader
@@ -138,18 +154,6 @@ export function LiquidationsChainRouteContent({ shell }: { shell: LiquidationsCh
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
 				activeChainLink={shell.chainName}
-			/>
-		)
-	}
-
-	if (query.error) {
-		return (
-			<LiquidationsShellError
-				protocolLinks={shell.protocolLinks}
-				activeProtocolLink={shell.protocolName}
-				chainLinks={shell.chainLinks}
-				activeChainLink={shell.chainName}
-				errorMessage={httpErrorMessage(query.error, "Couldn't load liquidations data. Try again.")}
 			/>
 		)
 	}

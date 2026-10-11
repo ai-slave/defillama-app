@@ -2,6 +2,7 @@ import * as React from 'react'
 import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { keepFocus } from '~/ui/focus'
 import { Input } from '~/ui/Input'
@@ -74,10 +75,12 @@ export function YieldsFiltersPanel({
 	}
 
 	return (
-		<form
+		<Card
 			noValidate
 			onSubmit={handleApply}
-			className="relative mb-4 rounded-md border border-subtle bg-surface p-4"
+			as="form"
+			padding="md"
+			className="relative mb-4"
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
 		>
 			<div className="mb-3 flex items-center justify-between">
@@ -267,6 +270,6 @@ export function YieldsFiltersPanel({
 					Apply filters
 				</Button>
 			</div>
-		</form>
+		</Card>
 	)
 }

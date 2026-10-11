@@ -5,6 +5,7 @@ import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/co
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
@@ -615,79 +616,56 @@ export function DemoPreview() {
 					Sample charts use illustrative data
 				</p>
 
-				<div
-					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<TextCard text={demoTextCard} />
-				</div>
+				</Card>
 
 				{demoCharts.slice(0, 2).map((chart) => (
-					<div
-						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-					>
+					<Card key={chart.id} padding="none" className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 						<DemoChartCard chart={chart} />
-					</div>
+					</Card>
 				))}
 
-				<div
-					className={`${firstMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${firstMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<DemoMultiChartCard multi={firstMultiChart} />
-				</div>
+				</Card>
 
 				{demoCharts.slice(2, 4).map((chart) => (
-					<div
-						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-					>
+					<Card key={chart.id} padding="none" className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 						<DemoChartCard chart={chart} />
-					</div>
+					</Card>
 				))}
 
-				<div
-					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<TextCard text={demoTextCard2} />
-				</div>
+				</Card>
 
-				<div
-					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<TextCard text={demoTextCard3} />
-				</div>
+				</Card>
 
-				<div
-					className={`${secondMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${secondMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<DemoMultiChartCard multi={secondMultiChart} />
-				</div>
+				</Card>
 
 				{demoCharts.slice(4).map((chart) => (
-					<div
-						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-					>
+					<Card key={chart.id} padding="none" className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 						<DemoChartCard chart={chart} />
-					</div>
+					</Card>
 				))}
 
-				<div
-					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<TextCard text={demoTextCard4} />
-				</div>
+				</Card>
 
-				<div
-					className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-subtle bg-surface`}
-				>
+				<Card padding="none" className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'}`}>
 					<DemoMultiChartCard multi={thirdMultiChart} />
-				</div>
+				</Card>
 			</div>
 
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-2">
 				<p className="p-2 text-center body-sm text-secondary italic">Live data from DefiLlama</p>
-				<div className="rounded-md border border-subtle bg-surface">
+				<Card padding="none">
 					<UnifiedTable
 						config={{
 							id: 'demo-ethereum-protocols',
@@ -698,7 +676,7 @@ export function DemoPreview() {
 							params: { chains: DEMO_CHAINS }
 						}}
 					/>
-				</div>
+				</Card>
 			</div>
 		</div>
 	)

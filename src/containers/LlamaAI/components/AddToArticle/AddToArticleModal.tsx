@@ -22,8 +22,9 @@ import { Dialog, DialogBody, DialogCancelButton, DialogFooter, DialogHeader, use
 import { Field, FieldGroup } from '~/ui/Field'
 import { passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
@@ -290,21 +291,17 @@ function AddToArticleForm({
 					{/* Locked while the export runs, so the article it goes to and its parts cannot change under it. */}
 					<fieldset disabled={isSubmitting} className="contents">
 						<FieldGroup label="Add to a draft" error={submitted ? draftError : null}>
-							<div className="relative">
-								<Icon name="search" aria-hidden="true" className={searchFieldIconStyles} />
-								<Input
-									ref={searchRef}
-									type="text"
-									aria-label="Search drafts"
-									onInput={(e) => setSearch(e.currentTarget.value)}
-									// Enter finishes a search, not the form: it would add to whichever draft is picked, or say none is.
-									onKeyDown={(e) => {
-										if (e.key === 'Enter') e.preventDefault()
-									}}
-									placeholder="Search drafts…"
-									className={searchFieldInputPlacementStyles}
-								/>
-							</div>
+							<SearchField
+								ref={searchRef}
+								label="Search drafts"
+								value={search}
+								onChange={setSearch}
+								// Enter finishes a search, not the form: it would add to whichever draft is picked, or say none is.
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') e.preventDefault()
+								}}
+								placeholder="Search drafts…"
+							/>
 
 							<div className="max-h-56 overflow-y-auto overscroll-contain">
 								{queryReadFailed(drafts) ? (

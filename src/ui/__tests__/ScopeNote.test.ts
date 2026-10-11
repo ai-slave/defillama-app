@@ -1,13 +1,7 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { failedDataNote, ignoredFiltersPhrase, listPhrase } from '../ScopeNote'
-
-describe('listPhrase', () => {
-	test('joins one, two or more names into a sentence fragment', () => {
-		expect(listPhrase(['Ethereum'])).toBe('Ethereum')
-		expect(listPhrase(['Ethereum', 'Solana'])).toBe('Ethereum and Solana')
-		expect(listPhrase(['Ethereum', 'Solana', 'Base'])).toBe('Ethereum, Solana and Base')
-	})
-})
+import { FailedDataNote, ignoredFiltersPhrase } from '../ScopeNote'
 
 describe('ignoredFiltersPhrase', () => {
 	test('names one, two or more ignored filters as a phrase', () => {
@@ -19,13 +13,17 @@ describe('ignoredFiltersPhrase', () => {
 	})
 })
 
-describe('failedDataNote', () => {
+describe('FailedDataNote', () => {
+	// The markup escapes the apostrophe in "Couldn't", so match from the word after it.
+	const note = (labels: Array<string>, shows: string) =>
+		renderToStaticMarkup(createElement(FailedDataNote, { labels, shows }))
+
 	test('names what failed and what the chart still shows', () => {
-		expect(failedDataNote(['Stablecoins Mcap'], 'The chart shows the other metrics.')).toBe(
-			"Couldn't load Stablecoins Mcap. The chart shows the other metrics."
+		expect(note(['Stablecoins Mcap'], 'The chart shows the other metrics.')).toContain(
+			'load Stablecoins Mcap. The chart shows the other metrics.'
 		)
-		expect(failedDataNote(['Staking', 'Pool2'], 'The chart shows TVL without them.')).toBe(
-			"Couldn't load Staking and Pool2. The chart shows TVL without them."
+		expect(note(['Staking', 'Pool2'], 'The chart shows TVL without them.')).toContain(
+			'load Staking and Pool2. The chart shows TVL without them.'
 		)
 	})
 })

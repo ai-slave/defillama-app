@@ -17,7 +17,7 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelExportShellLoading,
 	ChartPanelTitle,
@@ -25,7 +25,7 @@ import {
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -227,14 +227,14 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Button>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar>
-						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
+					<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Cumulative Holdings Over Time</ChartPanelTitle>}>
 						{props.assets.length > 1 ? (
-							<TagGroup
+							<SegmentedControl
 								size="md"
-								selectedValue={selectedAsset}
-								setValue={setSelectedAsset}
-								values={props.assets}
+								value={selectedAsset}
+								onValueChange={setSelectedAsset}
+								options={props.assets.map((value) => ({ value, label: value }))}
+								label="Asset"
 								variant="default"
 							/>
 						) : null}
@@ -257,7 +257,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								onReady={handleChartReady}
 							/>
 						) : (
-							<ChartPanelBodyFallback />
+							<ChartPanelBodyEmpty>No holdings recorded.</ChartPanelBodyEmpty>
 						)}
 					</Suspense>
 				</ChartPanel>

@@ -532,7 +532,7 @@ export function UnifiedTableTab({
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
-								<div className="rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-tertiary">
+								<div className="rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-tertiary">
 									All available data views are shown above.
 								</div>
 							)}

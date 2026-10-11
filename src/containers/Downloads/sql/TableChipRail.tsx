@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -173,7 +174,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 
 function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () => void }) {
 	return (
-		<div className="rounded-md border border-subtle bg-surface px-3 py-2.5">
+		<Card padding="base">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 body-sm">
 					<span className="mono-sm-bold text-primary">{table.name}</span>
@@ -214,7 +215,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 					</li>
 				))}
 			</ul>
-		</div>
+		</Card>
 	)
 }
 
@@ -226,7 +227,7 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
 			<span className="text-primary">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>

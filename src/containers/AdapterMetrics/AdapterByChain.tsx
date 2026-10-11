@@ -37,10 +37,11 @@ import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { SearchField } from '~/ui/SearchField'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -177,7 +178,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		return map
 	}, [sortedRankRows])
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance,
 		// Revenue keeps its column definition order everywhere: the numbers sit next to the name.
@@ -353,15 +354,13 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
 			<Panel>
 				<TableToolbar>
-					<label className={searchFieldWrapperStyles}>
-						<span className="sr-only">Search protocols</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search protocols"
+						value={projectName}
+						onChange={setProjectName}
+						placeholder="Search…"
+						className={searchFieldWrapperStyles}
+					/>
 					<SelectWithCombobox
 						allValues={columnsOptions}
 						selectedValues={selectedColumns}

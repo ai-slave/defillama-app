@@ -24,8 +24,9 @@ import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -98,7 +99,7 @@ export function ChainsByCategoryTable({
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance,
 		columnOrders: chainsTableColumnOrders
@@ -129,15 +130,13 @@ export function ChainsByCategoryTable({
 	const tableContent = (
 		<>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search chains</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search chains"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search…"
+					className={searchFieldWrapperStyles}
+				/>
 
 				{showByGroup ? (
 					<SelectWithCombobox

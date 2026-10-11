@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useRef, useState, type RefObject } from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -33,7 +34,7 @@ function CollapsedExamplesRail({
 	toggleRef: RefObject<HTMLButtonElement | null>
 }) {
 	return (
-		<aside className="flex flex-col items-stretch gap-2 rounded-md border border-subtle bg-surface p-1.5">
+		<Card as="aside" padding="sm" className="flex flex-col items-stretch gap-2">
 			<Tooltip
 				content="Expand playbook"
 				render={
@@ -54,7 +55,7 @@ function CollapsedExamplesRail({
 				</span>
 				<span className="tabular-nums">{EXAMPLE_QUERIES.length}</span>
 			</button>
-		</aside>
+		</Card>
 	)
 }
 
@@ -109,7 +110,7 @@ function ExpandedExamplesPanel({
 	}, [filteredGroups])
 
 	return (
-		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-subtle bg-surface p-3">
+		<Card as="aside" padding="base" className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3">
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
 					<h3 className="title-md tracking-tight text-primary">Playbook</h3>
@@ -198,7 +199,7 @@ function ExpandedExamplesPanel({
 					{totalVisible !== EXAMPLE_QUERIES.length ? ` · ${totalVisible} shown` : ''}
 				</p>
 			</footer>
-		</aside>
+		</Card>
 	)
 }
 

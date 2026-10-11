@@ -51,7 +51,7 @@ import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/util
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -804,11 +804,12 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 }
 
 // Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.
+// The notice box, not ChartPanelBodyError's red line: a chart that failed to draw reads like the chat's other failures.
 function ChartErrorPlaceholder({ message = 'This chart couldn’t be drawn.' }: { message?: string }) {
 	return (
-		<ChartPanelBodyFallback className="px-4">
+		<div className="m-auto flex items-center justify-center px-4 initial:min-h-[360px]">
 			<InlineStatus variant="error">{message}</InlineStatus>
-		</ChartPanelBodyFallback>
+		</div>
 	)
 }
 

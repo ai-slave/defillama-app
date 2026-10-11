@@ -15,7 +15,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button, StableLabel } from '~/ui/Button'
 import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { calendarChartOptions } from './calendarChartOptions'
 import { CalendarDayCell } from './CalendarDayCell'
@@ -239,14 +239,15 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 						Reset
 					</Button>
 				</div>
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={viewMode}
-					setValue={(value) => {
+					value={viewMode}
+					onValueChange={(value) => {
 						setQueryParams({ view: value === 'Month' ? undefined : value })
 					}}
-					values={[...VIEW_MODES]}
+					options={VIEW_MODES.map((value) => ({ value, label: value }))}
+					label="Calendar view"
 					className="ml-auto"
 				/>
 				{protocolSeries.length > 1 ? (

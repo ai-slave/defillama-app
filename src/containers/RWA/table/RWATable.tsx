@@ -9,15 +9,10 @@ import {
 } from '~/components/Table/search/columnSelect'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SearchField } from '~/ui/SearchField'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from '../api.types'
@@ -115,22 +110,20 @@ function RWATableView({
 						<RWATableColumnSetSwitch section={section} value={columnSet} onChange={onColumnSetChange} />
 					</div>
 					<TableToolbarControlGroup>
-						<label className={searchFieldInlineWrapperStyles}>
-							<span className="sr-only">{section === 'perps' ? 'Search markets' : 'Search assets'}</span>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								onInput={(event) => setSearchValue(event.currentTarget.value)}
-								placeholder={section === 'perps' ? 'Search markets…' : 'Search assets…'}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</label>
+						<SearchField
+							label={section === 'perps' ? 'Search markets' : 'Search assets'}
+							value={searchValue}
+							onChange={setSearchValue}
+							placeholder={section === 'perps' ? 'Search markets…' : 'Search assets…'}
+							className={searchFieldInlineWrapperStyles}
+						/>
 						{periodSwitch && onPeriodChange ? (
-							<TagGroup
+							<SegmentedControl
 								variant="default"
-								setValue={onPeriodChange}
-								selectedValue={period}
-								values={RWA_CHANGE_PERIODS}
-								ariaLabel="Change period"
+								onValueChange={onPeriodChange}
+								value={period}
+								options={RWA_CHANGE_PERIODS.map((value) => ({ value, label: value }))}
+								label="Change period"
 								size="md"
 							/>
 						) : null}

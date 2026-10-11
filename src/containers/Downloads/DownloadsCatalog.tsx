@@ -12,9 +12,9 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { EmptyState } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -226,18 +226,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 				<TabPanel value={activeTab} className="flex min-w-0 flex-col gap-6">
 					{activeTab !== 'saved' ? (
-						<label className="relative">
-							<span className="sr-only">Search datasets</span>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								inputMode="search"
-								value={searchValue}
-								placeholder="Search…"
-								onInput={(e) => setSearchValue(e.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</label>
+						<SearchField label="Search datasets" value={searchValue} onChange={setSearchValue} placeholder="Search…" />
 					) : null}
 
 					{activeTab !== 'saved' ? (

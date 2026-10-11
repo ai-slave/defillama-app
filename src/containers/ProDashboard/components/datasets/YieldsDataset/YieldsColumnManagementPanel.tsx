@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, YIELDS_IDENTITY_COLUMN_ID, type YieldColumnId } from './columns'
 
@@ -70,7 +71,7 @@ function ColumnButton(props: ColumnButtonProps) {
 	const index = visibleColumns.indexOf(columnKey)
 
 	return isActive ? (
-		<div data-row className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2">
+		<Card data-row padding="sm" className="flex w-full items-center justify-between">
 			<div className="flex items-center gap-2">
 				<Icon name="check" className="size-3.5 text-success" />
 				<span className="body-sm text-primary">{metadata.name}</span>
@@ -135,7 +136,7 @@ function ColumnButton(props: ColumnButtonProps) {
 					</Tooltip>
 				)}
 			</div>
-		</div>
+		</Card>
 	) : (
 		<Tooltip
 			content={metadata.description}
@@ -187,7 +188,7 @@ export function YieldsColumnManagementPanel({
 	const visibleCount = YIELDS_COLUMN_IDS.filter((key) => currentColumns[key]).length
 
 	return (
-		<div className="relative mb-4 rounded-md border border-subtle bg-surface p-4">
+		<Card padding="md" className="relative mb-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h4 className="label-md text-primary">Customize columns</h4>
 				<Tooltip
@@ -210,18 +211,14 @@ export function YieldsColumnManagementPanel({
 					<Icon name="x" className="size-4" />
 				</Tooltip>
 			</div>
-			<div className="relative mb-3">
-				<Icon name="search" className={searchFieldIconStyles} />
-				<Input
-					ref={searchRef}
-					type="text"
-					aria-label="Search columns"
-					placeholder="Search columns…"
-					value={searchTerm}
-					onChange={(event) => setSearchTerm(event.currentTarget.value)}
-					className={searchFieldInputPlacementStyles}
-				/>
-			</div>
+			<SearchField
+				ref={searchRef}
+				label="Search columns"
+				value={searchTerm}
+				onChange={setSearchTerm}
+				placeholder="Search columns…"
+				className="mb-3"
+			/>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<div>
 					<p className="mb-2 label-sm text-secondary">Active columns ({visibleCount})</p>
@@ -271,6 +268,6 @@ export function YieldsColumnManagementPanel({
 					</div>
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }

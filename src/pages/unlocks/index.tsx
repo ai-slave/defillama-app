@@ -48,7 +48,7 @@ import { ChartPanel, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/Chart
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { ScopeNote } from '~/ui/ScopeNote'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -205,16 +205,17 @@ function UpcomingUnlockVolumeChart({
 					options={DWM_GROUPING_OPTIONS_LOWERCASE}
 				/>
 				<div className="flex items-center gap-1">
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						selectedValue={viewMode}
-						setValue={(value) => {
+						value={viewMode}
+						onValueChange={(value) => {
 							void pushShallowQuery(router, {
 								[UPCOMING_UNLOCK_CHART_QUERY_KEYS.viewMode]: getUpcomingUnlockViewModeQueryValue(value)
 							})
 						}}
-						values={UPCOMING_UNLOCK_VIEW_MODES}
+						options={UPCOMING_UNLOCK_VIEW_MODES.map((value) => ({ value, label: value }))}
+						label="Chart view"
 					/>
 					<Tooltip
 						content="Total View aggregates the selected unlock type across all protocols. Breakdown View stacks the same value by protocol."

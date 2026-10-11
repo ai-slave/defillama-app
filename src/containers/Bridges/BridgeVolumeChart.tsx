@@ -8,7 +8,7 @@ import {
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { BridgeVolumePoint } from './api.types'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
@@ -61,19 +61,21 @@ export function BridgeVolumeChart({
 					options={DWM_GROUPING_OPTIONS_LOWERCASE}
 					className={headerStart ? undefined : 'mr-auto'}
 				/>
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={viewType}
-					setValue={(newViewType) => startTransition(() => setViewType(newViewType))}
-					values={BRIDGE_VOLUME_VIEW_TYPES}
+					value={viewType}
+					onValueChange={(newViewType) => startTransition(() => setViewType(newViewType))}
+					options={BRIDGE_VOLUME_VIEW_TYPES.map((value) => ({ value, label: value }))}
+					label="Chart view"
 				/>
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={metricType}
-					setValue={(newMetricType) => startTransition(() => setMetricType(newMetricType))}
-					values={BRIDGE_VOLUME_METRIC_TYPES}
+					value={metricType}
+					onValueChange={(newMetricType) => startTransition(() => setMetricType(newMetricType))}
+					options={BRIDGE_VOLUME_METRIC_TYPES.map((value) => ({ value, label: value }))}
+					label="Metric"
 				/>
 				{headerEnd}
 			</ChartPanelToolbar>

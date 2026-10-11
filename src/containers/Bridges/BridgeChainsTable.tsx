@@ -15,14 +15,9 @@ import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/componen
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeChainTableRow } from './utils'
@@ -167,7 +162,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	useSortColumnOrders({
 		instance,
@@ -178,16 +173,14 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 		<Panel>
 			<PanelHeader>
 				<PanelTitle as="h1">Chains</PanelTitle>
-				<label className={searchFieldInlineWrapperStyles}>
-					<span className="sr-only">Search…</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search chains"
+					name="search"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search…"
+					className={searchFieldInlineWrapperStyles}
+				/>
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol size="md" />
 			</PanelHeader>
 			<VirtualTable table={instance} />

@@ -4,8 +4,10 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Panel } from '~/ui/Panel'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus, type StatusVariant } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import type { QueryRetry } from '~/utils/query'
 import type { NavLink } from './api.types'
 
 interface LiquidationsShellChromeProps {
@@ -16,9 +18,8 @@ interface LiquidationsShellChromeProps {
 }
 
 interface LiquidationsShellCardProps extends LiquidationsShellChromeProps {
-	children?: React.ReactNode
-	statusVariant?: StatusVariant
-	textClassName?: string
+	/** The panel body: a loading, error or gate state. */
+	children: React.ReactNode
 }
 
 function LiquidationsShellChrome({
@@ -52,9 +53,7 @@ function LiquidationsShellCard({
 	protocolLinks,
 	chainLinks,
 	activeProtocolLink,
-	activeChainLink,
-	statusVariant = 'empty',
-	textClassName = 'body-md text-secondary'
+	activeChainLink
 }: LiquidationsShellCardProps) {
 	return (
 		<>
@@ -65,35 +64,29 @@ function LiquidationsShellCard({
 				{...(activeChainLink ? { activeChainLink } : {})}
 			/>
 
-			<Panel className="w-full flex-1">
-				{statusVariant === 'loading' ? (
-					<SurfaceBodyLoadingStatus className="min-h-[380px]" />
-				) : (
-					<SurfaceBodyStatus
-						variant={statusVariant}
-						className="min-h-[380px]"
-						contentClassName="flex max-w-xl flex-col items-center gap-3 px-6 py-8"
-						textClassName={textClassName}
-					>
-						{children}
-					</SurfaceBodyStatus>
-				)}
-			</Panel>
+			<Panel className="min-h-[380px] w-full flex-1">{children}</Panel>
 		</>
 	)
 }
 
 export function LiquidationsShellLoader(props: LiquidationsShellChromeProps) {
-	return <LiquidationsShellCard {...props} statusVariant="loading" />
+	return (
+		<LiquidationsShellCard {...props}>
+			<SurfaceBodyLoadingStatus />
+		</LiquidationsShellCard>
+	)
 }
 
 export function LiquidationsShellError({
 	errorMessage,
+	retry,
 	...props
-}: LiquidationsShellChromeProps & { errorMessage: string }) {
+}: LiquidationsShellChromeProps & { errorMessage: string; retry: QueryRetry }) {
 	return (
-		<LiquidationsShellCard {...props} statusVariant="error" textClassName="body-sm text-error">
-			{errorMessage}
+		<LiquidationsShellCard {...props}>
+			<SurfaceBodyStatus variant="error" retry={retry}>
+				{errorMessage}
+			</SurfaceBodyStatus>
 		</LiquidationsShellCard>
 	)
 }
@@ -110,23 +103,29 @@ export function LiquidationsAccessGate(props: LiquidationsShellChromeProps) {
 				<LiquidationsShellLoader {...props} />
 			) : (
 				<LiquidationsShellCard {...props}>
-					{!isAuthenticated ? (
-						<p className="body-md text-secondary">
-							An{' '}
-							<button type="button" onClick={signInDialogStore.show} className="underline">
-								active subscription
-							</button>{' '}
-							is required to view liquidations data.
-						</p>
-					) : (
-						<p className="body-md text-secondary">
-							An{' '}
-							<BasicLink href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`} className="underline">
-								active subscription
-							</BasicLink>{' '}
-							is required to view liquidations data.
-						</p>
-					)}
+					<EmptyState
+						size="md"
+						icon="lock"
+						title="Liquidations need a subscription"
+						actions={
+							isAuthenticated ? (
+								<Button
+									as={BasicLink}
+									href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
+									variant="primary"
+									size="sm"
+								>
+									Subscribe
+								</Button>
+							) : (
+								<Button type="button" variant="primary" size="sm" onClick={signInDialogStore.show}>
+									Sign in
+								</Button>
+							)
+						}
+					>
+						See positions, prices and liquidation levels by protocol and chain.
+					</EmptyState>
 				</LiquidationsShellCard>
 			)}
 

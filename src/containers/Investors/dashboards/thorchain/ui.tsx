@@ -9,8 +9,14 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { SurfaceBodyStatus } from '~/ui/Status'
+import {
+	CHART_FILL,
+	ChartPanel,
+	ChartPanelBodyEmpty,
+	ChartPanelBodyLoading,
+	ChartPanelTitle,
+	ChartPanelToolbar
+} from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -246,10 +252,10 @@ export function PlaceholderCard({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<ChartPanelTitle subtitle={subtitle}>{title}</ChartPanelTitle>} />
-			<SurfaceBodyStatus variant="empty" contentClassName="flex flex-col items-center gap-2">
-				Awaiting data
+			<ChartPanelBodyEmpty className="flex-col gap-2">
+				<span>Awaiting data</span>
 				{note ? <code className="rounded-sm bg-page px-2 py-0.5 mono-sm">{note}</code> : null}
-			</SurfaceBodyStatus>
+			</ChartPanelBodyEmpty>
 		</ChartPanel>
 	)
 }

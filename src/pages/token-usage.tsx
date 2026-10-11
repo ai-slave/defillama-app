@@ -35,9 +35,10 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
+import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { ErrorLine, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { EmptyState, ErrorLine, PanelLoadingStatus, PanelStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -156,24 +157,26 @@ export default function Tokens() {
 					No token selected
 				</PanelStatus>
 			) : !isAuthenticated || !hasActiveSubscription ? (
-				<PanelStatus variant="empty" className="min-h-[380px]">
-					{!isAuthenticated ? (
-						<>
-							An active subscription is required to view token usage.{' '}
-							<button type="button" onClick={signInDialogStore.show} className="underline">
-								Sign in
-							</button>
-						</>
-					) : (
-						<>
-							An{' '}
-							<BasicLink href="/subscription" className="underline">
-								active subscription
-							</BasicLink>{' '}
-							is required to view token usage.
-						</>
-					)}
-				</PanelStatus>
+				<Panel className="min-h-[380px] flex-1">
+					<EmptyState
+						size="md"
+						icon="lock"
+						title="Token usage needs a subscription"
+						actions={
+							isAuthenticated ? (
+								<Button as={BasicLink} href="/subscription" variant="primary" size="sm">
+									Subscribe
+								</Button>
+							) : (
+								<Button type="button" variant="primary" size="sm" onClick={signInDialogStore.show}>
+									Sign in
+								</Button>
+							)
+						}
+					>
+						See which protocols and exchanges hold a token, and how much.
+					</EmptyState>
+				</Panel>
 			) : !protocols || protocols.length === 0 ? (
 				<PanelStatus variant="empty" className="min-h-[380px]">
 					No protocols found

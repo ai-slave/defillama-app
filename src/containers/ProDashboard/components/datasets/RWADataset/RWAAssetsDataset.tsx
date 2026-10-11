@@ -21,13 +21,8 @@ import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQ
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -168,7 +163,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 		onPaginationChange: setPagination,
 		autoResetPageIndex: true
 	})
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	if (queryReadFailed(assetsQuery)) {
 		return (
@@ -209,16 +204,13 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search assets"
-								placeholder="Search assets…"
-								onInput={(event) => setProjectName(event.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search assets"
+							value={projectName}
+							onChange={setProjectName}
+							placeholder="Search assets…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

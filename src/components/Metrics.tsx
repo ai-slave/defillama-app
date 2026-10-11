@@ -12,8 +12,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SearchField } from '~/ui/SearchField'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { fetchJson } from '~/utils/async'
@@ -42,8 +42,12 @@ const metricsByCategory = trending.concat(
 	Object.entries(metricsByCategoryName).map(([category, metrics]) => ({ category, metrics }))
 )
 
-const TABS = ['All', 'Protocols', 'Chains'] as const
-type Tab = (typeof TABS)[number]
+const TAB_OPTIONS = [
+	{ value: 'All', label: 'All' },
+	{ value: 'Protocols', label: 'Protocols' },
+	{ value: 'Chains', label: 'Chains' }
+] as const
+type Tab = (typeof TAB_OPTIONS)[number]['value']
 
 function findCurrentCategory(pathname: string) {
 	if (pathname === '/') return null
@@ -128,26 +132,22 @@ export function Metrics({
 	const pinnedRoutes = usePinnedRoutes()
 
 	const search = (
-		<label className="relative">
-			<span className="sr-only">Search pages</span>
-			<Icon name="search" className="absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary" />
-			<Input
-				ref={searchInputRef}
-				// The dialog moves focus itself when it opens; see MetricsAndTools.
-				autoFocus={!canDismiss}
-				type="text"
-				inputMode="search"
-				placeholder="Search…"
-				className={searchFieldInputPlacementStyles}
-				onInput={(e) => setSearchValue(e.currentTarget.value)}
-			/>
-		</label>
+		<SearchField
+			label="Search pages"
+			ref={searchInputRef}
+			// The dialog moves focus itself when it opens; see MetricsAndTools.
+			autoFocus={!canDismiss}
+			placeholder="Search…"
+			value={searchValue}
+			onChange={setSearchValue}
+		/>
 	)
 	const tabs = (
-		<TagGroup
-			selectedValue={tab}
-			setValue={(value) => startTransition(() => setTab(value))}
-			values={TABS}
+		<SegmentedControl
+			value={tab}
+			onValueChange={(value) => startTransition(() => setTab(value))}
+			options={TAB_OPTIONS}
+			label="Metric scope"
 			variant="solid"
 			size="sm"
 		/>

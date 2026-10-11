@@ -1,5 +1,5 @@
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
 import { TIMEFRAMES, type Timeframe } from '../constants'
 
@@ -25,13 +25,13 @@ export function RefineDrawer({
 			<DialogBody>
 				<div className="flex flex-col gap-2">
 					<span className="label-sm text-secondary">Timeframe</span>
-					<TagGroup
-						selectedValue={timeframe}
-						setValue={setTimeframe}
-						values={TIMEFRAMES}
+					<SegmentedControl
+						value={timeframe}
+						onValueChange={setTimeframe}
+						options={TIMEFRAMES.map((value) => ({ value, label: value }))}
 						variant="field"
 						size="md"
-						ariaLabel="Timeframe"
+						label="Timeframe"
 					/>
 				</div>
 				<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">

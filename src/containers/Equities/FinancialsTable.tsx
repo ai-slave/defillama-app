@@ -4,7 +4,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -173,19 +173,21 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 			<TableToolbar>
 				<h2 className="label-md">Financials</h2>
 				<TableToolbarControlGroup className="ml-auto">
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						selectedValue={statementType}
-						setValue={(value) => startTransition(() => setStatementType(value))}
-						values={EQUITIES_STATEMENT_OPTIONS}
+						value={statementType}
+						onValueChange={(value) => startTransition(() => setStatementType(value))}
+						options={EQUITIES_STATEMENT_OPTIONS.map((value) => ({ value, label: value }))}
+						label="Statement"
 					/>
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						selectedValue={periodType}
-						setValue={(value) => startTransition(() => setPeriodType(value))}
-						values={EQUITIES_STATEMENT_PERIOD_OPTIONS}
+						value={periodType}
+						onValueChange={(value) => startTransition(() => setPeriodType(value))}
+						options={EQUITIES_STATEMENT_PERIOD_OPTIONS.map((value) => ({ value, label: value }))}
+						label="Period"
 					/>
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 				</TableToolbarControlGroup>

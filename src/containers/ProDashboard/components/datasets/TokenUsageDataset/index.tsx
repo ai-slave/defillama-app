@@ -8,8 +8,8 @@ import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKe
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -361,15 +361,13 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 					</div>
 				</div>
 				<div className="mt-3 flex items-center gap-2 sm:gap-4">
-					<div className={searchFieldWrapperStyles}>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							aria-label="Search protocols"
-							placeholder="Search protocols…"
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							className={searchFieldInputPlacementStyles}
-						/>
-					</div>
+					<SearchField
+						label="Search protocols"
+						value={search}
+						onChange={setSearch}
+						placeholder="Search protocols…"
+						className={searchFieldWrapperStyles}
+					/>
 				</div>
 			</div>
 

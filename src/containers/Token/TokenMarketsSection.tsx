@@ -376,7 +376,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 	if (isEmpty) {
 		if (embedded) {
 			return (
-				<SurfaceBodyStatus variant="empty" className="min-h-[120px] p-4">
+				<SurfaceBodyStatus variant="empty" className="min-h-[120px]">
 					No market data available for this token.
 				</SurfaceBodyStatus>
 			)

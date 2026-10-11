@@ -15,14 +15,9 @@ import { formatUnlockDate, formatUnlockTime } from '~/containers/Unlocks/dateFor
 import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
@@ -133,7 +128,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
-	const [_projectName, setProjectName] = useTableSearch({
+	const [projectName, setProjectName] = useTableSearch({
 		instance,
 		columnToSearch: 'name'
 	})
@@ -149,16 +144,14 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search events…</span>
-						<Icon name="search" className={searchFieldIconStyles} />
-						<Input
-							name="search"
-							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search events…"
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
+					<SearchField
+						label="Search events"
+						name="search"
+						value={projectName}
+						onChange={setProjectName}
+						placeholder="Search events…"
+						className={searchFieldInlineWrapperStyles}
+					/>
 					{typeOptions.length > 1 ? (
 						<SelectWithCombobox
 							allValues={typeOptions}

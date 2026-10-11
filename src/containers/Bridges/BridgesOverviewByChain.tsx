@@ -13,15 +13,10 @@ import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
@@ -551,15 +546,13 @@ export function BridgesOverviewByChain({
 							) : null}
 
 							{activeTab === 'largeTxs' ? null : (
-								<label className={searchFieldInlineWrapperStyles}>
-									<span className="sr-only">Search bridges</span>
-									<Icon name="search" className={searchFieldIconStyles} />
-									<Input
-										onInput={(e) => setSearchValue(e.currentTarget.value)}
-										placeholder="Search…"
-										className={searchFieldInputPlacementStyles}
-									/>
-								</label>
+								<SearchField
+									label="Search bridges"
+									value={searchValue}
+									onChange={setSearchValue}
+									placeholder="Search…"
+									className={searchFieldInlineWrapperStyles}
+								/>
 							)}
 							<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
 						</TableToolbarControlGroup>

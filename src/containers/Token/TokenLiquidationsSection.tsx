@@ -141,7 +141,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('protocols')
 	const handleSetActiveTab = (tab: (typeof TABS)[number]['id']) => setActiveTab(tab)
-	const { data, error, isLoading } = useQuery({
+	const { data, error, isLoading, refetch, isFetching } = useQuery({
 		queryKey: ['token-liquidations', tokenSymbol],
 		queryFn: () => fetchTokenLiquidationsClient(tokenSymbol, authorizedFetch),
 		staleTime: 60 * 60 * 1000,
@@ -164,9 +164,10 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 		<TokenPrivateSectionGate
 			title="Liquidations"
 			sectionId={TOKEN_LIQUIDATIONS_SECTION_ID}
-			contentLabel="token liquidations"
+			lockedTitle="Token liquidations need a subscription"
 			isLoading={isLoading}
 			error={error}
+			retry={{ refetch, isFetching }}
 			errorMessage="Couldn't load token liquidations."
 			bodyClassName="flex flex-col gap-2 p-2"
 		>

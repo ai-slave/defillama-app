@@ -1,3 +1,4 @@
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { FEATURES_SERVER } from '~/constants'
 import { isChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { SITEMAP_BASE_URL } from '~/utils/sitemapXml'
@@ -27,14 +28,6 @@ const FEED_IMAGE_KEYS: Array<keyof FeedImageInput> = [
 	'headline',
 	'href'
 ]
-
-function escapeHtml(value: string): string {
-	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-function escapeAttr(value: string): string {
-	return escapeHtml(value).replace(/"/g, '&quot;')
-}
 
 function stringAttr(attrs: Record<string, unknown> | null | undefined, key: string): string | undefined {
 	const value = attrs?.[key]
@@ -67,14 +60,14 @@ function applyMark(children: string, mark: TiptapMark): string {
 		if (!href) return children
 		const target = /^(\/|#)/.test(href) ? absolutize(href, SITEMAP_BASE_URL) : href
 		if (!target) return children
-		return `<a href="${escapeAttr(target)}">${children}</a>`
+		return `<a href="${escapeHtml(target)}">${children}</a>`
 	}
 	if (mark.type === 'entityLink') {
 		const entityType = stringAttr(mark.attrs, 'entityType')
 		const slug = stringAttr(mark.attrs, 'slug')
 		if (!entityType || !slug || !isValidArticleEntityType(entityType)) return children
 		const route = stringAttr(mark.attrs, 'route') || getArticleEntityRoute(entityType as ArticleEntityType, slug)
-		return `<a href="${escapeAttr(`${SITEMAP_BASE_URL}${route}`)}">${children}</a>`
+		return `<a href="${escapeHtml(`${SITEMAP_BASE_URL}${route}`)}">${children}</a>`
 	}
 	return children
 }
@@ -90,10 +83,10 @@ function renderInlineText(node: TiptapJson): string {
 export function imageFigureHtml(image: FeedImageInput): string {
 	const src = absolutize(image.src, FEATURES_SERVER)
 	if (!src) return ''
-	const alt = escapeAttr((image.alt ?? '').trim())
-	const imgTag = `<img src="${escapeAttr(src)}" alt="${alt}" />`
+	const alt = escapeHtml((image.alt ?? '').trim())
+	const imgTag = `<img src="${escapeHtml(src)}" alt="${alt}" />`
 	const linkHref = absolutize(image.href, SITEMAP_BASE_URL)
-	const media = linkHref ? `<a href="${escapeAttr(linkHref)}">${imgTag}</a>` : imgTag
+	const media = linkHref ? `<a href="${escapeHtml(linkHref)}">${imgTag}</a>` : imgTag
 
 	const captionLines: Array<string> = []
 	if (image.headline?.trim()) captionLines.push(image.headline.trim())
@@ -110,7 +103,7 @@ export function imageFigureHtml(image: FeedImageInput): string {
 
 function renderCodeBlock(node: TiptapJson): string {
 	const language = stringAttr(node.attrs, 'language') || 'plaintext'
-	return `<pre><code class="language-${escapeAttr(language)}">${escapeHtml(getTiptapNodeText(node))}</code></pre>`
+	return `<pre><code class="language-${escapeHtml(language)}">${escapeHtml(getTiptapNodeText(node))}</code></pre>`
 }
 
 function renderCallout(node: TiptapJson): string {
@@ -127,8 +120,8 @@ function renderCitation(node: TiptapJson): string {
 	const url = absolutize(stringAttr(node.attrs, 'url'), SITEMAP_BASE_URL)
 	const text = `[${escapeHtml(label)}]`
 	if (url) {
-		const titleAttr = title ? ` title="${escapeAttr(title)}"` : ''
-		return `<a href="${escapeAttr(url)}"${titleAttr}>${text}</a>`
+		const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+		return `<a href="${escapeHtml(url)}"${titleAttr}>${text}</a>`
 	}
 	return text
 }
@@ -140,7 +133,7 @@ function renderChart(node: TiptapJson): string {
 	const primary = config.series[0]
 	if (!primary) return ''
 	const href = `${SITEMAP_BASE_URL}${getArticleEntityRoute(primary.entityType, primary.slug)}`
-	return `<p><em>[Chart: ${escapeHtml(label)}]</em> — <a href="${escapeAttr(href)}">View on DefiLlama</a></p>`
+	return `<p><em>[Chart: ${escapeHtml(label)}]</em> — <a href="${escapeHtml(href)}">View on DefiLlama</a></p>`
 }
 
 function renderLlamaAIChart(node: TiptapJson): string {
@@ -155,7 +148,7 @@ function renderEmbed(node: TiptapJson): string {
 	if (!config) return ''
 	const label = getEmbedProviderLabel(config.provider)
 	const text = config.title || config.caption || config.sourceUrl
-	return `<p>[${escapeHtml(label)}] <a href="${escapeAttr(config.sourceUrl)}">${escapeHtml(text)}</a></p>`
+	return `<p>[${escapeHtml(label)}] <a href="${escapeHtml(config.sourceUrl)}">${escapeHtml(text)}</a></p>`
 }
 
 function renderPeoplePanel(node: TiptapJson): string {
@@ -165,9 +158,9 @@ function renderPeoplePanel(node: TiptapJson): string {
 	const people = config.items
 		.map((item) => {
 			const src = absolutize(item.src, FEATURES_SERVER)
-			const avatar = src ? `<img src="${escapeAttr(src)}" alt="${escapeAttr(item.name)}" /> ` : ''
+			const avatar = src ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(item.name)}" /> ` : ''
 			const name = item.href
-				? `<a href="${escapeAttr(item.href)}"><strong>${escapeHtml(item.name)}</strong></a>`
+				? `<a href="${escapeHtml(item.href)}"><strong>${escapeHtml(item.name)}</strong></a>`
 				: `<strong>${escapeHtml(item.name)}</strong>`
 			const bio = item.bio ? `: ${escapeHtml(item.bio)}` : ''
 			return `<p>${avatar}${name}${bio}</p>`

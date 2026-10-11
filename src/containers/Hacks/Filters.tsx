@@ -5,7 +5,7 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Card } from '~/ui/Card'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -201,13 +201,13 @@ function Filters({
 
 			<div className="flex flex-col gap-2 px-4 py-2.5 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
 				{isMobile ? <span className="body-sm text-primary">Time</span> : null}
-				<TagGroup
+				<SegmentedControl
 					variant="responsive"
 					size="md"
-					setValue={setSelectedTime}
-					selectedValue={selectedTimeLabel}
-					values={timeOptions}
-					ariaLabel="Time period"
+					onValueChange={setSelectedTime}
+					value={selectedTimeLabel}
+					options={timeOptions.map((value) => ({ value, label: value }))}
+					label="Time period"
 				/>
 			</div>
 			<ResetFiltersButton nestedMenu={isMobile} onClick={onClearAll} disabled={!hasActiveFilters}>

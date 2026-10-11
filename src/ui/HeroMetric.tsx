@@ -1,8 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
-import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { StaleText } from '~/ui/StaleText'
+import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface HeroMetricProps {
@@ -15,58 +14,27 @@ interface HeroMetricProps {
 	byChainTitle?: string
 }
 
-/** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows. */
+/** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows. Without rows it is
+    the StatItem headline. */
 export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: HeroMetricProps) {
-	const valueEl = <StaleText className="min-h-8 mono-xl">{value}</StaleText>
-
 	if (!byChain || byChain.length === 0) {
-		return (
-			<p className="flex flex-col">
-				{tooltip ? (
-					<Tooltip content={tooltip} className="cursor-help text-secondary underline decoration-dotted" tabIndex={0}>
-						{label}
-					</Tooltip>
-				) : (
-					<span className="text-secondary">{label}</span>
-				)}
-				{valueEl}
-			</p>
-		)
+		return <StatItem label={label} tooltip={tooltip} value={<StaleText>{value}</StaleText>} />
 	}
-
-	const summaryContent = (
-		<>
-			<span className={`text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
-			<span className="flex flex-nowrap items-center gap-2">
-				{valueEl}
-				<Icon
-					name="chevron-down"
-					className="relative top-0.5 size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
-				/>
-			</span>
-		</>
-	)
 
 	return (
 		<details className="group">
-			{tooltip ? (
-				/* A <summary> must not contain interactive descendants, so the summary
-				   itself anchors the tooltip (same trick as MetricSection). */
-				<Ariakit.TooltipProvider placement="top-start">
-					<Ariakit.TooltipAnchor
-						render={(anchorProps) => (
-							<summary {...anchorProps} className="flex cursor-pointer flex-col">
-								{summaryContent}
-							</summary>
-						)}
+			{/* A <summary> must not contain interactive descendants, so the summary itself anchors the tooltip (as
+			    MetricSection does): hover or focus shows the definition, and a click or tap still toggles the rows. */}
+			<Tooltip content={tooltip} render={<summary className="flex cursor-pointer flex-col" />}>
+				<span className={`text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
+				<span className="flex flex-nowrap items-center gap-2">
+					<StaleText className="min-h-8 mono-xl">{value}</StaleText>
+					<Icon
+						name="chevron-down"
+						className="relative top-0.5 size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
 					/>
-					<Ariakit.Tooltip className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap`} unmountOnHide portal>
-						<div className="p-2">{tooltip}</div>
-					</Ariakit.Tooltip>
-				</Ariakit.TooltipProvider>
-			) : (
-				<summary className="flex cursor-pointer flex-col">{summaryContent}</summary>
-			)}
+				</span>
+			</Tooltip>
 			<div className="my-3 flex max-h-[50dvh] flex-col overflow-auto">
 				<h2 className="font-semibold">{byChainTitle ?? `${label} by chain`}</h2>
 				{byChain.map(([chain, chainValue]) => (

@@ -15,10 +15,10 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -55,22 +55,20 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({ instance, columnOrders: raisesColumnOrders })
 
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects…</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search projects"
+					name="search"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search projects…"
+					className={searchFieldWrapperStyles}
+				/>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>
 			<VirtualTable table={instance} />

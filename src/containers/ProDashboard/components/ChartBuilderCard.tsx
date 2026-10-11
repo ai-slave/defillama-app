@@ -9,6 +9,7 @@ import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { handleSimpleFetchResponse, httpErrorMessage, ReaderError } from '~/utils/async'
@@ -503,7 +504,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			/>
 			<div className="flex flex-col gap-1 px-3 pb-1">
 				{effectiveShowColors && hasRenderableData ? (
-					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-subtle bg-surface p-2">
+					<Card padding="sm" className="flex items-center gap-2 overflow-x-auto">
 						<span className="shrink-0 label-sm text-secondary">Series Colors</span>
 						{displayedSeries.map((series: ChartSeries) => {
 							const colorValue = seriesColors[series.name] || series.color || DEFAULT_SERIES_COLOR
@@ -546,7 +547,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						>
 							Reset All
 						</Button>
-					</div>
+					</Card>
 				) : null}
 			</div>
 

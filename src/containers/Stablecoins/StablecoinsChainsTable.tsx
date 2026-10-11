@@ -19,8 +19,9 @@ import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -196,7 +197,7 @@ export function StablecoinsChainsTable({
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	const [groupTvls, updater] = useLocalStorageSettingsManager('tvl_chains')
 
 	const selectedAggregateTypes = React.useMemo(() => {
@@ -217,15 +218,13 @@ export function StablecoinsChainsTable({
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search chains"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search…"
+					className={searchFieldWrapperStyles}
+				/>
 				<SelectWithCombobox
 					allValues={CHAINS_CATEGORY_GROUP_SETTINGS}
 					selectedValues={selectedAggregateTypes}

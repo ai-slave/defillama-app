@@ -8,7 +8,7 @@ import Layout from '~/layout'
 import { Change } from '~/ui/Change'
 import { CopyHelper } from '~/ui/Copy'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { truncateAddress } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -22,8 +22,21 @@ const valueToFilter = {
 	'30d': 'month'
 }
 
-const TIME_VALUES = ['1d', '7d', '30d'] as const
-const CHAIN_VALUES = ['Ethereum', 'Arbitrum', 'Polygon', 'Optimism', 'Base'] as const
+type Period = '1d' | '7d' | '30d'
+type Chain = 'Ethereum' | 'Arbitrum' | 'Polygon' | 'Optimism' | 'Base'
+
+const PERIOD_OPTIONS: Array<SegmentedControlOption<Period>> = [
+	{ value: '1d', label: '1d' },
+	{ value: '7d', label: '7d' },
+	{ value: '30d', label: '30d' }
+]
+const CHAIN_OPTIONS: Array<SegmentedControlOption<Chain>> = [
+	{ value: 'Ethereum', label: 'Ethereum' },
+	{ value: 'Arbitrum', label: 'Arbitrum' },
+	{ value: 'Polygon', label: 'Polygon' },
+	{ value: 'Optimism', label: 'Optimism' },
+	{ value: 'Base', label: 'Base' }
+]
 
 interface ITrendingContracts {
 	accounts_percentage_growth: number
@@ -78,8 +91,8 @@ async function getContracts(chain: string, time: string) {
 export default function TrendingContracts() {
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'gas_spend' }])
 
-	const [value, setValue] = useState<(typeof TIME_VALUES)[number]>('1d')
-	const [chain, setChain] = useState<(typeof CHAIN_VALUES)[number]>('Ethereum')
+	const [value, setValue] = useState<Period>('1d')
+	const [chain, setChain] = useState<Chain>('Ethereum')
 
 	const time = useDeferredValue(value)
 
@@ -121,13 +134,21 @@ export default function TrendingContracts() {
 			<Panel className="flex-1">
 				<PanelHeader>
 					<PanelTitle as="h1">Trending Contracts</PanelTitle>
-					<TagGroup variant="default" size="md" selectedValue={value} setValue={setValue} values={TIME_VALUES} />
-					<TagGroup
+					<SegmentedControl
 						variant="default"
 						size="md"
-						selectedValue={chain}
-						setValue={(val) => startTransition(() => setChain(val))}
-						values={CHAIN_VALUES}
+						value={value}
+						onValueChange={(next) => setValue(next)}
+						options={PERIOD_OPTIONS}
+						label="Period"
+					/>
+					<SegmentedControl
+						variant="default"
+						size="md"
+						value={chain}
+						onValueChange={(val) => startTransition(() => setChain(val))}
+						options={CHAIN_OPTIONS}
+						label="Chain"
 					/>
 				</PanelHeader>
 				{queryReadFailed(query) ? (

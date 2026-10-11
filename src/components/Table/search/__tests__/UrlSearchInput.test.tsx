@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { UrlSearchInput } from '../UrlSearchInput'
 
 let container: HTMLDivElement
@@ -36,7 +37,7 @@ const field = () => container.querySelector('input')!
 
 async function type(value: string) {
 	await act(async () => {
-		field().value = value
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field(), value)
 		field().dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }
@@ -71,4 +72,21 @@ test('a search cleared from outside the field, such as by removing its pill, cle
 
 	await waitForDebounce()
 	expect(updateSearch.mock.calls).toEqual([['bit']])
+})
+
+test('clearing the field with its × applies the empty search after the debounce and keeps focus in the field', async () => {
+	await showUrlSearch('')
+	await type('bit')
+	await waitForDebounce()
+	await showUrlSearch('bit')
+
+	await type('bitc')
+	const clear = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Clear search')!
+	await act(async () => clear.click())
+	expect(field().value).toBe('')
+	expect(updateSearch.mock.calls).toEqual([['bit']])
+	expect(document.activeElement).toBe(field())
+
+	await waitForDebounce()
+	expect(updateSearch.mock.calls).toEqual([['bit'], ['']])
 })

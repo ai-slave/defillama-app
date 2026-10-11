@@ -121,7 +121,9 @@ export function TokenUsageSection({
 	const {
 		data: rows,
 		error,
-		isLoading
+		isLoading,
+		refetch,
+		isFetching
 	} = useQuery({
 		queryKey: ['token-usage', 'token-page', tokenSymbol],
 		queryFn: () => fetchTokenUsageRows(tokenSymbol, authorizedFetch),
@@ -181,9 +183,10 @@ export function TokenUsageSection({
 		<TokenPrivateSectionGate
 			title="Token Usage"
 			sectionId={TOKEN_USAGE_SECTION_ID}
-			contentLabel="token usage"
+			lockedTitle="Token usage needs a subscription"
 			isLoading={isLoading}
 			error={error}
+			retry={{ refetch, isFetching }}
 			errorMessage="Couldn't load token usage."
 			emptyMessage={filteredRows.length === 0 ? 'No token usage entries found.' : null}
 			headerActions={

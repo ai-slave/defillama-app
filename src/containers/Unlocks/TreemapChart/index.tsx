@@ -13,7 +13,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
@@ -266,12 +266,13 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 					</div>
 				) : null}
 
-				<TagGroup
+				<SegmentedControl
 					variant="default"
 					size="md"
-					selectedValue={timeView}
-					setValue={(period) => startTransition(() => setTimeView(period))}
-					values={UNLOCKS_TREEMAP_TIME_VIEWS}
+					value={timeView}
+					onValueChange={(period) => startTransition(() => setTimeView(period))}
+					options={UNLOCKS_TREEMAP_TIME_VIEWS.map((value) => ({ value, label: value }))}
+					label="Time range"
 				/>
 			</div>
 

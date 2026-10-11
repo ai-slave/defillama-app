@@ -14,7 +14,7 @@ import {
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
+import { CexChartPanel } from '~/containers/Cexs/CexChartPanel'
 import {
 	buildReserveStablecoinChartData,
 	getReserveStablecoinViewState,
@@ -24,7 +24,7 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -108,7 +108,7 @@ function MultiSeriesChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={presentation.dataset}
 					charts={presentation.charts}
@@ -178,7 +178,7 @@ function PieChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}

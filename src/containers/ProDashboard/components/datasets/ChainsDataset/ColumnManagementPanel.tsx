@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface Column {
@@ -42,7 +43,7 @@ export function ColumnManagementPanel({
 	].filter((group) => group.columns.length > 0)
 
 	return (
-		<div className="mb-4 rounded-md border border-subtle bg-surface p-4">
+		<Card padding="md" className="mb-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h4 className="label-md text-primary">Customize columns</h4>
 				<div className="flex items-center gap-2">
@@ -55,17 +56,14 @@ export function ColumnManagementPanel({
 				</div>
 			</div>
 
-			<div className="relative mb-3">
-				<Icon name="search" className={searchFieldIconStyles} />
-				<Input
-					ref={searchRef}
-					type="text"
-					aria-label="Search columns"
-					placeholder="Search columns…"
-					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className={searchFieldInputPlacementStyles}
-				/>
-			</div>
+			<SearchField
+				ref={searchRef}
+				label="Search columns"
+				value={searchTerm}
+				onChange={setSearchTerm}
+				placeholder="Search columns…"
+				className="mb-3"
+			/>
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 				<div>
@@ -87,7 +85,7 @@ export function ColumnManagementPanel({
 								<div
 									key={columnId}
 									data-row
-									className="hover-wash flex items-center justify-between rounded-md border border-subtle bg-surface-elevated-1 p-2 transition-colors"
+									className="hover-wash flex items-center justify-between rounded-lg border border-subtle bg-surface-elevated-1 p-2 transition-colors"
 								>
 									<div className="flex items-center gap-2">
 										<Icon name="check" className="size-3.5 text-success" />
@@ -203,6 +201,6 @@ export function ColumnManagementPanel({
 					Done
 				</Button>
 			</div>
-		</div>
+		</Card>
 	)
 }

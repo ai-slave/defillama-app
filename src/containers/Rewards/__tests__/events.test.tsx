@@ -68,7 +68,7 @@ describe('Rewards interaction events', () => {
 		await act(async () => button.click())
 	}
 	async function search(value: string) {
-		const input = container.querySelector<HTMLInputElement>('input[type="search"]')!
+		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search protocols or programs"]')!
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
 			input.dispatchEvent(new Event('input', { bubbles: true }))

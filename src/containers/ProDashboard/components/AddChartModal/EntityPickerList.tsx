@@ -6,9 +6,8 @@ import { Card } from '~/ui/Card'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { SearchField } from '~/ui/SearchField'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { getItemIconUrl } from '../../utils'
 
@@ -117,16 +116,15 @@ export function EntityPickerList({
 			{(control) => (
 				<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-subtle">
 					<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
-						<div className="relative flex-1">
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								{...control}
-								ref={searchRef}
-								onInput={(e) => setSearch(e.currentTarget.value)}
-								placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}…`}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							{...control}
+							ref={searchRef}
+							label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`}
+							value={search}
+							onChange={setSearch}
+							placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}…`}
+							className="flex-1"
+						/>
 						{selectedEntities.length > 0 ? (
 							<div className="ml-3 flex items-center gap-2 label-sm">
 								<span className="text-secondary">{selectedEntities.length} selected</span>

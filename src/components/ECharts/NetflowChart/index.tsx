@@ -9,7 +9,7 @@ import type { BridgeNetflowPeriod } from '~/containers/Bridges/api.types'
 import type { BridgeNetflowChartData } from '~/containers/Bridges/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
@@ -207,10 +207,21 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 		<div className="relative pr-5">
 			<div ref={containerRef} className="my-auto" style={heightStyle ?? { minHeight: '600px' }} />
 			<div className="m-4 flex justify-center">
-				<TagGroup variant="default" size="md" values={flowTypes} selectedValue={period} setValue={setPeriod} />
+				<SegmentedControl
+					variant="default"
+					size="md"
+					options={PERIOD_OPTIONS}
+					value={period}
+					onValueChange={(next) => setPeriod(next)}
+					label="Period"
+				/>
 			</div>
 		</div>
 	)
 }
 
-const flowTypes = ['day', 'week', 'month'] as const
+const PERIOD_OPTIONS: Array<SegmentedControlOption<BridgeNetflowPeriod>> = [
+	{ value: 'day', label: 'Day' },
+	{ value: 'week', label: 'Week' },
+	{ value: 'month', label: 'Month' }
+]

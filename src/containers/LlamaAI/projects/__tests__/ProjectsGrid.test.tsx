@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectsGrid } from '../ProjectsGrid'
@@ -59,7 +60,7 @@ test('project cards have a real link with separate rename and delete controls', 
 	expect(push).not.toHaveBeenCalled()
 })
 
-test.each(['Clear project search', 'Clear search'])('%s returns focus to the search field', async (name) => {
+test.each(['field', 'empty state'])('Clear search in the %s returns focus to the search field', async (place) => {
 	await waitForUi(() => expect(container.querySelector('a[href="/ai/projects/research"]')).not.toBeNull())
 	const search = container.querySelector<HTMLInputElement>('input[aria-label="Search projects"]')!
 	await act(async () => {
@@ -68,7 +69,8 @@ test.each(['Clear project search', 'Clear search'])('%s returns focus to the sea
 	})
 	const clear = () =>
 		[...container.querySelectorAll('button')].find(
-			(button) => button.getAttribute('aria-label') === name || button.textContent === name
+			(button) =>
+				accessibleName(button) === 'Clear search' && search.parentElement!.contains(button) === (place === 'field')
 		)
 	await waitForUi(() => expect(clear()).toBeDefined())
 	await act(async () => {

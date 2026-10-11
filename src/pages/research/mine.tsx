@@ -19,8 +19,8 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
@@ -248,15 +248,13 @@ function MyArticlesContent() {
 
 					{/* One row at every width: on a phone the search takes what the sort select leaves. */}
 					<div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
-						<label className="relative flex min-w-0 flex-1 items-center">
-							<Icon name="search" className={searchFieldIconStyles} aria-hidden />
-							<Input
-								type="search"
-								onInput={(e) => setSearchInput(e.currentTarget.value)}
-								placeholder="Search title, slug…"
-								className="w-full pl-8 sm:w-56"
-							/>
-						</label>
+						<SearchField
+							label="Search articles"
+							value={searchInput}
+							onChange={setSearchInput}
+							placeholder="Search title, slug…"
+							className="min-w-0 flex-1 sm:w-56 sm:flex-none"
+						/>
 						<Select
 							allValues={SORT_OPTIONS}
 							selectedValues={sortKey}

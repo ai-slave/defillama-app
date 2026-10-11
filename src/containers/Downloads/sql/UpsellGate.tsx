@@ -503,7 +503,7 @@ function ChartNotebookCell() {
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<div className="rounded-md border border-subtle bg-surface-elevated-1 px-3 pt-3">
+				<div className="rounded-lg border border-subtle bg-surface-elevated-1 px-3 pt-3">
 					<div className="mb-2 flex items-baseline justify-between">
 						<span className="label-xs tracking-[0.18em] text-tertiary uppercase">30d fees by protocol</span>
 						<span className="mono-sm text-tertiary tabular-nums">bar · top 7</span>

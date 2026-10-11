@@ -90,7 +90,7 @@ const waitForText = (value: string) =>
 test('shows a signed-out visitor the gate without a checkout link', async () => {
 	await render()
 
-	expect(text()).toContain('An active subscription is required to view liquidations data.')
+	expect(text()).toContain('Liquidations need a subscription')
 	expect(container.querySelector('a[href^="/subscription"]')).toBeNull()
 	expect(text()).toContain('Arbitrum One')
 })
@@ -99,7 +99,7 @@ test('sends a signed-in visitor without a subscription to checkout and back', as
 	signIn('none')
 	await render()
 
-	await waitForText('is required to view liquidations data')
+	await waitForText('Liquidations need a subscription')
 	expect(container.querySelector('a[href^="/subscription"]')?.getAttribute('href')).toBe(
 		'/subscription?returnUrl=%2Fliquidations%2Fsky%2Farbitrum-one'
 	)
@@ -108,12 +108,12 @@ test('sends a signed-in visitor without a subscription to checkout and back', as
 
 test('an open sign-in stays through the account load after a sign-in from another tab', async () => {
 	await render()
-	const gateSignIn = [...container.querySelectorAll('button')].find((el) => el.textContent === 'active subscription')!
+	const gateSignIn = [...container.querySelectorAll('button')].find((el) => el.textContent === 'Sign in')!
 	await act(async () => gateSignIn.click())
 	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Sign in'))
 	await act(async () => signIn('none'))
 	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in"))
-	await waitForText('is required to view liquidations data')
+	await waitForText('Liquidations need a subscription')
 	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in")
 })
 
@@ -123,5 +123,5 @@ test('loads the chain for a subscriber and shows the server error message', asyn
 	await render()
 
 	await waitForText('Liquidations are warming up')
-	expect(text()).not.toContain('is required to view liquidations data')
+	expect(text()).not.toContain('Liquidations need a subscription')
 })

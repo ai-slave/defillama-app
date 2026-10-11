@@ -1,8 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { tooltipSurfaceStyles } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
 import { ExchangeDocsLinks } from './docsLinks'
@@ -48,23 +47,19 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 			{/* Negative margin trims the card's gap-4 under the heading; the KPIs read as one block with it. */}
 			<h2 className="-mb-2 heading-xs">Find My Exchange</h2>
 			<details className="group">
-				<Ariakit.TooltipProvider placement="top-start">
-					<Ariakit.TooltipAnchor render={<summary className="flex flex-col" />}>
-						<span className="text-secondary underline decoration-dotted">{definitions.totalVolume24h.label}</span>
-						<span className="flex items-center gap-2">
-							<span className="min-h-8 mono-xl">
-								{formatUsd(summary.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-							</span>
-							<Icon
-								name="chevron-down"
-								className="size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
-							/>
+				{/* The summary anchors the definition, since a <summary> must not hold a focusable anchor of its own. */}
+				<Tooltip content={definitions.totalVolume24h.description} render={<summary className="flex flex-col" />}>
+					<span className="text-secondary underline decoration-dotted">{definitions.totalVolume24h.label}</span>
+					<span className="flex items-center gap-2">
+						<span className="min-h-8 mono-xl">
+							{formatUsd(summary.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 						</span>
-					</Ariakit.TooltipAnchor>
-					<Ariakit.Tooltip className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap`} unmountOnHide portal>
-						<div className="p-2">{definitions.totalVolume24h.description}</div>
-					</Ariakit.Tooltip>
-				</Ariakit.TooltipProvider>
+						<Icon
+							name="chevron-down"
+							className="size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
+						/>
+					</span>
+				</Tooltip>
 				<div className="my-2 flex flex-col">
 					<VolumeKindSection
 						label={definitions.cex.label}

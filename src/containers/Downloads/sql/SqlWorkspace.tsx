@@ -1133,7 +1133,7 @@ function StatusStrip({
 	const runStatus = error ? 'bad' : busy ? 'caution' : lastRun ? 'good' : 'neutral'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
 			<span className="flex items-center gap-1.5">
 				<StatusDot status={envStatus} />
 				<span className="text-tertiary">LlamaSQL</span>

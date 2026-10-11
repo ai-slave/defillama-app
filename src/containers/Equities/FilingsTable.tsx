@@ -13,8 +13,9 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import type { IEquitiesFilingApiItem } from './api.types'
@@ -124,20 +125,18 @@ export function EquitiesFilingsTable({
 		},
 		enableSortingRemoval: false
 	})
-	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'documentDescription' })
+	const [searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'documentDescription' })
 
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search filings</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						onInput={(e) => setSearchValue(e.currentTarget.value)}
-						placeholder="Search filings"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search filings"
+					value={searchValue}
+					onChange={setSearchValue}
+					placeholder="Search filings"
+					className={searchFieldWrapperStyles}
+				/>
 				<SelectWithCombobox
 					allValues={['All', ...filingForms]}
 					selectedValues={[selectedForm]}

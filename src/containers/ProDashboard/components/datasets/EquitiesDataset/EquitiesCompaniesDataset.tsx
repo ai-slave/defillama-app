@@ -21,13 +21,8 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { Change } from '~/ui/Change'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -217,7 +212,7 @@ export function EquitiesCompaniesDataset() {
 		autoResetPageIndex: true
 	})
 
-	const [_searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [searchValue, setSearchValue] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	if (queryReadFailed(companiesQuery)) {
 		return (
@@ -271,16 +266,13 @@ export function EquitiesCompaniesDataset() {
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search companies"
-								placeholder="Search companies…"
-								onInput={(e) => setSearchValue(e.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search companies"
+							value={searchValue}
+							onChange={setSearchValue}
+							placeholder="Search companies…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

@@ -44,10 +44,14 @@ import { tw } from './tw'
    Ariakit host) passes one, else a generated one, so the browser never
    reports a field it cannot tell apart from the others.
 
-   Search fields: SearchField (./SearchField.tsx) for a search with a clear
-   button. A hand-built one renders `<Input className={searchFieldInputPlacementStyles}>`
-   inside a wrapper; an Ariakit host (Combobox, ComboboxInput) renders the
-   same Input through `render`. Table searches pick one wrapper:
+   Search fields: every plain search (its value held in state) is
+   SearchField (./SearchField.tsx), which owns the icon, this recipe, the
+   accessible label and the clear ×. `searchFieldIconStyles` and
+   `searchFieldInputPlacementStyles` serve only an Ariakit Combobox or
+   ComboboxInput: its store owns the value, so it renders this Input through
+   `render` beside the icon. `hand-built-search-field`
+   (scripts/policies/check-design-tokens.mjs) refuses the two strings
+   anywhere else. Table searches pass SearchField one wrapper as `className`:
    `searchFieldWrapperStyles` (standalone, left-anchored),
    `searchFieldInlineWrapperStyles` (fixed 280px beside other toolbar
    controls, never shrinks), or `searchFieldFlexibleWrapperStyles` (shares

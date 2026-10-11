@@ -20,7 +20,7 @@ import {
 } from '~/ui/ChartPanel'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -377,13 +377,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 
 						<ChartPanelToolbar>
 							<h2 className="mr-auto heading-xs">Price History</h2>
-							<TagGroup
+							<SegmentedControl
 								variant="default"
 								size="md"
-								selectedValue={activeTimeframe}
-								setValue={setActiveTimeframe}
-								values={PRICE_CHART_TIMEFRAMES}
-								ariaLabel="Price history timeframe"
+								value={activeTimeframe}
+								onValueChange={setActiveTimeframe}
+								options={PRICE_CHART_TIMEFRAMES.map((value) => ({ value, label: value }))}
+								label="Price history timeframe"
 							/>
 							<ChartExportButtons
 								chartInstance={priceChartInstance}
@@ -429,21 +429,23 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				<ChartPanel className="col-span-full">
 					<ChartPanelToolbar
 						leading={
-							<TagGroup
+							<SegmentedControl
 								variant="default"
 								size="md"
-								selectedValue={activeFundamentalChart}
-								setValue={setActiveFundamentalChart}
-								values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
+								value={activeFundamentalChart}
+								onValueChange={setActiveFundamentalChart}
+								options={EQUITY_FUNDAMENTAL_CHART_OPTIONS.map((value) => ({ value, label: value }))}
+								label="Fundamentals chart"
 							/>
 						}
 					>
-						<TagGroup
+						<SegmentedControl
 							variant="default"
 							size="md"
-							selectedValue={activeDimensionPeriod}
-							setValue={setActiveDimensionPeriod}
-							values={EQUITY_DIMENSION_PERIOD_OPTIONS}
+							value={activeDimensionPeriod}
+							onValueChange={setActiveDimensionPeriod}
+							options={EQUITY_DIMENSION_PERIOD_OPTIONS.map((value) => ({ value, label: value }))}
+							label="Fundamentals period"
 						/>
 						<ChartExportButtons
 							chartInstance={fundamentalsChartInstance}

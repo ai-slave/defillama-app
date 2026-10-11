@@ -228,7 +228,11 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 type HighlightForm = { highlightText: string; sponsorLogo: ArticleImage | null }
 
 // A cleared override removes Clear override, which held focus; the highlight field takes it.
-const focusHighlightFieldOnLeave = passFocusOnLeave((node) => node.closest('label')?.querySelector('textarea'))
+// The button sits outside the field's label (so it stays out of the textarea's name), so it finds the field through
+// their shared group.
+const focusHighlightFieldOnLeave = passFocusOnLeave((node) =>
+	node.closest('[data-highlight-field]')?.querySelector('textarea')
+)
 
 function highlightFormFromArticle(article: ArticleDocument): HighlightForm {
 	return { highlightText: article.editorialTagMetadata?.highlightText ?? '', sponsorLogo: article.sponsorLogo ?? null }
@@ -313,7 +317,7 @@ export function ReportHighlightControls({
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
 				{/* The label names only the field: the count describes it, and the buttons sit outside, so neither joins
 				    the textarea's name. */}
-				<div className="grid gap-1.5">
+				<div data-highlight-field className="grid gap-1.5">
 					<span className="flex items-baseline justify-between gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
 						<label htmlFor={highlightId}>Highlight text</label>
 						<span id={`${highlightId}-count`}>{highlightText.length}/2000</span>

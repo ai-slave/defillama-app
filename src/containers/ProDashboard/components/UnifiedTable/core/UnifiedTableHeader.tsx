@@ -3,7 +3,7 @@ import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { ProBadge, ProMeta } from '../../../ui'
@@ -43,13 +43,12 @@ interface UnifiedTableHeaderProps {
 
 function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) => void }) {
 	const [expanded, setExpanded] = useState(false)
-	const [retainedQuery, setRetainedQuery] = useState('')
-	const valueRef = useRef('')
+	// Outlives the field, so reopening the search shows the query the rows are still filtered by.
+	const [query, setQuery] = useState('')
 	const restoreFocusRef = useRef(false)
 
 	const collapse = (restoreFocus: boolean) => {
 		restoreFocusRef.current = restoreFocus
-		setRetainedQuery(valueRef.current)
 		setExpanded(false)
 	}
 
@@ -77,30 +76,26 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 		)
 	}
 	return (
-		<div className="relative w-64">
-			<Icon name="search" className={searchFieldIconStyles} />
-			<Input
-				type="search"
-				autoFocus
-				defaultValue={retainedQuery}
-				aria-label="Search table rows"
-				placeholder="Search rows…"
-				className={searchFieldInputPlacementStyles}
-				onInput={(event) => {
-					valueRef.current = event.currentTarget.value
-					onSearchChange(valueRef.current)
-				}}
-				onBlur={(event) => {
-					if (valueRef.current) return
-					collapse(event.relatedTarget === null)
-				}}
-				onKeyDown={(event) => {
-					if (event.key !== 'Escape') return
-					event.stopPropagation()
-					collapse(true)
-				}}
-			/>
-		</div>
+		<SearchField
+			label="Search table rows"
+			autoFocus
+			value={query}
+			onChange={(value) => {
+				setQuery(value)
+				onSearchChange(value)
+			}}
+			placeholder="Search rows…"
+			className="w-64"
+			onBlur={(event) => {
+				if (query) return
+				collapse(event.relatedTarget === null)
+			}}
+			onKeyDown={(event) => {
+				if (event.key !== 'Escape') return
+				event.stopPropagation()
+				collapse(true)
+			}}
+		/>
 	)
 }
 

@@ -7,11 +7,10 @@ import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 
 echarts.use([LineChart, GridComponent, SVGRenderer])
 
-const OG_CHART_LINE_COLOR = '#326abd'
-const OG_CHART_AREA_COLOR = 'rgba(50, 106, 189, 0.35)'
-
 export function renderChartSvg(dataset: MultiSeriesChartDataset, width: number, height: number): string | null {
 	if (dataset.source.length === 0) return null
+	// The SVG renders on the server, where no CSS variable resolves, so the brand blue and the area fade come from the
+	// chart theme's checked hex values, drawn as the dashboard's own single-series area chart draws them.
 	const theme = getChartTheme(true)
 	const chart = echarts.init(null, null, {
 		renderer: 'svg',
@@ -31,10 +30,10 @@ export function renderChartSvg(dataset: MultiSeriesChartDataset, width: number, 
 				data: dataset.source,
 				showSymbol: false,
 				smooth: false,
-				lineStyle: { width: 2, color: OG_CHART_LINE_COLOR },
+				lineStyle: { width: 2, color: theme.brand },
 				areaStyle: {
 					color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-						{ offset: 0, color: OG_CHART_AREA_COLOR },
+						{ offset: 0, color: theme.brand },
 						{ offset: 1, color: theme.areaGradientTo }
 					])
 				}

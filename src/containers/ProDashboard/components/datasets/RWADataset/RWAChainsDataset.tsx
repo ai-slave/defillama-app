@@ -21,13 +21,8 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_RWA_CHAINS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -196,7 +191,7 @@ export function RWAChainsDataset() {
 		autoResetPageIndex: true
 	})
 
-	const [_chainName, setChainName] = useTableSearch({ instance, columnToSearch: 'chain' })
+	const [chainName, setChainName] = useTableSearch({ instance, columnToSearch: 'chain' })
 
 	if (queryReadFailed(chainsQuery)) {
 		return (
@@ -245,16 +240,13 @@ export function RWAChainsDataset() {
 							}}
 							smol
 						/>
-						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" className={searchFieldIconStyles} />
-							<Input
-								type="text"
-								aria-label="Search chains"
-								placeholder="Search chains…"
-								onInput={(e) => setChainName(e.currentTarget.value)}
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
+						<SearchField
+							label="Search chains"
+							value={chainName}
+							onChange={setChainName}
+							placeholder="Search chains…"
+							className={searchFieldInlineWrapperStyles}
+						/>
 					</div>
 				</div>
 			</div>

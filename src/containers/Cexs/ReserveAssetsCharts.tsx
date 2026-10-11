@@ -12,7 +12,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
-import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
+import { CexChartPanel } from '~/containers/Cexs/CexChartPanel'
 import type { ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
 import {
 	type ProtocolBreakdownChart,
@@ -20,7 +20,7 @@ import {
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { CHART_FILL } from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -115,7 +115,7 @@ function ChainsChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -187,7 +187,7 @@ function TokenValuesUSDChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -271,7 +271,7 @@ function TokensBreakdownPieChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<PieChart
 					chartData={presentation.chartData}
 					stackColors={presentation.stackColors}
@@ -341,7 +341,7 @@ function TokenBalancesRawChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}
@@ -376,7 +376,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 				/>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -446,7 +446,7 @@ function InflowsByTokenChartCard({
 				</>
 			}
 		>
-			<React.Suspense fallback={cexChartFallback}>
+			<React.Suspense fallback={<ChartPanelBodyLoading />}>
 				<MultiSeriesChart
 					dataset={dataset}
 					charts={charts}

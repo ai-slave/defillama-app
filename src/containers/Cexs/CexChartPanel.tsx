@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-
-export const cexChartFallback = <ChartPanelBodyFallback />
+import { ChartPanel, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 
 export function CexChartPanel({
 	title,
@@ -14,8 +12,7 @@ export function CexChartPanel({
 }) {
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar>
-				<h2 className="mr-auto heading-xs">{title}</h2>
+			<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">{title}</ChartPanelTitle>}>
 				{controls}
 			</ChartPanelToolbar>
 			{children}

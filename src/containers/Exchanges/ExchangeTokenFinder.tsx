@@ -222,7 +222,7 @@ export function ExchangeTokenFinder({
 
 			<Card padding="none" className="overflow-x-auto">
 				{selectedTokens.length === 0 ? (
-					<SurfaceBodyStatus variant="empty" className="min-h-32 px-4">
+					<SurfaceBodyStatus variant="empty" className="min-h-32">
 						Select one or more tokens to find exchanges.
 					</SurfaceBodyStatus>
 				) : queryReadFailed(listingsQuery) ? (
@@ -234,7 +234,7 @@ export function ExchangeTokenFinder({
 				) : listingsQuery.isPending ? (
 					<SurfaceBodyLoadingStatus label="Loading token listings" className="min-h-32" />
 				) : rows.length === 0 ? (
-					<SurfaceBodyStatus variant="empty" className="min-h-32 px-4">
+					<SurfaceBodyStatus variant="empty" className="min-h-32">
 						No exchanges match the selected tokens and region.
 					</SurfaceBodyStatus>
 				) : (

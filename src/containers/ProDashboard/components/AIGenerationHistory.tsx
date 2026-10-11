@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { formatDateTime } from '~/utils/dateFormat'
 import type { AIGeneratedData } from '../dashboardTypes'
@@ -24,10 +25,7 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 				<Icon name="chevron-down" className="size-3.5 transition-transform group-open:rotate-180" />
 			</summary>
 			{sessions.map((session, index) => (
-				<div
-					key={session.sessionId}
-					className="mt-2 flex flex-nowrap gap-2 rounded-md border border-subtle bg-surface p-2 pl-1 md:p-4 md:pl-2"
-				>
+				<Card key={session.sessionId} padding="sm" className="mt-2 flex flex-nowrap gap-2">
 					<span className="flex h-lh shrink-0 items-center label-md">
 						<Icon name="sparkles" className="size-3.5 text-link" />
 					</span>
@@ -59,7 +57,7 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 							<span className="text-secondary">{session.prompt || 'No prompt recorded'}</span>
 						</p>
 					</div>
-				</div>
+				</Card>
 			))}
 		</details>
 	)

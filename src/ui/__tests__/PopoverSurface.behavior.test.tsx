@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { MenuItem, MenuSurface } from '../MenuSurface'
-import { ComboboxSurface, DrawerDismiss, PopoverSurface, type PopoverSurfaceVariant } from '../PopoverSurface'
+import { ComboboxSurface, DrawerDismiss, PopoverSurface, type SurfaceOwnProps } from '../PopoverSurface'
 
 let root: Root
 let container: HTMLDivElement
@@ -29,7 +29,7 @@ function accessibleName(element: HTMLElement) {
 	return labelledBy ? document.getElementById(labelledBy)?.textContent : element.getAttribute('aria-label')
 }
 
-async function renderMenu(variant: PopoverSurfaceVariant) {
+async function renderMenu(variant: SurfaceOwnProps['variant']) {
 	const items = (
 		<>
 			<MenuItem>Download image</MenuItem>

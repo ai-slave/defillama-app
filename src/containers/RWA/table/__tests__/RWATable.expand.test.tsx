@@ -198,7 +198,7 @@ describe('RWATable expansion', () => {
 		await act(async () => chevron().click())
 		const search = container.querySelector<HTMLInputElement>('input[placeholder="Search assets…"]')!
 		await act(async () => {
-			search.value = 'OUSG'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'OUSG')
 			search.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		expect(rows()).toHaveLength(2)

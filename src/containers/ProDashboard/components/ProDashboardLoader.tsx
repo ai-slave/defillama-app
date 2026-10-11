@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { Card } from '~/ui/Card'
 import { LoadingDots } from '~/ui/Loaders'
 
 // The Pro route's full-page loader keeps its branded llama, the one listed exception to the shared loading parts
@@ -6,7 +7,7 @@ import { LoadingDots } from '~/ui/Loaders'
 // and the one status line announces "Loading" once.
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center gap-6 rounded-md border border-subtle bg-surface p-1">
+		<Card padding="none" className="isolate flex flex-1 flex-col items-center justify-center gap-6">
 			<div className="relative size-24" aria-hidden>
 				<div className="absolute inset-0 rounded-full border border-pro-ai opacity-10" />
 
@@ -58,6 +59,6 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 					<LoadingDots />
 				</p>
 			</div>
-		</div>
+		</Card>
 	)
 }

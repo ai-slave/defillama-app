@@ -1,4 +1,5 @@
 import { Select } from '~/components/Select/Select'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { EmptyState } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
@@ -34,10 +35,10 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-subtle bg-surface px-2.5 py-1.5 body-sm">
-				<span className="text-tertiary">Source</span>
+			<Card padding="sm" className="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<span className="body-sm text-tertiary">Source</span>
 				{availableSources.length === 0 ? (
-					<span className="text-tertiary italic">
+					<span className="body-sm text-tertiary italic">
 						Add a SQL cell and run it first — chart cells visualize prior cell output.
 					</span>
 				) : (
@@ -54,12 +55,12 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					/>
 				)}
 				{selected && !selected.hasRun ? (
-					<span className="inline-flex items-center gap-1 text-warning">
+					<span className="inline-flex items-center gap-1 body-sm text-warning">
 						<Icon name="alert-triangle" className="size-3" />
 						source not yet run
 					</span>
 				) : selected?.result ? (
-					<span className="inline-flex min-w-0 items-center gap-1.5 text-tertiary">
+					<span className="inline-flex min-w-0 items-center gap-1.5 body-sm text-tertiary">
 						<span className="text-secondary tabular-nums">{formatNumber(selected.result.rows.length)}</span>
 						rows
 						<span aria-hidden>·</span>
@@ -75,7 +76,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 						</span>
 					</span>
 				) : null}
-			</div>
+			</Card>
 
 			{result ? (
 				<ResultsChart result={result} chartConfig={cell.chartConfig} onChartConfigChange={onChartConfigChange} />

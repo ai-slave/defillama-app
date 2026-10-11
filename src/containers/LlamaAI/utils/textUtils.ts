@@ -1,25 +1,11 @@
-import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 
 // Cache for highlightWord regex (js-hoist-regexp best practice)
 // Avoids recreating RegExp on every keystroke - significant perf win for IME input
 let highlightRegexCache: { key: string; regex: RegExp } | null = null
 
-// Hoisted HTML escape regex (js-hoist-regexp)
-const HTML_ESCAPE_REGEX = /[&<>"']/g
-const HTML_ESCAPE_MAP = {
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;',
-	'"': '&quot;',
-	"'": '&#39;'
-} satisfies Record<string, string>
-
 // Hoisted regex escape pattern (js-hoist-regexp)
 const REGEX_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
-
-function escapeHtml(str: string): string {
-	return str.replace(HTML_ESCAPE_REGEX, (char) => getOwnRegistryValue(HTML_ESCAPE_MAP, char) || char)
-}
 
 export function highlightWord(text: string, words: Array<string>) {
 	if (typeof text !== 'string') return ''

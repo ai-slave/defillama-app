@@ -4,18 +4,21 @@ import type { ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { LoadingIndicator } from '~/ui/Status'
+import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
+import type { QueryRetry } from '~/utils/query'
 import { getTokenPrivateSectionView } from './TokenPrivateSectionGate.utils'
 
 export function TokenPrivateSectionGate({
 	title,
 	sectionId,
-	contentLabel,
+	lockedTitle,
 	isLoading,
 	error,
+	retry,
 	errorMessage,
 	emptyMessage,
 	headerActions,
@@ -24,9 +27,12 @@ export function TokenPrivateSectionGate({
 }: {
 	title: string
 	sectionId: string
-	contentLabel: string
+	/** The gate's title for a reader without a subscription: "Token usage needs a subscription". */
+	lockedTitle: string
 	isLoading?: boolean
 	error?: Error | null
+	/** The section's query, so a failed read offers Try again. */
+	retry: QueryRetry
 	errorMessage: string
 	emptyMessage?: string | null
 	headerActions?: ReactNode
@@ -66,40 +72,35 @@ export function TokenPrivateSectionGate({
 
 				<div className={sectionBodyClassName}>
 					{view === 'loading' ? (
-						<div className="flex flex-1 items-center justify-center">
-							<LoadingIndicator />
-						</div>
+						<SurfaceBodyLoadingStatus label={`Loading ${title.toLowerCase()}`} />
 					) : view === 'sign-in' || view === 'subscribe' ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							{view === 'sign-in' ? (
-								<p className="body-sm text-secondary">
-									An{' '}
-									<button type="button" onClick={signInDialogStore.show} className="underline">
-										active subscription
-									</button>{' '}
-									is required to view {contentLabel}.
-								</p>
-							) : (
-								<p className="body-sm text-secondary">
-									An{' '}
-									<BasicLink
+						<EmptyState
+							size="md"
+							icon="lock"
+							title={lockedTitle}
+							actions={
+								view === 'sign-in' ? (
+									<Button type="button" variant="primary" size="sm" onClick={signInDialogStore.show}>
+										Sign in
+									</Button>
+								) : (
+									<Button
+										as={BasicLink}
 										href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-										className="underline"
+										variant="primary"
+										size="sm"
 									>
-										active subscription
-									</BasicLink>{' '}
-									is required to view {contentLabel}.
-								</p>
-							)}
-						</div>
+										Subscribe
+									</Button>
+								)
+							}
+						/>
 					) : view === 'error' ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="max-w-md body-sm text-secondary">{httpErrorMessage(error, errorMessage)}</p>
-						</div>
+						<SurfaceBodyStatus variant="error" retry={retry}>
+							{httpErrorMessage(error, errorMessage)}
+						</SurfaceBodyStatus>
 					) : view === 'empty' ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="body-sm text-secondary">{emptyMessage}</p>
-						</div>
+						<SurfaceBodyStatus variant="empty">{emptyMessage}</SurfaceBodyStatus>
 					) : (
 						children
 					)}

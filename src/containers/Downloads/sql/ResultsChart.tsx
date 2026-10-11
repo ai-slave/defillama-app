@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { useCallback, useMemo, useRef } from 'react'
+import { Card } from '~/ui/Card'
 import { EmptyState } from '~/ui/Status'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
@@ -46,7 +47,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		<div className="flex flex-col gap-3">
 			<ChartToolbar config={resolvedConfig} classified={classified} onChange={patch} />
 
-			<div className="flex flex-col gap-2 rounded-md border border-subtle bg-surface p-2">
+			<Card padding="sm" className="flex flex-col gap-2">
 				<div className="flex items-center justify-end gap-1.5">
 					<ChartExportButton
 						chartInstance={getChartInstance}
@@ -55,7 +56,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 					/>
 				</div>
 				<ChartRouter config={resolvedConfig} result={result} classified={classified} onReady={handleChartReady} />
-			</div>
+			</Card>
 		</div>
 	)
 }

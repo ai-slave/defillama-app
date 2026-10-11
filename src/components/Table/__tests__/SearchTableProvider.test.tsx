@@ -5,6 +5,7 @@ import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { TotalValueLostContainer } from '~/containers/Hacks/TotalValueLost'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -99,7 +100,7 @@ test('composes search, visibility, sorting, reset, and CSV without rerendering t
 		expect(container.querySelector('tbody tr')?.textContent).toBe('Alpha, Inc.1')
 		const input = container.querySelector('input')!
 		await act(async () => {
-			input.value = 'Beta'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Beta')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
@@ -164,7 +165,7 @@ test('does not bind searchable controls to a different preset provider', async (
 		)
 		const input = container.querySelector('input')!
 		await act(async () => {
-			input.value = 'Beta'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Beta')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
@@ -195,7 +196,7 @@ test('keeps nested searchable tables independent', async () => {
 		)
 		const input = container.querySelectorAll('input')[1]
 		await act(async () => {
-			input.value = 'Beta'
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Beta')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		const sections = container.querySelectorAll('section')
@@ -208,7 +209,7 @@ test('keeps nested searchable tables independent', async () => {
 
 function typeImmediately(input: HTMLInputElement, value: string) {
 	flushSync(() => {
-		input.value = value
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }
@@ -251,6 +252,26 @@ test('cancels pending text when the filter is reset', async () => {
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
 	} finally {
 		await act(async () => root.unmount())
+	}
+})
+
+test('clearing the search with its × shows every row and keeps focus in the field', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	try {
+		await act(async () => root.render(<Fixture />))
+		const input = container.querySelector('input')!
+		await act(async () => typeImmediately(input, 'Beta'))
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+		const clear = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Clear search')!
+		await act(async () => clear.click())
+		expect(input.value).toBe('')
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+		expect(document.activeElement).toBe(input)
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
 	}
 })
 

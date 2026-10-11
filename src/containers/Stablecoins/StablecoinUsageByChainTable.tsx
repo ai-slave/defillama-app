@@ -17,13 +17,9 @@ import type { groupBridgeData } from '~/containers/Stablecoins/hooks'
 import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
@@ -204,7 +200,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance,
 		columnOrders: assetsByChainColumnOrders
@@ -214,15 +210,13 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 		<Panel>
 			<TableToolbar>
 				<h3 className="label-md">Stablecoins Usage by Chain</h3>
-				<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
-					<span className="sr-only">Search</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search chains"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search…"
+					className={`${searchFieldInlineWrapperStyles} ml-auto`}
+				/>
 			</TableToolbar>
 			<VirtualTable table={instance} />
 		</Panel>

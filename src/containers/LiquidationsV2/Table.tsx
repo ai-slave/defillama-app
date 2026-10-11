@@ -10,13 +10,8 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
-import {
-	Input,
-	searchFieldIconStyles,
-	searchFieldInlineWrapperStyles,
-	searchFieldInputPlacementStyles
-} from '~/ui/Input'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
@@ -410,15 +405,13 @@ export function LiquidationsPositionsTable({
 				<LiquidationsTableContent
 					toolbar={
 						<TableToolbar>
-							<label className={searchFieldInlineWrapperStyles}>
-								<span className="sr-only">Search positions</span>
-								<Icon name="search" className={searchFieldIconStyles} />
-								<Input
-									onInput={(e) => setSearchValue(e.currentTarget.value)}
-									placeholder="Search positions by protocol, chain, owner, or collateral"
-									className={searchFieldInputPlacementStyles}
-								/>
-							</label>
+							<SearchField
+								label="Search positions"
+								value={searchValue}
+								onChange={setSearchValue}
+								placeholder="Search positions by protocol, chain, owner, or collateral"
+								className={searchFieldInlineWrapperStyles}
+							/>
 							<TableCsvExport filename="liquidations-v2-100k-positions" />
 						</TableToolbar>
 					}

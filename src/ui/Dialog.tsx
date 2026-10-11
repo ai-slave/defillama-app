@@ -541,7 +541,7 @@ type DialogHeadingProps = {
 } & Omit<ComponentPropsWithoutRef<'h2'>, 'className'>
 
 /** Ariakit-wired dialog title (aria-labelledby), rendered as an h2 heading-xs. */
-export function DialogHeading({ className, ...props }: DialogHeadingProps) {
+function DialogHeading({ className, ...props }: DialogHeadingProps) {
 	return (
 		<Ariakit.DialogHeading render={<h2 />} className={`heading-xs text-primary ${className ?? ''}`.trim()} {...props} />
 	)

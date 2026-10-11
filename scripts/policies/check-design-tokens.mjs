@@ -975,6 +975,31 @@ const RULES = [
 		}
 	},
 	{
+		id: 'hand-built-search-field',
+		description:
+			'a search field assembled from searchFieldIconStyles and searchFieldInputPlacementStyles — render SearchField from src/ui/SearchField.tsx (the icon, the Input recipe, an accessible `label`, the clear × and its focus return), with a searchField*WrapperStyles constant as `className` for placement',
+		match: (content) => withoutComments(content).match(/\bsearchField(?:Icon|InputPlacement)Styles\b/g),
+		exceptions: {
+			'src/components/Select/VirtualizedSelect.tsx':
+				'the Combobox store owns the value, so the field renders the Input through `render` on ComboboxInput',
+			'src/containers/Articles/admin/ArticleMultiPicker.tsx':
+				'the Combobox store owns the value, so the field renders the Input through `render`',
+			'src/containers/Articles/admin/ArticlePicker.tsx':
+				'the Combobox store owns the value, so the field renders the Input through `render`; its × also clears the picked article',
+			'src/containers/Articles/editor/ArticlePageAssetPicker.tsx':
+				'the Combobox store owns the value, so the field renders the Input through `render`',
+			'src/containers/LlamaAI/components/sidebar/AgenticSidebar.tsx':
+				"the sidebar search's × closes the field and hands focus to the search toggle, and a spinner takes its place while results load; SearchField's × only clears the text",
+			'src/containers/ProDashboard/components/AddChartModal/MetricSentenceBuilder.tsx':
+				'the subject search is a Combobox whose store owns the value, so the field renders the Input through `render`',
+			'src/containers/Raises/Search.tsx':
+				'the Combobox store owns the value, so the field renders the Input through `render`',
+			'src/pages/directory.tsx': 'the Combobox store owns the value, so the field renders the Input through `render`'
+		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
 		id: 'native-select',
 		description:
 			'native <select> — use Select (or SelectWithCombobox for a long or searchable list) from src/components/Select, which owns the trigger, the phone drawer and disabled options',
@@ -1254,11 +1279,22 @@ const RULES = [
 	{
 		id: 'hand-built-card',
 		description:
-			'a card surface drawn by hand (rounded-lg, -xl or -2xl with border-subtle and bg-surface) — render Card from src/ui/Card.tsx with a padding step (none, sm, base, md, strip), or Panel for a titled shell; className keeps only placement',
+			'a card surface drawn by hand (rounded-md, -lg, -xl or -2xl with border-subtle and bg-surface) — render Card from src/ui/Card.tsx with a padding step (none, sm, base, md, strip), or Panel for a titled shell; className keeps only placement',
 		match: (content) =>
-			withoutComments(content).match(/\brounded-(?:lg|xl|2xl) border border-subtle bg-surface(?=[\s"'`])/g),
+			withoutComments(content).match(/\brounded-(?:md|lg|xl|2xl) border border-subtle bg-surface(?=[\s"'`])/g),
 		exceptions: {
 			'src/components/NotFoundPage.tsx': 'the 404 frame keeps a 4px inset around its full-bleed illustration',
+			'src/components/Select/SelectWithCombobox.tsx':
+				'the Only button inside a select row, a control rather than a card',
+			'src/containers/AttestationLanding/index.tsx': 'a venue label pill in the flow diagram',
+			'src/containers/Downloads/index.tsx': 'the API host chip in the downloads hero, set in mono',
+			'src/containers/Downloads/sql/SqlWorkspace.tsx': 'the one-line engine status strip above the editor, 8px by 12px',
+			'src/containers/Downloads/sql/TableChipRail.tsx':
+				'the one-line no-tables strip, 8px by 12px like the engine status strip',
+			'src/containers/LlamaAI/projects/ProjectFilesPanel.tsx':
+				'a connected GitHub repo row with its branch badge and Disconnect control',
+			'src/containers/ProDashboard/components/AddChartModal/UnifiedTableTab/index.tsx':
+				'the one-line note that stands in for the data-view list when every view is shown, 8px by 12px',
 			'src/components/RowLinksWithDropdown/index.tsx': 'a segmented row of links, a control rather than a card',
 			'src/containers/DesignSystem/foundations.tsx': 'a specimen swatch on the dev-only design system page',
 			'src/containers/DesignSystem/shared.tsx': 'the specimen frame on the dev-only design system page',

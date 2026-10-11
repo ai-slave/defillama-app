@@ -44,7 +44,7 @@ async function render(node: ReactNode) {
 async function search(container: HTMLElement, value: string) {
 	const input = container.querySelector('input')!
 	await act(async () => {
-		input.value = value
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }

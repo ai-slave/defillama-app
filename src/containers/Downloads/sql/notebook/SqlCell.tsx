@@ -2,6 +2,7 @@ import MonacoEditor, { loader } from '@monaco-editor/react'
 import type { Ref } from 'react'
 import { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import type { ChartConfig } from '../chartConfig'
 import { DARK_THEME_ID, defineSqlEditorThemes, LIGHT_THEME_ID } from '../editorTheme'
@@ -88,7 +89,7 @@ export function SqlCell({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="overflow-hidden rounded-md border border-subtle bg-surface">
+			<Card padding="none" className="overflow-hidden">
 				<MonacoEditor
 					height={`${editorHeight}px`}
 					language="sql"
@@ -124,7 +125,7 @@ export function SqlCell({
 						guides: { indentation: false, highlightActiveIndentation: false }
 					}}
 				/>
-			</div>
+			</Card>
 
 			{cell.runError ? (
 				<ErrorBanner

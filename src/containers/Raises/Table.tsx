@@ -15,9 +15,9 @@ import { orderedFilteredTableFeatures } from '~/components/Table/features/ordere
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatIsoDate } from '~/utils/dateFormat'
@@ -190,7 +190,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance,
 		columnOrders: raisesColumnOrders
@@ -199,16 +199,14 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 	return (
 		<Panel>
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects…</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search projects"
+					name="search"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search projects…"
+					className={searchFieldWrapperStyles}
+				/>
 				<ExternalLinkButton href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093">
 					Methodology & biases
 				</ExternalLinkButton>

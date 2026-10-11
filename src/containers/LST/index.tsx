@@ -28,13 +28,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanelBody,
-	ChartPanelBodyFallback,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanelBody, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { tabTrackStyles, TabLink } from '~/ui/Tab'
@@ -340,32 +334,32 @@ export function LSTOverview({
 		() => createInflowsTooltipFormatter({ groupBy: renderedGroupBy, valueSymbol: 'ETH' }),
 		[renderedGroupBy]
 	)
-	const selectedBreakdownPresentation = React.useMemo(
+	// The panel branches on this kind, not on `tab` (they always match): the kind narrows the rows each chart draws.
+	const chartPresentation = React.useMemo(
 		() =>
 			renderedActiveChartData.kind === 'breakdown'
-				? buildSelectedPercentageChart({
-						dataset: renderedActiveChartData.data.dataset,
-						charts: renderedActiveChartData.data.charts,
-						selectedCharts: selectedBreakdownTokensSet,
-						missingValuePolicy: 'sum-available'
-					})
-				: null,
-		[renderedActiveChartData, selectedBreakdownTokensSet]
-	)
-	const selectedInflowsPresentation = React.useMemo(
-		() =>
-			renderedActiveChartData.kind === 'inflows'
-				? buildSelectedAdditiveChart({
-						dataset: renderedActiveChartData.data.dataset,
-						charts:
-							renderedGroupBy === 'cumulative'
-								? renderedActiveChartData.data.cumulativeCharts
-								: renderedActiveChartData.data.barCharts,
-						seriesOrder: tokens,
-						selectedCharts: selectedInflowTokensSet
-					})
-				: null,
-		[renderedActiveChartData, renderedGroupBy, selectedInflowTokensSet, tokens]
+				? {
+						kind: 'breakdown' as const,
+						...buildSelectedPercentageChart({
+							dataset: renderedActiveChartData.data.dataset,
+							charts: renderedActiveChartData.data.charts,
+							selectedCharts: selectedBreakdownTokensSet,
+							missingValuePolicy: 'sum-available'
+						})
+					}
+				: {
+						kind: 'inflows' as const,
+						...buildSelectedAdditiveChart({
+							dataset: renderedActiveChartData.data.dataset,
+							charts:
+								renderedGroupBy === 'cumulative'
+									? renderedActiveChartData.data.cumulativeCharts
+									: renderedActiveChartData.data.barCharts,
+							seriesOrder: tokens,
+							selectedCharts: selectedInflowTokensSet
+						})
+					},
+		[renderedActiveChartData, renderedGroupBy, selectedBreakdownTokensSet, selectedInflowTokensSet, tokens]
 	)
 
 	return (
@@ -397,7 +391,7 @@ export function LSTOverview({
 						))}
 					</Ariakit.TabList>
 					<TabPanel value={tab} className="flex flex-col">
-						{tab === 'breakdown' ? (
+						{chartPresentation.kind === 'breakdown' ? (
 							<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
 								<div className="flex flex-col">
 									<ChartPanelToolbar>
@@ -454,26 +448,22 @@ export function LSTOverview({
 											chartInstance={breakdownChartInstance}
 											filename={breakdownExportFilenameBase}
 											title={breakdownExportTitle}
-											csvSource={selectedBreakdownPresentation?.csvSource ?? null}
+											csvSource={chartPresentation.csvSource}
 										/>
 									</ChartPanelToolbar>
 									<ChartPanelBody>
-										{selectedBreakdownPresentation ? (
-											<React.Suspense fallback={<ChartPanelBodyLoading />}>
-												<MultiSeriesChart
-													dataset={selectedBreakdownPresentation.dataset}
-													charts={selectedBreakdownPresentation.charts}
-													csvSource={selectedBreakdownPresentation.csvSource}
-													stacked
-													expandTo100Percent
-													containerClassName={CHART_FILL}
-													valueSymbol="%"
-													onReady={handleBreakdownReady}
-												/>
-											</React.Suspense>
-										) : (
-											<ChartPanelBodyFallback />
-										)}
+										<React.Suspense fallback={<ChartPanelBodyLoading />}>
+											<MultiSeriesChart
+												dataset={chartPresentation.dataset}
+												charts={chartPresentation.charts}
+												csvSource={chartPresentation.csvSource}
+												stacked
+												expandTo100Percent
+												containerClassName={CHART_FILL}
+												valueSymbol="%"
+												onReady={handleBreakdownReady}
+											/>
+										</React.Suspense>
 									</ChartPanelBody>
 								</div>
 							</div>
@@ -522,29 +512,25 @@ export function LSTOverview({
 								</ChartPanelToolbar>
 
 								<ChartPanelBody>
-									{selectedInflowsPresentation ? (
-										<React.Suspense fallback={<ChartPanelBodyLoading />}>
-											<MultiSeriesChart
-												dataset={selectedInflowsPresentation.dataset}
-												charts={selectedInflowsPresentation.charts}
-												csvSource={selectedInflowsPresentation.csvSource}
-												containerClassName={CHART_FILL}
-												groupBy={renderedGroupBy}
-												valueSymbol="ETH"
-												showTotalInTooltip
-												{...(selectedInflowTokens.length > 1
-													? {
-															chartOptions: {
-																tooltip: { formatter: inflowsTooltipFormatter }
-															}
+									<React.Suspense fallback={<ChartPanelBodyLoading />}>
+										<MultiSeriesChart
+											dataset={chartPresentation.dataset}
+											charts={chartPresentation.charts}
+											csvSource={chartPresentation.csvSource}
+											containerClassName={CHART_FILL}
+											groupBy={renderedGroupBy}
+											valueSymbol="ETH"
+											showTotalInTooltip
+											{...(selectedInflowTokens.length > 1
+												? {
+														chartOptions: {
+															tooltip: { formatter: inflowsTooltipFormatter }
 														}
-													: {})}
-												onReady={handleInflowsReady}
-											/>
-										</React.Suspense>
-									) : (
-										<ChartPanelBodyFallback />
-									)}
+													}
+												: {})}
+											onReady={handleInflowsReady}
+										/>
+									</React.Suspense>
 								</ChartPanelBody>
 							</div>
 						)}

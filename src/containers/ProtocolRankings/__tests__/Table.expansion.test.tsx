@@ -110,7 +110,7 @@ const renderTable = async (page: ProtocolRankingInitialPage = initialPage) => {
 
 // Types into the search box and lets its debounce fire without waiting in real time.
 const typeSearch = async (value: string) => {
-	const search = container.querySelector<HTMLInputElement>('input[type="search"]')!
+	const search = container.querySelector<HTMLInputElement>('input[aria-label="Search protocols by name"]')!
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	try {
 		await act(async () => {

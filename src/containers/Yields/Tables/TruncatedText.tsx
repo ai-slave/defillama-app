@@ -3,7 +3,8 @@ import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 const isClipped = (element: HTMLElement) => element.scrollWidth > element.clientWidth
 
-/** One-line cell text that shows its full value in a tooltip only while it is clipped. */
+/** One-line cell text that shows its full value in a tooltip only while it is clipped. It keeps its own Ariakit store
+    rather than `Tooltip`, whose tap always toggles: here a tap on text that fits must show nothing. */
 export function TruncatedText({
 	text,
 	className,

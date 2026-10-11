@@ -28,7 +28,8 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { searchFieldWrapperStyles } from '~/ui/Input'
+import { SearchField } from '~/ui/SearchField'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -289,7 +290,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 	})
 	const leafColumns = instance.getAllLeafColumns()
 	const columnSelect = getColumnSelectState(leafColumns, columnVisibility)
-	const [_projectName, setProjectName] = useTableSearch({
+	const [projectName, setProjectName] = useTableSearch({
 		instance,
 		columnToSearch: 'name'
 	})
@@ -297,16 +298,14 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 	return (
 		<Card padding="none">
 			<TableToolbar>
-				<label className={searchFieldWrapperStyles}>
-					<span className="sr-only">Search projects…</span>
-					<Icon name="search" className={searchFieldIconStyles} />
-					<Input
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects…"
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
+				<SearchField
+					label="Search projects"
+					name="search"
+					value={projectName}
+					onChange={setProjectName}
+					placeholder="Search projects…"
+					className={searchFieldWrapperStyles}
+				/>
 
 				<Button
 					type="button"

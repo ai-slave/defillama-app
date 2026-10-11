@@ -33,7 +33,7 @@ import {
    pays, in its tooltip or beside the value where it has none.
 ---------------------------------------------------------------------------- */
 
-export type ChangeUnit = 'percent' | 'usd' | 'count' | 'pp'
+type ChangeUnit = 'percent' | 'usd' | 'count' | 'pp'
 
 /** A headline's change as data: the container draws the value through Change and the window beside it. */
 export interface ChangeData {

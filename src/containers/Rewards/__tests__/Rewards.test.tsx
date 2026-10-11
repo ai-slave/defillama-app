@@ -215,7 +215,7 @@ describe('Rewards dashboard', () => {
 				/>
 			)
 		)
-		const input = element<HTMLInputElement>('input[type="search"]')
+		const input = element<HTMLInputElement>('input[aria-label="Search protocols or programs"]')
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Example')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
