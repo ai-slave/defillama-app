@@ -4,7 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
@@ -206,9 +206,7 @@ export default function Incentives() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyFallback>
-						<p className="body-sm text-tertiary">No weekly pool data</p>
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>No weekly pool data.</ChartPanelBodyEmpty>
 				)}
 			</ChartPanel>
 

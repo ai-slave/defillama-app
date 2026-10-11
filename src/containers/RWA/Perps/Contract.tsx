@@ -12,7 +12,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
-import { ChartPanelBodyFallback, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -392,13 +392,9 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					/>
 				</Suspense>
 			) : enabledMetrics.length === 0 ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-					Select at least one metric.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>Select at least one metric.</ChartPanelBodyEmpty>
 			) : (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-					No chart data available for the selected metrics.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>No chart data available for the selected metrics.</ChartPanelBodyEmpty>
 			)}
 		</div>
 	)

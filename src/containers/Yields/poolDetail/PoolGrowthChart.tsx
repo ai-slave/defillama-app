@@ -15,11 +15,11 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Change } from '~/ui/Change'
 import {
+	CHART_FILL,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
-	ChartPanelBodyLoading,
-	CHART_FILL
+	ChartPanelBodyLoading
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -712,9 +712,7 @@ export function PoolGrowthChart({
 				) : loading ? (
 					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : !anchoredOn ? (
-					<ChartPanelBodyFallback className="body-sm text-tertiary">
-						No measured redemptions in this range.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>No measured redemptions in this range.</ChartPanelBodyEmpty>
 				) : (
 					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart

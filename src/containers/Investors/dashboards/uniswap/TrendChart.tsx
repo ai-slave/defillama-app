@@ -8,7 +8,7 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -229,9 +229,7 @@ export function SeriesTrendChart({
 			) : isLoading ? (
 				<ChartPanelBodyLoading />
 			) : chartSeries.length === 0 ? (
-				<ChartPanelBodyFallback>
-					<p className="body-sm text-tertiary">No data</p>
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>No data.</ChartPanelBodyEmpty>
 			) : (
 				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart

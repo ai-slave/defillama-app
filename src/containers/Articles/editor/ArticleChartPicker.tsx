@@ -20,7 +20,7 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
@@ -182,11 +182,7 @@ function MultiPreview({
 	const loading = <ChartPanelBodyLoading className="h-[300px] min-h-0" />
 	if (isLoading) return loading
 	if (chartModel.charts.length === 0) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="h-[300px] min-h-0 body-sm text-tertiary">
-				No data available
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty className="h-[300px] min-h-0">No data available.</ChartPanelBodyEmpty>
 	}
 	return (
 		<Suspense fallback={loading}>

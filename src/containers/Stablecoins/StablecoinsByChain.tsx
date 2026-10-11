@@ -57,8 +57,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -663,11 +663,7 @@ function MultiSeriesChartPanel({
 		return <ChartPanelBodyLoading />
 	}
 	if (state.status === 'unavailable' || state.data.charts.length === 0 || state.data.dataset.source.length === 0) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty>Chart unavailable.</ChartPanelBodyEmpty>
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyLoading />}>

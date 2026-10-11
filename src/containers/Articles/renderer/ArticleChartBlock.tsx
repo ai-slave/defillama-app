@@ -11,7 +11,7 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
@@ -201,9 +201,7 @@ export function ArticleChartBlock({
 					) : isLoading ? (
 						<ChartPanelBodyLoading className="h-full" />
 					) : chartModel.charts.length === 0 ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite" className="h-full body-sm text-tertiary">
-							No data available
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyEmpty className="h-full">No data available.</ChartPanelBodyEmpty>
 					) : (
 						<Suspense fallback={<ChartPanelBodyLoading className="h-full" />}>
 							<MultiSeriesChart

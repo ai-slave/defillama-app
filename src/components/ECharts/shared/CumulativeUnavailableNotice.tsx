@@ -1,5 +1,5 @@
 import { Button } from '~/ui/Button'
-import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 
 /**
@@ -22,10 +22,10 @@ export function CumulativeUnavailableNotice({
 	)
 	if (fill) {
 		return (
-			<ChartPanelBodyFallback role="status" className="gap-2 body-sm text-tertiary">
+			<ChartPanelBodyEmpty className="gap-2">
 				<span>Cumulative isn&apos;t available for {metric}.</span>
 				{showDaily}
-			</ChartPanelBodyFallback>
+			</ChartPanelBodyEmpty>
 		)
 	}
 	return (

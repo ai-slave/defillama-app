@@ -9,7 +9,7 @@ import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/ty
 import {
 	CHART_FILL,
 	ChartPanel,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
@@ -324,9 +324,7 @@ export default function Revenue() {
 							/>
 						</Suspense>
 					) : (
-						<ChartPanelBodyFallback>
-							<p className="body-sm text-tertiary">No monthly holder data</p>
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyEmpty>No monthly holder data.</ChartPanelBodyEmpty>
 					)
 				) : holderModel ? (
 					<Suspense fallback={<ChartPanelBodyLoading />}>
@@ -341,9 +339,7 @@ export default function Revenue() {
 						/>
 					</Suspense>
 				) : (
-					<ChartPanelBodyFallback>
-						<p className="body-sm text-tertiary">No daily holder data</p>
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>No daily holder data.</ChartPanelBodyEmpty>
 				)}
 			</ChartPanel>
 

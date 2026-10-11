@@ -16,13 +16,7 @@ import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Change } from '~/ui/Change'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -141,9 +135,7 @@ export function BreakdownSnapshotTable({
 	})
 
 	if (rows.length === 0) {
-		return (
-			<ChartPanelBodyFallback className="body-sm text-secondary">No data for the selection.</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty>No data for the selection.</ChartPanelBodyEmpty>
 	}
 
 	return (

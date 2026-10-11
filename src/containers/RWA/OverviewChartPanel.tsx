@@ -8,8 +8,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	CHART_FILL,
 	ChartPanel,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -567,9 +567,7 @@ export function RWAOverviewChartPanel({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
-								No flow data available.
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyEmpty>No flow data available.</ChartPanelBodyEmpty>
 						)
 					) : chartFailedRead ? (
 						<ChartPanelBodyError retry={chartFailedRead}>Couldn&apos;t load chart data.</ChartPanelBodyError>

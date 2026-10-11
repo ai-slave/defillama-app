@@ -4,7 +4,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { FundingRoundsTable } from '~/containers/PreIPO/FundingRoundsTable'
 import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/IntegrationTables'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyEmpty, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleRow } from '~/ui/EntityTitleRow'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { StaleText } from '~/ui/StaleText'
@@ -107,9 +107,7 @@ export function PreIpoCompanyPage({
 							<ChartPanelToolbar>
 								<h2 className="mr-auto heading-xs">{HISTORY_CHART_TITLE}</h2>
 							</ChartPanelToolbar>
-							<ChartPanelBodyFallback className="body-md text-secondary">
-								No valuation history available
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyEmpty>No valuation history available.</ChartPanelBodyEmpty>
 						</>
 					)}
 				</ChartPanel>

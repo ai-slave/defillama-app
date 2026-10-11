@@ -9,8 +9,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -145,9 +145,7 @@ export function RWASnapshotChartPanel({
 				) : isLoading ? (
 					<ChartPanelBodyLoading />
 				) : deferredSlices.length === 0 ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
-						No data for this view.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>No data for this view.</ChartPanelBodyEmpty>
 				) : (
 					<Suspense fallback={<ChartPanelBodyLoading className={bodyClassName} />}>
 						{view === 'pie' ? (

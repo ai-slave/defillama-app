@@ -24,8 +24,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -135,11 +135,7 @@ function RatesChart({
 	const [isDark] = useDarkModeManager()
 	const spec = buildRatesChart(points, isDark)
 	if (!spec) {
-		return (
-			<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
-				No rate history is available.
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty>No rate history is available.</ChartPanelBodyEmpty>
 	}
 	return (
 		<Suspense fallback={<ChartPanelBodyLoading label="Loading rates chart" />}>

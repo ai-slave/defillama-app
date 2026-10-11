@@ -15,7 +15,7 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -123,9 +123,7 @@ export function DexSpotShareChart({
 					</ChartPanelBody>
 				</React.Suspense>
 			) : (
-				<ChartPanelBodyFallback className="body-sm text-secondary" role="status">
-					DEX and CEX spot volume do not have overlapping data for this chart.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>DEX and CEX spot volume do not have overlapping data for this chart.</ChartPanelBodyEmpty>
 			)}
 		</ChartPanel>
 	)

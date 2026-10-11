@@ -72,12 +72,12 @@ function statuses() {
 
 test('asks for a metric instead of drawing an empty chart when every metric is removed', async () => {
 	await renderPanel(['TVL', 'Stablecoins Mcap'])
-	expect(statuses()).toContain('Pick metrics to plot')
+	expect(statuses()).toContain('Pick metrics to plot.')
 })
 
 test('says the chain has no chart data when it has no metrics to pick', async () => {
 	await renderPanel([])
-	expect(statuses()).toContain('No chart data for this chain')
+	expect(statuses()).toContain('No chart data for this chain.')
 })
 
 test('offers no export or embed while nothing is plotted', async () => {

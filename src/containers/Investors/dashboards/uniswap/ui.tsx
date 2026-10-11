@@ -17,13 +17,7 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
-import {
-	CHART_FILL,
-	ChartPanel,
-	ChartPanelBodyFallback,
-	ChartPanelBodyLoading,
-	ChartPanelToolbar
-} from '~/ui/ChartPanel'
+import { CHART_FILL, ChartPanel, ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
@@ -289,10 +283,10 @@ export function PlaceholderCard({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar leading={<CardTitle title={title} subtitle={subtitle} />} />
-			<ChartPanelBodyFallback className="flex-col gap-2 text-center">
-				<span className="body-sm text-tertiary">Awaiting data</span>
+			<ChartPanelBodyEmpty className="flex-col gap-2">
+				<span>Awaiting data.</span>
 				{note && <code className="rounded-sm bg-page px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
-			</ChartPanelBodyFallback>
+			</ChartPanelBodyEmpty>
 		</ChartPanel>
 	)
 }

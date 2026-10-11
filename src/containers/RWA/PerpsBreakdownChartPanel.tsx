@@ -7,8 +7,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import {
 	CHART_FILL,
 	ChartPanel,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -238,9 +238,7 @@ export function RWAPerpsBreakdownChartPanel({
 			) : isLoading ? (
 				<ChartPanelBodyLoading />
 			) : deferredChart.isEmpty ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="text-center body-sm text-tertiary">
-					No data for this view.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>No data for this view.</ChartPanelBodyEmpty>
 			) : (
 				<Suspense fallback={<ChartPanelBodyLoading />}>
 					<MultiSeriesChart

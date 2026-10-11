@@ -21,8 +21,8 @@ import { Card } from '~/ui/Card'
 import {
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -613,17 +613,13 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						rangeHallmarks={null}
 					/>
 				) : (
-					<ChartPanelBodyFallback
-						role="status"
-						aria-live="polite"
-						className="max-w-sm text-center body-sm text-tertiary"
-					>
+					<ChartPanelBodyEmpty className="max-w-sm">
 						{chartBody === 'unavailable'
 							? 'Chart unavailable for this token right now.'
 							: chartBody === 'select-metrics'
 								? 'Select metrics to chart.'
 								: 'Chart unavailable without CoinGecko market data.'}
-					</ChartPanelBodyFallback>
+					</ChartPanelBodyEmpty>
 				)}
 			</ChartPanelBody>
 		</>

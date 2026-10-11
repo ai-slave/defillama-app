@@ -13,7 +13,7 @@ import {
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
@@ -213,9 +213,7 @@ export function ApiUsageBreakdown({ usageStatsQuery }: { usageStatsQuery: UseQue
 			) : usageStatsQuery.isLoading ? (
 				<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />
 			) : sortedStats.length === 0 ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="min-h-[200px] body-sm text-tertiary">
-					No usage data yet.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty className="min-h-[200px]">No usage data yet.</ChartPanelBodyEmpty>
 			) : (
 				<Suspense fallback={<ChartPanelBodyLoading label="Loading usage stats" className="min-h-[200px]" />}>
 					<MultiSeriesChart

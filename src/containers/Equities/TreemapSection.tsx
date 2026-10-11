@@ -7,7 +7,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
@@ -220,9 +220,9 @@ export function EquitiesTreemapSection({
 			) : data == null ? (
 				<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />
 			) : rankedRows.length === 0 ? (
-				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: CHART_HEIGHT }}>
-					No companies match the current filters
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty style={{ height: CHART_HEIGHT }}>
+					No companies match the current filters.
+				</ChartPanelBodyEmpty>
 			) : (
 				<>
 					<Suspense fallback={<ChartPanelBodyLoading style={{ height: CHART_HEIGHT }} />}>

@@ -46,8 +46,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import {
 	ChartPanel,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -662,11 +662,7 @@ function SelectedAssetChart({
 		return <ChartPanelBodyLoading className="w-full" />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full body-sm text-tertiary">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty className="w-full">Chart unavailable.</ChartPanelBodyEmpty>
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyLoading className="w-full" />}>

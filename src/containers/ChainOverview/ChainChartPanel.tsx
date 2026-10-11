@@ -18,7 +18,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import {
 	ChartPanel,
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -298,9 +298,9 @@ export function ChainChartPanel({
 				{loadingCharts.length > 0 ? (
 					chartLoading
 				) : toggledCharts.length === 0 ? (
-					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
-						{charts.length > 0 ? 'Pick metrics to plot' : 'No chart data for this chain'}
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>
+						{charts.length > 0 ? 'Pick metrics to plot.' : 'No chart data for this chain.'}
+					</ChartPanelBodyEmpty>
 				) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
 					<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={() => updateGroupBy('daily')} />
 				) : (

@@ -20,8 +20,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -497,9 +497,7 @@ export function PoolApyChart({
 				) : loading ? (
 					<ChartPanelBodyLoading label={`Loading ${range} history`} />
 				) : !hasData ? (
-					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
-						No data in this range for the selected series and window.
-					</ChartPanelBodyFallback>
+					<ChartPanelBodyEmpty>No data in this range for the selected series and window.</ChartPanelBodyEmpty>
 				) : (
 					<Suspense fallback={<ChartPanelBodyLoading />}>
 						<MultiSeriesChart

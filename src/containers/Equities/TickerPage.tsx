@@ -13,8 +13,8 @@ import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import {
 	ChartPanel,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -415,9 +415,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									onReady={handlePriceChartReady}
 								/>
 							) : (
-								<ChartPanelBodyFallback className="body-sm text-tertiary" role="status">
-									No price history available for this timeframe.
-								</ChartPanelBodyFallback>
+								<ChartPanelBodyEmpty>No price history available for this timeframe.</ChartPanelBodyEmpty>
 							)}
 						</Suspense>
 					</ChartPanel>

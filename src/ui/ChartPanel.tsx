@@ -36,6 +36,12 @@ import { LoadingIndicator, RetryButton } from './Status'
    check-status-parts.ts refuses a fallback that renders a childless
    ChartPanelBodyFallback or div.
 
+   A chart with nothing to plot (no data in the range, no metric picked, a
+   filter that matches nothing) renders ChartPanelBodyEmpty with a sentence
+   naming what is missing. It announces itself, so a reader who changes a
+   range or filter hears the chart empty. ChartPanelBodyFallback is only the
+   box; check-status-parts.ts refuses text inside it.
+
    A failed read renders ChartPanelBodyError where the chart would be: the
    red message and, when the chart's data comes from a query in the browser,
    that query's Try again (`retry`). Check `queryReadFailed` (nothing to draw
@@ -126,6 +132,28 @@ export function ChartPanelBodyLoading({
 	return (
 		<ChartPanelBodyFallback role="status" aria-live="polite" className={className} style={style}>
 			<LoadingIndicator label={label} />
+		</ChartPanelBodyFallback>
+	)
+}
+
+/** Nothing to plot, in the body's place: one sentence naming what is missing ("No data in this range."), announced.
+    `className` and `style` take the slot's size where it is smaller than the 360px default. */
+export function ChartPanelBodyEmpty({
+	children,
+	className,
+	style
+}: {
+	children: ReactNode
+	className?: string
+	style?: CSSProperties
+}) {
+	return (
+		<ChartPanelBodyFallback
+			role="status"
+			className={`p-4 text-center body-sm text-tertiary ${className ?? ''}`.trim()}
+			style={style}
+		>
+			{children}
 		</ChartPanelBodyFallback>
 	)
 }

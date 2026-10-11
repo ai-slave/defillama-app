@@ -44,8 +44,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -463,11 +463,7 @@ function SelectedChainsChart({
 		return <ChartPanelBodyLoading />
 	}
 	if (!data || data.charts.length === 0 || data.dataset.source.length === 0) {
-		return (
-			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
-				Chart unavailable
-			</ChartPanelBodyFallback>
-		)
+		return <ChartPanelBodyEmpty>Chart unavailable.</ChartPanelBodyEmpty>
 	}
 	return (
 		<React.Suspense fallback={<ChartPanelBodyLoading />}>

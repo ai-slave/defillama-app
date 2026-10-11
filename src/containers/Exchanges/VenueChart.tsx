@@ -8,8 +8,8 @@ import {
 	CHART_FILL,
 	ChartPanel,
 	ChartPanelBody,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
@@ -242,9 +242,7 @@ function VenueChartView({
 				updatedAt={chart.lastUpdated}
 				showGlobalDataNotice={showGlobalDataNotice}
 			>
-				<ChartPanelBodyFallback className="body-sm text-tertiary">
-					No time-series data is available for this venue.
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty>No time-series data is available for this venue.</ChartPanelBodyEmpty>
 			</VenueChartFrame>
 		)
 	}

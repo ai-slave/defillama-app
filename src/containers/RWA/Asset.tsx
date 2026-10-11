@@ -19,8 +19,8 @@ import { Change } from '~/ui/Change'
 import {
 	CHART_FILL,
 	ChartPanel,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyError,
-	ChartPanelBodyFallback,
 	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
@@ -579,9 +579,7 @@ export function RWAAssetPage({
 									/>
 								</Suspense>
 							) : (
-								<ChartPanelBodyFallback className="body-sm text-tertiary">
-									No flow data available.
-								</ChartPanelBodyFallback>
+								<ChartPanelBodyEmpty>No flow data available.</ChartPanelBodyEmpty>
 							)
 						) : assetChartDataset ? (
 							<Suspense fallback={<ChartPanelBodyLoading />}>
@@ -594,9 +592,7 @@ export function RWAAssetPage({
 								/>
 							</Suspense>
 						) : (
-							<ChartPanelBodyFallback className="body-sm text-tertiary">
-								No market data available.
-							</ChartPanelBodyFallback>
+							<ChartPanelBodyEmpty>No market data available.</ChartPanelBodyEmpty>
 						)}
 					</ChartPanel>
 					<Card padding="sm" className="flex flex-col gap-6 xl:hidden">

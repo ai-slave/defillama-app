@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Skeleton } from '~/ui/Skeleton'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -64,9 +64,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 								) : item.isLoading ? (
 									<ChartPanelBodyLoading label="Loading chart data" className="size-full min-h-0" />
 								) : (
-									<ChartPanelBodyFallback className="size-full min-h-0 body-sm text-tertiary">
-										No data
-									</ChartPanelBodyFallback>
+									<ChartPanelBodyEmpty className="size-full min-h-0">No data.</ChartPanelBodyEmpty>
 								)}
 							</div>
 						</div>

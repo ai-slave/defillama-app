@@ -13,7 +13,7 @@ import { Panel } from './Panel'
    | ----------------------------------------- | ------------------------------------------- |
    | A whole panel is the state                | PanelStatus, PanelLoadingStatus             |
    | Inside a rendered Panel or Card body      | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
-   | A chart's slot: empty or a short note     | ChartPanelBodyFallback (./ChartPanel.tsx)   |
+   | A chart's slot: nothing to plot           | ChartPanelBodyEmpty (./ChartPanel.tsx)      |
    | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
    | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
    | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
@@ -291,7 +291,7 @@ const EMPTY_STATE_SIZE = {
 /** Where content would be and there is none: nothing created yet (no dashboards, no API key), nothing matched with a
     way back (Clear filters), a choice to make first (pick a token), or a locked feature (Upgrade). Not an error, which
     keeps PanelStatus or InlineStatus so it reads as broken, and not a quick no-match inside a table, list or popover,
-    which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus / ChartPanelBodyFallback.
+    which is NoResults. A one-line note inside a chart or panel body stays SurfaceBodyStatus / ChartPanelBodyEmpty.
     `md` sits inside a Panel, Card or dialog body and takes sm buttons; `lg` fills a page or tab and takes md buttons,
     with at most one primary. The icon sits in a neutral disc. `framed` draws a dashed well where a card, a grid of
     cards or a list would sit with no surface of its own (the page, a canvas dialog body); inside the Panel or Card that

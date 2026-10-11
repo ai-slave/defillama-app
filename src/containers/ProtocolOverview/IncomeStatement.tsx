@@ -16,7 +16,7 @@ import { Button } from '~/ui/Button'
 import { Change } from '~/ui/Change'
 import {
 	ChartPanelBody,
-	ChartPanelBodyFallback,
+	ChartPanelBodyEmpty,
 	ChartPanelBodyLoading,
 	ChartPanelTitle,
 	ChartPanelToolbar
@@ -824,9 +824,9 @@ export function IncomeStatement({
 							</ChartPanelBody>
 						</>
 					) : (
-						<ChartPanelBodyFallback role="status" className="min-h-[200px] body-sm text-tertiary">
-							No data available for the selected period
-						</ChartPanelBodyFallback>
+						<ChartPanelBodyEmpty className="min-h-[200px]">
+							No data available for the selected period.
+						</ChartPanelBodyEmpty>
 					)}
 				</div>
 			) : null}

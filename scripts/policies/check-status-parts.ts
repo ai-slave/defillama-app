@@ -47,6 +47,8 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
  * 11. hand-built-chart-loading: a ChartPanelBodyFallback whose only child is a LoadingIndicator. That is
  *    ChartPanelBodyLoading, which also announces it.
+ * 12. hand-built-chart-note: anything but a loading indicator inside a ChartPanelBodyFallback. A chart with nothing to plot is
+ *    ChartPanelBodyEmpty, which announces it in the shared look; the bare box is only for sizing.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
  * matches fails, so the list never outlives the code it excuses.
@@ -61,6 +63,7 @@ type RuleId =
 	| 'lone-spinner'
 	| 'blank-fallback'
 	| 'hand-built-chart-loading'
+	| 'hand-built-chart-note'
 	| 'error-box'
 	| 'alert-line'
 	| 'retry-gating'
@@ -78,6 +81,8 @@ const MESSAGES: Record<RuleId, string> = {
 	'blank-fallback':
 		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (ChartPanelBodyLoading, ChartPanelExportShellLoading, SurfaceBodyLoadingStatus, PanelLoadingStatus, ProCardLoading)',
 	'hand-built-chart-loading': 'wraps a LoadingIndicator in ChartPanelBodyFallback; use ChartPanelBodyLoading',
+	'hand-built-chart-note':
+		'puts a note inside ChartPanelBodyFallback; use ChartPanelBodyEmpty, or ChartPanelBodyError for a failure',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
 	'alert-line': 'hand-builds an alert line; use ErrorLine or InlineStatus',
 	'retry-gating':
@@ -121,6 +126,10 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 			'the sparkline under a metric that is already on screen; a loading line there reads as the metric still loading'
 	},
 	'hand-built-chart-loading': {},
+	'hand-built-chart-note': {
+		'src/containers/LlamaAI/components/charts/ChartRenderer.tsx':
+			"a chart that failed to draw shows the error notice box, like the chat's other failures"
+	},
 	'error-box': {
 		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-coloured on purpose',
 		'src/containers/Yields/poolDetail/PoolDetailView.tsx': "the exploit warning banner on a hacked pool's page"
@@ -706,6 +715,8 @@ export function scanSource(
 					tagName(children[0]) === 'LoadingIndicator'
 				) {
 					report('hand-built-chart-loading', opening)
+				} else if (children.length > 0) {
+					report('hand-built-chart-note', opening)
 				}
 			}
 
@@ -1207,6 +1218,23 @@ if (process.argv.includes('--self-test')) {
 			name: 'note in a chart body box',
 			source:
 				'export const F = () => <ChartPanelBodyFallback className="body-sm text-tertiary">No data</ChartPanelBodyFallback>',
+			rule: 'hand-built-chart-note'
+		},
+		{
+			name: 'computed note in a chart body box',
+			source:
+				"export const F = () => <ChartPanelBodyFallback role=\"status\">{empty ? 'Pick metrics to plot' : 'No data'}</ChartPanelBodyFallback>",
+			rule: 'hand-built-chart-note'
+		},
+		{
+			name: 'paragraph note in a chart body box',
+			source:
+				'export const F = () => <ChartPanelBodyFallback><p className="body-sm text-tertiary">No data</p></ChartPanelBodyFallback>',
+			rule: 'hand-built-chart-note'
+		},
+		{
+			name: 'empty note through the part',
+			source: 'export const F = () => <ChartPanelBodyEmpty>No data in this range.</ChartPanelBodyEmpty>',
 			rule: null
 		}
 	]

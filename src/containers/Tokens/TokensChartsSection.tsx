@@ -8,7 +8,7 @@ import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/
 import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { ChartPanelBodyError, ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
+import { ChartPanelBodyEmpty, ChartPanelBodyError, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { queryReadFailed } from '~/utils/query'
@@ -193,9 +193,7 @@ export function TokensChartsSection({
 			) : data == null ? (
 				<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />
 			) : !hasRows ? (
-				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: MAP_HEIGHT }}>
-					No tokens match the current filters
-				</ChartPanelBodyFallback>
+				<ChartPanelBodyEmpty style={{ height: MAP_HEIGHT }}>No tokens match the current filters.</ChartPanelBodyEmpty>
 			) : treemap ? (
 				<>
 					<React.Suspense fallback={<ChartPanelBodyLoading style={{ height: MAP_HEIGHT }} />}>
