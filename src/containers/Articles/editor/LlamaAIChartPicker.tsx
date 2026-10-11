@@ -11,9 +11,8 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { queryReadFailed } from '~/utils/query'
 import { createLlamaAIChartAttrs } from '../llamaaiChart'
@@ -204,7 +203,7 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 										</span>
 										{inserting ? (
 											<span className="flex shrink-0 items-center gap-1 body-sm text-secondary">
-												<LoadingSpinner size={14} />
+												<BusyGlyph decorative size={12} />
 												Inserting…
 											</span>
 										) : null}

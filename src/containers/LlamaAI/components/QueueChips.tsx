@@ -8,8 +8,7 @@ import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { focusNeighbourOnLeave, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Textarea } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { ErrorLine } from '~/ui/Status'
+import { BusyGlyph, ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 const REASON_COPY: Record<QueueNotSentReason, string> = {
@@ -231,8 +230,8 @@ export function QueueChips({
 						return (
 							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={ROW}>
 								{adding ? (
-									<span aria-label="Adding to queue" role="status" className="shrink-0 text-tertiary">
-										<LoadingSpinner size={14} />
+									<span className="shrink-0 text-tertiary">
+										<BusyGlyph label="Adding to queue" size={14} hideLabel />
 									</span>
 								) : (
 									<Icon
@@ -291,8 +290,8 @@ export function QueueChips({
 					if (item.state === 'firing') {
 						return (
 							<li key={rowKey} data-row ref={focusNeighbourRowOnLeave} tabIndex={-1} className={ROW}>
-								<span aria-label="Sending" role="status" className="shrink-0 text-tertiary">
-									<LoadingSpinner size={14} />
+								<span className="shrink-0 text-tertiary">
+									<BusyGlyph label="Sending" size={14} hideLabel />
 								</span>
 								<p className="m-0 min-w-0 flex-1 truncate body-sm text-secondary">{message}</p>
 							</li>
@@ -327,7 +326,7 @@ export function QueueChips({
 									</>
 								) : (
 									<>
-										<LoadingSpinner size={14} />
+										<BusyGlyph decorative size={14} />
 										<div className="min-w-0 flex-1">
 											<p className="m-0 truncate body-sm text-primary">{message}</p>
 											<p className="m-0 body-sm text-tertiary">Being edited</p>

@@ -33,9 +33,8 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { ErrorLine, InlineStatus } from '~/ui/Status'
+import { BusyGlyph, ErrorLine, InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
@@ -341,7 +340,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						accessibleWhenDisabled
 					>
 						{running ? (
-							<LoadingSpinner size={14} />
+							<BusyGlyph decorative size={14} />
 						) : (
 							<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 								<path d="M8 5v14l11-7z" />
@@ -538,7 +537,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 					disabled={controls.save.disabled}
 					accessibleWhenDisabled
 				>
-					{savePending ? <LoadingSpinner size={14} /> : null}
+					{savePending ? <BusyGlyph decorative size={14} /> : null}
 					{controls.save.label}
 				</Button>
 			</DialogFooter>

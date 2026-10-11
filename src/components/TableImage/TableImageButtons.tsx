@@ -11,9 +11,9 @@ import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverMenuItemStyles, popoverMultiSelectCheckStyles } from '~/ui/Popover'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
@@ -163,7 +163,7 @@ export function TableImageButtons({
 					}
 				>
 					{isLoading ? (
-						<LoadingSpinner size={14} />
+						<BusyGlyph decorative size={14} />
 					) : (
 						(triggerContent ?? <Icon name="download-paper" className="size-3.5" />)
 					)}

@@ -4,7 +4,7 @@ import ScatterChart from '~/components/ECharts/ScatterChart'
 import type { ScatterChartPoint, ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { resolveUtrGradeOrLabel, type UtrGradeLabel, utrGradeColor } from './gradeBands'
 import { areMatrixIconsReady, type MatrixIconMap } from './performanceMatrixIcons'
@@ -134,18 +134,6 @@ function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
 	)
 }
 
-function MatrixLoadingState() {
-	return (
-		<div
-			role="status"
-			aria-live="polite"
-			className="pointer-events-none absolute inset-0 flex items-center justify-center"
-		>
-			<LoadingIndicator label="Loading chart" />
-		</div>
-	)
-}
-
 export function PerformanceMatrix({
 	rows,
 	grading,
@@ -206,7 +194,7 @@ export function PerformanceMatrix({
 								/>
 							</div>
 						) : (
-							<MatrixLoadingState />
+							<SurfaceBodyLoadingStatus label="Loading chart" className="absolute inset-0 min-h-0" />
 						)}
 					</div>
 					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 label-xs text-tertiary">

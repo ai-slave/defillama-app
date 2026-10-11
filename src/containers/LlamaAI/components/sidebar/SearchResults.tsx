@@ -3,9 +3,9 @@ import type { SearchResult } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ListRow } from '~/ui/ListRow'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 
 export const SearchResults = memo(function SearchResults({
@@ -41,11 +41,7 @@ export const SearchResults = memo(function SearchResults({
 	}
 
 	if (isSearching && results.length === 0) {
-		return (
-			<div role="status" aria-live="polite" className="flex items-center justify-center p-6">
-				<LoadingIndicator label="Searching" />
-			</div>
-		)
+		return <ListLoading label="Searching" />
 	}
 
 	if (!isSearching && results.length === 0 && query.trim()) {
@@ -88,8 +84,8 @@ export const SearchResults = memo(function SearchResults({
 				</Card>
 			))}
 			{isSearching ? (
-				<div role="status" aria-live="polite" className="flex items-center justify-center py-2">
-					<LoadingIndicator label="Loading more" />
+				<div className="flex items-center justify-center py-2">
+					<InlineLoading label="Loading more results" />
 				</div>
 			) : null}
 		</div>

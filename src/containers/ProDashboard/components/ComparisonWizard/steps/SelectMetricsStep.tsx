@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ListLoading } from '~/ui/NoResults'
+import { InlineStatus } from '~/ui/Status'
 import { useAppMetadata } from '../../../AppMetadataContext'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import { MetricCard } from '../components/MetricCard'
@@ -33,9 +34,7 @@ export function SelectMetricsStep() {
 			</div>
 
 			{metadataLoading ? (
-				<div role="status" aria-live="polite" className="flex justify-center py-6">
-					<LoadingIndicator label="Checking metric availability" />
-				</div>
+				<ListLoading label="Checking metric availability" />
 			) : metadataError ? (
 				<InlineStatus
 					variant="error"

@@ -24,8 +24,9 @@ import { passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { ListLoading } from '~/ui/NoResults'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
 const LAST_TARGET_KEY = 'llamaai-last-article-target'
@@ -324,9 +325,7 @@ function AddToArticleForm({
 										Couldn&apos;t load your drafts.
 									</InlineStatus>
 								) : drafts.isLoading ? (
-									<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-										<LoadingIndicator label="Loading drafts" />
-									</div>
+									<ListLoading label="Loading drafts" />
 								) : filtered.length === 0 ? (
 									<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
 										{search.trim() ? 'No matches found' : 'No drafts yet'}

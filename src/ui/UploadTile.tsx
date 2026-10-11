@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef } from 'react'
 import { Icon, type IIcon } from './Icon'
-import { LoadingSpinner } from './Loaders'
+import { LoadingSpinner } from './internal/Loaders'
 
 /* ----------------------------------------------------------------------------
    UploadTile — the dashed drop target that picks a file (cover image, avatar,

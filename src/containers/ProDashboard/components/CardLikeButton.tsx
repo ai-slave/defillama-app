@@ -1,6 +1,6 @@
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
 
@@ -39,7 +39,7 @@ export function CardLikeButton({
 			}
 		>
 			{isLiking ? (
-				<LoadingSpinner size={14} />
+				<BusyGlyph decorative size={14} />
 			) : (
 				<Icon name="star" className={isLiked ? 'size-3.5 fill-current text-warning' : 'size-3.5 fill-none'} />
 			)}

@@ -16,7 +16,6 @@ import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
 import { ListRow } from '~/ui/ListRow'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MetricChip, metricOptionChipStyles, metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
 import { OptionTile } from '~/ui/OptionTile'
@@ -30,8 +29,9 @@ import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import {
+	BusyGlyph,
+	InlineLoading,
 	InlineStatus,
-	LoadingIndicator,
 	PanelLoadingStatus,
 	PanelStatus,
 	SurfaceBodyLoadingStatus,
@@ -895,7 +895,7 @@ export function FeedbackGroup() {
 			<Example
 				wide
 				name="PanelLoadingStatus / PanelStatus"
-				note="A whole panel is the state. Loading draws the animated LoadingIndicator; the text statuses take only empty and error."
+				note="A whole panel is the state. Loading draws the animated indicator; the text statuses take only empty and error."
 			>
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
 					<PanelLoadingStatus className="min-h-[140px]" />
@@ -923,13 +923,17 @@ export function FeedbackGroup() {
 				</div>
 			</Example>
 			<Example
-				name="LoadingIndicator / LoadingSpinner"
-				note="Quiet loading copy; the spinner only inside a busy control."
+				name="InlineLoading / BusyGlyph"
+				note="Loading inline in a row or field; a row, chip or line busy with its work, its label shown or kept for screen readers."
 			>
 				<Row>
-					<LoadingIndicator />
-					<LoadingIndicator label="Loading chats" />
-					<LoadingSpinner size={14} />
+					<InlineLoading label="Loading chats" />
+					<span className="body-sm text-secondary">
+						<BusyGlyph label="Saving…" size={12} />
+					</span>
+					<span className="text-tertiary">
+						<BusyGlyph label="Adding to queue" size={14} hideLabel />
+					</span>
 				</Row>
 			</Example>
 			<Example

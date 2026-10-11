@@ -17,7 +17,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
-import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, InlineLoading, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../../services/protocolTvl'
@@ -288,7 +288,7 @@ export function AdvancedTvlChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <LoadingIndicator label="Loading selected chart" /> : null}
+				{hasProtocolSelection && isLoading ? <InlineLoading label="Loading selected chart" /> : null}
 			</div>
 
 			<div className="overflow-hidden rounded-lg border border-subtle">

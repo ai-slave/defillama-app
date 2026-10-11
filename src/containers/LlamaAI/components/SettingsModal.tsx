@@ -38,7 +38,7 @@ import { focusNeighbourOnLeave, neighbourRowControl, showFieldErrors, takeLostFo
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { Skeleton } from '~/ui/Skeleton'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -402,10 +402,10 @@ export const SettingsModal = memo(function SettingsModal({
 			mobileNotificationRow = (
 				<>
 					<RowDivider />
-					<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
+					<div className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<p className="m-0 label-md text-primary">Mobile notifications</p>
-							<LoadingIndicator label="Loading your preference" />
+							<InlineLoading label="Loading your preference" />
 						</div>
 					</div>
 				</>
@@ -929,8 +929,8 @@ export const SettingsModal = memo(function SettingsModal({
 												{!skillsFailed || (agentHome.skills.data?.active.length ?? 0) > 0 ? (
 													<SettingsCard>
 														{agentHome.skills.isLoading ? (
-															<div role="status" aria-live="polite" className="px-4 py-3.5">
-																<LoadingIndicator />
+															<div className="px-4 py-3.5">
+																<InlineLoading label="Loading skills" />
 															</div>
 														) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
 															!skillsFailed ? (
@@ -1120,8 +1120,8 @@ function MemoryList({
 	return (
 		<SettingsCard>
 			{isLoading ? (
-				<div role="status" aria-live="polite" className="px-4 py-3.5">
-					<LoadingIndicator />
+				<div className="px-4 py-3.5">
+					<InlineLoading label="Loading memories" />
 				</div>
 			) : (entries?.length ?? 0) === 0 ? (
 				<p className="px-4 py-3.5 body-sm text-secondary">{emptyText}</p>

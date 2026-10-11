@@ -1,8 +1,6 @@
 {
 	"core": {
 		"hex-in-classname": 0,
-		"dark-hex-variant": 0,
-		"arbitrary-font-size": 0,
 		"arbitrary-spacing": 0,
 		"explicit-thin-scrollbar": 0,
 		"ungated-hover": 0,
@@ -15,7 +13,6 @@
 		"disabled-opacity": 0,
 		"neutral-hover-on-hued-control": 0,
 		"fixed-dark-fill": 0,
-		"arbitrary-color-function": 0,
 		"arbitrary-shadow": 0,
 		"stock-shadow": 0,
 		"product-utility-leak": 0,
@@ -55,13 +52,10 @@
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
 		"raw-mono-family": 0,
-		"raw-type-pair": 0,
 		"raw-type-size": 0
 	},
 	"product": {
 		"hex-in-classname": 0,
-		"dark-hex-variant": 0,
-		"arbitrary-font-size": 0,
 		"arbitrary-spacing": 0,
 		"explicit-thin-scrollbar": 0,
 		"ungated-hover": 0,
@@ -74,7 +68,6 @@
 		"disabled-opacity": 0,
 		"neutral-hover-on-hued-control": 0,
 		"fixed-dark-fill": 0,
-		"arbitrary-color-function": 0,
 		"arbitrary-shadow": 0,
 		"stock-shadow": 0,
 		"product-utility-leak": 0,
@@ -114,7 +107,6 @@
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
 		"raw-mono-family": 0,
-		"raw-type-pair": 0,
 		"raw-type-size": 0
 	}
 }

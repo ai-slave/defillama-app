@@ -1,5 +1,5 @@
 import { TablePager } from '~/components/Table/TablePager'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 
 export function TokenDeferredPaginationControls({
@@ -22,9 +22,9 @@ export function TokenDeferredPaginationControls({
 		<div className="flex flex-wrap items-center justify-between gap-2">
 			<TablePager pageIndex={0} pageCount={pageCount} onPageChange={onRequestPage} disabled={isLoading} />
 			{isLoading ? (
-				<div className="flex items-center gap-2 label-sm text-secondary">
-					<LoadingSpinner size={12} />
-					<span>Loading full table…</span>
+				<div className="label-sm text-secondary">
+					{/* The table's loading overlay announces the same wait. */}
+					<BusyGlyph label="Loading full table…" size={12} insideLiveRegion />
 				</div>
 			) : null}
 		</div>

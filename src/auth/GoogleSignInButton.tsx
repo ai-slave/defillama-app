@@ -6,8 +6,7 @@ import { authProviderButtonStyles, authProviderIconSlotStyles, LastUsedCorner } 
 import { GOOGLE_WEB_CLIENT_ID } from '~/constants'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { InlineStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 
 type CodeResponse = { code?: string; error?: string }
 type CodeClient = { requestCode: () => void }
@@ -218,7 +217,7 @@ export function GoogleSignInButton({
 			>
 				<span className={authProviderIconSlotStyles}>
 					{busy || loadStatus === 'loading' ? (
-						<LoadingSpinner size={14} />
+						<BusyGlyph decorative size={14} />
 					) : (
 						<Icon name="google" className="size-4.5" />
 					)}

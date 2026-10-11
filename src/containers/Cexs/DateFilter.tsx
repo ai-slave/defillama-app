@@ -13,8 +13,8 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 
 dayjs.extend(utc)
 
@@ -113,7 +113,7 @@ export function DateFilter({
 				>
 					{isLoading ? (
 						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-medium bg-surface shadow-raised">
-							<LoadingSpinner size={12} />
+							<BusyGlyph decorative size={12} />
 							<span className="sr-only">Loading custom range inflows</span>
 						</span>
 					) : null}

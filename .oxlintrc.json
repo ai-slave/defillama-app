@@ -43,12 +43,20 @@
 						"name": "@tanstack/react-table/static-functions",
 						"importNames": ["column_getIsVisible"],
 						"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+					},
+					{
+						"name": "next/error",
+						"message": "next/error draws its own unstyled page; render EmptyState size=\"lg\" for a not found."
 					}
 				],
 				"patterns": [
 					{
 						"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
 						"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+					},
+					{
+						"group": ["~/ui/internal/*", "**/ui/internal/*"],
+						"message": "src/ui/internal holds the pieces src/ui parts are built from; use the finished part for the job (design.md, Which component for which job)."
 					}
 				]
 			}
@@ -315,12 +323,20 @@
 								"name": "@tanstack/react-table/static-functions",
 								"importNames": ["column_getIsVisible"],
 								"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+							},
+							{
+								"name": "next/error",
+								"message": "next/error draws its own unstyled page; render EmptyState size=\"lg\" for a not found."
 							}
 						],
 						"patterns": [
 							{
 								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
 								"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+							},
+							{
+								"group": ["~/ui/internal/*", "**/ui/internal/*"],
+								"message": "src/ui/internal holds the pieces src/ui parts are built from; use the finished part for the job (design.md, Which component for which job)."
 							},
 							{
 								"group": ["~/server/tablePages/*.server", "~/server/tablePages/**/*.server"],
@@ -350,12 +366,20 @@
 								"name": "@tanstack/react-table/static-functions",
 								"importNames": ["column_getIsVisible"],
 								"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+							},
+							{
+								"name": "next/error",
+								"message": "next/error draws its own unstyled page; render EmptyState size=\"lg\" for a not found."
 							}
 						],
 						"patterns": [
 							{
 								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
 								"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+							},
+							{
+								"group": ["~/ui/internal/*", "**/ui/internal/*"],
+								"message": "src/ui/internal holds the pieces src/ui parts are built from; use the finished part for the job (design.md, Which component for which job)."
 							},
 							{
 								"group": ["~/server/**", "~/containers/**"],

@@ -5,11 +5,11 @@ import { startTransition, useDeferredValue, useMemo, useRef, useState } from 're
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles, popoverScrollAreaStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
 import { MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 interface IProps {
@@ -123,7 +123,7 @@ function Item({ label, to }: { label: string; to: string }) {
 			className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
 		>
 			<span>{label}</span>
-			{loading ? <LoadingSpinner size={12} /> : null}
+			{loading ? <BusyGlyph decorative size={12} /> : null}
 		</Ariakit.MenuItem>
 	)
 }

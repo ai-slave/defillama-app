@@ -11,7 +11,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { queryReadFailed } from '~/utils/query'
 import {
@@ -219,9 +219,7 @@ function GitHubConnectForm({
 							onRetry={() => void installs.refetch()}
 						/>
 					) : installs.isLoading ? (
-						<div role="status" aria-live="polite">
-							<LoadingIndicator label="Loading installations" />
-						</div>
+						<InlineLoading label="Loading installations" />
 					) : needsInstall ? (
 						<p className="body-sm text-secondary">
 							No GitHub apps installed yet. Install LlamaAI Workspace on your GitHub account to grant repo access.
@@ -269,9 +267,7 @@ function GitHubConnectForm({
 											onRetry={() => void repos.refetch()}
 										/>
 									) : repos.isLoading ? (
-										<div role="status" aria-live="polite">
-											<LoadingIndicator label="Loading repositories" />
-										</div>
+										<InlineLoading label="Loading repositories" />
 									) : (
 										<Ariakit.ComboboxProvider
 											inputValue={repoQuery ?? selectedRepo}
@@ -325,9 +321,7 @@ function GitHubConnectForm({
 											onRetry={() => void branches.refetch()}
 										/>
 									) : branches.isLoading ? (
-										<div role="status" aria-live="polite">
-											<LoadingIndicator label="Loading branches" />
-										</div>
+										<InlineLoading label="Loading branches" />
 									) : (
 										<Ariakit.ComboboxProvider
 											inputValue={branchQuery ?? effectiveBranch}

@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { downloadBlob } from '~/utils/download'
@@ -135,7 +135,7 @@ function ImagePreviewContent({
 					className={TOOLBAR_BUTTON}
 				>
 					{copy.isPending ? (
-						<LoadingSpinner size={14} />
+						<BusyGlyph decorative size={14} />
 					) : (
 						<Icon name={copy.isSuccess ? 'check' : 'copy'} className="size-3.5" />
 					)}
@@ -165,7 +165,7 @@ function ImagePreviewContent({
 					className={TOOLBAR_BUTTON}
 				>
 					{download.isPending ? (
-						<LoadingSpinner size={14} />
+						<BusyGlyph decorative size={14} />
 					) : (
 						<Icon name={download.isSuccess ? 'check' : 'download-cloud'} className="size-3.5" />
 					)}

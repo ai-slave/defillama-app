@@ -6,8 +6,7 @@ import { Button } from '~/ui/Button'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { EmptyState } from '~/ui/Status'
+import { BusyGlyph, EmptyState } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface SavedQueriesPanelProps {
@@ -76,7 +75,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 							>
 								<span className="flex w-full min-w-0 flex-col gap-0.5">
 									<span className="flex items-center gap-2">
-										{isBusy ? <LoadingSpinner size={10} /> : null}
+										{isBusy ? <BusyGlyph decorative size={12} /> : null}
 										<span
 											className={`truncate body-sm transition-colors ${
 												isBusy ? 'text-link' : 'text-primary group-hover/apply:text-link'

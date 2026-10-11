@@ -5,7 +5,7 @@ import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialo
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
-import { LoadingIndicator } from '~/ui/Status'
+import { ListLoading } from '~/ui/NoResults'
 import { Tag } from '~/ui/Tag'
 import { tw } from '~/ui/tw'
 import { useAppMetadata } from '../AppMetadataContext'
@@ -341,11 +341,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 				</p>
 				<DialogBody kind="list">
 					<Ariakit.ComboboxList alwaysVisible aria-label="Quick add suggestions">
-						{protocolsLoading ? (
-							<div role="status" aria-live="polite" className="px-2 py-2">
-								<LoadingIndicator label="Loading protocols" />
-							</div>
-						) : null}
+						{protocolsLoading ? <ListLoading label="Loading protocols" /> : null}
 						{grouped
 							? GROUP_ORDER.map((group) => {
 									const groupRows = rows.filter((_, index) => suggestions[index]?.group === group)

@@ -9,7 +9,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { ChartPanelExportShellLoading } from '~/ui/ChartPanel'
-import { EmptyState, LoadingIndicator, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { EmptyState, InlineLoading, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -242,7 +242,7 @@ export function BorrowedChartTab({
 					/>
 				</Tooltip>
 
-				{hasProtocolSelection && isLoading ? <LoadingIndicator label="Loading selected chart" /> : null}
+				{hasProtocolSelection && isLoading ? <InlineLoading label="Loading selected chart" /> : null}
 
 				{hasProtocolSelection && !isLoading && !hasData ? (
 					<p className="body-sm text-tertiary">No data available for this chart type.</p>

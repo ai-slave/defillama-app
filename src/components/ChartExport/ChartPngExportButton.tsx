@@ -4,8 +4,8 @@ import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
@@ -74,16 +74,26 @@ export function ChartPngExportButton({
 				render={
 					<Ariakit.MenuButton
 						store={menu}
-						data-loading={isLoading}
-						disabled={disabled || isLoading}
-						// The menu hands focus back here as the export starts, so the trigger stays focusable while it runs.
-						accessibleWhenDisabled={isLoading}
+						disabled={disabled}
 						aria-label={iconOnly ? exportLabel : undefined}
-						render={<Button size="md" square={iconOnly} />}
+						// The menu hands focus back here as the export starts; a pending Button keeps it.
+						render={
+							<Button
+								size="md"
+								square={iconOnly}
+								pending={isLoading}
+								// A label would reserve "Exporting…" beside .png on every toolbar; the text button swaps its icon instead.
+								pendingLabel={iconOnly ? 'Exporting…' : undefined}
+							/>
+						}
 					/>
 				}
 			>
-				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" className="size-3.5" />}
+				{isLoading && !iconOnly ? (
+					<BusyGlyph decorative size={14} />
+				) : (
+					<Icon name="download-paper" className="size-3.5" />
+				)}
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Tooltip>
 

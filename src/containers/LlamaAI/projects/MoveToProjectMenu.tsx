@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { NestedDrawerHeader, MenuItem, MenuSurface } from '~/ui/PopoverSurface'
-import { ErrorLine, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 import { useMoveSessionToProject, useProjectList } from './hooks'
 
@@ -44,10 +44,9 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				/>
 				{failed ? (
 					<ErrorLine inset="menuRow">Couldn&apos;t load your projects.</ErrorLine>
-				) : projects.isFetching ? (
-					<div role="status" className="flex justify-center px-3 py-2">
-						<LoadingIndicator label="Loading projects" />
-					</div>
+				) : projects.isLoading ? (
+					// Only the first load: a background refetch keeps the rows still instead of pushing them down.
+					<ListLoading label="Loading projects" />
 				) : !projects.data?.length ? (
 					<NoResults>No projects yet</NoResults>
 				) : null}

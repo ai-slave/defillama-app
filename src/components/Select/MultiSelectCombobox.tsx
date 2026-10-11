@@ -5,9 +5,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator } from '~/ui/Status'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { MultiSelectOption } from './types'
@@ -136,11 +136,7 @@ export function MultiSelectCombobox({
 				className="max-h-[min(400px,var(--popover-available-height))]"
 			>
 				<Ariakit.ComboboxList ref={comboboxRef}>
-					{isLoading ? (
-						<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">
-							<LoadingIndicator />
-						</p>
-					) : null}
+					{isLoading ? <ListLoading label="Loading options" /> : null}
 					{matches.slice(0, viewableMatches).map((item) => (
 						<Ariakit.ComboboxItem
 							key={`multi-select-${item.value}`}

@@ -11,7 +11,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -147,11 +147,7 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 					{checkoutClientSecret ? (
 						<div className="relative min-h-[400px]">
 							<Suspense
-								fallback={
-									<div role="status" className="absolute inset-0 flex items-center justify-center">
-										<LoadingIndicator label="Loading checkout" />
-									</div>
-								}
+								fallback={<SurfaceBodyLoadingStatus label="Loading checkout" className="absolute inset-0 min-h-0" />}
 							>
 								<EmbeddedCardCheckout clientSecret={checkoutClientSecret} />
 							</Suspense>

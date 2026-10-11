@@ -3,8 +3,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tab, tabIds } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -349,9 +349,7 @@ function TabPill({
 			>
 				<span className="flex size-3 shrink-0 items-center justify-center">
 					{running ? (
-						<span aria-hidden className="flex">
-							<LoadingSpinner size={10} />
-						</span>
+						<BusyGlyph decorative size={12} />
 					) : dirty ? (
 						<StatusDot status="caution" label="Unsaved changes" />
 					) : null}

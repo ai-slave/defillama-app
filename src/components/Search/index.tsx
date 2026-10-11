@@ -17,10 +17,9 @@ import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Keycap } from '~/ui/Keycap'
-import { LoadingDots } from '~/ui/Loaders'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
@@ -174,7 +173,7 @@ function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelec
 		if (search.failed) {
 			return <SearchError retrying={search.isFetching} onRetry={() => void search.refetch()} />
 		}
-		if (search.isLoading) return <SearchLoading />
+		if (search.isLoading) return <ListLoading label="Searching" />
 		if (search.data.length === 0) return <NoResults />
 		return (
 			<>
@@ -192,7 +191,7 @@ function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelec
 	}
 
 	if (defaults.failed) return <SearchError retrying={defaults.isFetching} onRetry={() => void defaults.refetch()} />
-	if (defaults.isLoading) return <SearchLoading />
+	if (defaults.isLoading) return <ListLoading label="Loading suggestions" />
 	if (defaults.defaultSearchList.length === 0) return <NoResults />
 	return (
 		<>
@@ -208,14 +207,6 @@ function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelec
 				<SearchItem key={`${route.name}-${route.route}-${route.subName}`} route={route} onSelect={onSelect} />
 			))}
 		</>
-	)
-}
-
-function SearchLoading() {
-	return (
-		<p role="status" className="flex justify-center p-4">
-			<LoadingIndicator />
-		</p>
 	)
 }
 
@@ -434,8 +425,8 @@ function SeeMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: ()
 		>
 			{isLoading ? (
 				<>
-					Loading
-					<LoadingDots />
+					<BusyGlyph decorative size={12} />
+					Loading…
 				</>
 			) : (
 				'See more'

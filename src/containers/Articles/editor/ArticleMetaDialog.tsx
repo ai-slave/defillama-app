@@ -10,7 +10,7 @@ import { Field } from '~/ui/Field'
 import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { emailError } from '~/utils/email'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
@@ -638,9 +638,7 @@ function MetaSheet({
 				{/* Authors save through their own requests, not publish, so their Add form (a submit) stays outside the lock. */}
 				<MetaSection title="Authors">
 					{collaboratorsLoading && !collaboratorsLoadFailed && authors.length === 0 ? (
-						<p role="status" aria-live="polite">
-							<LoadingIndicator label="Loading authors" />
-						</p>
+						<InlineLoading label="Loading authors" />
 					) : null}
 					{collaboratorsLoadFailed ? (
 						<InlineStatus

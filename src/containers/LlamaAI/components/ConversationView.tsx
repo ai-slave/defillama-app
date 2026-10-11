@@ -35,7 +35,7 @@ import type {
 import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { QueryRetry } from '~/utils/query'
 import styles from '../LlamaAIChat.module.css'
@@ -721,8 +721,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						<div className="flex w-full flex-col gap-2 px-2">
 							<div className="flex flex-col gap-4">
 								{paginationState.isLoadingMore ? (
-									<div role="status" aria-live="polite" className="flex justify-center py-2">
-										<LoadingIndicator label="Loading older messages" />
+									<div className="flex justify-center py-2">
+										<InlineLoading label="Loading older messages" />
 									</div>
 								) : null}
 
@@ -760,8 +760,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 								})}
 
 								{paginationState.isLoadingNewer ? (
-									<div role="status" aria-live="polite" className="flex justify-center py-2">
-										<LoadingIndicator label="Loading newer messages" />
+									<div className="flex justify-center py-2">
+										<InlineLoading label="Loading newer messages" />
 									</div>
 								) : null}
 

@@ -7,7 +7,6 @@ import { AI_SERVER } from '~/constants'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -79,11 +78,13 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 							// Focusable while the export runs, so focus stays on the control instead of falling to the page.
 							disabled={loading}
 							accessibleWhenDisabled
-							render={<Button variant="ghost" size="md" square />}
+							render={
+								<Button variant="ghost" size="md" square pending={pdfExport.isPending} pendingLabel="Exporting PDF" />
+							}
 						/>
 					}
 				>
-					{pdfExport.isPending ? <LoadingSpinner size={16} /> : <Icon name="download-paper" className="size-4" />}
+					<Icon name="download-paper" className="size-4" />
 				</Tooltip>
 				<MenuSurface variant="actions" className="w-44">
 					<MenuItem

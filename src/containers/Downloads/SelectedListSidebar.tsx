@@ -1,7 +1,7 @@
 import { Button } from '~/ui/Button'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { ConfirmableContent } from './ActionFeedback'
 
@@ -100,7 +100,7 @@ export function SelectedListSidebar({
 							>
 								<span className="flex size-4 shrink-0 items-center justify-center">
 									{query?.isLoading ? (
-										<LoadingSpinner size={12} />
+										<BusyGlyph decorative size={12} />
 									) : query?.error ? (
 										<Icon name="alert-triangle" className="size-3.5 text-error" />
 									) : isReady ? (

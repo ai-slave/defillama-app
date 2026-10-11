@@ -16,7 +16,7 @@ import { connectWallet } from '~/auth/walletConnection'
 import { isWalletRequestRejected, walletErrorMessage } from '~/auth/walletErrors'
 import { WalletProviderClient } from '~/layout/WalletProviderClient'
 import { Button } from '~/ui/Button'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 
 export type WalletSignInProps = {
 	store: SignInFlowStore
@@ -220,7 +220,7 @@ export function WalletSignInForm({ store, onAuthenticated }: WalletSignInProps) 
 					{selected && connectMutation.isPending ? (
 						// Keyed apart from the list, so the two never share a node that focus could stay on.
 						<div key="waiting" role="status" aria-live="polite" className="flex flex-col gap-1">
-							<LoadingIndicator label={`Waiting for ${selected.name}`} />
+							<InlineLoading insideLiveRegion label={`Waiting for ${selected.name}`} />
 							<p className="body-sm text-secondary">
 								Approve the connection in your wallet. Connecting won’t sign you in.
 							</p>

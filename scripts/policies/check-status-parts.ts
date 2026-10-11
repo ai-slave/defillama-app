@@ -11,19 +11,15 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *
  * 1. loading-text: an element whose text children read "Loading…", "Fetching…", "Searching…" or "Waiting…" (ending
  *    in …, ... or &hellip;, with `{expr}` pieces allowed between), or a string literal rendered as its child. Use
- *    LoadingIndicator, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus.
+ *    InlineLoading, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus.
  *    Text under `sr-only`, a busy button's label (BUTTON_LIKE) and attribute
  *    values (pendingLabel, aria-label, label) are not checked.
- * 2. loading-dots: `<LoadingDots>`. Use LoadingIndicator; a busy button label (inside BUTTON_LIKE) may keep the dots.
- * 3. lone-spinner: a `justify-center` element whose only child is a LoadingSpinner, or a `flex-col items-center`
- *    element holding a LoadingSpinner and one line of text. Use the loading parts; LoadingSpinner is for busy buttons
- *    and inline controls.
- * 4. error-box: a whole `className` string, or a named class constant, with `bg-error-faint` or `bg-error-tint` and a
+ * 2. error-box: a whole `className` string, or a named class constant, with `bg-error-faint` or `bg-error-tint` and a
  *    `border-error*` class. Use InlineStatus or PanelStatus, which draw the error box. A ternary branch or a tone map
  *    entry is one tone of a chip, toggle or pill, not a message box, and is not checked.
- * 5. alert-line: an element with `role="alert"` (or `role={'alert'}`) and `text-error` and no `id` (a field's error
+ * 3. alert-line: an element with `role="alert"` (or `role={'alert'}`) and `text-error` and no `id` (a field's error
  *    carries the id its field's aria-describedby names). Use ErrorLine or InlineStatus.
- * 6. retry-gating: a ternary, `&&` or `if` that renders a retry (`refetch` or a `retry=` prop) when a query's
+ * 4. retry-gating: a ternary, `&&` or `if` that renders a retry (`refetch` or a `retry=` prop) when a query's
  *    `isError`, `isLoadingError` or `error` is set. A retry clears those, so the error and its focused Try again
  *    vanish while it runs. Gate the error on `queryReadFailed(query)` and check it before loading; PanelStatus,
  *    SurfaceBodyStatus and InlineStatus take the query as `retry`. Also refused: a chain that tests the same query's
@@ -33,18 +29,20 @@ import { collectSourceFiles, policyTargetFiles } from '../lib/sourceFiles'
  *    hook that returns one, or returns an object holding one (`{ query, isLoading }`; found across src), held in a
  *    variable or destructured. Such an object's `query` property is the query, and its other fields count as the
  *    query's. useMutation results are outside this rule.
- * 7. next-error: next/error's `<Error statusCode=…>` under src/pages. Render EmptyState size="lg" for a not found.
- * 8. error-copy: "Failed to …", "could not be …ed", "Something went wrong", "Oops", "Error: " or "Please" in client
+ * 5. error-copy: "Failed to …", "could not be …ed", "Something went wrong", "Oops", "Error: " or "Please" in client
  *    copy, outside console calls (docs/focus-and-errors.md, "Error copy").
- * 9. raw-error-message: `x instanceof Error ? x.message : …` or a `getErrorMessage(…)` call outside console calls in
+ * 6. raw-error-message: `x instanceof Error ? x.message : …` or a `getErrorMessage(…)` call outside console calls in
  *    client code. Both show any error's own message, so a browser "Failed to fetch" or a status text reaches the
  *    screen. Use `httpErrorMessage(error, "Couldn't …")`, which keeps an API's 4xx reason, or narrow to the typed
  *    error whose message is written for readers. A `.message` read from an inferred `Error` (a mutation's error) has
  *    no shape to refuse here; the doc's rule covers it.
- * 10. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBody or a div with no
+ * 7. blank-fallback: a Suspense `fallback` or a `dynamic()` `loading` that renders a ChartPanelBody or a div with no
  *    children. A fallback is a loading state: render the part for its surface with a label naming what loads
  *    (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, or
  *    ProCardLoading on a Pro dashboard card), with the reserved height on its className or style.
+ *
+ * The dots, spinner and indicator those parts draw live in src/ui/internal, which an oxlint import rule keeps out of app
+ * code, so a hand-built loading state has only its copy left to give it away.
  *
  * EXCEPTIONS names files where a rule's shape is deliberate, each with its reason. An exception that no longer
  * matches fails, so the list never outlives the code it excuses.
@@ -55,8 +53,6 @@ const sourceRoot = path.join(root, 'src')
 
 type RuleId =
 	| 'loading-text'
-	| 'loading-dots'
-	| 'lone-spinner'
 	| 'blank-fallback'
 	| 'error-box'
 	| 'alert-line'
@@ -64,14 +60,10 @@ type RuleId =
 	| 'hand-placed-retry'
 	| 'error-copy'
 	| 'raw-error-message'
-	| 'next-error'
 
 const MESSAGES: Record<RuleId, string> = {
 	'loading-text':
-		'renders loading text by hand; use LoadingIndicator, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus',
-	'loading-dots': 'renders LoadingDots outside a busy button; use LoadingIndicator',
-	'lone-spinner':
-		'draws a region loading state from a lone LoadingSpinner; use PanelLoadingStatus, SurfaceBodyLoadingStatus, ListLoading or LoadingIndicator',
+		'renders loading text by hand; use InlineLoading, ListLoading, PanelLoadingStatus or SurfaceBodyLoadingStatus',
 	'blank-fallback':
 		'renders a blank box as a Suspense or dynamic() fallback; render the loading part for its surface with a label (SurfaceBodyLoadingStatus, ChartPanelExportShellLoading, PanelLoadingStatus, ProCardLoading)',
 	'error-box': 'hand-builds an error box; use InlineStatus or PanelStatus',
@@ -83,30 +75,19 @@ const MESSAGES: Record<RuleId, string> = {
 	'error-copy':
 		'writes "Failed to", "could not be …ed", "Something went wrong", "Oops", "Error:" or "Please"; say "Couldn\'t <do what>." (docs/focus-and-errors.md, "Error copy")',
 	'raw-error-message':
-		'shows any error\'s own message ("Failed to fetch", a status text); use httpErrorMessage(error, "Couldn\'t …") or narrow to a typed error written for readers (docs/focus-and-errors.md, "Error copy")',
-	'next-error': 'renders next/error\'s Error page; render EmptyState size="lg" for a not found'
+		'shows any error\'s own message ("Failed to fetch", a status text); use httpErrorMessage(error, "Couldn\'t …") or narrow to a typed error written for readers (docs/focus-and-errors.md, "Error copy")'
 }
 
 const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 	'loading-text': {
 		'src/components/Select/VirtualizedSelect.tsx':
 			"the select trigger's value reads Loading… while its options load, beside the trigger's busy arrow",
-		'src/containers/Token/TokenDeferredPaginationControls.tsx':
-			'the busy line beside the pager, the docs/focus-and-errors.md example',
 		'src/containers/LlamaAI/components/IntegrationRow.tsx':
 			'an instruction to finish the link in Telegram, followed by what to do if it did not open',
 		'src/containers/Articles/landing/ResearchSearch.tsx':
 			"the result count's own label slot, which reads Loading… until the count arrives",
 		'src/containers/Articles/editor/EntitySuggestionList.tsx':
 			"the result count's own label slot, which reads Searching… until the count arrives"
-	},
-	'loading-dots': {
-		'src/containers/ProDashboard/components/ProDashboardLoader.tsx':
-			"the Pro route loader's branded llama, the one accepted branded full-page loader"
-	},
-	'lone-spinner': {
-		'src/containers/LlamaAI/components/sidebar/AgenticSessionItem.tsx':
-			"a sidebar row's busy veil while its chat restores, too small for a labelled status"
 	},
 	'blank-fallback': {
 		'src/components/Nav/Desktop/PinnedPages.tsx':
@@ -149,8 +130,7 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 		'src/containers/LlamaAI/api/transport.ts': "a JSON parse failure's detail kept in the error body for logs",
 		'src/containers/RWA/queries.tsx': 'page-build loaders; the message goes to the build log',
 		'src/containers/Yields/VaultRisk/loader.ts': "a page-build loader's log line"
-	},
-	'next-error': {}
+	}
 }
 
 // Parts whose failure is always a read and which take `retry`; InlineStatus also holds action errors, so only a Try
@@ -623,7 +603,6 @@ export function scanSource(
 	}
 
 	const checkCopy = !isServerSource(relative)
-	let nextErrorName: string | null = null
 	let getErrorMessageName: string | null = null
 	for (const statement of sourceFile.statements) {
 		const bindings =
@@ -635,18 +614,6 @@ export function scanSource(
 		if (!bindings || !ts.isNamedImports(bindings)) continue
 		for (const element of bindings.elements) {
 			if ((element.propertyName ?? element.name).text === 'getErrorMessage') getErrorMessageName = element.name.text
-		}
-	}
-	if (relative.startsWith('src/pages/')) {
-		for (const statement of sourceFile.statements) {
-			if (
-				ts.isImportDeclaration(statement) &&
-				ts.isStringLiteral(statement.moduleSpecifier) &&
-				statement.moduleSpecifier.text === 'next/error' &&
-				statement.importClause?.name
-			) {
-				nextErrorName = statement.importClause.name.text
-			}
 		}
 	}
 
@@ -669,8 +636,6 @@ export function scanSource(
 			if (/(?:^|[\s"'`{])sr-only(?:[\s"'`}]|$)/.test(classText)) hidden = true
 			if (BUTTON_LIKE.has(tag)) busyLabel = true
 
-			if (tag === 'LoadingDots' && !inButton) report('loading-dots', opening)
-
 			const role = attribute(opening, 'role')
 			if (
 				role &&
@@ -690,29 +655,6 @@ export function scanSource(
 			const action = tag === 'InlineStatus' ? attribute(opening, 'action') : undefined
 			const actionRetry = action?.initializer ? handPlacedRetry(action.initializer, true) : null
 			if (actionRetry) report('hand-placed-retry', actionRetry)
-
-			if (nextErrorName && tag === nextErrorName && attribute(opening, 'statusCode')) report('next-error', opening)
-
-			if (ts.isJsxElement(node) && !BUTTON_LIKE.has(tag)) {
-				const children = node.children.filter(isMeaningful)
-				const isSpinner = (child: ts.JsxChild) =>
-					ts.isJsxSelfClosingElement(child) && tagName(child) === 'LoadingSpinner'
-				const isTextLine = (child: ts.JsxChild) =>
-					ts.isJsxText(child) ||
-					(ts.isJsxElement(child) && child.children.every((inner) => !openingOf(inner)) && !isSpinner(child))
-				if (children.length === 1 && isSpinner(children[0]) && /\bjustify-center\b/.test(classText)) {
-					report('lone-spinner', opening)
-				}
-				if (
-					children.length === 2 &&
-					/\bflex-col\b/.test(classText) &&
-					/\bitems-center\b/.test(classText) &&
-					children.some(isSpinner) &&
-					children.some(isTextLine)
-				) {
-					report('lone-spinner', opening)
-				}
-			}
 		}
 
 		if ((ts.isJsxElement(node) || ts.isJsxFragment(node)) && !hidden && !busyLabel) {
@@ -845,39 +787,6 @@ if (process.argv.includes('--self-test')) {
 			rule: null
 		},
 		{ name: 'loading without an ellipsis', source: 'export const F = () => <p>Loading complete</p>', rule: null },
-		{
-			name: 'loading dots in a panel',
-			source: 'export const F = () => <p>Loading<LoadingDots /></p>',
-			rule: 'loading-dots'
-		},
-		{
-			name: 'loading dots in a busy button',
-			source: 'export const F = () => <Ariakit.Button>Loading<LoadingDots /></Ariakit.Button>',
-			rule: null
-		},
-		{
-			name: 'lone centred spinner',
-			source:
-				'export const F = () => <div className="flex min-h-40 items-center justify-center"><LoadingSpinner size={16} /></div>',
-			rule: 'lone-spinner'
-		},
-		{
-			name: 'spinner stacked over a caption',
-			source:
-				'export const F = () => <div className="flex flex-col items-center gap-2"><LoadingSpinner size={16} /><p>Preparing</p></div>',
-			rule: 'lone-spinner'
-		},
-		{
-			name: 'spinner in a centred button',
-			source: 'export const F = () => <Button className="justify-center"><LoadingSpinner size={12} /></Button>',
-			rule: null
-		},
-		{
-			name: 'spinner beside a control',
-			source:
-				'export const F = () => <div className="flex justify-center gap-2"><LoadingSpinner size={12} /><Select /></div>',
-			rule: null
-		},
 		{
 			name: 'hand-built error box',
 			source:
@@ -1015,12 +924,6 @@ if (process.argv.includes('--self-test')) {
 			rule: null
 		},
 		{
-			name: 'next/error page',
-			relative: 'src/pages/policy-self-test.tsx',
-			source: "import Error from 'next/error'\nexport default function P() { return <Error statusCode={404} /> }",
-			rule: 'next-error'
-		},
-		{
 			name: 'Failed to toast',
 			source: "export const f = () => toast.error('Failed to save chart')",
 			rule: 'error-copy'
@@ -1115,11 +1018,6 @@ if (process.argv.includes('--self-test')) {
 			name: 'server route message',
 			relative: 'src/containers/Foo/server/api.ts',
 			source: "export const body = { error: 'Failed to fetch data' }",
-			rule: null
-		},
-		{
-			name: 'next/error outside pages',
-			source: "import Error from 'next/error'\nexport function P() { return <Error statusCode={404} /> }",
 			rule: null
 		},
 		{

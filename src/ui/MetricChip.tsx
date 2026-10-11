@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { focusNeighbourOnLeave } from './focus'
 import { Icon } from './Icon'
-import { LoadingSpinner } from './Loaders'
+import { LoadingSpinner } from './internal/Loaders'
 import { tw } from './tw'
 /* ----------------------------------------------------------------------------
    MetricChip — a metric plotted on a chart, beside its Add Metrics button.

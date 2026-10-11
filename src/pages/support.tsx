@@ -9,8 +9,7 @@ import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Input, Textarea } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { InlineStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { emailError } from '~/utils/email'
 
 const EMPTY_REQUEST = { name: '', email: '', body: '' }
@@ -75,7 +74,7 @@ function LiveChatCard({ userHash, email }: { userHash: string | null; email: str
 				<span className="flex items-center justify-center gap-2 font-semibold group-disabled:text-disabled">
 					{loading ? (
 						<>
-							<LoadingSpinner size={16} />
+							<BusyGlyph decorative size={14} />
 							Opening Chat…
 						</>
 					) : (

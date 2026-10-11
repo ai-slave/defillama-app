@@ -29,9 +29,8 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
-import { ErrorLine, InlineStatus } from '~/ui/Status'
+import { BusyGlyph, ErrorLine, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -404,7 +403,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								{visibility.isPending || copyLink.isPending ? (
-									<LoadingSpinner size={14} />
+									<BusyGlyph decorative size={14} />
 								) : copyLink.isSuccess ? (
 									<Icon name="check-circle" className="size-3.5 shrink-0" />
 								) : (
@@ -441,7 +440,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								{deletion.isPending ? (
-									<LoadingSpinner size={14} />
+									<BusyGlyph decorative size={14} />
 								) : (
 									<Icon name="trash-2" className="size-3.5 shrink-0" />
 								)}
@@ -477,7 +476,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			) : null}
 			{isRestoring ? (
 				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-veil">
-					<LoadingSpinner size={12} />
+					<BusyGlyph label="Restoring chat" size={12} hideLabel />
 				</span>
 			) : null}
 		</div>

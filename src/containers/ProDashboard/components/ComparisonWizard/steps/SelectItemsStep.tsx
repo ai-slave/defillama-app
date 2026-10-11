@@ -11,7 +11,7 @@ import { Field } from '~/ui/Field'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
@@ -294,9 +294,7 @@ export function SelectItemsStep() {
 
 						<div ref={listRef} className="h-[280px] overflow-y-auto">
 							{protocolsLoading ? (
-								<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
-									<LoadingIndicator label={`Loading ${typeLabel.toLowerCase()}`} />
-								</div>
+								<SurfaceBodyLoadingStatus label={`Loading ${typeLabel.toLowerCase()}`} className="h-full min-h-0" />
 							) : protocolCatalog.status === 'error' ? (
 								<div className="p-3">
 									<InlineStatus

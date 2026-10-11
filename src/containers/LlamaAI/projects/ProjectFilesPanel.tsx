@@ -3,9 +3,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { UploadTile } from '~/ui/UploadTile'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
@@ -99,9 +98,7 @@ export function ProjectFilesPanel({
 				<div className="flex items-center gap-2">
 					<h3 className="label-md text-primary">Files</h3>
 					{sourcesQuery.isLoading && files.length > 0 ? (
-						<span role="status" aria-label="Loading connected sources">
-							<LoadingSpinner size={14} />
-						</span>
+						<BusyGlyph label="Loading connected sources" size={14} hideLabel />
 					) : null}
 				</div>
 				<Ariakit.MenuProvider placement="bottom-end">
@@ -216,9 +213,10 @@ export function ProjectFilesPanel({
 					{fileErrorNotice ? (
 						<div className="absolute inset-0 flex items-center justify-center p-3">{fileErrorNotice}</div>
 					) : isInitialLoading ? (
-						<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center p-4">
-							<LoadingIndicator label={filesQuery.isLoading ? 'Loading files' : 'Loading connected sources'} />
-						</div>
+						<SurfaceBodyLoadingStatus
+							label={filesQuery.isLoading ? 'Loading files' : 'Loading connected sources'}
+							className="absolute inset-0 min-h-0"
+						/>
 					) : null}
 				</div>
 			) : (
@@ -274,8 +272,8 @@ export function ProjectFilesPanel({
 			)}
 
 			{isUploading ? (
-				<p role="status" className="flex items-center gap-1.5 body-sm text-secondary">
-					<LoadingSpinner size={12} /> Uploading…
+				<p className="body-sm text-secondary">
+					<BusyGlyph label="Uploading…" size={12} />
 				</p>
 			) : null}
 

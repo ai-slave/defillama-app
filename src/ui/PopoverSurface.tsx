@@ -3,12 +3,8 @@ import { type ReactNode, useCallback } from 'react'
 import { Button } from './Button'
 import { catchLostFocus } from './focus'
 import { Icon } from './Icon'
-import {
-	popoverDestructiveMenuItemStyles,
-	popoverMenuItemStyles,
-	popoverTreeRowStyles,
-	surfaceMotionStyles
-} from './Popover'
+import { menuItemRowStyles, surfaceMotionStyles } from './internal/Popover'
+import { popoverMenuItemStyles } from './Popover'
 import { Tooltip } from './Tooltip'
 import { tw } from './tw'
 
@@ -383,6 +379,13 @@ export function MenuSurface({
 		</Ariakit.Menu>
 	)
 }
+
+/* Its own recipe, not `text-error` appended to the row: Tailwind emits `.text-primary` after `.text-error`, so an
+   appended color class never wins. A destructive row highlights in its own red, like the destructive button. */
+const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error hover:bg-error-tint focus-visible:bg-error-tint data-active-item:bg-error-tint`
+
+/* The current row (`data-active`) is a selection: brand tint and link text, and it takes no hover wash. */
+const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary not-data-[active=true]:hover:bg-hover-row not-data-[active=true]:focus-visible:bg-hover-row not-data-[active=true]:data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-brand-muted data-[active=true]:text-link max-sm:min-h-11`
 
 type MenuItemRow = 'menu' | 'tree'
 

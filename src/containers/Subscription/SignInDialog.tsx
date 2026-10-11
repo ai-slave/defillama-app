@@ -36,8 +36,7 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import { emailError } from '~/utils/email'
@@ -51,11 +50,7 @@ const quoteQuestion = (question: string) => `“${question.slice(0, 100)}${quest
 
 const WalletSignIn = dynamic<WalletSignInProps>(() => import('./WalletSignIn').then((module) => module.WalletSignIn), {
 	ssr: false,
-	loading: () => (
-		<div role="status" aria-live="polite" className={`${authWalletPickerStyles} flex items-center justify-center`}>
-			<LoadingIndicator label="Loading wallets" />
-		</div>
-	)
+	loading: () => <SurfaceBodyLoadingStatus label="Loading wallets" className={authWalletPickerStyles} />
 })
 
 export function SignInDialog({
@@ -707,7 +702,7 @@ function AuthScreen({
 					>
 						<span className={authProviderIconSlotStyles}>
 							{signInWithGithubMutation.isPending ? (
-								<LoadingSpinner size={16} />
+								<BusyGlyph decorative size={14} />
 							) : (
 								<Icon name="github" className="size-4.5" />
 							)}

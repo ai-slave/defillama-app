@@ -9,8 +9,7 @@ import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
+import { BusyGlyph, EmptyState, PanelLoadingStatus, InlineStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
@@ -1219,7 +1218,7 @@ function EditorRunBar({
 			{/* Run and Stop share one slot, so React keeps the same button and its focus when they swap. */}
 			{running ? (
 				<Button variant="secondary" size="md" onClick={onCancel}>
-					<LoadingSpinner size={14} />
+					<BusyGlyph decorative size={14} />
 					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 						<rect x="6" y="6" width="12" height="12" rx="1" />
 					</svg>
@@ -1288,7 +1287,7 @@ function SavedQueriesTab({
 								className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
 							>
 								{isBusy ? (
-									<LoadingSpinner size={12} />
+									<BusyGlyph decorative size={12} />
 								) : (
 									<Icon
 										name="arrow-right"

@@ -6,7 +6,6 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	popoverMeasuredRowStyles,
 	popoverMultiSelectCheckStyles,
@@ -15,7 +14,7 @@ import {
 } from '~/ui/Popover'
 import { PopoverHeader } from '~/ui/PopoverHeader'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineLoading } from '~/ui/Status'
 import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { isSearchable } from './searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
@@ -224,7 +223,13 @@ function OptionList({
 	if (matches.length === 0) {
 		return (
 			<p role="status" className="flex justify-center px-3 py-6 text-center body-sm text-tertiary">
-				{isSearching ? <LoadingIndicator label="Searching" /> : search ? `No results for "${search}"` : 'No options'}
+				{isSearching ? (
+					<InlineLoading insideLiveRegion label="Searching" />
+				) : search ? (
+					`No results for "${search}"`
+				) : (
+					'No options'
+				)}
 			</p>
 		)
 	}
@@ -311,7 +316,7 @@ function OptionContent({ option, reserveLogo }: { option: VirtualizedSelectOptio
 function TriggerArrow({ isLoading }: { isLoading: boolean }) {
 	return isLoading ? (
 		<span className="ml-auto text-tertiary">
-			<LoadingSpinner size={14} />
+			<BusyGlyph decorative size={14} />
 		</span>
 	) : (
 		<Ariakit.ComboboxSelectArrow className="ml-auto text-tertiary" />

@@ -2,8 +2,7 @@ import { useId, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Textarea } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { InlineStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { useUpdateProject } from './hooks'
 import {
@@ -62,9 +61,7 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 				</label>
 				<span role="status" className="flex items-center gap-1 body-sm text-secondary">
 					{status === 'saving' ? (
-						<>
-							<LoadingSpinner size={12} /> Saving…
-						</>
+						<BusyGlyph label="Saving…" size={12} insideLiveRegion />
 					) : status === 'failed' ? (
 						'Not saved'
 					) : status === 'unsaved' ? (

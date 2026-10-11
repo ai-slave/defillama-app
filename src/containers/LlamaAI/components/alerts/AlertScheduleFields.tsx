@@ -5,7 +5,7 @@ import { DAYS_OF_WEEK, getTimezoneLabel, GMT_OFFSETS } from '~/containers/LlamaA
 import type { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { FieldGroup } from '~/ui/Field'
 import { takeLostFocus } from '~/ui/focus'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { queryReadFailed } from '~/utils/query'
 
 /* ----------------------------------------------------------------------------
@@ -136,9 +136,7 @@ export function SlackTargetPickers({
 	return (
 		<>
 			{workspacesLoading ? (
-				<span role="status" aria-live="polite">
-					<LoadingIndicator label="Loading workspaces" />
-				</span>
+				<InlineLoading label="Loading workspaces" />
 			) : workspaces.length > 0 ? (
 				<Select
 					heading="Slack workspace"
@@ -170,9 +168,7 @@ export function SlackTargetPickers({
 						</InlineStatus>
 					</div>
 				) : channelsQuery.isLoading ? (
-					<span role="status" aria-live="polite">
-						<LoadingIndicator label="Loading channels" />
-					</span>
+					<InlineLoading label="Loading channels" />
 				) : (
 					<Select
 						heading="Slack channel"

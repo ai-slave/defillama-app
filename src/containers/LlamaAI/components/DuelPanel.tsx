@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineLoading } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
 import type { Message } from '../types'
 import { canVoteOnDuel, getDuelArmStatus, hasDuelAnswer, hasDuelProgress, type DuelArmStatus } from './duelVoting'
@@ -64,8 +64,8 @@ function AnswerColumn({
 						</ChatStatusLine>
 					</div>
 				) : !hasVisibleContent ? (
-					<div role="status" aria-live="polite" className="py-3">
-						<LoadingIndicator label={`Waiting for ${label}`} />
+					<div className="py-3">
+						<InlineLoading label={`Waiting for ${label}`} />
 					</div>
 				) : null}
 			</div>

@@ -5,10 +5,10 @@ import { startTransition, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
@@ -139,7 +139,7 @@ function Row({ name, setOpen }: { name: string; setOpen: (open: boolean) => void
 			className={popoverMenuItemStyles}
 		>
 			<span>{name}</span>
-			{loading ? <LoadingSpinner size={12} /> : null}
+			{loading ? <BusyGlyph decorative size={12} /> : null}
 		</Ariakit.ComboboxItem>
 	)
 }

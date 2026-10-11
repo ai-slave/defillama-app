@@ -5,8 +5,8 @@ import { Select } from '~/components/Select/Select'
 import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { BusyGlyph } from '~/ui/Status'
 import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -403,10 +403,12 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					<div role="status" aria-live="polite">
 						<ProMeta
 							items={[
-								<>
-									<LoadingSpinner size={12} />
-									{validItems.length} of {limitedItems.length - failedItems.length} charts loaded
-								</>
+								<BusyGlyph
+									key="progress"
+									label={`${validItems.length} of ${limitedItems.length - failedItems.length} charts loaded`}
+									size={12}
+									insideLiveRegion
+								/>
 							]}
 						/>
 					</div>

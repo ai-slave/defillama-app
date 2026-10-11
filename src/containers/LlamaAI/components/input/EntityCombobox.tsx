@@ -2,9 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getAnchorRect } from '~/containers/LlamaAI/utils/entitySuggestions'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -73,9 +73,7 @@ export function EntityComboboxPopover({
 					</Ariakit.ComboboxItem>
 				))
 			) : (
-				<div role="status" aria-live="polite" className="px-3 py-2">
-					<LoadingIndicator />
-				</div>
+				<ListLoading label="Loading suggestions" />
 			)}
 		</ComboboxSurface>
 	)

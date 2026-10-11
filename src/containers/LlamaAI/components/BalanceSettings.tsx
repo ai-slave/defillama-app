@@ -5,7 +5,7 @@ import type { TopupResult } from '~/containers/LlamaAI/utils/settingsIntent'
 import { TopupForm } from '~/containers/Subscription/shared/TopupModal'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 
 export function BalanceSettings({ result, balanceBefore }: { result?: TopupResult; balanceBefore?: number }) {
@@ -61,9 +61,7 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 				</p>
 				<div className="flex min-h-7 items-center justify-between gap-3">
 					{isLoading && !readFailed ? (
-						<div role="status" aria-live="polite">
-							<LoadingIndicator label="Loading balance" />
-						</div>
+						<InlineLoading label="Loading balance" />
 					) : balance ? (
 						<p className="mono-lg text-primary tabular-nums">
 							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

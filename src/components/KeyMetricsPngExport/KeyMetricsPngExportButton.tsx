@@ -3,6 +3,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
@@ -298,13 +299,13 @@ export function KeyMetricsPngExportButton({
 					onClick={() => {
 						void handleExport()
 					}}
-					pendingLabel="Exporting…"
+					// No pendingLabel: it would reserve "Exporting…" and widen the button at rest; the icon turns into the spinner.
 					pending={isLoading}
 					aria-label="Download Key Metrics as PNG"
 				/>
 			}
 		>
-			<Icon name="download-paper" className="size-3" />
+			{isLoading ? <BusyGlyph decorative size={12} /> : <Icon name="download-paper" className="size-3" />}
 			<span>.png</span>
 		</Tooltip>
 	)

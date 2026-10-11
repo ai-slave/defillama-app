@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 
 /**
  * One line of status in the conversation, attached to the message it is about: under a failed prompt it sits at
@@ -26,11 +26,13 @@ export function ChatStatusLine({
 		>
 			<span className={`flex min-w-0 items-center gap-1.5 ${variant === 'error' ? 'text-error' : 'text-secondary'}`}>
 				{variant === 'error' ? (
-					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
+					<>
+						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
+						<span className="min-w-0">{children}</span>
+					</>
 				) : (
-					<LoadingSpinner size={14} />
+					<BusyGlyph label={children} size={14} insideLiveRegion />
 				)}
-				<span className="min-w-0">{children}</span>
 			</span>
 			{action}
 		</div>

@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 import { Icon } from './Icon'
-import { LoadingSpinner } from './Loaders'
+import { LoadingSpinner } from './internal/Loaders'
 
 /* ----------------------------------------------------------------------------
    Button — every action button. Callers choose `size`; `variant` defaults to
@@ -128,7 +128,10 @@ import { LoadingSpinner } from './Loaders'
    passes `disabled`, because a native disable drops focus to the page.
    Disabled controls dim to 60% and keep their fill on hover. Never a spinner
    without a label or a label without a spinner; an icon-only pending button
-   shows the spinner alone and announces the label.
+   shows the spinner alone and announces the label. An export button in a
+   toolbar row (.csv, .png) takes `pending` without a `pendingLabel` and swaps
+   its icon for `BusyGlyph decorative`: its label stays, so it keeps the width
+   of its neighbours while it works.
    Like Ariakit's, the button is type="button" unless it says otherwise: a
    submit button passes type="submit", so no other button submits by accident.
    Inside a dialog, any other focused control that disappears hands focus to

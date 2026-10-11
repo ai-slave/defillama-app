@@ -7,6 +7,7 @@ import { ProCardOverflowMenu } from '~/containers/ProDashboard/components/ProCar
 import { UnifiedTableHeader } from '~/containers/ProDashboard/components/UnifiedTable/core/UnifiedTableHeader'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { alertTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -46,7 +47,7 @@ async function render(node: ReactNode) {
 }
 function button(name: string) {
 	const found = [...document.querySelectorAll<HTMLButtonElement>('button, [role="menuitem"]')].find(
-		(el) => el.textContent?.trim() === name || el.getAttribute('aria-label') === name
+		(el) => accessibleName(el) === name
 	)
 	if (!found) throw new Error(`Missing button: ${name}`)
 	return found
@@ -78,9 +79,11 @@ test('a prepared export blocks duplicates, reports failure in a toast, and downl
 	await waitForSession()
 	await act(async () => button('Download .csv').focus())
 	await click('Download .csv')
-	await waitFor(() => expect(button('Preparing…').getAttribute('aria-disabled')).toBe('true'))
-	expect(document.activeElement).toBe(button('Preparing…'))
-	await click('Preparing…')
+	// The button keeps its label while the file is prepared; the status line announces the wait.
+	await waitFor(() => expect(button('Download .csv').getAttribute('aria-disabled')).toBe('true'))
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Preparing CSV download')
+	expect(document.activeElement).toBe(button('Download .csv'))
+	await click('Download .csv')
 	expect(prepare).toHaveBeenCalledOnce()
 	expect(downloads).toEqual([])
 

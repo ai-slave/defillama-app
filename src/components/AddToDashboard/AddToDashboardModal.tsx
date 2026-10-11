@@ -40,7 +40,8 @@ import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ListLoading } from '~/ui/NoResults'
+import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { httpErrorMessage } from '~/utils/async'
 import { formatUsd } from '~/utils/numberFormat'
@@ -399,9 +400,7 @@ function AddToDashboardDialog({
 					>
 						<div className="max-h-56 overflow-y-auto overscroll-contain">
 							{isLoadingDashboards ? (
-								<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-									<LoadingIndicator label="Loading dashboards" />
-								</div>
+								<ListLoading label="Loading dashboards" />
 							) : filteredDashboards.length === 0 && !search.trim() ? (
 								dashboardsFailed ? null : (
 									<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">

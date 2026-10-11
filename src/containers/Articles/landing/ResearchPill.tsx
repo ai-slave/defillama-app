@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithRef, ElementType } from 'react'
 import { ReservedLabel } from '~/ui/Button'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 
 /* ----------------------------------------------------------------------------
    ResearchPill — the round CTA pill of the public research pages, the one
@@ -95,7 +95,7 @@ export function ResearchPill<T extends ElementType = 'button'>({
 				</span>
 				{pendingLabel === undefined ? null : pending ? (
 					<span className="col-start-1 row-start-1 flex items-center justify-center gap-inherit">
-						<LoadingSpinner size={14} />
+						<BusyGlyph decorative size={14} />
 						{pendingLabel}
 					</span>
 				) : (

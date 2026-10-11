@@ -1,9 +1,5 @@
-import { LoadingIndicator } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export function TopupCheckoutLoading() {
-	return (
-		<div role="status" aria-live="polite" className="flex min-h-[400px] items-center justify-center">
-			<LoadingIndicator label="Loading card payments" />
-		</div>
-	)
+	return <SurfaceBodyLoadingStatus label="Loading card payments" className="min-h-[400px]" />
 }

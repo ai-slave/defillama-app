@@ -6,7 +6,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingIndicator, InlineStatus } from '~/ui/Status'
+import { InlineLoading, InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { clearPendingTeamCheckout } from './pendingTeamCheckout'
@@ -249,7 +249,9 @@ export function TeamSeatsCard() {
 					<span className="label-lg text-primary">Subscriptions & Billing</span>
 					{/* The one reason the billing buttons are disabled while it runs; a failed refresh's retry shows its own. */}
 					<div role="status">
-						{billingWait && !isTeamRefreshError ? <LoadingIndicator label={billingWait.replace('…', '')} /> : null}
+						{billingWait && !isTeamRefreshError ? (
+							<InlineLoading insideLiveRegion label={billingWait.replace('…', '')} />
+						) : null}
 					</div>
 				</div>
 				<div className="flex items-center gap-2">

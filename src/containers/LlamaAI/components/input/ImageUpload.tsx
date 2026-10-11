@@ -7,9 +7,8 @@ import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/ut
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
-import { ErrorLine } from '~/ui/Status'
+import { BusyGlyph, ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -96,7 +95,7 @@ function UploadStatus({
 				) : upload.status === 'pending' ? (
 					<Icon name="clock" className="size-3.5" />
 				) : (
-					<LoadingSpinner size={14} />
+					<BusyGlyph decorative size={14} />
 				)}
 				<span>
 					{label}
@@ -221,11 +220,7 @@ export function TextChip({
 								<span className="body-sm text-secondary">{size}</span>
 							</>
 						) : null}
-						{opening ? (
-							<span role="status" aria-label="Opening attachment">
-								<LoadingSpinner size={14} />
-							</span>
-						) : null}
+						{opening ? <BusyGlyph decorative size={14} /> : null}
 					</div>
 				</div>
 			</Header>

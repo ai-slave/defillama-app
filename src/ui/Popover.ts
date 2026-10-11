@@ -1,3 +1,4 @@
+import { menuItemRowStyles, surfaceMotionStyles } from './internal/Popover'
 import { tw } from './tw'
 /* ----------------------------------------------------------------------------
    Row, check and hovercard/tooltip recipes for the popover surfaces. The
@@ -16,8 +17,6 @@ import { tw } from './tw'
    single-select row draws no box: only the selected row shows a 14px
    text-link check.
 ---------------------------------------------------------------------------- */
-
-export const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
 
 const tooltipMotionStyles = tw`translate-y-1 opacity-0 transition-[opacity,translate] duration-120 ease-out-quart data-enter:translate-y-0 data-enter:opacity-100 data-leave:duration-100`
 
@@ -39,16 +38,7 @@ export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:c
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 
-const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm aria-disabled:cursor-not-allowed aria-disabled:text-disabled data-focus-visible:focus-ring max-sm:min-h-11`
-
 export const popoverMenuItemStyles = `${menuItemRowStyles} text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-/* Its own recipe, not `text-error` appended to the row: Tailwind emits `.text-primary` after `.text-error`, so an
-   appended color class never wins. A destructive row highlights in its own red, like the destructive button. */
-export const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error hover:bg-error-tint focus-visible:bg-error-tint data-active-item:bg-error-tint`
-
-/* The current row (`data-active`) is a selection: brand tint and link text, and it takes no hover wash. */
-export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary not-data-[active=true]:hover:bg-hover-row not-data-[active=true]:focus-visible:bg-hover-row not-data-[active=true]:data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-brand-muted data-[active=true]:text-link max-sm:min-h-11`
 
 /* The list under a PopoverHeader scrolls on its own, so the title row and header stay put when Ariakit
    scrolls the selected option into view on open, or the user scrolls a long list. Neither reserves a

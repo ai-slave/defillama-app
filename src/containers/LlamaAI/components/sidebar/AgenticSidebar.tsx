@@ -32,10 +32,9 @@ import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
@@ -142,7 +141,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 
 		return (
 			<div style={itemStyle} className="flex items-center justify-center py-2 text-tertiary">
-				{item.isFetching ? <LoadingSpinner size={12} /> : null}
+				{item.isFetching ? <BusyGlyph label="Loading more chats" size={12} hideLabel /> : null}
 			</div>
 		)
 	}
@@ -456,9 +455,8 @@ function SidebarPanel({
 							/>
 							<span className="absolute top-0 right-1 bottom-0 my-auto flex items-center gap-1">
 								{isSearching ? (
-									<span role="status" className="flex size-6 items-center justify-center text-tertiary">
-										<LoadingSpinner size={12} />
-										<span className="sr-only">Searching</span>
+									<span className="flex size-6 items-center justify-center text-tertiary">
+										<BusyGlyph label="Searching" size={12} hideLabel />
 									</span>
 								) : (
 									<Button
@@ -528,9 +526,7 @@ function SidebarPanel({
 
 					<nav className="px-4 pt-2 pb-4" aria-label="Chat history">
 						{isLoading ? (
-							<div role="status" aria-live="polite" className="flex justify-center py-6">
-								<LoadingIndicator label="Loading chats" />
-							</div>
+							<ListLoading label="Loading chats" />
 						) : loadError ? (
 							<InlineStatus variant="error">{loadError}</InlineStatus>
 						) : shownSessions.length === 0 ? (

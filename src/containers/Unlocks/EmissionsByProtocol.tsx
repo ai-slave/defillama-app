@@ -16,7 +16,7 @@ import { Change } from '~/ui/Change'
 import { CHART_FILL, ChartPanelExportShellLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
@@ -1131,11 +1131,7 @@ export function UnlocksCharts({
 	const readFailed = queryReadFailed(emissionsQuery)
 
 	if (shouldFetch && emissionsQuery.isLoading && !readFailed) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center">
-				<LoadingIndicator />
-			</div>
-		)
+		return <SurfaceBodyLoadingStatus label="Loading unlocks" />
 	}
 
 	const resolvedData: ProtocolEmissionResult | null = initialData ?? data

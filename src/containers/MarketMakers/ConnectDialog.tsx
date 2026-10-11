@@ -21,10 +21,11 @@ import { Field, type FieldControlProps } from '~/ui/Field'
 import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { ListLoading } from '~/ui/NoResults'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { ErrorLine, InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine, InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { emailError } from '~/utils/email'
 import { useSubmitLead } from './client'
@@ -99,9 +100,7 @@ function TokenCombobox({
 				{debouncedQuery.trim().length === 0 ? (
 					<p className="px-3 py-6 text-center body-sm text-tertiary">Start typing to search tokens</p>
 				) : results.isPending ? (
-					<div role="status" aria-live="polite" className="flex justify-center px-3 py-6">
-						<LoadingIndicator label="Searching" />
-					</div>
+					<ListLoading label="Searching" />
 				) : results.isError ? (
 					<ErrorLine inset="menuRow">Couldn&apos;t search tokens. Edit the search to try again.</ErrorLine>
 				) : tokens.length === 0 ? (

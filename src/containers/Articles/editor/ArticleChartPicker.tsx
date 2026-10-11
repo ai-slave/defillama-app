@@ -29,7 +29,7 @@ import { Input } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { EmptyState, LoadingIndicator, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { EmptyState, InlineLoading, SurfaceBodyStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -552,11 +552,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										)
 									})}
 								</ul>
-								{metaLoading ? (
-									<div role="status" aria-live="polite">
-										<LoadingIndicator label="Loading available chart types" />
-									</div>
-								) : null}
+								{metaLoading ? <InlineLoading label="Loading available chart types" /> : null}
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 px-5 pb-3">

@@ -344,59 +344,6 @@ function matchOffScaleMonoWeight(content) {
 	return found.length > 0 ? found : null
 }
 
-// A raw size and a raw weight on one element are a type style the ramp should name: `text-sm
-// font-semibold` is title-md. Order does not matter, and a variant that changes either one over the
-// base pair (`md:text-base`) is another style. The parts of one clsx() call, and the branches of a
-// template's ${}, land on one element, so each counts as one class set. A bare weight over an
-// inherited size cannot be told apart from emphasis inside a sentence, so recipes and shared
-// components cover those instead.
-const RAW_TYPE_SIZE = /^text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\])(?:\/\S+)?$/
-const RAW_TYPE_WEIGHT = /^font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/
-const STRING_LITERAL_AT = new RegExp(STRING_LITERAL.source, 'y')
-
-function rawTypePairs(classText, found) {
-	const scopes = new Map()
-	for (const token of classText.replace(/\$\{|[{}'"`]|:(?=\s|$)/g, ' ').split(/\s+/)) {
-		const parsed = token.match(VARIANT_UTILITY)
-		if (!parsed) continue
-		const [, variants, utility] = parsed
-		const scope = scopes.get(variants) ?? {}
-		if (RAW_TYPE_SIZE.test(utility)) scope.fontSize = utility
-		else if (RAW_TYPE_WEIGHT.test(utility)) scope.weight = utility
-		scopes.set(variants, scope)
-	}
-	const base = scopes.get('') ?? {}
-	for (const [variants, scope] of scopes) {
-		const fontSize = scope.fontSize ?? base.fontSize
-		const weight = scope.weight ?? base.weight
-		if ((scope.fontSize || scope.weight) && fontSize && weight) found.push(`${variants}${fontSize} ${weight}`)
-	}
-}
-
-function matchRawTypePair(content) {
-	const found = []
-	let source = content.replace(/\/\*[\s\S]*?\*\//g, '')
-	for (const call of [...source.matchAll(/\bclsx\(/g)].reverse()) {
-		let depth = 1
-		let i = call.index + call[0].length
-		while (depth > 0 && i < source.length) {
-			STRING_LITERAL_AT.lastIndex = i
-			const literal = /['"`]/.test(source[i]) ? STRING_LITERAL_AT.exec(source) : null
-			if (literal) {
-				i += literal[0].length
-				continue
-			}
-			if (source[i] === '(') depth++
-			else if (source[i] === ')') depth--
-			i++
-		}
-		rawTypePairs(source.slice(call.index + call[0].length, i - 1), found)
-		source = source.slice(0, call.index) + source.slice(i)
-	}
-	for (const [literal] of source.matchAll(STRING_LITERAL)) rawTypePairs(literal.slice(1, -1), found)
-	return found.length > 0 ? found : null
-}
-
 // The font size a text-* utility sets, in px at the default root: a number, NaN when it is a size whose px value
 // depends on the viewport (vw, calc), or null when the utility is not a font size (a color, an alignment).
 const NAMED_TEXT_PX = {
@@ -459,15 +406,16 @@ function splitVariants(token) {
 	return { variants: parts, utility: token.slice(start).replace(/^!|!$/g, '') }
 }
 
-// Every raw size in a class string, alone or under a breakpoint. A placeholder's size belongs to the field recipe,
-// and prose-* variants style article bodies through the typography plugin, so neither counts.
-function matchRawTypeSize(content, arbitraryOnly = false) {
+// Every raw size in a class string, alone, under a breakpoint or beside a raw weight (`text-sm font-semibold` is
+// title-md), arbitrary px included. A placeholder's size belongs to the field recipe, and prose-* variants style
+// article bodies through the typography plugin, so neither counts.
+function matchRawTypeSize(content) {
 	const found = []
 	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
 	for (const [literal] of source.matchAll(STRING_LITERAL)) {
 		for (const token of classTokens(literal.slice(1, -1))) {
 			const { variants, utility } = splitVariants(token)
-			if (textSizePx(utility) === null || (arbitraryOnly && !utility.startsWith('text-['))) continue
+			if (textSizePx(utility) === null) continue
 			if (variants.some((v) => v.startsWith('placeholder') || v.startsWith('prose-'))) continue
 			found.push(token)
 		}
@@ -696,21 +644,15 @@ const RULES = [
 			'src/containers/MCP/index.tsx':
 				"the terminal mock's window-control dots: macOS's close, minimise and zoom colours, the same in both modes",
 			'src/containers/MarketMakers/DocsFigures.tsx':
-				"the docs figures' frames: backdrops matched to their photographic background images, and a rule around a screenshot on its fixed light canvas, the same in both modes"
+				"the docs figures' frames: backdrops matched to their photographic background images, and a rule around a screenshot on its fixed light canvas, the same in both modes",
+			'src/containers/MarketMakers/colors.ts':
+				"the breakdown table's heat scale: one hue at nine alphas over the card, spelled out as static classes so Tailwind emits them"
 		},
-		description: 'hardcoded hex color in a utility class (use a token: bg-surface, text-data-up, …)',
-		pattern: /(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret)-\[#[0-9a-fA-F]/g
-	},
-	{
-		id: 'dark-hex-variant',
-		description: 'dark:*-[#hex] mode fork (tokens flip via html.dark; no per-component dark hex)',
-		pattern: /dark:[a-zA-Z-]*-\[#[0-9a-fA-F]/g
-	},
-	{
-		id: 'arbitrary-font-size',
-		description: 'arbitrary font size (use the type ramp: label-sm, body-xs, …)',
-		match: (content) => matchRawTypeSize(content, true),
-		landingDisplay: true
+		description:
+			'an arbitrary color in a utility class: a hex, rgb()/hsl()/oklch()/color-mix(), or a dark:*-[#hex] mode fork (use a token: bg-surface, text-data-up, …; tokens flip via html.dark)',
+		// The last branch keeps a dark: fork on any utility (border-t, ring-offset), not only the listed ones.
+		pattern:
+			/(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret|divide|placeholder)-\[(?:#[0-9a-fA-F]|(?:rgba?|hsla?|oklch|oklab|color-mix)\(|color:)|dark:[a-zA-Z-]*-\[#[0-9a-fA-F]/g
 	},
 	{
 		id: 'arbitrary-spacing',
@@ -824,16 +766,6 @@ const RULES = [
 			'a dark fill that ignores the theme (a fixed product dark token, LlamaAI ink, stock black or a dark hex). An always-dark surface sets `theme-dark` on its root so the text, borders and controls inside it take their dark values in light mode too (design.md → Always-dark surfaces); after checking that, update the baseline',
 		match: matchFixedDarkFill,
 		skipTests: true
-	},
-	{
-		id: 'arbitrary-color-function',
-		exceptions: {
-			'src/containers/MarketMakers/colors.ts':
-				"the breakdown table's heat scale: one hue at nine alphas over the card, spelled out as static classes so Tailwind emits them"
-		},
-		description: 'arbitrary rgb()/hsl()/oklch() color in a utility class (same contract as hex-in-classname)',
-		pattern:
-			/(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret|divide|placeholder)-\[(?:(?:rgba?|hsla?|oklch|oklab|color-mix)\(|color:)/g
 	},
 	{
 		id: 'arbitrary-shadow',
@@ -1027,9 +959,9 @@ const RULES = [
 				"the Pro route loader's branded llama, a deliberate brand moment on a full-page load; its rings stop under reduced motion"
 		},
 		description:
-			'hand-rolled animate-spin spinner — use LoadingSpinner from src/ui/Loaders in buttons and inline controls, or LoadingIndicator from src/ui/Status for in-panel loading',
+			'hand-rolled animate-spin spinner — a busy button is Button `pending`, a busy row, chip or line is BusyGlyph, and loading content is a loading part from src/ui/Status',
 		pattern: /\banimate-spin\b/g,
-		// src/ui/Loaders owns the one spinner.
+		// src/ui/internal/Loaders owns the one spinner.
 		uiOwned: true
 	},
 	{
@@ -1378,17 +1310,9 @@ const RULES = [
 		skipTests: true
 	},
 	{
-		id: 'raw-type-pair',
-		description:
-			'a raw text-* size with a font-* weight is a type style without a name; use the named style for its role in design.md → Typography (title-md, label-md, body-sm, …)',
-		match: matchRawTypePair,
-		landingDisplay: true,
-		skipTests: true
-	},
-	{
 		id: 'raw-type-size',
 		description:
-			'a raw text-* size, alone or with a breakpoint, is a type style without a name; use the named style for its role in design.md → Typography (body-md, label-sm, heading-sm, …)',
+			'a raw text-* size (text-sm, text-[11px]), alone, with a breakpoint or with a font-* weight, is a type style without a name; use the named style for its role in design.md → Typography (body-md, label-sm, title-md, heading-sm, …)',
 		match: matchRawTypeSize,
 		landingDisplay: true,
 		skipTests: true

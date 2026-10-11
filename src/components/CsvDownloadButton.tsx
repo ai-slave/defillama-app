@@ -9,7 +9,7 @@ import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLim
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 
@@ -125,11 +125,13 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 			{!isLoading || !isClient ? (
 				<Icon name="download-paper" className="size-3.5 shrink-0" />
 			) : (
-				<LoadingSpinner size={14} />
+				<BusyGlyph decorative size={14} />
 			)}
 
 			{children || (
-				<span className="truncate">{csv.status === 'pending' ? 'Preparing…' : smol ? '.csv' : 'Download .csv'}</span>
+				// The label stays while the file is prepared, so the button keeps its width beside .png; the spinner and the status
+				// line below carry the wait.
+				<span className="truncate">{smol ? '.csv' : 'Download .csv'}</span>
 			)}
 		</>
 	)

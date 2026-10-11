@@ -1,10 +1,10 @@
 import Image from 'next/image'
 import { Card } from '~/ui/Card'
-import { LoadingDots } from '~/ui/Loaders'
+import { InlineLoading } from '~/ui/Status'
 
-// The Pro route's full-page loader keeps its branded llama, the one listed exception to the shared loading parts
-// (check-status-parts, check-design-tokens). Its rings spin only under motion-safe, so reduced motion holds them still,
-// and the one status line announces "Loading" once.
+// The Pro route's full-page loader keeps its branded llama, the one listed exception to the shared spinner
+// (check-design-tokens hand-rolled-spinner). Its rings spin only under motion-safe, so reduced motion holds them still,
+// and the one status line under them announces "Loading" once.
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (
 		<Card padding="none" className="isolate flex flex-1 flex-col items-center justify-center gap-6">
@@ -54,10 +54,7 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 
 			<div className="flex flex-col items-center gap-1 text-center">
 				{heading ? <h1 className="heading-xs text-primary">{heading}</h1> : null}
-				<p role="status" aria-live="polite" className="flex items-center gap-1 text-secondary">
-					Loading
-					<LoadingDots />
-				</p>
+				<InlineLoading label="Loading" />
 			</div>
 		</Card>
 	)

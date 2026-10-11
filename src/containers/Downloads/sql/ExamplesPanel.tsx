@@ -4,8 +4,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SearchField } from '~/ui/SearchField'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
 
@@ -251,7 +251,7 @@ function PlaybookItem({
 			>
 				<span className="flex size-4 items-center justify-center">
 					{isBusy ? (
-						<LoadingSpinner size={10} />
+						<BusyGlyph decorative size={12} />
 					) : (
 						<span className="label-sm text-tertiary transition-colors group-hover/item:text-primary">
 							{String(ordinal).padStart(2, '0')}

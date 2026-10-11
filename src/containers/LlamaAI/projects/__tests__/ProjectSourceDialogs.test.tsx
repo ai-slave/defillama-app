@@ -411,7 +411,9 @@ test('GitHub files never get a per-file delete action while source metadata load
 	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'github-1', path: 'repo/notes.md', size: 100 }] })
 	await mountFiles()
 	await waitForUi(() => expect(container.textContent).toContain('repo/notes.md'))
-	expect(container.querySelector('[role="status"][aria-label="Loading connected sources"]')).not.toBeNull()
+	expect(Array.from(container.querySelectorAll('[role="status"]'), (status) => status.textContent)).toContain(
+		'Loading connected sources'
+	)
 	expect(container.querySelector('[aria-label="Delete repo/notes.md"]')).toBeNull()
 	await act(async () =>
 		request.resolve([{ id: 'github-1', adapter_type: 'github', config: { owner: 'owner', repo: 'repo' } }])

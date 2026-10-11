@@ -1,4 +1,4 @@
-import { LoadingIndicator } from './Status'
+import { LoadingIndicator } from './internal/Loaders'
 
 /** The shared empty-result line for lists, popovers, and tables. */
 export function NoResults({ children = 'No results found' }: { children?: React.ReactNode }) {

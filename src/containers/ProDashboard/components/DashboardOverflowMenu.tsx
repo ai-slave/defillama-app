@@ -6,8 +6,8 @@ import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
@@ -107,7 +107,11 @@ export function DashboardOverflowMenu({
 
 	// The menu closes on a pick, so a running duplicate or move shows on the button that reopens it.
 	const triggerIcon =
-		duplicate.isPending || move.isPending ? <LoadingSpinner size={14} /> : <Icon name="ellipsis" className="size-4" />
+		duplicate.isPending || move.isPending ? (
+			<BusyGlyph decorative size={14} />
+		) : (
+			<Icon name="ellipsis" className="size-4" />
+		)
 
 	const dashboardItems = (
 		<>

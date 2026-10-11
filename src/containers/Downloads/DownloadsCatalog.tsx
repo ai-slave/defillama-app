@@ -12,11 +12,10 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { EmptyState } from '~/ui/Status'
+import { BusyGlyph, EmptyState } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -278,7 +277,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 														<div className="flex items-center gap-3">
 															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 																{pending ? (
-																	<LoadingSpinner size={18} />
+																	<BusyGlyph decorative size={18} />
 																) : (
 																	<Icon name="file-text" className="size-5 text-link" />
 																)}
@@ -352,7 +351,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 														<div className="flex items-center gap-3">
 															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint">
 																{pending ? (
-																	<LoadingSpinner size={18} />
+																	<BusyGlyph decorative size={18} />
 																) : (
 																	<Icon name="bar-chart-2" className="size-5 text-link" />
 																)}

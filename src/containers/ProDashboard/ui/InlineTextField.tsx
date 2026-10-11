@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { keepKeyboardEventsInsideCard } from './keyboard'
 
@@ -58,7 +58,7 @@ export function InlineTextField({
 		<>
 			{saving ? (
 				<span className="pointer-events-none absolute top-1 right-1 text-tertiary">
-					<LoadingSpinner size={12} />
+					<BusyGlyph label="Saving" size={12} hideLabel />
 				</span>
 			) : null}
 			{failed && errorMessage ? (

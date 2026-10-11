@@ -74,9 +74,10 @@ import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { ListRow } from '~/ui/ListRow'
+import { ListLoading } from '~/ui/NoResults'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { ErrorLine, InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine, InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
@@ -220,9 +221,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 					) : (
 						<DialogBody>
 							{view === 'loading' ? (
-								<div role="status" className="flex justify-center py-16">
-									<LoadingIndicator label="Loading alerts" />
-								</div>
+								<SurfaceBodyLoadingStatus label="Loading alerts" className="min-h-40" />
 							) : view === 'sign-in' ? (
 								<p className="body-sm text-secondary">
 									Sign in to use alerts and manage their delivery from one place.
@@ -658,9 +657,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								Couldn&apos;t load alert history.
 							</InlineStatus>
 						) : executionsQuery.isLoading ? (
-							<div role="status" className="flex justify-center py-4">
-								<LoadingIndicator label="Loading history" />
-							</div>
+							<ListLoading label="Loading history" />
 						) : !executionsQuery.data || executionsQuery.data.length === 0 ? (
 							<p className="text-center body-sm text-tertiary">No runs yet.</p>
 						) : (
@@ -691,8 +688,8 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								Couldn&apos;t load this execution.
 							</InlineStatus>
 						) : execDetailQuery.isLoading ? (
-							<div role="status" className="mt-2 flex justify-center">
-								<LoadingIndicator label="Loading run" />
+							<div className="mt-2 flex justify-center">
+								<InlineLoading label="Loading run" />
 							</div>
 						) : null}
 					</div>

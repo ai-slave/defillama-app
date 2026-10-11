@@ -1,6 +1,6 @@
 import type { ChangeEventHandler } from 'react'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { LoadingSpinner } from './internal/Loaders'
 
 /* ----------------------------------------------------------------------------
    Switch — an on/off toggle with a visible or screen-reader label.

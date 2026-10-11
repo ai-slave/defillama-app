@@ -4,8 +4,8 @@ import { useCallback, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
+import { BusyGlyph } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig } from '../chartConfig'
@@ -130,9 +130,9 @@ export function NotebookCell({
 					<Tag>{cell.type === 'sql' ? 'SQL' : cell.type === 'markdown' ? 'MD' : 'Chart'}</Tag>
 				</span>
 				{cell.running && cell.loadingStage ? (
-					<span className="inline-flex items-center gap-1 label-sm text-warning">
-						<LoadingSpinner size={10} />
-						{cell.loadingStage}…
+					<span className="label-sm text-warning">
+						{/* The results panel announces the stage. */}
+						<BusyGlyph label={`${cell.loadingStage}…`} size={12} insideLiveRegion />
 					</span>
 				) : cell.runError ? (
 					<span className="inline-flex items-center gap-1 label-sm text-error">
@@ -146,7 +146,7 @@ export function NotebookCell({
 						cell.running ? (
 							// Run and Stop share one slot, so React keeps the same button and its focus when they swap.
 							<Button variant="secondary" size="sm" onClick={onCancel}>
-								<LoadingSpinner size={14} />
+								<BusyGlyph decorative size={14} />
 								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 									<rect x="6" y="6" width="12" height="12" rx="1" />
 								</svg>

@@ -9,7 +9,7 @@ import { usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { EmbeddedCardCheckout } from './EmbeddedCardCheckout'
 import {
@@ -94,11 +94,7 @@ function OutcomeStep({ title, description }: { title: string; description: strin
 }
 
 function CheckoutLoading() {
-	return (
-		<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center">
-			<LoadingIndicator label="Loading checkout" />
-		</div>
-	)
+	return <SurfaceBodyLoadingStatus label="Loading checkout" className="absolute inset-0 min-h-0" />
 }
 
 // Reads the session the caller's useStripeCheckout created; nothing rendered here creates one. Every step renders in

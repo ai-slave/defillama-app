@@ -12,7 +12,7 @@ import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { SpawnAgentStatus } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 
 export { TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
 
@@ -115,12 +115,13 @@ export function SpawnProgressCard({
 			) : null}
 
 			{recovery?.status === 'reconnecting' ? (
-				<div role="status" aria-live="polite" className="flex items-center gap-2 border-t border-subtle pt-2">
-					<LoadingSpinner size={14} />
-					<p className="m-0 flex-1 body-sm text-secondary">
-						Connection lost. Reconnecting{recovery.attemptCount > 0 ? ` (attempt ${recovery.attemptCount})` : ''}
-						&hellip;
-					</p>
+				<div className="flex items-center gap-2 border-t border-subtle pt-2">
+					<div className="flex-1 body-sm text-secondary">
+						<BusyGlyph
+							label={`Connection lost. Reconnecting${recovery.attemptCount > 0 ? ` (attempt ${recovery.attemptCount})` : ''}…`}
+							size={14}
+						/>
+					</div>
 					{onReconnect ? (
 						<Button type="button" size="sm" onClick={onReconnect}>
 							Reconnect now

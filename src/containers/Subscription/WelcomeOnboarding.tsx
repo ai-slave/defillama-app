@@ -20,7 +20,7 @@ import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { OptionTile } from '~/ui/OptionTile'
 import { popoverMultiSelectCheckStyles } from '~/ui/Popover'
-import { LoadingIndicator, PanelLoadingStatus } from '~/ui/Status'
+import { InlineLoading, PanelLoadingStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const ONBOARDING_OPTIONS = [
@@ -350,11 +350,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 								? 'This usually takes a few seconds, and this page checks again automatically.'
 								: 'Confirming your payment is taking longer than usual. Refresh the page to check again.'}
 					</p>
-					{checking ? (
-						<div role="status" aria-live="polite">
-							<LoadingIndicator label="Checking your payment" />
-						</div>
-					) : null}
+					{checking ? <InlineLoading label="Checking your payment" /> : null}
 					<Button size="md" onClick={() => window.location.reload()}>
 						Refresh
 					</Button>

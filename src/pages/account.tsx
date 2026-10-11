@@ -14,7 +14,7 @@ import Layout from '~/layout'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineLoading } from '~/ui/Status'
 
 // Reads of the subscription after a ?success=true return, as WelcomeOnboarding budgets them: one at once, then
 // one every four seconds until it reads the bought plan.
@@ -213,7 +213,7 @@ export default function Account() {
 						{/* One live region for every step, so the outcome is announced when the reads settle. */}
 						<div role="status">
 							{paymentStep === 'confirming' ? (
-								<LoadingIndicator label="Checking your payment" />
+								<InlineLoading insideLiveRegion label="Checking your payment" />
 							) : (
 								<Ariakit.DialogDescription className="body-sm text-secondary">
 									{PAYMENT_DESCRIPTIONS[paymentStep]}

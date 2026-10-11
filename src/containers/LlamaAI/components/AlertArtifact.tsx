@@ -47,9 +47,8 @@ import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
-import { InlineStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { queryReadFailed } from '~/utils/query'
 
@@ -377,14 +376,8 @@ export function AlertArtifact({
 					) : null}
 
 					{testMutation.isPending ? (
-						<p
-							ref={takeLostFocus}
-							tabIndex={-1}
-							role="status"
-							className="flex items-center justify-center gap-1.5 body-sm text-tertiary"
-						>
-							<LoadingSpinner size={12} />
-							Sending test alert…
+						<p ref={takeLostFocus} tabIndex={-1} className="flex justify-center body-sm text-tertiary">
+							<BusyGlyph label="Sending test alert…" size={12} />
 						</p>
 					) : null}
 

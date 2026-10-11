@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus, LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { InlineLoading, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { type Status, StatusBadge } from '~/ui/StatusBadge'
 import { type QueryRetry, queryReadFailed } from '~/utils/query'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
@@ -130,9 +130,7 @@ export function ProfileCountryCard({
 			</div>
 
 			{view.status === 'loading' ? (
-				<div role="status" aria-live="polite">
-					<LoadingIndicator label={`Loading information for ${countryLabel(view.country)}`} />
-				</div>
+				<InlineLoading label={`Loading information for ${countryLabel(view.country)}`} />
 			) : view.status === 'error' ? (
 				<InlineStatus variant="error" retry={view.query}>
 					Couldn&apos;t load country-specific information for {countryLabel(view.country)}. Showing global information.

@@ -16,9 +16,8 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, PanelLoadingStatus } from '~/ui/Status'
+import { BusyGlyph, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { httpErrorMessage } from '~/utils/async'
@@ -657,8 +656,17 @@ function ProDashboardContent() {
 									aria-hidden="true"
 									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 body-md text-secondary"
 								>
-									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" className="size-3.5" />}
-									{doneStatusLabel}
+									{autoSaving ? (
+										<>
+											<BusyGlyph decorative size={14} />
+											{doneStatusLabel}
+										</>
+									) : (
+										<>
+											<Icon name="check" className="size-3.5" />
+											{doneStatusLabel}
+										</>
+									)}
 								</span>
 							) : null}
 							{dashboardId && (mode === 'edit' || canEditDashboard) ? (

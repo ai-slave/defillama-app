@@ -8,7 +8,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { ErrorLine, LoadingIndicator } from '~/ui/Status'
+import { ErrorLine, InlineLoading } from '~/ui/Status'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 import { navLinkStyles } from './shared'
 
@@ -39,8 +39,8 @@ export function Account() {
 	return (
 		<>
 			{loaders?.userLoading && !(isAuthenticated && user && unavailable) ? (
-				<div role="status" aria-live="polite" className="flex min-h-7 w-full items-center justify-center">
-					<LoadingIndicator label="Loading account" />
+				<div className="flex min-h-7 w-full items-center justify-center">
+					<InlineLoading label="Loading account" />
 				</div>
 			) : isAuthenticated && user ? (
 				<div data-account className="flex w-full flex-col">

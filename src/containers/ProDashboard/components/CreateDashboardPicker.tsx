@@ -22,9 +22,8 @@ import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { BusyGlyph, InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed } from '~/utils/query'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -206,9 +205,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 				<Suspense
 					fallback={
 						<DialogBody>
-							<div role="status" aria-live="polite" className="flex h-96 items-center justify-center">
-								<LoadingIndicator label="Loading comparison builder" />
-							</div>
+							<SurfaceBodyLoadingStatus label="Loading comparison builder" className="h-96" />
 						</DialogBody>
 					}
 				>
@@ -399,7 +396,7 @@ function DashboardTemplates({
 						>
 							<span className="flex items-center gap-2 label-md text-primary group-aria-disabled:group-not-aria-busy:text-disabled">
 								{template.name}
-								{creating || loading ? <LoadingSpinner size={14} /> : null}
+								{creating || loading ? <BusyGlyph decorative size={14} /> : null}
 							</span>
 							<span id={`${id}-${template.id}`} className="block body-sm text-tertiary">
 								<span className="block">{template.description}</span>

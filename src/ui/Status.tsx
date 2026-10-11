@@ -4,29 +4,34 @@ import { Button } from './Button'
 import { Card } from './Card'
 import { focusRegionOnLeave } from './focus'
 import { Icon, type IIcon } from './Icon'
-import { LoadingDots, LoadingSpinner } from './Loaders'
+import { LoadingIndicator, LoadingSpinner } from './internal/Loaders'
 
 /* ----------------------------------------------------------------------------
    Loading, empty and error states.
 
-   | Where                                     | Use                                         |
-   | ----------------------------------------- | ------------------------------------------- |
-   | A whole panel is the state                | PanelStatus, PanelLoadingStatus             |
-   | Inside a Panel, Card or chart body        | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
-   | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
-   | An error with no room for a box           | ErrorLine (menu rows, toolbars, chips)      |
-   | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
-   | Nothing here yet, or nothing matched      | EmptyState (icon, title, hint, actions)     |
-   | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
-   | Loading rows in a list or popover         | ListLoading (./NoResults.tsx)               |
-   | Loading inline in a row, field or line    | LoadingIndicator inside a role=status node  |
-   | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
+   | Where                                       | Use                                         |
+   | ------------------------------------------- | ------------------------------------------- |
+   | A whole panel is the state                  | PanelStatus, PanelLoadingStatus             |
+   | Inside a Panel, Card, chart or dialog body  | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
+   | A message in a dialog or above content      | InlineStatus (error, warning, empty)        |
+   | An error with no room for a box             | ErrorLine (menu rows, toolbars, chips)      |
+   | Loading over content that stays visible     | SurfaceLoadingOverlay                       |
+   | Nothing here yet, or nothing matched        | EmptyState (icon, title, hint, actions)     |
+   | An empty result in a list, popover, table   | NoResults (./NoResults.tsx)                 |
+   | Loading rows in a list or popover           | ListLoading (./NoResults.tsx)               |
+   | Loading inline in a row, field or line      | InlineLoading                               |
+   | A row, chip, tab or line busy with its work | BusyGlyph, `decorative` inside a control    |
+   | A busy button                               | Button `pending` (./Button.tsx)             |
 
    - Loading always shows on the surface that holds the content, through
-     these parts, with the quiet LoadingIndicator they render by default.
+     these parts. The dots, spinner and indicator they draw live in
+     ./internal/Loaders.tsx, which an oxlint import rule keeps out of app
+     code, so a page cannot assemble a loading state of its own.
      A loading state never sits on the bare page background. A Suspense or
      `dynamic()` fallback is a loading state too: the part for its surface
-     with a label naming what loads, never a blank min-h box.
+     with a label naming what loads, never a blank min-h box. A body that
+     reserves its box while nothing is in it yet (a checkout frame)
+     places SurfaceBodyLoadingStatus with `absolute inset-0 min-h-0`.
    - Copy is text-center body-sm: loading and empty text-tertiary, error
      text-error with role="alert". InlineStatus draws its own box (below). Ad-hoc placeholders use the same
      tokens; never raw `text-red-*` or text-primary for "No results found".
@@ -43,9 +48,9 @@ import { LoadingDots, LoadingSpinner } from './Loaders'
      the query as `retry` and draw its Try again (RetryButton); never place
      one by hand inside a status. See docs/focus-and-errors.md for retries.
    - scripts/policies/check-status-parts.ts refuses hand-built loading text,
-     LoadingDots, a lone spinner as a region's loading state, error boxes,
-     alert lines, a retry gated on isError instead of queryReadFailed, and a
-     Suspense or `dynamic()` fallback that renders a blank box.
+     error boxes, alert lines, a retry gated on isError instead of
+     queryReadFailed, and a Suspense or `dynamic()` fallback that renders a
+     blank box.
 ---------------------------------------------------------------------------- */
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
@@ -90,7 +95,7 @@ export function PanelStatus({ children, variant, retry, className }: PanelStatus
 
 /** The Try again of a failed read, drawn by the status parts that take `retry`: it waits while the read runs again,
     and hands focus to the region around it when what loads replaces the status. */
-export function RetryButton({ retry }: { retry: QueryRetry }) {
+function RetryButton({ retry }: { retry: QueryRetry }) {
 	return (
 		<Button
 			ref={focusRegionOnLeave}
@@ -101,16 +106,6 @@ export function RetryButton({ retry }: { retry: QueryRetry }) {
 		>
 			Try again
 		</Button>
-	)
-}
-
-/** The app's loading indicator: quiet tertiary text matching the empty/error copy. */
-export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
-	return (
-		<span className="flex items-center gap-1 body-sm text-tertiary">
-			{label}
-			<LoadingDots />
-		</span>
 	)
 }
 
@@ -189,6 +184,64 @@ export function ErrorLine({ children, inset }: { children: ReactNode; inset: key
 			</span>
 			<span className="min-w-0">{children}</span>
 		</p>
+	)
+}
+
+/** Loading inline in a row, field or line (a setting's value, a field's options, a step's check): the quiet
+    indicator with a label naming what loads, announced. Where the caller keeps one live region around content that
+    changes in place (a step whose "Checking your payment" turns into its outcome), `insideLiveRegion` drops the part's
+    own role, so that region announces the label once and a nested region never repeats it. Rows of a list or popover
+    loading are ListLoading; a panel, card, chart or dialog body loading is SurfaceBodyLoadingStatus. */
+export function InlineLoading({ label, insideLiveRegion = false }: { label: string; insideLiveRegion?: boolean }) {
+	return (
+		<span
+			role={insideLiveRegion ? undefined : 'status'}
+			aria-live={insideLiveRegion ? undefined : 'polite'}
+			className="flex"
+		>
+			<LoadingIndicator label={label} />
+		</span>
+	)
+}
+
+/** A row, chip, tab or line busy with its own work while it stays on screen (a saved query running, a file
+    uploading, an autosave): the spinner and `label` naming the work ("Saving…", "Adding to queue"). The label shows
+    beside the spinner in the line's own type and colour; `hideLabel` keeps it for screen readers only where there is
+    no room (an icon slot, a chip), so the spinner is never unlabelled. The part announces itself; `insideLiveRegion`
+    drops the role where the caller's own region already announces the change.
+    Inside a control (a button, link, tab, menu item, combobox option, summary, a Card as a button), or beside text
+    that already names the work, the glyph is `decorative`: the bare spinner, aria-hidden, with no role and no label.
+    A label there would join the control's name ("Query running Stop query") and nest a live region in a control. The
+    control's own text or aria-label names the work ("Signing in…"), the control keeps `aria-busy`, and a status region
+    beside it announces the work where the change needs announcing. A busy button with room for a label is Button
+    `pending` with `pendingLabel`.
+    `size` matches what it stands in for: 12 beside body-sm or label-sm text and in a 12-16px slot, 14 in place of a
+    size-3.5 icon, 18 in place of a size-5 tile icon.
+    Content still loading is one of the loading parts above, never this. */
+export function BusyGlyph(
+	props: { size: 12 | 14 | 18 } & (
+		| { decorative?: false; label: ReactNode; hideLabel?: boolean; insideLiveRegion?: boolean }
+		| { decorative: true }
+	)
+) {
+	// `in` narrows the union under strict: false, where a check on the optional `decorative` flag does not.
+	if (!('label' in props)) {
+		return (
+			<span aria-hidden className="flex shrink-0">
+				<LoadingSpinner size={props.size} />
+			</span>
+		)
+	}
+	const { label, size, hideLabel = false, insideLiveRegion = false } = props
+	return (
+		<span
+			role={insideLiveRegion ? undefined : 'status'}
+			aria-live={insideLiveRegion ? undefined : 'polite'}
+			className="flex items-center gap-1.5"
+		>
+			<LoadingSpinner size={size} />
+			<span className={hideLabel ? 'sr-only' : 'min-w-0'}>{label}</span>
+		</span>
 	)
 }
 

@@ -7,10 +7,10 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useMedia } from '~/hooks/useMedia'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
-import { NoResults } from '~/ui/NoResults'
+import { ListLoading, NoResults } from '~/ui/NoResults'
 import { popoverRowStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { SearchField } from '~/ui/SearchField'
-import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { InlineStatus } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { queryReadFailed } from '~/utils/query'
 import { searchTokens } from './search'
@@ -138,9 +138,7 @@ function TokenSearch({
 					</button>
 				))}
 				{isLoading ? (
-					<p role="status" aria-live="polite" className="p-3">
-						<LoadingIndicator />
-					</p>
+					<ListLoading label="Searching tokens" />
 				) : failed ? (
 					<InlineStatus variant="error" retry={tokenSearch}>
 						Couldn&rsquo;t search tokens.

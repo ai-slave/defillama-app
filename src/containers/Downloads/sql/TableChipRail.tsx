@@ -4,7 +4,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
 import { inferFineKindFromArrowType } from './columnKind'
@@ -159,7 +159,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 				{failed ? (
 					<Icon name="alert-triangle" className="size-3 text-error" />
 				) : loading ? (
-					<LoadingSpinner size={10} />
+					<BusyGlyph decorative size={12} />
 				) : (
 					<StatusDot status="neutral" />
 				)}
