@@ -18,10 +18,7 @@ export function generateGoogleCalendarUrl(event: UnlockEvent, tokenName: string,
 	const params = {
 		text: `${tokenName} Unlock`,
 		dates: formatGoogleCalendarDates(event.timestamp),
-		details: `${tokenName} will unlock on this date. \nAmount: ${tokenValue}\nCheck details here: https://defillama.com/unlocks/${slug(
-			tokenName
-		)}
-		\nDo note that the unlock time depends on protocols vesting schedule and are just estimate.`,
+		details: `${tokenName} will unlock on this date.\nAmount: ${tokenValue}\nCheck details here: https://defillama.com/unlocks/${slug(tokenName)}\nThe unlock time follows the protocol's vesting schedule and is an estimate.`,
 		location: `https://defillama.com/unlocks/${slug(tokenName.toLowerCase())}`
 	}
 	return `https://calendar.google.com/calendar/render?action=TEMPLATE&${new URLSearchParams(params)}`
@@ -42,7 +39,7 @@ DTEND;VALUE=DATE:${end.format('YYYYMMDD')}
 SUMMARY:${tokenName} Token Unlock
 DESCRIPTION:${tokenName} Token will unlock on this date. Amount: ${tokenValue}\\nCheck details here: https://defillama.com/unlocks/${slug(
 		tokenName
-	)}\\nDo note that the unlock time depends on protocols vesting schedule and are just estimate.
+	)}\\nThe unlock time follows the protocol's vesting schedule and is an estimate.
 URL;VALUE=URI:https://defillama.com/unlocks/${slug(tokenName)}
 LOCATION:https://defillama.com/unlocks/${slug(tokenName)}
 STATUS:CONFIRMED

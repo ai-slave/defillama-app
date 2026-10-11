@@ -79,7 +79,7 @@ export default function OdysseyHeader() {
 						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 					>
 						{icon}
-						<span className="hidden lg:inline">{label}</span>
+						<span className="max-lg:sr-only">{label}</span>
 					</a>
 				))}
 			</nav>

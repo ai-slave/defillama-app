@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
 import { TokenPageTableShell } from '~/components/Table/helpers'
+import { SortIcon } from '~/components/Table/SortIcon'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import { scenarioTone } from '../derive'
@@ -165,13 +166,8 @@ function SortHeader({
 	onSort: (k: SortKey) => void
 }) {
 	const active = sort === k
-	const arrow = (
-		<Icon
-			name="chevron-down"
-			className={`size-3 shrink-0 transition ${active ? 'opacity-100' : 'opacity-0'} ${active && dir === 'asc' ? 'rotate-180' : ''}`}
-			aria-hidden
-		/>
-	)
+	// The resting caret is visible, so every sortable column says it sorts.
+	const arrow = <SortIcon dir={active ? dir : false} />
 	return (
 		<th
 			className={`border-b border-subtle px-3 py-2 font-medium whitespace-nowrap ${align === 'right' ? 'text-right' : 'text-left'}`}

@@ -63,7 +63,7 @@ export default function UniswapHeader() {
 							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-secondary transition-colors hover:bg-hover-row hover:text-primary sm:flex"
 						>
 							{LINK_ICONS[key]}
-							<span className="hidden lg:inline">{label}</span>
+							<span className="max-lg:sr-only">{label}</span>
 						</a>
 					)
 				})}

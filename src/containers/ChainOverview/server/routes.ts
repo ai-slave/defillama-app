@@ -72,6 +72,9 @@ export function resolveChainFeatureParamFromMetadata(
 	return chainRoute
 }
 
+// The redirect runs from getStaticProps, which never sees the query string, so an old or shared link with a
+// non-canonical slug (/stablecoins/Ethereum?pegtype=…) lands on the canonical page with its filters reset. Accepted for
+// now: such links are rare and the reader rebuilds the view; keeping the query needs the redirect in src/proxy.ts.
 export function getChainRouteRedirectDestination(chain: string, chainRoute: ChainRoute, prefix: string): string | null {
 	return chain === chainRoute.canonicalSlug ? null : `/${prefix}/${chainRoute.canonicalSlug}`
 }

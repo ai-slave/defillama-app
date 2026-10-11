@@ -455,7 +455,11 @@ function GrowthReadout({
 				</span>
 				<span>on</span>
 				<Ariakit.PopoverProvider placement="bottom-start">
-					<Ariakit.PopoverDisclosure className={`${readoutFieldStyles} inline-flex items-center gap-1.5`}>
+					<Ariakit.PopoverDisclosure
+						// The sentence's "on" names it for sighted readers only; the name says what the date sets.
+						aria-label={`Deposit day: ${anchoredOn ? (formatDate(anchoredOn) ?? anchoredOn) : 'not set'}`}
+						className={`${readoutFieldStyles} inline-flex items-center gap-1.5`}
+					>
 						{anchoredOn ? (formatDate(anchoredOn) ?? anchoredOn) : '—'}
 						<Ariakit.PopoverDisclosureArrow className="size-3.5 shrink-0 text-tertiary" />
 					</Ariakit.PopoverDisclosure>

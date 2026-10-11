@@ -117,7 +117,10 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 			postCheckoutPath
 		}: UpgradePayment): Promise<UpgradeOutcome> => {
 			if (!user) throw new Error("You're signed out. Sign in and try again.")
-
+			// The payment intent belongs to the account that opened checkout (useStripeCheckout checks it while creating
+			// the session). Signing in as another account in a second tab after the form shows still pays for the first
+			// account, which is the one the form was opened for; guarding that rare switch would add an account check and
+			// a step to every payment for no reader who does not cause it on purpose.
 			const confirmResult = awaitingVerification
 				? // The bank check the earlier attempt left open; a new card entry would not finish it.
 					await stripe.handleNextAction({ clientSecret })

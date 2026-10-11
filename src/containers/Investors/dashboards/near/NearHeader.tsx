@@ -73,7 +73,7 @@ export default function NearHeader() {
 						}`}
 					>
 						{LINK_ICONS[key]}
-						<span className="hidden lg:inline">{LINK_LABELS[key]}</span>
+						<span className="max-lg:sr-only">{LINK_LABELS[key]}</span>
 					</a>
 				))}
 				<a

@@ -29,7 +29,7 @@ function ProtocolPageButton() {
 	return (
 		<Ariakit.MenuButton render={<Button variant="ghost" size="md" />}>
 			<Icon name="calendar-plus" className="size-3.5" />
-			Add to Calendar
+			Add to calendar
 		</Ariakit.MenuButton>
 	)
 }
@@ -77,7 +77,7 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 					}
 				>
 					<Icon name="download-cloud" className="size-4" />
-					Other Calendars Apps
+					Other calendar apps
 				</MenuItem>
 			</MenuSurface>
 		</Ariakit.MenuProvider>

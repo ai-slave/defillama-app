@@ -152,7 +152,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 					: loading
 						? 'border-brand-muted bg-brand-faint text-primary'
 						: 'border-subtle bg-surface text-secondary'
-			} ${loading ? 'animate-pulse' : ''}`}
+			} ${loading ? 'motion-safe:animate-pulse' : ''}`}
 		>
 			<span className="flex size-3 shrink-0 items-center justify-center">
 				{failed ? (
