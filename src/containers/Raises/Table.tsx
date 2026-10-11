@@ -197,7 +197,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 	})
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects…</span>

@@ -72,7 +72,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	}, [router.isReady, router.query.search, setProjectName])
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects…</span>

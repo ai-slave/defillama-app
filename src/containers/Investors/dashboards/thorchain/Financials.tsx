@@ -4,6 +4,7 @@ import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -225,10 +226,10 @@ export default function Financials() {
 						subtitle="Affiliate fees paid to integrating wallets and interfaces."
 					/>
 					<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-						<div className="rounded-lg border border-subtle bg-surface p-4">
+						<Card padding="md">
 							<h3 className="mb-3 title-md text-primary">{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />
-						</div>
+						</Card>
 						<DonutCard dist={affiliate.topShareDonut} subtitle="Share of lifetime affiliate fees." />
 					</div>
 				</section>

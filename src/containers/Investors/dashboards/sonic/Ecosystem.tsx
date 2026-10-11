@@ -14,6 +14,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -128,7 +129,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 	})
 
 	return (
-		<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+		<Card padding="none" className="overflow-x-auto">
 			<table className="w-full">
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
@@ -175,7 +176,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 					className="border-t border-subtle px-4 py-3"
 				/>
 			)}
-		</div>
+		</Card>
 	)
 }
 

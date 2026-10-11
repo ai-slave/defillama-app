@@ -47,7 +47,7 @@ export function LiquidationsChainPage(props: LiquidationsChainPageProps) {
 				/>
 			</div>
 
-			<Panel padding="none" className="mt-2">
+			<Panel className="mt-2">
 				<LiquidationsTableTabs
 					tabs={CHAIN_TABS}
 					activeTab={activeTab}

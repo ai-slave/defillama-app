@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { Card } from '~/ui/Card'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { ApiTrendChart, FeeRevenueChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
@@ -172,10 +173,10 @@ function LiquiditySection({
 			    "Token Breakdown" donut and "Token Values" table duplicated these two. */}
 			<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
 				<CategoryBarCard chart={liquidity.poolDepthChart} />
-				<div className="rounded-lg border border-subtle bg-surface p-4">
+				<Card padding="md">
 					<h3 className="mb-3 title-md text-primary">{liquidity.pools.title ?? 'Pools by Depth'}</h3>
 					<ApiTable table={liquidity.pools} maxHeight="420px" />
-				</div>
+				</Card>
 			</div>
 		</section>
 	)

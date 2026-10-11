@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Card } from '~/ui/Card'
 import { DialogBackButton, DialogBody, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -175,7 +176,7 @@ function CriteriaSheetContent({
 								this metric.
 							</p>
 						) : null}
-						<div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-4 py-3">
+						<Card padding="strip" className="flex flex-wrap items-center justify-between gap-4">
 							<span className="flex flex-col gap-1">
 								<span className="body-sm text-tertiary">Grade</span>
 								<GradeBadge
@@ -215,7 +216,7 @@ function CriteriaSheetContent({
 								<span className="body-sm text-tertiary">Weight</span>
 								<span className="mono-md tabular-nums">{Math.round(active.weight * 100)}%</span>
 							</span>
-						</div>
+						</Card>
 						{active.note ? <p className="body-md text-secondary">{active.note}</p> : null}
 						{state.axis === 'disclosure' && disclosures ? (
 							<DisclosureDetails criterionKey={active.key} disclosures={disclosures} />
@@ -223,7 +224,7 @@ function CriteriaSheetContent({
 						{doc?.rubric.length ? (
 							<div className="flex flex-col gap-2">
 								<h4 className="label-md text-primary">Scoring rubric</h4>
-								<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
+								<Card padding="none" className="overflow-hidden">
 									<div className="flex items-center justify-between gap-3 bg-brand px-4 py-2 label-sm text-on-brand">
 										<span className="flex-1 text-center">Rubric</span>
 										<span>Value (/10)</span>
@@ -238,7 +239,7 @@ function CriteriaSheetContent({
 											<RubricValueBadge value={10 - index} />
 										</div>
 									))}
-								</div>
+								</Card>
 							</div>
 						) : null}
 					</section>

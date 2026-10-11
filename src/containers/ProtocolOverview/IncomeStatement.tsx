@@ -13,6 +13,7 @@ import {
 import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import {
 	ChartPanelBody,
@@ -22,7 +23,6 @@ import {
 	ChartPanelToolbar
 } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -562,7 +562,7 @@ export function IncomeStatement({
 	}
 
 	return (
-		<Panel padding="sm" className={`col-span-full gap-4 ${className ?? ''}`}>
+		<Card padding="sm" className={`col-span-full flex flex-col gap-4 ${className ?? ''}`}>
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{showTitles ? (
 					<div>
@@ -830,7 +830,7 @@ export function IncomeStatement({
 					)}
 				</div>
 			) : null}
-		</Panel>
+		</Card>
 	)
 }
 

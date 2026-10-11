@@ -4,6 +4,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -478,7 +479,7 @@ function TreasurySection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<h2 className="heading-xs">Treasury &amp; Buybacks</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<div className="rounded-lg border border-subtle bg-surface p-4">
+				<Card padding="md">
 					<h3 className="mb-3 label-md text-secondary">Treasury</h3>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-subtle py-2">
@@ -496,8 +497,8 @@ function TreasurySection({ data }: { data: FinData }) {
 							</span>
 						</div>
 					</div>
-				</div>
-				<div className="rounded-lg border border-subtle bg-surface p-4">
+				</Card>
+				<Card padding="md">
 					<h3 className="mb-3 label-md text-secondary">SPK Buyback Tracker</h3>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-subtle py-2">
@@ -513,7 +514,7 @@ function TreasurySection({ data }: { data: FinData }) {
 							<span className="title-md text-primary">{data.buybackKpis.avgPrice.formatted}</span>
 						</div>
 					</div>
-				</div>
+				</Card>
 			</div>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ChartPanel>
@@ -658,7 +659,7 @@ export default function Financials() {
 			{data.quarterlyReports && data.quarterlyReports.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<h2 className="heading-xs">Quarterly Reports</h2>
-					<div className="rounded-lg border border-subtle bg-surface p-4">
+					<Card padding="md">
 						<div className="flex flex-col">
 							{data.quarterlyReports.map((report) => (
 								<a
@@ -672,7 +673,7 @@ export default function Financials() {
 								</a>
 							))}
 						</div>
-					</div>
+					</Card>
 				</div>
 			)}
 		</div>

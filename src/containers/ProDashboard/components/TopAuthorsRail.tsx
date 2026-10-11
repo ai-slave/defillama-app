@@ -68,13 +68,14 @@ export function TopAuthorsRail() {
 				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
 				<div className="flex gap-3 overflow-hidden">
 					{Array.from({ length: 6 }).map((_, i) => (
-						<div
+						<Card
+							padding="none"
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-top-authors-${i}`}
-							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-lg border border-subtle bg-surface"
+							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden"
 						>
 							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-linear-[99.97deg] from-transparent via-hover-row to-transparent" />
-						</div>
+						</Card>
 					))}
 				</div>
 			</div>

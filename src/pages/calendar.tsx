@@ -146,7 +146,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 		>
 			<Announcement notCancellable>Want us to track other events? Tweet at @0xngmi on twitter!</Announcement>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>

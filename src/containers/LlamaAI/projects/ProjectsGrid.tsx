@@ -6,6 +6,7 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -225,7 +226,7 @@ export function ProjectsGrid() {
 				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{visibleProjects.map((p) => (
 						<li key={p.id}>
-							<div className="group hover-wash-card relative flex size-full flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left">
+							<Card padding="base" className="group hover-wash-card relative flex size-full flex-col gap-2">
 								<header className="flex items-center gap-2">
 									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
 										<Icon name="folder" className="size-3.5" />
@@ -285,7 +286,7 @@ export function ProjectsGrid() {
 									</span>
 									<span>{formatProjectBytes(p.total_bytes)}</span>
 								</footer>
-							</div>
+							</Card>
 						</li>
 					))}
 				</ul>

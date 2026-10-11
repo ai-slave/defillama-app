@@ -20,6 +20,7 @@ import {
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Card } from '~/ui/Card'
 
 function LlamaAIPage() {
 	const { user, loaders } = useAuthContext()
@@ -124,7 +125,7 @@ function SignedOutChat() {
 						) : (
 							<AgenticSidebar {...sidebarProps} folded />
 						)}
-						<div className="relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-subtle bg-surface">
+						<Card padding="none" className="relative isolate flex flex-1 flex-col overflow-hidden">
 							{!sidebarVisible ? (
 								<ChatControls
 									handleNewChat={() => promptInputRef.current?.focus()}
@@ -149,7 +150,7 @@ function SignedOutChat() {
 								enterToSend
 								holdWalkthrough={!isSession && !!promptParam}
 							/>
-						</div>
+						</Card>
 					</div>
 				</LlamaAIChromeContext.Provider>
 			)}

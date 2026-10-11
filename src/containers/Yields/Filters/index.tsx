@@ -287,7 +287,7 @@ export function YieldFilters({
 	// the menu.
 	if (phone) {
 		return (
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar className="gap-2">
 					{apyControls}
 					{showSearchOnMobile ? tokenSearch : null}
@@ -308,7 +308,7 @@ export function YieldFilters({
 	// that pick the rows, with actions right.
 	if (!tokenSearch && !curatedViews) {
 		return (
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar className="gap-2">
 					{apyControls}
 					{apyControls ? <span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden /> : null}
@@ -325,7 +325,7 @@ export function YieldFilters({
 	}
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			{/* View row: APY composition + window dials, then preset chips, view actions right. */}
 			{hasViewControls || curatedViews ? (
 				<TableToolbar className="gap-2 border-b border-subtle">

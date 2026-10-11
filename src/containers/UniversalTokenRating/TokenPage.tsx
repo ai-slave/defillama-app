@@ -251,7 +251,7 @@ export function MetricCard({
 	children: ReactNode
 }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
 				<span className="flex flex-wrap items-center gap-2">
 					<h3 className="label-lg">{title}</h3>

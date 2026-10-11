@@ -315,7 +315,7 @@ function EarningsDayPanel({
 	const isBusiest = day.rows.length > 0 && day.rows.length === busiestCount
 	const visibleCards = expanded ? day.rows : day.cards
 	return (
-		<Panel padding="none" className="min-w-0">
+		<Panel className="min-w-0">
 			<PanelHeader>
 				{/* Three fixed rows, so the five day headers keep one height and their cards start level: a status
 				    line beside the count wrapped the count below the date on busy days. */}
@@ -420,7 +420,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 			) : null}
 
 			<div className="grid grid-cols-1 items-start gap-2 xl:grid-cols-[2fr_1fr]">
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Earnings seasons</PanelTitle>
@@ -441,7 +441,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 					</PanelHeader>
 					<SeasonsChart summary={summary} />
 				</Panel>
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<PanelTitle>At stake this week</PanelTitle>
 						<p className="ml-auto label-sm text-secondary">{formatWeekRange(week.monday, week.friday)}</p>
@@ -450,7 +450,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 				</Panel>
 			</div>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<div className="mr-auto flex items-center gap-1.5">
 						<Button

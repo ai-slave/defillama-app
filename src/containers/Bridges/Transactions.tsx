@@ -832,7 +832,7 @@ function TransactionsTable({
 	}, [instance, csvFileName])
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<h2 className="mr-auto label-md">
 					Transactions

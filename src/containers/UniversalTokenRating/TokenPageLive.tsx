@@ -9,11 +9,13 @@ import { chartColor, UTR_METRIC_COLORS } from '~/constants/colors'
 import { AccentBadge, SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -171,15 +173,12 @@ function VenueList({
 			<h4 className="label-md text-primary">{title}</h4>
 			<div className="flex flex-wrap gap-2">
 				{keyedOccurrences(venues, (venue) => venue.name).map(({ item: venue, key }) => (
-					<span
-						key={key}
-						className="inline-flex items-center gap-1.5 rounded-lg border border-subtle bg-surface px-2 py-1 body-sm"
-					>
+					<Tag key={key} className="gap-1.5">
 						{venue.logoUrl ? (
 							<img src={venue.logoUrl} alt={venue.displayName} width={18} height={18} className="rounded-full" />
 						) : null}
 						{venue.displayName}
-					</span>
+					</Tag>
 				))}
 			</div>
 		</div>
@@ -257,7 +256,10 @@ function AboutDrawer({
 						<Icon name="arrow-up-right" className="size-3" />
 					</Button>
 				) : null}
-				<div className="grid grid-cols-2 items-center gap-3 rounded-lg border border-subtle bg-surface p-3 lg:flex lg:flex-wrap lg:justify-between lg:gap-4">
+				<Card
+					padding="base"
+					className="grid grid-cols-2 items-center gap-3 lg:flex lg:flex-wrap lg:justify-between lg:gap-4"
+				>
 					<GradeChip
 						score={asset.overallScore}
 						grade={asset.grade}
@@ -298,15 +300,18 @@ function AboutDrawer({
 							</span>
 						</span>
 					</span>
-				</div>
+				</Card>
 				<div className="flex items-center gap-2">
 					<h4 className="label-lg">Performance</h4>
 					<AccentBadge className="min-h-6">Last 30 days</AccentBadge>
 				</div>
-				<Panel padding="none">
+				<Panel>
 					<PerformanceMatrix rows={[matrixRow]} grading={scoringConfig?.grading} className="h-[320px] w-full" />
 				</Panel>
-				<div className="flex flex-col divide-y divide-(--border-subtle) rounded-lg border border-subtle bg-surface sm:flex-row sm:divide-x sm:divide-y-0">
+				<Card
+					padding="none"
+					className="flex flex-col divide-y divide-(--border-subtle) sm:flex-row sm:divide-x sm:divide-y-0"
+				>
 					<TickScoreStrip
 						label="Disclosures"
 						score={asset.disclosure?.score ?? null}
@@ -319,7 +324,7 @@ function AboutDrawer({
 						gradeLabel={asset.performance?.grade ?? null}
 						gradingScale={scoringConfig?.grading.performance.scale}
 					/>
-				</div>
+				</Card>
 				<VenueList title="CEX where listed" venues={cexVenues} />
 				{cexVenues.length > 0 && dexVenues.length > 0 ? <div className="border-t border-subtle" /> : null}
 				<VenueList title="DEX where listed" venues={dexVenues} />
@@ -561,7 +566,7 @@ export function TokenPageLive({
 				</div>
 			</div>
 
-			<Panel padding="none">
+			<Panel>
 				<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:divide-x md:divide-y-0">
 					<div className="flex items-center gap-3 px-4 py-3">
 						<GradeChip
@@ -604,7 +609,7 @@ export function TokenPageLive({
 			{disclosureCategories.length > 0 ? (
 				<>
 					<h2 className="heading-sm">Disclosures Overview</h2>
-					<Panel padding="none">
+					<Panel>
 						<div className="grid grid-cols-1 lg:grid-cols-2">
 							{disclosureCategories.map((entry, index) => (
 								<div
@@ -1026,7 +1031,7 @@ export function TokenPageLive({
 						<>
 							<h2 className="heading-sm">Performance Overview: Liquidity Footprint</h2>
 							{tier1Covered != null ? (
-								<Panel padding="none">
+								<Panel>
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
 										<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
 										<Tooltip
@@ -1155,7 +1160,7 @@ export function TokenPageLive({
 								) : null}
 							</div>
 							{hasVestingData ? (
-								<Panel padding="none">
+								<Panel>
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
 										<span className="flex flex-wrap items-center gap-2">
 											<h3 className="label-lg">Disclosed Token Vesting vs Actual Vesting</h3>
@@ -1261,7 +1266,7 @@ export function TokenPageLive({
 							) : null}
 							<div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
 								{visibleTokenomicsCards.map((card) => (
-									<Panel key={card.title} padding="none">
+									<Panel key={card.title}>
 										<div className="flex items-center justify-between gap-2 px-4 py-3">
 											<div className="flex flex-col gap-0.5">
 												<h3 className="body-sm text-secondary">{card.title}</h3>

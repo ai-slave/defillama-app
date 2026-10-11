@@ -3,6 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -107,12 +108,12 @@ function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-5">
+		<Card padding="md">
 			<h3 className="heading-xs">GHO Across Markets</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>
-		</div>
+		</Card>
 	)
 }
 

@@ -5,6 +5,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { CHART_SERIES_LIMIT } from '~/constants/colors'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -216,7 +217,7 @@ export default function Ecosystem() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<div className="flex flex-col gap-2 rounded-xl border border-subtle bg-surface p-6">
+			<Card padding="md" className="flex flex-col gap-2">
 				<div className="flex items-center gap-3">
 					<NearIcon />
 					<h2 className="mono-xl text-primary">Ecosystem</h2>
@@ -224,7 +225,7 @@ export default function Ecosystem() {
 				<p className="max-w-2xl body-md text-secondary">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.
 				</p>
-			</div>
+			</Card>
 
 			{/* NEAR Intents */}
 			<div className="flex flex-wrap items-center justify-between gap-3">

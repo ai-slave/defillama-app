@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -135,11 +136,11 @@ function LoansTable({ data }: { data: Array<LoanRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">Open-Term Loans</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
-		</div>
+		</Card>
 	)
 }
 

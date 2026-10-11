@@ -60,7 +60,7 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 		]
 	]
 	return (
-		<Panel padding="none">
+		<Panel>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 				<span className="flex items-center gap-2">
 					<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={24} />
@@ -127,7 +127,7 @@ function CompareColumn({
 			{row && columns ? (
 				<>
 					<SummaryCard row={row} grading={grading} />
-					<Panel padding="none">
+					<Panel>
 						<PerformanceMatrix rows={[row]} grading={grading} className="h-[300px] w-full" />
 					</Panel>
 					<CategoryBreakdownTable

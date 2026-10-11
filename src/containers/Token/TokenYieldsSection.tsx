@@ -194,7 +194,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	return (
 		// tabIndex: the deferred pager hands focus here when the full table replaces it.
-		<Panel padding="none" tabIndex={-1} className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
+		<Panel tabIndex={-1} className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
 			<PanelHeader>
 				<PanelTitle
 					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"

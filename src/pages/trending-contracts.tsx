@@ -118,7 +118,7 @@ export default function TrendingContracts() {
 			description="Discover trending smart contracts across blockchains. See the most active contracts in real-time on DefiLlama."
 			canonicalUrl="/trending-contracts"
 		>
-			<Panel padding="none" className="flex-1">
+			<Panel className="flex-1">
 				<PanelHeader>
 					<PanelTitle as="h1">Trending Contracts</PanelTitle>
 					<TagGroup variant="default" size="md" selectedValue={value} setValue={setValue} values={TIME_VALUES} />

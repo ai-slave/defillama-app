@@ -220,19 +220,19 @@ Named styles live in [`src/styles/typography.css`](src/styles/typography.css). E
 
 Spacing is Tailwind's 4px-based scale; never an arbitrary value such as `p-[10px]` (`arbitrary-spacing`).
 
-| Role                                    | Tailwind                  |
-| --------------------------------------- | ------------------------- |
-| Icon to text inside a control           | `gap-1` (tight `gap-0.5`) |
-| Dense control cluster                   | `gap-1.5`                 |
-| Between toolbar groups                  | `gap-2`                   |
-| Between cards, panels and tables        | `gap-2`                   |
-| Dense card padding                      | `p-2`                     |
-| Directory card padding, prose internals | `p-3`, `gap-3`            |
-| Roomy card or panel padding             | `p-4`                     |
-| Panel header                            | `px-4 py-3`               |
-| Toolbar above a chart / a table         | `px-2 pt-2 pb-0` / `p-2`  |
-| Popover and menu row                    | `px-3 py-2`               |
-| Card sections                           | `gap-6`                   |
+| Role                                    | Tailwind                       |
+| --------------------------------------- | ------------------------------ |
+| Icon to text inside a control           | `gap-1` (tight `gap-0.5`)      |
+| Dense control cluster                   | `gap-1.5`                      |
+| Between toolbar groups                  | `gap-2`                        |
+| Between cards, panels and tables        | `gap-2`                        |
+| Dense card padding                      | `Card padding="sm"`            |
+| Directory card padding, prose internals | `Card padding="base"`, `gap-3` |
+| Roomy card padding                      | `Card padding="md"`            |
+| Panel header                            | `px-4 py-3`                    |
+| Toolbar above a chart / a table         | `px-2 pt-2 pb-0` / `p-2`       |
+| Popover and menu row                    | `px-3 py-2`                    |
+| Card sections                           | `gap-6`                        |
 
 - Layout is gap, padding and `min-h` driven. Space siblings with flex or grid `gap`, size boxes with padding and `min-h`, and let text wrap. Margins only opt out of a parent's rhythm (`mt-auto`, a negative bleed).
 - Cards side by side keep their header rows level: the same header padding and height, so titles and header actions line up across the row.
@@ -334,7 +334,7 @@ Each component's header comment holds its own rules. Read it before using the co
 | A multi-choice option pill in a form                                        | `Ariakit.Checkbox render={<Button variant="toggle" />}`, sized to its row                                                                                                                                                                                                                                | `src/ui/Button.tsx`                                                  |
 | A repeated content tile                                                     | `Card` (`padding` is required); a featured card beside data cards (a builder, an upsell) takes `tone` (brand, warning; a product colour comes from a scope such as `.ai-violet-accent`)                                                                                                                  | `src/ui/Card.tsx`                                                    |
 | A card that links somewhere or opens a flow (article, report, launcher)     | `Card as={…}` with `hover-wash-card`, 8px; never a blue hover border, a lift or a 12px radius                                                                                                                                                                                                            | `src/ui/Card.tsx`                                                    |
-| A titled chart or table shell                                               | `Panel`, `PanelHeader`, `PanelTitle`                                                                                                                                                                                                                                                                     | `src/ui/Panel.tsx`                                                   |
+| A titled chart or table shell                                               | `Panel`, `PanelHeader`, `PanelTitle`; Panel is flush, and any other surface is `Card`                                                                                                                                                                                                                    | `src/ui/Panel.tsx`                                                   |
 | A chart shell and its toolbar                                               | `ChartPanel`, `ChartPanelToolbar`, `ChartPanelBody`                                                                                                                                                                                                                                                      | `src/ui/ChartPanel.tsx`                                              |
 | A table toolbar                                                             | `TableToolbar`, `TableToolbarControlGroup`                                                                                                                                                                                                                                                               | `src/ui/Toolbar.tsx`                                                 |
 | Stat cells sharing hairlines in one surface                                 | `DividedGrid` with the grid columns; each cell keeps its own padding and content; separate cards in a row are `StatTile`                                                                                                                                                                                 | `src/ui/DividedGrid.tsx`                                             |
@@ -482,7 +482,7 @@ Controls that share a row must share a height and a centre line, and only the re
 | Color             | `hex-in-classname`, `dark-hex-variant`, `arbitrary-color-function`, `builtin-palette-color`, `brand-fill-as-text`, `opacity-color-modifier`, `disabled-opacity`, `neutral-hover-on-hued-control`, `fixed-dark-fill`, `interim-token`, `prefixed-design-token`, `product-token-leak`, `product-utility-leak`, `implicit-border-color`, `per-field-color-scheme`, `hand-built-status-badge`, `hand-built-status-dot` |
 | Type              | `arbitrary-font-size`, `raw-type-pair`, `raw-type-size`, `conflicting-named-typography`, `unknown-named-typography`, `off-scale-mono-weight`, `raw-mono-family`, `ascii-ellipsis`                                                                                                                                                                                                                                  |
 | Spacing and shape | `arbitrary-spacing`, `arbitrary-standard-radius`, `arbitrary-shadow`, `explicit-thin-scrollbar`, `deprecated-tailwind-spelling`                                                                                                                                                                                                                                                                                    |
-| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `eyebrow-section-heading`, `raw-echarts-init`, `hand-built-empty-state`, `hand-built-divided-grid`, `kept-mounted-surface`, `raw-kbd`                                                                           |
+| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `eyebrow-section-heading`, `raw-echarts-init`, `hand-built-empty-state`, `hand-built-divided-grid`, `hand-built-card`, `kept-mounted-surface`, `raw-kbd`                                                        |
 | Toolbars          | `toolbar-justify-override`, `chart-toolbar-auto-margin`                                                                                                                                                                                                                                                                                                                                                            |
 | Interaction       | `ungated-hover`                                                                                                                                                                                                                                                                                                                                                                                                    |
 

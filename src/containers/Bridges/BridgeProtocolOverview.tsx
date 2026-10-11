@@ -420,7 +420,7 @@ export function BridgeTablePanel({
 	const tableView: BridgeTableView = bridgesSettings[BRIDGES_SHOWING_ADDRESSES] ? 'addresses' : 'tokens'
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<Tabs
 				value={tableView}
 				values={BRIDGE_TABLE_VIEWS}

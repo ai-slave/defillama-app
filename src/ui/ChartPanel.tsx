@@ -5,7 +5,7 @@ import { QuestionHelper } from './QuestionHelper'
 import { LoadingIndicator, RetryButton } from './Status'
 
 /* ----------------------------------------------------------------------------
-   ChartPanel — the chart shell: `Panel padding="none"`, an optional
+   ChartPanel — the chart shell: a `Panel`, an optional
    ChartPanelToolbar, and a ChartPanelBody. The shell owns chrome and space
    reservation; the route owns metrics, queries, exports and chart logic.
 
@@ -52,7 +52,7 @@ import { LoadingIndicator, RetryButton } from './Status'
 ---------------------------------------------------------------------------- */
 
 export function ChartPanel({ className, ...props }: ComponentProps<'div'>) {
-	return <Panel padding="none" className={className} {...props} />
+	return <Panel className={className} {...props} />
 }
 
 type ChartPanelToolbarProps = ComponentPropsWithoutRef<'div'> & {

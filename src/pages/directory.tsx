@@ -202,7 +202,8 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 					<Ariakit.ComboboxList
 						ref={comboboxRef}
 						alwaysVisible
-						className="mt-2 h-80 overflow-y-auto overscroll-contain rounded-lg border border-subtle bg-surface"
+						render={<Card padding="none" />}
+						className="mt-2 h-80 overflow-y-auto overscroll-contain"
 					>
 						{matches.length > 0 ? (
 							<>

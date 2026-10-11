@@ -171,7 +171,7 @@ export function InsidersTable({
 	})
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader className="flex-col items-start gap-1">
 				<PanelTitle as="h3">Insiders</PanelTitle>
 				{methodology ? <p className="body-md text-secondary">{methodology}</p> : null}

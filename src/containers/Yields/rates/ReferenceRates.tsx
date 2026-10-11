@@ -303,7 +303,7 @@ function RatesByAssetPanel({
 	onSort: (key: SortKey) => void
 }) {
 	return (
-		<Panel padding="none" role="region" aria-labelledby="rates-by-asset">
+		<Panel role="region" aria-labelledby="rates-by-asset">
 			<TableToolbar className="min-h-10 border-b border-subtle">
 				<h2 id="rates-by-asset" className="mr-auto label-md text-primary">
 					By asset
@@ -349,7 +349,7 @@ function RatesByProtocolPanel({
 	onSort: (key: CompSortKey) => void
 }) {
 	return (
-		<Panel padding="none" role="region" aria-labelledby="rates-by-protocol">
+		<Panel role="region" aria-labelledby="rates-by-protocol">
 			<TableToolbar className="min-h-10 border-b border-subtle">
 				<h2 id="rates-by-protocol" className="mr-auto label-md text-primary">
 					By protocol

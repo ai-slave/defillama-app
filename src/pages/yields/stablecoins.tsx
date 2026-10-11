@@ -4,6 +4,7 @@ import { disclaimer } from '~/containers/Yields/constants'
 import { loadEarnPageProps } from '~/containers/Yields/server/earnPage.server'
 import EarnView, { type EarnViewProps } from '~/containers/Yields/views/EarnView'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 // The subject of this route. Seeds the ISR rows AND locks the live query, so the
@@ -39,12 +40,12 @@ export default function StablecoinYieldsPage(data: InferGetServerSidePropsType<t
 				{...data}
 				lockedQuery={{ ...STABLECOIN_QUERY }}
 				intro={
-					<p className="rounded-lg border border-subtle bg-surface p-4 body-sm text-secondary">
+					<Card as="p" padding="sm" className="body-sm text-secondary">
 						Stablecoin pools pay yield on dollar-pegged assets, so returns come from lending demand, trading fees and
 						incentives rather than token price movement. Every pool below holds only stablecoins and carries no
 						impermanent loss. APY, TVL and pool counts update daily - sort by APY for the highest headline rate, or by
 						TVL to weight toward pools with the deepest liquidity.
-					</p>
+					</Card>
 				}
 			/>
 		</Layout>

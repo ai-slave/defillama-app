@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { EmailChangeModal } from './EmailChangeModal'
@@ -33,7 +34,7 @@ export function AuthenticationCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Icon name="key-filled" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Authentication</span>
@@ -114,7 +115,7 @@ export function AuthenticationCard() {
 						Your email isn&apos;t verified.
 					</InlineStatus>
 				) : null}
-			</div>
+			</Card>
 
 			<PasswordResetModal
 				isOpen={isPasswordModalOpen}

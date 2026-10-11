@@ -959,7 +959,7 @@ export function SurfacesGroup() {
 	return (
 		<Group id="surfaces" title="Surfaces">
 			<Example name="Panel" note="The titled chart or table shell; header controls are md.">
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<PanelTitle>Fees by chain</PanelTitle>
 						<Button size="md">.csv</Button>

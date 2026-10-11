@@ -85,7 +85,7 @@ export function ExchangeResearch({
 							above does not apply to it.
 						</p>
 					</div>
-					<Panel padding="none">
+					<Panel>
 						<DepthCurveChart rows={depthRows} />
 					</Panel>
 				</section>
@@ -99,7 +99,7 @@ export function ExchangeResearch({
 							data for. Rank is the same quality tier shown on the exchange directory.
 						</p>
 					</div>
-					<Panel padding="none">
+					<Panel>
 						<BtcExecutionTable rows={btcExecutionRows} />
 					</Panel>
 				</section>

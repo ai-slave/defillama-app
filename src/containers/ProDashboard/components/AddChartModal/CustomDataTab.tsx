@@ -6,6 +6,7 @@ import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { FileButton } from '~/ui/FileButton'
 import { Icon } from '~/ui/Icon'
@@ -278,7 +279,7 @@ function CustomDataForm({
 					</div>
 				) : null}
 
-				<div className="min-h-[260px] flex-1 overflow-hidden rounded-lg border border-subtle bg-surface p-2">
+				<Card padding="sm" className="min-h-[260px] flex-1 overflow-hidden">
 					{!result ? (
 						<div className="flex h-full items-center justify-center px-6 text-center body-sm text-tertiary">
 							Paste or upload a CSV to preview it here.
@@ -294,7 +295,7 @@ function CustomDataForm({
 					) : (
 						<ChartRouter config={customData.chart} result={result} classified={classified} />
 					)}
-				</div>
+				</Card>
 			</div>
 		</div>
 	)

@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -47,7 +48,7 @@ const FAQ_ITEMS: Array<{ q: string; a: React.ReactNode }> = [
 
 function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 	return (
-		<details className="group rounded-lg border border-subtle bg-surface">
+		<Card as="details" padding="none" className="group">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 label-md text-primary">
 				{q}
 				<svg
@@ -61,7 +62,7 @@ function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 				</svg>
 			</summary>
 			<p className="px-4 pb-4 body-md text-secondary">{a}</p>
-		</details>
+		</Card>
 	)
 }
 
@@ -394,7 +395,7 @@ export default function Tokenomics() {
 						</Suspense>
 					</ChartPanel>
 					{fire.wallets.length > 0 && (
-						<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+						<Card padding="none" className="overflow-x-auto">
 							<table className="w-full text-left body-md">
 								<thead>
 									<tr className="border-b border-subtle label-md tracking-wider text-secondary uppercase">
@@ -428,14 +429,14 @@ export default function Tokenomics() {
 									))}
 								</tbody>
 							</table>
-						</div>
+						</Card>
 					)}
 					<p className="body-sm text-secondary">{fire.note}</p>
 				</>
 			) : (
-				<div className="rounded-lg border border-subtle bg-surface p-5">
+				<Card padding="sm">
 					<p className="body-sm text-secondary">{b.firePoolNote}</p>
-				</div>
+				</Card>
 			)}
 
 			<h2 className="heading-xs">FAQ</h2>

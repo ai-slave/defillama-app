@@ -28,6 +28,7 @@ import { setStorageItem } from '~/contexts/localStorageStore'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button, StableLabel } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -389,9 +390,11 @@ function SidebarPanel({
 
 	return (
 		<SessionListFocusContext.Provider value={newChatRef}>
-			<aside
+			<Card
+				as="aside"
+				padding="none"
 				ref={sidebarRef}
-				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-subtle bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
+				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
 			>
 				<header className="flex flex-col gap-2 border-b border-subtle p-4">
 					<div className="-mx-2 flex items-center gap-1">
@@ -667,7 +670,7 @@ function SidebarPanel({
 						</footer>
 					</>
 				)}
-			</aside>
+			</Card>
 		</SessionListFocusContext.Provider>
 	)
 }

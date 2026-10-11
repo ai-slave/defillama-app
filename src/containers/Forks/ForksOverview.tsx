@@ -253,7 +253,7 @@ export function ForksOverview({
 					)}
 				</ChartPanel>
 			</div>
-			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<SearchTableProvider
 					options={{ data: tableData, columns: forksColumn, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 				>

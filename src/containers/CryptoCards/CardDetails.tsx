@@ -117,7 +117,7 @@ function TierComparisonTable({
 	// the region is what tells the columns apart.
 	const namesRepeat = new Set(card.tiers.map((tier) => tier.name)).size < card.tiers.length
 	return (
-		<Panel padding="none" role="region" aria-labelledby={headingId}>
+		<Panel role="region" aria-labelledby={headingId}>
 			<PanelHeader>
 				<PanelTitle as={heading} id={headingId}>
 					Compare tiers
@@ -300,7 +300,7 @@ function CardSection({
 					heading={panelHeading}
 				/>
 			) : null}
-			<Panel padding="none" role="region" aria-labelledby={`${headingId}-shared`}>
+			<Panel role="region" aria-labelledby={`${headingId}-shared`}>
 				<PanelHeader>
 					<PanelTitle as={panelHeading} id={`${headingId}-shared`}>
 						{card.tiers.length > 1 ? 'Same on every tier' : 'Card details'}

@@ -19,6 +19,7 @@ import type {
 } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
@@ -104,10 +105,10 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 
 export function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-5">
+		<Card padding="md">
 			<h3 className="mb-4 heading-xs">{title}</h3>
 			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
-		</div>
+		</Card>
 	)
 }
 

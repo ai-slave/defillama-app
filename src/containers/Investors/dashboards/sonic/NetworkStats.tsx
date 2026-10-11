@@ -187,7 +187,7 @@ export default function NetworkStats() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Live Burn Counter */}
-			<div className="rounded-xl border border-subtle bg-surface p-6">
+			<Card padding="md" className="p-6">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ export default function NetworkStats() {
 						})}
 					</div>
 				)}
-			</div>
+			</Card>
 
 			{/* Network Vitals */}
 			<div className="flex flex-col gap-4">
@@ -235,7 +235,7 @@ export default function NetworkStats() {
 			{stream.recentBlocks.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<h2 className="heading-xs">Recent Blocks</h2>
-					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-subtle">
@@ -270,7 +270,7 @@ export default function NetworkStats() {
 								))}
 							</tbody>
 						</table>
-					</div>
+					</Card>
 				</div>
 			)}
 
@@ -278,7 +278,7 @@ export default function NetworkStats() {
 			{(data.fees || data.epoch) && (
 				<div className="flex flex-col gap-4">
 					<h2 className="heading-xs">Fees & Epoch</h2>
-					<div className="rounded-lg border border-subtle bg-surface">
+					<Card padding="none">
 						<div className="flex flex-col divide-y divide-(--border-subtle)">
 							{data.fees && (
 								<>
@@ -295,7 +295,7 @@ export default function NetworkStats() {
 								</>
 							)}
 						</div>
-					</div>
+					</Card>
 				</div>
 			)}
 

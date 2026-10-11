@@ -6,6 +6,7 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -143,7 +144,7 @@ export default function Revenue() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<details className="group rounded-xl border border-subtle bg-surface">
+			<Card as="details" padding="none" className="group">
 				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-primary">
 					<span>Quick Investment Thesis</span>
 					<svg
@@ -184,7 +185,7 @@ export default function Revenue() {
 						loop operates most forcefully at inflection points, which is where the protocol appears to be now.
 					</p>
 				</div>
-			</details>
+			</Card>
 
 			<div className="flex items-center justify-between">
 				<h2 className="heading-xs">Dashboard Timeframe</h2>
@@ -357,7 +358,7 @@ export default function Revenue() {
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<h2 className="heading-xs">Wallet Breakdown</h2>
-					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
 								{walletTable.getHeaderGroups().map((headerGroup) => (
@@ -396,7 +397,7 @@ export default function Revenue() {
 								))}
 							</tbody>
 						</table>
-					</div>
+					</Card>
 				</div>
 			)}
 
@@ -405,7 +406,7 @@ export default function Revenue() {
 					<h2 className="heading-xs">Frequently Asked Questions</h2>
 					<div className="flex flex-col gap-3">
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
-							<details key={key} className="group overflow-hidden rounded-lg border border-subtle bg-surface">
+							<Card as="details" key={key} padding="none" className="group overflow-hidden">
 								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-primary transition-colors hover:bg-hover-row">
 									<span className="flex items-start gap-3">
 										<span className="flex h-lh shrink-0 items-center">
@@ -430,15 +431,15 @@ export default function Revenue() {
 								<div className="border-t border-subtle bg-hover-row px-5 pt-4 pb-5">
 									<p className="pl-9 body-md text-secondary">{item.answer}</p>
 								</div>
-							</details>
+							</Card>
 						))}
 					</div>
 				</div>
 			)}
 
 			{data.metadata && (
-				<div className="rounded-lg border border-subtle bg-surface p-4 body-sm text-secondary">
-					<p>
+				<Card padding="sm">
+					<p className="body-sm text-secondary">
 						Data via{' '}
 						{Object.entries(data.metadata.links || {}).map(([key, url], idx, arr) => (
 							<span key={key}>
@@ -449,8 +450,8 @@ export default function Revenue() {
 							</span>
 						))}
 					</p>
-					<p className="mt-1">Last updated: {data.metadata.updatedAt}</p>
-				</div>
+					<p className="mt-1 body-sm text-secondary">Last updated: {data.metadata.updatedAt}</p>
+				</Card>
 			)}
 		</div>
 	)

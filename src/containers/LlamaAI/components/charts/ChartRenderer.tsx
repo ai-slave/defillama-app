@@ -50,6 +50,7 @@ import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransf
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
@@ -862,17 +863,17 @@ function ChartRendererImpl({
 	// Without a chart yet, the placeholder gets the chart card's frame, so loading, loaded and failed share one box.
 	if (hasError && (!charts || charts.length === 0)) {
 		return (
-			<div className="rounded-lg border border-subtle bg-surface">
+			<Card padding="none">
 				<ChartErrorPlaceholder />
-			</div>
+			</Card>
 		)
 	}
 
 	if (isLoading && (!charts || charts.length === 0)) {
 		return (
-			<div className="rounded-lg border border-subtle bg-surface">
+			<Card padding="none">
 				<ChartLoadingPlaceholder chartTypes={chartTypes} />
-			</div>
+			</Card>
 		)
 	}
 

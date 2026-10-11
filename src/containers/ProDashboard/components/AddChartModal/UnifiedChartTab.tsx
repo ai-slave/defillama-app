@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useMemo } from 'react'
+import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
@@ -381,7 +382,7 @@ export function UnifiedChartTab({
 						/>
 					) : null}
 
-					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-subtle bg-surface">
+					<Card padding="none" className="h-[450px] shrink-0 overflow-hidden">
 						{composerItems.length === 0 ? (
 							<div className="flex h-full items-center justify-center body-sm text-tertiary">
 								Select entities to preview chart
@@ -395,7 +396,7 @@ export function UnifiedChartTab({
 								<CombinedChartPreview composerItems={composerItems} />
 							</div>
 						)}
-					</div>
+					</Card>
 
 					{composerItems.length > 0 ? (
 						<div className="flex shrink-0 items-center gap-2 overflow-x-auto py-1">

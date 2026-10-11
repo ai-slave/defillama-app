@@ -42,6 +42,7 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Field, FieldGroup } from '~/ui/Field'
 import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -54,11 +55,7 @@ import { queryReadFailed } from '~/utils/query'
 
 export function AlertArtifactLoading() {
 	return (
-		<div
-			role="status"
-			aria-label="Loading alert"
-			className="my-2 flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3"
-		>
+		<Card padding="base" role="status" aria-label="Loading alert" className="my-2 flex flex-col gap-3">
 			<div className="flex items-center gap-3">
 				<Skeleton className="size-10 shrink-0 rounded-lg" />
 				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -72,7 +69,7 @@ export function AlertArtifactLoading() {
 				<Skeleton className="h-8 w-16 rounded-lg" />
 				<Skeleton className="ml-auto h-8 w-28 rounded-lg" />
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -254,7 +251,7 @@ export function AlertArtifact({
 
 	if (!isAuthenticated) {
 		return (
-			<div className="my-2 flex items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
+			<Card padding="base" className="my-2 flex items-center gap-3">
 				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning-tint text-warning">
 					<Icon name="calendar-plus" className="size-4" />
 				</div>
@@ -262,7 +259,7 @@ export function AlertArtifact({
 					<h3 className="m-0 label-md text-primary">Sign in to save alerts</h3>
 					<p className="m-0 body-sm text-secondary">Scheduled alerts require authentication.</p>
 				</div>
-			</div>
+			</Card>
 		)
 	}
 

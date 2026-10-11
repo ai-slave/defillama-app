@@ -1,3 +1,5 @@
+import { Card } from '~/ui/Card'
+
 const LINK_ICONS: Record<string, React.ReactNode> = {
 	website: (
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4 shrink-0">
@@ -65,7 +67,7 @@ const LINKS: Record<string, string> = {
 
 export default function BerachainHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
+		<Card as="header" padding="strip" className="flex items-center gap-4">
 			<BerachainLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -95,6 +97,6 @@ export default function BerachainHeader() {
 					</svg>
 				</a>
 			</nav>
-		</header>
+		</Card>
 	)
 }

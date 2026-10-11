@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { TodoItem } from '~/containers/LlamaAI/types'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { StatusBadge } from '~/ui/StatusBadge'
 
@@ -73,7 +74,7 @@ export function TodoChecklistPanel({
 	const completed = orderedTodos.filter((t) => t.status === 'completed').length
 	const total = orderedTodos.filter((t) => t.status !== 'cancelled').length
 	return (
-		<section className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-2" aria-label="Progress">
+		<Card as="section" padding="sm" aria-label="Progress" className="flex flex-col gap-1.5">
 			<div className="flex items-center gap-2 px-0.5">
 				<span aria-hidden="true" className="body-md">
 					📋
@@ -109,7 +110,7 @@ export function TodoChecklistPanel({
 					)
 				})}
 			</ul>
-		</section>
+		</Card>
 	)
 }
 

@@ -191,7 +191,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 			<Card padding="sm">
 				<h1 className="heading-sm">Protocols with highest TVL by chain on each category</h1>
 			</Card>
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>

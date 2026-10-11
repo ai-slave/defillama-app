@@ -38,7 +38,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 				/>
 			</div>
 
-			<Panel padding="none" className="mt-2">
+			<Panel className="mt-2">
 				<LiquidationsTableTabs
 					tabs={OVERVIEW_TABS}
 					activeTab={activeTab}

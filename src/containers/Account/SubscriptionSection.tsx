@@ -7,6 +7,7 @@ import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -95,7 +96,7 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 	const buttonLabel = planType === 'api' ? 'Upgrade API to yearly' : 'Upgrade Pro to yearly'
 
 	return (
-		<div className="flex items-center rounded-2xl border border-brand bg-brand-tint-strong p-4">
+		<Card padding="md" tone="brand" className="flex items-center">
 			<div className="flex w-full flex-col gap-8.5 sm:w-[155px]">
 				<div className="flex flex-col gap-3">
 					<p className="sub-gradient-text heading-xs">Save {savings} with annual billing</p>
@@ -107,13 +108,13 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 					{buttonLabel}
 				</Button>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
 function FreeUpgradeBanner() {
 	return (
-		<div className="relative overflow-hidden rounded-2xl border border-brand bg-brand-tint-strong p-4">
+		<Card padding="md" tone="brand" className="relative overflow-hidden">
 			<div className="relative z-10 flex max-w-[250px] flex-col gap-6.5">
 				<div className="flex flex-col gap-3">
 					<p className="sub-gradient-text heading-xs">Unlock the full power of DefiLlama</p>
@@ -146,7 +147,7 @@ function FreeUpgradeBanner() {
 					className="absolute inset-0 hidden h-full w-full object-fill dark:block"
 				/>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -166,7 +167,7 @@ function PastDueSubscriptionCard({
 	const planName = getPlanName(subscription.type)
 	const canUpdatePayment = subscription.provider === 'stripe'
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-warning-muted bg-warning-tint p-4">
+		<Card padding="md" tone="warning" className="flex flex-col gap-4">
 			<div className="flex items-start gap-2">
 				{/* Centred on the heading's first line. */}
 				<span className="flex h-lh shrink-0 items-center title-lg">
@@ -199,13 +200,13 @@ function PastDueSubscriptionCard({
 					</Button>
 				)}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
 function LegacyWarning() {
 	return (
-		<div className="flex items-start gap-2 rounded-2xl border border-warning-muted bg-warning-tint p-4 body-md">
+		<Card padding="md" tone="warning" className="flex items-start gap-2 body-md">
 			<span className="flex h-lh shrink-0 items-center">
 				<Icon name="alert-triangle" className="size-5 text-warning" />
 			</span>
@@ -216,7 +217,7 @@ function LegacyWarning() {
 				</a>{' '}
 				and subscribe again after the current subscription expires.
 			</p>
-		</div>
+		</Card>
 	)
 }
 
@@ -230,7 +231,7 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 	const hasAssigned = subscriptionType !== null
 
 	return (
-		<div className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-3">
 			<div className="flex items-center gap-2">
 				<Icon name="users" className="size-5 text-primary" />
 				<span className="label-md text-primary">Team subscription</span>
@@ -247,7 +248,7 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 					assigned a subscription.
 				</p>
 			)}
-		</div>
+		</Card>
 	)
 }
 

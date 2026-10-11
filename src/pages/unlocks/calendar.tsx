@@ -3,7 +3,7 @@ import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendar
 import { CalendarView } from '~/containers/Unlocks/CalendarView'
 import { getUnlocksCalendarStaticPropsData } from '~/containers/Unlocks/queries'
 import Layout from '~/layout'
-import { Panel } from '~/ui/Panel'
+import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -46,9 +46,9 @@ export default function UnlocksCalendar({
 					Add it here!
 				</a>
 			</Announcement>
-			<Panel padding="sm">
+			<Card padding="sm">
 				<CalendarView initialUnlocksData={initialUnlocksData} precomputedData={precomputedData} />
-			</Panel>
+			</Card>
 		</Layout>
 	)
 }

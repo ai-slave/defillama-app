@@ -252,7 +252,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				)}
 			</ChartPanel>
 
-			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<SearchTableProvider
 					options={{
 						data: finalCategoriesList,

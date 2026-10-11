@@ -320,7 +320,7 @@ function SectorsReadyPage({
 				}
 			/>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<div className="mr-auto">
 						<PanelTitle>Sector performance</PanelTitle>
@@ -441,7 +441,7 @@ function SectorsReadyPage({
 				</div>
 			</section>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle>All sectors</PanelTitle>
 					<CSVDownloadButton

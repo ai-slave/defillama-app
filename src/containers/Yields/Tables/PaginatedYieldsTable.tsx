@@ -79,7 +79,7 @@ export function PaginatedYieldsTable<TRow>({
 	if (shell === 'none') return tableContent
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			{/* The Panel owns the border; clip table backgrounds without changing generic Panel overflow. */}
 			<div className="overflow-clip rounded-[inherit]">{tableContent}</div>
 		</Panel>

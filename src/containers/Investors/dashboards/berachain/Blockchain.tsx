@@ -2,6 +2,7 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -256,7 +257,7 @@ export default function Blockchain() {
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<h2 className="heading-xs">Top Tokens by 30d Transfer Volume</h2>
-					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
 								{tokenTable.getHeaderGroups().map((headerGroup) => (
@@ -295,7 +296,7 @@ export default function Blockchain() {
 								))}
 							</tbody>
 						</table>
-					</div>
+					</Card>
 				</div>
 			)}
 		</div>

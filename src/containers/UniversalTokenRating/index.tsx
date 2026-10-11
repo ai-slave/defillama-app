@@ -5,6 +5,7 @@ import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { focusNeighbourOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -161,7 +162,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		<div className="flex flex-col gap-2">
 			<TopMovers movers={topMovers} />
 
-			<div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-surface p-2">
+			<Card padding="sm" className="flex flex-wrap items-center gap-2">
 				<form
 					noValidate
 					role="search"
@@ -249,7 +250,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					Documentation
 					<Icon name="file-text" className="size-3.5" />
 				</Button>
-			</div>
+			</Card>
 			{filterChips.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-1.5 lg:hidden">
 					{filterChips.map((chip) => (
@@ -271,7 +272,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</div>
 			) : null}
 
-			<Panel padding="none" className="max-lg:hidden">
+			<Panel className="max-lg:hidden">
 				<PanelHeader>
 					<PanelTitle>Performance Matrix</PanelTitle>
 					{scoredLabel}
@@ -279,7 +280,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				<PerformanceMatrix rows={filteredRows} grading={scoringConfig?.grading} />
 			</Panel>
 
-			<Panel padding="none" className="lg:hidden">
+			<Panel className="lg:hidden">
 				<PanelHeader>
 					<PanelTitle>Top-10 Project Rating Matrix</PanelTitle>
 				</PanelHeader>
@@ -296,7 +297,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</div>
 			</Panel>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle>Leaderboard Ranking</PanelTitle>
 					{scoredLabel}

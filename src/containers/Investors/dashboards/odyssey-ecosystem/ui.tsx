@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Card } from '~/ui/Card'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
@@ -12,11 +13,11 @@ export function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-1 label-md text-secondary">{title}</h3>
 			{subtitle && <p className="mb-3 body-sm text-secondary">{subtitle}</p>}
 			{children}
-		</div>
+		</Card>
 	)
 }
 

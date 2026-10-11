@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import type { QueryRetry } from '~/utils/query'
 import { Button } from './Button'
+import { Card } from './Card'
 import { focusRegionOnLeave } from './focus'
 import { Icon, type IIcon } from './Icon'
 import { LoadingDots, LoadingSpinner } from './Loaders'
-import { Panel } from './Panel'
 
 /* ----------------------------------------------------------------------------
    Loading, empty and error states.
@@ -74,9 +74,9 @@ export function PanelStatus({ children, variant, retry, className }: PanelStatus
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
-		<Panel
+		<Card
 			padding="sm"
-			className={`flex-1 items-center justify-center gap-2 initial:min-h-[360px] ${className ?? ''}`.trim()}
+			className={`flex flex-1 flex-col items-center justify-center gap-2 initial:min-h-[360px] ${className ?? ''}`.trim()}
 		>
 			<p
 				role={role}
@@ -86,7 +86,7 @@ export function PanelStatus({ children, variant, retry, className }: PanelStatus
 				{children}
 			</p>
 			{retry ? <RetryButton retry={retry} /> : null}
-		</Panel>
+		</Card>
 	)
 }
 
@@ -211,14 +211,14 @@ export function SurfaceLoadingOverlay({ label }: { label: string }) {
 
 export function PanelLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
 	return (
-		<Panel
+		<Card
 			padding="sm"
-			className={`flex-1 items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
+			className={`flex flex-1 flex-col items-center justify-center initial:min-h-[360px] ${className ?? ''}`.trim()}
 		>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				<LoadingIndicator label={label} />
 			</div>
-		</Panel>
+		</Card>
 	)
 }
 

@@ -6,6 +6,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -137,12 +138,12 @@ function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-5">
+		<Card padding="md">
 			<h3 className="heading-xs">Rate Comparison Across Chains</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>
-		</div>
+		</Card>
 	)
 }
 

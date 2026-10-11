@@ -256,9 +256,7 @@ export function ChainsByCategory({
 
 			<NewsletterSignup layout="strip" />
 
-			<React.Suspense
-				fallback={<Panel padding="none" style={{ minHeight: `${chainsTableData.length * 50 + 200}px` }} />}
-			>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${chainsTableData.length * 50 + 200}px` }} />}>
 				<ChainsByCategoryTable data={chainsTableData} showByGroup={showByGroup} tvlQuickPicks={tvlQuickPicks} />
 			</React.Suspense>
 		</>

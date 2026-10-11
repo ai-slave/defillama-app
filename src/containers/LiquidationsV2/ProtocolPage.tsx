@@ -43,7 +43,7 @@ export function LiquidationsProtocolPage(props: LiquidationsProtocolPageProps) {
 				/>
 			</div>
 
-			<Panel padding="none" className="mt-2">
+			<Panel className="mt-2">
 				<LiquidationsTableTabs
 					tabs={PROTOCOL_TABS}
 					activeTab={activeTab}

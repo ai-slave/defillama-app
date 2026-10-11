@@ -1252,6 +1252,46 @@ const RULES = [
 		skipTests: true
 	},
 	{
+		id: 'hand-built-card',
+		description:
+			'a card surface drawn by hand (rounded-lg, -xl or -2xl with border-subtle and bg-surface) — render Card from src/ui/Card.tsx with a padding step (none, sm, base, md, strip), or Panel for a titled shell; className keeps only placement',
+		match: (content) =>
+			withoutComments(content).match(/\brounded-(?:lg|xl|2xl) border border-subtle bg-surface(?=[\s"'`])/g),
+		exceptions: {
+			'src/components/NotFoundPage.tsx': 'the 404 frame keeps a 4px inset around its full-bleed illustration',
+			'src/components/RowLinksWithDropdown/index.tsx': 'a segmented row of links, a control rather than a card',
+			'src/containers/DesignSystem/foundations.tsx': 'a specimen swatch on the dev-only design system page',
+			'src/containers/DesignSystem/shared.tsx': 'the specimen frame on the dev-only design system page',
+			'src/containers/Exchanges/MicaCells.tsx': 'a 28px icon tile in a table cell',
+			'src/containers/Investors/dashboards/flare/ui.tsx':
+				"a callout with the partner's 3px accent edge and its wider left inset",
+			'src/containers/LlamaAI/components/AlertsModal.tsx':
+				"an alert row whose 14px vertical inset lines up with the modal's list rows",
+			'src/containers/LlamaAI/components/LlamaAITipBanner.tsx': 'a one-line tip strip under the composer, 10px by 14px',
+			'src/containers/LlamaAI/components/NotificationPermissionBanner.tsx': 'the same tip strip as LlamaAITipBanner',
+			'src/containers/LlamaAI/components/TipOrNotifyBanner.tsx': 'the same tip strip as LlamaAITipBanner',
+			'src/containers/LlamaAI/components/QueueChips.tsx': 'queued prompt rows, 8px by 12px, under the composer',
+			'src/containers/LlamaAI/components/charts/ChartRenderer.tsx':
+				'the chart frame with its tab row pulled into the top inset',
+			'src/containers/LlamaAI/components/sidebar/AgenticSidebar.tsx': 'the folded 44px icon rail',
+			'src/containers/LlamaAI/components/status/StreamingStatus.tsx':
+				'a status block that tightens below sm and indents behind a 2px left edge under an active task',
+			'src/containers/LlamaAI/dailyBrief/HomeDailyBrief.tsx': 'a question button with its own pressed fill',
+			'src/containers/ProDashboard/components/AddChartModal/MetricTab.tsx': 'a picker block that tightens below sm',
+			'src/containers/ProtocolRankings/Table.tsx': 'the chrome is off when the table is embedded borderless',
+			'src/containers/TokenRights/TokenRightsByProtocol.tsx': 'the chrome is on only when the section is embedded',
+			'src/containers/UniversalTokenRating/TopMovers.tsx': 'a scrolling bar of mover chips',
+			'src/pages/ai/index.tsx':
+				"the LlamaAI marketing landing's feature cards keep the landing's larger radius and inset",
+			'src/containers/MobileApp/index.tsx':
+				"the mobile app landing's feature cards keep the landing's larger radius and inset",
+			'src/containers/Sheets/index.tsx': 'the Sheets marketing landing keeps its larger radius on its dark surface',
+			'src/pages/sheets/auth.tsx': "the add-on's sign-in card keeps the Sheets landing look"
+		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
 		id: 'raw-echarts-init',
 		exceptions: {
 			'src/containers/Unlocks/TreemapChart/index.tsx':

@@ -2,7 +2,7 @@ import { Panel } from '~/ui/Panel'
 
 function ValueCard({ title, value }: { title: string; value: string }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<div className="border-b border-subtle px-4 py-3">
 				<h3 className="body-sm text-secondary">{title}</h3>
 			</div>

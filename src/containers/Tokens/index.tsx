@@ -665,7 +665,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.stats} display={serverTable.data.statsDisplay} />
 			{view === 'table' ? <TokensSourceAvailability sources={serverTable.data.unavailableSources} /> : null}
-			<Panel padding="none">
+			<Panel>
 				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
 					<ViewTabs tabs={VIEW_TABS} label="Tokens view" />
 					<TabPanel value={view}>

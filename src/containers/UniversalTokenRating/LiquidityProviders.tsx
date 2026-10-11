@@ -12,7 +12,7 @@ export function LpPerformanceInsights({
 	avgSpreadPct: number | null
 }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<div className="border-b border-subtle px-4 py-3">
 				<h3 className="label-lg">Performance Insights</h3>
 			</div>

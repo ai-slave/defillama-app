@@ -410,7 +410,7 @@ export function RWAPerpsContractPage({ contract }: { contract: IRWAPerpsContract
 				</Card>
 
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<Panel padding="none" className="col-span-full">
+					<Panel className="col-span-full">
 						<div className="flex flex-col gap-6 p-2 xl:hidden">
 							<RWAPerpsContractHeader contract={contract} headingAs="h1" />
 							<RWAPerpsContractPriceSummary contract={contract} />

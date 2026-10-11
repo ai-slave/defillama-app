@@ -30,6 +30,7 @@ import {
 } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
@@ -673,7 +674,9 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 											</SettingsCard>
 											{settings.enablePremiumTools ? (
-												<form
+												<Card
+													as="form"
+													padding="md"
 													noValidate
 													// The cap commits on blur, and Enter commits it through the form.
 													onSubmit={(e) => {
@@ -681,7 +684,6 @@ export const SettingsModal = memo(function SettingsModal({
 														const form = e.currentTarget
 														if (!commitSpendCap(spendCapValue)) showFieldErrors(form, () => setSpendCapSubmitted(true))
 													}}
-													className="rounded-lg border border-subtle bg-surface p-4"
 												>
 													<Field
 														label="Spend cap per message"
@@ -706,7 +708,7 @@ export const SettingsModal = memo(function SettingsModal({
 															</div>
 														)}
 													</Field>
-												</form>
+												</Card>
 											) : null}
 										</div>
 									</div>
@@ -714,7 +716,7 @@ export const SettingsModal = memo(function SettingsModal({
 									{availableModels.length > 0 ? (
 										<div>
 											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
-											<div className="mt-3 space-y-3 rounded-lg border border-subtle bg-surface p-4">
+											<Card padding="md" className="mt-3 space-y-3">
 												<Field label="Model">
 													{(control) => (
 														<Select
@@ -771,7 +773,7 @@ export const SettingsModal = memo(function SettingsModal({
 														)}
 													</Field>
 												) : null}
-											</div>
+											</Card>
 										</div>
 									) : null}
 								</div>
@@ -784,11 +786,7 @@ export const SettingsModal = memo(function SettingsModal({
 										subtitle="Connect external accounts to chat and receive alerts."
 									/>
 									{isSettingsLoading ? (
-										<div
-											role="status"
-											aria-label="Loading integrations"
-											className="rounded-lg border border-subtle bg-surface p-4"
-										>
+										<Card padding="md" role="status" aria-label="Loading integrations">
 											<div className="flex items-center justify-between gap-3">
 												<div className="flex min-w-0 flex-1 flex-col gap-2">
 													<Skeleton className="h-4 w-24" />
@@ -796,7 +794,7 @@ export const SettingsModal = memo(function SettingsModal({
 												</div>
 												<Skeleton className="h-8 w-20 shrink-0 rounded-lg" />
 											</div>
-										</div>
+										</Card>
 									) : (
 										<div className="flex flex-col gap-3">
 											<IntegrationRow
@@ -812,7 +810,7 @@ export const SettingsModal = memo(function SettingsModal({
 												title="Slack"
 												description="Receive scheduled alerts in your Slack channels. Multi-workspace supported."
 											/>
-											<div className="rounded-lg border border-subtle bg-surface p-4">
+											<Card padding="md">
 												<div className="flex flex-wrap items-start justify-between gap-3">
 													<div className="min-w-0 flex-1">
 														<p className="m-0 label-md text-primary">Mobile app</p>
@@ -830,7 +828,7 @@ export const SettingsModal = memo(function SettingsModal({
 														Get the app
 													</Button>
 												</div>
-											</div>
+											</Card>
 										</div>
 									)}
 								</div>
@@ -1091,7 +1089,11 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
 }
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
-	return <div className="overflow-hidden rounded-lg border border-subtle bg-surface">{children}</div>
+	return (
+		<Card padding="none" className="overflow-hidden">
+			{children}
+		</Card>
+	)
 }
 
 function RowDivider() {

@@ -57,7 +57,7 @@ function CriterionCards({
 			{CRITERIA.map((definition) => {
 				const criterion = criteria.find((entry) => entry.key === definition.key) ?? null
 				return (
-					<Panel key={definition.key} padding="none">
+					<Panel key={definition.key}>
 						<div className="flex min-h-20 items-start justify-between gap-2 px-4 py-3">
 							<div className="flex flex-col gap-1">
 								<h3 className="body-sm text-secondary">{definition.label}</h3>
@@ -96,7 +96,7 @@ function CriterionCards({
 
 function NotDisclosedPanel() {
 	return (
-		<Panel padding="none" className="min-h-32">
+		<Panel className="min-h-32">
 			<EmptyState size="md" icon="eye-off" title="Data not disclosed" />
 		</Panel>
 	)
@@ -104,7 +104,7 @@ function NotDisclosedPanel() {
 
 function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProvider> }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<PanelTitle as="h3">Performance Summary</PanelTitle>
 				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link">
@@ -210,7 +210,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 	const providerShare = metric?.avgBreakdown.marketMakersPercentage ?? null
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<PanelTitle as="h3">Performance Breakdown</PanelTitle>
 				<SegmentedControl
@@ -386,7 +386,7 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 	const [providerName, setProviderName] = useState(rows[0]?.name ?? '')
 	const provider = rows.find((entry) => entry.name === providerName) ?? rows[0] ?? null
 	return (
-		<Panel padding="none">
+		<Panel>
 			<Tabs<UptimeView> value={mode} values={UPTIME_VIEWS} onValueChange={setMode}>
 				<PanelHeader>
 					<PanelTitle as="h3">Uptime Calculations</PanelTitle>

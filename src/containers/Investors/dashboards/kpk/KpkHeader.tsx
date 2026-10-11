@@ -1,4 +1,5 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { Card } from '~/ui/Card'
 import { formatDate } from '~/utils/dateFormat'
 import { useTab, type KpkLinkKey, type KpkMetadata } from './api'
 
@@ -17,7 +18,7 @@ export default function KpkHeader() {
 	const asOf = data?.asOf ? formatDate(data.asOf) : null
 
 	return (
-		<header className="flex flex-col gap-2.5 rounded-lg border border-subtle bg-surface px-4 py-3">
+		<Card as="header" padding="strip" className="flex flex-col gap-2.5">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 				<span className="heading-xs tracking-[0.14em] text-primary">KPK</span>
 				<span className="label-sm tracking-[0.13em] text-secondary uppercase">
@@ -41,6 +42,6 @@ export default function KpkHeader() {
 					<span key={note}>{note}</span>
 				))}
 			</div>
-		</header>
+		</Card>
 	)
 }

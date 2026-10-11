@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -8,16 +9,7 @@ import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkChartColors, kpkCompositionChartOptions } from './chartDefaults'
 import { asRanged, buildComposition, defaultRange, gapNote, rangeOptions, type CompositionPayload } from './transform'
-import {
-	Card,
-	ChartFootnote,
-	DashSwatch,
-	DataTable,
-	InfoTip,
-	usdCompact,
-	type FooterRow,
-	KPK_PERCENT_OPTIONS
-} from './ui'
+import { ChartFootnote, DashSwatch, DataTable, InfoTip, usdCompact, type FooterRow, KPK_PERCENT_OPTIONS } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -189,7 +181,8 @@ export function CompositionSection({
 						<SurfaceBodyLoadingStatus className="min-h-[400px]" />
 					)}
 				</ChartPanel>
-				<Card>
+				{/* min-w-0: a wide table scrolls inside the card instead of widening the grid track. */}
+				<Card padding="md" className="min-w-0">
 					{/* The payload's own title, the same string the chip above carries. A hard space
 					    while it is in flight — a collapsed empty heading would jump the table below. */}
 					<h3 className="mb-2 heading-xs">{model?.title ?? ' '}</h3>

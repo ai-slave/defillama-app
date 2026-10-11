@@ -195,9 +195,7 @@ export function OraclesByChain({
 				</ChartPanel>
 			</div>
 
-			<React.Suspense
-				fallback={<Panel padding="none" style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}
-			>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}>
 				<SearchTableProvider
 					options={{
 						data: tableAndPieData.tableData,

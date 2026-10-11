@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { tokenIconUrl } from '~/utils/icons'
 import { useTab, type MetadataResponse } from './api'
 
@@ -66,7 +67,7 @@ function OdysseyLogo() {
 export default function OdysseyHeader() {
 	const { data: meta } = useTab<MetadataResponse>('metadata')
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
+		<Card as="header" padding="strip" className="flex items-center gap-4">
 			<OdysseyLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{buildLinks(meta).map(({ label, url, icon }) => (
@@ -82,6 +83,6 @@ export default function OdysseyHeader() {
 					</a>
 				))}
 			</nav>
-		</header>
+		</Card>
 	)
 }

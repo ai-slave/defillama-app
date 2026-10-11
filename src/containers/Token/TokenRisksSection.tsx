@@ -183,7 +183,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 	}
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<div className="mr-auto min-w-0">
 					<PanelTitle
@@ -206,7 +206,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 			</PanelHeader>
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
-				<Card padding="md">
+				<Card padding="sm">
 					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
 					<p className="mt-1 mono-xl text-primary">
 						{formatUsd(getAtRiskExposureUsd(exposures.summary), USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}

@@ -122,7 +122,7 @@ function TokenPnlContent({
 
 	if (!pnlData || pnlData.priceSeries.length === 0) {
 		return (
-			<Panel padding="none" className="flex-1">
+			<Panel className="flex-1">
 				<EmptyState size="md" title="No historical data available for this range">
 					Try a different date range or another token.
 				</EmptyState>
@@ -168,7 +168,7 @@ function TokenPnlContent({
 				) : null}
 			</section>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h3" className="mr-0">
 						Price Over Time

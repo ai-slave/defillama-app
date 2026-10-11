@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -15,7 +16,6 @@ import {
 	rateBasisTitle
 } from './mandatesModel'
 import {
-	Card,
 	CompareBars,
 	DataTable,
 	earnedTitle,
@@ -147,7 +147,8 @@ export default function Mandates() {
 							{data.yieldIsSample ? ' — sample data, so every figure in this section is frozen at that date' : ''}
 						</p>
 					)}
-					<Card>
+					{/* min-w-0: a wide table scrolls inside the card instead of widening the grid track. */}
+					<Card padding="md" className="min-w-0">
 						<DataTable<KpkMandateWindow>
 							getRowKey={(row) => String(row.days)}
 							rows={perf?.windows}
@@ -237,7 +238,8 @@ export default function Mandates() {
 
 			<section className="flex flex-col gap-3">
 				<h2 className="heading-xs">Per-client breakdown</h2>
-				<Card>
+				{/* min-w-0: a wide table scrolls inside the card instead of widening the grid track. */}
+				<Card padding="md" className="min-w-0">
 					{/* The client column stays put, so a narrow screen scrolling through the
 					    sleeve columns still shows whose row it is reading. */}
 					<DataTable<KpkMandateClient>

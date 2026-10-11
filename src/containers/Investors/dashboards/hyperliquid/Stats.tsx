@@ -17,6 +17,7 @@ import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -198,7 +199,7 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 	}, [coins])
 
 	return (
-		<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
+		<Card padding="none" className="overflow-hidden">
 			<div className="relative h-10 overflow-hidden">
 				<div
 					ref={trackRef}
@@ -208,7 +209,7 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 					{coins.map((c, i) => renderItem(c, coins.length + i))}
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -523,11 +524,11 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">Predicted Funding Rates (Annualized) — HL vs CEXs</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
-		</div>
+		</Card>
 	)
 }
 
@@ -546,11 +547,11 @@ function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">Perpetual Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
-		</div>
+		</Card>
 	)
 }
 
@@ -569,11 +570,11 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">Spot Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
-		</div>
+		</Card>
 	)
 }
 

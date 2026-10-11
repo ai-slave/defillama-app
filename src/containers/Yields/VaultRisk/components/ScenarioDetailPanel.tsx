@@ -426,7 +426,7 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 function ReasonNote({ scenario }: { scenario: ScenarioVM }) {
 	if (scenario.status === 'computed') return null
 	return (
-		<Card padding="md">
+		<Card padding="sm">
 			<p className="label-sm text-primary">Why this isn&apos;t quantified</p>
 			<p className="mt-1 body-md text-secondary">
 				Current on-chain inputs identify the scenario, but don&apos;t contain enough exposure data to size depositor

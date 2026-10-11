@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 
 interface CollapsibleSectionProps {
@@ -12,7 +13,7 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 	const [isExpanded, setIsExpanded] = useState(true)
 
 	return (
-		<div className={`rounded-lg border border-subtle bg-surface ${className}`}>
+		<Card padding="none" className={className}>
 			<button
 				type="button"
 				aria-expanded={isExpanded}
@@ -32,6 +33,6 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 				</div>
 			</button>
 			{isExpanded ? <div className="border-t border-subtle px-3 py-2.5">{children}</div> : null}
-		</div>
+		</Card>
 	)
 }

@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -65,10 +66,10 @@ const INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 
 function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
-		</div>
+		</Card>
 	)
 }
 
@@ -144,11 +145,11 @@ function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">Yield Pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
-		</div>
+		</Card>
 	)
 }
 

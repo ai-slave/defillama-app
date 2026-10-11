@@ -351,7 +351,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			) : null}
 			{children}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>

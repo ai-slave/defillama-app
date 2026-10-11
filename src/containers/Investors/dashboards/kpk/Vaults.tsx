@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
@@ -9,7 +10,6 @@ import { KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
 import {
 	andList,
-	Card,
 	DataTable,
 	Disclaimer,
 	InfoTip,
@@ -124,7 +124,8 @@ export default function Vaults() {
 						onValueChange={setVenue}
 					/>
 				</div>
-				<Card>
+				{/* min-w-0: a wide table scrolls inside the card instead of widening the grid track. */}
+				<Card padding="md" className="min-w-0">
 					<DataTable<KpkVault>
 						getOccurrenceKey={(row) => JSON.stringify([row.chain, row.venue, row.name, row.asset])}
 						freeze="panes"

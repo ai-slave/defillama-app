@@ -7,6 +7,7 @@ import {
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
+import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
@@ -80,7 +81,7 @@ const FEE_MECHANICS: Array<[string, string]> = [
 
 function FeeMechanics() {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 				{FEE_MECHANICS.map(([version, text]) => (
 					<div key={version} className="flex flex-col gap-1">
@@ -92,7 +93,7 @@ function FeeMechanics() {
 			<p className="mt-3 body-sm text-tertiary">
 				Protocol fees are set by governance-controlled policy and can be adjusted per pool.
 			</p>
-		</div>
+		</Card>
 	)
 }
 

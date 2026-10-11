@@ -1,4 +1,5 @@
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from './endTrialHold'
 
@@ -16,7 +17,7 @@ const BENEFITS = [
 export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 	const isApplying = useEndTrialApplying()
 	return (
-		<div className="flex items-center rounded-2xl border border-brand bg-brand-tint-strong p-4">
+		<Card padding="md" tone="brand" className="flex items-center">
 			<div className="flex w-full flex-col gap-4 sm:w-[200px]">
 				<div className="flex flex-col gap-3">
 					<p className="sub-gradient-text heading-xs">Unlock the full power of DefiLlama</p>
@@ -44,6 +45,6 @@ export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 				</Button>
 				{isApplying ? <p className="body-sm text-tertiary">{END_TRIAL_APPLYING_REASON}</p> : null}
 			</div>
-		</div>
+		</Card>
 	)
 }

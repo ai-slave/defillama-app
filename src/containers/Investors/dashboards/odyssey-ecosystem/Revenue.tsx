@@ -6,6 +6,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -96,7 +97,7 @@ function SubSectionCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
 				<div>
 					<h3 className="title-md text-primary">{title}</h3>
@@ -110,7 +111,7 @@ function SubSectionCard({
 				)}
 			</div>
 			{children}
-		</div>
+		</Card>
 	)
 }
 

@@ -7,6 +7,7 @@ import { useAuthContext } from '~/auth'
 import { revokeGoogleCredentialSharing } from '~/auth/GoogleSignInButton'
 import { AUTH_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
 import { showFieldErrors } from '~/ui/focus'
@@ -503,7 +504,7 @@ export function DeleteAccountCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Icon name="trash-2" className="size-7 text-error" />
 					<span className="label-lg text-primary">Delete account</span>
@@ -530,7 +531,7 @@ export function DeleteAccountCard() {
 						Delete account
 					</Button>
 				</div>
-			</div>
+			</Card>
 
 			{openSession ? (
 				<DeleteAccountModal session={openSession} onClose={() => setOpenSession(null)} onDeleted={handleDeleted} />

@@ -298,7 +298,7 @@ export function EquitiesMarketsTable({
 			: `equities-${ticker.toLowerCase()}-markets-${activeVenue.toLowerCase()}`
 
 	return (
-		<Panel padding="none" className="col-span-full">
+		<Panel className="col-span-full">
 			<TableToolbar>
 				<SegmentedControl
 					value={activeVenue}
@@ -350,7 +350,7 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: Array<IEquitie
 	)
 
 	return (
-		<Panel padding="none" className="col-span-full">
+		<Panel className="col-span-full">
 			<TableToolbar>
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-tokens` })}

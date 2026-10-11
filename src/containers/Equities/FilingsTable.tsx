@@ -127,7 +127,7 @@ export function EquitiesFilingsTable({
 	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'documentDescription' })
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search filings</span>

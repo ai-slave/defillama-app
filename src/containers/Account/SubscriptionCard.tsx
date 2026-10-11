@@ -1,4 +1,5 @@
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 
 interface SubscriptionCardProps {
@@ -47,7 +48,7 @@ export function SubscriptionCard({
 
 	if (isManual) {
 		return (
-			<div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex min-w-0 flex-1 flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Icon name="receipt" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Subscription</span>
@@ -60,12 +61,12 @@ export function SubscriptionCard({
 				<p className="body-sm text-tertiary">
 					Your {planName} plan was set up by the DefiLlama team. To change it, email support@defillama.com.
 				</p>
-			</div>
+			</Card>
 		)
 	}
 
 	return (
-		<div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex min-w-0 flex-1 flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="receipt" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Subscription</span>
@@ -121,6 +122,6 @@ export function SubscriptionCard({
 					</Button>
 				</div>
 			) : null}
-		</div>
+		</Card>
 	)
 }

@@ -4,11 +4,14 @@ import { type ComponentProps, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanelBodyLoading } from '~/ui/ChartPanel'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
+import { StatTile } from '~/ui/SummaryStats'
+import { Tag } from '~/ui/Tag'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { mergeFailedReads, queryReadFailed } from '~/utils/query'
 import { AccentBadge, integrationStatus, SecondaryBadge } from './badges'
@@ -50,7 +53,6 @@ function asStr(value: unknown): string | null {
 
 const FALLBACK = '—'
 const NA = 'N/A'
-const CARD_BORDER = 'rounded-lg border border-subtle bg-surface'
 const EMPTY_SECTIONS = { depth: {}, volume: {}, spread: {}, kpi: {} }
 
 const INTEGRATION_LABEL: Record<'full' | 'partial' | 'none', string> = {
@@ -180,12 +182,12 @@ function VenueSection({ title, venues }: { title: string; venues: Array<Venue> }
 			<h3 className="label-md text-primary">{title}</h3>
 			<div className="flex flex-wrap gap-2">
 				{venues.map((venue) => (
-					<span key={venue.key} className={`inline-flex items-center gap-1.5 px-2 py-1 body-sm ${CARD_BORDER}`}>
+					<Tag key={venue.key} className="gap-1.5">
 						{venue.icon ? (
 							<img src={venue.icon} alt={venue.name} width={18} height={18} className="rounded-full" />
 						) : null}
 						{venue.name}
-					</span>
+					</Tag>
 				))}
 			</div>
 		</section>
@@ -317,7 +319,7 @@ function DrawerBody({
 					<AccentBadge className="h-6">{badge}</AccentBadge>
 				</div>
 				<RadarChart indicators={RADAR_INDICATORS} values={radarValues(scores)} />
-				<div className={`flex flex-col p-3 ${CARD_BORDER}`}>
+				<Card padding="base" className="flex flex-col">
 					{SCORE_ROWS.map((row) => (
 						<div key={row.key} className="flex h-8 items-center justify-between">
 							<span className="body-md text-secondary">{row.label}</span>
@@ -326,7 +328,7 @@ function DrawerBody({
 							</span>
 						</div>
 					))}
-				</div>
+				</Card>
 			</section>
 
 			<section className="flex flex-col gap-3">
@@ -337,9 +339,10 @@ function DrawerBody({
 					const percentileLabel =
 						percentile == null ? NA : formatPercent(percentile, { input: 'percent', maximumFractionDigits: 0 })
 					return (
-						<div
+						<Card
 							key={card.rankKey}
-							className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3 ${CARD_BORDER}`}
+							padding="base"
+							className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
 						>
 							<div className="flex flex-col gap-1">
 								<h4 className="flex items-center gap-2 label-md">
@@ -354,20 +357,20 @@ function DrawerBody({
 								<SecondaryBadge>Percentile: {percentileLabel}</SecondaryBadge>
 								<SecondaryBadge>Rank: {rankValue == null ? NA : rankValue}</SecondaryBadge>
 							</div>
-						</div>
+						</Card>
 					)
 				})}
 			</section>
 
 			<section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
-					<span className="body-sm text-secondary">Active Engagements in Forgd</span>
-					<span className="heading-sm">{activeEngagements == null ? FALLBACK : activeEngagements}</span>
-				</div>
-				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
-					<span className="body-sm text-secondary">Avg. FDV of projects in Forgd</span>
-					<span className="heading-sm">{avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}</span>
-				</div>
+				<StatTile
+					label="Active engagements in Forgd"
+					value={activeEngagements == null ? FALLBACK : activeEngagements}
+				/>
+				<StatTile
+					label="Avg. FDV of projects in Forgd"
+					value={avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}
+				/>
 			</section>
 
 			<BreakdownTables sections={breakdown.data?.sections ?? EMPTY_SECTIONS} badge={badge} />

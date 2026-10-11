@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Card } from '~/ui/Card'
 import { readInvestorApiJson } from '../../api.types'
 
 interface Metadata {
@@ -57,7 +58,7 @@ export default function ThorchainHeader() {
 	const links = data?.links ?? {}
 
 	return (
-		<header className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-4 py-2.5">
+		<Card as="header" padding="strip" className="flex items-center gap-3">
 			{/* RUNE token mark, inlined so the dashboard owns it (no asset file dependency). */}
 			<svg viewBox="0 0 300 300" role="img" aria-label="THORChain" className="size-8 shrink-0">
 				<circle cx="150" cy="150" r="150" fill="url(#rune-logo)" />
@@ -107,6 +108,6 @@ export default function ThorchainHeader() {
 					</a>
 				)}
 			</nav>
-		</header>
+		</Card>
 	)
 }

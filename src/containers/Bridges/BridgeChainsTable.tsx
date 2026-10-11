@@ -175,7 +175,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 	})
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<PanelTitle as="h1">Chains</PanelTitle>
 				<label className={searchFieldInlineWrapperStyles}>

@@ -97,7 +97,7 @@ export function ChainsByAdapter(props: IProps) {
 					chartName={props.type}
 				/>
 			) : null}
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>

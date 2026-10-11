@@ -486,7 +486,7 @@ function TokenRightsPage({
 					]}
 				/>
 
-				<Panel padding="none">
+				<Panel>
 					<TableToolbar>
 						<label className={searchFieldWrapperStyles}>
 							<span className="sr-only">Search protocol</span>

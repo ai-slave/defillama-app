@@ -97,7 +97,7 @@ export function RecentlyListedProtocolsTable({
 	})
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>

@@ -1,6 +1,7 @@
 import { useRef, useState, type RefObject } from 'react'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -121,7 +122,7 @@ export function TeamInvitesCard() {
 	const [showInviteModal, setShowInviteModal] = useState(false)
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Icon name="mail" className="size-5 text-primary" />
@@ -150,6 +151,6 @@ export function TeamInvitesCard() {
 			)}
 
 			{showInviteModal ? <InviteMemberModal onClose={() => setShowInviteModal(false)} /> : null}
-		</div>
+		</Card>
 	)
 }

@@ -128,6 +128,7 @@ import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -2943,8 +2944,9 @@ export function AgenticChat({
 											/>
 										</>
 									) : null}
-									<div
-										className={`llamaai-chat-panel relative isolate flex flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${CHAT_PANEL_LAYOUT[chatPanelLayout]} ${chatPanelShrinkAnimation}`}
+									<Card
+										padding="none"
+										className={`llamaai-chat-panel relative isolate flex flex-col overflow-hidden ${CHAT_PANEL_LAYOUT[chatPanelLayout]} ${chatPanelShrinkAnimation}`}
 										style={
 											isTerminalView && !terminalChatCollapsed
 												? {
@@ -3039,11 +3041,15 @@ export function AgenticChat({
 												conversationKey={`conversation-${conversationViewResetKey}`}
 											/>
 										)}
-									</div>
+									</Card>
 									{!isRouteSessionPending && rightPanel ? (
-										<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-subtle bg-surface lg:ml-2 lg:flex">
+										<Card
+											as="aside"
+											padding="none"
+											className="hidden w-[340px] shrink-0 flex-col overflow-y-auto lg:ml-2 lg:flex"
+										>
 											{rightPanel}
-										</aside>
+										</Card>
 									) : null}
 									{!isRouteSessionPending && citationSheet.isOpen ? (
 										<CitationDetailPanel

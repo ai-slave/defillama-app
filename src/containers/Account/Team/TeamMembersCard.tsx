@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MemberRow } from './MemberRow'
 import { useTeam } from './useTeam'
@@ -8,7 +9,7 @@ export function TeamMembersCard() {
 	const headingRef = useRef<HTMLHeadingElement>(null)
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="users" className="size-5 text-primary" />
 				<h2 ref={headingRef} tabIndex={-1} className="label-lg text-primary">
@@ -25,6 +26,6 @@ export function TeamMembersCard() {
 					))}
 				</div>
 			)}
-		</div>
+		</Card>
 	)
 }

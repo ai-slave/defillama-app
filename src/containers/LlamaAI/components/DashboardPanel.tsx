@@ -12,6 +12,7 @@ import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/service
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
+import { Panel } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 
@@ -148,10 +149,7 @@ function DashboardPanelInner({
 			}}
 		>
 			{config ? (
-				<div
-					className="flex h-full flex-col rounded-lg border border-subtle bg-surface"
-					style={{ width: 'min(50vw, 800px)', minWidth: '400px' }}
-				>
+				<Panel className="h-full" style={{ width: 'min(50vw, 800px)', minWidth: '400px' }}>
 					<div className="flex items-center justify-between border-b border-subtle px-4 py-3">
 						<div className="flex items-center gap-2 overflow-hidden">
 							<Icon name="layout-grid" className="size-4 shrink-0 text-link" />
@@ -241,7 +239,7 @@ function DashboardPanelInner({
 							</Tooltip>
 						</div>
 					) : null}
-				</div>
+				</Panel>
 			) : null}
 			{artifactSave?.containsPremium ? (
 				<ConfirmDialog

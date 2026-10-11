@@ -31,7 +31,7 @@ function IntegrationLink({ href, label }: { href: string; label: string }) {
 
 function EmptyIntegrationTable({ title, message }: { title: string; message: string }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<PanelTitle>{title}</PanelTitle>
 			</PanelHeader>

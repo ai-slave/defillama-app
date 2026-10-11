@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator, InlineStatus } from '~/ui/Status'
@@ -241,7 +242,7 @@ export function TeamSeatsCard() {
 	const hasStripe = teamSubscriptions.some((sub) => sub.provider === undefined || sub.provider === 'stripe')
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
 					<Icon name="receipt" className="size-5 text-primary" />
@@ -306,6 +307,6 @@ export function TeamSeatsCard() {
 					<PurchaseSeatsModal onClose={() => setShowPurchaseModal(false)} />
 				</Suspense>
 			)}
-		</div>
+		</Card>
 	)
 }

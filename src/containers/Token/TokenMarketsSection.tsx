@@ -353,7 +353,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		// Each keeps its loading state's height, so the error does not move the page.
 		if (embedded) return <div className="flex min-h-[200px] items-center justify-center p-3">{status}</div>
 		return (
-			<Panel padding="none" className="flex-1">
+			<Panel className="flex-1">
 				{sectionHeader}
 				<div className="flex min-h-[360px] flex-1 items-center justify-center p-2">{status}</div>
 			</Panel>
@@ -365,7 +365,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 			return <SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="min-h-[200px] p-3" />
 		}
 		return (
-			<Panel padding="none" className="flex-1">
+			<Panel className="flex-1">
 				{sectionHeader}
 				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="p-2" />
 			</Panel>
@@ -437,7 +437,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 	}
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			{sectionHeader}
 			<div className="flex flex-col gap-2 p-2">{content}</div>
 		</Panel>

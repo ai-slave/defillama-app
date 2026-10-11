@@ -321,7 +321,7 @@ export function OracleOverview({
 				</ChartPanel>
 			</SummaryCardGrid>
 
-			<Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
+			<Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<SearchTableProvider
 					options={{
 						data: tableData,

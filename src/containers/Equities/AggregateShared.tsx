@@ -140,7 +140,7 @@ export function ReturnMatrix({
 	rows: Array<AggregateReturnMatrixRow>
 }) {
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<div className="mr-auto">
 					<PanelTitle>{title}</PanelTitle>

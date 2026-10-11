@@ -229,7 +229,7 @@ export function CategoryPerformanceContainer({
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
+			<Card padding="base" className="flex flex-col gap-3">
 				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
 				<p className="body-md text-secondary">
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
@@ -244,7 +244,7 @@ export function CategoryPerformanceContainer({
 						benchmark data exists.
 					</p>
 				) : null}
-			</div>
+			</Card>
 
 			<ChartPanel>
 				<ChartPanelToolbar

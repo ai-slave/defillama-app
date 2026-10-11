@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -135,7 +136,7 @@ export default function YieldsEmissions() {
 					<StatTile label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
 					<StatTile label="Avg APY" value={data.yields.kpis.avgApy.formatted} />
 				</div>
-				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+				<Card padding="none" className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
@@ -182,7 +183,7 @@ export default function YieldsEmissions() {
 							className="border-t border-subtle px-4 py-3"
 						/>
 					)}
-				</div>
+				</Card>
 			</div>
 		</div>
 	)

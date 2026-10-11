@@ -4,6 +4,7 @@ import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChar
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
@@ -15,10 +16,10 @@ export const MAPLE_CSV_ONLY_EXPORT = { csv: true, png: false, filename: 'bar-cha
 
 export function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			<SurfaceBodyLoadingStatus className="min-h-[400px]" />
-		</div>
+		</Card>
 	)
 }
 

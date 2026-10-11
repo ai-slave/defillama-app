@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelExportShellLoading } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
@@ -60,7 +61,7 @@ export default function Overview() {
 			{protocolRankings.length > 0 && (
 				<>
 					<h2 className="heading-xs">Protocol Rankings</h2>
-					<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full text-left body-md">
 							<thead>
 								<tr className="border-b border-subtle label-md tracking-wider text-secondary uppercase">
@@ -97,7 +98,7 @@ export default function Overview() {
 								))}
 							</tbody>
 						</table>
-					</div>
+					</Card>
 				</>
 			)}
 

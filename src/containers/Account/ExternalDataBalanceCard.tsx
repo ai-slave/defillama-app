@@ -1,4 +1,5 @@
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -25,7 +26,7 @@ export function ExternalDataBalanceCard({
 }: ExternalDataBalanceCardProps) {
 	if (isLoading) {
 		return (
-			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Skeleton className="size-7" />
 					<Skeleton className="h-5 w-44" />
@@ -33,7 +34,7 @@ export function ExternalDataBalanceCard({
 				<Skeleton className="h-3 w-full" />
 				<Skeleton className="h-3 w-3/4" />
 				<Skeleton className="h-8 w-20 rounded-lg" />
-			</div>
+			</Card>
 		)
 	}
 
@@ -44,7 +45,7 @@ export function ExternalDataBalanceCard({
 	const isLowBalance = totalAvailable < 1
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
@@ -107,6 +108,6 @@ export function ExternalDataBalanceCard({
 					{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 				</span>
 			</div>
-		</div>
+		</Card>
 	)
 }

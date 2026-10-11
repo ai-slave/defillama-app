@@ -65,7 +65,7 @@ function LiquidationsShellCard({
 				{...(activeChainLink ? { activeChainLink } : {})}
 			/>
 
-			<Panel padding="none" className="w-full flex-1">
+			<Panel className="w-full flex-1">
 				{statusVariant === 'loading' ? (
 					<SurfaceBodyLoadingStatus className="min-h-[380px]" />
 				) : (

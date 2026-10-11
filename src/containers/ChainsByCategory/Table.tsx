@@ -174,13 +174,7 @@ export function ChainsByCategoryTable({
 		</>
 	)
 
-	return borderless ? (
-		<div className="isolate">{tableContent}</div>
-	) : (
-		<Panel padding="none" className="isolate">
-			{tableContent}
-		</Panel>
-	)
+	return borderless ? <div className="isolate">{tableContent}</div> : <Panel className="isolate">{tableContent}</Panel>
 }
 
 const chainsTableColumnOrders: ColumnOrdersByBreakpoint = {

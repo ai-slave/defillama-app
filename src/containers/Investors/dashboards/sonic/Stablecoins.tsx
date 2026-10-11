@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 const SKELETON_WIDTHS = [
 	['w-16', 'w-2/3', 'w-12', 'w-24', 'w-10'],
 	['w-14', 'w-1/2', 'w-14', 'w-20', 'w-16'],
@@ -11,7 +12,7 @@ export default function Stablecoins() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col">
 			<div className="relative flex-1">
-				<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
+				<Card padding="none" className="overflow-hidden">
 					<div className="flex flex-col">
 						<div className="flex border-b border-subtle">
 							{Array.from({ length: 5 }).map((_, i) => (
@@ -38,7 +39,7 @@ export default function Stablecoins() {
 						))}
 					</div>
 					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
-				</div>
+				</Card>
 				<div className="absolute inset-0 flex items-center justify-center">
 					<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary">
 						Stablecoins — Coming Soon

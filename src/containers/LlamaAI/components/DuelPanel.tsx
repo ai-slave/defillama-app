@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
@@ -46,7 +47,7 @@ function AnswerColumn({
 	const statusText = error ?? (status === 'interrupted' ? 'This response was interrupted.' : null)
 
 	return (
-		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-lg border border-subtle bg-surface">
+		<Card as="section" padding="none" aria-label={label} className="flex min-w-0 flex-1 flex-col">
 			<div className="flex items-center gap-2 px-4 pt-3 pb-1">
 				<span className="label-sm text-secondary">{label}</span>
 				{isStreaming ? <span className="size-1.5 rounded-full bg-brand motion-safe:animate-pulse" aria-hidden /> : null}
@@ -84,7 +85,7 @@ function AnswerColumn({
 					I prefer this response
 				</Button>
 			</div>
-		</section>
+		</Card>
 	)
 }
 

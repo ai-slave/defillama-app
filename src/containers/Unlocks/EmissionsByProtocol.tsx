@@ -273,7 +273,7 @@ function TokenHeader({
 	geckoId: string | null
 }) {
 	return (
-		<div className="flex w-full flex-wrap items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
+		<Card padding="base" className="flex w-full flex-wrap items-center gap-3">
 			<TokenLogo
 				name={name}
 				kind="token"
@@ -302,7 +302,7 @@ function TokenHeader({
 					) : null}
 				</>
 			) : null}
-		</div>
+		</Card>
 	)
 }
 
@@ -380,7 +380,7 @@ function TokenAllocationBars({
 	stackColors: Record<string, string>
 }) {
 	return (
-		<Panel padding="none" className="overflow-hidden">
+		<Panel className="overflow-hidden">
 			<PanelHeader>
 				<PanelTitle as="h3">Token Allocation</PanelTitle>
 			</PanelHeader>
@@ -1092,7 +1092,7 @@ function ChartContainer({
 			) : null}
 
 			{data.events.length > 0 ? (
-				<Panel padding="none" className="w-full overflow-hidden">
+				<Panel className="w-full overflow-hidden">
 					<PanelHeader>
 						<PanelTitle as="h3">Unlock Events</PanelTitle>
 					</PanelHeader>

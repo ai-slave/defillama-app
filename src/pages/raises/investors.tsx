@@ -179,7 +179,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 			canonicalUrl="/raises/investors"
 			pageName={pageName}
 		>
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>

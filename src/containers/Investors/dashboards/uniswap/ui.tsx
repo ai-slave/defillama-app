@@ -17,6 +17,7 @@ import {
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useMedia } from '~/hooks/useMedia'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelBodyEmpty, ChartPanelBodyLoading, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { StatTile } from '~/ui/SummaryStats'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
@@ -341,12 +342,12 @@ export function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<div className="mb-3">
 				<CardTitle title={title} subtitle={subtitle} />
 			</div>
 			{children}
-		</div>
+		</Card>
 	)
 }
 

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -570,7 +571,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-3 rounded-lg border border-subtle bg-surface p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+		<Card padding="base" className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
 			<div className="flex min-w-0 flex-col gap-2">
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-2">
@@ -721,6 +722,6 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 					)}
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }

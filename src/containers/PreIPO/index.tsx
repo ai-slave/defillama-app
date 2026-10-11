@@ -205,7 +205,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 					Track private-company valuations, funding rounds, and markets where pre-IPO exposure is tradable.
 				</p>
 			</Card>
-			<Panel padding="none">
+			<Panel>
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search companies, IDs, or sectors</span>

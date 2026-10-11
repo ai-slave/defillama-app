@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
+import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -62,7 +63,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 	const reversedAsks = [...topAsks].reverse()
 
 	return (
-		<div className="flex flex-col rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col">
 			<h3 className="mb-3 label-md text-secondary">Order Book</h3>
 
 			<div className="mb-2 grid grid-cols-3 label-sm text-secondary">
@@ -121,13 +122,13 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 			{bids.length === 0 && asks.length === 0 ? (
 				<SurfaceBodyLoadingStatus label="Waiting for order book data" className="min-h-[100px]" />
 			) : null}
-		</div>
+		</Card>
 	)
 }
 
 function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 	return (
-		<div className="flex max-h-[800px] flex-col rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex max-h-[800px] flex-col">
 			<h3 className="mb-3 shrink-0 label-md text-secondary">Recent Trades</h3>
 
 			<div className="mb-2 grid shrink-0 grid-cols-4 label-sm text-secondary">
@@ -156,7 +157,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 				})}
 				{trades.length === 0 ? <SurfaceBodyLoadingStatus label="Waiting for trades" className="min-h-[100px]" /> : null}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -176,7 +177,7 @@ function MetricStrip({
 	depth1: number
 }) {
 	return (
-		<div className="grid grid-cols-2 gap-3 rounded-lg border border-subtle bg-surface p-4 md:grid-cols-6">
+		<Card padding="strip" className="grid grid-cols-2 gap-3 md:grid-cols-6">
 			<div>
 				<div className="body-sm text-secondary">Spread</div>
 				<div className="body-md text-primary">
@@ -228,7 +229,7 @@ function MetricStrip({
 					{formatUsd(depth1, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }
 

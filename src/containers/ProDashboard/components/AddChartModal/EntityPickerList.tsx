@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
@@ -96,12 +97,12 @@ export function EntityPickerList({
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full rounded-lg border border-subtle bg-surface">
+			<Card padding="none" className="flex h-full">
 				<SurfaceBodyLoadingStatus
 					label={mode === 'chain' ? 'Loading chains' : 'Loading protocols'}
 					className="min-h-[200px]"
 				/>
-			</div>
+			</Card>
 		)
 	}
 

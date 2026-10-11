@@ -221,14 +221,14 @@ export function Metrics({
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
+			<Card padding="base" className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					<h2 className="heading-sm">Metrics</h2>
 					{tabs}
 				</div>
 				{search}
 				{categoryJumps}
-			</div>
+			</Card>
 			{sections}
 		</>
 	)
@@ -268,7 +268,7 @@ export function LinkToMetricOrToolPage({
 		>
 			<Card
 				as={BasicLink}
-				padding="md"
+				padding="base"
 				className="hover-wash-card flex flex-1 flex-col items-start gap-1.5"
 				href={page.route}
 				target={isExternalLink ? '_blank' : undefined}

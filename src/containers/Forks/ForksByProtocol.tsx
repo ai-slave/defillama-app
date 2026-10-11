@@ -116,7 +116,6 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 			<Suspense
 				fallback={
 					<Panel
-						padding="none"
 						style={{
 							minHeight: `${protocolTableData.length * 50 + 200}px`
 						}}

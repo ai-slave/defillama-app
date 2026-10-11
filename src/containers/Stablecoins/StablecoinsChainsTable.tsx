@@ -215,7 +215,7 @@ export function StablecoinsChainsTable({
 	}
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search</span>

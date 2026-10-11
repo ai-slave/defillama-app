@@ -1,6 +1,7 @@
 import { useMutation, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Button, StableLabel } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -51,7 +52,7 @@ export function ApiAccessCard({
 
 	if (!apiKey) {
 		return (
-			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Icon name="cli" className="size-7 text-primary" />
 					<span className="label-lg text-primary">API access</span>
@@ -78,12 +79,12 @@ export function ApiAccessCard({
 					Generate one to start making requests to the DefiLlama API.
 				</EmptyState>
 				{generateError ? <InlineStatus variant="error">{generateError}</InlineStatus> : null}
-			</div>
+			</Card>
 		)
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			{/* Header */}
 			<div className="flex items-center gap-2">
 				<Icon name="cli" className="size-7 text-primary" />
@@ -198,6 +199,6 @@ export function ApiAccessCard({
 
 			{/* API Usage Breakdown */}
 			<ApiUsageBreakdown usageStatsQuery={usageStatsQuery} />
-		</div>
+		</Card>
 	)
 }

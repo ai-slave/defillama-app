@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -36,7 +37,7 @@ export function TeamInfoCard() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="users" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Team</span>
@@ -121,6 +122,6 @@ export function TeamInfoCard() {
 					</p>
 				) : null}
 			</div>
-		</div>
+		</Card>
 	)
 }

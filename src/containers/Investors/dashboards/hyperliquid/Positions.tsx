@@ -15,6 +15,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanel, ChartPanelBodyLoading, ChartPanelTitle, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
@@ -405,13 +406,13 @@ function DataTable<T>({
 	})
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md">
 			<h3 className="mb-3 label-md text-secondary">{title}</h3>
 			{/* Auto layout sizes each column to its nowrap cells, so a phone scrolls the table sideways instead of
 			    squashing every column into the card's width. */}
 			<Table table={instance} tableLayout="auto" />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
-		</div>
+		</Card>
 	)
 }
 

@@ -4,6 +4,7 @@ import { useId, type ReactNode } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Keycap } from '~/ui/Keycap'
 import { StatusDot } from '~/ui/StatusBadge'
@@ -296,7 +297,7 @@ function FeatureTile({
 function ShowcasePane() {
 	const id = useId()
 	return (
-		<div className="flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface">
+		<Card padding="none" className="flex flex-col overflow-hidden">
 			<TabProvider defaultSelectedId={`${id}-notebook`} selectOnMove={false}>
 				<TabStrip id={id} />
 				<TabPanel tabId={`${id}-notebook`} unmountOnHide>
@@ -309,7 +310,7 @@ function ShowcasePane() {
 					<AltQueryBody />
 				</TabPanel>
 			</TabProvider>
-		</div>
+		</Card>
 	)
 }
 

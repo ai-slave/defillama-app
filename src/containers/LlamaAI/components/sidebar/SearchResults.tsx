@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { SearchResult } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ListRow } from '~/ui/ListRow'
 import { NoResults } from '~/ui/NoResults'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -54,7 +55,7 @@ export const SearchResults = memo(function SearchResults({
 	return (
 		<div className="flex flex-col gap-1.5">
 			{results.map((result) => (
-				<div key={result.session_id} className="flex flex-col rounded-lg border border-subtle bg-surface">
+				<Card key={result.session_id} padding="none" className="flex flex-col">
 					<button
 						type="button"
 						onClick={() => onSessionClick(result.session_id)}
@@ -84,7 +85,7 @@ export const SearchResults = memo(function SearchResults({
 								</ListRow>
 							))}
 					</div>
-				</div>
+				</Card>
 			))}
 			{isSearching ? (
 				<div role="status" aria-live="polite" className="flex items-center justify-center py-2">

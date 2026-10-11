@@ -59,7 +59,7 @@ export function RankTable({
 	})
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<PanelTitle>Rank</PanelTitle>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}

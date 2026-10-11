@@ -2,11 +2,13 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
 
 /**
  * Card — the surface for repeated content and data: bg-surface, border-subtle, 8px radius. Every new card uses it.
+ * A chart or table shell, usually with a header row (PanelHeader), is a Panel (./Panel.tsx) instead; Card is everything else.
  * `Card` and `Panel` share the same outer chrome; `Panel` adds chart/table header and body structure, not a stronger
  * border. `border-medium` belongs to controls, inputs and overlays, never to page cards.
  *
  * `padding` is required and an enum, not a free value:
  * - sm (p-2): dense stat and data cards, and information, methodology and notes cards.
+ * - base (p-3): directory and list tiles, saved items, a card header row that sits flush with a chart below.
  * - strip (px-4 py-3): summary strips such as InlineStatStrip.
  * - md (p-4): roomy detail cards, only where the content needs the extra inset.
  * - none: embedded tables and charts that bring their own layout.
@@ -32,7 +34,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  */
 type CardProps<T extends ElementType> = {
 	as?: T
-	padding: 'none' | 'sm' | 'md' | 'strip'
+	padding: 'none' | 'sm' | 'base' | 'md' | 'strip'
 	radius?: 'default' | 'large'
 	tone?: keyof typeof TONE
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'padding'>
@@ -40,6 +42,7 @@ type CardProps<T extends ElementType> = {
 const PADDING = {
 	none: '',
 	sm: ' p-2',
+	base: ' p-3',
 	md: ' p-4',
 	strip: ' px-4 py-3'
 } as const

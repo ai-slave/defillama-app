@@ -10,6 +10,7 @@ import {
 	useNewsletterSubscription
 } from '~/hooks/useNewsletterSubscription'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Field, FieldGroup } from '~/ui/Field'
 import { keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -227,7 +228,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="mail" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Newsletters</span>
@@ -284,7 +285,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					</Button>
 				</form>
 			)}
-		</div>
+		</Card>
 	)
 }
 

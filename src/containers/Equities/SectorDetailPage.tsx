@@ -155,7 +155,7 @@ function ConstituentsPanel({
 		getRowId: (row) => `${row.ticker}:${row.country}`
 	})
 	return (
-		<Panel padding="none">
+		<Panel>
 			<PanelHeader>
 				<div className="mr-auto">
 					<PanelTitle>Constituents</PanelTitle>
@@ -325,7 +325,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 			</div>
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Industry breakdown</PanelTitle>
@@ -365,7 +365,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					</div>
 				</Panel>
 
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Concentration</PanelTitle>
@@ -438,7 +438,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 			</div>
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Valuation vs. market</PanelTitle>
@@ -489,7 +489,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					</div>
 				</Panel>
 
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Returns vs. market</PanelTitle>

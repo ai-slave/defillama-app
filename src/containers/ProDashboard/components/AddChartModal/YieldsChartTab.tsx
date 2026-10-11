@@ -7,6 +7,7 @@ import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalizati
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
@@ -375,7 +376,7 @@ export function YieldsChartTab({
 					</div>
 
 					{selectedYieldPool && !showPoolPicker ? (
-						<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
+						<Card padding="none" className="overflow-hidden">
 							<div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
 								<div className="flex min-w-0 items-center gap-3">
 									{selectedPoolData ? (
@@ -434,7 +435,7 @@ export function YieldsChartTab({
 									</Button>
 								</div>
 							</div>
-						</div>
+						</Card>
 					) : (
 						// With no pool picked, the search takes the error and the focus: picking starts there.
 						<Field hideLabel label="Search pools" error={error}>

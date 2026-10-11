@@ -5,6 +5,7 @@ import type { TreemapChartProps, TreemapNode } from '~/components/ECharts/Treema
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TablePager } from '~/components/Table/TablePager'
+import { Card } from '~/ui/Card'
 import {
 	CHART_FILL,
 	ChartPanel,
@@ -154,7 +155,7 @@ export default function FeeM() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* FeeM Introduction */}
-			<div className="rounded-lg border border-subtle bg-surface p-5">
+			<Card padding="md">
 				<p className="body-md text-secondary">
 					FeeM lets builders earn directly from the transaction activity they generate on Sonic. It creates a built-in
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
@@ -179,7 +180,7 @@ export default function FeeM() {
 						<span className="ml-2 body-sm text-secondary">50% burned</span>
 					</div>
 				</div>
-			</div>
+			</Card>
 
 			{/* Global KPIs */}
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -220,7 +221,7 @@ export default function FeeM() {
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">FeeM Leaderboard</h2>
-				<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+				<Card padding="none" className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
@@ -269,7 +270,7 @@ export default function FeeM() {
 							className="border-t border-subtle px-4 py-3"
 						/>
 					)}
-				</div>
+				</Card>
 			</div>
 		</div>
 	)

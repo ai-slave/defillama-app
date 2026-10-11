@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { NearIcon } from './NearIcon'
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -26,7 +27,7 @@ function ProductCard({
 	links?: Array<{ url: string; label: string }>
 }) {
 	return (
-		<div className="flex flex-col gap-3 rounded-xl border border-subtle bg-surface p-6">
+		<Card padding="md" className="flex flex-col gap-3">
 			<h3 className="heading-xs text-primary">{title}</h3>
 			<div className="flex flex-col gap-3 body-md text-secondary">{children}</div>
 			{links && links.length > 0 && (
@@ -38,14 +39,14 @@ function ProductCard({
 					))}
 				</div>
 			)}
-		</div>
+		</Card>
 	)
 }
 
 export default function Products() {
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-6">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-3">
 					<NearIcon />
 					<h2 className="heading-sm text-primary">Protocol</h2>
@@ -56,7 +57,7 @@ export default function Products() {
 					began as a sharded blockchain has evolved into a vertically integrated system designed to coordinate value
 					movement across blockchains, traditional assets, and the emerging agentic economy.
 				</p>
-			</div>
+			</Card>
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ProductCard
@@ -127,7 +128,7 @@ export default function Products() {
 				</ProductCard>
 			</div>
 
-			<div className="rounded-xl border border-subtle bg-surface p-6">
+			<Card padding="md">
 				<div className="flex items-center justify-between">
 					<h3 className="heading-xs text-primary">Governance: House of Stake</h3>
 					<ExternalLink href="https://houseofstake.org/">houseofstake.org</ExternalLink>
@@ -137,7 +138,7 @@ export default function Products() {
 					treasury decisions. House of Stake formalizes how proposals are introduced, debated, and ratified, and is
 					incorporating AI-assisted mechanisms to improve efficiency, analysis, and coordination.
 				</p>
-			</div>
+			</Card>
 		</div>
 	)
 }

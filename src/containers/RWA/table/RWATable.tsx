@@ -106,7 +106,7 @@ function RWATableView({
 	const { csvPart, periodSwitch } = getRwaColumnSet(section, columnSet)
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			{/* The home page's Protocol Rankings header: a label-md title in the toolbar row, controls right. */}
 			<div className="border-b border-subtle">
 				<TableToolbar>

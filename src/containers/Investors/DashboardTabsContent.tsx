@@ -7,6 +7,7 @@ import {
 	useProDashboardDashboard,
 	useProDashboardItemsState
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
+import { Card } from '~/ui/Card'
 import { Skeleton } from '~/ui/Skeleton'
 import type { DashboardTabConfig } from './dashboardTypes'
 
@@ -48,7 +49,7 @@ function DashboardHeading({
 /** The loading table; `still` when it is the backdrop of a "Coming Soon" note, which waits for nothing. */
 export function SkeletonTable({ still }: { still?: boolean }) {
 	return (
-		<div className="relative overflow-hidden rounded-lg border border-subtle bg-surface">
+		<Card padding="none" className="relative overflow-hidden">
 			<div className="flex flex-col">
 				<div className="flex border-b border-subtle">
 					{PLACEHOLDER_COLS.map((_, i) => (
@@ -74,7 +75,7 @@ export function SkeletonTable({ still }: { still?: boolean }) {
 				))}
 			</div>
 			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
-		</div>
+		</Card>
 	)
 }
 

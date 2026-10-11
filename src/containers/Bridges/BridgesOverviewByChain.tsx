@@ -528,7 +528,7 @@ export function BridgesOverviewByChain({
 				</ChartPanel>
 			</SummaryCardGrid>
 
-			<Panel padding="none">
+			<Panel>
 				<Tabs<TableView> value={activeTab} values={TABLE_VIEWS} onValueChange={setActiveTab}>
 					<TableToolbar>
 						<SegmentedControl

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Card } from '~/ui/Card'
 import { readInvestorApiJson } from '../../api.types'
 import { UniswapLogo } from './UniswapLogo'
 
@@ -44,7 +45,7 @@ export default function UniswapHeader() {
 	const links = data?.links ?? {}
 
 	return (
-		<header className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-4 py-2.5">
+		<Card as="header" padding="strip" className="flex items-center gap-3">
 			<UniswapLogo />
 			<div className="leading-tight">
 				<span className="title-md text-primary">{data?.projectName ?? 'Uniswap'}</span>
@@ -81,6 +82,6 @@ export default function UniswapHeader() {
 					</a>
 				)}
 			</nav>
-		</header>
+		</Card>
 	)
 }

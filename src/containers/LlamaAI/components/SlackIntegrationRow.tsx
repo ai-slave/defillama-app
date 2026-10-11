@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode, type Ref } from 'react'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { useSlackIntegrationLink } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { InlineStatus } from '~/ui/Status'
@@ -70,7 +71,7 @@ function WorkspaceRow({
 }) {
 	const needsReconnect = !workspace.revoked && workspace.needs_reconnect === true
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-surface p-3">
+		<Card padding="base" className="flex flex-wrap items-center justify-between gap-2">
 			<div className="min-w-0 flex-1">
 				<p className="m-0 label-md text-primary">{workspace.team_name}</p>
 				<p className="m-0 mt-0.5 body-sm text-secondary">
@@ -99,7 +100,7 @@ function WorkspaceRow({
 					</Button>
 				)}
 			</div>
-		</div>
+		</Card>
 	)
 }
 

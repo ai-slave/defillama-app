@@ -59,7 +59,7 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 	useSortColumnOrders({ instance, columnOrders: raisesColumnOrders })
 
 	return (
-		<Panel padding="none">
+		<Panel>
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects…</span>

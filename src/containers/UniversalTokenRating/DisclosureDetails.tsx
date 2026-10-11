@@ -4,6 +4,7 @@ import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChar
 import PieChart from '~/components/ECharts/PieChart'
 import { CHART_COLORS } from '~/constants/colors'
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
+import { Card } from '~/ui/Card'
 import { CHART_FILL, ChartPanelBody } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { EmptyState } from '~/ui/Status'
@@ -66,7 +67,7 @@ function NamedLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) 
 
 function DisclosureTable({ columns, rows }: { columns: Array<string>; rows: Array<Array<ReactNode>> }) {
 	return (
-		<div className="shrink-0 overflow-x-auto rounded-lg border border-subtle bg-surface">
+		<Card padding="none" className="shrink-0 overflow-x-auto">
 			<table className="w-full min-w-[480px] border-collapse text-left">
 				<thead>
 					<tr>
@@ -90,16 +91,16 @@ function DisclosureTable({ columns, rows }: { columns: Array<string>; rows: Arra
 					))}
 				</tbody>
 			</table>
-		</div>
+		</Card>
 	)
 }
 
 function Commentary({ title, text }: { title: string; text: string }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface px-4 py-3">
+		<Card padding="strip" className="flex flex-col gap-2">
 			<span className="body-sm text-tertiary">{title}</span>
 			<p className="body-sm whitespace-pre-line text-primary">{text}</p>
-		</div>
+		</Card>
 	)
 }
 
@@ -149,7 +150,7 @@ function GroupName({ name, index }: { name: string; index: number }) {
 function VestingSchedule({ groups }: { groups: Array<UtrDisclosedTokenomicsGroup> }) {
 	return (
 		<>
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h4">Schedule preview</PanelTitle>
 				</PanelHeader>
@@ -350,12 +351,12 @@ export function DisclosureDetails({
 						])}
 					/>
 					{disclosures.verifyMmEngagements != null ? (
-						<div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface px-4 py-3">
+						<Card padding="strip" className="flex items-center justify-between gap-3">
 							<span className="body-sm text-secondary">
 								Willing to verify these engagements through Forgd&apos;s free-to-use Market Maker Monitoring tool
 							</span>
 							<SecondaryBadge>{disclosures.verifyMmEngagements ? 'Yes' : 'No'}</SecondaryBadge>
-						</div>
+						</Card>
 					) : null}
 				</>
 			)

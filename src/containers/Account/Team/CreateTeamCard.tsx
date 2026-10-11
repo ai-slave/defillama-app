@@ -1,5 +1,6 @@
 import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Field } from '~/ui/Field'
 import { focusRegionOnLeave, keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -12,7 +13,7 @@ export function CreateTeamCard() {
 	const createTeamButtonRef = useRef<HTMLButtonElement>(null)
 
 	return (
-		<div className="flex flex-col rounded-2xl border border-subtle bg-surface">
+		<Card padding="none" className="flex flex-col">
 			<EmptyState
 				size="md"
 				headingAs="h2"
@@ -45,7 +46,7 @@ export function CreateTeamCard() {
 			>
 				Create a team to manage subscriptions for your organization. Purchase seats and invite members.
 			</EmptyState>
-		</div>
+		</Card>
 	)
 }
 

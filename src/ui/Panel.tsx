@@ -9,32 +9,22 @@ import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'reac
            the left, controls on the right. Every control in a panel header
            is the 32px md size (Button md, Select size="md", segmented
            min-h-8); dense control clusters use a 6px gap.
-   Body:   charts and tables use padding="none" and sit flush; a panel that
-           owns its content's inset (a status, a list of cards) uses "sm" or
-           "md". Callers always choose padding explicitly; there is no default.
+   Body:   flush; the chart, table or body below the header brings its own
+           inset. Any other surface is a Card (./Card.tsx), which has the
+           padding steps.
 
    `className` is for LAYOUT PLACEMENT ONLY (col-span, min-h, …), same
    contract as Button/Card.
 ---------------------------------------------------------------------------- */
 
-type PanelPadding = 'none' | 'sm' | 'md'
-
-type PanelProps = {
-	padding: PanelPadding
-} & Omit<ComponentProps<'div'>, 'className'> & {
-		className?: string | undefined
-	}
-
-const PANEL_PADDING: Record<PanelPadding, string> = {
-	none: '',
-	sm: ' p-2',
-	md: ' p-4'
+type PanelProps = Omit<ComponentProps<'div'>, 'className'> & {
+	className?: string | undefined
 }
 
-export function Panel({ className, padding, ...props }: PanelProps) {
+export function Panel({ className, ...props }: PanelProps) {
 	return (
 		<div
-			className={`relative flex flex-col rounded-lg border border-subtle bg-surface${PANEL_PADDING[padding]} ${className ?? ''}`.trim()}
+			className={`relative flex flex-col rounded-lg border border-subtle bg-surface ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

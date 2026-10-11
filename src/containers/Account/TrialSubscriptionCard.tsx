@@ -1,4 +1,5 @@
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
 
@@ -30,7 +31,7 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 	const formattedDate = trialEndDate ? (formatDate(trialEndDate) ?? 'Unknown') : 'Unknown'
 
 	return (
-		<div className="flex min-w-0 flex-1 flex-col justify-between gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex min-w-0 flex-1 flex-col justify-between gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="receipt" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Subscription</span>
@@ -62,6 +63,6 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 					</div>
 				</>
 			)}
-		</div>
+		</Card>
 	)
 }

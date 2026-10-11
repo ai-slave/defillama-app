@@ -4,6 +4,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import type { FreeLimitOffer } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { getVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -28,7 +29,7 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 
 	if (variant === 'b') {
 		return (
-			<div className="my-2.5 flex w-full flex-col gap-4 rounded-lg border border-subtle bg-surface p-4">
+			<Card padding="md" className="my-2.5 flex w-full flex-col gap-4">
 				<div className="min-w-0">
 					<span className="label-xs tracking-wide text-link uppercase">DefiLlama Pro</span>
 					<h3 className="mt-1 heading-xs text-primary">Keep asking LlamaAI</h3>
@@ -59,12 +60,12 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 						DefiLlama App
 					</BasicLink>
 				</p>
-			</div>
+			</Card>
 		)
 	}
 
 	return (
-		<div className="my-2.5 flex w-full flex-col gap-4 rounded-lg border border-subtle bg-surface p-4">
+		<Card padding="md" className="my-2.5 flex w-full flex-col gap-4">
 			<div className="flex items-start gap-3">
 				<img src="/assets/app/app-icon.png" alt="" width={44} height={44} className="size-11 shrink-0 rounded-xl" />
 				<div className="min-w-0">
@@ -102,6 +103,6 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 					Explore DefiLlama Pro
 				</BasicLink>
 			</p>
-		</div>
+		</Card>
 	)
 }

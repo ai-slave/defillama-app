@@ -3,6 +3,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBackButton, DialogBody, DialogHeader, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Panel } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { PillBody } from './CitationPill'
 import {
@@ -136,12 +137,12 @@ export function CitationDetailPanel({
 
 	return (
 		<div className="hidden shrink-0 overflow-hidden pl-2.5 lg:block">
-			<div
+			<Panel
 				ref={panelRef}
 				data-citation-panel
 				role="region"
 				aria-label="Source detail"
-				className="relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-subtle bg-surface"
+				className="h-full w-[min(26vw,420px)] min-w-[320px] overflow-hidden"
 			>
 				<div className={`absolute top-0 left-0 h-full w-[3px] ${accent.bar}`} />
 				<div className="flex shrink-0 items-start gap-2.5 border-b border-subtle py-3 pr-3 pl-4">
@@ -174,7 +175,7 @@ export function CitationDetailPanel({
 					</div>
 				</div>
 				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-2.5 px-4 py-3.5`}>{verification}</div>
-			</div>
+			</Panel>
 		</div>
 	)
 }

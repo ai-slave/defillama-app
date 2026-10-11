@@ -988,7 +988,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 
 	return (
 		<div className="flex flex-col gap-2">
-			<Panel padding="none">
+			<Panel>
 				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
 					<ViewTabs tabs={VIEW_TABS} label="Equities view" />
 					<TabPanel value={view}>

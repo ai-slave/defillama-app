@@ -222,14 +222,14 @@ export default function TopGainersLosers({ protocols }: InferGetStaticPropsType<
 			canonicalUrl="/top-gainers-and-losers"
 		>
 			<h1 className="heading-sm">Top Gainers and Losers</h1>
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle>Top Gainers</PanelTitle>
 				</PanelHeader>
 				<TopGainersAndLosersTable key="gainers-change_1d" data={topGainers} sortingState={GAINERS_SORTING_STATE} />
 			</Panel>
 
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle>Top Losers</PanelTitle>
 				</PanelHeader>

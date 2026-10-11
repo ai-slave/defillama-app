@@ -1,5 +1,6 @@
 import { useAuthContext } from '~/auth'
 import { PROMO_EMAILS_TEXT } from '~/containers/Subscription/constants'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Switch } from '~/ui/Switch'
 
@@ -14,7 +15,7 @@ export function SettingsCard() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="settings" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Settings</span>
@@ -36,6 +37,6 @@ export function SettingsCard() {
 					<p className="max-w-[400px] body-sm text-tertiary">{PROMO_EMAILS_TEXT}</p>
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }

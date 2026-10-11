@@ -42,6 +42,7 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { CountBadge } from '~/ui/CountBadge'
 import { Field } from '~/ui/Field'
@@ -580,7 +581,7 @@ export function ColumnManager({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<section className="rounded-lg border border-subtle bg-surface p-3">
+			<Card as="section" padding="base">
 				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
 						<h4 className="title-sm text-primary">Selected</h4>
@@ -633,7 +634,7 @@ export function ColumnManager({
 				</DndContext>
 
 				<p className="mt-2 body-sm text-tertiary">Drag to reorder. First column pinned left.</p>
-			</section>
+			</Card>
 
 			<SortingSection
 				currentSortColumn={currentSortColumn}
@@ -644,7 +645,7 @@ export function ColumnManager({
 				onReset={onSortingReset}
 			/>
 
-			<section className="flex flex-col rounded-lg border border-subtle bg-surface">
+			<Card as="section" padding="none" className="flex flex-col">
 				<div className="border-b border-subtle p-2">
 					<SegmentedControl
 						label="Column group"
@@ -690,9 +691,9 @@ export function ColumnManager({
 						</div>
 					)}
 				</div>
-			</section>
+			</Card>
 
-			<section className="rounded-lg border border-subtle bg-surface p-3">
+			<Card as="section" padding="base">
 				<button
 					type="button"
 					onClick={() => {
@@ -919,7 +920,7 @@ export function ColumnManager({
 						))}
 					</div>
 				) : null}
-			</section>
+			</Card>
 
 			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</div>
@@ -1012,7 +1013,7 @@ function SortingSection({
 	}, [currentSortColumn, selectableColumns])
 
 	return (
-		<section className="rounded-lg border border-subtle bg-surface p-3">
+		<Card as="section" padding="base">
 			<h4 className="mb-2 title-sm text-primary">Sorting</h4>
 			<div className="flex flex-wrap items-center gap-2 body-sm">
 				<Select
@@ -1045,6 +1046,6 @@ function SortingSection({
 					Reset
 				</Button>
 			</div>
-		</section>
+		</Card>
 	)
 }

@@ -141,7 +141,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 			data-ab-variant={assignment === null ? 'a' : undefined}
 			className="flex flex-col gap-2"
 		>
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h1">Rewards</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>

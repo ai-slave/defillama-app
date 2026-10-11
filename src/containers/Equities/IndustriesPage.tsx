@@ -386,7 +386,7 @@ function IndustriesReadyPage({
 					}
 				/>
 
-				<Panel padding="none">
+				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Industries with most companies</PanelTitle>
@@ -431,7 +431,7 @@ function IndustriesReadyPage({
 				rows={matrixRows}
 			/>
 
-			<Panel padding="none" className="min-w-0">
+			<Panel className="min-w-0">
 				<PanelHeader>
 					<div className="mr-auto">
 						<PanelTitle>All industries</PanelTitle>

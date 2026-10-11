@@ -71,7 +71,7 @@ export function LockedVerifiedSection({ symbol }: { symbol: string }) {
 	const { show, modal } = useSubscribeProModal('verified-yields', 'pool-page')
 	return (
 		<>
-			<Panel padding="none" className="overflow-hidden">
+			<Panel className="overflow-hidden">
 				<div className="grid grid-cols-1 items-center gap-6 bg-(--yield-verified-badge) p-4 @min-[48rem]:grid-cols-[minmax(0,1fr)_auto] @min-[48rem]:gap-10">
 					<div className="flex max-w-[60ch] flex-col gap-2">
 						<h2 className="heading-sm text-primary">See what {symbol} holders actually received.</h2>

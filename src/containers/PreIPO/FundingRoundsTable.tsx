@@ -55,7 +55,7 @@ const columns = columnHelper.columns([
 export function FundingRoundsTable({ companyName, raises }: { companyName: string; raises: Array<PreIpoRaise> }) {
 	if (raises.length === 0) {
 		return (
-			<Panel padding="none">
+			<Panel>
 				<PanelHeader>
 					<PanelTitle>Funding Rounds</PanelTitle>
 				</PanelHeader>

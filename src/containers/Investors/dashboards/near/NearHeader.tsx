@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { NearIcon } from './NearIcon'
 
 const LINK_ICONS: Record<string, React.ReactNode> = {
@@ -58,7 +59,7 @@ const LINKS: Record<string, string> = {
 
 export default function NearHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-subtle bg-surface px-4 py-2.5">
+		<Card as="header" padding="strip" className="flex items-center gap-4">
 			<NearLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -88,6 +89,6 @@ export default function NearHeader() {
 					</svg>
 				</a>
 			</nav>
-		</header>
+		</Card>
 	)
 }

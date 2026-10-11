@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { GradeBadge, ScoreBar } from './grades'
 import type { UtrCategoryBreakdown, UtrGradeScaleEntry, UtrRubricScore } from './types'
@@ -79,7 +80,7 @@ export function CategoryBreakdownTable({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 }) {
 	return (
-		<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
+		<Card padding="none" className="overflow-x-auto">
 			<p className="border-b border-subtle px-4 py-2.5 label-md">{title}</p>
 			<table className="w-full border-collapse body-sm">
 				<tbody>
@@ -135,7 +136,7 @@ export function CategoryBreakdownTable({
 					</tr>
 				</tbody>
 			</table>
-		</div>
+		</Card>
 	)
 }
 

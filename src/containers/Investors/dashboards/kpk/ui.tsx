@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { Card } from '~/ui/Card'
 import { DividedGrid } from '~/ui/DividedGrid'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
@@ -166,11 +167,11 @@ export function earnedTitle(window: KpkExcessWindow | null | undefined): string 
  */
 export function LedgerStrip({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface">
+		<Card padding="none">
 			<DividedGrid columns="grid-cols-1 sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
 				{children}
 			</DividedGrid>
-		</div>
+		</Card>
 	)
 }
 
@@ -272,16 +273,6 @@ export function LedgerTile({
 			{children && <div className="flex flex-col items-center gap-2">{children}</div>}
 		</div>
 	)
-}
-
-/**
- * `min-w-0` is load-bearing: a flex or grid item's automatic minimum width is its
- * min-content, so without it a card holding a wide `nowrap` table grows to the table's
- * full width, the layout overflows sideways, and the table's own scroll container never
- * engages. The mockup gets this for free — its tables sit in plain block containers.
- */
-export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-	return <div className={`min-w-0 rounded-lg border border-subtle bg-surface p-4 ${className}`}>{children}</div>
 }
 
 export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {

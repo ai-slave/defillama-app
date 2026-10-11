@@ -1,6 +1,7 @@
 import { useRef, useState, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import type { TeamMember } from './types'
@@ -45,7 +46,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-4">
 				<div className="flex items-center gap-2">
 					<Icon name="users" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Team</span>
@@ -86,10 +87,10 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 					<Icon name="sign-out" className="size-3.5" />
 					Leave team
 				</Button>
-			</div>
+			</Card>
 
 			{members.length > 0 && (
-				<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+				<Card padding="md" className="flex flex-col gap-4">
 					<div className="flex items-center gap-2">
 						<Icon name="users" className="size-5 text-primary" />
 						<span className="label-lg text-primary">Members ({members.length})</span>
@@ -99,7 +100,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 							<ReadOnlyMemberRow key={member.id} member={member} isCurrentUser={user?.id === member.userId} />
 						))}
 					</div>
-				</div>
+				</Card>
 			)}
 
 			{showLeaveConfirm ? (

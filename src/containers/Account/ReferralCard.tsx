@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { InlineStatus } from '~/ui/Status'
@@ -58,7 +59,7 @@ export function ReferralCard() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
+		<Card padding="md" className="flex flex-col gap-4">
 			<div className="flex items-center gap-2">
 				<Icon name="share" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Referrals</span>
@@ -110,6 +111,6 @@ export function ReferralCard() {
 					</div>
 				</div>
 			)}
-		</div>
+		</Card>
 	)
 }

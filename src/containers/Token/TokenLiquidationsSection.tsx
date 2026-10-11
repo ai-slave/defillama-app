@@ -191,7 +191,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 						tokenStateMode="local"
 					/>
 
-					<Panel padding="none">
+					<Panel>
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading liquidations table" />}>
 							<LiquidationsTableTabs
 								tabs={TABS}

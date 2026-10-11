@@ -4,6 +4,7 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { TablePager } from '~/components/Table/TablePager'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -40,7 +41,7 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 					/>
 				</div>
 				<div className="flex flex-col gap-3 xl:w-96 xl:shrink-0">
-					<Panel padding="none" className="flex-1">
+					<Panel className="flex-1">
 						<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[280px] w-full flex-1" />
 					</Panel>
 					<div className="flex gap-3">
@@ -116,7 +117,7 @@ function MobileBreakdownTable({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 }) {
 	return (
-		<div className="rounded-lg border border-subtle bg-surface">
+		<Card padding="none">
 			<p className="border-b border-subtle px-3 py-2.5 label-md">{title}</p>
 			{columns.map((column) => (
 				<div
@@ -127,7 +128,7 @@ function MobileBreakdownTable({
 					{breakdownValue(column, mode, gradingScale)}
 				</div>
 			))}
-		</div>
+		</Card>
 	)
 }
 
@@ -160,7 +161,7 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 				mode={mode}
 				gradingScale={grading?.performance.scale}
 			/>
-			<Panel padding="none">
+			<Panel>
 				<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[260px] w-full" />
 			</Panel>
 			<div className="flex gap-3">
