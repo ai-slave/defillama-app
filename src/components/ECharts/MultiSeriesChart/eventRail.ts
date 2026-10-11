@@ -57,7 +57,7 @@ function isDangerLabel(label: string) {
 
 // Ramp steps as hex, because canvas cannot read var(); the contrast policy (rule 5) fails when a copy drifts from its
 // token. Every point fill holds 3:1 on the plot surface and its ink 4.5:1 on the fill, so a marker reads by its fill,
-// not only its 1px border: the light grey is step 9 with white ink, since step 8 is 2.9:1 on white.
+// not only its 1px border: the light gray is step 9 with white ink, since step 8 is 2.9:1 on white.
 const EVENT_DOTS = {
 	danger: {
 		fill: { light: ['--crimson-9', '#d11b3b'], dark: ['--crimson-9', '#d11a3b'] },
@@ -126,7 +126,7 @@ export function buildEventRailData({
 }
 
 /**
- * Groups the point events inside the plot into runs whose neighbours sit closer than EVENT_CLUSTER_GAP pixels.
+ * Groups the point events inside the plot into runs whose neighbors sit closer than EVENT_CLUSTER_GAP pixels.
  * Keys are each run's first index, the one item that draws the run's marker. Events arrive sorted by date.
  */
 export function clusterPointEvents(
@@ -240,7 +240,7 @@ function eventTooltipBlock(event: EventRailDatum) {
 const blurOpaque = { style: { opacity: 1 } }
 
 /**
- * A count, or "!", centred in the marker-sized square at (left, top). The "!" is drawn as a bar and a dot on whole
+ * A count, or "!", centered in the marker-sized square at (left, top). The "!" is drawn as a bar and a dot on whole
  * pixels: a 10px font's gap between them is under a pixel on a 1x screen and blurs into one bar.
  */
 function glyph(text: string, left: number, top: number, ink: string): RailElement {

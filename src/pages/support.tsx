@@ -161,7 +161,7 @@ function Support() {
 					</Card>
 
 					{/* Keyed by the signed-in user: signing out unmounts the card, so the next session starts with
-					    the SDK uninitialised instead of reusing a chat the sign-out already tore down. */}
+					    the SDK uninitialized instead of reusing a chat the sign-out already tore down. */}
 					<LiveChatCard key={userHash ?? 'signed-out'} userHash={userHash} email={email} />
 				</div>
 
@@ -234,7 +234,7 @@ function SuccessScreen({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boole
 				Your support request has been submitted successfully. We'll get back to you as soon as possible.
 			</p>
 			<Button variant="primary" size="md" onClick={() => setIsSubmitted(false)} className="mt-4 w-full">
-				Submit Another Request
+				Submit another request
 			</Button>
 		</Card>
 	)

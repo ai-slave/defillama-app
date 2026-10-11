@@ -69,7 +69,7 @@ function TreemapChart({
 	containerClassName,
 	onReady,
 	showRootLabel = true,
-	valueLabel = 'Market Cap',
+	valueLabel = 'Market cap',
 	valueSymbol = '$'
 }: TreemapChartProps) {
 	const isNarrativeVariant = variant === 'narrative'

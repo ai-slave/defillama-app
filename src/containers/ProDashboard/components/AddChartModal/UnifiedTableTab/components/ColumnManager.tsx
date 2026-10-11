@@ -131,7 +131,7 @@ const AGGREGATION_OPTIONS: Array<SegmentedControlOption<ColumnAggregation>> = [
 ]
 
 const EXAMPLE_PRESETS: Array<{ name: string; expression: string; format: ColumnFormat }> = [
-	{ name: 'TVL/MCap', expression: 'tvl / mcap', format: 'ratio' },
+	{ name: 'TVL/Mcap', expression: 'tvl / mcap', format: 'ratio' },
 	{ name: 'Fees (24h Run Rate)', expression: 'fees24h * 365', format: 'usd' },
 	{ name: 'Fee Yield (24h Run Rate)', expression: '(fees24h * 365) / tvl * 100', format: 'percent' },
 	{ name: 'P/F Ratio (24h Run Rate)', expression: 'mcap / (fees24h * 365)', format: 'ratio' },

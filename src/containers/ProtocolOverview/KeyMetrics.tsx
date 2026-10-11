@@ -963,7 +963,7 @@ function TokenCGData(props: IKeyMetricsProps) {
 	return (
 		<>
 			{props.tokenCGData.marketCap.current != null ? (
-				<MetricRow label="Market Cap" value={props.formatPrice(props.tokenCGData.marketCap.current)} />
+				<MetricRow label="Market cap" value={props.formatPrice(props.tokenCGData.marketCap.current)} />
 			) : null}
 			{props.tokenCGData.price.current != null ? (
 				props.tokenCGData.price.ath != null || props.tokenCGData.price.atl != null ? (
@@ -996,7 +996,7 @@ function TokenCGData(props: IKeyMetricsProps) {
 				<MetricRow
 					label="Outstanding FDV"
 					tooltip={
-						'Outstanding FDV is calculated by taking the outstanding supply of the token and multiplying it by the price.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (eg coins in treasury or reserve).'
+						'Outstanding FDV is calculated by taking the outstanding supply of the token and multiplying it by the price.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g. coins in treasury or reserve).'
 					}
 					value={props.formatPrice(props.outstandingFDV)}
 				/>

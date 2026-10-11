@@ -188,7 +188,7 @@ describe('the datafeed serves unlock badges and agent badges as one set', () => 
 		)
 	}
 
-	test('both groups arrive, the agent badge in the brand colour and numbered like the chat', async () => {
+	test('both groups arrive, the agent badge in the brand color and numbered like the chat', async () => {
 		await apply([event])
 
 		const marks = await marksFor()

@@ -9,7 +9,7 @@ import {
 } from '../chartSeries'
 
 describe('buildRwaTimeSeriesCharts', () => {
-	test('draws the Total line first without a fill or a tooltip sum, then the groups from the third colour', () => {
+	test('draws the Total line first without a fill or a tooltip sum, then the groups from the third color', () => {
 		expect(buildRwaTimeSeriesCharts({ dimensions: ['timestamp', 'Bonds', 'Total Onchain AUM'], source: [] })).toEqual([
 			{
 				name: 'Total Onchain AUM',

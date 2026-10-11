@@ -345,7 +345,7 @@ function TokenStats({
 	}
 	if (tokenMcap != null) {
 		items.push({
-			label: 'MCap',
+			label: 'Mcap',
 			value: formatUsd(tokenMcap, {
 				compact: true,
 				minimumCompactValue: 1_000_000,
@@ -380,7 +380,7 @@ function TokenAllocationBars({
 	return (
 		<Panel className="overflow-hidden">
 			<PanelHeader>
-				<PanelTitle as="h3">Token Allocation</PanelTitle>
+				<PanelTitle as="h3">Token allocation</PanelTitle>
 			</PanelHeader>
 			<div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
 				{(['current', 'final'] as const).map((phase) => {
@@ -970,7 +970,7 @@ function ChartContainer({
 										isLoading={isPriceOverlayLoading}
 									/>
 									<Switch
-										label="MCap"
+										label="Mcap"
 										value="show=mcap"
 										onChange={() => {
 											void pushShallowQuery(router, {
@@ -1093,7 +1093,7 @@ function ChartContainer({
 			{data.events.length > 0 ? (
 				<Panel className="w-full overflow-hidden">
 					<PanelHeader>
-						<PanelTitle as="h3">Unlock Events</PanelTitle>
+						<PanelTitle as="h3">Unlock events</PanelTitle>
 					</PanelHeader>
 					<div className="p-3">
 						<Pagination startIndex={upcomingEventIndex} items={paginationItems} />

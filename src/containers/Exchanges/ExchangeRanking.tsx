@@ -319,7 +319,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			<Card padding="md" className="flex flex-col gap-3">
 				{/* The four pillars spell the name: whatever the backend labels them, the keys are R, E, A, L. */}
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<h2 className="heading-sm">REAL Ranking</h2>
+					<h2 className="heading-sm">REAL ranking</h2>
 					<p className="label-sm text-tertiary">Reserves · Execution · Activity · Liquidity</p>
 				</div>
 				<p className="body-md text-secondary">

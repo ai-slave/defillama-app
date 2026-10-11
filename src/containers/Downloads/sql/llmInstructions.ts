@@ -28,9 +28,9 @@ function overviewSection(): string {
 - A browser-side LlamaSQL environment loaded with DefiLlama datasets as in-memory tables.
 - Data sources are the same endpoints that power the DefiLlama UI, fetched as CSV and registered into LlamaSQL on demand.
 - Tables referenced in SQL (after \`FROM\`, \`JOIN\`, \`PIVOT\`, \`UNPIVOT\`) are auto-loaded if their identifier matches a known dataset.
-- Two dataset flavours live side by side:
+- Two dataset flavors live side by side:
   - **Flat datasets** — one snapshot table per topic. Rows are entities (a protocol, a chain, a pool, a hack, a raise, etc.). Columns are current metrics.
-  - **Time-series (chart) datasets** — parameterised templates. One table per specific protocol / chain / category / stablecoin, with one row per date.`
+  - **Time-series (chart) datasets** — parameterized templates. One table per specific protocol / chain / category / stablecoin, with one row per date.`
 }
 
 function typesSection(): string {
@@ -175,7 +175,7 @@ function describeFlatDataset(d: DatasetDefinition): string {
 function timeseriesCatalogSection(): string {
 	const lines: Array<string> = [
 		`## Time-series datasets (${chartDatasets.length})`,
-		`Each entry is a **template**. The real table name substitutes the parameter — pick a valid value (protocol slug, chain slug, category, etc) to materialise one series. Grain is always "one row per date".`
+		`Each entry is a **template**. The real table name substitutes the parameter — pick a valid value (protocol slug, chain slug, category, etc) to materialize one series. Grain is always "one row per date".`
 	]
 	for (const category of chartDatasetCategories) {
 		const items = chartDatasets.filter((d) => d.category === category)

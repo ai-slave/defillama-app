@@ -18,7 +18,7 @@ import {
 	isAgentTicker,
 	loadTerminalScript,
 	plotOverridesFor,
-	postStudyCatalogue,
+	postStudyCatalog,
 	readSymbolInput,
 	setCurrentTerminalEntity,
 	SOURCE_INPUT_ID,
@@ -110,15 +110,15 @@ export function TerminalPanel() {
 	}, 600)
 
 	useEffect(() => {
-		let cancelled = false
+		let canceled = false
 		setCurrentTerminalEntity(null)
 		fetchTerminalEntities(symbol, fetchFn)
 			.then((next) => {
-				if (!cancelled) setCurrentTerminalEntity(defaultEntityFor(next))
+				if (!canceled) setCurrentTerminalEntity(defaultEntityFor(next))
 			})
 			.catch(() => undefined)
 		return () => {
-			cancelled = true
+			canceled = true
 		}
 	}, [symbol, fetchFn])
 
@@ -141,7 +141,7 @@ export function TerminalPanel() {
 		if (!layoutSession) return
 		let widget: TerminalWidget | null = null
 		let stopAutoSave: (() => void) | null = null
-		let cancelled = false
+		let canceled = false
 		// A saved layout carries its own symbol, and the widget's `symbol` option overrides it, so
 		// the option is only passed when something outside the chart actually asked for a symbol.
 		const requestedSymbol = peekRequestedTerminalSymbol()
@@ -152,7 +152,7 @@ export function TerminalPanel() {
 			fetchTerminalLayout(layoutSession, fetchFn)
 		])
 			.then(([, datafeed, savedLayout]) => {
-				if (cancelled || layoutSession.controller.signal.aborted || !containerRef.current || !window.TradingView) return
+				if (canceled || layoutSession.controller.signal.aborted || !containerRef.current || !window.TradingView) return
 				const initialSymbol = requestedSymbol ?? (savedLayout ? null : getTerminalSymbol())
 				const chartTheme = getChartTheme(isDarkMode)
 				const surfaceColor = getComputedStyle(containerRef.current).backgroundColor
@@ -192,7 +192,7 @@ export function TerminalPanel() {
 					disabled_features: ['use_localstorage_for_settings', 'header_compare', 'header_saveload', '14851']
 				})
 				widget.onChartReady(() => {
-					if (cancelled || layoutSession.controller.signal.aborted || !widget) return
+					if (canceled || layoutSession.controller.signal.aborted || !widget) return
 					const chart = widget.activeChart()
 					chartRef.current = chart
 					const pendingSymbol = peekRequestedTerminalSymbol()
@@ -200,7 +200,7 @@ export function TerminalPanel() {
 					if (pendingSymbol && pendingSymbol !== chartTicker(chart)) void chart.setSymbol(pendingSymbol)
 					setTerminalWidget(widget)
 					// The backend can only validate an indicator against the list this build accepts.
-					postStudyCatalogue(widget, fetchFn)
+					postStudyCatalog(widget, fetchFn)
 					widget.subscribe('study_event', (entityId, eventType) => {
 						if (eventType === 'create') void adoptStudy(entityId)
 						if (eventType === 'remove') styledRef.current.delete(entityId)
@@ -208,7 +208,7 @@ export function TerminalPanel() {
 					// Changing the source is how a user switches metric, and the plot has to follow.
 					widget.subscribe('study_properties_changed', (entityId) => void adoptStudy(entityId))
 					widget.subscribe('drawing_event', (entityId, eventType) => {
-						if (cancelled) return
+						if (canceled) return
 						if (eventType === 'remove') setTimeout(pruneDeletedTerminalDrawings)
 						else if (eventType === 'points_changed' || eventType === 'properties_changed') syncTerminalDrawing(entityId)
 					})
@@ -235,11 +235,11 @@ export function TerminalPanel() {
 				})
 			})
 			.catch(() => {
-				if (!cancelled) setStatus('missing')
+				if (!canceled) setStatus('missing')
 			})
 
 		return () => {
-			cancelled = true
+			canceled = true
 			chartRef.current = null
 			setTerminalWidget(null)
 			releaseTerminalBars()

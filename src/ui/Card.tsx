@@ -19,7 +19,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
  *
  * `tone` is the featured fill: a card that offers something beside plain data cards (a builder, an upsell, a report
  * download). brand is the featured tint and warning a caution or a gold upsell (the MCP page's LlamaAI card); each
- * tone's border is its muted step, so the card stays one object. A product's own colour comes from a scope that
+ * tone's border is its muted step, so the card stays one object. A product's own color comes from a scope that
  * re-points the brand tokens around the card (`.ai-violet-accent` for LlamaAI), never a product tone here. Each
  * featured card keeps its own tint; they are not unified onto one. A plain data card never takes a tone.
  *

@@ -8,8 +8,8 @@ export function getChartEntityKey(chart: ChartConfig): string {
 }
 
 /**
- * The colour of every protocol and chain the dashboard's chart cards draw, so an entity looks the same on every
- * card. Entities take the palette in order of first appearance, so no two share a colour until there are more than
+ * The color of every protocol and chain the dashboard's chart cards draw, so an entity looks the same on every
+ * card. Entities take the palette in order of first appearance, so no two share a color until there are more than
  * the palette holds. Derived from the items alone, so the server and the client agree.
  */
 export function getDashboardEntityColors(items: ReadonlyArray<DashboardItemConfig>): Record<string, string> {
@@ -27,9 +27,9 @@ export function getDashboardEntityColors(items: ReadonlyArray<DashboardItemConfi
 }
 
 /**
- * Series colours of a combined card, by item id. Each series takes its entity's dashboard colour while those stay
+ * Series colors of a combined card, by item id. Each series takes its entity's dashboard color while those stay
  * distinct in the card; when an entity repeats (one protocol, several metrics) or the palette has wrapped, the card
- * colours its series by rank instead. A colour the user chose always wins.
+ * colors its series by rank instead. A color the user chose always wins.
  */
 export function getMultiChartSeriesColors(
 	items: ReadonlyArray<ChartConfig>,

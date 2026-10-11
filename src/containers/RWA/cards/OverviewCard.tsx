@@ -33,7 +33,7 @@ type RwaBarRow = {
 	text: string
 }
 
-/** A labelled bar list: the bar takes its share of the column, the text sits beside it. */
+/** A labeled bar list: the bar takes its share of the column, the text sits beside it. */
 function RWABars({ rows }: { rows: Array<RwaBarRow> }) {
 	if (rows.length === 0) return <p className="my-auto text-center body-sm text-tertiary">No data yet.</p>
 	return (
@@ -57,7 +57,7 @@ function RWABars({ rows }: { rows: Array<RwaBarRow> }) {
 	)
 }
 
-/** Ten labelled bars, the largest first, the value beside each. */
+/** Ten labeled bars, the largest first, the value beside each. */
 export function RWAValueBars({ bars, logo = 'token' }: { bars: Array<RwaNamedBar>; logo?: RwaBarRow['logo'] }) {
 	const max = Math.max(0, ...bars.map((bar) => bar.value))
 	if (max <= 0) return <RWABars rows={[]} />

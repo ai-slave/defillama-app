@@ -83,7 +83,7 @@ describe('buildNewDashboardItems from a quick add draft', () => {
 		expect(buildFromDraft(chainChartDraft)).toEqual([{ ...chainChartDraft, id: 'new:tvl:Ethereum' }])
 	})
 
-	test('carries a chart draft colour through the composer', () => {
+	test('carries a chart draft color through the composer', () => {
 		expect(buildFromDraft({ ...chartDraft, color: '#ff0080' })).toEqual([
 			{ ...chartDraft, id: 'new:fees:uniswap', color: '#ff0080' }
 		])

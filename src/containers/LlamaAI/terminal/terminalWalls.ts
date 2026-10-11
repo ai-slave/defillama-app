@@ -6,8 +6,8 @@ export const REVISION_INPUT_ID = 'revision'
 
 /**
  * One bar of the histogram. `near` and `far` are the two sub-bars the library stacks from the
- * axis, drawn in the slot's two colours — for a liquidation map, the long and the short side of
- * the same price. `slot` picks the colour band, and is an index into the config's `slots`.
+ * axis, drawn in the slot's two colors — for a liquidation map, the long and the short side of
+ * the same price. `slot` picks the color band, and is an index into the config's `slots`.
  */
 export interface WallBin {
 	priceLow: number
@@ -76,7 +76,7 @@ export function wallHhists(bins: Array<WallBin>, barTime: number, slotCount: num
 
 /**
  * Graphics do not move the price scale, and a bar outside it is both clipped AND still counted in
- * the width normalisation, so one off-screen bar shrinks every visible one. Two invisible plots
+ * the width normalization, so one off-screen bar shrinks every visible one. Two invisible plots
  * spanning the bins keep the scale wide enough for all of them.
  */
 export function wallScaleBounds(bins: Array<WallBin>): [number, number] {

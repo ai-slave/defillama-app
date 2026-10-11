@@ -1279,7 +1279,7 @@ test('manage seats opens on the seat count', async () => {
 	await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('input[type=number]')))
 })
 
-test('cancelling team creation returns focus to Create team', async () => {
+test('canceling team creation returns focus to Create team', async () => {
 	await mount(<CreateTeamCard />)
 	await click('Create team')
 	await act(async () => button('Cancel').focus())

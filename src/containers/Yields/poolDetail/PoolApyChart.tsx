@@ -300,7 +300,7 @@ export function PoolApyChart({
 	initialRange?: PoolHistoryRange
 	intrinsicApy?: IntrinsicApySeries | null
 	// The pool is measured but this reader's model has no measured line. The picker still lists
-	// it, greyed, so the reader learns the line exists and what unlocks it.
+	// it, grayed, so the reader learns the line exists and what unlocks it.
 	lockedVerifiedApy?: boolean
 	stepAccrual?: boolean
 }) {

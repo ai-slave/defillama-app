@@ -19,7 +19,7 @@ const OFF_RAMP_HELP = 'BTC network fee in + taker fee + slippage + fiat withdraw
 const TRADE_COST_HELP =
 	'Execution alone: taker fee + slippage on the venue’s BTC book at this size. No rail, no transfer.'
 /** Columns present but hidden by default — reachable from the column select, and still in
- *  the CSV. Regulator is parked until the licence data is filled in. Access is off because
+ *  the CSV. Regulator is parked until the license data is filled in. Access is off because
  *  an "Available" chip beside a row with no published on/off-ramp fee reads as a promise the
  *  row does not keep; the sort still puts genuinely unavailable venues last. */
 export const RAMP_HIDDEN_COLUMNS = { regulator: false, access: false }
@@ -190,7 +190,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 			},
 			meta: {
 				headerClassName: 'min-w-[150px]',
-				headerHelperText: 'Lead regulator for the licence covering this region; the badge marks a MiCA licence.'
+				headerHelperText: 'Lead regulator for the license covering this region; the badge marks a MiCA license.'
 			}
 		})
 	])

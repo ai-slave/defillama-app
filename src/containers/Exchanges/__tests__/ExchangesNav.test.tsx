@@ -12,7 +12,7 @@ function renderNav(activePage: ExchangesPage, country: string | null = null) {
 describe('Exchanges top-level navigation', () => {
 	test.each([
 		['exchanges', '/exchanges', 'Exchanges'],
-		['rank', '/exchanges/rank', 'REAL Ranking'],
+		['rank', '/exchanges/rank', 'REAL ranking'],
 		['reserves', '/cexs', 'Exchange reserves'],
 		['charts', '/exchanges/charts', 'Exchange charts'],
 		['tokens', '/exchanges/tokens', 'Find exchanges by token'],

@@ -75,7 +75,7 @@ export default function Overview() {
 			}
 			total.push(value)
 		}
-		return { ...c, title: 'Swap Volume', series: [{ name: 'Volume', type: 'bar', data: total }] }
+		return { ...c, title: 'Swap volume', series: [{ name: 'Volume', type: 'bar', data: total }] }
 	}, [vol])
 	if (!data) return <PanelLoadingStatus />
 

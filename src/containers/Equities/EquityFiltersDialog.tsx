@@ -156,7 +156,7 @@ function CategoricalFilterEditor({
 					size="md"
 					visibleOptionLimit={null}
 					selectAllScope="matches"
-					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}
+					searchPlaceholder={`Search ${valueLabel.toLowerCase()}…`}
 					emptyLabel="No matches found"
 					className="flex-1"
 					triggerProps={{ 'aria-label': `${valueLabel} values` }}

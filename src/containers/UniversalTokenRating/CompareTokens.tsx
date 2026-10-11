@@ -131,12 +131,12 @@ function CompareColumn({
 						<PerformanceMatrix rows={[row]} grading={grading} className="h-[300px] w-full" />
 					</Panel>
 					<CategoryBreakdownTable
-						title="Disclosures: Breakdown by Category"
+						title="Disclosures: breakdown by category"
 						columns={columns.disclosure}
 						gradingScale={grading?.disclosure.scale}
 					/>
 					<CategoryBreakdownTable
-						title="Performance: Breakdown by Category"
+						title="Performance: breakdown by category"
 						columns={columns.performance}
 						gradingScale={grading?.performance.scale}
 					/>

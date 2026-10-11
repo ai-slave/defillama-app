@@ -17,7 +17,7 @@ const income = buildBerachainIncome({
 })
 
 describe('buildBerachainIncome', () => {
-	test('sums each monthly breakdown into one row per month labelled as monthly', () => {
+	test('sums each monthly breakdown into one row per month labeled as monthly', () => {
 		expect(income.berachain.monthly).toEqual({
 			dataset: {
 				source: [

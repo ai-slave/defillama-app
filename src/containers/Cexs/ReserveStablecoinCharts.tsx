@@ -338,7 +338,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 			<div className="grid grid-cols-2 gap-2">
 				{totalStablecoins ? (
 					<MultiSeriesChartCard
-						title="Total Stablecoin in CEX"
+						title="Total stablecoin in CEX"
 						filterLabel="Stablecoins"
 						dataset={totalStablecoins.dataset}
 						charts={totalStablecoins.charts}
@@ -351,7 +351,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 
 				{stablecoinsByPegMechanism ? (
 					<MultiSeriesChartCard
-						title="Stablecoins by Backing Type"
+						title="Stablecoins by backing type"
 						filterLabel="Backing"
 						dataset={stablecoinsByPegMechanism.dataset}
 						charts={stablecoinsByPegMechanism.charts}
@@ -364,7 +364,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 
 				{pegMechanismPieSeries.peers.length > 0 || pegMechanismPieSeries.upstreamOthersValue > 0 ? (
 					<PieChartCard
-						title="Distribution by Backing Type"
+						title="Distribution by backing type"
 						series={pegMechanismPieSeries}
 						exportFilenameBase={buildFilename('stablecoins-backing-type')}
 						exportTitle={stablecoinsExportTitle}
@@ -374,7 +374,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 
 				{stablecoinsByPegType ? (
 					<MultiSeriesChartCard
-						title="Stablecoins by Currency Peg"
+						title="Stablecoins by currency peg"
 						filterLabel="Currency"
 						dataset={stablecoinsByPegType.dataset}
 						charts={stablecoinsByPegType.charts}
@@ -387,7 +387,7 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 
 				{stablecoinsByToken ? (
 					<MultiSeriesChartCard
-						title="Individual Stablecoins"
+						title="Individual stablecoins"
 						filterLabel="Token"
 						dataset={stablecoinsByToken.dataset}
 						charts={stablecoinsByToken.charts}

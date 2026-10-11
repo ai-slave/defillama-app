@@ -29,28 +29,28 @@ function curateShelf(dashboards: ReadonlyArray<Dashboard>): Array<Dashboard> {
 const SECTIONS: Array<SectionConfig> = [
 	{
 		key: 'trendingToday',
-		title: 'Trending Today',
+		title: 'Trending today',
 		subtitle: 'Most viewed in the last 24 hours',
 		seeAllHref: '/pro?tab=discover&sortBy=trending&timeFrame=1d',
 		emptyMessage: 'Nothing trending yet'
 	},
 	{
 		key: 'trendingWeek',
-		title: 'Trending This Week',
+		title: 'Trending this week',
 		subtitle: 'Most viewed this week',
 		seeAllHref: '/pro?tab=discover&sortBy=trending&timeFrame=7d',
 		emptyMessage: 'Nothing trending this week'
 	},
 	{
 		key: 'popular',
-		title: 'Most Popular',
+		title: 'Most popular',
 		subtitle: 'Most viewed of all time',
 		seeAllHref: '/pro?tab=discover&sortBy=popular',
 		emptyMessage: 'No popular dashboards yet'
 	},
 	{
 		key: 'recent',
-		title: 'Recently Created',
+		title: 'Recently created',
 		subtitle: 'Newest public dashboards',
 		seeAllHref: '/pro?tab=discover&sortBy=recent',
 		emptyMessage: 'No new dashboards yet',

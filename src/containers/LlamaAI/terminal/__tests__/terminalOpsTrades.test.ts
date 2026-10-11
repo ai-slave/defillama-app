@@ -110,7 +110,7 @@ describe('the study that draws the fills', () => {
 	})
 
 	// A marker on the fill price sits mid-candle over the wick, where the candle hides it. Clear of
-	// the bar it is also unambiguous about which way the fill went, now that nothing is labelled.
+	// the bar it is also unambiguous about which way the fill went, now that nothing is labeled.
 	test('a buy is a green triangle under the bar and a sell a red one over it', async () => {
 		const styles = ((await trades()) as any).metainfo.defaults.styles
 		const buy = ['shape_triangle_up', 'BelowBar', MARKS.up]

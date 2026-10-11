@@ -113,7 +113,7 @@ function buttons() {
 	return Array.from(container.querySelectorAll('button'))
 }
 
-function buttonLabelled(label: string) {
+function buttonLabeled(label: string) {
 	const button = buttons().find((node) => node.textContent?.trim() === label)
 	expect(button).toBeDefined()
 	return button!
@@ -238,7 +238,7 @@ test.each([
 	expect(actions.handleChartsReordered.mock.calls[0][0].map((item: { id: string }) => item.id)).toEqual(expected)
 })
 
-test('a keyboard drag tells a screen reader where the card is, that it did not move, and that it was cancelled', async () => {
+test('a keyboard drag tells a screen reader where the card is, that it did not move, and that it was canceled', async () => {
 	await renderGrid({
 		items: [
 			{ id: 'fees', kind: 'text', title: 'Fees notes', content: 'a' },
@@ -269,7 +269,7 @@ test('a keyboard drag tells a screen reader where the card is, that it did not m
 		'Fees notes is over position 1 of 2.',
 		'Fees notes was dropped where it started.',
 		'Fees notes is over position 1 of 2.',
-		'Moving Fees notes cancelled.'
+		'Moving Fees notes canceled.'
 	])
 })
 
@@ -369,7 +369,7 @@ test('switching tabs writes the active tab to the query string and drops it for 
 	expect(container.textContent).toContain('In first')
 	expect(container.textContent).not.toContain('In second')
 
-	await act(async () => buttonLabelled('Second').click())
+	await act(async () => buttonLabeled('Second').click())
 	expect(mocks.router.replace).toHaveBeenCalledWith(
 		{ pathname: '/pro/[dashboardId]/[[...mode]]', query: { tab: 'tab-b' } },
 		undefined,
@@ -381,7 +381,7 @@ test('switching tabs writes the active tab to the query string and drops it for 
 	expect(container.textContent).toContain('In second')
 	expect(container.textContent).not.toContain('In first')
 
-	await act(async () => buttonLabelled('First').click())
+	await act(async () => buttonLabeled('First').click())
 	expect(mocks.router.replace).toHaveBeenLastCalledWith(
 		{ pathname: '/pro/[dashboardId]/[[...mode]]', query: {} },
 		undefined,
@@ -441,7 +441,7 @@ test('the Heading/Tab segment switches how a section renders', async () => {
 	expect(actions.handleUpdateSection).toHaveBeenCalledOnce()
 })
 
-test('the shared area above tabs is labelled and keeps its own add tile', async () => {
+test('the shared area above tabs is labeled and keeps its own add tile', async () => {
 	const items: Array<DashboardItemConfig> = [notes('text-shared', 'Shared'), ...tabbedItems.slice(0, 2)]
 	await renderGrid({ items })
 	expect(container.textContent).toContain('Shown on every tab')
@@ -460,7 +460,7 @@ test('tabs without shared cards still offer the shared area to an editor', async
 	const items = tabbedItems.slice(0, 2)
 	await renderGrid({ items })
 	expect(container.textContent).toContain('Shown on every tab')
-	await act(async () => buttonLabelled('Add card').click())
+	await act(async () => buttonLabeled('Add card').click())
 	expect(onAddChartClick).toHaveBeenCalledWith({ beforeItemId: 'tab-a' })
 
 	await renderGrid({ items, isReadOnly: true })

@@ -136,8 +136,8 @@ test('adding without a target says what is missing under the field it names and 
 	expect(document.activeElement).toBe(title)
 })
 
-// A browser submits the form on Enter in a text field unless the keydown is cancelled; happy-dom does not, so the
-// cancelled keydown is the contract.
+// A browser submits the form on Enter in a text field unless the keydown is canceled; happy-dom does not, so the
+// canceled keydown is the contract.
 test('Enter in the draft search finishes the search without submitting', async () => {
 	session.serve({ [MINE]: DRAFTS })
 	await click('Open')

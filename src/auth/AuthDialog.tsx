@@ -4,7 +4,7 @@ import { DialogBackButton, DialogHeader } from '~/ui/Dialog'
 
 // Reserve four wallet rows and the helper (two lines on mobile) while the SDK loads.
 export const authWalletPickerStyles = 'min-h-62 sm:min-h-58'
-// Sign-in method buttons keep a centred label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
+// Sign-in method buttons keep a centered label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
 // so no label moves to make room at any width. A pending spinner takes the icon's slot.
 export const authProviderButtonStyles =
 	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:text-disabled disabled:border-disabled aria-disabled:cursor-not-allowed aria-disabled:text-disabled aria-disabled:border-disabled'

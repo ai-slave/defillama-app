@@ -27,8 +27,8 @@ describe('Token PnL price chart data', () => {
 	})
 })
 
-describe('Token PnL annualised return', () => {
-	async function annualisedOver(days: number, startPrice: number, endPrice: number) {
+describe('Token PnL annualized return', () => {
+	async function annualizedOver(days: number, startPrice: number, endPrice: number) {
 		const end = START + days * DAY
 		http.serve({
 			[`${COINS_SERVER_URL}/chart/`]: {
@@ -47,14 +47,14 @@ describe('Token PnL annualised return', () => {
 	}
 
 	test('is not shown for a window under a year, where a big one-day move used to overflow to Infinity', async () => {
-		expect(await annualisedOver(1, 1, 8)).toBeNull()
-		expect(await annualisedOver(364, 100, 105)).toBeNull()
+		expect(await annualizedOver(1, 1, 8)).toBeNull()
+		expect(await annualizedOver(364, 100, 105)).toBeNull()
 	})
 
 	test('compounds a window of a year or more to a yearly rate', async () => {
-		expect(await annualisedOver(365, 100, 120)).toBeCloseTo(20, 6)
+		expect(await annualizedOver(365, 100, 120)).toBeCloseTo(20, 6)
 		// 1.8 over two years is sqrt(1.8) a year.
-		expect(await annualisedOver(730, 100, 180)).toBeCloseTo(34.1641, 4)
-		expect(await annualisedOver(730, 100, 0)).toBeCloseTo(-100, 4)
+		expect(await annualizedOver(730, 100, 180)).toBeCloseTo(34.1641, 4)
+		expect(await annualizedOver(730, 100, 0)).toBeCloseTo(-100, 4)
 	})
 })

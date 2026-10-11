@@ -8,7 +8,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
-import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { getAllProtocolEmissions, getProtocolEmissions } from '~/containers/Unlocks/queries'
 import { EmptyState, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
@@ -117,7 +117,7 @@ export function UnlocksChartTab({
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-preview', selectedUnlocksProtocol],
-		queryFn: () => getProtocolEmissons(slug(selectedUnlocksProtocol || '')),
+		queryFn: () => getProtocolEmissions(slug(selectedUnlocksProtocol || '')),
 		enabled: Boolean(selectedUnlocksProtocol),
 		staleTime: 60 * 60 * 1000
 	})

@@ -106,16 +106,16 @@ test('cancels through the abort signal', async () => {
 	const controller = new AbortController()
 	const promise = uploadChatFile({ authToken: 'tok', file, sessionId: 's1', signal: controller.signal })
 	controller.abort()
-	await expect(promise).rejects.toThrow('Upload cancelled')
+	await expect(promise).rejects.toThrow('Upload canceled')
 })
 
-test('does not send a request when its signal was already cancelled', async () => {
+test('does not send a request when its signal was already canceled', async () => {
 	const file = stub()
 	const controller = new AbortController()
 	controller.abort()
 	const previous = FakeXhr.last
 	await expect(uploadChatFile({ authToken: 'tok', file, sessionId: 's1', signal: controller.signal })).rejects.toThrow(
-		'Upload cancelled'
+		'Upload canceled'
 	)
 	expect(FakeXhr.last).toBe(previous)
 })

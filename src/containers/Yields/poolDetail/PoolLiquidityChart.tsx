@@ -76,7 +76,7 @@ const REMAINDER_NAME = 'Rest of deposits'
 const TOTAL_NAME = 'Total deposits'
 
 // [light, dark] series fills. Withdrawable liquidity is the reassuring part of the stack, so it
-// takes the positive hue; the remainder is neutral grey rather than a warning colour, because
+// takes the positive hue; the remainder is neutral gray rather than a warning color, because
 // sitting beyond the instant lane is normal for a queued exit and is not bad news in itself.
 const SERIES_COLOR: Record<'available' | 'remainder', readonly [light: string, dark: string]> = {
 	available: CHART_PALETTE.accent,
@@ -272,7 +272,7 @@ function buildTooltipFormatter(
 
 const POSITION_INPUT_ID = 'exit-position-size'
 
-/** The plot's own key, the row above the plot. Every colour the chart uses is named here and nowhere else. */
+/** The plot's own key, the row above the plot. Every color the chart uses is named here and nowhere else. */
 function LiquidityKey({
 	model,
 	blockedDays,
@@ -332,7 +332,7 @@ function describeExitMechanism(
 
 const CELL = 'px-4 py-3'
 
-/** One row of equal stats summarising the plot, label over figure. */
+/** One row of equal stats summarizing the plot, label over figure. */
 function LiquidityReadout({
 	model,
 	unit,
@@ -381,7 +381,7 @@ function LiquidityReadout({
 	) : (
 		<ReadoutCell
 			label="Withdrawable now"
-			hint="The most that could be withdrawn immediately, measured on-chain at that day's block. A binding constraint, not backing inventory."
+			hint="The most that could be withdrawn immediately, measured onchain at that day's block. A binding constraint, not backing inventory."
 			className={CELL}
 		>
 			<span className="mono-xl text-primary">

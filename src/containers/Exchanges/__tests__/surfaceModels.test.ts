@@ -188,7 +188,7 @@ describe('surface model selection', () => {
 	})
 
 	// BRAND_COLORS is private to ResearchChart; btc reads the shared asset pair, whose light and dark slots differ.
-	test('picks the light or dark brand colour by theme', () => {
+	test('picks the light or dark brand color by theme', () => {
 		expect(researchSeriesColor('btc', 0, false)).toBe(ASSET_BRAND_COLORS.Bitcoin[0])
 		expect(researchSeriesColor('btc', 0, true)).toBe(ASSET_BRAND_COLORS.Bitcoin[1])
 	})

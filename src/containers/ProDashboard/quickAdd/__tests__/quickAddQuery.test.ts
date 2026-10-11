@@ -62,7 +62,7 @@ describe('quick add query parsing', () => {
 		})
 	})
 
-	test('recognises entity free commands', () => {
+	test('recognizes entity free commands', () => {
 		expect(parseQuickAddQuery('text')).toMatchObject({ command: 'text', entityTerms: [] })
 		expect(parseQuickAddQuery('note').command).toBe('text')
 		expect(parseQuickAddQuery('section').command).toBe('section')

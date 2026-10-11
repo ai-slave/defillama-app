@@ -465,7 +465,7 @@ export default function InvestorsPage() {
 					<Logo />
 				</div>
 				<h1 className="ir-rise relative mt-8 max-w-2xl text-center text-[28px] leading-tight text-primary [animation-delay:60ms] sm:text-3xl">
-					Investor Relations built on <span className="font-semibold text-link">verified data</span>
+					Investor relations built on <span className="font-semibold text-link">verified data</span>
 				</h1>
 				<p className="ir-rise relative mt-3 max-w-[560px] text-center body-md tracking-[0.12em] text-primary [animation-delay:110ms]">
 					A dedicated hub where DeFi protocols publish official, DefiLlama-attested metrics, reports, and calls — one

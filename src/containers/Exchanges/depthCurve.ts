@@ -258,7 +258,7 @@ export function slippageHaircutFactor(predictedBps: number | null, realizedBps: 
  * where the book said the fill would land and where it actually landed; bands further
  * out were never part of that claim.
  *
- * Tighter bands are then clamped to the discounted value. They are not penalised on
+ * Tighter bands are then clamped to the discounted value. They are not penalized on
  * their own account: a cumulative curve cannot decrease outward, and reducing a band
  * without clamping what sits inside it would claim more depth within 0.5% than within
  * 1%.

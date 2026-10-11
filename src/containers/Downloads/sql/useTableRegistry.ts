@@ -204,7 +204,7 @@ async function fetchCsvFor(
 }
 
 function throwIfAborted(signal?: AbortSignal): void {
-	if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError')
+	if (signal?.aborted) throw new DOMException('Canceled', 'AbortError')
 }
 
 function isAbortError(err: unknown): boolean {
@@ -215,7 +215,7 @@ async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<
 	if (!signal) return promise
 	throwIfAborted(signal)
 	return await new Promise<T>((resolve, reject) => {
-		const onSignalAbort = () => reject(new DOMException('Cancelled', 'AbortError'))
+		const onSignalAbort = () => reject(new DOMException('Canceled', 'AbortError'))
 		signal.addEventListener('abort', onSignalAbort, { once: true })
 		promise.then(
 			(value) => {

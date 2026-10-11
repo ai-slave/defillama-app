@@ -91,16 +91,16 @@ export function NotebookView({
 	}, [loadedTables, cellTables])
 
 	useEffect(() => {
-		let cancelled = false
+		let canceled = false
 		let completionsDisposable: { dispose: () => void } | null = null
 		let hoversDisposable: { dispose: () => void } | null = null
 		loader.init().then((monaco) => {
-			if (cancelled) return
+			if (canceled) return
 			completionsDisposable = registerSqlCompletions(monaco, contextRef)
 			hoversDisposable = registerSqlHovers(monaco, contextRef)
 		})
 		return () => {
-			cancelled = true
+			canceled = true
 			completionsDisposable?.dispose()
 			hoversDisposable?.dispose()
 		}

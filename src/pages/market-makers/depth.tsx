@@ -23,7 +23,7 @@ export default function DepthLeaderboard({ payload }: InferGetStaticPropsType<ty
 		>
 			<Leaderboard
 				active="Depth"
-				title="Depth Leaderboard"
+				title="Depth leaderboard"
 				subtitle="See how Market Makers rank based on Depth KPIs such as the avg. value of bid & ask as well as percentage of market share."
 				columns={DEPTH_COLUMNS}
 				initialData={payload}

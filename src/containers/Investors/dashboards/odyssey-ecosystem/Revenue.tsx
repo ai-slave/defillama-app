@@ -48,8 +48,8 @@ function MetronomeIncomeStatement() {
 
 	return (
 		<>
-			<h2 className="heading-xs">Metronome · Income Statement</h2>
-			<ChartCard title="Income Statement" subtitle={`${INCOME_STATEMENT_NAME} — fees & revenue`}>
+			<h2 className="heading-xs">Metronome · Income statement</h2>
+			<ChartCard title="Income statement" subtitle={`${INCOME_STATEMENT_NAME} — fees & revenue`}>
 				<IncomeStatement
 					name={INCOME_STATEMENT_NAME}
 					incomeStatement={incomeStatement}
@@ -59,7 +59,7 @@ function MetronomeIncomeStatement() {
 					showTitles={false}
 				/>
 			</ChartCard>
-			<ChartCard title="Income Statement Visualization" subtitle="Sankey flow of fees → revenue → token holders">
+			<ChartCard title="Income statement visualization" subtitle="Sankey flow of fees → revenue → token holders">
 				<IncomeStatement
 					name={INCOME_STATEMENT_NAME}
 					incomeStatement={incomeStatement}
@@ -242,7 +242,7 @@ export default function Revenue() {
 			</div>
 
 			{/* 1 · Claimed revenue */}
-			<h2 className="heading-xs">Claimed Revenue · Last 30 Days</h2>
+			<h2 className="heading-xs">Claimed revenue · Last 30 days</h2>
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
 				{data ? (
 					<>
@@ -268,7 +268,7 @@ export default function Revenue() {
 			</div>
 			<Panel>
 				<ChartPanelToolbar
-					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily Claimed Revenue</ChartPanelTitle>}
+					leading={<ChartPanelTitle subtitle="Stacked by protocol">Daily claimed revenue</ChartPanelTitle>}
 				/>
 				{isLoading || !dailyModel ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
@@ -288,7 +288,7 @@ export default function Revenue() {
 			<Panel>
 				<ChartPanelToolbar
 					leading={
-						<ChartPanelTitle subtitle="Revenue routed to token holders (MET / VSP)">Holder Buybacks</ChartPanelTitle>
+						<ChartPanelTitle subtitle="Revenue routed to token holders (MET / VSP)">Holder buybacks</ChartPanelTitle>
 					}
 				>
 					<SegmentedControl<'daily' | 'monthly'>
@@ -342,7 +342,7 @@ export default function Revenue() {
 			{/* Metronome breakdown · canonical from financial-statement adapter */}
 			{mc && (
 				<>
-					<h2 className="heading-xs">Metronome Revenue Breakdown · {mc.monthLabel}</h2>
+					<h2 className="heading-xs">Metronome revenue breakdown · {mc.monthLabel}</h2>
 					<ChartCard title="Revenue by source" subtitle={`Total ${mc.claimedFormatted} this month`}>
 						{mc.hasBreakdown && mc.items?.length ? (
 							<SimpleTable
@@ -373,7 +373,7 @@ export default function Revenue() {
 			<MetronomeIncomeStatement />
 
 			{/* 3 · Unclaimed pipeline */}
-			<h2 className="heading-xs">Unclaimed Pipeline · Overview</h2>
+			<h2 className="heading-xs">Unclaimed pipeline · Overview</h2>
 			<Panel>
 				<ChartPanelToolbar
 					leading={
@@ -398,7 +398,7 @@ export default function Revenue() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">Treasury LP Positions · Pending Rewards</h2>
+			<h2 className="heading-xs">Treasury LP positions · Pending rewards</h2>
 			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
@@ -413,7 +413,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<h2 className="heading-xs">UniV3 Concentrated Liquidity · Unclaimed Fees</h2>
+			<h2 className="heading-xs">UniV3 concentrated liquidity · Unclaimed fees</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SubSectionCard title="Ethereum UniV3" total={ethUniv3Total}>
 					<SimpleTable
@@ -441,8 +441,8 @@ export default function Revenue() {
 				</SubSectionCard>
 			</div>
 
-			<h2 className="heading-xs">Gauge & Lock Rewards</h2>
-			<SubSectionCard title="veAERO Locks (Base)" total={veAeroTotal}>
+			<h2 className="heading-xs">Gauge & lock rewards</h2>
+			<SubSectionCard title="veAERO locks (Base)" total={veAeroTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => String(row.nft)}
 					rows={up.aeroLocks}
@@ -456,7 +456,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<h2 className="heading-xs">Morpho AMO · Unrealised PnL</h2>
+			<h2 className="heading-xs">Morpho AMO · Unrealized PnL</h2>
 			<SubSectionCard title="AMO vault positions" total={amoTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.vaultName, row.asset])}
@@ -484,7 +484,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<h2 className="heading-xs">Convex vlCVX · Vote-locked Rewards</h2>
+			<h2 className="heading-xs">Convex vlCVX · Vote-locked rewards</h2>
 			<SubSectionCard title="vlCVX claimable" subtitle={`Claimable rewards total ${fmtUsd(convexClaimable)}.`}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
@@ -499,7 +499,7 @@ export default function Revenue() {
 			</SubSectionCard>
 
 			{/* Synth interest — informational, not in pipeline total */}
-			<h2 className="heading-xs">Synth Interest · Borrower-side Accrual</h2>
+			<h2 className="heading-xs">Synth interest · Borrower-side accrual</h2>
 			<SubSectionCard
 				title="Outstanding synth debt"
 				subtitle={`Est. ${fmtUsd(synthDaily)} per day · ${fmtUsd(synthMonthly)} per month`}

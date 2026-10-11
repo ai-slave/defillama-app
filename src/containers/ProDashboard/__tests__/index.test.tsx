@@ -259,7 +259,7 @@ describe('a visitor', () => {
 		expect(container.textContent).toContain('This dashboard is empty')
 		expect(button('Actions')).toBeUndefined()
 		expect(document.body.querySelector('[aria-label="Dashboard actions"]')).toBeNull()
-		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
+		expect(document.body.querySelector('[aria-label="Dashboard settings"]')).toBeNull()
 		expect(document.body.querySelector('[aria-label="What you can add next"]')).toBeNull()
 	})
 
@@ -382,9 +382,9 @@ describe('an editor', () => {
 		expect(button('Add card')).toBeUndefined()
 		expect(button('Add section')).toBeUndefined()
 		expect(button('30d')).toBeUndefined()
-		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
+		expect(document.body.querySelector('[aria-label="Dashboard settings"]')).toBeNull()
 		await openDashboardMenu()
-		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).not.toBeNull()
+		expect(document.body.querySelector('[aria-label="Dashboard settings"]')).not.toBeNull()
 		expect(button('Add your first card')).toBeDefined()
 		expect(document.body.querySelectorAll('[aria-label="What you can add next"] li')).toHaveLength(3)
 	})
@@ -392,7 +392,7 @@ describe('an editor', () => {
 	test('the phone menu lists the editor actions, then every dashboard action once', async () => {
 		await renderDashboard({ items: [note], mode: 'edit', owned: {} })
 		const desktopNames = (await openDashboardMenu(), menuItemNames(openMenu()!))
-		expect(desktopNames).toEqual(['Dashboard Settings', 'Duplicate', 'New dashboard', 'Delete dashboard…'])
+		expect(desktopNames).toEqual(['Dashboard settings', 'Duplicate', 'New dashboard', 'Delete dashboard…'])
 		await pressKey(openMenu()!, 'Escape')
 		await openPhoneMenu()
 		expect(menuItemNames(openMenu()!)).toEqual([

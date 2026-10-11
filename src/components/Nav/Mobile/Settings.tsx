@@ -30,7 +30,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 				content="Settings"
 				render={
 					<ComboboxSelectTrigger
-						render={<Button variant="onBrand" size="lg" square aria-label="Open Settings Menu" className="-my-0.5" />}
+						render={<Button variant="onBrand" size="lg" square aria-label="Open settings menu" className="-my-0.5" />}
 					/>
 				}
 			>

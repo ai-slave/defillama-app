@@ -30,12 +30,12 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 			<div className="flex flex-col gap-4 xl:flex-row">
 				<div className="flex min-w-0 flex-1 flex-col gap-4">
 					<CategoryBreakdownTable
-						title="Disclosures: Breakdown by Category"
+						title="Disclosures: breakdown by category"
 						columns={columns.disclosure}
 						gradingScale={grading?.disclosure.scale}
 					/>
 					<CategoryBreakdownTable
-						title="Performance: Breakdown by Category"
+						title="Performance: breakdown by category"
 						columns={columns.performance}
 						gradingScale={grading?.performance.scale}
 					/>
@@ -150,13 +150,13 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 				]}
 			/>
 			<MobileBreakdownTable
-				title="Disclosures: Breakdown by Category"
+				title="Disclosures: breakdown by category"
 				columns={columns.disclosure}
 				mode={mode}
 				gradingScale={grading?.disclosure.scale}
 			/>
 			<MobileBreakdownTable
-				title="Performance: Breakdown by Category"
+				title="Performance: breakdown by category"
 				columns={columns.performance}
 				mode={mode}
 				gradingScale={grading?.performance.scale}

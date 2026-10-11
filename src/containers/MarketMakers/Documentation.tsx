@@ -193,7 +193,7 @@ const GLOSSARY: Array<GlossaryEntry> = [
 	},
 	{
 		term: 'Decentralized Exchange ("DEX")',
-		def: 'An on-chain trading venue where assets are traded without a centralized intermediary.'
+		def: 'An onchain trading venue where assets are traded without a centralized intermediary.'
 	},
 	{
 		term: 'Executed Volume',
@@ -590,7 +590,7 @@ export function MarketMakersDocumentation() {
 							</div>
 							<div className="mt-3 hidden border-t border-subtle min-[1120px]:block" />
 							<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
-								<h1 className="heading-sm text-primary">Market Maker Leaderboard Documentation</h1>
+								<h1 className="heading-sm text-primary">Market maker leaderboard documentation</h1>
 
 								<div id="introduction" aria-labelledby="introduction-title" className="scroll-mt-24">
 									<span id="introduction-title" className="sr-only">
@@ -607,7 +607,7 @@ export function MarketMakersDocumentation() {
 
 								<Divider />
 
-								<Section id="preface" title="1. Preface & Market Maker Leaderboard Overview">
+								<Section id="preface" title="1. Preface & market maker leaderboard overview">
 									<P>
 										Forgd's Market Maker Leaderboard provides data-driven insights on{' '}
 										<span className="font-semibold text-primary">40+ institutional liquidity providers</span> across key
@@ -740,7 +740,7 @@ export function MarketMakersDocumentation() {
 
 								<Divider />
 
-								<Section id="depth-leaderboard" title="3. Depth Leaderboard">
+								<Section id="depth-leaderboard" title="3. Depth leaderboard">
 									<SubHeading>Overview</SubHeading>
 									<P>
 										The Depth Leaderboard ranks market makers based on the liquidity they provide within defined
@@ -817,7 +817,7 @@ export function MarketMakersDocumentation() {
 
 								<Divider />
 
-								<Section id="volume-leaderboard" title="4. Volume Leaderboard">
+								<Section id="volume-leaderboard" title="4. Volume leaderboard">
 									<SubHeading>Overview</SubHeading>
 									<P>
 										The Volume Leaderboard ranks market makers based on the trading activity they generate across their
@@ -896,7 +896,7 @@ export function MarketMakersDocumentation() {
 
 								<Divider />
 
-								<Section id="spread-leaderboard" title="5. Spread Leaderboard">
+								<Section id="spread-leaderboard" title="5. Spread leaderboard">
 									<SubHeading>Overview</SubHeading>
 									<P>
 										The Spread Leaderboard ranks market makers based on the tightness of their quoted bid-ask spreads
@@ -980,7 +980,7 @@ export function MarketMakersDocumentation() {
 
 								<Divider />
 
-								<Section id="kpi-adherence-leaderboard" title="6. KPI Adherence Leaderboard">
+								<Section id="kpi-adherence-leaderboard" title="6. KPI Adherence leaderboard">
 									<SubHeading>Overview</SubHeading>
 									<P>
 										The KPI Adherence Leaderboard ranks market makers based on the consistency with which they meet

@@ -48,7 +48,7 @@ function REVByChain(props: IChainsByREVPageData) {
 				<Card padding="none">
 					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
-							Chain Rankings
+							Chain rankings
 						</PanelTitle>
 						<TableSearchInput columnId="name" placeholder="Search chains…" className={searchFieldInlineWrapperStyles} />
 						<TableCsvExport filename="revenue-chains" />

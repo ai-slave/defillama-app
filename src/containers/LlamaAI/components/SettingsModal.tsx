@@ -34,7 +34,7 @@ import { Card } from '~/ui/Card'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, neighborRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { Skeleton } from '~/ui/Skeleton'
@@ -352,7 +352,7 @@ export const SettingsModal = memo(function SettingsModal({
 		// Ariakit takes the trigger from focus: a press that did not focus the entry's Delete leaves no row to go from.
 		const trigger = removeMemoryDialog.getState().disclosureElement
 		const row = trigger?.closest('li')
-		const next = row ? neighbourRowControl(row, trigger!) : null
+		const next = row ? neighborRowControl(row, trigger!) : null
 		agentHome.deleteMemoryMutation.mutate(memoryRemoval.id, {
 			onSuccess: () => {
 				memoryRemovalFocus.current = next ?? null
@@ -958,7 +958,7 @@ export const SettingsModal = memo(function SettingsModal({
 																					type="button"
 																					size="sm"
 																					variant="ghost"
-																					ref={focusNeighbourOnLeave()}
+																					ref={focusNeighborOnLeave()}
 																					onClick={() => moveSkill('archive', skill.name)}
 																					// Focusable while another skill archives: the archived row hands focus to it.
 																					disabled={agentHome.archiveSkillMutation.isPending}
@@ -993,7 +993,7 @@ export const SettingsModal = memo(function SettingsModal({
 																		type="button"
 																		size="sm"
 																		variant="ghost"
-																		ref={focusNeighbourOnLeave()}
+																		ref={focusNeighborOnLeave()}
 																		onClick={() => moveSkill('restore', skill.name)}
 																		// Focusable while another skill restores: the restored row hands focus to it.
 																		disabled={agentHome.restoreSkillMutation.isPending}

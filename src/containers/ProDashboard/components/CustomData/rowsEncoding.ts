@@ -97,17 +97,17 @@ export function useDecodedRows(rows: CustomDataRows | undefined): DecodedRowsSta
 	const [decoded, setDecoded] = useState<{ source: CustomDataEncodedRows; state: DecodedRowsState } | null>(null)
 	useEffect(() => {
 		if (rows === undefined || !isCustomDataEncodedRows(rows)) return
-		let cancelled = false
+		let canceled = false
 		decodeRows(rows).then(
 			(decodedRows) => {
-				if (!cancelled) setDecoded({ source: rows, state: { status: 'ready', rows: decodedRows } })
+				if (!canceled) setDecoded({ source: rows, state: { status: 'ready', rows: decodedRows } })
 			},
 			() => {
-				if (!cancelled) setDecoded({ source: rows, state: { status: 'error' } })
+				if (!canceled) setDecoded({ source: rows, state: { status: 'error' } })
 			}
 		)
 		return () => {
-			cancelled = true
+			canceled = true
 		}
 	}, [rows])
 	if (rows === undefined) return IDLE

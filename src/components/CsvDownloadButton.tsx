@@ -150,7 +150,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 	return (
 		<>
 			{replaceClassName ? (
-				// A caller that styles the control itself (a menu row) gets the behaviour without Button's look.
+				// A caller that styles the control itself (a menu row) gets the behavior without Button's look.
 				<Ariakit.Button
 					type="button"
 					data-umami-event="export-csv"

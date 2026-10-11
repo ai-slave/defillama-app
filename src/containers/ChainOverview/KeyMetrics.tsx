@@ -170,7 +170,7 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 
 	return (
 		<ChainMetricSection
-			label="Stablecoins Mcap"
+			label="Stablecoins market cap"
 			tooltip={
 				isAll
 					? 'Sum of market cap of all stablecoins circulating on all chains'
@@ -395,9 +395,9 @@ const BRIDGED_TVL_SUB_METRICS = [
 	{
 		key: 'native',
 		label: 'Native',
-		tooltip: "Sum of marketcaps of all tokens that were issued on the chain (excluding the chain's own token)"
+		tooltip: "Sum of market caps of all tokens that were issued on the chain (excluding the chain's own token)"
 	},
-	{ key: 'ownTokens', label: 'Own Tokens', tooltip: 'Marketcap of the governance token of the chain' },
+	{ key: 'ownTokens', label: 'Own Tokens', tooltip: 'Market cap of the governance token of the chain' },
 	{
 		key: 'canonical',
 		label: 'Canonical',
@@ -470,7 +470,7 @@ function ChainTokenInfo({ chainTokenInfo }: { chainTokenInfo: IChainOverviewData
 				value={formatNullableCurrency(chainTokenInfo.current_price)}
 			/>
 			<ChainMetricRow
-				label={tokenLabel(`$${chainTokenInfo.token_symbol} Market Cap`)}
+				label={tokenLabel(`$${chainTokenInfo.token_symbol} market cap`)}
 				value={formatNullableCurrency(chainTokenInfo.market_cap)}
 			/>
 			<ChainMetricRow

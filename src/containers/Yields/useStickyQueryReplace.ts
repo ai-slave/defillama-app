@@ -29,7 +29,7 @@ export function useStickyPrefsOverlay(query: QueryRecord | null, prefs: Readonly
 	return React.useMemo(() => (isClient && query ? applyStickyPrefs(query, prefs) : null), [isClient, query, prefs])
 }
 
-// Retry cancelled hydration once, then release fetching even if restoration fails.
+// Retry canceled hydration once, then release fetching even if restoration fails.
 export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 	const router = useRouter()
 	const isClient = useIsClient()

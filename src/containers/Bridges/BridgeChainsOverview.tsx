@@ -67,7 +67,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 					<ChartExportButtons
 						chartInstance={exportChartInstance}
 						filename="bridge-inflows-by-chain"
-						title="Bridge Inflows"
+						title="Bridge inflows"
 						csvSource={presentation.csvSource}
 					/>
 				</ChartPanelToolbar>

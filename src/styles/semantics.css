@@ -177,7 +177,7 @@
 
 	/* Rising and falling marks (candles, up/down bars, Sankey links, trade markers), 3:1 or more on every chart
 	   background. Down is a crimson at emerald-9's OKLCH lightness and chroma (not a ramp step): crimson-9 is far more
-	   saturated and outweighs the green. In dark mode the marks are the step-11 text colours, which are near-equal in
+	   saturated and outweighs the green. In dark mode the marks are the step-11 text colors, which are near-equal in
 	   weight there and match the labels beside them. Heat cells and the value scale stay on HEAT_UP/HEAT_DOWN in
 	   src/constants/colors.ts, because text sits on them. */
 	--chart-up: var(--emerald-9);
@@ -323,7 +323,7 @@ html.dark,
 @utility bg-brand-tint-pressed {
 	background-color: var(--bg-brand-tint-pressed);
 }
-/* Rising and falling marks drawn in the DOM (a change bar), the same colours the charts draw. */
+/* Rising and falling marks drawn in the DOM (a change bar), the same colors the charts draw. */
 @utility bg-chart-up {
 	background-color: var(--chart-up);
 }

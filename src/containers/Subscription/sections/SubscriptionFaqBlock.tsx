@@ -29,7 +29,7 @@ export function SubscriptionFaqBlock({
 
 	return (
 		<div className="mt-16 w-full md:mt-12 md:w-[384px]">
-			<h2 className="text-center heading-sm text-primary">Frequently Asked Questions</h2>
+			<h2 className="text-center heading-sm text-primary">Frequently asked questions</h2>
 			<div className="mt-7 md:mt-9 md:flex md:flex-col md:gap-4">
 				{faqItems.map((item, index) => {
 					const questionId = `subscription-faq-question-${index}`

@@ -104,10 +104,10 @@ describe('Leaderboard', () => {
 		const details = container.querySelector<HTMLButtonElement>('button[aria-label="Row details"]')!
 		await act(async () => details.click())
 		expect(details.getAttribute('aria-expanded')).toBe('true')
-		expect(container.textContent).toContain('Disclosures: Breakdown by Category')
+		expect(container.textContent).toContain('Disclosures: breakdown by category')
 		await act(async () => details.click())
 		expect(details.getAttribute('aria-expanded')).toBe('false')
-		expect(container.textContent).not.toContain('Disclosures: Breakdown by Category')
+		expect(container.textContent).not.toContain('Disclosures: breakdown by category')
 	})
 
 	test('pages to a searched token and lets the reader page onward', async () => {

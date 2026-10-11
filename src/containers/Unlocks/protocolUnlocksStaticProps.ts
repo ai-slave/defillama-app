@@ -1,5 +1,5 @@
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
-import { getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { getProtocolEmissions } from '~/containers/Unlocks/queries'
 import { slug } from '~/utils'
 import type { ITokenListEntry } from '~/utils/metadata/types'
 import { getCliffEmissionAmount } from './eventAmount'
@@ -65,7 +65,7 @@ export async function getProtocolUnlocksStaticPropsData(
 		}
 	}
 
-	const emissions = await getProtocolEmissons(normalizedName, {
+	const emissions = await getProtocolEmissions(normalizedName, {
 		emissionsProtocolsList,
 		tokenlist
 	})

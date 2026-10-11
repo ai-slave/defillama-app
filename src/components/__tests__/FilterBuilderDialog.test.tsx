@@ -49,8 +49,8 @@ test('an added filter names its fields, and Apply writes the draft', async () =>
 	await act(async () => root.render(<TokensFiltersDialog filters={[]} onFiltersChange={change} />))
 	await click(control('Filters'))
 
-	await click(control('MCap Rank'))
-	await type(field('MCap Rank minimum'), '10')
+	await click(control('Mcap Rank'))
+	await type(field('Mcap Rank minimum'), '10')
 	await click(control('Apply'))
 	expect(change).toHaveBeenCalledExactlyOnceWith([{ id: 'rank', min: 10, max: null }])
 })

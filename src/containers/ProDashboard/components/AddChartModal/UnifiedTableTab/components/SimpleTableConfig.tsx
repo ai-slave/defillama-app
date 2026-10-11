@@ -84,7 +84,7 @@ const tableTypeOptions: Array<{
 	},
 	{
 		value: 'rwa-selected-chain',
-		label: 'RWA on chain',
+		label: 'RWA onchain',
 		description: 'RWA assets on a selected chain'
 	},
 	{

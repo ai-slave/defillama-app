@@ -3,7 +3,7 @@ import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import type { RWAFlowGrouping } from '../flows'
 import { perpsDefinitions } from '../Perps/definitions'
-import type { RWAEntityChart, RWAEntityChartCatalogue } from '../platformChart/entityChart'
+import type { RWAEntityChart, RWAEntityChartCatalog } from '../platformChart/entityChart'
 import { cumulativeRwaPoints, getRwaMilestoneHallmarks, periodBarSeries, rwaLineSeries } from '../platformChart/metrics'
 import type { RWAPlatformMilestone } from '../PlatformPage/api.types'
 
@@ -12,7 +12,7 @@ import type { RWAPlatformMilestone } from '../PlatformPage/api.types'
    until the server folds funding per venue. Pure: the panels fetch and render. */
 
 type RWAVenueChartMetricKey = 'openInterest' | 'volume' | 'markets' | 'cumulativeVolume' | 'oiShare' | 'events'
-export const RWA_VENUE_CHART: RWAEntityChartCatalogue<RWAVenueChartMetricKey> = {
+export const RWA_VENUE_CHART: RWAEntityChartCatalog<RWAVenueChartMetricKey> = {
 	groups: ['Core', 'Activity', 'Ratios', 'Annotations'],
 	defaults: ['openInterest'],
 	metrics: [
@@ -76,7 +76,7 @@ export function buildRwaVenueOiShare(
 	return out
 }
 
-/** One series per selected metric, in catalogue order, the platform entity chart's shape. */
+/** One series per selected metric, in catalog order, the platform entity chart's shape. */
 export function buildRwaVenueEntityChart(
 	selected: ReadonlyArray<RWAVenueChartMetricKey>,
 	inputs: RWAVenueChartInputs

@@ -1,10 +1,10 @@
 export const oldBlue = '#1f67d2'
 
-/* Chart series colours: the one categorical palette (design.md → Charts). Ten colours, each at 3:1 or more on the
+/* Chart series colors: the one categorical palette (design.md → Charts). Ten colors, each at 3:1 or more on the
    white card, light page, dark card and dark page, so one list serves both modes and PNG exports. Found by search
-   in OKLCH for the widest separation between any two colours for normal and red–green colour-blind vision, and
-   ordered so neighbours differ most, because series take colours by rank. Brand blue stays first for
-   single-series charts. Brand colours that come with the data (stablecoins, partner dashboards) are kept. */
+   in OKLCH for the widest separation between any two colors for normal and red–green color-blind vision, and
+   ordered so neighbors differ most, because series take colors by rank. Brand blue stays first for
+   single-series charts. Brand colors that come with the data (stablecoins, partner dashboards) are kept. */
 export const CHART_COLORS: [string, string, string, ...Array<string>] = [
 	oldBlue,
 	'#ed5f18', // orange
@@ -18,23 +18,23 @@ export const CHART_COLORS: [string, string, string, ...Array<string>] = [
 	'#c32851' // crimson
 ]
 
-/** Past this many series a chart folds the rest into one "Others" series: more colours than this cannot be told apart. */
+/** Past this many series a chart folds the rest into one "Others" series: more colors than this cannot be told apart. */
 export const CHART_SERIES_LIMIT = 10
 
-/** The "Others" series: a neutral grey at 3:1 or more on every chart background, so it reads as the remainder. */
+/** The "Others" series: a neutral gray at 3:1 or more on every chart background, so it reads as the remainder. */
 export const OTHERS_COLOR = '#8a8d8f'
 
-/** The colour for the series at this rank. Past CHART_SERIES_LIMIT callers fold into Others, or MultiSeriesChart
-   recolours a stack that shows every series by overlap (`assignStackColors`), so the cycle is only a fallback. */
+/** The color for the series at this rank. Past CHART_SERIES_LIMIT callers fold into Others, or MultiSeriesChart
+   recolors a stack that shows every series by overlap (`assignStackColors`), so the cycle is only a fallback. */
 export function chartColor(index: number): string {
 	return CHART_COLORS[index % CHART_COLORS.length] ?? oldBlue
 }
 
 /**
- * Colours for series in draw order, each its own while the palette lasts. A series keeps its colour unless one drawn
- * before it took that colour (a pick from past CHART_SERIES_LIMIT wraps onto a top colour, and a page-wide colour can
- * match another series'); those take the palette colours nothing drawn uses, in draw order. A pie and a stack of at
- * most CHART_SERIES_LIMIT series both use it, so they colour the same picks alike.
+ * Colors for series in draw order, each its own while the palette lasts. A series keeps its color unless one drawn
+ * before it took that color (a pick from past CHART_SERIES_LIMIT wraps onto a top color, and a page-wide color can
+ * match another series'); those take the palette colors nothing drawn uses, in draw order. A pie and a stack of at
+ * most CHART_SERIES_LIMIT series both use it, so they color the same picks alike.
  */
 export function assignUniqueColors(series: ReadonlyArray<{ name: string; color: string }>): Record<string, string> {
 	const colors: Record<string, string> = {}
@@ -56,7 +56,7 @@ export function assignUniqueColors(series: ReadonlyArray<{ name: string; color: 
 	return colors
 }
 
-/** Colours for `count` series in rank order. */
+/** Colors for `count` series in rank order. */
 export function chartColors(count: number): Array<string> {
 	return Array.from({ length: count }, (_, index) => chartColor(index))
 }
@@ -105,7 +105,7 @@ function fromOklab([L, A, B]: [number, number, number]): string {
 		.join('')}`
 }
 
-/** Treemap children: lighter steps of the parent's colour in OKLab, so siblings read as one family in both modes. */
+/** Treemap children: lighter steps of the parent's color in OKLab, so siblings read as one family in both modes. */
 export function childColors(parent: string, count: number): Array<string> {
 	const [L, A, B] = toOklab(parent)
 	return Array.from({ length: count }, (_, index) => {
@@ -115,7 +115,7 @@ export function childColors(parent: string, count: number): Array<string> {
 	})
 }
 
-/** The one value scale (design.md → Charts): -1 is HEAT_DOWN, 0 the Others grey, 1 HEAT_UP, mixed in OKLab. Callers
+/** The one value scale (design.md → Charts): -1 is HEAT_DOWN, 0 the Others gray, 1 HEAT_UP, mixed in OKLab. Callers
    map their value onto -1..1 (a % change over its cap, a correlation, a 0-100 score around 50); outside is clamped. */
 export function divergingColor(t: number): string {
 	const clamped = Math.max(-1, Math.min(1, t))
@@ -124,7 +124,7 @@ export function divergingColor(t: number): string {
 	return fromOklab([from[0] + (to[0] - from[0]) * k, from[1] + (to[1] - from[1]) * k, from[2] + (to[2] - from[2]) * k])
 }
 
-/** Crypto asset brand colours shared by the ETF, DAT and exchange research charts, as [light, dark]: a brand under 3:1
+/** Crypto asset brand colors shared by the ETF, DAT and exchange research charts, as [light, dark]: a brand under 3:1
    on a chart background in one mode moves its lightness (OKLCH, same hue) just far enough there; one that passes keeps
    its hex in both. */
 export const ASSET_BRAND_COLORS = {
@@ -134,9 +134,9 @@ export const ASSET_BRAND_COLORS = {
 	Hyperliquid: ['#0ea091', '#50d2c1']
 } as const satisfies Record<string, readonly [light: string, dark: string]>
 
-/** The token rating page's metric colours, as [light, dark]: each one names a metric on every chart of the page
+/** The token rating page's metric colors, as [light, dark]: each one names a metric on every chart of the page
    (market cap blue, volume gold, depth purple, the depth chart's market cap green, and the two bands of the volume and
-   depth stacks). Like the brand colours, a value under 3:1 on a chart background in one mode moves its lightness (OKLCH, same
+   depth stacks). Like the brand colors, a value under 3:1 on a chart background in one mode moves its lightness (OKLCH, same
    hue) just far enough there. */
 export const UTR_METRIC_COLORS = {
 	marketCap: [oldBlue, oldBlue],
@@ -154,9 +154,9 @@ export const UTR_METRIC_COLORS = {
 	]
 } as const
 
-/** The equity sectors' colours, one per sector everywhere on the Equities pages (cards, treemap, rotation matrix). The
-   palette holds ten colours and there are eleven sectors, so the eleventh takes sky: as far from its nearest palette
-   colour (teal) as the palette's own closest pair, and 3:1 on both chart backgrounds. */
+/** The equity sectors' colors, one per sector everywhere on the Equities pages (cards, treemap, rotation matrix). The
+   palette holds ten colors and there are eleven sectors, so the eleventh takes sky: as far from its nearest palette
+   color (teal) as the palette's own closest pair, and 3:1 on both chart backgrounds. */
 export const SECTOR_COLORS: Record<string, string> = {
 	technology: CHART_COLORS[0],
 	'financial-services': CHART_COLORS[1],

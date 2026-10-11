@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { popoverRowStyles } from '~/ui/Popover'
 import { PopoverSurface } from '~/ui/PopoverSurface'
@@ -248,7 +248,7 @@ function YSeriesPicker({
 						{available.filter((n) => !yCols.includes(n)).length === 0 ? (
 							<div className="px-2 py-1 body-sm text-tertiary">No more numeric columns</div>
 						) : (
-							// Popover rows run edge to edge; the wrapper also makes them each other's only neighbours.
+							// Popover rows run edge to edge; the wrapper also makes them each other's only neighbors.
 							<div className="-mx-2 flex flex-col">
 								{available
 									.filter((n) => !yCols.includes(n))
@@ -260,7 +260,7 @@ function YSeriesPicker({
 											aria-label={`Add ${name}`}
 											key={name}
 											data-row
-											ref={focusNeighbourOnLeave()}
+											ref={focusNeighborOnLeave()}
 											onClick={() => onToggle(name)}
 											className={popoverRowStyles}
 										>

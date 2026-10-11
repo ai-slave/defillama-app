@@ -8,7 +8,7 @@ export function isWalletEmail(email: string | undefined | null): boolean {
 }
 
 export function truncateAddress(address: string): string {
-	return `${address.slice(0, 6)}...${address.slice(-6)}`
+	return `${address.slice(0, 6)}…${address.slice(-6)}`
 }
 
 // A checkout return lands before the webhook applies the purchase, so re-read the affected data a bounded number of

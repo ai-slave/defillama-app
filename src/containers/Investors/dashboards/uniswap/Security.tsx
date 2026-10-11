@@ -224,7 +224,7 @@ export default function Security() {
 	return (
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Track Record</h2>
+				<h2 className="heading-xs">Track record</h2>
 				{/* Terse values, labels carry the words; cols=3 spreads the row out. */}
 				<KpiGrid
 					kpis={kpis}
@@ -252,18 +252,18 @@ export default function Security() {
 				{/* Chart labels follow the partner requirements doc, not any prior dashboard's naming. */}
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
-						title="Audits by Firm"
+						title="Audits by firm"
 						subtitle="Public audit reports across all Uniswap repos, grouped by audit firm."
 						items={byFirm}
 					/>
 					<BarListCard
-						title="Audits by Product"
+						title="Audits by product"
 						subtitle="The same reports grouped by the audited product repo."
 						items={byRepo}
 					/>
 				</div>
 				<ChartCard
-					title="All Audit Reports"
+					title="All audit reports"
 					subtitle="Public audit report PDFs, scanned live from the Uniswap GitHub repos, newest protocol version first. Each report links to the source."
 				>
 					<AuditReportsTable reports={data.auditReports ?? []} />
@@ -285,7 +285,7 @@ export default function Security() {
 					<ChartPanelToolbar
 						leading={
 							<CardTitle
-								title="Vote Turnout by Proposal (USD)"
+								title="Vote turnout by proposal (USD)"
 								subtitle={data.voteTurnout?.note ?? 'Governor Bravo proposals; USD at vote-time UNI price.'}
 							/>
 						}

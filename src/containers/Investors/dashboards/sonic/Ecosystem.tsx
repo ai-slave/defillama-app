@@ -337,7 +337,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</Panel>
-				<h2 className="heading-xs">Top Protocols by Fees</h2>
+				<h2 className="heading-xs">Top protocols by fees</h2>
 				<ProtocolTable data={data.fees.topProtocols} valueLabel="Fees" />
 			</div>
 
@@ -370,7 +370,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</Panel>
-				<h2 className="heading-xs">Top DEXes by Volume</h2>
+				<h2 className="heading-xs">Top DEXs by volume</h2>
 				<ProtocolTable data={data.dexVolume.topDexes} valueLabel="Volume" />
 			</div>
 
@@ -402,7 +402,7 @@ export default function Ecosystem() {
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply Breakdown</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin supply breakdown</ChartPanelTitle>} />
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>
@@ -445,7 +445,7 @@ export default function Ecosystem() {
 
 			{/* Chain Assets */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Chain Assets</h2>
+				<h2 className="heading-xs">Chain assets</h2>
 				<AssetBreakdownSection
 					categories={data.chainAssets.categories}
 					pieColors={data.chainAssets.pieColors}

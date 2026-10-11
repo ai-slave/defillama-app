@@ -17,7 +17,7 @@ import { formatUsd } from '~/utils/numberFormat'
  * light/dark surfaces (mint `#58e0b0` is 1.65:1 on white). Each hue is therefore re-stepped
  * per theme, and the lightness is deliberately staggered across slots rather than flat:
  * mint and lime are both greens and at equal lightness sit ΔE 7.4 apart, which no legend
- * can rescue for a full-colour reader.
+ * can rescue for a full-color reader.
  *
  * Validated with the dataviz palette validator (OKLab ΔE ×100):
  *   dark  (surface #0c0e13) — all checks pass · adjacent CVD ΔE 16.6 · all-pairs normal ΔE 17.8

@@ -196,7 +196,7 @@ export default function Tvl() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">Total Ecosystem TVL</h2>
+			<h2 className="heading-xs">Total ecosystem TVL</h2>
 			<Panel>
 				<ChartPanelToolbar
 					leading={
@@ -222,7 +222,7 @@ export default function Tvl() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">TVL vs ETH Price</h2>
+			<h2 className="heading-xs">TVL vs ETH price</h2>
 			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}
@@ -244,7 +244,7 @@ export default function Tvl() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">TVL by Chain</h2>
+			<h2 className="heading-xs">TVL by chain</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{protocolByChainModels.map(({ protocol, model, zoom }) => {
 					return (
@@ -270,14 +270,14 @@ export default function Tvl() {
 
 			{u && (
 				<>
-					<h2 className="heading-xs">Morpho Borrow Markets · Utilization</h2>
+					<h2 className="heading-xs">Morpho borrow markets · Utilization</h2>
 					<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 						<StatTile label="Total Supply" value={uk.supply?.formatted ?? '—'} />
 						<StatTile label="Total Borrows" value={uk.borrows?.formatted ?? '—'} />
 						<StatTile label="Avg Utilization" value={uk.avgUtilization?.formatted ?? '—'} />
 						<StatTile label="Idle Liquidity" value={uk.idleLiquidity?.formatted ?? '—'} />
 					</div>
-					<ChartCard title="Vaults Overview">
+					<ChartCard title="Vaults overview">
 						<SimpleTable
 							getOccurrenceKey={(row) => JSON.stringify([row.vault, row.chain])}
 							rows={u.vaults}

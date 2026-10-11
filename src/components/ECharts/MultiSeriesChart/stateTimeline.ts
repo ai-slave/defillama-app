@@ -3,9 +3,9 @@ import { formatTooltipChartDate } from '../shared/formatters'
 import { asTooltipDataRecord } from '../shared/tooltip'
 import { EVENT_STRIP_BOTTOM_NO_ZOOM, EVENT_STRIP_BOTTOM_WITH_ZOOM } from './eventRail'
 
-/** One coloured cell per period under the plot, on the event rail's hidden y-axis; never drawn beside the rail. */
+/** One colored cell per period under the plot, on the event rail's hidden y-axis; never drawn beside the rail. */
 export interface StateTimelinePoint {
-	/** Period centre, in the dataset's timestamp unit (ms). */
+	/** Period center, in the dataset's timestamp unit (ms). */
 	timestamp: number
 	color: string
 	/** The cell's tooltip line. */
@@ -14,7 +14,7 @@ export interface StateTimelinePoint {
 
 export interface StateTimelineOption {
 	points: Array<StateTimelinePoint>
-	/** Period length; each cell spans half of it either side of its timestamp so neighbours touch. */
+	/** Period length; each cell spans half of it either side of its timestamp so neighbors touch. */
 	stepMs: number
 }
 

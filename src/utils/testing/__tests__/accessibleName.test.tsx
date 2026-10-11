@@ -42,7 +42,7 @@ test('a button at rest keeps its busy label out of its text and name while it re
 	expect(button.querySelector('[data-label="Saving…"]')).not.toBeNull()
 })
 
-test('an aria-labelled icon button is named by its label', async () => {
+test('an aria-labeled icon button is named by its label', async () => {
 	await act(async () =>
 		root.render(
 			<Button size="sm" square aria-label="Close dialog">

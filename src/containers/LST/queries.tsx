@@ -347,7 +347,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 		tokensList.push(row)
 	}
 
-	// Colours go by staked ETH rank, the order every chart on the page ranks LSTs in.
+	// Colors go by staked ETH rank, the order every chart on the page ranks LSTs in.
 	const lsdColors: Record<string, string> = { Others: OTHERS_COLOR }
 	for (const [index, name] of tokens.entries()) lsdColors[name] = chartColor(index)
 

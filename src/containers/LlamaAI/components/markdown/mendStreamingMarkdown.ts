@@ -19,7 +19,7 @@ function trailingParagraph(node: RootContent): Paragraph | null {
 }
 
 // Text the parser could not match as markup, as raw source. Code spans, links and emphasis it did
-// recognise are separate nodes, and a marker inside one of them is enclosed by something already
+// recognize are separate nodes, and a marker inside one of them is enclosed by something already
 // closed, so a closer appended after the paragraph could never pair with it: only direct children
 // of the paragraph can hold an opener that is still pending.
 function unmatchedText(paragraph: Paragraph, source: string): string {

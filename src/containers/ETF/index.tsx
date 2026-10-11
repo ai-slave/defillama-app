@@ -57,7 +57,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<div>
-						<h1 className="heading-sm">Daily Stats</h1>
+						<h1 className="heading-sm">Daily stats</h1>
 						<span className="body-sm text-tertiary">{lastUpdated}</span>
 					</div>
 
@@ -90,7 +90,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 				</SummaryStatsCard>
 				<Panel className="col-span-2">
 					<ChartPanelToolbar>
-						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
+						<h2 className="mr-auto heading-xs">Flows (source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<Select
 							allValues={ETF_ASSET_NAMES}
@@ -104,7 +104,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						<ChartExportButtons
 							chartInstance={chartInstance}
 							filename="etf-flows"
-							title="ETF Flows"
+							title="ETF flows"
 							csvSource={{
 								type: 'dataset',
 								prepare: () => ({
@@ -132,7 +132,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 			<SearchTableProvider options={{ data: snapshot, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
 					<TableToolbar>
-						<h2 className="mr-auto label-md">Exchange Traded Funds</h2>
+						<h2 className="mr-auto label-md">Exchange traded funds</h2>
 						<TableSearchInput columnId="ticker" placeholder="Search ETF…" className={searchFieldInlineWrapperStyles} />
 						<TableCsvExport filename="etf-overview" />
 					</TableToolbar>

@@ -27,7 +27,7 @@ export interface SubcategoryMeta {
 // Ordered intentionally — groups render in this order in the panel. Keep
 // "Leaderboards" first since it's the easiest on-ramp, tricky analyses later.
 export const SUBCATEGORY_META: Array<SubcategoryMeta> = [
-	{ name: 'Leaderboards', color: '#6366f1', blurb: 'Top-N rankings across the DefiLlama catalogue.' },
+	{ name: 'Leaderboards', color: '#6366f1', blurb: 'Top-N rankings across the DefiLlama catalog.' },
 	{ name: 'Cross-joins', color: '#0ea5e9', blurb: 'Stitch datasets together — the point of SQL.' },
 	{ name: 'Time series', color: '#f59e0b', blurb: 'Trends, rolling windows, temporal joins.' },
 	{ name: 'Concentration', color: '#10b981', blurb: 'How much of the market sits in how few hands.' },
@@ -63,7 +63,7 @@ LIMIT 25`
 	},
 	{
 		title: 'DEX volume leaders (24h)',
-		description: 'Busiest decentralised exchanges by on-chain volume.',
+		description: 'Busiest decentralized exchanges by onchain volume.',
 		subcategory: 'Leaderboards',
 		tables: [{ kind: 'dataset', slug: 'dex-volumes' }],
 		sql: `SELECT name, category, total24h, total7d, change_7d
@@ -74,7 +74,7 @@ LIMIT 20`
 	},
 	{
 		title: 'Biggest protocol treasuries',
-		description: 'Protocols holding the most on-chain treasury value.',
+		description: 'Protocols holding the most onchain treasury value.',
 		subcategory: 'Leaderboards',
 		tables: [{ kind: 'dataset', slug: 'treasuries' }],
 		sql: `SELECT name, chain, tvl, change_1d, change_7d

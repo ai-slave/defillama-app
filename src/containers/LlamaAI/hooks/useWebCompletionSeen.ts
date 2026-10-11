@@ -52,7 +52,7 @@ function shouldRetrySeenRequest(error: unknown) {
 	return error.status === 408 || error.status >= 500
 }
 
-/** Queue shared by every flush attempt. `flushing` serialises them so a retry
+/** Queue shared by every flush attempt. `flushing` serializes them so a retry
     cannot race the flush that scheduled it. */
 interface SeenFlushState {
 	pending: Map<string, PendingSeen>
@@ -147,7 +147,7 @@ export function useWebCompletionSeen({ attention, preference }: UseWebCompletion
 
 	// The scheduled retry is state, not a ref, so unmount and every re-schedule
 	// cancel the outstanding timer through this effect's cleanup. A retry that is
-	// no longer wanted needs no cancelling: the flush re-checks the queue and the
+	// no longer wanted needs no canceling: the flush re-checks the queue and the
 	// preference, so it turns into a no-op.
 	useEffect(() => {
 		if (retryAt === null) return

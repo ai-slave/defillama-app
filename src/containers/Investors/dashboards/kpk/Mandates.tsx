@@ -124,7 +124,7 @@ export default function Mandates() {
 				/>
 			</LedgerStrip>
 
-			<CompositionSection title="Composition of Mandate AUM" comps={data?.comp} initialKey="client" />
+			<CompositionSection title="Composition of mandate AUM" comps={data?.comp} initialKey="client" />
 
 			{showPerf && (
 				<section className="flex flex-col gap-3">
@@ -277,7 +277,7 @@ export default function Mandates() {
 							{
 								key: 'deployedPct',
 								label: 'Deployed',
-								title: 'Defi plus ops positions, less what sits idle in wallets',
+								title: 'DeFi plus ops positions, less what sits idle in wallets',
 								right: true,
 								render: (row) => (
 									<span className="flex items-center justify-end gap-2">

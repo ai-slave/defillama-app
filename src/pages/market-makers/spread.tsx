@@ -23,7 +23,7 @@ export default function SpreadLeaderboard({ rows }: InferGetStaticPropsType<type
 		>
 			<Leaderboard
 				active="Spread"
-				title="Spread Leaderboard"
+				title="Spread leaderboard"
 				subtitle="See how Market Makers rank based on Spread KPIs such as the avg. top-of-book spread as well as their adherence to contractual obligations."
 				columns={SPREAD_COLUMNS}
 				initialData={rows}

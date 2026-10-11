@@ -11,7 +11,7 @@ export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 	return (
 		<Card as="section" padding="none" aria-labelledby="protocol-faq-heading" className="overflow-hidden">
 			<h2 id="protocol-faq-heading" className="border-b border-subtle px-3 py-3 heading-xs sm:px-4">
-				Frequently Asked Questions
+				Frequently asked questions
 			</h2>
 			<div>
 				{items.map((item, index) => (

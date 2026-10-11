@@ -86,7 +86,7 @@ describe('prepareTokensCsv', () => {
 		expect(fetchJson.mock.calls[0]?.[0]).toBe('/api/public/tokens?pageSize=500&snapshot=latest')
 		expect(fetchJson.mock.calls[1]?.[0]).toBe('/api/public/tokens?page=2&pageSize=500&snapshot=snapshot-123456789012')
 		expect(rows[0]).not.toContain('FDV')
-		expect(rows[0]).toContain('MCap')
+		expect(rows[0]).toContain('Mcap')
 		expect(rows).toHaveLength(3)
 		expect(rows[1]?.[1]).toBe('Bitcoin (BTC)')
 		expect(rows[2]?.[1]).toBe('Ethereum (ETH)')
@@ -145,7 +145,7 @@ describe('prepareTokensCsv', () => {
 		const { rows } = await prepareTokensCsv({ query: {}, sorting: [], hiddenColumnIds: new Set() })
 		const header = rows[0]
 		if (!header) throw new Error('Expected CSV header')
-		expect(rows[1]?.[header.indexOf('Past 30D Unlocks')]).toBe(0)
-		expect(rows[1]?.[header.indexOf('Next 30D Unlocks')]).toBe('')
+		expect(rows[1]?.[header.indexOf('Past 30d Unlocks')]).toBe(0)
+		expect(rows[1]?.[header.indexOf('Next 30d Unlocks')]).toBe('')
 	})
 })

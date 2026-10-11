@@ -41,7 +41,7 @@ export default function Staking() {
 		<div className="flex flex-col gap-6">
 			{query.data.narrative && <NarrativeCallout>{query.data.narrative}</NarrativeCallout>}
 
-			<h2 className="heading-xs">Staking &amp; Delegation</h2>
+			<h2 className="heading-xs">Staking &amp; delegation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile
 					label="% of Circ. Supply Staked or Delegated"

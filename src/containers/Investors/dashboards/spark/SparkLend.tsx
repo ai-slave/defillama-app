@@ -147,7 +147,7 @@ function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Yield Pools</h3>
+			<h3 className="mb-3 label-md text-secondary">Yield pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</Card>
@@ -240,7 +240,7 @@ export default function SparkLend() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="TVL by Chain"
+							title="TVL by chain"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={tvlByChain.dataset}
@@ -357,7 +357,7 @@ export default function SparkLend() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="USD Inflows"
+							title="USD inflows"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}
@@ -370,7 +370,7 @@ export default function SparkLend() {
 				</Panel>
 			)}
 
-			{poolsLoading ? <CardSkeleton title="Yield Pools" /> : <YieldPoolsTable data={pools} />}
+			{poolsLoading ? <CardSkeleton title="Yield pools" /> : <YieldPoolsTable data={pools} />}
 		</div>
 	)
 }

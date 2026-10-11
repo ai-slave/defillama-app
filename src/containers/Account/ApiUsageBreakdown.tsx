@@ -32,7 +32,7 @@ export interface ApiUsageStats {
 }
 
 const DEFAULT_WINDOW_DAYS = 30
-// ECharts draws to canvas and cannot read var(), so the chrome colours are literal. Only the split lines and the
+// ECharts draws to canvas and cannot read var(), so the chrome colors are literal. Only the split lines and the
 // axis differ between themes.
 const LIGHT_CHART_COLORS = {
 	split: 'rgba(0, 0, 0, 0.06)',

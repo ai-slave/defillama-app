@@ -23,7 +23,7 @@ function formatFlagTally(tally: RWAFlagTally): string {
 type FlagColumnConfig = {
 	key: RWAFlagKey
 	width: string
-	/** A restriction: yes is the warning colour. */
+	/** A restriction: yes is the warning color. */
 	yesIsWarning?: boolean
 	/** In the export, not the picker; the dialog filters cover them. */
 	csvOnly?: boolean

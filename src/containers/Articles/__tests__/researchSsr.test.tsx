@@ -207,7 +207,7 @@ describe('research SSR data loading', () => {
 
 		const html = renderWithQueryClient(<ArticlesPage {...props} />)
 		expect(html).toContain('Interviews')
-		expect(html).not.toContain('Research Notes Newsletters')
+		expect(html).not.toContain('Research Notes newsletters')
 	})
 
 	test('loads section landing props for SSR and renders articles immediately', async () => {

@@ -91,7 +91,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 			<RowLinksWithDropdown heading="Assets" links={allAssets} activeLink="All" />
 			<Panel className="col-span-2">
 				<ChartPanelToolbar>
-					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
+					<h1 className="mr-auto heading-xs">DAT inflows by asset</h1>
 					<ChartGroupingSelector
 						value={groupBy}
 						onValueChange={onChangeGroupBy}
@@ -111,7 +111,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 					<ChartExportButtons
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
-						title="DAT Inflows by Asset"
+						title="DAT inflows by asset"
 						csvSource={{
 							type: 'dataset',
 							prepare: () => ({

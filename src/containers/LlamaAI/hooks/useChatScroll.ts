@@ -53,7 +53,7 @@ const BOTTOM_PAGINATION_THRESHOLD_PX = 50
 //
 // Only 'attached' mode auto-follows new content, through the content resize observer.
 // 'reattaching' is a transient mode for the smooth scroll animation — nothing writes
-// scrollTop during it so the browser animation isn't cancelled.
+// scrollTop during it so the browser animation isn't canceled.
 // 'detached' is fully passive — the user has full scroll control.
 //
 // External callers (session restore, new prompt) use attach() which force-sets

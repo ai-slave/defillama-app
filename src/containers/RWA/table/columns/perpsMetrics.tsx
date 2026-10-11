@@ -139,7 +139,7 @@ const premiumColumn = columnHelper.accessor((row) => row.metrics.premium ?? unde
 /** The raw rate per interval: most rates sit far below a hundredth of a percent, so three significant digits. */
 export function formatFundingRateDetail(rate: number, intervalHours: number): string {
 	const percent = formatPercent(rate, { input: 'fraction', maximumSignificantDigits: 3, signDisplay: 'exceptZero' })
-	return `${percent} per ${intervalHours}h, annualised.`
+	return `${percent} per ${intervalHours}h, annualized.`
 }
 
 function FundingCell({ metrics }: { metrics: RWATableMetrics }) {
@@ -160,8 +160,8 @@ const fundingAprColumn = columnHelper.accessor((row) => row.metrics.fundingApr ?
 	cell: ({ row }) => <FundingCell metrics={row.original.metrics} />,
 	meta: numberColumnMeta(
 		'w-[110px]',
-		`${d.fundingRate.description} Shown annualised from the venue's funding interval so 1h and 8h venues compare; the raw rate per interval is in the cell tooltip. A group row leaves it empty.`,
-		'Funding rate (annualised %)'
+		`${d.fundingRate.description} Shown annualized from the venue's funding interval so 1h and 8h venues compare; the raw rate per interval is in the cell tooltip. A group row leaves it empty.`,
+		'Funding rate (annualized %)'
 	)
 })
 

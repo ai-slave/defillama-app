@@ -149,7 +149,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
-		header: '1m Change',
+		header: '30d Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
@@ -209,7 +209,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 	return (
 		<Panel>
 			<TableToolbar>
-				<h3 className="label-md">Stablecoins Usage by Chain</h3>
+				<h3 className="label-md">Stablecoins usage by chain</h3>
 				<SearchField
 					label="Search chains"
 					value={projectName}

@@ -44,7 +44,7 @@ function day(
 }
 
 describe('exitStripKind', () => {
-	test('maps every outcome to a strip colour, and unknown ones to grey', () => {
+	test('maps every outcome to a strip color, and unknown ones to gray', () => {
 		expect(exitStripKind('ok_full')).toBe('full')
 		expect(exitStripKind('ok_partial')).toBe('partial')
 		expect(exitStripKind('delayed')).toBe('queued')

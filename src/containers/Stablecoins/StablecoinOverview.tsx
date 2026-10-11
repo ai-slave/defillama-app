@@ -423,7 +423,7 @@ export function PeggedAssetInfo({
 					</EntityTitleRow>
 
 					<p className="flex flex-col">
-						<span className="label-md text-secondary">Market Cap</span>
+						<span className="label-md text-secondary">Market cap</span>
 						<span className="min-h-8 mono-xl">
 							{displayedMarketCap == null
 								? 'N/A'
@@ -560,7 +560,7 @@ export function PeggedAssetInfo({
 				{hasInfo ? (
 					<div className="col-span-full">
 						<Card as="section" padding="sm" className="flex flex-col gap-3 body-md">
-							<h2 className="heading-xs">Stablecoin Information</h2>
+							<h2 className="heading-xs">Stablecoin information</h2>
 							{description ? <p className="body-md">{description}</p> : null}
 							{pegMechanism ? (
 								<p className="flex flex-wrap items-center gap-2">

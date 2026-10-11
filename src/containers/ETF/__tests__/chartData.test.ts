@@ -88,7 +88,7 @@ describe('buildETFFlowChartData', () => {
 		})
 	})
 
-	test('picks the light or dark brand colour by theme', () => {
+	test('picks the light or dark brand color by theme', () => {
 		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
 		expect(buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Bitcoin'], isDark: false }).charts[0]?.color).toBe(
 			ASSET_BRAND_COLORS.Bitcoin[0]

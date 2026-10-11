@@ -335,7 +335,7 @@ describe('kpk Treasury mandates tab', () => {
 		}
 		await renderTab()
 
-		expect(container.textContent).toContain('Composition of Mandate AUM')
+		expect(container.textContent).toContain('Composition of mandate AUM')
 		expect(container.textContent).not.toContain('Performance vs benchmark')
 		expect(container.textContent).toContain('No per-position history available')
 		expect(container.textContent).not.toContain('onchain transactions')

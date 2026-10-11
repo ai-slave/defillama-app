@@ -95,7 +95,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	const submitCreation = (data: CreateDashboardData) => {
 		creation.mutate(data, {
 			onSuccess: (dashboard) => {
-				// Keep the saved link visible if navigation is cancelled or fails, without allowing a duplicate creation.
+				// Keep the saved link visible if navigation is canceled or fails, without allowing a duplicate creation.
 				void router
 					.push(`/pro/${dashboardUrlKey(dashboard)}/edit`)
 					.catch(() => false)
@@ -369,7 +369,7 @@ function DashboardTemplates({
 							: empty
 								? 'No matching data available.'
 								: ''
-					// The card being created keeps full colour (aria-busy); every other unavailable card dims.
+					// The card being created keeps full color (aria-busy); every other unavailable card dims.
 					return (
 						<Card
 							key={template.id}

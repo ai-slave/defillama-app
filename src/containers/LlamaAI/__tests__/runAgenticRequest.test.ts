@@ -45,7 +45,7 @@ describe('runAgenticRequest', () => {
 			})
 		)
 		coordinator.invalidate('session-1')
-		rejectRequest(new Error('request cancelled'))
+		rejectRequest(new Error('request canceled'))
 		await running
 
 		expect(onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'abort' }), expect.any(Object))

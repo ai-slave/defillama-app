@@ -6,7 +6,7 @@ import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
+import { neighborRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -32,11 +32,11 @@ interface DashboardCardProps {
 }
 
 // A confirmed delete closes onto the card's own control, and the list refetch removes the card after that. Focus moves
-// to the neighbouring card's link (a direct child, unlike the author link); after the last card, to the list's region
+// to the neighboring card's link (a direct child, unlike the author link); after the last card, to the list's region
 // (the tab panel), else the page content.
-const focusNeighbourOnLeave = passFocusOnLeave(
+const focusNeighborOnLeave = passFocusOnLeave(
 	(card) =>
-		neighbourRowControl(card, card)?.querySelector<HTMLElement>(':scope > a') ??
+		neighborRowControl(card, card)?.querySelector<HTMLElement>(':scope > a') ??
 		card.parentElement?.closest<HTMLElement>('[tabindex]') ??
 		pageContent()
 )
@@ -197,7 +197,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	return (
 		<Card
 			padding="none"
-			ref={focusNeighbourOnLeave}
+			ref={focusNeighborOnLeave}
 			className={`hover-wash-card group/dashboard-card relative isolate flex flex-col overflow-hidden ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (

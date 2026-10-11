@@ -29,7 +29,7 @@ describe('advanced TVL presentation', () => {
 		])
 	})
 
-	test('keeps the largest Others last and grey, ranking the chains before it', () => {
+	test('keeps the largest Others last and gray, ranking the chains before it', () => {
 		const presentation = buildAdvancedTvlPresentation({
 			chartType: 'chainsTvl',
 			chainsDataset: {

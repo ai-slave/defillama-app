@@ -258,7 +258,7 @@ function PieChart({
 					shadowColor: 'rgba(0, 0, 0, 0.5)'
 				}
 			},
-			// A slice without a colour takes the palette by its rank, not ECharts' default palette; Others stays grey.
+			// A slice without a color takes the palette by its rank, not ECharts' default palette; Others stays gray.
 			data: chartData.map((item, index) => ({
 				name: item.name,
 				value: item.value,

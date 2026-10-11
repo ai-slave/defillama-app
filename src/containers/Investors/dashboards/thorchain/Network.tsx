@@ -58,7 +58,7 @@ export default function Network() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">Nodes & Bonding</h2>
+			<h2 className="heading-xs">Nodes & bonding</h2>
 			<KpiGrid kpis={kpis} items={NODES_KPIS} cols={3} />
 			<KpiGrid kpis={kpis} items={BONDED_KPIS} />
 
@@ -71,13 +71,13 @@ export default function Network() {
 				/>
 			) : (
 				<PlaceholderCard
-					title="RUNE Bonded Over Time"
+					title="RUNE bonded over time"
 					subtitle="Bond history feed unavailable."
 					note="raynalytics daily-tvl"
 				/>
 			)}
 
-			<h2 className="heading-xs">Protocol-Owned Liquidity</h2>
+			<h2 className="heading-xs">Protocol-owned liquidity</h2>
 			<KpiGrid kpis={kpis} items={POL_KPIS} cols={3} />
 			{/* Mark-to-market POL value since POL genesis (May 2023), RUNE by default with a
 			    USD toggle — official raynalytics feed, cross-checked against THORNode state. */}
@@ -91,7 +91,7 @@ export default function Network() {
 				/>
 			) : (
 				<PlaceholderCard
-					title="Protocol-Owned Liquidity Over Time"
+					title="Protocol-owned liquidity over time"
 					subtitle="POL market value over time. Awaiting feed."
 					note="raynalytics pol-value"
 				/>

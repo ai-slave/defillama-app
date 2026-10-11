@@ -33,7 +33,7 @@ const FAQ_ITEMS: Array<{ q: string; a: React.ReactNode }> = [
 	},
 	{
 		q: 'What is the 300M FLR/year burn target?',
-		a: 'Under conservative modeling, the 20x base fee increase should generate approximately 300M FLR/year in burns from transaction fees alone, enough to offset a meaningful portion of annual inflation. This is an aspirational target; actual burn rate grows proportionally with network activity. The Burn vs. Emit chart above shows real-time progress toward this goal.'
+		a: 'Under conservative modeling, the 20x base fee increase should generate approximately 300M FLR/year in burns from transaction fees alone, enough to offset a meaningful portion of annual inflation. This is an aspirational target; actual burn rate grows proportionally with network activity. The Burn vs emit chart above shows real-time progress toward this goal.'
 	},
 	{
 		q: "What's the difference between gas burns and protocol burns?",
@@ -110,14 +110,14 @@ export default function Tokenomics() {
 
 			{inf && (
 				<>
-					<h2 className="heading-xs">Inflation & Supply</h2>
+					<h2 className="heading-xs">Inflation & supply</h2>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 						<StatTile label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
 						<StatTile label="Circulating Supply" value={inf.kpis.circulatingSupply} />
 						<StatTile
-							label="On-chain Burned (Total)"
+							label="Onchain burned (total)"
 							value={inf.kpis.cumulativeOnchainBurned}
-							tooltip="All on-chain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
+							tooltip="All onchain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
 						/>
 						<StatTile label="Emitted (Last Month)" value={inf.kpis.lastMonthEmitted} />
 						<StatTile label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
@@ -201,7 +201,7 @@ export default function Tokenomics() {
 				</>
 			)}
 
-			<h2 className="heading-xs">FLR Transaction Burn</h2>
+			<h2 className="heading-xs">FLR transaction burn</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Latest Daily" value={bk.latestDailyBurn} />
 				<StatTile label="Burn 7d" value={bk.burn7d} />
@@ -266,7 +266,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</Panel>
 
-			<h2 className="heading-xs">FLR Emissions</h2>
+			<h2 className="heading-xs">FLR emissions</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 				{maxSupplyQuery.data != null && <StatTile label="Max Supply" value={maxSupplyQuery.data} />}
 				<StatTile label="Latest Epoch Emit" value={ek.latestEpochEmit} />
@@ -290,7 +290,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</Panel>
 
-			<h2 className="heading-xs">Burn vs. Emit & Net Inflation</h2>
+			<h2 className="heading-xs">Burn vs emit & net inflation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile
 					label="Burn / Emit (latest)"

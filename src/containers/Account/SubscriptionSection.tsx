@@ -169,7 +169,7 @@ function PastDueSubscriptionCard({
 	return (
 		<Card padding="md" tone="warning" className="flex flex-col gap-4">
 			<div className="flex items-start gap-2">
-				{/* Centred on the heading's first line. */}
+				{/* Centered on the heading's first line. */}
 				<span className="flex h-lh shrink-0 items-center title-lg">
 					<Icon name="alert-triangle" className="size-5 text-warning" />
 				</span>
@@ -351,7 +351,7 @@ export function SubscriptionSection() {
 	// The overage endpoints only operate on the user's own Stripe API subscription;
 	// seat-derived team records look like Stripe but have no Stripe subscription behind them.
 	const canManageOverage = hasApiSubscription && apiSubscription?.provider === 'stripe' && !apiSubscription?.team_id
-	// The cancel endpoint targets the active subscription first, so cancelling from
+	// The cancel endpoint targets the active subscription first, so canceling from
 	// the overdue warning is only offered when the overdue record IS that subscription.
 	const isActivePastDue = activePastDueSubscription != null && activePastDueSubscription.id === activeSubscription?.id
 	const pastDueBanner = activePastDueSubscription ? (

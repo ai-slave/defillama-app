@@ -221,17 +221,17 @@ export default function TopGainersLosers({ protocols }: InferGetStaticPropsType<
 			description="Track the top DeFi TVL gainers and losers by 24h change. Compare protocol TVL, 1d TVL change, chains, and Mcap/TVL."
 			canonicalUrl="/top-gainers-and-losers"
 		>
-			<h1 className="heading-sm">Top Gainers and Losers</h1>
+			<h1 className="heading-sm">Top gainers and losers</h1>
 			<Panel>
 				<PanelHeader>
-					<PanelTitle>Top Gainers</PanelTitle>
+					<PanelTitle>Top gainers</PanelTitle>
 				</PanelHeader>
 				<TopGainersAndLosersTable key="gainers-change_1d" data={topGainers} sortingState={GAINERS_SORTING_STATE} />
 			</Panel>
 
 			<Panel>
 				<PanelHeader>
-					<PanelTitle>Top Losers</PanelTitle>
+					<PanelTitle>Top losers</PanelTitle>
 				</PanelHeader>
 				<TopGainersAndLosersTable key="losers-change_1d" data={topLosers} sortingState={LOSERS_SORTING_STATE} />
 			</Panel>

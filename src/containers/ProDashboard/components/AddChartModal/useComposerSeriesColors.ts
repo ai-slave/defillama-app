@@ -4,8 +4,8 @@ import type { ChartConfig } from '../../types'
 import { getChartEntityKey, getDashboardEntityColors, getMultiChartSeriesColors } from '../../utils/colorManager'
 
 /**
- * Composer series colours by item id, as the saved cards will draw them when they join after the dashboard's cards.
- * A combined card colours its series together; separate cards each take their entity's colour.
+ * Composer series colors by item id, as the saved cards will draw them when they join after the dashboard's cards.
+ * A combined card colors its series together; separate cards each take their entity's color.
  */
 export function useComposerSeriesColors(
 	composerItems: ReadonlyArray<ChartConfig>,

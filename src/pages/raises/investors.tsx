@@ -176,7 +176,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 		>
 			<Panel>
 				<PanelHeader>
-					<PanelTitle as="h1">Deals by Investors</PanelTitle>
+					<PanelTitle as="h1">Deals by investors</PanelTitle>
 					<SearchField
 						label="Search investors"
 						name="search"

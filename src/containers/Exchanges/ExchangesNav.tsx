@@ -13,7 +13,7 @@ const EXCHANGES_PAGES = {
 	rank: {
 		href: '/exchanges/rank',
 		label: 'Ranking',
-		heading: 'REAL Ranking',
+		heading: 'REAL ranking',
 		description: 'Every exchange scored on Reserves, Execution, Activity and Liquidity, with how each pillar is built.'
 	},
 	reserves: {

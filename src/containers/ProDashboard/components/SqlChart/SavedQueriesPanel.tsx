@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { BusyGlyph, EmptyState } from '~/ui/Status'
@@ -112,7 +112,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 										variant="ghostDestructive"
 										size="sm"
 										square
-										ref={focusNeighbourOnLeave()}
+										ref={focusNeighborOnLeave()}
 										onClick={() => deleteDownload(query.id)}
 										aria-label={`Delete ${query.name}`}
 										disabled={!!busyTaskId}

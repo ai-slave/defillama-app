@@ -65,14 +65,14 @@ const EXAMPLE_CONVERSATIONS = [
 const CAPABILITIES = [
 	{ icon: 'bar-chart-2' as const, label: 'Charts & analytics', sub: 'Auto-generated charts' },
 	{ icon: 'trending-up' as const, label: 'Price forecasts', sub: 'Monte Carlo + technicals' },
-	{ icon: 'link' as const, label: 'On-chain analysis', sub: 'Smart money & logs' },
+	{ icon: 'link' as const, label: 'Onchain analysis', sub: 'Smart money & logs' },
 	{ icon: 'calendar' as const, label: 'Scheduled alerts', sub: 'Automated daily checks' },
 	{ icon: 'file-text' as const, label: 'Research reports', sub: 'Multi-agent deep dives' }
 ]
 
 const FALLBACK_QUESTIONS: Array<LandingQuestion> = [
 	{ text: 'Which protocols have growing TVL but declining token prices right now?', tag: 'Find alpha' },
-	{ text: 'Build a conviction-scored trade thesis on ETH with technicals and on-chain data', tag: 'Trade thesis' },
+	{ text: 'Build a conviction-scored trade thesis on ETH with technicals and onchain data', tag: 'Trade thesis' },
 	{ text: 'What are the best delta-neutral yield strategies for 10 ETH on Ethereum?', tag: 'Yield strategy' },
 	{ text: 'Show me all USDC mint events on Ethereum this week', tag: 'On-Chain' },
 	{ text: 'Deep research report on the current state of restaking protocols', tag: 'Research' },
@@ -622,7 +622,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 							{/* DeFi & TradFi - wide card */}
 							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-surface p-6 pb-5 md:col-span-2">
-								<h3 className="mb-1.5 title-lg text-ai-gold-deep">DeFi, TradFi & Onchain</h3>
+								<h3 className="mb-1.5 title-lg text-ai-gold-deep">DeFi, TradFi & onchain</h3>
 								<p className="mb-4 max-w-lg body-md text-tertiary">
 									DefiLlama's 5,000+ protocols paired with stocks, macro, and onchain data. Questions that used to need
 									multiple tools and tabs are now single prompts.
@@ -803,7 +803,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 										// Replaces the Play button that had focus, so the player takes it.
 										ref={takeLostFocus}
 										src="https://www.youtube.com/embed/rEJz1gfC0Oc?si=0DD5sxzyUpC7GO14&autoplay=1"
-										title="LlamaAI Demo"
+										title="LlamaAI demo"
 										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
 										referrerPolicy="strict-origin-when-cross-origin"
 										allowFullScreen

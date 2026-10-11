@@ -17,7 +17,7 @@ import { TopupCheckoutLoading } from './TopupCheckoutLoading'
    `Dialog size="sm" fullSheet`: DialogHeader with the description as its
    subtitle and a DialogBackButton on the payment step, then a `content`
    DialogBody. LlamaAI settings render TopupForm inline, where Back is a
-   labelled link above the section heading instead of a second icon-only
+   labeled link above the section heading instead of a second icon-only
    back beside the host dialog's header.
 
    - The amount field is `Input`. Presets are `toggle` Buttons with numeric
@@ -263,7 +263,7 @@ export function TopupForm({
 
 	return (
 		<>
-			{/* Inside a settings section the step's back is a labelled link above the heading, not a second
+			{/* Inside a settings section the step's back is a labeled link above the heading, not a second
 			    icon-only back beside the host dialog's own header. */}
 			<header className="flex flex-col items-start gap-3">
 				{step === 'stripe' ? (

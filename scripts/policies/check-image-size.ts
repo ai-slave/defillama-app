@@ -26,11 +26,11 @@ const sourceRoot = path.join(root, 'src')
 const allowedFiles = new Map<string, string>([
 	[
 		'src/containers/Articles/landing/ResearchTrustedByCarousel.tsx',
-		'each logo is centred in a fixed-size link tile, so its natural size moves nothing outside the tile'
+		'each logo is centered in a fixed-size link tile, so its natural size moves nothing outside the tile'
 	],
 	[
 		'src/containers/Subscription/sections/SubscriptionTrustedBlock.tsx',
-		'each logo is centred in a fixed-height frame, so its natural size moves nothing outside the frame'
+		'each logo is centered in a fixed-height frame, so its natural size moves nothing outside the frame'
 	],
 	[
 		'src/containers/MarketMakers/DocsFigures.tsx',

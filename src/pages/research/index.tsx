@@ -169,7 +169,7 @@ function ArticlesLandingInner({
 	return (
 		<div className="pb-5">
 			<ResearchHero
-				title="Bespoke Digital Asset Research and Market Intelligence"
+				title="Bespoke digital asset research and market intelligence"
 				subtitle="Independent and trusted in-depth analysis of digital asset markets for institutional strategy and decision-making."
 				reports={landingData.heroReports}
 			/>
@@ -261,7 +261,7 @@ function ArticlesLandingInner({
 								/>
 							</div>
 							<div className="flex flex-col gap-y-16">
-								<ResearchSpotlightColumn title="Explore Spotlights" articles={landingData.spotlightColumn} />
+								<ResearchSpotlightColumn title="Explore spotlights" articles={landingData.spotlightColumn} />
 							</div>
 						</div>
 					</ResearchSectionWithSharedHeightProvider>

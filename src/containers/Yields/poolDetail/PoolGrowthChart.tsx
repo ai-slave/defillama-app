@@ -89,7 +89,7 @@ const INTRINSIC_DEFAULT_ON = false
 // The quoted line stays outside this stack.
 const GROWTH_STACK = 'growth'
 
-// Translucent [light, dark] fill for the shaded gap bands: neutral grey, because a gap is a hole in
+// Translucent [light, dark] fill for the shaded gap bands: neutral gray, because a gap is a hole in
 // our own coverage and must not read as an accusation against the pool.
 const GAP_BAND_FILL: Record<GrowthGapKind, readonly [light: string, dark: string]> = {
 	unmeasured: ['rgba(126, 138, 160, 0.18)', 'rgba(126, 138, 160, 0.3)']
@@ -349,7 +349,7 @@ function LedgerEntry({
 				</>
 			}
 		>
-			{/* Ink, not the series colour: the swatch already carries identity. */}
+			{/* Ink, not the series color: the swatch already carries identity. */}
 			<span className="mono-sm-bold text-primary">{formatUsd(gain, { ...money, signDisplay: 'exceptZero' })}</span>
 			{rate == null ? null : <span className="body-sm text-tertiary">{formatPercent(rate, percent)} APY</span>}
 		</ReadoutCell>
@@ -528,7 +528,7 @@ function GrowthReadout({
 				<LedgerEntry
 					swatch={colors.pool}
 					label="This pool"
-					hint="What the pool itself earned, measured by simulating a real withdrawal on-chain each day."
+					hint="What the pool itself earned, measured by simulating a real withdrawal onchain each day."
 					gain={combined.poolGain}
 					rate={combined.poolAnnualizedPct}
 					money={money}
@@ -664,7 +664,7 @@ export function PoolGrowthChart({
 					{/* Only where the pool has an intrinsic leg. */}
 					{currentModel.hasIntrinsic ? (
 						<Tooltip
-							content={`Stack what ${assetName} earned by itself on top of what the pool earned, both measured on-chain. Its price move is still not drawn.`}
+							content={`Stack what ${assetName} earned by itself on top of what the pool earned, both measured onchain. Its price move is still not drawn.`}
 							render={
 								<button
 									type="button"

@@ -7,7 +7,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighborOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -716,7 +716,7 @@ function MetaSheet({
 												aria-label={`Remove ${entry.profile.displayName}`}
 												pendingLabel="Removing…"
 												pending={collaboratorRemovingId === entry.pbUserId}
-												ref={focusNeighbourOnLeave(() => addInputRef.current)}
+												ref={focusNeighborOnLeave(() => addInputRef.current)}
 												onClick={() => void runAuthorAction(handleRemoveCollaborator(entry.pbUserId), showListError)}
 											>
 												Remove
@@ -800,7 +800,7 @@ function MetaSheet({
 														variant="ghost"
 														square
 														aria-label={`Remove guest co-author ${index + 1}`}
-														ref={focusNeighbourOnLeave(() => addGuestRef.current)}
+														ref={focusNeighborOnLeave(() => addGuestRef.current)}
 														onClick={() => removeGuestAuthor(index)}
 													/>
 												}

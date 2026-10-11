@@ -63,7 +63,7 @@ describe('server protocol lists', () => {
 		expect(names(first.rows)).toEqual(['Match B'])
 		expect(first.total).toBe(2)
 		expect(buildProtocolListCsv(rows, 'recent')).toBe(
-			'Name,Category,TVL,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nMatch B,Lending,20,2,0,0,0\nMatch C,Lending,30,3,0,0,0'
+			'Name,Category,TVL,Listed At,1d TVL Change,7d TVL Change,30d TVL Change\nMatch B,Lending,20,2,0,0,0\nMatch C,Lending,30,3,0,0,0'
 		)
 	})
 	test('applies chain exclusions, additive TVL, category and fork rules before bounds', () => {
@@ -131,7 +131,7 @@ describe('server protocol lists', () => {
 		const rows = getProtocolListRows(source, { sort: 'totalRaised' }).rows
 		expect(names(rows)).toEqual(['Partial', 'Zero', 'Unknown'])
 		expect(buildProtocolListCsv(rows, 'airdrops')).toBe(
-			'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nPartial,Lending,30,100,1,3,0,0,0\nZero,Lending,20,0,0,2,0,0,0\nUnknown,Lending,10,,2,1,0,0,0'
+			'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,30d TVL Change\nPartial,Lending,30,100,1,3,0,0,0\nZero,Lending,20,0,0,2,0,0,0\nUnknown,Lending,10,,2,1,0,0,0'
 		)
 	})
 	test('keeps query identity through URL transport, including explicit empty categories', () => {

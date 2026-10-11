@@ -15,7 +15,7 @@ const ENTITY_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
 	unknown: 'help-circle'
 }
 
-// What a role IS, classified on-chain. `unknown` is neutral (the read failed this tick), never a flag.
+// What a role IS, classified onchain. `unknown` is neutral (the read failed this tick), never a flag.
 function EntityBadge({ entity }: { entity: RoleEntity }) {
 	if (entity.kind === 'safe' && entity.threshold && entity.threshold.n > 0) {
 		return (

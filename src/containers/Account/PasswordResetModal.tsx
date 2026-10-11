@@ -25,7 +25,7 @@ export function PasswordResetModal(props: PasswordResetModalProps) {
 
 function PasswordResetDialog({ isOpen, onClose, email, sentAtSeconds, onSent }: PasswordResetModalProps) {
 	// Each opening owns its request, so a reopened dialog starts on the form without the last failure. The request
-	// cannot be cancelled, so the dialog stays open until it settles.
+	// cannot be canceled, so the dialog stays open until it settles.
 	// Not the mutation's own error: that one clears as soon as a retry starts.
 	const [error, setError] = useState<string | null>(null)
 	const sendReset = useMutation({

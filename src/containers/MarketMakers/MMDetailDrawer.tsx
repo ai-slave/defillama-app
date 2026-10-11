@@ -367,7 +367,7 @@ function DrawerBody({
 					value={activeEngagements == null ? FALLBACK : activeEngagements}
 				/>
 				<StatTile
-					label="Avg. FDV of projects in Forgd"
+					label="Avg FDV of projects in Forgd"
 					value={avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}
 				/>
 			</section>

@@ -66,7 +66,7 @@ export function uploadChatFile({
 }: UploadChatFileOptions): Promise<UploadedAttachment> {
 	return new Promise<UploadedAttachment>((resolve, reject) => {
 		if (signal?.aborted) {
-			reject(new DOMException('Upload cancelled', 'AbortError'))
+			reject(new DOMException('Upload canceled', 'AbortError'))
 			return
 		}
 		const params = new URLSearchParams({ sessionId })
@@ -111,7 +111,7 @@ export function uploadChatFile({
 		})
 		xhr.addEventListener('abort', () => {
 			done()
-			reject(new DOMException('Upload cancelled', 'AbortError'))
+			reject(new DOMException('Upload canceled', 'AbortError'))
 		})
 
 		xhr.send(form)

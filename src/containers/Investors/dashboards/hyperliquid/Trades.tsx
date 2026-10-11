@@ -64,7 +64,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 
 	return (
 		<Card padding="md" className="flex flex-col">
-			<h3 className="mb-3 label-md text-secondary">Order Book</h3>
+			<h3 className="mb-3 label-md text-secondary">Order book</h3>
 
 			<div className="mb-2 grid grid-cols-3 label-sm text-secondary">
 				<span>Price</span>
@@ -129,7 +129,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 	return (
 		<Card padding="md" className="flex max-h-[800px] flex-col">
-			<h3 className="mb-3 shrink-0 label-md text-secondary">Recent Trades</h3>
+			<h3 className="mb-3 shrink-0 label-md text-secondary">Recent trades</h3>
 
 			<div className="mb-2 grid shrink-0 grid-cols-4 label-sm text-secondary">
 				<span>Time</span>

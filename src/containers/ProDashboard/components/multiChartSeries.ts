@@ -49,7 +49,7 @@ export type MultiChartInputSeries = {
 	metricType: string
 }
 
-/** One composer preview series, named and coloured the way the saved card draws it at this grouping. */
+/** One composer preview series, named and colored the way the saved card draws it at this grouping. */
 export function buildComposerPreviewSeries(
 	item: Pick<ChartConfig, 'type'> & { data: Array<[number, number]> },
 	grouping: DashboardGrouping,
@@ -69,7 +69,7 @@ export function buildComposerPreviewSeries(
 	}
 }
 
-/** The series a combined chart card draws, named for its grouping, in the colours `getMultiChartSeriesColors` gave. */
+/** The series a combined chart card draws, named for its grouping, in the colors `getMultiChartSeriesColors` gave. */
 export function buildMultiChartCardSeries(
 	validItems: ReadonlyArray<ChartRuntimeView>,
 	{

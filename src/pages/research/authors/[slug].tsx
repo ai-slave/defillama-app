@@ -238,7 +238,7 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 		<section className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-5 px-4 pt-2 pb-8 sm:px-6 lg:gap-10 lg:px-8 lg:pb-12">
 			<div className="flex items-center gap-2">
 				<h2 id="latest-research" className="shrink-0 label-lg text-research-navy lg:heading-xs lg:uppercase">
-					Our Latest Research
+					Our latest research
 				</h2>
 				<div className="h-px min-w-0 flex-1 bg-current" aria-hidden />
 			</div>

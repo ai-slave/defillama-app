@@ -61,7 +61,7 @@ export function SubscribeLayout2({
 						</BasicLink>
 						<div className="flex items-center gap-4">
 							<BasicLink href="/" className="label-md text-secondary transition-colors hover:text-primary">
-								Return to Main Page
+								Return to main page
 							</BasicLink>
 						</div>
 					</div>

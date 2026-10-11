@@ -351,7 +351,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		metrics: { staking: true }
 	},
 	Oracle: {
-		description: 'Protocols that connect data from the outside world (off-chain) with the blockchain world (Onchain)',
+		description: 'Protocols that connect data from the outside world (offchain) with the blockchain world (onchain)',
 		headingLabel: 'Oracles',
 		seoLabel: 'Oracles',
 		tableHeader: 'Oracle Rankings',
@@ -369,7 +369,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		searchPlaceholder: 'Search options vaults…'
 	},
 	'Uncollateralized Lending': {
-		description: 'Protocol that allows you to lend against known parties that can borrow without collaterall',
+		description: 'Protocol that allows you to lend against known parties that can borrow without collateral',
 		metrics: { borrowed: true },
 		columns: [
 			'name',
@@ -388,7 +388,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Liquidity Manager': { description: 'Protocols that manage Liquidity Positions in concentrated liquidity AMMs' },
 	'Staking Pool': {
 		description:
-			"Refers to platforms where users stake their assets using smart contracts on native blockchains to help secure the network and earn rewards but don't receive a receipt token to use in other Defi apps like with Liquid Staking projects",
+			"Refers to platforms where users stake their assets using smart contracts on native blockchains to help secure the network and earn rewards but don't receive a receipt token to use in other DeFi apps like with Liquid Staking projects",
 		headingLabel: 'Staking Pools',
 		seoLabel: 'Staking Pools',
 		searchPlaceholder: 'Search staking pools…'
@@ -635,7 +635,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 			'Decentralized Offered Rates - The DOR mechanism provides a decentralized benchmark rate for crypto assets'
 	},
 	'Collateral Management': {
-		description: 'Protocols that manage or leverage Onchain collateral for financial applications'
+		description: 'Protocols that manage or leverage onchain collateral for financial applications'
 	},
 	Meme: {
 		description:
@@ -701,7 +701,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	DePIN: {
 		description:
-			'Protocols that provide decentralized infrastructure for physical assets, such as sensors, devices, or networks, enabling real-world data collection and processing via Onchain rewards and governance'
+			'Protocols that provide decentralized infrastructure for physical assets, such as sensors, devices, or networks, enabling real-world data collection and processing via onchain rewards and governance'
 	},
 	'Dual-Token Stablecoin': {
 		description:
@@ -746,7 +746,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		description: 'Block builder APIs for private transaction bundles'
 	},
 	'Stablecoin Wrapper': {
-		description: 'Protocols that lock an existing stablecoin and mint a 1:1 redeemable on-chain wrapper token'
+		description: 'Protocols that lock an existing stablecoin and mint a 1:1 redeemable onchain wrapper token'
 	},
 	'Crypto Card Issuer': {
 		description:
@@ -850,7 +850,7 @@ export function getProtocolCategoryPresentation({
 	const defaultHeadingLabel = hasCustomPresentation ? label : `${label} Protocols`
 	const defaultTitleSuffix = 'Rankings'
 	const defaultTableHeader = effectiveCategory === 'RWA' ? 'Assets Rankings' : 'Protocols Rankings'
-	const defaultSearchPlaceholder = hasCustomPresentation ? `Search ${label}...` : 'Search Protocols…'
+	const defaultSearchPlaceholder = hasCustomPresentation ? `Search ${label}…` : 'Search Protocols…'
 	const normalizedChain = chain?.trim()
 	const chainTitleSuffix = normalizedChain && normalizedChain !== 'All' ? ` on ${normalizedChain}` : ''
 	const resolvedTitleSuffix = `${config?.seoTitleSuffix ?? defaultTitleSuffix}${chainTitleSuffix}`

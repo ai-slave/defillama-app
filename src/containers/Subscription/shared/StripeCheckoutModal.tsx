@@ -195,7 +195,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 		const postCheckoutPath = checkoutReturnPath(request)
 		// A charged payment stays locked while the page navigates away, so it cannot be submitted twice.
 		const paying = paid !== null && (paid.isPending || paid.data === 'succeeded')
-		// The payment cannot be cancelled once confirmPayment starts, so the dialog stays open until it settles. The card
+		// The payment cannot be canceled once confirmPayment starts, so the dialog stays open until it settles. The card
 		// form grows as it loads, so the phone sheet keeps its full height unless only a bank check is left.
 		surface = { ...surface, size: 'md', fullSheet: !result.awaitingVerification, pending: paying }
 		content = (

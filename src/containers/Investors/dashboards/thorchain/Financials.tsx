@@ -167,7 +167,7 @@ export default function Financials() {
 					{composition.flatMap(({ label, def, data: d }) => [
 						<Kpi key={`${label}-lifetime`} kpi={d?.lifetime} label={`${label} (Lifetime)`} def={def} />,
 						<Kpi key={`${label}-1y`} kpi={d?.y1} label={`${label} (1Y)`} />,
-						<Kpi key={`${label}-30d`} kpi={d?.d30} label={`${label} (30D)`} />,
+						<Kpi key={`${label}-30d`} kpi={d?.d30} label={`${label} (30d)`} />,
 						<Kpi key={`${label}-7d`} kpi={d?.d7} label={`${label} (7D)`} />
 					])}
 				</KpiBand>
@@ -192,18 +192,18 @@ export default function Financials() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Income Statement</h2>
+				<h2 className="heading-xs">Income statement</h2>
 				<ThorchainIncomeStatement
-					title="THORChain Income Statement"
+					title="THORChain income statement"
 					subtitle="Fees & protocol revenue, including the native network fee."
 				/>
 			</section>
 
 			{!affiliate && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Affiliate Fees</h2>
+					<h2 className="heading-xs">Affiliate fees</h2>
 					<PlaceholderCard
-						title="Affiliate Fees"
+						title="Affiliate fees"
 						subtitle="Affiliate fee feed unavailable."
 						note="raynalytics daily-affiliate-fees"
 					/>
@@ -211,7 +211,7 @@ export default function Financials() {
 			)}
 			{affiliate && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Affiliate Fees</h2>
+					<h2 className="heading-xs">Affiliate fees</h2>
 					{/* "Included in total fees" lives in the (i) tooltip, not a second header. */}
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 						<Kpi kpi={affiliate.kpis.affiliateLifetime} label="Lifetime" def={defs.affiliateFees} />

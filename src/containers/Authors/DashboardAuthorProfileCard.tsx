@@ -26,7 +26,7 @@ const SOCIAL_VALUE_MAX = 300
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const SOCIALS = [
-	{ id: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/yourhandle' },
+	{ id: 'twitter', label: 'X/Twitter', placeholder: 'https://x.com/yourhandle' },
 	{ id: 'github', label: 'GitHub', placeholder: 'https://github.com/yourhandle' },
 	{ id: 'farcaster', label: 'Farcaster', placeholder: 'https://warpcast.com/yourhandle' },
 	{ id: 'bluesky', label: 'Bluesky', placeholder: 'https://bsky.app/profile/you.bsky.social' },

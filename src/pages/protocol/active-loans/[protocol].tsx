@@ -164,7 +164,7 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
 						<BreakdownChartCard
-							title="Active Loans by Chain"
+							title="Active Loans by chain"
 							seriesLabel="Chain"
 							allValues={chainsUnique}
 							breakdown={chainBreakdown}
@@ -181,7 +181,7 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 
 					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
 						<BreakdownChartCard
-							title="Active Loans by Token (USD)"
+							title="Active Loans by token (USD)"
 							seriesLabel="Token"
 							allValues={tokensUnique}
 							breakdown={tokenBreakdownUSD}
@@ -196,7 +196,7 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 
 					{tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0 ? (
 						<TokensBreakdownPieChartCard
-							title="Active Loans Tokens Breakdown (USD)"
+							title="Active Loans tokens breakdown (USD)"
 							tokenBreakdownPieSeries={tokenBreakdownPieSeries}
 							shareHeader={ACTIVE_LOANS_SHARE_HEADER}
 							exportFilenameBase={buildFilename('active-loans-tokens-breakdown-usd')}
@@ -207,7 +207,7 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 
 					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 						<BreakdownChartCard
-							title="Active Loans by Token (Raw Quantities)"
+							title="Active Loans by token (raw quantities)"
 							seriesLabel="Token"
 							allValues={rawTokensUnique}
 							breakdown={tokenRawBreakdown}

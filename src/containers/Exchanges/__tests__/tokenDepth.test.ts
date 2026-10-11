@@ -46,7 +46,7 @@ describe('tokenDepthVenues', () => {
 		expect(tokenDepthVenues([pair('none', null)], MEASURED)).toEqual([])
 	})
 
-	// Fills discount a book; they are not a licence to show it. Most venues running a
+	// Fills discount a book; they are not a license to show it. Most venues running a
 	// token's perp are never in the execution basket, and hiding their captured books
 	// understated the token's real venue set.
 	test('charts venues with no measured fills, undiscounted', () => {

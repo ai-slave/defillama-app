@@ -83,7 +83,7 @@ test('Delete asks before removing the portfolio, then hands focus to New', async
 	expect(document.activeElement).toBe(button('New'))
 })
 
-test('cancelling the portfolio delete returns focus to Delete', async () => {
+test('canceling the portfolio delete returns focus to Delete', async () => {
 	await render({ portfolio: 'Stables' })
 	await waitForUi(() => expect(button('Delete')).toBeDefined())
 

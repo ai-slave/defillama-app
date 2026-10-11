@@ -61,7 +61,7 @@ export function governanceMarker(reachesPrincipal: boolean | undefined): ReachMa
 }
 
 // A null marker renders an aligned blank so the addresses stay in their column. The dots take the risk section's own
-// tone scale (toneClasses), not StatusDot, so they match the risk colours around them; the legend names each tone.
+// tone scale (toneClasses), not StatusDot, so they match the risk colors around them; the legend names each tone.
 export function ReachDot({ marker }: { marker: ReachMarker | null }) {
 	if (!marker) return <span className="size-2 shrink-0" aria-hidden />
 	return (
@@ -79,7 +79,7 @@ const REACH_LEGEND: ReadonlyArray<{ tone: Tone; label: string }> = [
 	{ tone: 'good', label: "Can't reach deposit" }
 ]
 
-// Paired colour+text so the dots never read as colour-only.
+// Paired color+text so the dots never read as color-only.
 export function ReachLegend() {
 	return (
 		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 body-sm text-secondary">

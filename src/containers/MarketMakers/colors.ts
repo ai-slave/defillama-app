@@ -16,7 +16,7 @@ export function rankOpacity(r: number | null | undefined): number {
 
 // A HEAT_UP (emerald-9, rgb 0 123 69) wash keyed by intensity band: a higher rank or percentile is a better
 // value. One rgba over the card background so it adapts to both themes on its own and reads as a gentle tint
-// rather than a bold block; text inherits the theme colour. Static class literals so Tailwind compiles them,
+// rather than a bold block; text inherits the theme color. Static class literals so Tailwind compiles them,
 // which is why the constant is spelled out here.
 const HEAT_CLASS: Record<number, string> = {
 	10: 'bg-[rgba(0,123,69,0.05)]',

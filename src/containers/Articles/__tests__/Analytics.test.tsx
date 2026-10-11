@@ -101,7 +101,7 @@ describe('research section engagement', () => {
 
 	test('sends engagement when the router commits a navigation, not when one merely starts', () => {
 		now = 5000
-		// A started navigation can still be cancelled, so it must not end the visit.
+		// A started navigation can still be canceled, so it must not end the visit.
 		for (const handler of mocks.routerHandlers.get('routeChangeStart') ?? []) handler()
 		expect(track).not.toHaveBeenCalled()
 		for (const handler of mocks.routerHandlers.get('beforeHistoryChange') ?? []) handler()

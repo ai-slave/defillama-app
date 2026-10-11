@@ -445,7 +445,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
-							<PanelTitle>Valuation vs. market</PanelTitle>
+							<PanelTitle>Valuation vs market</PanelTitle>
 							<p className="body-sm text-tertiary">
 								Sector totals valued as one company; marker is the all-equities median
 							</p>
@@ -496,7 +496,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 				<Panel>
 					<PanelHeader>
 						<div className="mr-auto">
-							<PanelTitle>Returns vs. market</PanelTitle>
+							<PanelTitle>Returns vs market</PanelTitle>
 							<p className="body-sm text-tertiary">Cap-weighted price return · spread in percentage points</p>
 						</div>
 					</PanelHeader>

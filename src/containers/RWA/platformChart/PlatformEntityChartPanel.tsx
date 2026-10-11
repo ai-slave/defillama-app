@@ -43,7 +43,7 @@ export function RWAPlatformEntityChartPanel({
 	})
 	return (
 		<RWAEntityChartPanel
-			catalogue={RWA_PLATFORM_CHART}
+			catalog={RWA_PLATFORM_CHART}
 			selected={selected}
 			{...data}
 			filename={`rwa-platform-${meta.slug || rwaSlug(meta.name)}-chart`}

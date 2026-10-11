@@ -45,14 +45,14 @@ describe('TokenRightsByProtocol', () => {
 				)
 			)
 			expect(container.textContent).toContain('Token rights summary')
-			expect(container.textContent).not.toContain('Governance Rights')
+			expect(container.textContent).not.toContain('Governance rights')
 
 			const details = [...container.querySelectorAll<HTMLElement>('[role="tab"]')].find(
 				(tab) => tab.textContent === 'Details'
 			)!
 			await act(async () => details.click())
 			expect(details.getAttribute('aria-selected')).toBe('true')
-			expect(container.textContent).toContain('Governance Rights')
+			expect(container.textContent).toContain('Governance rights')
 		} finally {
 			await act(async () => root.unmount())
 			container.remove()

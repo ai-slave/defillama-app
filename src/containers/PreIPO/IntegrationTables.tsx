@@ -190,13 +190,13 @@ export function PerpetualMarketsTable({
 	perps: Array<PreIpoPerpIntegration>
 }) {
 	if (perps.length === 0) {
-		return <EmptyIntegrationTable title="Perpetual Markets" message="No perpetual markets available." />
+		return <EmptyIntegrationTable title="Perpetual markets" message="No perpetual markets available." />
 	}
 	return (
 		<SearchTableProvider options={{ data: perps, columns: perpColumns }}>
 			<Card padding="none">
 				<TableToolbar>
-					<h2 className="mr-auto label-md">Perpetual Markets</h2>
+					<h2 className="mr-auto label-md">Perpetual markets</h2>
 					<TableSearchInput
 						columnId="exchangeName"
 						placeholder="Search exchanges…"
@@ -218,13 +218,13 @@ export function TokenIssuersTable({
 	tokenIssuers: Array<PreIpoTokenIssuerIntegration>
 }) {
 	if (tokenIssuers.length === 0) {
-		return <EmptyIntegrationTable title="Token Issuers" message="No token issuer markets available." />
+		return <EmptyIntegrationTable title="Token issuers" message="No token issuer markets available." />
 	}
 	return (
 		<SearchTableProvider options={{ data: tokenIssuers, columns: issuerColumns }}>
 			<Card padding="none">
 				<TableToolbar>
-					<h2 className="mr-auto label-md">Token Issuers</h2>
+					<h2 className="mr-auto label-md">Token issuers</h2>
 					<TableSearchInput
 						columnId="issuerName"
 						placeholder="Search issuers…"

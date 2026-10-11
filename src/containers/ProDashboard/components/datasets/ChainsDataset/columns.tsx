@@ -92,7 +92,7 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 		cell: ({ row }) => renderChange(row.original.change_7d)
 	},
 	{
-		header: '1m Change',
+		header: '30d Change',
 		id: 'change_1m',
 		accessorFn: (row) => row.change_1m ?? undefined,
 		size: 90,

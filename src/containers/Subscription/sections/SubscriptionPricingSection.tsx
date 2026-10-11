@@ -50,8 +50,8 @@ export function SubscriptionPricingSection({
 				</div>
 				<div className="flex w-full flex-col items-center gap-7">
 					<h1 className="heading-lg text-primary">
-						The Smartest Way to Navigate <br className="hidden md:inline" />
-						Onchain Data
+						The smartest way to navigate <br className="hidden md:inline" />
+						Onchain data
 					</h1>
 					<p className="body-xl text-secondary md:w-[540px] md:body-lg">
 						Analyze 6,000+ protocols across 400+ chains with AI, custom dashboards, live data feeds and premium API

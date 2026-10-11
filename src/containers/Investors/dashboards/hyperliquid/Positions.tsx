@@ -132,7 +132,7 @@ function PortfolioTrend({
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>Portfolio Trend ({window})</ChartPanelTitle>}>
+			<ChartPanelToolbar leading={<ChartPanelTitle>Portfolio trend ({window})</ChartPanelTitle>}>
 				<span className={changePct >= 0 ? 'body-sm text-success' : 'body-sm text-error'}>
 					{changePct >= 0 ? '+' : ''}
 					{formatPercent(changePct, {
@@ -323,7 +323,7 @@ const fillColumns: Array<ColumnDef<typeof tableFeaturesConfig, HlpFill>> = [
 		cell: ({ getValue }) => {
 			const value = getValue<string | null>()
 			if (!value) return '—'
-			return `${value.slice(0, 8)}...${value.slice(-6)}`
+			return `${value.slice(0, 8)}…${value.slice(-6)}`
 		},
 		size: 150
 	}
@@ -560,7 +560,7 @@ export default function Positions() {
 			</div>
 
 			<DataTable
-				title="HLP Positions"
+				title="HLP positions"
 				data={filteredPositions}
 				columns={positionColumns}
 				defaultSort={[{ id: 'positionValue', desc: true }]}
@@ -569,7 +569,7 @@ export default function Positions() {
 
 			{filteredOpenOrders.length > 0 ? (
 				<DataTable
-					title="Open Orders"
+					title="Open orders"
 					data={filteredOpenOrders}
 					columns={openOrderColumns}
 					defaultSort={[{ id: 'timestamp', desc: true }]}
@@ -622,7 +622,7 @@ export default function Positions() {
 							accessorKey: 'hash',
 							cell: ({ getValue }) => {
 								const value = getValue<string>()
-								return `${value.slice(0, 8)}...${value.slice(-6)}`
+								return `${value.slice(0, 8)}…${value.slice(-6)}`
 							},
 							size: 150
 						}
@@ -634,7 +634,7 @@ export default function Positions() {
 
 			{filteredFills.length > 0 ? (
 				<DataTable
-					title="Recent HLP Fills"
+					title="Recent HLP fills"
 					data={filteredFills}
 					columns={fillColumns}
 					defaultSort={[{ id: 'time', desc: true }]}

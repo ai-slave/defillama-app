@@ -158,7 +158,7 @@ test('every card names its own link and actions after its dashboard', async () =
 	expect(container.querySelector('[aria-label="Actions for Audit board"]')).not.toBeNull()
 })
 
-test('cancelling a delete from the card menu returns focus to the menu button', async () => {
+test('canceling a delete from the card menu returns focus to the menu button', async () => {
 	await render(makeDashboard({}), async () => {})
 	const menuButton = container.querySelector<HTMLButtonElement>('[aria-label="Actions for Audit board"]')!
 	await act(async () => {

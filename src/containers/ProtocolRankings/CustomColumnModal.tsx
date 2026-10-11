@@ -247,7 +247,7 @@ function CustomColumnForm({
 										required
 										value={state.name}
 										onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value }))}
-										placeholder="Custom Column"
+										placeholder="Custom column"
 									/>
 								}
 							/>

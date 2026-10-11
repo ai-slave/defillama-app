@@ -5,7 +5,7 @@ import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighborOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -345,7 +345,7 @@ function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange
 							square
 							accessibleWhenDisabled
 							disabled={total === 1}
-							ref={focusNeighbourOnLeave(
+							ref={focusNeighborOnLeave(
 								(node) => node.closest('[data-row]')!.parentElement!.lastElementChild as HTMLElement
 							)}
 							onClick={onRemove}

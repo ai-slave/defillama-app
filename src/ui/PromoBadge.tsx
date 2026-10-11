@@ -4,7 +4,7 @@ import { tw } from './tw'
 
 /**
  * PromoBadge — the small pill that points at something worth trying: "New", "7-day trial", "Free", "Pro". One look for
- * every promo, in the brand tint: amber is the warning colour and green means a value went up, so neither marks a
+ * every promo, in the brand tint: amber is the warning color and green means a value went up, so neither marks a
  * promo. Sentence case; the icon is optional ("sparkles" for New, "file-lock-2" for a locked Pro feature). A paid
  * trial names its length ("7-day trial"), never a bare "free", so it reads apart from a free tier's "Free".
  *

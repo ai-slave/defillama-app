@@ -931,7 +931,7 @@ export function isEmptyProtocolEmissionResult(
 	return result == null || result.name === null
 }
 
-export const getProtocolEmissons = async (
+export const getProtocolEmissions = async (
 	protocolName: string,
 	options?: {
 		emissionsProtocolsList?: Array<string>

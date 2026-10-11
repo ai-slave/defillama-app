@@ -315,7 +315,7 @@ export function PortfolioNotifications({
 		<>
 			<Card padding="sm">
 				<div className="mb-2">
-					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
+					<h2 className="mb-0.5 heading-xs">Email notifications</h2>
 					{/* A failed read is unknown, not "none": offering setup would POST over the saved preferences. */}
 					{readFailed ? (
 						<InlineStatus variant="error" retry={{ refetch, isFetching }}>
@@ -691,7 +691,7 @@ function PortfolioSelection() {
 			<TableToolbar>
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
-					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
+					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}…` : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => handleSelectPortfolio(value)}
@@ -831,7 +831,7 @@ function TopMovers({ protocols, portfolio }: TopMoversProps) {
 	return (
 		<Card padding="none">
 			<TableToolbar>
-				<h2 className="mr-auto heading-xs">Top Movers</h2>
+				<h2 className="mr-auto heading-xs">Top movers</h2>
 
 				<label className="flex cursor-pointer items-center gap-1.5">
 					<input

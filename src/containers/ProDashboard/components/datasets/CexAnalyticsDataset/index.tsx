@@ -370,7 +370,7 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 		<div className="flex h-full w-full flex-col">
 			<Suspense fallback={<ProCardLoading label="Loading chart" className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
-					title="Spot vs Derivatives Volume"
+					title="Spot vs derivatives volume"
 					dataset={dataset}
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
 					valueSymbol="$"
@@ -419,7 +419,7 @@ function VenueMarketShareChart({
 			values.set(venue, point.share)
 		}
 
-		// The remainder draws last, in the Others grey.
+		// The remainder draws last, in the Others gray.
 		const othersIndex = order.indexOf('Others')
 		if (othersIndex !== -1) order.push(...order.splice(othersIndex, 1))
 

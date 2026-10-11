@@ -107,16 +107,16 @@ async function mountFiltered() {
 describe('RWAPerpsCards', () => {
 	test('draws Open Interest by Asset Group with the Key Metrics total, Change by Venue and the 7 day volume line', () => {
 		const text = render()
-		expect(text).toContain('Open Interest by Asset Group $5m')
-		expect(text).toContain('Change by Venue')
+		expect(text).toContain('Open interest by asset group $5m')
+		expect(text).toContain('Change by venue')
 		expect(text).toMatch(/Volume, 7 day average \$7m a day \+250(\.00)?% over a week/)
-		expect(text).not.toContain('RWA Perps Open Interest')
+		expect(text).not.toContain('RWA perps open interest')
 		expect(text).toContain('Commodities')
 	})
 
 	test('follows Venue Type DEX only: the asset groups, the server split variant and the DEX daily volume', () => {
 		const text = render({ includeCex: false })
-		expect(text).toContain('Open Interest by Asset Group $2m')
+		expect(text).toContain('Open interest by asset group $2m')
 		expect(text).not.toContain('Commodities')
 		expect(text).toContain('Lighter')
 		expect(text).not.toContain('Binance')
@@ -136,27 +136,27 @@ describe('RWAPerpsCards', () => {
 		})
 		const { card } = await mountFiltered()
 		await waitForUi(() => expect(http.requests).toHaveLength(2))
-		expect(card('Change by Venue').querySelector('[role="status"]')).not.toBeNull()
+		expect(card('Change by venue').querySelector('[role="status"]')).not.toBeNull()
 		expect(card('Volume, 7 day average').querySelector('[role="status"]')).not.toBeNull()
 
 		await act(async () => release())
-		await waitForUi(() => expect(card('Change by Venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
+		await waitForUi(() => expect(card('Change by venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
 	})
 
 	test('under a filter, a failed history load reads as an error on both history cards, each with its Try again', async () => {
 		http.serve({ [CONTRACT_BREAKDOWN]: fixtureStatus(404) })
 		const { card } = await mountFiltered()
-		await waitForUi(() => expect(alertTexts(card('Change by Venue'))).toHaveLength(1))
+		await waitForUi(() => expect(alertTexts(card('Change by venue'))).toHaveLength(1))
 		expect(alertTexts(card('Volume, 7 day average'))).toHaveLength(1)
-		expect(card('Open Interest by Asset Group').textContent).toContain('$5m')
+		expect(card('Open interest by asset group').textContent).toContain('$5m')
 
 		http.serve({ [CONTRACT_BREAKDOWN]: () => history })
-		const retry = [...card('Change by Venue').querySelectorAll('button')].find(
+		const retry = [...card('Change by venue').querySelectorAll('button')].find(
 			(button) => accessibleName(button) === 'Try again'
 		)!
 		await act(async () => retry.click())
-		await waitForUi(() => expect(card('Change by Venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
-		expect(alertTexts(card('Change by Venue'))).toEqual([])
+		await waitForUi(() => expect(card('Change by venue').textContent).toContain('Hyperliquid+$30 (+30%)'))
+		expect(alertTexts(card('Change by venue'))).toEqual([])
 	})
 
 	test('reads Unavailable, never $0, when the markets have no open interest', () => {

@@ -163,7 +163,7 @@ export async function fetchEquitiesDimensions(ticker: string, country: string): 
 }
 
 /**
- * Fetch on-chain tokenized asset and perp market coverage for a company ticker.
+ * Fetch onchain tokenized asset and perp market coverage for a company ticker.
  */
 export async function fetchEquitiesOnchain(ticker: string, country: string): Promise<IEquitiesOnchainResponse> {
 	return fetchJson<IEquitiesOnchainResponse>(createEquitiesUrl(EQUITIES_ONCHAIN_API, { ticker, country }))

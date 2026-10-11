@@ -45,7 +45,7 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				data-umami-event="bybit-banner-click"
 				className="relative mx-auto block w-full max-w-[1800px] overflow-hidden rounded-md"
 			>
-				{/* Colours are inline rather than classes: the badge sits on the banner art, which is
+				{/* Colors are inline rather than classes: the badge sits on the banner art, which is
 				    dark in both themes, so it must not follow the theme the way a semantic token would. */}
 				<span
 					className="absolute top-2 right-2 z-10 rounded-sm px-1.5 py-0.5 label-xs tracking-wide uppercase backdrop-blur-sm"

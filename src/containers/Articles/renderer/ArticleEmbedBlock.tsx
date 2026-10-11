@@ -159,11 +159,11 @@ export function TweetEmbed({
 
 	useEffect(() => {
 		if (!visible) return
-		let cancelled = false
+		let canceled = false
 		let timeoutId: ReturnType<typeof setTimeout> | null = null
 		let pollId: ReturnType<typeof setInterval> | null = null
 		loadTwitterWidgets().then(() => {
-			if (cancelled) return
+			if (canceled) return
 			const w = window as Window & { twttr?: { widgets?: { load?: (el?: HTMLElement) => void } } }
 			w.twttr?.widgets?.load?.(containerRef.current ?? undefined)
 			pollId = setInterval(() => {
@@ -177,7 +177,7 @@ export function TweetEmbed({
 				}
 			}, 400)
 			timeoutId = setTimeout(() => {
-				if (cancelled) return
+				if (canceled) return
 				const node = containerRef.current
 				const rendered = node?.querySelector('.twitter-tweet-rendered, iframe.twitter-tweet')
 				if (!rendered) setFailed(true)
@@ -185,7 +185,7 @@ export function TweetEmbed({
 			}, 6000)
 		})
 		return () => {
-			cancelled = true
+			canceled = true
 			if (timeoutId) clearTimeout(timeoutId)
 			if (pollId) clearInterval(pollId)
 		}

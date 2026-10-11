@@ -167,7 +167,7 @@ describe('newsletter and media-kit split', () => {
 
 		const html = renderWithQueryClient(<ResearchNewsletters newsletters={[newsletter]} interviews={[interview]} />)
 
-		expect(html).toContain('Research Notes Newsletters')
+		expect(html).toContain('Research Notes newsletters')
 		expect(html).toContain('Weekly DeFi market structure')
 		expect(html).toContain('27 Aug 2026')
 		expect(html).toContain('href="https://defillama-research.beehiiv.com/p/market-structure"')

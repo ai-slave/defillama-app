@@ -34,10 +34,10 @@ export function getEmbeddedChainChartSettings(
 		index === 0 ? queryParams[chainCharts[tchart]] !== 'false' : queryParams[chainCharts[tchart]] === 'true'
 	) as Array<ChainChartLabels>
 
-	const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
+	const hasAtLeastOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
 
 	const groupBy =
-		hasAtleasOneBarChart && queryParams?.groupBy ? (normalizeChartInterval(queryParams.groupBy) ?? 'daily') : 'daily'
+		hasAtLeastOneBarChart && queryParams?.groupBy ? (normalizeChartInterval(queryParams.groupBy) ?? 'daily') : 'daily'
 
 	const denomination =
 		getChainDenominations(props.metadata).find(

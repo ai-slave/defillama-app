@@ -75,7 +75,7 @@ export function buildApiUsageChartData(
 	}
 
 	const canonicalIndex = new Map(routeSeries.map((name, index) => [name, index]))
-	// A route keeps the colour of its rank among all routes, so deselecting one leaves the others' colours alone.
+	// A route keeps the color of its rank among all routes, so deselecting one leaves the others' colors alone.
 	const charts = seriesNames.map((name, index) => ({
 		type: 'bar' as const,
 		name,

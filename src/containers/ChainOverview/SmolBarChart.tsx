@@ -12,7 +12,7 @@ export function SmolBarChart({
 	groupBy
 }: {
 	series: Array<[number, number]>
-	/** A net flow (ETF inflows): bars rise and fall in the up/down colours. Otherwise a total, in brand blue. */
+	/** A net flow (ETF inflows): bars rise and fall in the up/down colors. Otherwise a total, in brand blue. */
 	signed?: boolean
 	className?: string
 	groupBy?: 'daily' | 'weekly' | 'monthly'

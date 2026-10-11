@@ -145,7 +145,7 @@ export function VaultRiskUnmapped({
 				<p className="label-md text-primary">Risk scenarios for this pool aren&apos;t mapped yet</p>
 				<p className="max-w-md body-sm text-secondary">
 					Coverage is rolling out across protocols. This pool will populate as its scenarios are compiled and verified
-					on-chain.
+					onchain.
 				</p>
 			</div>
 		</Shell>

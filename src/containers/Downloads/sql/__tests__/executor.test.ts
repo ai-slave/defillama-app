@@ -62,8 +62,8 @@ test('abort waits for the driver to finish cancellation before another query can
 	await Promise.resolve()
 	expect(cancelSent).toHaveBeenCalledOnce()
 	expect(settled).toBe(false)
-	pending.reject(new Error('Query cancelled'))
-	expect(await result).toMatchObject({ ok: false, cancelled: true })
+	pending.reject(new Error('Query canceled'))
+	expect(await result).toMatchObject({ ok: false, canceled: true })
 	expect(await runSql(context, 'SELECT 3 AS value', {}, undefined, new AbortController().signal)).toMatchObject({
 		ok: true,
 		result: { rows: [[3]] }
@@ -81,7 +81,7 @@ test('an abort during the fresh-load retry delay never starts another query', as
 	expect(send).toHaveBeenCalledOnce()
 	controller.abort()
 	await vi.advanceTimersByTimeAsync(60)
-	expect(await result).toMatchObject({ ok: false, cancelled: true })
+	expect(await result).toMatchObject({ ok: false, canceled: true })
 	expect(send).toHaveBeenCalledOnce()
 })
 
@@ -122,16 +122,16 @@ test('queued cancellation cannot interrupt another result, and schema operations
 	const query = vi.fn().mockResolvedValue(table)
 	context.conn!.query = query
 	const first = runSql(context, 'SELECT 8 AS value', {}, undefined, new AbortController().signal)
-	const cancelled = new AbortController()
-	const second = runSql(context, 'SELECT 9 AS value', {}, undefined, cancelled.signal)
+	const canceled = new AbortController()
+	const second = runSql(context, 'SELECT 9 AS value', {}, undefined, canceled.signal)
 	const schema = queryDuckDB(context.conn!, 'DESCRIBE protocols')
 	await Promise.resolve()
-	cancelled.abort()
+	canceled.abort()
 	expect(cancelSent).not.toHaveBeenCalled()
 	expect(query).not.toHaveBeenCalled()
 	batches.resolve(table.batches)
 	expect(await first).toMatchObject({ ok: true, result: { rows: [[8]] } })
-	expect(await second).toMatchObject({ ok: false, cancelled: true })
+	expect(await second).toMatchObject({ ok: false, canceled: true })
 	await schema
 	expect(send).toHaveBeenCalledOnce()
 	expect(query).toHaveBeenCalledWith('DESCRIBE protocols')

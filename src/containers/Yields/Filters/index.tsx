@@ -10,7 +10,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { CountBadge } from '~/ui/CountBadge'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighborOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -39,7 +39,7 @@ function filterSelectionKey(filters: Record<string, unknown>): string {
 
 // Saved views re-render a task after a delete. With no view left, the popover's name field takes focus (its heading
 // only shows on phones, where this popover never opens).
-const focusNeighbourViewOnLeave = focusNeighbourOnLeave((node) =>
+const focusNeighborViewOnLeave = focusNeighborOnLeave((node) =>
 	node.closest('[data-dialog]')!.querySelector<HTMLElement>('input')
 )
 
@@ -116,7 +116,7 @@ export function SaveViewButton({
 											size="sm"
 											square
 											aria-label={`Delete ${viewName}`}
-											ref={focusNeighbourViewOnLeave}
+											ref={focusNeighborViewOnLeave}
 											onClick={() => deleteFilter(viewName)}
 										/>
 									}

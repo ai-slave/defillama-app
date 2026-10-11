@@ -193,7 +193,7 @@ test('native sharing distinguishes cancellation from failure and permits retry',
 	session.serve({ [SHARE]: () => shareResponse() })
 	await render(true)
 	await expectText('Share link copied to clipboard')
-	nativeShare.mockRejectedValueOnce(new DOMException('Cancelled', 'AbortError'))
+	nativeShare.mockRejectedValueOnce(new DOMException('Canceled', 'AbortError'))
 	await act(async () => button('Share…').click())
 	await settle()
 	expect(document.querySelector('[role="alert"]')).toBeNull()

@@ -4,7 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TablePager } from '~/components/Table/TablePager'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave, passFocusOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -296,7 +296,7 @@ export function DashboardDiscovery({
 									key={`pro-dashboard-tag-${tag}`}
 									data-active
 									data-row
-									ref={focusNeighbourOnLeave(() => searchRef.current)}
+									ref={focusNeighborOnLeave(() => searchRef.current)}
 									onClick={() => {
 										const { tag: currentTag } = router.query
 										let nextTag: Array<string> | undefined

@@ -81,7 +81,7 @@ export function Account() {
 			<SignInModal
 				trigger={
 					<Button variant="primary" size="sm" className="w-full">
-						Sign In / Subscribe
+						Sign in / Subscribe
 					</Button>
 				}
 			/>

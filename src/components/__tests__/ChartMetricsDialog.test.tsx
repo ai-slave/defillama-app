@@ -121,7 +121,7 @@ test("a metric's definition shows when its chip takes keyboard focus", async () 
 	await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Value locked in DeFi.'))
 })
 
-test('a long catalogue opens with focus in its search field', async () => {
+test('a long catalog opens with focus in its search field', async () => {
 	const labels = Array.from({ length: 12 }, (_, index) => `Metric ${index + 1}`)
 	await act(async () =>
 		root.render(

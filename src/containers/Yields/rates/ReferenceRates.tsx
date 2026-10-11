@@ -182,7 +182,7 @@ function BenchmarkMetric({
 			</dd>
 			{delta != null ? (
 				<dd className="flex items-center gap-1 body-sm text-secondary tabular-nums">
-					{/* Rounded to the shown precision, so a move under 0.005pp reads flat instead of a coloured 0.00pp. */}
+					{/* Rounded to the shown precision, so a move under 0.005pp reads flat instead of a colored 0.00pp. */}
 					<Change value={roundNumber(delta, 2)} unit="pp" />
 					<span className="text-tertiary">vs 7d ago</span>
 				</dd>
@@ -226,7 +226,7 @@ function ReferenceRatesSummary({
 			<PanelHeader className="items-start">
 				<div className="mr-auto flex min-w-0 flex-col gap-0.5">
 					<PanelTitle as="h1" id="reference-rates-title">
-						Stablecoin Reference Rates
+						Stablecoin reference rates
 					</PanelTitle>
 					<p className="max-w-3xl body-sm text-secondary">
 						Market-size weighted base rates for major stablecoins across the largest EVM lending markets. Rewards APY is

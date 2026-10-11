@@ -74,7 +74,7 @@ describe('getProtocolTvlStrike', () => {
 
 		expect(getProtocolTvlStrike(parent, bothOff)).toEqual({
 			struck: true,
-			text: 'Some sub-protocols are excluded from chain tvl'
+			text: 'Some sub-protocols are excluded from Chain TVL'
 		})
 		expect(getProtocolTvlStrike(parent, bothOn)).toEqual({ struck: false, text: null })
 	})

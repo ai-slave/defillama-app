@@ -324,7 +324,7 @@ export function EquitiesMarketsTable({
 				pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
 				emptyMessage={
 					activeVenue === 'all'
-						? `No on-chain markets found for ${ticker}.`
+						? `No onchain markets found for ${ticker}.`
 						: `No ${activeVenue} markets found for ${ticker}.`
 				}
 			/>

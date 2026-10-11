@@ -369,7 +369,7 @@ const demoMultiCharts: Array<MultiChartConfig> = [
 	}
 ]
 
-// The demo colours its entities like a dashboard would, in the order the cards appear on the page.
+// The demo colors its entities like a dashboard would, in the order the cards appear on the page.
 const DEMO_ENTITY_COLORS = getDashboardEntityColors([
 	...demoCharts.slice(0, 2),
 	demoMultiCharts[0],
@@ -382,7 +382,7 @@ const DEMO_ENTITY_COLORS = getDashboardEntityColors([
 const demoTextCard: TextConfig = {
 	id: 'demo-text-intro',
 	kind: 'text',
-	title: '📊 Pro Dashboard Features Showcase',
+	title: '📊 Pro Dashboard features showcase',
 	content: `This dashboard demonstrates all available Pro Dashboard features including:
 
 - **Chart Types**: TVL, Volume, Fees, Revenue, Users, Transactions
@@ -399,7 +399,7 @@ const demoTextCard: TextConfig = {
 const demoTextCard2: TextConfig = {
 	id: 'demo-text-metrics',
 	kind: 'text',
-	title: '📈 Understanding DeFi Metrics',
+	title: '📈 Understanding DeFi metrics',
 	content: `**Key DeFi Metrics Explained:**
 
 - **TVL (Total Value Locked)**: The total value of assets locked in DeFi protocols
@@ -407,7 +407,7 @@ const demoTextCard2: TextConfig = {
 - **Fees**: Protocol fees generated from user activity
 - **Revenue**: Net revenue earned by protocols
 - **Users**: Active user count on the platform
-- **Transactions**: Number of Onchain transactions
+- **Transactions**: Number of onchain transactions
 
 *These metrics help assess protocol health, adoption, and market trends.*`,
 	colSpan: 1
@@ -416,7 +416,7 @@ const demoTextCard2: TextConfig = {
 const demoTextCard3: TextConfig = {
 	id: 'demo-text-dashboard-table',
 	kind: 'text',
-	title: '🔧 Advanced Protocol Rankings',
+	title: '🔧 Advanced protocol rankings',
 	content: `**Dashboard Table Features:**
 
 - **Dynamic Columns**: Show/hide columns, reorder as needed
@@ -433,7 +433,7 @@ const demoTextCard3: TextConfig = {
 const demoTextCard4: TextConfig = {
 	id: 'demo-text-dashboard',
 	kind: 'text',
-	title: '🚀 Dashboard Management',
+	title: '🚀 Dashboard management',
 	content: `**Dashboard Capabilities:**
 
 - **Multiple Dashboards**: Create unlimited custom dashboards
@@ -450,15 +450,15 @@ const demoTextCard4: TextConfig = {
 const features = [
 	{
 		icon: 'bar-chart-2',
-		title: 'Customizable Charts'
+		title: 'Customizable charts'
 	},
 	{
 		icon: 'activity',
-		title: 'Multiple Dashboards'
+		title: 'Multiple dashboards'
 	},
 	{
 		icon: 'percent',
-		title: 'Advanced Analytics'
+		title: 'Advanced analytics'
 	},
 	{
 		icon: 'layers',
@@ -504,7 +504,7 @@ export function DemoPreview() {
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
 							<div className="flex flex-col rounded-sm border border-subtle bg-surface px-6 py-8 text-center">
-								<h3 className="mb-3 heading-sm text-primary">Free Account</h3>
+								<h3 className="mb-3 heading-sm text-primary">Free account</h3>
 								<div className="mb-6 heading-lg text-primary">
 									$0
 									<span className="body-lg text-secondary">/month</span>
@@ -530,7 +530,7 @@ export function DemoPreview() {
 									</li>
 								</ul>
 								<Button as={BasicLink} href={createAccountHref} variant="outline" size="lg">
-									Create Free Account
+									Create free account
 								</Button>
 							</div>
 

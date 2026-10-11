@@ -58,7 +58,7 @@ async function pickPortal() {
 		return found!
 	})
 	await act(async () => option.click())
-	return button('Fetch Transactions')
+	return button('Fetch transactions')
 }
 
 test('Fetch keeps focus while transactions load, and the pager stays focusable at the first page', async () => {
@@ -131,7 +131,7 @@ test('Fetch says what is missing under its field, focuses it, and puts an invert
 		)
 	)
 	const trigger = button('Select a bridge')
-	const fetchButton = button('Fetch Transactions')
+	const fetchButton = button('Fetch transactions')
 	expect(fetchButton.getAttribute('aria-disabled')).toBeNull()
 	await act(async () => fetchButton.click())
 	expect(fieldErrorOf(trigger)).toBeTruthy()

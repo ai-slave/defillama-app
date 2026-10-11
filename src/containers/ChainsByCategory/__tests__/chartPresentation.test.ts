@@ -33,7 +33,7 @@ describe('chains by category chart presentation', () => {
 		])
 		expect(result.chainSeries).toEqual(['Solana', 'Ethereum'])
 		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum'])
-		// Staking moves Solana ahead, and both charts colour it as the leader.
+		// Staking moves Solana ahead, and both charts color it as the leader.
 		expect(result.dominanceCharts.charts.map((chart) => chart.color)).toEqual([chartColor(0), chartColor(1)])
 		expect(result.colorsByChain).toEqual({ Solana: chartColor(0), Ethereum: chartColor(1) })
 	})

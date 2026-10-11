@@ -45,7 +45,7 @@ export function VerifiedApyAnnouncement({
 					<strong className="font-semibold">Verified APY</strong>: what you would actually have earned.
 					<span className="hidden lg:inline">
 						{' '}
-						Every day we simulate a real holder withdrawing from each pool on-chain and record what they received.
+						Every day we simulate a real holder withdrawing from each pool onchain and record what they received.
 					</span>
 				</span>
 				<button type="button" {...track?.cta} onClick={show} className={`ml-auto ${announcementCtaStyles}`}>

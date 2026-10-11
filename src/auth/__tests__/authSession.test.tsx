@@ -677,7 +677,7 @@ test.each(['cancel', 'replace'] as const)('ignores a late Google session after %
 	expect(onAuthenticated).not.toHaveBeenCalled()
 })
 
-test.each(['confirm', 'resend'] as const)('ignores a cancelled Google link %s response', async (operation) => {
+test.each(['confirm', 'resend'] as const)('ignores a canceled Google link %s response', async (operation) => {
 	await render()
 	const { fixture, finish } = holdOnce()
 	http.serve({ [operation === 'confirm' ? LINK_CONFIRM : LINK_RESEND]: fixture })

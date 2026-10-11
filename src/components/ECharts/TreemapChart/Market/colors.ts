@@ -1,6 +1,6 @@
 import { divergingColor } from '~/constants/colors'
 
-/** A tile takes the full rising or falling colour at a ±3% change. */
+/** A tile takes the full rising or falling color at a ±3% change. */
 const COLOR_CAP_PCT = 3
 
 export function getEquitiesTreemapColor(changePct: number | null): string {

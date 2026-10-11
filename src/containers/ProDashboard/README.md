@@ -25,7 +25,7 @@ A Pro dashboard is a JSON document the frontend owns. The server stores `data` a
 - An owner persists a variable value by rewriting the bound literals in the same save. A viewer overrides through `?var-<id>=…`, which also reaches the stream URL so edge cache variants stay correct. Search, SEO and AI iteration see real values.
 - Custom data rows stay out of the SSR HTML and arrive with the stream's `dashboard` chunk.
 - `variables` and `annotations` merge as whole top-level keys. The reducer keeps local edits of those keys when they differ from the save baseline.
-- A colour saved into a card wins over the entity colour (`chart.color ?? entityColors[…]`). Colours older composers saved by default are not migrated onto the palette: a saved hex cannot say whether the user picked it, so an old card may keep an off-palette colour.
+- A color saved into a card wins over the entity color (`chart.color ?? entityColors[…]`). Colors older composers saved by default are not migrated onto the palette: a saved hex cannot say whether the user picked it, so an old card may keep an off-palette color.
 - Undo history lives only in the tab; nothing is persisted, so a deleted card is recoverable until the tab closes.
 - New text fields (section titles, parameter and annotation labels, custom data names and columns) bypass server sanitization and render as plain text only.
 

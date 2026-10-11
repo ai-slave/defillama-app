@@ -222,7 +222,7 @@ export const exchangeDefinitions = {
 			description: 'Net USD flow into tracked reserve wallets over the last 7 days.'
 		},
 		inflows1mUsd: {
-			label: '1m Inflows',
+			label: '30d Inflows',
 			description: 'Net USD flow into tracked reserve wallets over the last month.'
 		},
 		ownTokenFraction: {

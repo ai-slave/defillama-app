@@ -57,7 +57,7 @@ export function FundingRoundsTable({ companyName, raises }: { companyName: strin
 		return (
 			<Panel>
 				<PanelHeader>
-					<PanelTitle>Funding Rounds</PanelTitle>
+					<PanelTitle>Funding rounds</PanelTitle>
 				</PanelHeader>
 				<p className="p-8 text-center body-md text-secondary">No funding rounds available.</p>
 			</Panel>
@@ -68,7 +68,7 @@ export function FundingRoundsTable({ companyName, raises }: { companyName: strin
 		<SearchTableProvider options={{ data: raises, columns, initialState: { sorting: DEFAULT_SORTING } }}>
 			<Card padding="none">
 				<TableToolbar>
-					<h2 className="mr-auto label-md">Funding Rounds</h2>
+					<h2 className="mr-auto label-md">Funding rounds</h2>
 					<TableSearchInput columnId="series" placeholder="Search rounds…" className={searchFieldInlineWrapperStyles} />
 					<TableCsvExport filename={`${companyName}-funding-rounds`} />
 				</TableToolbar>

@@ -171,7 +171,7 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="heading-xs">All Reserves</h3>
+			<h3 className="heading-xs">All reserves</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />
 			</div>
@@ -286,7 +286,7 @@ export default function Markets() {
 							dataset={marketSizeDataset}
 							charts={MARKET_SIZE_CHART}
 							valueSymbol="$"
-							title="Market Size by Chain"
+							title="Market size by chain"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
@@ -302,7 +302,7 @@ export default function Markets() {
 								dataset={utilizationDataset}
 								charts={UTILIZATION_CHART}
 								valueSymbol="%"
-								title="Utilization by Top Assets"
+								title="Utilization by top assets"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								chartOptions={AAVE_CATEGORY_PERCENT_CHART_OPTIONS}

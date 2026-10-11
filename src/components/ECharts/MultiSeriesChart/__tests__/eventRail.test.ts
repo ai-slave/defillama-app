@@ -74,7 +74,7 @@ describe('hallmark event-rail clusters', () => {
 	test('merges point events that would overlap and keeps distant ones apart', () => {
 		const events = pointEvents([100, 105, 112, 200])
 
-		// Each neighbour within a marker's width joins the run, so a chain of close events stays one marker.
+		// Each neighbor within a marker's width joins the run, so a chain of close events stays one marker.
 		expect([...clusterPointEvents(events, toX, 0, 1000)]).toEqual([
 			[0, [0, 1, 2]],
 			[3, [3]]
@@ -203,7 +203,7 @@ describe('hallmark event-rail rendering', () => {
 
 	test('keeps drawing a range band while the zoom shows only part of its span', () => {
 		const { drawn } = renderRail([], {
-			rangeHallmarks: [[[year(0, 10), year(4, 20)], 'Rewards programme']],
+			rangeHallmarks: [[[year(0, 10), year(4, 20)], 'Rewards program']],
 			zoom: [year(0, 15), year(1, 1)]
 		})
 

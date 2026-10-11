@@ -193,7 +193,7 @@
 		"react/react-in-jsx-scope": "off",
 		// These three want content, or a name, inside the element itself. This codebase composes controls
 		// with Ariakit's `render` prop, so the content arrives as the wrapper's children:
-		// `HovercardAnchor render={<a href=… />}>{label}` is a labelled link that the rule reads as an
+		// `HovercardAnchor render={<a href=… />}>{label}` is a labeled link that the rule reads as an
 		// empty one. That is every hit of the two content rules, and 46 of 78 for the name rule; 20 of
 		// those carry an explicit `sr-only` label, which an aria-label would override, breaking voice
 		// control. The other 18 need no name at all -- role="separator" dividers, <datalist> options whose

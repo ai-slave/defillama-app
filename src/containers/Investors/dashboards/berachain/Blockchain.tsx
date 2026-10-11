@@ -144,7 +144,7 @@ export default function Blockchain() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Chain Activity */}
-			<h2 className="heading-xs">Chain Activity</h2>
+			<h2 className="heading-xs">Chain activity</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile label="Latest Daily Txs" value={data.activityKpis.latestTxCount.formatted} />
 				<StatTile label="Active Addresses" value={data.activityKpis.latestActiveAddresses.formatted} />
@@ -155,7 +155,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily Transactions"
+						title="Daily transactions"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.transactions}
@@ -170,7 +170,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Active & New Addresses"
+						title="Active & new addresses"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.addresses}
@@ -183,7 +183,7 @@ export default function Blockchain() {
 			</Panel>
 
 			{/* Gas & Fee Economics */}
-			<h2 className="heading-xs">Gas & Fee Economics</h2>
+			<h2 className="heading-xs">Gas & fee economics</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile label="Fees (7d)" value={data.gasKpis.totalFees7d.formatted} />
 				<StatTile label="Fees (30d)" value={data.gasKpis.totalFees30d.formatted} />
@@ -194,7 +194,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily Gas Fees (USD)"
+						title="Daily gas fees (USD)"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.gasFees}
@@ -209,7 +209,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Block Utilization (%)"
+						title="Block utilization (%)"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.blockUtilization}
@@ -222,11 +222,11 @@ export default function Blockchain() {
 			</Panel>
 
 			{/* Contract Deployments */}
-			<h2 className="heading-xs">Contract Deployments</h2>
+			<h2 className="heading-xs">Contract deployments</h2>
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="New Contracts Deployed (Monthly)"
+						title="New contracts deployed (monthly)"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.contractDeployments}
@@ -239,11 +239,11 @@ export default function Blockchain() {
 			</Panel>
 
 			{/* Token Transfers */}
-			<h2 className="heading-xs">Token Transfers</h2>
+			<h2 className="heading-xs">Token transfers</h2>
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily Token Transfer Volume (USD)"
+						title="Daily token transfer volume (USD)"
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						dataset={data.chartDatasets.tokenTransfers}
@@ -257,7 +257,7 @@ export default function Blockchain() {
 
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Top Tokens by 30d Transfer Volume</h2>
+					<h2 className="heading-xs">Top tokens by 30d transfer volume</h2>
 					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>

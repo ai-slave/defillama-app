@@ -236,7 +236,7 @@ export function RWAOverviewChartPanel({
 			isFlowMetric && !isGroupedFlowChart && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
 		useInitialDataset: getInitialMetricDataset('onChainMcap') != null && !activeFilters && !isFlowVsPrice
 	})
-	// Only Flow vs Price cannot draw without the on-chain mcap, so only there does its failure fail the chart.
+	// Only Flow vs Price cannot draw without the onchain mcap, so only there does its failure fail the chart.
 	const flowChartFailedRead = mergeFailedReads([flowFailedRead, isFlowVsPrice ? flowMcapFailedRead : null])
 	const { chartDataset: flowActiveMcapDataset } = useRwaChartDataset({
 		selectedMetric: 'activeMcap',

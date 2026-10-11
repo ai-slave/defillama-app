@@ -89,7 +89,7 @@ export function TodoChecklistPanel({
 				{orderedTodos.map((todo) => {
 					const isActive = todo.status === 'in_progress'
 					const isCompleted = todo.status === 'completed'
-					const isCancelled = todo.status === 'cancelled'
+					const isCanceled = todo.status === 'cancelled'
 					return (
 						<li key={todo.id} className="flex items-start gap-2 p-0.5">
 							<span className="flex h-lh shrink-0 items-center body-sm">
@@ -99,7 +99,7 @@ export function TodoChecklistPanel({
 								className={`m-0 flex-1 body-sm ${
 									isActive
 										? 'font-medium text-primary'
-										: isCompleted || isCancelled
+										: isCompleted || isCanceled
 											? 'text-tertiary line-through'
 											: 'text-secondary'
 								}`}

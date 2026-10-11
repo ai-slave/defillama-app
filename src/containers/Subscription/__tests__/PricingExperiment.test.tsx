@@ -225,7 +225,7 @@ test('waits for the foreground and excludes trial, free signup and disabled chec
 	})
 	await act(async () => root.render(<Pricing />))
 	await act(async () =>
-		[...host.querySelectorAll('button')].find((button) => button.textContent === 'Start for Free')!.click()
+		[...host.querySelectorAll('button')].find((button) => button.textContent === 'Start for free')!.click()
 	)
 	expect(events('page-visit')).toHaveLength(1)
 	expect(events('subscribe-click')).toEqual([])
@@ -249,7 +249,7 @@ test('comparison checkout counts the plan click under fallback A and excludes sa
 			</main>
 		)
 	)
-	await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Get Started: API"]')!.click())
+	await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Get started: API"]')!.click())
 	await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Contact us: Enterprise"]')!.click())
 	expect(events('subscribe-click')).toEqual([
 		[
@@ -284,7 +284,7 @@ test('comparison-table paid-plan upgrades are not new subscribe clicks', async (
 			</main>
 		)
 	)
-	await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Get Started: API"]')!.click())
+	await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Get started: API"]')!.click())
 	expect(subscribe).toHaveBeenCalledExactlyOnceWith('api')
 	expect(events('subscribe-click')).toEqual([])
 })

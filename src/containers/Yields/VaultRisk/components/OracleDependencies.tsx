@@ -34,7 +34,7 @@ const EXCHANGE_RATE_KINDS = new Set(['exchange-rate', 'constant'])
 // Vendorless drainable exposure is grouped under provider 'none' upstream, which the
 // vendor tail drops as a gap vendor — without these rows it counts toward the header
 // total but appears nowhere (the sUSDe case: an immutable ERC4626 exchange rate carrying
-// most of the vault's oracle exposure). Split by what the feed is: a pure on-chain
+// most of the vault's oracle exposure). Split by what the feed is: a pure onchain
 // exchange rate has no admin at all; anything else is an honest resolver gap.
 type VendorlessGroup = { kind: 'exchange-rate' | 'unidentified'; exposureUsd: number; symbols: Array<string> }
 
@@ -144,7 +144,7 @@ export function OracleDependencies({
 					</p>
 				) : null}
 				<p className="max-w-2xl body-sm text-secondary">
-					Each price traces to a feed and the on-chain admin that can move it. Compromise either to misprice the
+					Each price traces to a feed and the onchain admin that can move it. Compromise either to misprice the
 					collateral and borrow against it. Per-row amounts overlap and are not summed.
 				</p>
 			</div>
@@ -207,7 +207,7 @@ export function OracleDependencies({
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
 									<span className="label-md text-primary">{v.provider}</span>
-									<span className="text-tertiary">· on-chain control not resolved</span>
+									<span className="text-tertiary">· onchain control not resolved</span>
 								</span>
 								{v.collateral_symbols.length > 0 ? (
 									<span className="body-sm text-tertiary">prices {v.collateral_symbols.join(', ')}</span>
@@ -242,10 +242,10 @@ export function OracleDependencies({
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
 									<span className="label-md text-primary">
-										{immutable ? 'On-chain exchange rate' : 'Unidentified feeds'}
+										{immutable ? 'Onchain exchange rate' : 'Unidentified feeds'}
 									</span>
 									<span className="text-tertiary">
-										{immutable ? '· no external feed or admin' : '· vendor and on-chain control not resolved'}
+										{immutable ? '· no external feed or admin' : '· vendor and onchain control not resolved'}
 									</span>
 								</span>
 								<span className="body-sm text-tertiary">prices {g.symbols.join(', ')}</span>

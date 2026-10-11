@@ -646,7 +646,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 						error={deleteFailed ? "Couldn't delete the alert. Try again." : null}
 						onConfirm={() => {
 							// A deleted row takes this confirmation and its trigger with it. The confirmation closes first, onto a
-							// neighbouring row's switch; once no row is left, the dialog's net takes focus.
+							// neighboring row's switch; once no row is left, the dialog's net takes focus.
 							const card = cardRef.current!
 							const next =
 								card.nextElementSibling?.querySelector<HTMLElement>('[role="switch"]') ??

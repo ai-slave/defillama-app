@@ -29,7 +29,7 @@ export function lockEarnRows(rows: Array<EarnPageRow>): Array<EarnPageRow> {
 	return rows.map(lockEarnRow)
 }
 
-/** Detail is the only response that serves `verified.methods` — the exact on-chain calls. */
+/** Detail is the only response that serves `verified.methods` — the exact onchain calls. */
 export function lockPoolDetail(detail: PoolDetail, measured = detail.verified != null): PoolDetail {
 	return { ...detail, verified: null, verified_locked: measured }
 }

@@ -48,7 +48,7 @@ const NUMBER_PARAM_KEYS = ['minTvl', 'maxTvl', 'minApy', 'maxApy', 'minAvailable
 type ArrayParamKey = (typeof ARRAY_PARAM_KEYS)[number]
 type NumberParamKey = (typeof NUMBER_PARAM_KEYS)[number]
 
-// The earn attributes EarnView can honour (URL `attribute` values).
+// The earn attributes EarnView can honor (URL `attribute` values).
 const EARN_ATTRIBUTE_VOCABULARY = new Set(['stablecoins', 'single_exposure', 'no_il', 'audited'])
 
 const EARN_PRESETS: Array<Preset> = [

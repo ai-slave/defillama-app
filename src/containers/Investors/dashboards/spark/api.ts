@@ -18,7 +18,7 @@ export async function fetchDuneQuery<T>(queryId: string): Promise<DuneResponse<T
 	return readInvestorApiJson<DuneResponse<T>>(response)
 }
 
-/** Palette colours by name in alphabetical order, so a name keeps its colour on every chart of the dashboard. */
+/** Palette colors by name in alphabetical order, so a name keeps its color on every chart of the dashboard. */
 export function assignColors(names: Array<string>): Record<string, string> {
 	const colors: Record<string, string> = {}
 	const sorted = names.toSorted()

@@ -73,7 +73,7 @@ describe('profile navigation segment resolution', () => {
 		expect(nextSelection).toBe('all')
 	})
 
-	test('lands on the rollup with no selection, and honours one the venue can serve', () => {
+	test('lands on the rollup with no selection, and honors one the venue can serve', () => {
 		expect(resolveProfileSegment(profile('spot', ['spot']), null)).toBe('all')
 		expect(resolveProfileSegment(profile('both', ['spot', 'linear_perp']), 'linear_perp')).toBe('linear_perp')
 		// A venue with no markets at all has nothing to show, not even the rollup.

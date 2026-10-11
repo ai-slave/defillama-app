@@ -7,7 +7,7 @@ import type { CSSProperties } from 'react'
    default, so a caller's rounded-* always wins. `style` is for measured
    widths that mirror the content being loaded. `still` drops the pulse for a
    placeholder that illustrates content rather than waits for it (a table
-   behind a "Coming Soon" note), where a pulse would read as loading.
+   behind a "Coming soon" note), where a pulse would read as loading.
 ---------------------------------------------------------------------------- */
 export function Skeleton({ className, style, still }: { className: string; style?: CSSProperties; still?: boolean }) {
 	return (

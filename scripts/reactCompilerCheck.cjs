@@ -80,7 +80,7 @@ for (const relativePath of files) {
 	// makes the recorded entry stale, which fails the check instead of silently compiling the component.
 	for (const event of events.filter((e) => e.kind === 'CompileSkip')) {
 		const at = event.fnLoc?.start?.line ?? '?'
-		// The compiler's own message interpolates the directive node, so normalise it to something a
+		// The compiler's own message interpolates the directive node, so normalize it to something a
 		// baseline diff can be read against.
 		const reason = /directive/.test(event.reason ?? '') ? 'Skipped by directive' : (event.reason ?? 'Skipped')
 		console.log(`  SKIPPED ${relativePath}:${at}: ${reason}`)

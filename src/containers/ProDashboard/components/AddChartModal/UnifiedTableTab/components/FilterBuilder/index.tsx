@@ -532,10 +532,10 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	const removeFilter = (filterId: string, removeButton: HTMLElement) => {
 		const removes = [...activeListRef.current!.querySelectorAll<HTMLElement>('[data-filter-remove]')]
 		const index = removes.indexOf(removeButton)
-		const neighbour = removes[index + 1] ?? removes[index - 1]
+		const neighbor = removes[index + 1] ?? removes[index - 1]
 		keepFocus(
 			() => handleRemoveFilter(filterId),
-			() => neighbour ?? optionOrSearch(filterId)
+			() => neighbor ?? optionOrSearch(filterId)
 		)
 	}
 

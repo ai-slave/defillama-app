@@ -12,14 +12,14 @@ import {
 import { getRwaPlatforms } from './grouping'
 import { getRwaOwnDimensions, getRwaPerpsInlineFilters } from './layout/inlineFilters'
 import type { RWAPageKind } from './layout/pageLayout'
-import { annualiseFundingRate } from './table/rows'
+import { annualizeFundingRate } from './table/rows'
 
 /**
  * The Perps tree's filters: the market's own fields, never the spot groups (Include toggles, AUM
  * ratios, compliance flags, Platforms). Pickers over the market's values and ranges over its numbers, all in the
  * URL, so a link carries the filter and Reset all clears it. The page's strip filters are the same records flagged
  * inline; More filters holds the rest. A page leaves out its own dimension; a picker with one value or a range no
- * market carries is not offered. Venue Type never removes a picker's value: it greys the values it leaves out.
+ * market carries is not offered. Venue Type never removes a picker's value: it grays the values it leaves out.
  */
 
 type QueryLike = Readonly<Record<string, string | Array<string> | undefined>>
@@ -62,7 +62,7 @@ export type RWAPerpsFilterDefinition =
 			/** Every value across the page's markets, ranked by open interest, largest first. Venue Type never removes one,
 			    so "every value" means the same under each choice and a pick never turns into it. */
 			values: Array<string>
-			/** Markets per value among those Venue Type keeps; a value at 0 is drawn greyed. */
+			/** Markets per value among those Venue Type keeps; a value at 0 is drawn grayed. */
 			counts: Record<string, number>
 			includeKey: string
 			excludeKey: ExcludeQueryKey
@@ -177,10 +177,10 @@ const RANGE_FILTERS: ReadonlyArray<{
 	},
 	{
 		id: 'fundingApr',
-		label: 'Funding (annualised)',
+		label: 'Funding (annualized)',
 		unit: 'percent',
 		keySuffix: 'FundingApr',
-		read: (row) => annualiseFundingRate(row.fundingRate ?? null, row.fundingIntervalHours ?? null)
+		read: (row) => annualizeFundingRate(row.fundingRate ?? null, row.fundingIntervalHours ?? null)
 	},
 	{ id: 'premium', label: 'Premium', unit: 'percent', keySuffix: 'Premium', read: (row) => percentOf(row.premium) },
 	{
@@ -219,7 +219,7 @@ export function getRwaPerpsFilterDefinitions(
 		})
 	}
 	// A page without the Venue Type control ignores includeCex/includeDex, as filterRwaPerpsRows does, so an old
-	// link carrying them neither greys values nor zeroes counts the table does not drop.
+	// link carrying them neither grays values nor zeroes counts the table does not drop.
 	const choice = definitions.length > 0 ? readRwaVenueTypeChoice(query) : 'all'
 	for (const filter of SELECT_FILTERS) {
 		if (own.includes(filter.id)) continue

@@ -84,7 +84,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 			<Card padding="none">
 				<PanelHeader>
 					<PanelTitle as="h1" className="whitespace-nowrap">
-						Total Value Lost in Hacks
+						Total value lost in hacks
 					</PanelTitle>
 					<TableSearchInput columnId="Name" placeholder="Search…" className={searchFieldInlineWrapperStyles} />
 					<TableColumnSelect />

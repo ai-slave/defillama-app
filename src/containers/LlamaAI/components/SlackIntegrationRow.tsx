@@ -131,7 +131,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 					link.state.status === 'loading' ||
 					link.state.status === 'error') && (
 					<ConnectButton
-						// Cancelling a pending link removes the block that held focus.
+						// Canceling a pending link removes the block that held focus.
 						ref={takeLostFocus}
 						onClick={() => link.connect()}
 						pendingLabel={link.state.status === 'loading' ? 'Loading…' : 'Opening…'}

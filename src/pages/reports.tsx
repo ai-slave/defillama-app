@@ -102,7 +102,7 @@ export default function ReportsPage() {
 
 			{/* Other Reports */}
 			<div className="flex flex-col gap-2">
-				<h2 className="px-1 heading-xs">Other Reports</h2>
+				<h2 className="px-1 heading-xs">Other reports</h2>
 				<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 					{otherReports.map((report) => (
 						<ReportCard key={report.title} report={report} />
@@ -137,7 +137,7 @@ function DLReportCard({ report }: { report: Report }) {
 						<div className="absolute inset-0 bg-linear-to-t from-page to-transparent" />
 						<div className="absolute bottom-3 left-4 flex items-center gap-2">
 							<h3 className="heading-xs text-primary">{report.title}</h3>
-							<span className="rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming Soon</span>
+							<span className="rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming soon</span>
 						</div>
 					</div>
 				)}
@@ -145,7 +145,7 @@ function DLReportCard({ report }: { report: Report }) {
 					{!report.image && (
 						<div className="flex items-center gap-2">
 							<h3 className="heading-xs">{report.title}</h3>
-							<span className="rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming Soon</span>
+							<span className="rounded-md bg-brand px-2 py-0.5 title-sm text-on-brand">Coming soon</span>
 						</div>
 					)}
 					<div className="flex items-center gap-3 body-sm text-secondary">

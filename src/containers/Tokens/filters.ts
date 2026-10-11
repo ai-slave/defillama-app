@@ -22,7 +22,7 @@ export interface TokensActiveFilter {
 }
 
 export const TOKENS_FILTER_CONFIGS: Array<TokensFilterConfig> = [
-	{ id: 'rank', label: 'MCap Rank', format: 'number', category: 'market' },
+	{ id: 'rank', label: 'Mcap Rank', format: 'number', category: 'market' },
 	...TOKENS_HIDEABLE_COLUMN_SPECS.flatMap((spec) =>
 		spec.id === 'rights'
 			? []

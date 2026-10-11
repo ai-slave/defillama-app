@@ -59,7 +59,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				<Card padding="none">
 					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
-							Protocol Expenses
+							Protocol expenses
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"

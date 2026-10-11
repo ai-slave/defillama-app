@@ -426,7 +426,7 @@ function markDate(time: number): string {
 	return time % 86_400 === 0 ? iso.slice(0, 10) : `${iso.slice(0, 16).replace('T', ' ')} UTC`
 }
 
-// The library takes a colour string, not a var(), and the brand token is what sets an agent badge
+// The library takes a color string, not a var(), and the brand token is what sets an agent badge
 // apart from the orange unlock badge.
 function brandColor(): string {
 	if (typeof document === 'undefined') return ''
@@ -568,14 +568,14 @@ interface StudyMetainfo {
 	inputs?: Array<Record<string, unknown>>
 }
 
-const CATALOGUE_INPUT_KEYS = ['id', 'name', 'type', 'defval', 'min', 'max', 'options'] as const
+const CATALOG_INPUT_KEYS = ['id', 'name', 'type', 'defval', 'min', 'max', 'options'] as const
 
 /**
  * What `createStudy` will accept on this build, as the agent is allowed to see it. An input marked
  * isHidden is machine-populated from the viewport, so it never leaves the browser; `isHidden` is
  * sparse, and an absent key means visible.
  */
-export function studyCatalogueFrom(metainfos: Array<StudyMetainfo>) {
+export function studyCatalogFrom(metainfos: Array<StudyMetainfo>) {
 	return metainfos
 		.filter(
 			(info) =>
@@ -597,7 +597,7 @@ export function studyCatalogueFrom(metainfos: Array<StudyMetainfo>) {
 				.filter((input) => input.isHidden !== true)
 				.map((input) =>
 					Object.fromEntries(
-						CATALOGUE_INPUT_KEYS.filter((key) => input[key] !== undefined).map((key) => [key, input[key]])
+						CATALOG_INPUT_KEYS.filter((key) => input[key] !== undefined).map((key) => [key, input[key]])
 					)
 				)
 		}))
@@ -607,8 +607,8 @@ let postedVersion: string | null = null
 
 // is_price_study and shortDescription — the acronym vocabulary the agent names studies by — exist
 // only on the raw metainfo, not on the public getStudiesList().
-const CATALOGUE_RETRY_MS = 400
-const CATALOGUE_TRIES = 15
+const CATALOG_RETRY_MS = 400
+const CATALOG_TRIES = 15
 
 /**
  * The widget the page holds and the `tradingViewApi` the library publishes inside its own frame are
@@ -631,7 +631,7 @@ function studyMetainfos(widget: TerminalWidget): unknown {
 	return null
 }
 
-export function postStudyCatalogue(widget: TerminalWidget, fetchFn: typeof fetch, tries = CATALOGUE_TRIES) {
+export function postStudyCatalog(widget: TerminalWidget, fetchFn: typeof fetch, tries = CATALOG_TRIES) {
 	const version = window.TradingView?.version?.() ?? 'unknown'
 	if (postedVersion === version) return
 	const metainfos = studyMetainfos(widget)
@@ -639,17 +639,17 @@ export function postStudyCatalogue(widget: TerminalWidget, fetchFn: typeof fetch
 	// moment it is offered. Giving up here leaves the agent unable to name any indicator for the
 	// life of the page, so wait for it rather than miss it.
 	if (!Array.isArray(metainfos) || metainfos.length === 0) {
-		if (tries > 0) setTimeout(() => postStudyCatalogue(widget, fetchFn, tries - 1), CATALOGUE_RETRY_MS)
+		if (tries > 0) setTimeout(() => postStudyCatalog(widget, fetchFn, tries - 1), CATALOG_RETRY_MS)
 		return
 	}
 	postedVersion = version
 	fetchFn(`${TERMINAL_API}/studies`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ version, studies: studyCatalogueFrom(metainfos as Array<StudyMetainfo>) })
+		body: JSON.stringify({ version, studies: studyCatalogFrom(metainfos as Array<StudyMetainfo>) })
 	})
 		// A rejected POST resolves, it does not throw, so only checking for a thrown error marks a
-		// refused catalogue as delivered and never retries it.
+		// refused catalog as delivered and never retries it.
 		.then((res) => {
 			if (!res.ok) postedVersion = null
 		})

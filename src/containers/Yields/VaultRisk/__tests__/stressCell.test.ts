@@ -185,7 +185,7 @@ describe('formatDepositPct', () => {
 	})
 })
 
-// The % is position-independent (loss socialises pro-rata); only the dollar figure scales with the
+// The % is position-independent (loss socializes pro-rata); only the dollar figure scales with the
 // deposit. scaleToPosition owns that: your loss = pool loss × your share, share capped at 1.
 describe('scaleToPosition', () => {
 	test('returns the pool figure unchanged when no deposit is set or supply is unknown', () => {

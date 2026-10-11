@@ -703,7 +703,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={supplyApy7dCharts}
 													chartOptions={singlePercentTimeChartOptions}
-													title="7 Day Avg Supply APY"
+													title="7d avg supply APY"
 													valueSymbol="%"
 												/>
 											) : null}
@@ -713,7 +713,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={borrowApyCharts}
 													chartOptions={percentTimeChartOptions}
-													title="Borrow Cost APY"
+													title="Borrow cost APY"
 													valueSymbol="%"
 													showLegend
 												/>
@@ -724,7 +724,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={netBorrowApyCharts}
 													chartOptions={singlePercentTimeChartOptions}
-													title="Net Borrow Cost"
+													title="Net borrow cost"
 													valueSymbol="%"
 												/>
 											) : null}

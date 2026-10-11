@@ -33,7 +33,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 					chart={props.distributionChart}
 					scope="overview"
 					timestamp={props.timestamp}
-					title="Liquidation Distribution"
+					title="Liquidation distribution"
 					defaultBreakdownMode="protocol"
 				/>
 			</div>

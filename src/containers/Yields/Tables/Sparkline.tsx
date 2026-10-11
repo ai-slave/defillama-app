@@ -1,5 +1,5 @@
 import { formatFixedNumber } from '~/utils/numberFormat'
-// Inline SVG sparkline for the /yields "30d Trend" column. Uses the yields colour
+// Inline SVG sparkline for the /yields "30d Trend" column. Uses the yields color
 // family (--apy-mid up, --apy-very down, --text-tertiary flat) so the sparkline speaks
 // the same green/red as stability, signed APYs and the charts.
 // `null` entries are missing days (gaps) and must never be plotted as zero.
@@ -37,7 +37,7 @@ export function Sparkline({ points, width = 84, height = 24 }: SparklineProps) {
 	}
 
 	// Fewer than two real points is not a trend — render the shared empty placeholder (the em
-	// dash the column aligns) rather than a lone degenerate dot floating off-centre.
+	// dash the column aligns) rather than a lone degenerate dot floating off-center.
 	if (count < 2 || first === null || last === null) {
 		return <EmptyCell />
 	}

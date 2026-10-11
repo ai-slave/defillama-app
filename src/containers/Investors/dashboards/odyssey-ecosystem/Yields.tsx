@@ -35,7 +35,7 @@ export default function Yields() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">Odyssey Loopr · Max APY by Chain</h2>
+			<h2 className="heading-xs">Odyssey Loopr · Max APY by chain</h2>
 			<ChartCard title="Aggregated APY per chain" subtitle="At max leverage, across all live Looper strategies">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.chain}
@@ -54,7 +54,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Odyssey Loopr · Per-Strategy Max APY</h2>
+			<h2 className="heading-xs">Odyssey Loopr · Per-strategy max APY</h2>
 			<ChartCard title="Live strategies" subtitle="Collateral / borrow APY per pool (snapshot)">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.name, row.chain, row.collateral, row.borrow])}
@@ -89,7 +89,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Vesper Pools · Net APY</h2>
+			<h2 className="heading-xs">Vesper pools · Net APY</h2>
 			<ChartCard title="All Vesper pools" subtitle="Current snapshot across Ethereum, Optimism and Base">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.pool, row.chain, row.asset])}
@@ -110,7 +110,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Synth LP Pools · Current APY</h2>
+			<h2 className="heading-xs">Synth LP pools · Current APY</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{Object.entries(data?.lpApyHistory || {}).map(([key, venue]) => (
 					<ChartCard key={key} title={venue.venue} subtitle="Latest APY per pool">
@@ -132,7 +132,7 @@ export default function Yields() {
 				))}
 			</div>
 
-			<h2 className="heading-xs">All Synth LP Pools</h2>
+			<h2 className="heading-xs">All Synth LP pools</h2>
 			<ChartCard title="LP pools snapshot" subtitle="Live across Aerodrome, Velodrome, Curve, Lithos">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.venue, row.chain, row.pool])}

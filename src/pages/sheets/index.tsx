@@ -50,7 +50,7 @@ export default function Sheets() {
 								Templates
 							</Button>
 							<Button as={BasicLink} href="/" variant="ghost" size="md">
-								Return to Main Page
+								Return to main page
 							</Button>
 						</nav>
 
@@ -92,7 +92,7 @@ export default function Sheets() {
 									>
 										Templates
 									</MenuItem>
-									<MenuItem render={<BasicLink href="/" />}>Return to Main Page</MenuItem>
+									<MenuItem render={<BasicLink href="/" />}>Return to main page</MenuItem>
 								</MenuSurface>
 							</Ariakit.MenuProvider>
 						</nav>

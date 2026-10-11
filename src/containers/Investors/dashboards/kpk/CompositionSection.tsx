@@ -52,7 +52,7 @@ export function CompositionSection({
 		(picked && comps?.[picked] ? picked : undefined) ??
 		(comps?.[initialKey] ? initialKey : options[0]?.value) ??
 		initialKey
-	// Memoised because the pre-range fallback mints an object, and `ranges` keys off it.
+	// Memoized because the pre-range fallback mints an object, and `ranges` keys off it.
 	const ranged = useMemo(() => asRanged(comps?.[breakdown]), [comps, breakdown])
 
 	const ranges = useMemo(() => rangeOptions(ranged), [ranged])

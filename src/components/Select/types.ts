@@ -5,7 +5,7 @@ export type SelectOption = {
 	name: string
 	help?: string
 	icon?: ReactNode
-	/** Drawn greyed out: a value the page's current settings leave out. */
+	/** Drawn grayed out: a value the page's current settings leave out. */
 	muted?: boolean
 	/** Shown but not pickable, with `help` as its visible reason (a private Slack channel the bot is not in). */
 	disabled?: boolean

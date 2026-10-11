@@ -8,8 +8,8 @@ import { tw } from './tw'
    under it, like Button md), bg-page on the surface it sits in,
    border-medium 1px like the controls beside it, darkening to border-strong
    on hover; bg-clip-padding keeps the darker field fill from showing through
-   the translucent border, so the edge matches its neighbours exactly;
-   8px radius, px-3. Beside panel-coloured buttons the field keeps its darker
+   the translucent border, so the edge matches its neighbors exactly;
+   8px radius, px-3. Beside panel-colored buttons the field keeps its darker
    bg-page fill, and the same border then reads a little different on the
    two fills; that is accepted, because the fill marks where to type. The outline is faint, so a field is identified
    by what it carries: a visible label above it, or a search icon with a
@@ -85,7 +85,7 @@ const codeInputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:font-mono m
 
 const codeTextareaStyles = `${fieldSurfaceStyles} py-2 max-sm:font-mono max-sm:placeholder:text-sm/6 sm:mono-md`
 
-/** A one-time code (email verification, account link): centred digits spaced apart, the hint at normal spacing. */
+/** A one-time code (email verification, account link): centered digits spaced apart, the hint at normal spacing. */
 const oneTimeCodeInputStyles = `${inputStyles} text-center tracking-[0.4em] placeholder:tracking-normal`
 
 /* A field with fixed text inside its box (a URL prefix, a unit): the frame draws the recipe's box, hover, focus and
@@ -120,7 +120,7 @@ const INPUT_VARIANTS = {
 type InputProps = (
 	| {
 			/** text (default); code for addresses, hex colors and formulas (mono at the same sizes); oneTimeCode for a
-			    verification code (centred, spaced digits); inline for a rename in place inside a tab or a dense row. */
+			    verification code (centered, spaced digits); inline for a rename in place inside a tab or a dense row. */
 			variant?: keyof typeof INPUT_VARIANTS
 			prefix?: never
 			suffix?: never

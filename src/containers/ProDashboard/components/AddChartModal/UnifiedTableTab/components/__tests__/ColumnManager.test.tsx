@@ -94,7 +94,7 @@ describe('without Pro', () => {
 	test('a custom column preset offers the upgrade instead of opening the form', async () => {
 		const onCustomColumnDraftChange = vi.fn()
 		await renderManager({ onCustomColumnDraftChange })
-		await act(async () => button('TVL/MCap').click())
+		await act(async () => button('TVL/Mcap').click())
 		await waitForUi(() => expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Upgrade to Pro'))
 		expect(nameField()).toBeNull()
 		expect(onCustomColumnDraftChange).not.toHaveBeenCalled()
@@ -129,11 +129,11 @@ describe('a subscriber', () => {
 	test('a custom column preset opens the form with the preset as the draft', async () => {
 		const onCustomColumnDraftChange = vi.fn()
 		await renderManager({ onCustomColumnDraftChange })
-		await act(async () => button('TVL/MCap').click())
+		await act(async () => button('TVL/Mcap').click())
 		expect(nameField()).not.toBeNull()
 		expect(onCustomColumnDraftChange).toHaveBeenLastCalledWith({
 			id: null,
-			name: 'TVL/MCap',
+			name: 'TVL/Mcap',
 			expression: 'tvl / mcap',
 			format: 'ratio',
 			aggregation: null

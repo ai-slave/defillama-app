@@ -29,9 +29,9 @@ export function PreTgePerformance({
 	if (fundraisingStatus == null) return null
 	return (
 		<>
-			<h2 className="heading-sm">Performance Overview: Fundraising</h2>
+			<h2 className="heading-sm">Performance overview: fundraising</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				<ValueCard title="Last Fundraising Round" value={fundraisingStatus} />
+				<ValueCard title="Last fundraising round" value={fundraisingStatus} />
 			</div>
 		</>
 	)

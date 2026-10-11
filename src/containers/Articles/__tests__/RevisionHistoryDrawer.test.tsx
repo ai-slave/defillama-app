@@ -378,7 +378,7 @@ describe('RevisionHistoryDrawer', () => {
 		expect(row('rev-3').getAttribute('aria-current')).toBe('true')
 	})
 
-	test('a cancelled delete hands focus back to Delete', async () => {
+	test('a canceled delete hands focus back to Delete', async () => {
 		await renderDrawer()
 		await selectRevision('rev-2')
 		await waitForUi(() => expect(sheetText()).toContain('Revision 2'))

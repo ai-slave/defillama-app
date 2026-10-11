@@ -140,7 +140,7 @@ export interface CollateralVM {
 	liquidationThreshold: number | null // riskiest (highest) LLTV across markets; 0–1
 	borrowedDebtUsd: number | null
 	badDebtAtZeroUsd: number | null // THIS vault's pro-rata bad-debt ceiling at −100%
-	badDebtBasis: BadDebtBasis | null // null = un-migrated protocol (legacy behaviour)
+	badDebtBasis: BadDebtBasis | null // null = un-migrated protocol (legacy behavior)
 	badDebtMarkets: Array<{ lltv: number | null; badDebtAtZeroUsd: number }>
 	drainableUsd: number | null // oracle-compromise loss
 	aggregateTrustUsd: number

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getProtocolEmissons, isEmptyProtocolEmissionResult } from '~/containers/Unlocks/queries'
+import { getProtocolEmissions, isEmptyProtocolEmissionResult } from '~/containers/Unlocks/queries'
 import { withSubscriptionJsonRoute } from '~/server/api/withSubscriptionJsonRoute'
 import { slug } from '~/utils'
 
@@ -29,7 +29,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	metadataModule.refreshMetadataInBackgroundIfStale('token_unlocks_api')
-	const data = await getProtocolEmissons(emissionsSlug, {
+	const data = await getProtocolEmissions(emissionsSlug, {
 		skipAvailabilityCheck: true,
 		tokenlist: metadataModule.default.tokenlist
 	})

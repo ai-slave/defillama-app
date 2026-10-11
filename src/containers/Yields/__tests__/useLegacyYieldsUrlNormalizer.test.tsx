@@ -106,7 +106,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		expect(settled).toBe(true)
 	})
 
-	test('retries a cancelled replace instead of leaving pool fetching disabled', async () => {
+	test('retries a canceled replace instead of leaving pool fetching disabled', async () => {
 		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
 		routerMock.replace.mockResolvedValueOnce(false)
 		await render({})
@@ -223,7 +223,7 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		}
 	})
 
-	test('the URL wins over storage, and legacy params are canonicalised in the same replace', async () => {
+	test('the URL wins over storage, and legacy params are canonicalized in the same replace', async () => {
 		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
 		await render({ apyWindow: 'avg_7d' })
 		expect(settled).toBe(true)

@@ -71,7 +71,7 @@ async function getContracts(chain: string, time: string) {
 							try {
 								name = await fetchJson(`https://api.llama.fi/contractName2/${chain}/${contract.contract.toLowerCase()}`)
 								if (name.name === '') {
-									throw new Error('Etherescan: Contract not verified')
+									throw new Error('Etherscan: Contract not verified')
 								}
 							} catch {
 								name = undefined
@@ -133,7 +133,7 @@ export default function TrendingContracts() {
 		>
 			<Panel className="flex-1">
 				<PanelHeader>
-					<PanelTitle as="h1">Trending Contracts</PanelTitle>
+					<PanelTitle as="h1">Trending contracts</PanelTitle>
 					<SegmentedControl
 						variant="default"
 						size="md"

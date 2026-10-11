@@ -44,7 +44,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 		header: '24H',
 		width: 90,
 		format: 'percent',
-		filterLabel: '24H Change',
+		filterLabel: '24h Change',
 		filterCategory: 'price',
 		csvValue: (row) => row.priceChange24h ?? ''
 	},
@@ -53,7 +53,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 		header: '7D',
 		width: 90,
 		format: 'percent',
-		filterLabel: '7D Change',
+		filterLabel: '7d Change',
 		filterCategory: 'price',
 		csvValue: (row) => row.priceChange7d ?? ''
 	},
@@ -62,13 +62,13 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 		header: '30D',
 		width: 90,
 		format: 'percent',
-		filterLabel: '30D Change',
+		filterLabel: '30d Change',
 		filterCategory: 'price',
 		csvValue: (row) => row.priceChange30d ?? ''
 	},
 	{
 		id: 'marketCap',
-		header: 'MCap',
+		header: 'Mcap',
 		width: 120,
 		format: 'currency',
 		filterCategory: 'valuation',
@@ -100,7 +100,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'spotVolume24h',
-		header: '24H Spot Vol',
+		header: '24h Spot Vol',
 		width: 120,
 		format: 'currency',
 		filterCategory: 'activity',
@@ -108,7 +108,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'perpsVolume24h',
-		header: '24H Perps Vol',
+		header: '24h Perps Vol',
 		width: 120,
 		format: 'currency',
 		filterCategory: 'activity',
@@ -124,7 +124,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'fees24h',
-		header: '24H Fees',
+		header: '24h Fees',
 		width: 110,
 		format: 'currency',
 		filterCategory: 'earnings',
@@ -132,7 +132,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'revenue24h',
-		header: '24H Rev',
+		header: '24h Rev',
 		width: 110,
 		format: 'currency',
 		filterCategory: 'earnings',
@@ -140,7 +140,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'holdersRevenue24h',
-		header: '24H Holders Rev',
+		header: '24h Holders Rev',
 		width: 150,
 		format: 'currency',
 		filterCategory: 'earnings',
@@ -157,7 +157,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	{ id: 'rights', header: 'Rights', width: 90, csvValue: (row) => row.rights?.protocolName ?? '' },
 	{
 		id: 'unlock30dUsd',
-		header: 'Past 30D Unlocks',
+		header: 'Past 30d Unlocks',
 		width: 160,
 		format: 'currency',
 		filterCategory: 'unlocks',
@@ -165,7 +165,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	},
 	{
 		id: 'upcomingUnlockUsd',
-		header: 'Next 30D Unlocks',
+		header: 'Next 30d Unlocks',
 		width: 160,
 		format: 'currency',
 		filterCategory: 'unlocks',

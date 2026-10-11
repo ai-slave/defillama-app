@@ -478,7 +478,7 @@ const COLOR_CLASS = new RegExp(
 	'g'
 )
 // Every custom property the stylesheets define. A `border-(--name)` whose variable is defined nowhere resolves to
-// nothing, and the border falls back to the text colour.
+// nothing, and the border falls back to the text color.
 const DEFINED_PROPERTIES = new Set([...TOKEN_CSS.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]))
 const VAR_CLASS = new RegExp(`(?<![\\w-])(?:[\\w\\-[\\]&=.'*@():>]+:)*!?(?:${COLOR_PROPS})-\\((--[\\w-]+)\\)`, 'g')
 function matchUnresolvedTokenUtility(content) {
@@ -643,7 +643,7 @@ const RULES = [
 		id: 'hex-in-classname',
 		exceptions: {
 			'src/containers/MCP/index.tsx':
-				"the terminal mock's window-control dots: macOS's close, minimise and zoom colours, the same in both modes",
+				"the terminal mock's window-control dots: macOS's close, minimize and zoom colors, the same in both modes",
 			'src/containers/MarketMakers/DocsFigures.tsx':
 				"the docs figures' frames: backdrops matched to their photographic background images, and a rule around a screenshot on its fixed light canvas, the same in both modes",
 			'src/containers/MarketMakers/colors.ts':
@@ -736,13 +736,13 @@ const RULES = [
 			'src/containers/Articles/editor/ArticleChartPicker.tsx':
 				'an entity row with its logo; a disabled token cannot dim the logo',
 			'src/containers/LlamaAI/components/GoldCta.tsx':
-				"the gold gradient CTA's auth-loading placeholder; the disabled fill would swap the gold for grey and flash on every load of /ai",
+				"the gold gradient CTA's auth-loading placeholder; the disabled fill would swap the gold for gray and flash on every load of /ai",
 			'src/containers/ProDashboard/components/ComparisonWizard/steps/SelectItemsStep.tsx':
 				'an item row with its token logo; a disabled token cannot dim the logo',
 			'src/containers/LlamaAI/components/charts/ChartStyleEditor.tsx':
-				'the colour swatches dim with the locked form during a save; a disabled token cannot dim the colour they show',
+				'the color swatches dim with the locked form during a save; a disabled token cannot dim the color they show',
 			'src/containers/ProDashboard/components/CreateDashboardPicker.tsx':
-				'option cards whose brand icon tiles carry their own colour, dimmed as one while a dashboard is created'
+				'option cards whose brand icon tiles carry their own color, dimmed as one while a dashboard is created'
 		},
 		description:
 			'a disabled state drawn with opacity; controls take text-disabled, border-disabled and bg-disabled (design.md → Color ramps). Only a composite whose children carry their own colors or imagery keeps opacity',
@@ -814,9 +814,9 @@ const RULES = [
 	{
 		id: 'implicit-border-color',
 		exceptions: {
-			'src/ui/MetricChip.tsx': "the chip's outline is its series colour, set inline from its `color` prop",
+			'src/ui/MetricChip.tsx': "the chip's outline is its series color, set inline from its `color` prop",
 			'src/containers/LlamaAI/components/messages/CitationPill.tsx':
-				'a shared citation box constant; both of its uses add the border colour',
+				'a shared citation box constant; both of its uses add the border color',
 			'src/containers/Subscription/components.tsx':
 				"a one-side border fragment joined into ComparisonCell's class string, which sets border-subtle",
 			'src/containers/Subscription/sections/SubscriptionComparisonSection.tsx':
@@ -1063,7 +1063,7 @@ const RULES = [
 		skipTests: true
 	},
 	{
-		id: 'hand-coloured-change',
+		id: 'hand-colored-change',
 		exceptions: {
 			'src/containers/Bridges/BridgesLargeTxsTable.tsx':
 				'a Deposit or Withdrawal label names a direction, not a movement',
@@ -1073,16 +1073,16 @@ const RULES = [
 			'src/containers/Exchanges/ProfileExecution.tsx': 'an execution cost, red when it costs the trader',
 			'src/containers/ProDashboard/ui/ProBadge.tsx': "the Pro metric card's change pill, which tints its fill",
 			'src/containers/ProtocolOverview/IncomeStatement.tsx':
-				'earnings coloured as a profit or a loss, a level, not a movement',
-			'src/components/ECharts/shared/chartTheme.ts': 'maps the tokens to the colours ECharts draws with',
+				'earnings colored as a profit or a loss, a level, not a movement',
+			'src/components/ECharts/shared/chartTheme.ts': 'maps the tokens to the colors ECharts draws with',
 			'src/containers/Yields/Tables/YieldsCells.tsx': 'a signed APY is a rate that can go negative, not a movement',
 			'src/containers/Yields/poolDetail/ExitReliabilityPanel.tsx':
-				'the no-interruptions note, set in the positive hue of the measured-on-chain well',
+				'the no-interruptions note, set in the positive hue of the measured-onchain well',
 			'src/containers/Yields/poolDetail/PoolGrowthChart.tsx': 'an unrecovered drawdown, a status beside the figures'
 		},
 		description:
-			'a movement coloured by hand with text-data-up/down — render Change from src/ui/Change.tsx (unit percent, usd, count or pp), or pass `change` data to SummaryChange, StatTile, InlineStatStrip or SmolStatCard; Change owns the sign, the format and the zero colour',
-		// The aliases count too: --yield-positive-text is --text-data-up, and var() or text-(--…) reach the same colour.
+			'a movement colored by hand with text-data-up/down — render Change from src/ui/Change.tsx (unit percent, usd, count or pp), or pass `change` data to SummaryChange, StatTile, InlineStatStrip or SmolStatCard; Change owns the sign, the format and the zero color',
+		// The aliases count too: --yield-positive-text is --text-data-up, and var() or text-(--…) reach the same color.
 		match: (content) =>
 			withoutComments(content).match(
 				/(?:(?<![\w-])text-data-(?:up|down)|--(?:text-|color-)?data-(?:up|down)|--yield-(?:positive|negative)-text)(?![\w-])/g
@@ -1107,8 +1107,8 @@ const RULES = [
 			'src/containers/LlamaAI/components/alerts/ui.tsx': "an alert's icon tile"
 		},
 		description:
-			'a status coloured by hand with a success, warning or error tint and its text colour — render StatusBadge from src/ui/StatusBadge.tsx with status good, caution, bad or neutral; map the product value to a status, never to classes',
-		// One class string that pairs a status tint at rest with that status's text colour is a status pill drawn by hand. A
+			'a status colored by hand with a success, warning or error tint and its text color — render StatusBadge from src/ui/StatusBadge.tsx with status good, caution, bad or neutral; map the product value to a status, never to classes',
+		// One class string that pairs a status tint at rest with that status's text color is a status pill drawn by hand. A
 		// tint behind a state variant (hover:bg-error-tint) is a wash, not a status.
 		match: (content) => {
 			const found = []
@@ -1127,14 +1127,14 @@ const RULES = [
 			'src/components/Nav/shared.tsx':
 				'the attention marker on a nav link, which draws the eye rather than naming a state',
 			'src/containers/Articles/editor/RevisionHistoryDrawer.tsx':
-				"the revision timeline's event glyphs, told apart by shape as well as colour",
+				"the revision timeline's event glyphs, told apart by shape as well as color",
 			'src/containers/AttestationLanding/index.tsx':
 				"the attestation demo's animated verification lights, with a brand recheck state, sized to the illustration",
 			'src/containers/Yields/VaultRisk/primitives/MofNPips.tsx': 'an m-of-n signer threshold, one pip per signer',
 			'src/pages/token-rights.tsx': 'a token right on or off, a filled or hollow dot in one hue'
 		},
 		description:
-			'a status dot coloured by hand: a small round bg-success, bg-warning or bg-error mark — render StatusDot from src/ui/StatusBadge.tsx with status good, caution, bad or neutral, and `label` when no text beside it names the state',
+			'a status dot colored by hand: a small round bg-success, bg-warning or bg-error mark — render StatusDot from src/ui/StatusBadge.tsx with status good, caution, bad or neutral, and `label` when no text beside it names the state',
 		// One class string with a 4–8px round box and a solid status fill is a status dot drawn by hand. A dot doing
 		// another job (a marker, a pip, a glyph told apart by shape) is a listed exception.
 		match: (content) => {
@@ -1169,8 +1169,8 @@ const RULES = [
 			'src/pages/support.tsx': 'the request-sent confirmation, a success check in a tinted disc'
 		},
 		description:
-			'an empty state built by hand: an icon disc or a dashed text-centred well — render EmptyState from src/ui/Status.tsx (size md or lg, framed for a dashed well); a quick no-match in a list, popover or table is NoResults',
-		// An icon disc is a sized rounded-full box with a fill that centres its icon; a dashed box that centres quiet text is
+			'an empty state built by hand: an icon disc or a dashed text-centered well — render EmptyState from src/ui/Status.tsx (size md or lg, framed for a dashed well); a quick no-match in a list, popover or table is NoResults',
+		// An icon disc is a sized rounded-full box with a fill that centers its icon; a dashed box that centers quiet text is
 		// an empty well. A dashed box with a hover state is a control (DashedTile, UploadTile), not a well.
 		match: (content) => {
 			const found = []

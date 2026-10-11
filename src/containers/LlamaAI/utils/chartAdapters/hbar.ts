@@ -54,7 +54,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		if (!primarySeries) throw new Error('No series configuration found')
 
 		// Multi-series hbar → grouped bars (two+ bars per category). Single-series keeps the
-		// per-bar colour ranking look below.
+		// per-bar color ranking look below.
 		if (config.series.length > 1) {
 			const xField = primarySeries.dataMapping.xField
 			const logoByCategory = buildLogoByCategory(config.axes.x)
@@ -127,7 +127,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		}
 		const completeLogos = logos?.every(Boolean) ? logos : undefined
 
-		// A palette colour per bar by rank; honor an explicit per-category override from the editor.
+		// A palette color per bar by rank; honor an explicit per-category override from the editor.
 		const colors: Array<string> = []
 		for (const [index, [category]] of chartData.entries()) {
 			colors.push(config.seriesColors?.[category] ?? chartColor(index))

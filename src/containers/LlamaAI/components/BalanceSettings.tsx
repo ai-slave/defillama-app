@@ -70,7 +70,7 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 				</div>
 				{result === 'cancelled' && !readFailed ? (
 					<p role="status" className="body-sm text-secondary">
-						Payment cancelled.
+						Payment canceled.
 					</p>
 				) : null}
 				{readFailed ? (

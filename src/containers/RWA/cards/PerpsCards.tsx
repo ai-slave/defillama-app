@@ -58,14 +58,14 @@ export function RWAPerpsCards({ cards, markets, kpi, filtered, includeCex }: RWA
 	return (
 		<div className="grid grid-cols-1 gap-2 md:grid-cols-3">
 			<SmolStatCard
-				title="Open Interest by Asset Group"
+				title="Open interest by asset group"
 				tooltip={`${perpsDefinitions.totalOpenInterest.description} Split by the asset group of each market's underlying.`}
 				value={kpi.openInterest == null ? null : formatRwaKpiUsd(kpi.openInterest)}
 			>
 				<RWAValueBars bars={rankRwaPerpsOpenInterest(perpsMarkets)} logo={null} />
 			</SmolStatCard>
 			<RWAChangeCard
-				title="Change by Venue"
+				title="Change by venue"
 				tooltip={`Open interest now against ${RWA_CARD_CHANGE_DAYS} days ago, in total and per venue.`}
 				card={venueChange}
 				logo="token"

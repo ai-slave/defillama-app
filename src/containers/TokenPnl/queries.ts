@@ -18,7 +18,7 @@ export type TokenPnlResult = {
 		rangeHigh: number
 		rangeLow: number
 		holdingPeriodDays: number
-		/** null under a year: the window's return is not annualised. */
+		/** null under a year: the window's return is not annualized. */
 		annualizedReturn: number | null
 	}
 	currentPrice: number
@@ -211,7 +211,7 @@ export async function computeTokenPnl(params: {
 	const percentChange = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0
 	const absoluteChange = endPrice - startPrice
 	const holdingPeriodDays = Math.max(1, Math.round((end - start) / DAY_IN_SECONDS))
-	// A return is annualised only over a year or more, as the GIPS standard requires. Compounding a shorter window to a
+	// A return is annualized only over a year or more, as the GIPS standard requires. Compounding a shorter window to a
 	// year turns a 5% week into over +1,000% and a big one-day move into Infinity. The floor keeps a total loss at -100%.
 	const annualizedReturn =
 		holdingPeriodDays >= 365
@@ -248,7 +248,7 @@ export async function computeTokenPnl(params: {
 				encode: { x: 0, y: 1 },
 				stack: 'Token Price',
 				// The line and its area fill take the period's direction. The result is cached across theme
-				// changes, so it uses the fixed fills rather than the mode-aware line colours.
+				// changes, so it uses the fixed fills rather than the mode-aware line colors.
 				color: endPrice >= startPrice ? CHART_UP : CHART_DOWN
 			}
 		]

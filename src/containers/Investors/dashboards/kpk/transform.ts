@@ -17,7 +17,7 @@ export const PERIOD_DIMENSION = 'Period'
 const OTHER_SEGMENT = /^other\b/i
 
 /**
- * Colour by segment name, not by position.
+ * Color by segment name, not by position.
  *
  * `comp.segments` arrives sorted by current value, so indexing the palette by
  * position would repaint every band the moment two segments swap places. A category

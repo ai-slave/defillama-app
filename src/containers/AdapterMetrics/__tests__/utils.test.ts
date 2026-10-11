@@ -493,7 +493,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		})
 	})
 
-	test('gives selected overflow chains the palette colours their canonical peers leave free', () => {
+	test('gives selected overflow chains the palette colors their canonical peers leave free', () => {
 		const chains = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `Chain ${index + 1}`)
 		const lastChain = chains[chains.length - 1]
 		const chartData = toDataset({

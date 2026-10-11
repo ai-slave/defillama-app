@@ -179,7 +179,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 				controller.signal
 			).catch(
 				// runSql returns the engine's own errors, written for the person writing SQL; a throw here is not one.
-				(): RunResponse => ({ ok: false, cancelled: false, error: "Couldn't load the query sources." })
+				(): RunResponse => ({ ok: false, canceled: false, error: "Couldn't load the query sources." })
 			)
 			if (runControllerRef.current !== controller) return null
 			// A mounted editor must unlock after Stop, but an aborted result must never reach Save.

@@ -29,7 +29,7 @@ export function ComposerTray({
 			ref={focusComposerOnLeave}
 			role="status"
 			data-composer-tray=""
-			// Full width with the negative margin cancelling the column's gap: the strip becomes the composer's header,
+			// Full width with the negative margin canceling the column's gap: the strip becomes the composer's header,
 			// its edges line up with the queued prompts above, and the composer squares its top corners to meet it.
 			className="-mb-2 flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1.5 rounded-t-lg border border-b-0 border-medium bg-surface-elevated-1 px-3 py-1.5 body-sm text-secondary"
 		>

@@ -1,15 +1,15 @@
 /**
  * Source rows, headline stats and export snapshots for the `/tokens` directory.
  *
- * - `Past 30D Unlocks` covers `[now - 30 days, now)` and `Next 30D Unlocks` covers `[now, now + 30 days)`. Both add
+ * - `Past 30d Unlocks` covers `[now - 30 days, now)` and `Next 30d Unlocks` covers `[now, now + 30 days)`. Both add
  *   cliff and linear releases from the full schedule, so linear releases that started earlier still count, and value
  *   known amounts at the current price.
  * - A priced schedule with no releases in the window is zero. A token without a schedule or price, or a window whose
  *   only events have unknown amounts, is unavailable.
  * - Headline totals sum the whole ranked directory, even when the table is filtered.
- * - Headline MCap and its 24h change exclude CoinGecko receipt assets: `market_cap_rank` absent while
+ * - Headline market cap and its 24h change exclude CoinGecko receipt assets: `market_cap_rank` absent while
  *   `market_cap_rank_with_rehypothecated` is present. Rows, charts, filters and other totals keep them.
- * - The 24h MCap change compares current market caps with `marketCap / (1 + priceChange24h / 100)` over the same
+ * - The 24h market cap change compares current market caps with `marketCap / (1 + priceChange24h / 100)` over the same
  *   tokens: price-driven movement at current supply, not measured market-cap growth. A token with no change, or a change
  *   at or below -100%, leaves both sides of the change but stays in the headline total.
  * - A failed source makes only its own measurements unavailable (`unavailableSources`); a successful measured zero

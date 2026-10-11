@@ -59,8 +59,8 @@ export function Markout({ value }: { value: number | null }) {
 }
 
 /**
- * A size ladder or a set of horizons in one column, each rung labelled. A column apiece
- * would push the liquidity figures off the row; one unlabelled line would not say which
+ * A size ladder or a set of horizons in one column, each rung labeled. A column apiece
+ * would push the liquidity figures off the row; one unlabeled line would not say which
  * size or horizon it meant.
  */
 export function StackedRows({ rows }: { rows: Array<{ label: string; value: ReactNode }> }) {
@@ -267,7 +267,7 @@ export const SEGMENT_SHORT: Record<ExchangeSegment, string> = {
 	inverse_perp: 'COIN perp'
 }
 
-/** One labelled line per segment, the stacked cell the merged tables use; N/A when there is none. */
+/** One labeled line per segment, the stacked cell the merged tables use; N/A when there is none. */
 export function SegmentLines({
 	present,
 	value

@@ -10,7 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { keepFocus, neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
@@ -103,10 +103,10 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
-							// The neighbour's × shows only on hover or focus, so focus cannot land on it:
+							// The neighbor's × shows only on hover or focus, so focus cannot land on it:
 							// its drag handle takes focus.
 							const row = e.currentTarget.parentElement!
-							const next = neighbourRowControl(row, row)?.querySelector('button')
+							const next = neighborRowControl(row, row)?.querySelector('button')
 							keepFocus(
 								() => mutatePinnedMetrics((routes) => routes.filter((route) => route !== page.route)),
 								() => next

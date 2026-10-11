@@ -203,7 +203,7 @@ describe('Rewards link analytics', () => {
 		expect(linkEvents()).toEqual([['rewards-program-impression', data]])
 	})
 
-	test('ignores source links and cancelled navigation', () => {
+	test('ignores source links and canceled navigation', () => {
 		cleanup = observeRewardsLinks(container, createState())
 		const source = document.createElement('a')
 		container.appendChild(source)

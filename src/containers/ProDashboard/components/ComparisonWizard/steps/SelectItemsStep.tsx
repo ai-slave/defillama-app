@@ -8,7 +8,7 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -240,7 +240,7 @@ export function SelectItemsStep() {
 												size="sm"
 												square
 												aria-label={`Remove ${item.label}`}
-												ref={focusNeighbourOnLeave(() => searchRef.current)}
+												ref={focusNeighborOnLeave(() => searchRef.current)}
 												onClick={() => actions.toggleSelectedItem(item.value)}
 											/>
 										}

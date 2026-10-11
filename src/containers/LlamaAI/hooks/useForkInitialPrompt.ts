@@ -21,7 +21,7 @@ export function useForkInitialPrompt({
 	submitPrompt
 }: UseForkInitialPromptOptions) {
 	// The prompt the chat last took, by target, so a re-render or a return to the same URL never delivers it
-	// twice. A cancelled frame or a refused prompt leaves it pending for the next time the target is ready.
+	// twice. A canceled frame or a refused prompt leaves it pending for the next time the target is ready.
 	const submittedRef = useRef<{ target: string; prompt: string } | null>(null)
 	// Only the callbacks go through effect events. They are read for freshness and must not restart the
 	// effect below when a caller re-renders; the session values must, so they stay dependencies.

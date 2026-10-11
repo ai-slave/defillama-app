@@ -102,7 +102,7 @@ export function ChartPanelTitle({
 /* Chart panels in a row stretch to the tallest one, so the body grows with them and its 360px is a FLOOR, not a fixed
    height: a fixed body left dead space under the chart in every panel the grid stretched. A chart beside something
    that is not a chart (a summary card, a table, a list) keeps its own height: that row aligns to the top
-   (`items-start`, as SummaryCardGrid does), or the chart grows with every row its neighbour adds. Pass CHART_FILL to
+   (`items-start`, as SummaryCardGrid does), or the chart grows with every row its neighbor adds. Pass CHART_FILL to
    the chart itself so it fills the body it sits in. The floor is an `initial:` default, as in Status.tsx, so a
    deliberately tall chart (a 600px treemap) raises it with its own min-h-* class on the body and on its fallback. */
 export const CHART_FILL = 'flex-1 initial:min-h-[360px]'

@@ -38,7 +38,7 @@ export default function Network() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">Network Stats</h2>
+			<h2 className="heading-xs">Network stats</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Total Txns" value={k.totalTransactions} />
 				<StatTile label="24h Txns" value={k.transactions24h} />

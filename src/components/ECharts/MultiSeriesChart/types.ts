@@ -54,7 +54,7 @@ export type MultiSeriesChartSeriesConfig = {
 	/** Per-series axis and tooltip unit. Falls back to the chart-level value symbol. */
 	valueSymbol?: string
 	hideAreaStyle?: boolean
-	/** Stroke overrides for a line series, e.g. a dashed overlay. Merged over the resolved series colour. */
+	/** Stroke overrides for a line series, e.g. a dashed overlay. Merged over the resolved series color. */
 	lineStyle?: LineSeriesOption['lineStyle']
 	/** Render a line as a step series while retaining the canonical dataset contract. */
 	step?: LineSeriesOption['step']
@@ -125,7 +125,7 @@ export interface IMultiSeriesChartProps {
 	hallmarks?: Array<[timestampSec: number, label: string]>
 	/** Spans in unix seconds, drawn as bands on the event rail. */
 	rangeHallmarks?: Array<[[startSec: number, endSec: number], label: string]> | null
-	/** Dated dividers in unix seconds, drawn as a labelled line across the plot, such as Today on an unlock schedule. Events go in `hallmarks`. */
+	/** Dated dividers in unix seconds, drawn as a labeled line across the plot, such as Today on an unlock schedule. Events go in `hallmarks`. */
 	referenceLines?: Array<[timestampSec: number, label: string]>
 	/** A categorical state per period, drawn as a thin row under the plot. Not drawn beside an event rail. */
 	stateTimeline?: StateTimelineOption | null

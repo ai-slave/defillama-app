@@ -11,7 +11,7 @@ const CATEGORY_CARDS: Array<DatasetLauncherCard<ChartTabType>> = [
 	},
 	{
 		id: 'income-statement',
-		title: 'Income Statement',
+		title: 'Income statement',
 		description: 'Financial flows with table and Sankey views for protocols with fees and revenue',
 		icon: 'file-text',
 		tags: ['Table', 'Sankey', 'Fees', 'Revenue']

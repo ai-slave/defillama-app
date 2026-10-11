@@ -25,24 +25,24 @@ afterEach(async () => {
 	container.remove()
 })
 
-function buttonLabelled(label: string) {
+function buttonLabeled(label: string) {
 	return Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
 }
 
 async function openShare() {
-	await act(async () => buttonLabelled('Share')!.click())
+	await act(async () => buttonLabeled('Share')!.click())
 }
 
 test('a private dashboard hides the share button from everyone but its owner', async () => {
 	await act(async () =>
 		root.render(<CopyDashboardLinkButton dashboardVisibility="private" dashboardId="dashboard-1" />)
 	)
-	expect(buttonLabelled('Share')).toBeUndefined()
+	expect(buttonLabeled('Share')).toBeUndefined()
 
 	await act(async () =>
 		root.render(<CopyDashboardLinkButton dashboardVisibility="private" dashboardId="dashboard-1" isOwner />)
 	)
-	expect(buttonLabelled('Share')).toBeDefined()
+	expect(buttonLabeled('Share')).toBeDefined()
 })
 
 test('the owner of a private dashboard gets an explanation and a way to publish', async () => {
@@ -61,12 +61,12 @@ test('the owner of a private dashboard gets an explanation and a way to publish'
 	)
 	await openShare()
 	expect(document.body.textContent).toContain('This dashboard is private. Only you can open the link.')
-	const makePublic = buttonLabelled('Make public')!
+	const makePublic = buttonLabeled('Make public')!
 	expect(makePublic.getAttribute('data-umami-event')).toBe('dashboard-make-public')
 	await act(async () => makePublic.click())
 	expect(onMakePublic).toHaveBeenCalledOnce()
 
-	await act(async () => buttonLabelled('Open settings')!.click())
+	await act(async () => buttonLabeled('Open settings')!.click())
 	expect(onSelect).toHaveBeenCalledOnce()
 })
 
@@ -83,7 +83,7 @@ test('publishing announces that the dashboard is live and offers to copy its lin
 		)
 	)
 	await openShare()
-	await act(async () => buttonLabelled('Make public')!.click())
+	await act(async () => buttonLabeled('Make public')!.click())
 
 	const toast = (await import('react-hot-toast')).default
 	const [render, options] = (
@@ -121,7 +121,7 @@ test('a publish that the server rejects surfaces its reason', async () => {
 		)
 	)
 	await openShare()
-	await act(async () => buttonLabelled('Make public')!.click())
+	await act(async () => buttonLabeled('Make public')!.click())
 	const toast = (await import('react-hot-toast')).default
 	expect(toast.error).toHaveBeenCalledWith('This dashboard is read-only.')
 })
@@ -132,7 +132,7 @@ test('a free-tier owner sees the explanation without the publish button', async 
 	)
 	await openShare()
 	expect(document.body.textContent).toContain('This dashboard is private.')
-	expect(buttonLabelled('Make public')).toBeUndefined()
+	expect(buttonLabeled('Make public')).toBeUndefined()
 })
 
 test('a public dashboard keeps its link and embed snippet', async () => {
@@ -146,7 +146,7 @@ test('a public dashboard keeps its link and embed snippet', async () => {
 	expect(link.value).toContain('/pro/my-board')
 	const embed = document.body.querySelector<HTMLTextAreaElement>('[aria-label="Embed code"]')!
 	expect(embed.value).toContain('<iframe')
-	expect(buttonLabelled('Make public')).toBeUndefined()
+	expect(buttonLabeled('Make public')).toBeUndefined()
 })
 
 test('copying the link or the embed code says so to screen readers', async () => {
@@ -197,7 +197,7 @@ test.each(['before resolving', 'after resolving'] as const)(
 	async (flip) => {
 		await act(async () => root.render(<PublishingDashboard flip={flip} />))
 		await openShare()
-		await act(async () => buttonLabelled('Make public')!.click())
+		await act(async () => buttonLabeled('Make public')!.click())
 		expect(copyLinkButton()).not.toBeNull()
 		expect(document.activeElement).toBe(copyLinkButton())
 	}
@@ -222,8 +222,8 @@ test('a failed Make public leaves Copy link unfocused when the dashboard later t
 		)
 	)
 	await openShare()
-	await act(async () => buttonLabelled('Make public')!.click())
-	await act(async () => buttonLabelled('Publish from settings')!.click())
+	await act(async () => buttonLabeled('Make public')!.click())
+	await act(async () => buttonLabeled('Publish from settings')!.click())
 	expect(copyLinkButton()).not.toBeNull()
 	expect(document.activeElement).not.toBe(copyLinkButton())
 })

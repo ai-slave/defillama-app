@@ -25,7 +25,7 @@ function DriftBanner({ entries, protocolId }: { entries: Array<DriftEntry>; prot
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 label-md text-(--yield-warning-text)">
 				<span className="flex items-center gap-1.5">
 					<Icon name="alert-triangle" className="size-4" />
-					{`${entries.length} on-chain ${entries.length === 1 ? 'change' : 'changes'} detected — affects all ${protocolId} vaults`}
+					{`${entries.length} onchain ${entries.length === 1 ? 'change' : 'changes'} detected — affects all ${protocolId} vaults`}
 				</span>
 				<Icon name="chevron-down" className="size-4 shrink-0 transition-transform group-open:rotate-180" />
 			</summary>

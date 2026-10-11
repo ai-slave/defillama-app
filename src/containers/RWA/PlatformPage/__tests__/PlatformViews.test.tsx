@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-/* Behavioural contracts only, nothing here asserts on layout or class names:
+/* Behavioral contracts only, nothing here asserts on layout or class names:
    - each view shows its own content: the table under Assets, the profile under Information
    - the profile stays in the served HTML under the table view, hidden, for crawlers
    - About and Compliance render on a bare meta; Fees, Entity, Regulation and Milestones only with content

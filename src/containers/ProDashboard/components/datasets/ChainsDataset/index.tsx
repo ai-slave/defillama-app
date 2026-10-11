@@ -287,14 +287,14 @@ export function ChainsDataset({
 		[instance]
 	)
 
-	// Moves a shown column past its shown neighbour; hidden columns between them keep their places.
+	// Moves a shown column past its shown neighbor; hidden columns between them keep their places.
 	const moveColumn = (columnId: string, delta: -1 | 1) => {
-		const neighbour = activeColumns[activeColumns.indexOf(columnId) + delta]
+		const neighbor = activeColumns[activeColumns.indexOf(columnId) + delta]
 		const order = [...columnOrder]
-		for (const id of [columnId, neighbour]) if (!order.includes(id)) order.push(id)
+		for (const id of [columnId, neighbor]) if (!order.includes(id)) order.push(id)
 		const from = order.indexOf(columnId)
-		const to = order.indexOf(neighbour)
-		order[from] = neighbour
+		const to = order.indexOf(neighbor)
+		order[from] = neighbor
 		order[to] = columnId
 		writeColumns(order, columnVisibility)
 	}

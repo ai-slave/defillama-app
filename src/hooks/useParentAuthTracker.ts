@@ -17,11 +17,11 @@ export function useParentAuthTracker() {
 			return
 		}
 
-		let cancelled = false
+		let canceled = false
 		let trackVisit: (() => void) | null = null
 
 		checkParentAuth().then((user) => {
-			if (cancelled) return
+			if (canceled) return
 			if (!user) {
 				console.log('[auth-tracker] no parent auth detected')
 				return
@@ -44,7 +44,7 @@ export function useParentAuthTracker() {
 		})
 
 		return () => {
-			cancelled = true
+			canceled = true
 			if (trackVisit) window.removeEventListener(UMAMI_READY_EVENT, trackVisit)
 		}
 	}, [site])

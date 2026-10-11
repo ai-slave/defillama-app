@@ -2,7 +2,7 @@ import type { IIcon } from '~/ui/Icon'
 import type { Status } from '~/ui/StatusBadge'
 import type { OracleType, RiskKind } from './types'
 
-// Small tone enum so the colour language stays consistent across the section.
+// Small tone enum so the color language stays consistent across the section.
 export type Tone = 'danger' | 'warning' | 'neutral' | 'muted' | 'good'
 
 interface KindMeta {

@@ -30,7 +30,7 @@ export function TablePager({
 	/** Omitted where the page size is fixed. */
 	pageSize?: { value: number; options: ReadonlyArray<number>; onChange: (pageSize: number) => void }
 	disabled?: boolean
-	/** Placement only: a table footer's border and padding, a grid's centring. */
+	/** Placement only: a table footer's border and padding, a grid's centering. */
 	className?: string
 }) {
 	const showNavigation = pageCount > 1

@@ -15,7 +15,7 @@ export function withRwaOptionCounts(values: SelectValues, counts: Record<string,
 
 /**
  * A Perps picker's options: each value counts the markets Venue Type keeps, and a value Venue Type leaves out stays
- * listed, greyed (`muted`), with the choice that brings it back, as the Assets pickers do for Include in TVL.
+ * listed, grayed (`muted`), with the choice that brings it back, as the Assets pickers do for Include in TVL.
  */
 export function getRwaPerpsPickerOptions(values: Array<string>, counts: Record<string, number>): Array<SelectOption> {
 	return withRwaOptionCounts(values, counts).map((option) =>
@@ -38,7 +38,7 @@ function getHidingToggles(row: RWAOverviewDisplayRow, inclusion: RWAInclusionSta
 
 /**
  * An Assets inline picker's options: each value counts the page's rows Include in TVL keeps, and a value whose rows
- * the toggles all leave out stays listed, greyed (`muted`), with the toggle that brings it back.
+ * the toggles all leave out stays listed, grayed (`muted`), with the toggle that brings it back.
  */
 export function getRwaAssetsInlineOptions(
 	key: RWASelectFilterKey,

@@ -162,7 +162,7 @@ describe('buildGrowthSeries', () => {
 		// The executed line still breaks on every day without an executed rate.
 		expect(series.measured).toEqual([1, null, null, 1.5, null, null])
 		// The quoted run is rebased on the same basis and bridged to the executed points beside it;
-		// a run with no executed neighbour on one side simply starts or ends open.
+		// a run with no executed neighbor on one side simply starts or ends open.
 		expect(series.quoted).toEqual([1, 1.1, 1.2, 1.5, null, 1.6])
 		// Quoted days are not coverage gaps; the unmeasured day between executed points still is.
 		const gappedModel = buildGrowthChart([

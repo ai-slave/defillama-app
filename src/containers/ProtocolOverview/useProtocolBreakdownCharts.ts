@@ -912,16 +912,16 @@ export function useProtocolBreakdownCharts(
 		// Nothing to compute until the data arrives; the previous result stays on screen meanwhile.
 		if (isNetworkLoading) return
 
-		let cancelled = false
+		let canceled = false
 		const runId = ++computeRunIdRef.current
 		const computedProtocol = protocol
 
 		const runComputation = () => {
-			if (cancelled || runId !== computeRunIdRef.current) return
+			if (canceled || runId !== computeRunIdRef.current) return
 
 			const next = computeLatest()
 
-			if (cancelled || runId !== computeRunIdRef.current) return
+			if (canceled || runId !== computeRunIdRef.current) return
 			setComputed({ protocol: computedProtocol, result: next })
 		}
 
@@ -935,7 +935,7 @@ export function useProtocolBreakdownCharts(
 		}
 
 		return () => {
-			cancelled = true
+			canceled = true
 			if (
 				idleCallbackId !== undefined &&
 				typeof window !== 'undefined' &&

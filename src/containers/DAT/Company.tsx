@@ -226,7 +226,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Button>
 				</SummaryStatsCard>
 				<Panel className="col-span-2">
-					<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Cumulative Holdings Over Time</ChartPanelTitle>}>
+					<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Cumulative holdings over time</ChartPanelTitle>}>
 						{props.assets.length > 1 ? (
 							<SegmentedControl
 								size="md"
@@ -291,7 +291,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								containerClassName={CHART_FILL}
 								valueSymbol=""
 								showLegend
-								title="Fully Diluted Shares"
+								title="Fully diluted shares"
 								exportButtons={{
 									png: true,
 									csv: true,
@@ -304,7 +304,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				) : null}
 				{props.ohlcvChartData != null ? (
 					<Panel className="col-span-full">
-						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share Price</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h2">Share price</ChartPanelTitle>} />
 						{/* The candlestick sets its own height: 480px plus any indicator panels. */}
 						<ChartPanelBody className="min-h-[480px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[480px]" />}>

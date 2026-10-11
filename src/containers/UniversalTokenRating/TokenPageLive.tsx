@@ -352,7 +352,7 @@ export function TokenPageLive({
 }) {
 	const [criteriaDrawer, setCriteriaDrawer] = useState<CriteriaDrawerState | null>(null)
 	const [isDark] = useDarkModeManager()
-	// The page's metric colours keep one meaning across its charts; each is a [light, dark] pair.
+	// The page's metric colors keep one meaning across its charts; each is a [light, dark] pair.
 	const metricColor = (pair: readonly [light: string, dark: string]) => pair[isDark ? 1 : 0]
 	const [aboutOpen, setAboutOpen] = useState(false)
 
@@ -411,7 +411,7 @@ export function TokenPageLive({
 
 	const tokenomicsCards = [
 		{
-			title: 'Market Cap vs. FDV (Ratio)',
+			title: 'Market cap vs FDV (ratio)',
 			value:
 				metrics?.marketCapUsd != null && metrics.fdvUsd != null && metrics.fdvUsd !== 0
 					? `${formatNumber(metrics.marketCapUsd / metrics.fdvUsd, {
@@ -424,19 +424,19 @@ export function TokenPageLive({
 			criterion: findTokenomicsCriterion('mcap_vs_fdv')
 		},
 		{
-			title: 'Fully Diluted Valuation (FDV) (USD)',
+			title: 'Fully diluted valuation (FDV) (USD)',
 			value: usd(metrics?.fdvUsd),
 			hasData: metrics?.fdvUsd != null,
 			criterion: findTokenomicsCriterion('fdv')
 		},
 		{
-			title: 'Annualized Rate of Inflation',
+			title: 'Annualized rate of inflation',
 			value: formatPercent(metrics?.annualizedInflationPct, UTR_PERCENT_OPTIONS) ?? 'N/A',
 			hasData: metrics?.annualizedInflationPct != null,
 			criterion: findTokenomicsCriterion('inflation')
 		},
 		{
-			title: 'Buyback & Burn Events',
+			title: 'Buyback & burn events',
 			value:
 				metrics?.cumulativeBuybackTokens != null || metrics?.cumulativeBurnTokens != null
 					? `${formatNumber(Math.round((metrics.cumulativeBuybackTokens ?? 0) + (metrics.cumulativeBurnTokens ?? 0)))} tokens`
@@ -462,28 +462,28 @@ export function TokenPageLive({
 
 	const footprintCharts = [
 		{
-			title: 'Total Volume (CEX vs DEX)',
+			title: 'Total volume (CEX vs DEX)',
 			chart: charts.cexVsDexVolume,
 			names: ['CEX Volume', 'DEX Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
 			kind: 'cexdex' as const
 		},
 		{
-			title: 'Total +/- 2% Depth (CEX vs DEX)',
+			title: 'Total +/- 2% depth (CEX vs DEX)',
 			chart: charts.cexVsDexDepth,
 			names: ['CEX Depth', 'DEX Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
 			kind: 'cexdex' as const
 		},
 		{
-			title: 'Total Volume (Spot vs Perps)',
+			title: 'Total volume (spot vs perps)',
 			chart: charts.spotVsPerpsVolume,
 			names: ['Spot Volume', 'Perps Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
 			kind: 'spotperp' as const
 		},
 		{
-			title: 'Total +/- 2% Depth (Spot vs Perps)',
+			title: 'Total +/- 2% depth (spot vs perps)',
 			chart: charts.spotVsPerpsDepth,
 			names: ['Spot Depth', 'Perps Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
@@ -608,7 +608,7 @@ export function TokenPageLive({
 
 			{disclosureCategories.length > 0 ? (
 				<>
-					<h2 className="heading-sm">Disclosures Overview</h2>
+					<h2 className="heading-sm">Disclosures overview</h2>
 					<Panel>
 						<div className="grid grid-cols-1 lg:grid-cols-2">
 							{disclosureCategories.map((entry, index) => (
@@ -688,18 +688,18 @@ export function TokenPageLive({
 				<>
 					{hasMarketQualityData ? (
 						<>
-							<h2 className="heading-sm">Performance Overview: Market Quality</h2>
+							<h2 className="heading-sm">Performance overview: market quality</h2>
 							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								{hasVolumeMarketQuality ? (
 									<MetricCard
-										title="Total Volume (as % of Market Cap)"
+										title="Total volume (as % of market cap)"
 										onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.volumeMcap)}
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Market Cap (USD)</ChartCaption>
+													<ChartCaption>Market cap (USD)</ChartCaption>
 													{/* Both charts share one floor, so this card's chart area matches the Depth card beside it. */}
 													<ChartPanelBody>
 														<MultiSeriesChart
@@ -707,7 +707,7 @@ export function TokenPageLive({
 															charts={[
 																{
 																	type: 'line',
-																	name: 'Market Cap (USD)',
+																	name: 'Market cap (USD)',
 																	encode: { x: 0, y: 1 },
 																	color: metricColor(UTR_METRIC_COLORS.marketCap),
 																	data: marketQuality.series.map((point): [number, number] => [
@@ -750,12 +750,12 @@ export function TokenPageLive({
 										<KvTable
 											rows={[
 												[
-													`Trade Volume (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
+													`Trade volume (prev. ${marketQuality?.windowDays ?? 30}d avg)`,
 													usd(marketQuality?.volumeMcap.avgUsd)
 												],
-												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
+												['Market cap (prev. 30d avg)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
 												[
-													'Trade Volume / Market Capitalization',
+													'Trade volume / market cap',
 													formatPercent(marketQuality?.volumeMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -764,14 +764,14 @@ export function TokenPageLive({
 								) : null}
 								{hasDepthMarketQuality ? (
 									<MetricCard
-										title="Depth +/- 2% (as a % of Market Capitalization)"
+										title="Depth +/- 2% (as a % of market cap)"
 										onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.depthMcap)}
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
+													<ChartCaption>Depth +/- 2% (USD) | Market cap (USD)</ChartCaption>
 													<ChartPanelBody>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
@@ -790,7 +790,7 @@ export function TokenPageLive({
 																},
 																{
 																	type: 'line',
-																	name: 'Market Cap',
+																	name: 'Market cap',
 																	encode: { x: 0, y: 1 },
 																	color: metricColor(UTR_METRIC_COLORS.depthMarketCap),
 																	yAxisIndex: 1,
@@ -815,12 +815,12 @@ export function TokenPageLive({
 										<KvTable
 											rows={[
 												[
-													`Depth +/- 2% (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
+													`Depth +/- 2% (prev. ${marketQuality?.windowDays ?? 30}d avg)`,
 													usd(marketQuality?.depthMcap.avgUsd)
 												],
-												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
+												['Market cap (prev. 30d avg)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
 												[
-													'Depth / Market Capitalization',
+													'Depth / market cap',
 													formatPercent(marketQuality?.depthMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -829,7 +829,7 @@ export function TokenPageLive({
 								) : null}
 								{hasSpreadData ? (
 									<MetricCard
-										title="Bid / Ask Spread (Volume weighted spreads)"
+										title="Bid / ask spread (volume weighted spreads)"
 										onOpen={() => openTotalMarket(spread?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(spread)}
@@ -883,7 +883,7 @@ export function TokenPageLive({
 								) : null}
 								{hasPriceData ? (
 									<MetricCard
-										title="Price Performance"
+										title="Price performance"
 										onOpen={() => openTotalMarket(priceChart?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										badge={
@@ -926,13 +926,13 @@ export function TokenPageLive({
 								) : null}
 								{hasOpenInterestData ? (
 									<MetricCard
-										title="Open Interest (as a % of Market Capitalization)"
+										title="Open Interest (as a % of market cap)"
 										onOpen={() => openTotalMarket(openInterest?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(openInterest)}
 									>
 										<div className="flex flex-1 flex-col gap-3">
-											<h4 className="label-md">Top Venues by OI (prev. 30D avg.)</h4>
+											<h4 className="label-md">Top Venues by OI (prev. 30d avg)</h4>
 											<KvTable
 												rows={[
 													...(openInterest?.venues.map(
@@ -950,7 +950,7 @@ export function TokenPageLive({
 										<KvTable
 											rows={[
 												[
-													'Open Interest / Market Capitalization',
+													'Open Interest / market cap',
 													formatPercent(openInterest?.oiMcapRatioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -1029,11 +1029,11 @@ export function TokenPageLive({
 
 					{hasLiquidityFootprintData ? (
 						<>
-							<h2 className="heading-sm">Performance Overview: Liquidity Footprint</h2>
+							<h2 className="heading-sm">Performance overview: liquidity footprint</h2>
 							{tier1Covered != null ? (
 								<Panel>
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
-										<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
+										<h3 className="label-lg">Top-tier exchange coverage</h3>
 										<Tooltip
 											content="Open exchange coverage details"
 											render={
@@ -1154,7 +1154,7 @@ export function TokenPageLive({
 					{hasTokenomicsData ? (
 						<>
 							<div className="flex flex-wrap items-center gap-2">
-								<h2 className="heading-sm">Performance Overview: Tokenomics</h2>
+								<h2 className="heading-sm">Performance overview: tokenomics</h2>
 								{metrics?.undisclosedUnlockDetected ? (
 									<StatusBadge status="bad">Undisclosed unlock detected</StatusBadge>
 								) : null}
@@ -1163,7 +1163,7 @@ export function TokenPageLive({
 								<Panel>
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
 										<span className="flex flex-wrap items-center gap-2">
-											<h3 className="label-lg">Disclosed Token Vesting vs Actual Vesting</h3>
+											<h3 className="label-lg">Disclosed token vesting vs actual vesting</h3>
 										</span>
 										{vestingCriterion ? (
 											<Tooltip

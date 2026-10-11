@@ -9,7 +9,7 @@ function PluginPage() {
 			description="Access DefiLlama DeFi data through the ChatGPT plugin. Query TVL, protocol stats, chain data, and more using natural language."
 			canonicalUrl="/chatgptplugin"
 		>
-			<EntityTitleStrip title="DefiLlama ChatGPT Plugin" />
+			<EntityTitleStrip title="DefiLlama ChatGPT plugin" />
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About</h2>
@@ -21,7 +21,7 @@ function PluginPage() {
 			</Card>
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
-				<h2 className="heading-xs">Best Practices</h2>
+				<h2 className="heading-xs">Best practices</h2>
 				<hr className="border-subtle" />
 				<p>To achieve the best results from the plugin, follow these steps:</p>
 				<p>1. Ask "What features do you have?" to see the most recent feature list.</p>

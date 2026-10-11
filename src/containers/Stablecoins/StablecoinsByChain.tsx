@@ -248,9 +248,9 @@ export function StablecoinsByChain({
 		})
 	}, [chartType, chartView, peggedTotals])
 
-	let title = `Stablecoins Market Cap`
+	let title = `Stablecoins market cap`
 	if (selectedChain !== 'All') {
-		title = `${selectedChain} Stablecoins Market Cap`
+		title = `${selectedChain} Stablecoins market cap`
 	}
 
 	const dashboardChartType = getStablecoinDashboardChartType(chartType, chartView)
@@ -312,7 +312,7 @@ export function StablecoinsByChain({
 		const baseTitle = selectedChain !== 'All' ? `${selectedChain} Stablecoins` : 'Stablecoins'
 
 		if (chartType === 'marketCap') {
-			return chartView === 'total' ? baseTitle : `${baseTitle} Market Cap`
+			return chartView === 'total' ? baseTitle : `${baseTitle} market cap`
 		}
 		if (chartType === 'volume') {
 			return chartView === 'total' ? baseTitle : `${baseTitle} Volume`
@@ -339,7 +339,7 @@ export function StablecoinsByChain({
 		if (!selectedChartData) return selectedChartData
 		const payload =
 			chartType === 'inflows' ? groupStablecoinBarChartPayload(selectedChartData, volumeGroupBy) : selectedChartData
-		// The payload colours series by rank; a stablecoin's brand colour wins.
+		// The payload colors series by rank; a stablecoin's brand color wins.
 		const brandColors = stablecoinBrandColors(isDark)
 		return {
 			...payload,
@@ -611,7 +611,7 @@ export function StablecoinsByChain({
 									variant="rwa"
 									containerClassName={`${CHART_FILL} min-h-[600px]`}
 									onReady={handleChartReady}
-									valueLabel="Market Cap"
+									valueLabel="Market cap"
 								/>
 							</React.Suspense>
 						</ChartPanelBody>

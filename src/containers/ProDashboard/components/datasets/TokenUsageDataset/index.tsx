@@ -150,7 +150,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col items-center justify-center gap-4 px-4">
 					{props.editable ? (
 						<>
-							<h3 className="text-center heading-xs text-primary md:heading-sm">Select Tokens to Compare</h3>
+							<h3 className="text-center heading-xs text-primary md:heading-sm">Select tokens to compare</h3>
 							<div className="w-full max-w-md">
 								<TokenSelector config={config} onConfigChange={props.onConfigChange} placeholder="Search tokens…" />
 							</div>

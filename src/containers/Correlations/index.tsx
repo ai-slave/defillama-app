@@ -13,7 +13,7 @@ import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -285,7 +285,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	return (
 		<>
 			<Card padding="strip" className="flex flex-wrap items-center justify-between gap-4">
-				<h1 className="heading-sm">Correlations Matrix</h1>
+				<h1 className="heading-sm">Correlations matrix</h1>
 				<SegmentedControl
 					variant="default"
 					size="md"
@@ -311,7 +311,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 									onClick={() => removeCoin(coin.id)}
 									// Add token follows the last token, so it is that token's next row.
 									data-row
-									ref={focusNeighbourOnLeave()}
+									ref={focusNeighborOnLeave()}
 									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-hover-row focus-visible:bg-hover-row"
 								>
 									<CoinImage src={coin.logo} />

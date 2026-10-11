@@ -295,7 +295,7 @@ function CustomRangeForm({
 						Clear
 					</Button>
 					<Button type="submit" variant="primary" size="md" className="w-full sm:w-auto sm:flex-1">
-						Apply Filter
+						Apply filter
 					</Button>
 				</div>
 			</form>

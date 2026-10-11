@@ -23,7 +23,7 @@ import { Button, StableLabel } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { EmptyState, InlineStatus, PanelLoadingStatus } from '~/ui/Status'
@@ -203,7 +203,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								pendingLabel="Unlinking…"
 								pending={unlinkMutation.isPending && unlinkMutation.variables === report.id}
 								onClick={() => unlinkMutation.mutate(report.id)}
-								ref={focusNeighbourOnLeave(pageContent)}
+								ref={focusNeighborOnLeave(pageContent)}
 							>
 								<Icon name="x" className="size-3" /> Unlink
 							</Button>

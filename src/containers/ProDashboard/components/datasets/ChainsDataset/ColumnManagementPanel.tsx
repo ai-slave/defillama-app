@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
@@ -140,7 +140,7 @@ export function ColumnManagementPanel({
 														square
 														// Hiding or adding a column moves its row to the other list; focus stays in the list
 														// the reader is working in.
-														ref={focusNeighbourOnLeave(() => searchRef.current)}
+														ref={focusNeighborOnLeave(() => searchRef.current)}
 														onClick={() => toggleColumnVisibility(columnId)}
 														aria-label={`Hide ${column.name}`}
 													/>
@@ -175,7 +175,7 @@ export function ColumnManagementPanel({
 												variant="secondary"
 												size="md"
 												data-row
-												ref={focusNeighbourOnLeave(() => searchRef.current)}
+												ref={focusNeighborOnLeave(() => searchRef.current)}
 												onClick={() => toggleColumnVisibility(column.id)}
 												className="w-full justify-start"
 											>

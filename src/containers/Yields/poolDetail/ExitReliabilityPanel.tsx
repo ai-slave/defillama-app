@@ -70,7 +70,7 @@ function count(value: number): string {
 
 /**
  * "Did the exit work, and when didn't it?" Every failure over the whole measured history is a row
- * with a date, a duration and the on-chain receipt from that block — no score, no model. A pool
+ * with a date, a duration and the onchain receipt from that block — no score, no model. A pool
  * with four bad days in four years hides them under any time-proportional encoding, so this lists
  * them instead of plotting them.
  */
@@ -142,7 +142,7 @@ export function ExitLedger({
 									<TokenPageTableHeaderCell textAlign="end">Deposits</TokenPageTableHeaderCell>
 									<TokenPageTableHeaderCell textAlign="end">
 										<Tooltip
-											content="What could have been withdrawn immediately, against total deposits, both measured on-chain at that day's block."
+											content="What could have been withdrawn immediately, against total deposits, both measured onchain at that day's block."
 											className="ml-auto w-fit cursor-help"
 											tabIndex={0}
 										>
@@ -177,7 +177,7 @@ export function ExitLedger({
 				</>
 			) : (
 				// The empty ledger IS the claim, so it gets the panel's one tinted block rather than
-				// the grey shrug an empty state usually earns.
+				// the gray shrug an empty state usually earns.
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-t border-subtle bg-(--yield-verified-badge) px-3 py-3">
 					<p className="label-sm text-(--yield-positive-text)">
 						{`No interruptions in ${count(model.measuredDays)} measured days.`}
@@ -248,7 +248,7 @@ function IncidentRow({ incident }: { incident: ExitIncident }) {
 }
 
 // "Does the exit work for MY size, today?" — the user's position against the latest measured
-// lane. Pure arithmetic on the same on-chain check the rest of the panel reports; the verdict
+// lane. Pure arithmetic on the same onchain check the rest of the panel reports; the verdict
 // changes with the amount, never with a model.
 function CrowdingNote({ verified, holders }: { verified: VerifiedBlock; holders: DetailHolders | null }) {
 	const availableUsd = verified.exit_liquidity?.usd ?? null

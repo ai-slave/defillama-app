@@ -74,7 +74,7 @@ async function mountFiltered() {
 	})
 	// The cards are the grid's children, each opening with its title.
 	const card = () =>
-		[...container.firstElementChild!.children].find((node) => node.textContent.startsWith('Change by Chain'))!
+		[...container.firstElementChild!.children].find((node) => node.textContent.startsWith('Change by chain'))!
 	return { card }
 }
 
@@ -102,7 +102,7 @@ describe('RWAOverviewCards', () => {
 		expect(html).toContain('protocols/morpho-blue')
 		expect(text).toContain('Morpho Blue$300,000')
 		expect(render({ assets: [usdy] }).text).not.toContain('Morpho Blue')
-		expect(text).toContain('Change by Chain+$600,000+60.00%over 30d')
+		expect(text).toContain('Change by chain+$600,000+60.00%over 30d')
 	})
 
 	test('draws the server chain split while no filter is set, dollars whole under a million', () => {
@@ -121,7 +121,7 @@ describe('RWAOverviewCards', () => {
 		expect(render({ perpsOpenInterest: null }).text).toContain('$15.7b')
 	})
 
-	test('Change by Chain under a filter shows loading until the chain history lands, then the chain change', async () => {
+	test('Change by chain under a filter shows loading until the chain history lands, then the chain change', async () => {
 		let respond!: (rows: unknown) => void
 		http.serve({
 			'/api/public/rwa/asset-breakdown': () =>
@@ -143,7 +143,7 @@ describe('RWAOverviewCards', () => {
 		await waitForUi(() => expect(card().textContent).toContain('Ethereum+$300,000 (+60%)'))
 	})
 
-	test('Change by Chain under a filter reads a failed load as an error whose Try again loads the chain change', async () => {
+	test('Change by chain under a filter reads a failed load as an error whose Try again loads the chain change', async () => {
 		http.serve({ '/api/public/rwa/asset-breakdown': fixtureStatus(404) })
 		const { card } = await mountFiltered()
 		await waitForUi(() => expect(alertTexts(card())).toHaveLength(1))

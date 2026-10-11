@@ -35,7 +35,7 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 				<MarketMakersTabs active="Performance Index" />
 				<div className="flex flex-col gap-2">
 					<SectionHeader
-						title="Forgd Market Maker Performance Index Leaderboard"
+						title="Forgd Market Maker Performance Index leaderboard"
 						description="Data-driven Market Maker rankings derived from 500+ engagements, evaluating historical execution, reliability, and ecosystem integration."
 						badge={badge}
 						action={<RfqButton />}

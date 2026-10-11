@@ -23,8 +23,8 @@ export type SqlChartModalState = {
 	execution: Execution | null
 }
 
-type SourcePreparation = { ok: false; cancelled: true } | { ok: false; error: string } | null
-export type RunResponse = ExecutorResult | { ok: false; cancelled: true }
+type SourcePreparation = { ok: false; canceled: true } | { ok: false; error: string } | null
+export type RunResponse = ExecutorResult | { ok: false; canceled: true }
 
 export type RunSettlement =
 	| { kind: 'completed'; sql: string; result: QueryResult; durationMs: number; chartConfig: ChartConfig }
@@ -110,7 +110,7 @@ export function settleRun(
 			chartConfig: chartConfig ? migrateChartConfig(chartConfig, classified) : defaultChartConfig(classified)
 		}
 	}
-	if ('error' in response && !response.cancelled) return { kind: 'failed', error: response.error }
+	if ('error' in response && !response.canceled) return { kind: 'failed', error: response.error }
 	return { kind: 'cancelled' }
 }
 
@@ -122,15 +122,15 @@ export async function prepareSources(
 ): Promise<SourcePreparation> {
 	const loadedNames = new Set(context.loadedTables.map((table) => table.name))
 	for (const source of sources) {
-		if (signal.aborted) return { ok: false, cancelled: true }
+		if (signal.aborted) return { ok: false, canceled: true }
 		if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
 			const loaded = await context.loadSource(source, signal)
-			if (signal.aborted) return { ok: false, cancelled: true }
+			if (signal.aborted) return { ok: false, canceled: true }
 			if (!loaded) return { ok: false, error: `Could not load table "${tableNameFor(source)}".` }
 			loadedNames.add(loaded.name)
 		}
 	}
-	if (signal.aborted) return { ok: false, cancelled: true }
+	if (signal.aborted) return { ok: false, canceled: true }
 	return null
 }
 

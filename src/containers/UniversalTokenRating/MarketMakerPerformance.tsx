@@ -106,9 +106,9 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 	return (
 		<Panel>
 			<PanelHeader>
-				<PanelTitle as="h3">Performance Summary</PanelTitle>
+				<PanelTitle as="h3">Performance summary</PanelTitle>
 				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link">
-					Prev. 30D
+					Prev. 30d
 				</span>
 			</PanelHeader>
 			<div className="overflow-x-auto">
@@ -117,11 +117,11 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 						<tr className="border-b border-subtle text-left label-sm text-secondary">
 							<th className="px-4 py-2.5">Provider</th>
 							<th className="px-3 py-2.5">Engagement</th>
-							<th className="px-3 py-2.5 text-right">Avg. spread</th>
+							<th className="px-3 py-2.5 text-right">Avg spread</th>
 							<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
 							<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
 							<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
-							<th className="px-4 py-2.5 text-right">Avg. volume</th>
+							<th className="px-4 py-2.5 text-right">Avg volume</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -212,7 +212,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 	return (
 		<Panel>
 			<PanelHeader>
-				<PanelTitle as="h3">Performance Breakdown</PanelTitle>
+				<PanelTitle as="h3">Performance breakdown</PanelTitle>
 				<SegmentedControl
 					label="Breakdown metric"
 					variant="default"
@@ -296,7 +296,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 						</div>
 					</div>
 					<div className="flex min-w-0 flex-col">
-						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h4">Daily Breakdown</ChartPanelTitle>}>
+						<ChartPanelToolbar leading={<ChartPanelTitle headingAs="h4">Daily breakdown</ChartPanelTitle>}>
 							<SegmentedControl
 								label="Breakdown unit"
 								variant="solid"
@@ -389,9 +389,9 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 		<Panel>
 			<Tabs<UptimeView> value={mode} values={UPTIME_VIEWS} onValueChange={setMode}>
 				<PanelHeader>
-					<PanelTitle as="h3">Uptime Calculations</PanelTitle>
+					<PanelTitle as="h3">Uptime calculations</PanelTitle>
 					<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link">
-						Prev. 30D
+						Prev. 30d
 					</span>
 					<SegmentedControl
 						semantics="tabs"
@@ -408,7 +408,7 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 								<thead>
 									<tr className="border-b border-subtle text-left label-sm text-secondary">
 										<th className="px-4 py-2.5">Market Maker</th>
-										<th className="px-3 py-2.5 text-right">Avg. spread</th>
+										<th className="px-3 py-2.5 text-right">Avg spread</th>
 										<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
 										<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
 										<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
@@ -542,7 +542,7 @@ export function MarketMakerPerformance({
 	return (
 		<section className="flex flex-col gap-4" aria-labelledby="liquidity-providers-heading">
 			<h2 id="liquidity-providers-heading" className="heading-sm">
-				Performance Overview: Liquidity Providers
+				Performance overview: liquidity providers
 			</h2>
 			{hasData ? (
 				<>

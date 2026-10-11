@@ -104,7 +104,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.mcap ?? undefined, {
 		id: 'mcap',
-		header: 'Stables Mcap',
+		header: 'Stablecoins market cap',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {

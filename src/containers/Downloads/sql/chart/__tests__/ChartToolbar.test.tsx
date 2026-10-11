@@ -191,7 +191,7 @@ test('column pickers expose selected values, close on selection, and retain spli
 	expect(document.activeElement).toBe(picker('x'))
 })
 
-test('adding or removing a series hands focus to the neighbouring row, and the last one to the settings', async () => {
+test('adding or removing a series hands focus to the neighboring row, and the last one to the settings', async () => {
 	await render(<Harness config={{ ...initial, yCols: [] }} />)
 	await click(button('Y series'))
 	const settings = dialog('Y series settings')
@@ -207,7 +207,7 @@ test('adding or removing a series hands focus to the neighbouring row, and the l
 	expect(document.activeElement).toBe(button('Remove value1'))
 	await click(button('Remove value1'))
 	expect(document.activeElement).toBe(button('Remove value0'))
-	// The only series leaves no neighbour: the settings' net hands focus to their first control.
+	// The only series leaves no neighbor: the settings' net hands focus to their first control.
 	await click(button('Remove value0'))
 	expect(current.yCols).toEqual([])
 	expect(settings.contains(document.activeElement)).toBe(true)

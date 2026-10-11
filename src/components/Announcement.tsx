@@ -49,7 +49,7 @@ type AnnouncementProps = DismissibleAnnouncementProps | PermanentAnnouncementPro
 /** The one call to action in a banner (a link or a button): a pill in the banner's own palette. The banner carries its
     `*-announcement-scope` class from src/styles/themes/announcements.css, which sets `--announcement-cta`,
     `--announcement-cta-hover`, `--announcement-cta-text` and `--announcement-cta-ring` from its theme tokens, so every
-    banner shares one shape and only the colours change. The fill darkens while held. */
+    banner shares one shape and only the colors change. The fill darkens while held. */
 export const announcementCtaStyles =
 	'inline-flex min-h-6 shrink-0 cursor-pointer items-center gap-1 rounded-full bg-(--announcement-cta) px-2.5 py-0.5 title-sm text-(--announcement-cta-text) ring-1 ring-(--announcement-cta-ring) hover:bg-(--announcement-cta-hover) focus-visible:bg-(--announcement-cta-hover) active:brightness-90'
 

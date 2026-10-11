@@ -141,9 +141,9 @@ test('an answer that arrives after Stop or Cancel is discarded, even a successfu
 		kind: 'cancelled'
 	})
 	expect(
-		settleRun({ ok: false, error: 'Cancelled', cancelled: true }, { aborted: false, sql: 'x', chartConfig: lineChart })
+		settleRun({ ok: false, error: 'Canceled', canceled: true }, { aborted: false, sql: 'x', chartConfig: lineChart })
 	).toEqual({ kind: 'cancelled' })
-	expect(settleRun({ ok: false, cancelled: true }, { aborted: false, sql: 'x', chartConfig: lineChart })).toEqual({
+	expect(settleRun({ ok: false, canceled: true }, { aborted: false, sql: 'x', chartConfig: lineChart })).toEqual({
 		kind: 'cancelled'
 	})
 })
@@ -268,7 +268,7 @@ test('closing or stopping during source loading never loads the rest or runs the
 		[chainTvl, chainFees],
 		controller.signal
 	)
-	expect(outcome).toEqual({ ok: false, cancelled: true })
+	expect(outcome).toEqual({ ok: false, canceled: true })
 	expect(loads).toEqual([chainTvl])
 	// An aborted load answers null; Stop must not surface that as a load failure.
 	const stopped = new AbortController()
@@ -283,10 +283,10 @@ test('closing or stopping during source loading never loads the rest or runs the
 		[chainTvl],
 		stopped.signal
 	)
-	expect(abortedLoad).toEqual({ ok: false, cancelled: true })
+	expect(abortedLoad).toEqual({ ok: false, canceled: true })
 	expect(await prepareSources({ loadedTables: [], loadSource: async () => null }, [], controller.signal)).toEqual({
 		ok: false,
-		cancelled: true
+		canceled: true
 	})
 })
 

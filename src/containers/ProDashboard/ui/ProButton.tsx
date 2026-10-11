@@ -23,7 +23,7 @@ const PRO_BUTTON_SIZES = {
 }
 
 type ProButtonProps<T extends ElementType> = {
-	/** A link or other host keeps its own element and role; only the default button takes button behaviour. */
+	/** A link or other host keeps its own element and role; only the default button takes button behavior. */
 	as?: T
 	variant: keyof typeof PRO_BUTTON_VARIANTS
 	size?: keyof typeof PRO_BUTTON_SIZES

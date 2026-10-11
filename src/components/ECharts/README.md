@@ -41,11 +41,11 @@ A prop that does the same job on two renderers has the same name on both.
 - `hallmarks` and `rangeHallmarks` are unix seconds, the unit the API sends. A source that builds dates in milliseconds converts them before passing them in.
 - `referenceLines` is not an event: it draws a dated divider across the plot, such as Today on an unlock schedule, where the line itself splits past from future.
 
-- A point event is a 16px circle: grey for a milestone, red with a "!" when its label names a hack, exploit, attack, rug pull or depeg. The rail reads the label, so a hallmark label leads with what happened ("Hack · Access Control · $8.2m lost"), never a bare classification.
+- A point event is a 16px circle: gray for a milestone, red with a "!" when its label names a hack, exploit, attack, rug pull or depeg. The rail reads the label, so a hallmark label leads with what happened ("Hack · Access Control · $8.2m lost"), never a bare classification.
 - Point events closer than a marker's width at the current zoom share one marker that shows their count. It is red when any member is, and its tooltip lists every member.
 - A range event is a band across its span: violet, or solid red with a "!" for a danger label. Hovering the band shades its span on the plot. The rail is the one place events draw, so a page never adds its own `markArea` or mark line for them.
 - Fills hold 3:1 on the plot surface and glyphs 4.5:1 on their fill, in both themes, so a marker never depends on its 1px border.
-- The chart's Events toggle chip uses `OTHERS_COLOR`, the grey of the default marker, never a series colour.
+- The chart's Events toggle chip uses `OTHERS_COLOR`, the gray of the default marker, never a series color.
 
 ## Geometry exceptions
 

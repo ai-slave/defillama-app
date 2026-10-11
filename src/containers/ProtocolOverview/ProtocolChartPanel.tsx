@@ -144,7 +144,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				{
 					key: 'events',
 					label: 'Events',
-					// Matches the rail's default grey marker; a series colour would point at a line the toggle doesn't draw.
+					// Matches the rail's default gray marker; a series color would point at a line the toggle doesn't draw.
 					color: OTHERS_COLOR,
 					active: toggledMetrics.events === 'true',
 					type: 'events'

@@ -44,7 +44,7 @@ describe('ChainOverview KeyMetrics', () => {
 		const text = textFromMarkup(markup)
 
 		expect(text).toContain('$MEGA Price')
-		expect(text).toContain('$MEGA Market Cap')
+		expect(text).toContain('$MEGA market cap')
 		expect(text).toContain('$MEGA FDV')
 		expect(text).toContain('N/A')
 		expect(text).not.toContain('$0')

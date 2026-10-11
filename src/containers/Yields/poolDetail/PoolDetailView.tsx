@@ -94,7 +94,7 @@ export interface PoolDetailViewProps {
 	// Needed by the chart to rebuild its model when a wider range is fetched client-side.
 	liquidityDecimals: number | null
 	// The measured block from `/v2/earn/:id`. Null on unmeasured pools, which render no
-	// verification panel at all rather than an empty or greyed one.
+	// verification panel at all rather than an empty or grayed one.
 	verified: VerifiedBlock | null
 	// Supply composition with the measured legs swapped in; null on unmeasured or redacted pages.
 	apy: MeasuredApy | null

@@ -181,7 +181,7 @@ describe('runtime pie selection', () => {
 		)
 	})
 
-	test('gives a peer picked from past the top ten a palette colour no drawn slice uses', () => {
+	test('gives a peer picked from past the top ten a palette color no drawn slice uses', () => {
 		const data: Record<string, number> = {}
 		for (let rank = 0; rank < CHART_SERIES_LIMIT + 2; rank++) data[`P${rank}`] = 100 - rank
 		const series = prepareRuntimePieChartData({ data, limit: CHART_SERIES_LIMIT })
@@ -198,9 +198,9 @@ describe('runtime pie selection', () => {
 		expect(stackColors.Others).toBe(OTHERS_COLOR)
 	})
 
-	test('gives a slice whose page colour another drawn slice took the first unused palette colour', () => {
+	test('gives a slice whose page color another drawn slice took the first unused palette color', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 3, B: 2, C: 1 }, limit: CHART_SERIES_LIMIT })
-		// Page-wide rank colours wrap past the palette, so a peer ranked eleventh on the page shares the first colour.
+		// Page-wide rank colors wrap past the palette, so a peer ranked eleventh on the page shares the first color.
 		const colorByPeer = { A: chartColor(0), B: chartColor(CHART_SERIES_LIMIT), C: chartColor(1) }
 
 		expect(buildRuntimePieChartPresentation({ series, colorByPeer }).stackColors).toEqual({

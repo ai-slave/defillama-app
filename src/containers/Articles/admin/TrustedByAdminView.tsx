@@ -33,7 +33,7 @@ import type { SocialMention, TrustedLogo } from '~/containers/Articles/types'
 import { Button, StableLabel } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl } from '~/ui/focus'
+import { neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -57,19 +57,19 @@ function linkHost(linkUrl: string): string {
 }
 
 export function TrustedByAdminView() {
-	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
+	// The neighbor row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
 	const [deleteTarget, setDeleteTarget] = useState<{
 		kind: 'logo' | 'mention'
 		id: string
 		name: string
-		neighbour: HTMLElement | null | undefined
+		neighbor: HTMLElement | null | undefined
 	} | null>(null)
 	const returnFocusRef = useRef<HTMLElement | null>(null)
 	const addLogoRef = useRef<HTMLAnchorElement>(null)
 	const addMentionRef = useRef<HTMLAnchorElement>(null)
 	const confirmDelete = (target: { kind: 'logo' | 'mention'; id: string; name: string }, control: HTMLElement) => {
 		returnFocusRef.current = null
-		setDeleteTarget({ ...target, neighbour: neighbourRowControl(control.closest('li')!, control) })
+		setDeleteTarget({ ...target, neighbor: neighborRowControl(control.closest('li')!, control) })
 	}
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
@@ -205,7 +205,7 @@ export function TrustedByAdminView() {
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {
 						returnFocusRef.current =
-							deleteTarget.neighbour ?? (deleteTarget.kind === 'logo' ? addLogoRef.current : addMentionRef.current)
+							deleteTarget.neighbor ?? (deleteTarget.kind === 'logo' ? addLogoRef.current : addMentionRef.current)
 					}}
 				/>
 			) : null}
@@ -216,7 +216,7 @@ export function TrustedByAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="mt-2 heading-lg tracking-tight text-primary">Trusted By</h1>
+				<h1 className="mt-2 heading-lg tracking-tight text-primary">Trusted by</h1>
 				<p className="mt-1 body-md text-secondary">
 					Manage the logos and social media mentions shown in the Trusted By section on /research.
 				</p>

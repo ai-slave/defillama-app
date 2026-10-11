@@ -20,7 +20,7 @@ describe('withRwaOptionCounts', () => {
 })
 
 describe('getRwaPerpsPickerOptions', () => {
-	test('greys a value Venue Type leaves out and keeps it selectable with a hint', () => {
+	test('grays a value Venue Type leaves out and keeps it selectable with a hint', () => {
 		const [binance, xyz] = getRwaPerpsPickerOptions(['Binance', 'trade[XYZ]'], { 'trade[XYZ]': 2 })
 		expect(binance).toMatchObject({ key: 'Binance', name: 'Binance (0)', muted: true })
 		expect(binance.help).toBeTypeOf('string')
@@ -42,7 +42,7 @@ describe('getRwaAssetsInlineOptions', () => {
 	]
 	const inclusion = { includeStablecoins: false, includeGovernance: false, includeWrappers: false }
 
-	test('counts the rows Include in TVL keeps and greys out a category it hides, naming the toggle', () => {
+	test('counts the rows Include in TVL keeps and grays out a category it hides, naming the toggle', () => {
 		expect(getRwaAssetsInlineOptions('categories', values, rows, inclusion)).toEqual([
 			{ key: 'Treasuries', name: 'Treasuries (1)' },
 			{

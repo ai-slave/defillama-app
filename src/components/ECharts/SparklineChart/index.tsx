@@ -68,7 +68,7 @@ function parseRgbColor(base: string): RgbColor | null {
 
 interface SparklineChartProps {
 	data?: Array<PrimitiveSparklinePoint>
-	/** A literal colour: ECharts draws to canvas and cannot read var(). Defaults to the theme's brand colour. */
+	/** A literal color: ECharts draws to canvas and cannot read var(). Defaults to the theme's brand color. */
 	color?: string
 	areaColor?: string
 	className?: string

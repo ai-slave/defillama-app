@@ -60,7 +60,7 @@ export function articleWriteKey(articleId: string | undefined) {
 /**
  * Stores a write's answer as the article, from the mutation's own onSuccess so it lands even after the reader
  * leaves and before the write stops counting as running. A read that started before the write finished is
- * cancelled first, or its older answer would replace this one.
+ * canceled first, or its older answer would replace this one.
  */
 export async function cacheWrittenArticle(queryClient: QueryClient, saved: ArticleDocument) {
 	await queryClient.cancelQueries({ queryKey: articleQueryKey(saved.id) })

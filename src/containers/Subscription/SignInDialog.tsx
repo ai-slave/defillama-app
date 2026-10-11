@@ -270,7 +270,7 @@ function PasswordInput(props: Omit<ComponentPropsWithRef<'input'>, 'type' | 'cla
 	return (
 		<div className="relative flex">
 			<Input {...props} type={visible ? 'text' : 'password'} className="w-full pr-10" />
-			{/* sm, centred: an md square is as tall as the field and would sit on its border. touch-target keeps
+			{/* sm, centered: an md square is as tall as the field and would sit on its border. touch-target keeps
 			    its 44px hit area. */}
 			<Tooltip
 				content={visible ? 'Hide password' : 'Show password'}

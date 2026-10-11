@@ -231,7 +231,7 @@ export function ChainsByCategory({
 							<ChartExportButtons
 								chartInstance={chartInstance}
 								filename="chains-dominance"
-								title="Chains Dominance"
+								title="Chains dominance"
 								csvSource={selectedDominance.csvSource}
 							/>
 						</ChartPanelToolbar>
@@ -313,8 +313,8 @@ export const buildChainsByCategoryChartPresentation = ({
 		if (!rankedCurrentChains.has(chain)) chainSeries.push(chain)
 	}
 	const dimensionIndex = new Map(chainNames.map((chain, index) => [chain, index + 1]))
-	// Colours follow the rank both charts share, under the TVL settings in use, so the pie and the dominance chart
-	// colour a chain alike. Past the top ten the dominance chart recolours its stack by overlap.
+	// Colors follow the rank both charts share, under the TVL settings in use, so the pie and the dominance chart
+	// color a chain alike. Past the top ten the dominance chart recolors its stack by overlap.
 	const colorsByChain: Record<string, string> = {}
 	const chartsConfig: Array<MultiSeriesChartSeriesConfig> = []
 	for (const [rank, chain] of chainSeries.entries()) {

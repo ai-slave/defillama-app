@@ -89,7 +89,7 @@ export async function fetchRWAPlatformAumChart(platformSlug: string): Promise<Ar
 			if (typeof value === 'number') total = (total ?? 0) + value
 		}
 		if (total == null) continue
-		// The shared breakdown fetcher normalises timestamps to milliseconds; this series is seconds.
+		// The shared breakdown fetcher normalizes timestamps to milliseconds; this series is seconds.
 		series.push([row.timestamp / 1e3, total])
 	}
 	series.sort((a, b) => a[0] - b[0])

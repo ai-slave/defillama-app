@@ -332,7 +332,7 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 					<MultiSelectCombobox
 						heading="Chains"
 						data={chains}
-						placeholder="Select Chains…"
+						placeholder="Select chains…"
 						selectedValues={selectedChainValues}
 						setSelectedValues={(values: Array<string>) => {
 							updateRoute('chains', values, router)

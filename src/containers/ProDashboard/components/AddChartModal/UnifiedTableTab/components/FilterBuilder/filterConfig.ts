@@ -471,7 +471,7 @@ export const FILTER_CONFIGS: Array<FilterConfig> = [
 	},
 	{
 		id: 'stablesMcap',
-		label: 'Stablecoin Market Cap',
+		label: 'Stablecoins market cap',
 		type: 'numeric-range',
 		category: 'chain-metrics',
 		strategies: ['chains'],

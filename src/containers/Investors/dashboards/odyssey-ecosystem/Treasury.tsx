@@ -38,9 +38,9 @@ export default function Treasury() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">Treasury LP Positions</h2>
+			<h2 className="heading-xs">Treasury LP positions</h2>
 			<ChartCard
-				title="LP Positions (all chains)"
+				title="LP positions (all chains)"
 				subtitle={`${tlp?.rows?.length ?? 0} positions across Base, Optimism, Plasma`}
 			>
 				<SimpleTable
@@ -58,7 +58,7 @@ export default function Treasury() {
 
 			{eth?.rows?.length ? (
 				<>
-					<h2 className="heading-xs">Ethereum UniV3 Positions</h2>
+					<h2 className="heading-xs">Ethereum UniV3 positions</h2>
 					<ChartCard title="Ethereum positions">
 						<SimpleTable
 							getOccurrenceKey={(row) => row.pool}
@@ -73,7 +73,7 @@ export default function Treasury() {
 				</>
 			) : null}
 
-			<h2 className="heading-xs">Plasma UniV3 Unclaimed Fees</h2>
+			<h2 className="heading-xs">Plasma UniV3 unclaimed fees</h2>
 			<ChartCard title="Plasma positions" subtitle="One row per NFT">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
@@ -86,7 +86,7 @@ export default function Treasury() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Convex vlCVX Locks</h2>
+			<h2 className="heading-xs">Convex vlCVX locks</h2>
 			<ChartCard title="vlCVX">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
@@ -155,7 +155,7 @@ export default function Treasury() {
 				</>
 			) : null}
 
-			<h2 className="heading-xs">TVL Allocation by Bucket</h2>
+			<h2 className="heading-xs">TVL allocation by bucket</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title={met?.title || 'Metronome Allocation'}>
 					<SimpleTable

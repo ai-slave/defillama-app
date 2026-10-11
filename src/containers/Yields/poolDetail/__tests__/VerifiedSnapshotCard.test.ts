@@ -81,7 +81,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 		expect(snapshot.exitDetail).toBe('Exit could not be attested on the last check')
 	})
 
-	test('degrades an unrecognised status to unattested, never to success', () => {
+	test('degrades an unrecognized status to unattested, never to success', () => {
 		for (const status of ['probe_timeout', 'PARTIAL', '', 'instant ']) {
 			const snapshot = buildVerifiedSnapshot(withStatus(status), [], NOW)
 

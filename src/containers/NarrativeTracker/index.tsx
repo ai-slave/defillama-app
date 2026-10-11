@@ -234,8 +234,8 @@ export function CategoryPerformanceContainer({
 			<Card padding="base" className="flex flex-col gap-3">
 				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
 				<p className="body-md text-secondary">
-					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
-					and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
+					Market-cap-weighted category performance: Shows how a category of coins has performed over your chosen time
+					period and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
 					individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3.
 					averaging these weighted changes to get the overall category performance. Stablecoins are excluded from sector
 					baskets.

@@ -1,7 +1,7 @@
 /**
  * The field errors shown under `root`, read the way a screen reader reaches them: the `-error` description of every
  * invalid control (`aria-invalid`) and invalid choice group (`Field` / `FieldGroup` in src/ui/Field.tsx). A request
- * failure or other status text in the same colour is not a field error, so tests never find errors by class. An error
+ * failure or other status text in the same color is not a field error, so tests never find errors by class. An error
  * id ends in `-error` (Field's own ids do; a hand-wired error takes `${useId()}-error`), which tells it from a hint.
  */
 export function fieldErrorTexts(root: ParentNode = document): Array<string> {

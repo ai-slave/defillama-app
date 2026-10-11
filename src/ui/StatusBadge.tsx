@@ -3,7 +3,7 @@ import { Tooltip } from './Tooltip'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
-   StatusBadge: a state, coloured by whether it is good for the reader.
+   StatusBadge: a state, colored by whether it is good for the reader.
 
    <StatusBadge status="good">Live</StatusBadge>
    <StatusBadge status="caution" tooltip="Two of five venues report">Partial</StatusBadge>
@@ -12,9 +12,9 @@ import { tw } from './tw'
    (fee switch ON is good, equity capture Partial is caution) in a plain
    value → status map, never to classes. The badge owns the look: the status
    tint, a muted border, 6px corners and label-sm, 20px tall, the PromoBadge
-   recipe in status colours. A badge that is itself a button or link (a
+   recipe in status colors. A badge that is itself a button or link (a
    hovercard anchor) takes `statusBadgeStyles(status)`, which sets no
-   `display`. Never colour a status pill by hand (hand-built-status-badge in
+   `display`. Never color a status pill by hand (hand-built-status-badge in
    check-design-tokens.mjs).
 
    Not a movement (Change, ./Change.tsx), not a value from a set (Tag), not a
@@ -26,11 +26,11 @@ import { tw } from './tw'
    <StatusDot status={dirty ? 'caution' : 'good'} /> {dirty ? 'Unsaved changes' : 'All changes saved'}
    <StatusDot status="good" label="Published" />
 
-   Beside text that names the state, the dot only repeats it in colour and is
+   Beside text that names the state, the dot only repeats it in color and is
    hidden from assistive tech. With no such text, `label` names the state.
    `pulse` marks work in progress or a live feed. Never draw a status dot by
    hand (hand-built-status-dot in check-design-tokens.mjs). Not a series or
-   category swatch, a kind colour, a timeline marker or an unread marker.
+   category swatch, a kind color, a timeline marker or an unread marker.
 ---------------------------------------------------------------------------- */
 
 export type Status = 'good' | 'caution' | 'bad' | 'neutral'

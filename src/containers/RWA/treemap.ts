@@ -41,7 +41,7 @@ export const buildRwaTreemapTreeData = (
 	if (data.length === 0) return []
 
 	const rootLabel = breakdownLabel || 'Breakdown'
-	// Assign colors in value-descending order so the biggest block gets the first palette colour.
+	// Assign colors in value-descending order so the biggest block gets the first palette color.
 	const children: Array<RwaTreemapNode> = []
 	for (const [index, item] of data.entries()) {
 		const sharePct = total > 0 ? roundNumber((item.value / total) * 100, 2) : 0

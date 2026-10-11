@@ -81,7 +81,7 @@ describe('Superlatives', () => {
 
 	test('every card names the timeframe period', () => {
 		const html = renderToStaticMarkup(<Superlatives aggregated={aggregated} period="7D" />)
-		expect(html).toContain('Top Avg. (+/-) 2.00% Depth (7D)')
+		expect(html).toContain('Top Avg (+/-) 2.00% Depth (7D)')
 		expect(html).toContain('Highest Volume (Maker &amp; Taker) (7D)')
 		expect(html).toContain('Top Bid-Ask Spread (7D)')
 		expect(html).toContain('Top KPI Adherence — Combined Uptime (7D)')

@@ -1,5 +1,5 @@
 // Control-row audit: loads pages from a running dev server in headless Chrome and lists controls that sit in one row
-// but differ in height or centre line (a 36px button beside 32px fields, a badge that grows its tab), and controls
+// but differ in height or center line (a 36px button beside 32px fields, a badge that grows its tab), and controls
 // whose content sits off their padding (an invisible flex item pushing a label right). Reading class
 // strings cannot find these: they come from layout (flex and grid stretch, subgrid gaps, content taller than the
 // label line), so the audit measures the rendered boxes.
@@ -46,8 +46,8 @@ const port = 9444
 
 // Runs in the page. Two controls share a row when they overlap vertically by half the shorter one, sit within 48px
 // of each other, and their nearest shared flex or grid container is at most three levels above both, so controls in
-// neighbouring cards are not compared. Heights are compared only between controls drawn as boxes (a border or a
-// fill), since a bare icon button beside a 32px button is fine; centres are compared for all. A button inside a
+// neighboring cards are not compared. Heights are compared only between controls drawn as boxes (a border or a
+// fill), since a bare icon button beside a 32px button is fine; centers are compared for all. A button inside a
 // bordered wrapper that is the visible field is measured by the wrapper.
 const PROBE = `(() => {
 	const SEL = 'button, input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]), textarea, [role=combobox], [role=tab], [role=radio], [role=checkbox], a, label:has(> input[type=radio]), label:has(> input[type=checkbox])'
@@ -109,7 +109,7 @@ const PROBE = `(() => {
 		}
 	}
 	// Content off its padding: a boxed flex control whose visible content starts later than its padding, or sits off
-	// centre when it is centred, has something invisible taking space (an unpositioned pseudo-element in the gap, a
+	// center when it is centered, has something invisible taking space (an unpositioned pseudo-element in the gap, a
 	// stray margin). Text and icons that are hidden (visibility, sr-only, absolute) do not count.
 	const inset = []
 	for (const { el } of items) {
@@ -145,7 +145,7 @@ const PROBE = `(() => {
 		const lead = left - r.left - parseFloat(cs.borderLeftWidth) - parseFloat(cs.paddingLeft)
 		const trail = r.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) - right
 		if (lead < -0.5 || trail < -0.5) continue
-		const centred = cs.justifyContent === 'center'
+		const centered = cs.justifyContent === 'center'
 		// A control whose first real child starts on its padding edge lays out correctly; an offset inside that child
 		// (a padded icon tile in a two-state switch) is the child's design. Empty children do not count as first.
 		const firstChild = [...el.children]
@@ -164,8 +164,8 @@ const PROBE = `(() => {
 					})
 			)
 		const childLead = Math.min(...firstChild) - r.left - parseFloat(cs.borderLeftWidth) - parseFloat(cs.paddingLeft)
-		if (!centred && childLead <= 1.5) continue
-		if (Math.abs(lead - trail) > 1.5 && (centred || lead > 1.5))
+		if (!centered && childLead <= 1.5) continue
+		if (Math.abs(lead - trail) > 1.5 && (centered || lead > 1.5))
 			inset.push([label(el), Math.round(lead * 10) / 10, Math.round(trail * 10) / 10, el.tagName.toLowerCase() + '.' + String(el.className).split(/\\s+/).slice(0, 6).join('.')])
 	}
 	return { rows: found, inset }
@@ -243,7 +243,7 @@ for (const route of routes) {
 	console.log(
 		`${route}  ${rows.length + inset.length === 0 ? 'ok' : `${rows.length} row(s), ${inset.length} inset(s)`}`
 	)
-	for (const [a, ah, b, bh, dc] of rows) console.log(`  ${a} (${ah}px) beside ${b} (${bh}px), centres ${dc}px apart`)
+	for (const [a, ah, b, bh, dc] of rows) console.log(`  ${a} (${ah}px) beside ${b} (${bh}px), centers ${dc}px apart`)
 	for (const [name, lead, trail, where] of inset)
 		console.log(`  ${name}: content ${lead}px past its left padding, ${trail}px before its right (${where})`)
 }

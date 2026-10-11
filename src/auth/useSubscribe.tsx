@@ -451,8 +451,8 @@ export const useSubscribe = () => {
 			if (!response) {
 				throw new Error("You're signed out. Sign in and try again.")
 			}
-			// A 5xx, like a lost response, can come after the server cancelled. A cancel that went through stays
-			// cancelled, so trying again is safe; the plan is read again either way.
+			// A 5xx, like a lost response, can come after the server canceled. A cancel that went through stays
+			// canceled, so trying again is safe; the plan is read again either way.
 			if (response.status >= 500) throw new Error(CANCEL_UNCONFIRMED)
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {

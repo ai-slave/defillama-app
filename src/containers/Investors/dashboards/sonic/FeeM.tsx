@@ -155,7 +155,7 @@ export default function FeeM() {
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 heading-xs">Fee Distribution</h3>
+				<h3 className="mt-4 heading-xs">Fee distribution</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
 						<span className="title-md text-on-brand">90%</span>
@@ -186,7 +186,7 @@ export default function FeeM() {
 
 			{/* Daily Stats Chart */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Daily Activity</h2>
+				<h2 className="heading-xs">Daily activity</h2>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.dailyStatsTitle}</ChartPanelTitle>} />
 					<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -205,16 +205,16 @@ export default function FeeM() {
 
 			{/* Rewards Treemap */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Rewards Distribution</h2>
+				<h2 className="heading-xs">Rewards distribution</h2>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by Protocol</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Collected rewards by protocol</ChartPanelTitle>} />
 					<FeeMTreemap leaderboard={data.leaderboard} />
 				</Panel>
 			</div>
 
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">FeeM Leaderboard</h2>
+				<h2 className="heading-xs">FeeM leaderboard</h2>
 				<Card padding="none" className="overflow-x-auto">
 					<table className="w-full">
 						<thead>

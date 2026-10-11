@@ -90,7 +90,7 @@ const METRIC_OPTIONS: Array<{ value: ChartBuilderConfig['metric']; label: string
 	{ value: 'options-premium', label: 'Options Premium' },
 	{ value: 'bridge-aggregators', label: 'Bridge Aggregator Volume' },
 	{ value: 'perps-aggregators', label: 'Perps Aggregator Volume' },
-	{ value: 'stablecoins', label: 'Stablecoin Mcap (chains only)' },
+	{ value: 'stablecoins', label: 'Stablecoins market cap (chains only)' },
 	{ value: 'chain-fees', label: 'Chain Fees (chains only)' },
 	{ value: 'chain-revenue', label: 'Chain Revenue (chains only)' }
 ]

@@ -378,7 +378,7 @@ export default function MCPContainer() {
 					<div>
 						<p className="mb-3 label-sm tracking-widest text-link uppercase">DefiLlama MCP Server</p>
 						<h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.75rem]">
-							DeFi Data for <span className="text-link">AI Agents</span>
+							DeFi data for <span className="text-link">AI Agents</span>
 						</h1>
 						<p className="mb-2 max-w-lg body-md text-secondary">
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
@@ -389,7 +389,7 @@ export default function MCPContainer() {
 						</p>
 						<div className="flex flex-wrap gap-3">
 							<Button onClick={handleGetStarted} variant="primary" size="md">
-								Get Started
+								Get started
 							</Button>
 							<Button
 								as="a"
@@ -413,15 +413,15 @@ export default function MCPContainer() {
 			{/* Features */}
 			<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8">
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					<FeatureCard icon={<span>🔌</span>} title="23 DeFi Tools">
+					<FeatureCard icon={<span>🔌</span>} title="23 DeFi tools">
 						TVL, fees, revenue, token prices, yields, stablecoins, bridges, ETFs, hacks, treasuries, and more, all
 						accessible through natural language.
 					</FeatureCard>
-					<FeatureCard icon={<span>🔑</span>} title="Easy Setup">
+					<FeatureCard icon={<span>🔑</span>} title="Easy setup">
 						Paste the quick start prompt, your agent handles the rest. Works with Claude Code, OpenClaw, Cursor, Codex,
 						Gemini CLI, and more.
 					</FeatureCard>
-					<FeatureCard icon={<span>💳</span>} title="Uses Your API Credits">
+					<FeatureCard icon={<span>💳</span>} title="Uses your API credits">
 						Same credit pool as your DefiLlama API key. One credit per query. No separate billing. If you have an API
 						plan, you're already set.
 					</FeatureCard>
@@ -432,7 +432,7 @@ export default function MCPContainer() {
 			<section id="setup" className="mx-auto max-w-[1100px] scroll-mt-20 px-4 py-12 sm:px-6 md:px-8">
 				<SectionHeader
 					overline="Quick Start"
-					title="Paste This Into Your Agent"
+					title="Paste this into your agent"
 					description="Copy this prompt and send it to your AI agent. It handles the rest."
 				/>
 
@@ -448,8 +448,8 @@ export default function MCPContainer() {
 						Add the URL above to your MCP client. That's the only config needed.
 					</StepCard>
 					<StepCard step={2} title="Authenticate">
-						Your agent will prompt you to log in via browser on first use. Sign in with your DefiLlama account. API plan
-						required.
+						Your agent will prompt you to sign in via browser on first use. Sign in with your DefiLlama account. API
+						plan required.
 					</StepCard>
 					<StepCard step={3} title="Start querying">
 						Ask your agent anything about DeFi. It calls the right tool automatically.
@@ -499,7 +499,7 @@ export default function MCPContainer() {
 
 			{/* Tools */}
 			<section id="tools" className="mx-auto max-w-[1100px] scroll-mt-20 px-4 py-12 sm:px-6 md:px-8">
-				<SectionHeader overline="23 Tools" title="Everything DeFi, One Connection" />
+				<SectionHeader overline="23 Tools" title="Everything DeFi, one connection" />
 
 				<div className="space-y-6">
 					{toolCategories.map((cat, i) => (
@@ -512,7 +512,7 @@ export default function MCPContainer() {
 			<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8">
 				<SectionHeader
 					overline="Workflow Skills"
-					title="Guided Research Workflows"
+					title="Guided research workflows"
 					description="Optional skills that teach your agent structured analysis patterns, turning raw tools into expert-level DeFi research. Installed automatically by the quick start prompt unless you opted to skip them."
 				/>
 
@@ -548,7 +548,7 @@ export default function MCPContainer() {
 				<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">Ready to get started?</h2>
 				<p className="mb-6 text-secondary">Requires an API plan. Uses the same credits as your API key.</p>
 				<Button onClick={handleGetStarted} variant="primary" size="md" className="mx-auto">
-					Get Started
+					Get started
 				</Button>
 			</section>
 

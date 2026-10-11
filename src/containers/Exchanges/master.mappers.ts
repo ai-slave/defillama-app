@@ -1327,7 +1327,7 @@ export function mapMasterResearchReport(
 		//
 		// Overlapping lines, not a stack: the question is "how much of OI is BTC", which is
 		// read off one line against 100%, not off a band whose baseline moves with its
-		// neighbours.
+		// neighbors.
 		if (response.btc_oi && response.eth_oi) {
 			const total = summedOther(dayCount)(
 				exchangeSeriesItems(decoded, (exchange) => metricSeries(exchange, 'linear_perp'))
@@ -1341,7 +1341,7 @@ export function mapMasterResearchReport(
 					const observed = series[index]
 					return value == null || value <= 0 || observed == null ? null : observed / value
 				})
-			// Labelled 'Other', not 'Others': the tooltip treats the exact name 'Others' as a
+			// Labeled 'Other', not 'Others': the tooltip treats the exact name 'Others' as a
 			// truncated top-N bucket and rules it off from the rows above. Here it is a peer
 			// category, and 'Other' is what every other research chart calls its leftover.
 			const others = total.map((value, index) => {

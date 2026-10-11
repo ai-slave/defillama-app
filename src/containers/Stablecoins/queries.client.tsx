@@ -27,7 +27,7 @@ const buildStablecoinMcapSeries = async (chain: string): Promise<Array<Stablecoi
 		return null
 	}
 }
-export const useGetStabelcoinsChartDataByChain = (chain?: string) => {
+export const useGetStablecoinsChartDataByChain = (chain?: string) => {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['stablecoins', 'chart-by-chain', chain],
 		queryFn: chain ? () => buildStablecoinMcapSeries(chain) : () => null,

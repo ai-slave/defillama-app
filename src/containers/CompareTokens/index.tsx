@@ -97,7 +97,7 @@ export function CompareTokens({
 
 	return (
 		<>
-			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center heading-sm lg:-left-[116px]">Compare Tokens</h1>
+			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center heading-sm lg:-left-[116px]">Compare tokens</h1>
 			<div className="relative mx-auto flex w-full max-w-sm flex-col items-center gap-2 lg:-left-[116px]">
 				{/* On wider screens the labels share one row and the fields the next, so the swap centers on the fields. */}
 				<div className="flex flex-col gap-4 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:grid-rows-[auto_auto] sm:gap-x-4 sm:gap-y-1.5">

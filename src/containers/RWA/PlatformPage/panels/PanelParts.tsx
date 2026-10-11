@@ -37,7 +37,7 @@ export function Prose({ children }: { children: string }) {
 	)
 }
 
-export function LabelledProse({ label, text }: { label: string; text: string | null }) {
+export function LabeledProse({ label, text }: { label: string; text: string | null }) {
 	if (!text) return null
 	return (
 		<div className="flex flex-col gap-1">

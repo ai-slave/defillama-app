@@ -14,7 +14,7 @@ export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 	return (
 		<Card padding="md" as="section" className="overflow-hidden" aria-label="Daily change grid">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="heading-xs">Daily Change Grid</h3>
+				<h3 className="heading-xs">Daily change grid</h3>
 				<p className="body-xs text-secondary">{displayDays.length} days shown</p>
 			</div>
 			<ul className="flex scrollbar-none max-w-full flex-wrap gap-1.5 pb-1" aria-label="Daily return heat cells">
@@ -22,7 +22,7 @@ export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 					const isPositive = day.percentChange > 0
 					const isZero = day.percentChange === 0
 					const alpha = Math.min(60, Math.max(22, (Math.abs(day.percentChange) / 9) * 100))
-					// Up, down and Others colours at an alpha, so the cell follows the card in both modes.
+					// Up, down and Others colors at an alpha, so the cell follows the card in both modes.
 					const backgroundColor = isZero
 						? `color-mix(in srgb, ${OTHERS_COLOR} 22%, transparent)`
 						: `color-mix(in srgb, ${isPositive ? HEAT_UP : HEAT_DOWN} ${alpha}%, transparent)`

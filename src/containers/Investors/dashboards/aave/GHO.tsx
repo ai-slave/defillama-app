@@ -110,7 +110,7 @@ function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="heading-xs">GHO Across Markets</h3>
+			<h3 className="heading-xs">GHO across markets</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>
@@ -199,7 +199,7 @@ export default function GHO() {
 			{/* Chart section with inline time window toggle */}
 			<div>
 				<div className="mb-4 flex items-center justify-between">
-					<h3 className="heading-xs">GHO Borrow APY History</h3>
+					<h3 className="heading-xs">GHO borrow APY history</h3>
 					<SegmentedControl<TimeWindow>
 						variant="default"
 						size="md"

@@ -89,7 +89,7 @@ function TokensBreakdownPieChartCard({
 	return (
 		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
-				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
+				<h2 className="mr-auto heading-xs">Tokens breakdown</h2>
 				{selectableSeries.length > 1 ? (
 					<SelectWithCombobox
 						allValues={selectableSeries}
@@ -143,7 +143,7 @@ function HistoricalTreasuryChartCard({
 	return (
 		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar>
-				<h2 className="mr-auto heading-xs">Historical Treasury</h2>
+				<h2 className="mr-auto heading-xs">Historical treasury</h2>
 				<ChartExportButtons
 					chartInstance={chartInstance}
 					filename={exportFilenameBase}
@@ -418,7 +418,7 @@ export default function Protocols(props: TreasuryPageProps) {
 
 					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
-							title="Tokens Breakdown"
+							title="Tokens breakdown"
 							protocolName={props.name}
 							allTokens={rawTokensUnique}
 							breakdown={tokenRawBreakdown}

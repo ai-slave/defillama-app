@@ -47,9 +47,9 @@ const GROUP_OPTIONS: Array<{ value: EquitiesTreemapGroupBy; label: string }> = [
 ]
 
 const COLOR_METRIC_LABELS: Record<EquitiesTreemapColorMetric, string> = {
-	priceChangePercentage1d: 'Price 1D',
-	priceChangePercentage7d: 'Price 7D',
-	priceChangePercentage1m: 'Price 1M'
+	priceChangePercentage1d: 'Price 1d',
+	priceChangePercentage7d: 'Price 7d',
+	priceChangePercentage1m: 'Price 30d'
 }
 
 const COLOR_OPTIONS = EQUITIES_TREEMAP_COLOR_METRICS.map((value) => ({ value, label: COLOR_METRIC_LABELS[value] }))
@@ -193,7 +193,7 @@ export function EquitiesTreemapSection({
 							<ChartExportButtons
 								chartInstance={chartInstance}
 								filename={EXPORT_FILENAME}
-								title="Equities Market Map"
+								title="Equities market map"
 								csvSource={{
 									type: 'prepare-csv',
 									prepare: () =>

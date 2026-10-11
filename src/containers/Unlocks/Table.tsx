@@ -439,7 +439,7 @@ const emissionsColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.mcap ?? undefined, {
 		id: 'mcap',
-		header: 'MCap',
+		header: 'Mcap',
 		cell: ({ row }) => {
 			const value = row.original.mcap
 			if (value == null) return null

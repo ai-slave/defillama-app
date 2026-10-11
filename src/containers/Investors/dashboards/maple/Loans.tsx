@@ -55,7 +55,7 @@ const loanColumns: Array<ColumnDef<typeof paginatedTableFeatures, LoanRow>> = [
 		accessorKey: 'borrower',
 		cell: ({ getValue }) => {
 			const addr = getValue<string>()
-			return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+			return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 		},
 		size: 130
 	},
@@ -138,7 +138,7 @@ function LoansTable({ data }: { data: Array<LoanRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Open-Term Loans</h3>
+			<h3 className="mb-3 label-md text-secondary">Open-term loans</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</Card>
@@ -189,7 +189,7 @@ export default function Loans() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Principal by Pool"
+							title="Principal by pool"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={data.principalByPool}
@@ -209,7 +209,7 @@ export default function Loans() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Interest Rate Distribution"
+								title="Interest rate distribution"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								dataset={data.rateDistribution}
@@ -228,7 +228,7 @@ export default function Loans() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Loan Age Distribution"
+								title="Loan age distribution"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								dataset={data.ageDistribution}
@@ -242,7 +242,7 @@ export default function Loans() {
 				) : null}
 			</div>
 
-			{isLoading ? <CardSkeleton title="Open-Term Loans" /> : <LoansTable data={data.rows} />}
+			{isLoading ? <CardSkeleton title="Open-term loans" /> : <LoansTable data={data.rows} />}
 		</div>
 	)
 }

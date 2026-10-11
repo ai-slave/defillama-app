@@ -198,7 +198,7 @@ const colorsPerCategory = (draft: EditorDraft) =>
 	draft.type === 'pie' || (draft.type === 'hbar' && (draft.series?.length ?? 1) <= 1)
 
 /** Each series name's problem: empty, or repeating an earlier series' name. The cartesian adapter rejects either; a
-    chart coloured per category shows no name fields, and the pie and hbar adapters accept any name. */
+    chart colored per category shows no name fields, and the pie and hbar adapters accept any name. */
 function seriesNameIssues(draft: EditorDraft): Array<'empty' | 'duplicate' | null> {
 	if (colorsPerCategory(draft)) return []
 	const names = new Set<string>()

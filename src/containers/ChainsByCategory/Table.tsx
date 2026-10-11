@@ -337,7 +337,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
-		header: '1m TVL Change',
+		header: '30d TVL Change',
 		cell: (info) => <Change value={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
@@ -396,7 +396,7 @@ const columns = columnHelper.columns([
 	),
 	columnHelper.accessor((row) => row.stablesMcap ?? undefined, {
 		id: 'stablesMcap',
-		header: 'Stables MCap',
+		header: 'Stablecoins market cap',
 		cell: (info) =>
 			info.getValue() != null
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })

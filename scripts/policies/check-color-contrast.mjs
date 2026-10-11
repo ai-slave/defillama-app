@@ -29,10 +29,10 @@ const sectorBlock = paletteSource.slice(paletteSource.indexOf('export const SECT
 const CHART_SERIES_COLORS = [
 	paletteSource.match(/export const oldBlue = '(#[0-9a-fA-F]{6})'/)[1],
 	...[...paletteBlock.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1]),
-	// The eleventh sector colour beside the palette.
+	// The eleventh sector color beside the palette.
 	...[...sectorBlock.slice(0, sectorBlock.indexOf('\n}')).matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1])
 ]
-// Meaning colours kept as [light, dark] pairs (asset brands, the token rating page's metrics): each value is checked
+// Meaning colors kept as [light, dark] pairs (asset brands, the token rating page's metrics): each value is checked
 // on the mode it is drawn in.
 const MODE_PAIRS = ['ASSET_BRAND_COLORS', 'UTR_METRIC_COLORS'].flatMap((name) => {
 	const start = paletteSource.indexOf(`export const ${name}`)

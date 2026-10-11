@@ -607,7 +607,7 @@ export function RWAAssetPage({
 				{/* Left Column */}
 				<div className="flex flex-col gap-2">
 					{/* Token Properties */}
-					<SectionCard title="Token Properties">
+					<SectionCard title="Token properties">
 						<div className="grid grid-cols-2 gap-2">
 							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
@@ -764,7 +764,7 @@ export function RWAAssetPage({
 				{/* Right Column */}
 				<div className="flex flex-col gap-2">
 					{/* Asset Information */}
-					<SectionCard title="Asset Information">
+					<SectionCard title="Asset information">
 						<div className="flex flex-col gap-3">
 							<p className="flex flex-col gap-1">
 								<Tooltip
@@ -978,7 +978,7 @@ export function RWAAssetPage({
 									value={formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 								/>
 							) : (
-								<ChartPanelTitle headingAs="h2">Native Yield</ChartPanelTitle>
+								<ChartPanelTitle headingAs="h2">Native yield</ChartPanelTitle>
 							)
 						}
 					>

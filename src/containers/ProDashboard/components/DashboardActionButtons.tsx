@@ -99,7 +99,7 @@ export function CopyDashboardButton({
 				}}
 			>
 				<Icon name="copy" className="size-3.5" />
-				Copy Dashboard
+				Copy dashboard
 			</Button>
 			<span role="status" className="sr-only">
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}

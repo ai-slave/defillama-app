@@ -118,7 +118,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
 								const csv: Array<Array<CsvCell>> = [
-									['Stablecoin', 'Market Cap', '24h Change', '7d Change', '1m Change', 'Price', 'Chains']
+									['Stablecoin', 'Market Cap', '24h Change', '7d Change', '30d Change', 'Price', 'Chains']
 								]
 								for (const row of rows) {
 									const item = row.original

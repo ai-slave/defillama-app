@@ -6,7 +6,7 @@ import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset } from '../chartD
 import { definitions } from '../definitions'
 import type { RWAFlowGrouping } from '../flows'
 import type { RWAPlatformMilestone } from '../PlatformPage/api.types'
-import type { RWAEntityChart, RWAEntityChartCatalogue } from './entityChart'
+import type { RWAEntityChart, RWAEntityChartCatalog } from './entityChart'
 
 /* The entity chart of a platform page: the platform as one series per metric, the protocol page's Add Metrics
    pattern over the series the page already folds. Pure: the panel feeds it datasets and reads series back. */
@@ -31,7 +31,7 @@ const FLOW_AXIS = 1
 const PERCENT_AXIS = 2
 const COUNT_AXIS = 3
 
-export const RWA_PLATFORM_CHART: RWAEntityChartCatalogue<RWAPlatformChartMetricKey> = {
+export const RWA_PLATFORM_CHART: RWAEntityChartCatalog<RWAPlatformChartMetricKey> = {
 	groups: ['Core', 'Flows', 'Ratios', 'Assets', 'Annotations'],
 	defaults: ['activeMcap'],
 	metrics: [
@@ -230,7 +230,7 @@ export function periodBarSeries(
 	}
 }
 
-/** One series per selected metric, in catalogue order; a metric whose data is not there yet draws nothing. */
+/** One series per selected metric, in catalog order; a metric whose data is not there yet draws nothing. */
 export function buildRwaPlatformEntityChart(
 	selected: ReadonlyArray<RWAPlatformChartMetricKey>,
 	inputs: RWAPlatformChartInputs

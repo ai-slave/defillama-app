@@ -30,7 +30,7 @@ export const venueTypeColumn = columnHelper.accessor(
 				</span>
 			)
 		},
-		meta: textColumnMeta('w-[120px]', 'Whether the contract trades on a decentralised or a centralised venue.')
+		meta: textColumnMeta('w-[120px]', 'Whether the contract trades on a decentralized or a centralized venue.')
 	}
 )
 

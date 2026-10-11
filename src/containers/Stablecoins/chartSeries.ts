@@ -233,8 +233,8 @@ const USD_INFLOWS_CHART: MultiSeriesChartSeriesConfig = {
 
 const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [USD_INFLOWS_CHART]
 
-// Payloads are cached for every reader, so a series takes its rank colour here and each chart swaps in the
-// stablecoin's brand colour for its theme (`stablecoinBrandColors`).
+// Payloads are cached for every reader, so a series takes its rank color here and each chart swaps in the
+// stablecoin's brand color for its theme (`stablecoinBrandColors`).
 const getStablecoinSeriesColor = (name: string, index: number): string =>
 	name === STABLECOIN_OTHERS_SERIES_NAME ? OTHERS_COLOR : chartColor(index)
 

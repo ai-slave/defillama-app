@@ -116,7 +116,7 @@ export function DashboardOverflowMenu({
 	const dashboardItems = (
 		<>
 			{onOpenSettings ? (
-				<MenuItem aria-label="Dashboard Settings" onClick={onOpenSettings}>
+				<MenuItem aria-label="Dashboard settings" onClick={onOpenSettings}>
 					<Icon name="settings" className="size-3.5" />
 					<span>Settings</span>
 				</MenuItem>

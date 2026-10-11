@@ -5,7 +5,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ListRow } from '~/ui/ListRow'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
@@ -532,7 +532,7 @@ export function TokenSearchDialog({
 										selected
 										remove
 										// The chip leaves once the page applies the removal; with no chip left, the search field takes focus.
-										ref={focusNeighbourOnLeave(() => inputRef.current)}
+										ref={focusNeighborOnLeave(() => inputRef.current)}
 										onClick={() => toggle(value, true)}
 									/>
 								))}

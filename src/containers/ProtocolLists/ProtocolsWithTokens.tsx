@@ -268,7 +268,7 @@ const outstandingFdvColumns = columnHelper.columns([
 			headerClassName: 'w-[128px]',
 			align: 'end',
 			headerHelperText:
-				'Token price multiplied by outstanding supply.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (eg coins in treasury or reserve).'
+				'Token price multiplied by outstanding supply.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g. coins in treasury or reserve).'
 		}
 	})
 ])

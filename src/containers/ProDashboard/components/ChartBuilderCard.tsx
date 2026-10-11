@@ -545,7 +545,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							disabled={isReadOnly || !hasCustomSeriesColors}
 							onClick={handleResetAllSeriesColors}
 						>
-							Reset All
+							Reset all
 						</Button>
 					</Card>
 				) : null}

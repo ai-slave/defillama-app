@@ -75,8 +75,8 @@ export const BAR_CHARTS: Array<ChainChartLabels> = [
 
 export const DISABLED_CUMULATIVE_CHARTS: Array<ChainChartLabels> = ['Core Developers', 'Devs Commits']
 
-/** Picked metrics take chart colours in pick order, so a series, its chip and its axis share one colour and up to ten
-    picks stay distinguishable. A fixed colour per metric cannot: the catalogue has more metrics than the palette. */
+/** Picked metrics take chart colors in pick order, so a series, its chip and its axis share one color and up to ten
+    picks stay distinguishable. A fixed color per metric cannot: the catalog has more metrics than the palette. */
 export function getChainChartColors(toggledCharts: ReadonlyArray<ChainChartLabels>) {
 	const colors: Partial<Record<ChainChartLabels, string>> = {}
 	for (const [index, chart] of toggledCharts.entries()) colors[chart] = chartColor(index)

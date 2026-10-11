@@ -106,7 +106,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		}
 	},
 	{
-		header: '1m Change',
+		header: '30d Change',
 		id: 'change_1m',
 		accessorFn: (row) => row.change_1m ?? undefined,
 		cell: ({ row }) => <Change value={row.original.change_1m} />,

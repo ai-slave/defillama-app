@@ -104,7 +104,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.priceChangePercentage1m ?? undefined, {
 		id: 'priceChangePercentage1m',
-		header: '1m Change',
+		header: '30d Change',
 		cell: (info) => {
 			const val = info.getValue()
 			return val == null ? '—' : <Change value={val} />
@@ -251,7 +251,7 @@ export function EquitiesCompaniesDataset() {
 										'Volume',
 										'1d Change',
 										'7d Change',
-										'1m Change',
+										'30d Change',
 										'P/E',
 										'Div Yield',
 										'Revenue TTM',

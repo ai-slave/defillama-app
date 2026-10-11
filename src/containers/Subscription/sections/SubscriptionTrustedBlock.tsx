@@ -2,7 +2,7 @@ export function SubscriptionTrustedBlock({ trustLogos }: { trustLogos: Array<{ s
 	return (
 		<div className="flex w-full flex-col items-center md:w-auto">
 			<div className="flex w-full flex-col items-center gap-2 text-center md:w-[448px] md:gap-4">
-				<h2 className="heading-sm text-primary">Trusted by DeFi Natives and Global Regulators</h2>
+				<h2 className="heading-sm text-primary">Trusted by DeFi natives and global regulators</h2>
 				<p className="body-sm text-secondary md:body-md">From top crypto exchanges to global central banks</p>
 			</div>
 

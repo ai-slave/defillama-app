@@ -59,7 +59,7 @@ async function connect() {
 	source!.dispatchEvent(new MessageEvent('PB_CONNECT', { lastEventId: 'fixture-client', data: '{}' }))
 	await vi.waitFor(() => expect(popup.location.href).toContain('github.com'))
 }
-test.each([false, true])('keeps the SDK write private until acceptance; cancelled=%s', async (cancelled) => {
+test.each([false, true])('keeps the SDK write private until acceptance; canceled=%s', async (canceled) => {
 	const controller = new AbortController()
 	const onAuthenticated = vi.fn()
 	const request = { signal: controller.signal, popup, onAuthenticated }
@@ -69,15 +69,15 @@ test.each([false, true])('keeps the SDK write private until acceptance; cancelle
 		new MessageEvent('@oauth2', { data: JSON.stringify({ state: 'fixture-client', code: 'fixture-code' }) })
 	)
 	await vi.waitFor(() => expect(exchange).toBeTypeOf('function'))
-	if (cancelled) controller.abort()
+	if (canceled) controller.abort()
 	// Resolve despite abort, as a late server response can still reach the SDK.
 	exchange(
 		Response.json({ token: 'accepted-token', record: { id: 'user', collectionId: 'users', collectionName: 'users' } })
 	)
-	expect((await result)?.id ?? null).toBe(cancelled ? null : 'user')
+	expect((await result)?.id ?? null).toBe(canceled ? null : 'user')
 	await vi.waitFor(() => expect(saved.mock.calls.some((call) => call[0] === 'accepted-token')).toBe(true))
-	expect(pb.authStore.token).toBe(cancelled ? '' : 'accepted-token')
-	expect(onAuthenticated).toHaveBeenCalledTimes(cancelled ? 0 : 1)
+	expect(pb.authStore.token).toBe(canceled ? '' : 'accepted-token')
+	expect(onAuthenticated).toHaveBeenCalledTimes(canceled ? 0 : 1)
 	expect(source!.close).toHaveBeenCalled()
 	expect(popup.close).toHaveBeenCalled()
 })

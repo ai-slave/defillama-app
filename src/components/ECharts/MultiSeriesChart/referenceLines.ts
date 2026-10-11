@@ -1,4 +1,4 @@
-/** Dated dividers across the plot, each labelled at its top end. Timestamps are unix seconds. */
+/** Dated dividers across the plot, each labeled at its top end. Timestamps are unix seconds. */
 export function buildReferenceMarkLine({ lines, textColor }: { lines: Array<[number, string]>; textColor: string }) {
 	const sorted = lines.toSorted((a, b) => +a[0] - +b[0])
 

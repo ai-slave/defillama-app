@@ -142,7 +142,7 @@ test('Add to Slack keeps focus while it starts the link', async () => {
 	expect(document.activeElement).toBe(add)
 })
 
-test('cancelling a pending link hands focus to Add to Slack', async () => {
+test('canceling a pending link hands focus to Add to Slack', async () => {
 	session.serve({
 		'https://ai.llama.fi/slack/status': { links: [], pending: { expiresAt: '2100-01-01T00:00:00.000Z' } },
 		'https://ai.llama.fi/slack/link/cancel': { cancelled: true }

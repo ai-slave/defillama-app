@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { focusNeighbourOnLeave } from './focus'
+import { focusNeighborOnLeave } from './focus'
 import { Icon } from './Icon'
 import { LoadingSpinner } from './internal/Loaders'
 import { tw } from './tw'
@@ -8,13 +8,13 @@ import { tw } from './tw'
 
    rounded-full, 32px tall (md row height), label-sm in text-primary (white —
    NOT link-blue), a 2px gap to a 14px trailing ×, px-2. The border is the
-   metric's series colour, so the chip doubles as the chart's legend:
+   metric's series color, so the chip doubles as the chart's legend:
 
      <MetricChip label="TVL" color={seriesColor} onRemove={() => …} />
 
    It is a button named "Remove TVL": pressing it removes the metric. When the
    chip leaves while focused, focus moves to the next chip, else the previous
-   one; the first chip's previous neighbour is the Add Metrics button before
+   one; the first chip's previous neighbor is the Add Metrics button before
    it. `loading` swaps the × for a spinner and adds "loading" to the name;
    `prefix` is a glyph before the label (a verified seal).
 ---------------------------------------------------------------------------- */
@@ -22,7 +22,7 @@ import { tw } from './tw'
 const metricChipStyles = tw`flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-0.5 rounded-full border px-2 py-1.5 label-sm whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row`
 
 // One ref for every chip: a new callback each render would rerun its cleanup while the chip has focus.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave()
+const focusNeighborChipOnLeave = focusNeighborOnLeave()
 
 export function MetricChip({
 	label,
@@ -41,7 +41,7 @@ export function MetricChip({
 		<button
 			type="button"
 			data-row
-			ref={focusNeighbourChipOnLeave}
+			ref={focusNeighborChipOnLeave}
 			onClick={onRemove}
 			aria-label={loading ? `Remove ${label}, loading` : `Remove ${label}`}
 			className={metricChipStyles}

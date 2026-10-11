@@ -67,7 +67,7 @@ describe('InvestorRelationsView', () => {
 		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.trim() ?? null
 	}
 
-	/** The name of the tab the open panel is labelled by. */
+	/** The name of the tab the open panel is labeled by. */
 	function panelLabel() {
 		const panel = container.querySelector('[role="tabpanel"]')!
 		return container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent?.trim()

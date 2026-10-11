@@ -322,7 +322,7 @@ describe('buildMultiChartCardSeries', () => {
 		).toEqual(['Aave Fees', 'unknown Fees'])
 	})
 
-	test('draws each series in the colour given for its item', () => {
+	test('draws each series in the color given for its item', () => {
 		expect(
 			buildMultiChartCardSeries([loaded('a', 'tvl', 'Solana'), loaded('b', 'tvl', 'Base')], {
 				showCumulative: false,

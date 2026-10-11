@@ -306,7 +306,7 @@ test('keeps cached access visible and warns when background revalidation fails',
 	expect(sessionView.loaders.userLoading).toBe(false)
 })
 
-test("replaces a cancelled subscriber's cached active access with a canonical 404", async () => {
+test("replaces a canceled subscriber's cached active access with a canonical 404", async () => {
 	persistSubscription('account-a', activeSubscription('account-a'))
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {

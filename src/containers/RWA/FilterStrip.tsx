@@ -112,7 +112,7 @@ function RWAVenueTypeFilter({ counts }: { counts: Record<RWAVenueTypeChoice, num
 	/* The trigger reads the choice (DEX and CEX, DEX only, CEX only), never the field's name. */
 	return (
 		<Select
-			heading="Venue Type"
+			heading="Venue type"
 			allValues={withRwaOptionCounts(RWA_VENUE_TYPE_OPTIONS, counts)}
 			selectedValues={choice}
 			setSelectedValues={(next: string) =>

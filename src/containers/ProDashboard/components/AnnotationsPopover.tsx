@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, showFieldErrors } from '~/ui/focus'
+import { focusNeighborOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
@@ -106,7 +106,7 @@ function AnnotationsPanel({
 										variant="ghostDestructive"
 										aria-label={`Delete annotation ${annotation.label}`}
 										// After the last row, the date field that adds one.
-										ref={focusNeighbourOnLeave(() => dateInputRef.current)}
+										ref={focusNeighborOnLeave(() => dateInputRef.current)}
 										onClick={() => setAnnotations(annotations.filter((item) => item.id !== annotation.id))}
 									/>
 								}

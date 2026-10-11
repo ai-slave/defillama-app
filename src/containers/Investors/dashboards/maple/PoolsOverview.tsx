@@ -132,7 +132,7 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Active Pools</h3>
+			<h3 className="mb-3 label-md text-secondary">Active pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</Card>
@@ -184,7 +184,7 @@ export default function PoolsOverview() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="TVL by Pool"
+								title="TVL by pool"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								dataset={data.tvl}
@@ -203,7 +203,7 @@ export default function PoolsOverview() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Pool Utilization"
+								title="Pool utilization"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								dataset={data.utilization}
@@ -223,7 +223,7 @@ export default function PoolsOverview() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Spot APY by Pool"
+							title="Spot APY by pool"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={data.apy}
@@ -236,7 +236,7 @@ export default function PoolsOverview() {
 				</Panel>
 			) : null}
 
-			{isLoading ? <CardSkeleton title="Active Pools" /> : <PoolsTable data={poolRows} />}
+			{isLoading ? <CardSkeleton title="Active pools" /> : <PoolsTable data={poolRows} />}
 		</div>
 	)
 }

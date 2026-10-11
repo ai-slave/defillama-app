@@ -1,10 +1,10 @@
 import { OTHERS_COLOR } from '~/constants/colors'
 
 /**
- * Stablecoin brand colours by symbol (and by name, which Pro dashboard series use), kept over the palette because readers know them. Each is [light, dark]: a brand
+ * Stablecoin brand colors by symbol (and by name, which Pro dashboard series use), kept over the palette because readers know them. Each is [light, dark]: a brand
  * under 3:1 on a chart background in one mode moves its lightness (OKLCH, same hue) just far enough there, and a brand
- * that passes keeps its hex in both. The chart payloads are cached for every reader, so they colour series by rank and
- * each chart swaps in the brand colour for its theme.
+ * that passes keeps its hex in both. The chart payloads are cached for every reader, so they color series by rank and
+ * each chart swaps in the brand color for its theme.
  */
 const STABLECOIN_BRAND_COLORS: Record<string, readonly [light: string, dark: string]> = {
 	USDT: ['#009393', '#009393'],
@@ -23,7 +23,7 @@ const STABLECOIN_BRAND_COLORS: Record<string, readonly [light: string, dark: str
 	'Ethena USDe': ['#3A3A3A', '#626262'],
 	'Sky Dollar': ['#16a091', '#1BAB9B'],
 	'PayPal USD': ['#0070E0', '#0070E0'],
-	// Pie presentations give the remainder slice a palette colour; here it stays the neutral remainder.
+	// Pie presentations give the remainder slice a palette color; here it stays the neutral remainder.
 	Others: [OTHERS_COLOR, OTHERS_COLOR]
 }
 
@@ -33,7 +33,7 @@ for (const symbol in STABLECOIN_BRAND_COLORS) {
 	BRAND_COLORS_BY_THEME[1][symbol] = STABLECOIN_BRAND_COLORS[symbol][1]
 }
 
-/** Brand colours for the chart's theme, keyed by symbol; a series or slice missing here keeps its rank colour. */
+/** Brand colors for the chart's theme, keyed by symbol; a series or slice missing here keeps its rank color. */
 export function stablecoinBrandColors(isDark: boolean): Record<string, string> {
 	return BRAND_COLORS_BY_THEME[isDark ? 1 : 0]
 }

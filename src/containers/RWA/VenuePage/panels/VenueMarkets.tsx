@@ -6,7 +6,7 @@ import { formatRwaKpiUsd, formatRwaMultiple } from '../../kpi/format'
 import { PanelCard, Pill } from '../../PlatformPage/panels/PanelParts'
 import type { RwaVenueMarketsSummary, RwaVenueOracleProviders } from '../venueData'
 
-/** The group bars in the series colours by rank, largest first; groups past these are Others grey. */
+/** The group bars in the series colors by rank, largest first; groups past these are Others gray. */
 const GROUP_BAR_COLORS = chartColors(5)
 const ROW_CLASS =
 	'flex min-h-6 flex-wrap items-center justify-start gap-x-2 gap-y-1 border-b border-dashed border-subtle py-1 last:border-none'
@@ -22,7 +22,7 @@ function MarketsRow({ label, mono = false, children }: { label: string; mono?: b
 	)
 }
 
-/** An asset group with its share of the venue's open interest as a coloured bar between the name and the value. */
+/** An asset group with its share of the venue's open interest as a colored bar between the name and the value. */
 function ShareRow({ label, share, value, color }: { label: string; share: number; value: number; color?: string }) {
 	return (
 		<div className={SHARE_ROW_CLASS}>

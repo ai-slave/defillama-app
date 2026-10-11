@@ -132,7 +132,7 @@ test('the code and switch prompts hand focus to the control of the step that rep
 	})
 	await press(button('Confirm')!)
 	await waitForUi(() => expect(document.activeElement).toBe(button('Yes, switch')))
-	// Without a parent to consume the login token, cancelling the switch returns to its code prompt.
+	// Without a parent to consume the login token, canceling the switch returns to its code prompt.
 	await press(button('Cancel')!)
 	await waitForUi(() =>
 		expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))

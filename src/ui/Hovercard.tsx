@@ -36,7 +36,7 @@ const SIDE_FALLBACKS: Record<string, string> = {
  * Which surface: plain short text is a `<Tooltip>`. When opening the surface is the primary action, or the content
  * is a form or control set, use a popover, menu or dialog. A preview here may hold a few links or actions while
  * keyboard and touch access stay intact. When the anchor has its own click action, keep it and add a separate
- * labelled info control. The "N chains" list is the shared `ProtocolChainsHovercard`.
+ * labeled info control. The "N chains" list is the shared `ProtocolChainsHovercard`.
  *
  * Anchor: inline-flex, so it sizes to its content and follows the parent's `text-align`. Put truncating text in an
  * inner `<span className="truncate">` with `max-w-full` on the anchor; a bar that fills its cell adds `w-full`; an
@@ -44,7 +44,7 @@ const SIDE_FALLBACKS: Record<string, string> = {
  * anchor stretches to the column's width, and a side card opens past the widest sibling; add `self-start`.
  *
  * Placement: an anchor in a table cell opens to the side (`right-start`, or `left-start` near the table's end). A card
- * above or below covers the neighbouring row, and Ariakit keeps it open while the pointer moves toward it, so it
+ * above or below covers the neighboring row, and Ariakit keeps it open while the pointer moves toward it, so it
  * swallows the click on that row. A side card that has no room falls back below.
  *
  * Width: the surface caps itself with Ariakit's `--popover-available-width` and `--popover-available-height` and

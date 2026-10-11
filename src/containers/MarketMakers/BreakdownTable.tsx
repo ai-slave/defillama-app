@@ -183,7 +183,7 @@ export function BreakdownTable({
 				<h4 className="label-md">{title}, Detailed Breakdown</h4>
 				<AccentBadge className="h-6">{badge}</AccentBadge>
 			</div>
-			{/* On the card colour: the heat bands are a wash over it, and the drawer behind is grey. */}
+			{/* On the card color: the heat bands are a wash over it, and the drawer behind is gray. */}
 			<div className={`overflow-x-auto rounded-lg border bg-surface ${BORDER}`}>
 				<table className="w-full border-collapse">
 					<thead>

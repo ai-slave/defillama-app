@@ -1,5 +1,5 @@
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { BusyGlyph } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -143,7 +143,7 @@ export function SelectedListSidebar({
 										square
 										// The modals show the list only for two or more items, so the last row's × leaves with it and the
 										// picker takes focus.
-										ref={focusNeighbourOnLeave(pickerTrigger)}
+										ref={focusNeighborOnLeave(pickerTrigger)}
 										onClick={() => onRemove(item.value)}
 										aria-label={`Remove ${item.label}`}
 									/>

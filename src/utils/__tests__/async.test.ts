@@ -81,7 +81,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	test('times out followers without cancelling the leader request', async () => {
+	test('times out followers without canceling the leader request', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT_WAIT_MS', '5')
 		vi.stubEnv('SERVER_FETCH_JSON_TIMEOUT_MS', '1000')

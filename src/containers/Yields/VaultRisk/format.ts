@@ -105,7 +105,7 @@ export function formatOracleAdmin(admin: OracleAdmin): string {
 	}
 }
 
-// `unknown` means the on-chain read failed this tick (neutral, not a flag).
+// `unknown` means the onchain read failed this tick (neutral, not a flag).
 export function roleEntityLabel(entity: RoleEntity): string {
 	if (entity.kind === 'safe' && entity.threshold && entity.threshold.n > 0) {
 		return `${entity.threshold.m}-of-${entity.threshold.n} multisig`

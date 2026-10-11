@@ -51,7 +51,7 @@ function signedPct(value: number, signed?: SignMode): string {
 // The single, shared "no data" marker used across every yields table cell. A plain inline em
 // dash tinted --text-disabled — it carries NO alignment of its own, so the column's `align`
 // meta (applied as text-align on the <td>) places it exactly where that column's real content
-// sits: centered columns centre the dash, end-aligned columns right-align it. An explicit dash
+// sits: centered columns center the dash, end-aligned columns right-align it. An explicit dash
 // (never a blank cell) reads as "no data" rather than a rendering bug.
 // Missing values render as truly empty cells (the site-wide convention) — no dash.
 export function EmptyCell() {
@@ -88,7 +88,7 @@ export function DepegWarningIcon({
 // Supply-cap fill bar under the TVL value, shown only for pools that cap
 // deposits — same bar vocabulary as the borrow table's AvailableCell.
 // fill = tvl / (tvl + available), clamped at 100% (caps can be exceeded
-// on-chain via interest accrual).
+// onchain via interest accrual).
 export function SupplyCapBar({ tvl, available }: { tvl: number | null; available: number }) {
 	if (tvl == null) return null
 	const fill = Math.min(tvl / (tvl + available), 1)
@@ -258,9 +258,9 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 }
 
 // --- measured exit cell --------------------------------------------------------------------
-// What actually happened when we simulated a real holder withdrawing, on-chain, yesterday.
+// What actually happened when we simulated a real holder withdrawing, onchain, yesterday.
 // Status carries a leading glyph so the four outcomes are distinguishable at a glance without
-// reading; only `blocked` is coloured, because it is the only outcome that is bad news on its
+// reading; only `blocked` is colored, because it is the only outcome that is bad news on its
 // own (a queue with a known ETA is a fact, not a warning).
 //
 // A measured exit FEE rides along as the table's standard warning triangle — the same glyph
@@ -304,7 +304,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 	const share = withdrawableFraction(verified)
 	const withdrawableUsd = exitWithdrawableUsd(verified)
 	const depositsUsd = verified.tvl?.usd ?? null
-	// The bar is the cell's ring unrolled: colour is the withdrawable share, filling from the left
+	// The bar is the cell's ring unrolled: color is the withdrawable share, filling from the left
 	// under the figure that names it. Both figures are needed; with either missing, the coverage
 	// line states what IS known and never draws a zero.
 	const showFigures = share != null && withdrawableUsd != null && depositsUsd != null
@@ -405,7 +405,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 // When the row carries the resolved-view leg components, a composition sub-line renders beneath
 // the total — base (secondary) · reward (amber) · intrinsic (secondary) — and a label/value
 // tooltip with a bordered summary row appears.
-// `kind` only flavours the reward sign + labels (borrow reward offsets cost → shown negative).
+// `kind` only flavors the reward sign + labels (borrow reward offsets cost → shown negative).
 
 export interface TotalApyParts {
 	base?: number | null

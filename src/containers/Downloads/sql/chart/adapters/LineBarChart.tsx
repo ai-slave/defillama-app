@@ -225,7 +225,7 @@ function normalizeRowsToPercent(rows: Array<Array<number | string | null>>): Arr
 		const out = row.slice()
 		for (let index = 1; index < row.length; index++) {
 			const v = row[index]
-			// A row totalling zero or less has no shares, so it charts as empty rather than raw amounts shown as percents.
+			// A row totaling zero or less has no shares, so it charts as empty rather than raw amounts shown as percents.
 			out[index] = total > 0 && typeof v === 'number' && Number.isFinite(v) ? (v / total) * 100 : null
 		}
 		return out

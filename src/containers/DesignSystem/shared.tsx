@@ -89,7 +89,7 @@ export function Cell({ force, children }: { force?: ForcedState; children: React
 /* Side by side shows each example twice: the page in light, and the same markup in an always-dark scope. */
 export const SplitContext = createContext(false)
 
-function Pane({ dark, labelled, children }: { dark: boolean; labelled: boolean; children: ReactNode }) {
+function Pane({ dark, labeled, children }: { dark: boolean; labeled: boolean; children: ReactNode }) {
 	const anatomy = useContext(AnatomyContext)
 	return (
 		// The padding sits inside the scroller: a demo that moves past its box (the bouncing loading dots, a focus ring)
@@ -103,7 +103,7 @@ function Pane({ dark, labelled, children }: { dark: boolean; labelled: boolean; 
 			onSubmitCapture={(event) => event.preventDefault()}
 			className={`relative flex min-w-0 flex-col gap-3 overflow-x-auto rounded-lg border border-subtle bg-surface p-5 text-primary ${dark ? 'theme-dark' : ''}`}
 		>
-			{labelled ? (
+			{labeled ? (
 				<span className="label-xs tracking-wide text-tertiary uppercase">{dark ? 'Dark' : 'Light'}</span>
 			) : null}
 			{children}
@@ -120,16 +120,16 @@ export function Frame({ wide, children }: { wide: boolean; children: ReactNode }
 	const split = useContext(SplitContext)
 	if (!split)
 		return (
-			<Pane dark={false} labelled={false}>
+			<Pane dark={false} labeled={false}>
 				{children}
 			</Pane>
 		)
 	return (
 		<div className={`grid grid-cols-1 gap-3 ${wide ? '2xl:grid-cols-2' : ''}`}>
-			<Pane dark={false} labelled>
+			<Pane dark={false} labeled>
 				{children}
 			</Pane>
-			<Pane dark labelled>
+			<Pane dark labeled>
 				{children}
 			</Pane>
 		</div>

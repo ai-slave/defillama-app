@@ -100,7 +100,7 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 				<Card padding="none">
 					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
-							Safe Harbor Agreements
+							Safe Harbor agreements
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"

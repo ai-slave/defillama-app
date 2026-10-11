@@ -68,7 +68,7 @@ describe('PNG export legend selection', () => {
 	const exportLayout = (legendItems: Array<string>) =>
 		computeExportLayout({ title: 'OI', legendItems, shouldShowLegend: true, hasIcon: false, expandLegend: false })
 
-	test('greys out toggled-off series in the line legend and keeps them hidden', () => {
+	test('grays out toggled-off series in the line legend and keeps them hidden', () => {
 		const live = render(lineSeries({}))
 		live.dispatchAction({ type: 'legendUnSelect', name: 'Total' })
 		const liveOption = live.getOption() as EChartsOption
@@ -94,7 +94,7 @@ describe('PNG export legend selection', () => {
 		expect(legendOf(exported).data).toEqual(['Binance', 'Total'])
 	})
 
-	test('greys out toggled-off slices in the pie legend and keeps them hidden', () => {
+	test('grays out toggled-off slices in the pie legend and keeps them hidden', () => {
 		// PieChart passes the slice names as legend data.
 		const live = render(pieSeries({ data: ['Tether', 'Paxos'] }))
 		live.dispatchAction({ type: 'legendUnSelect', name: 'Paxos' })

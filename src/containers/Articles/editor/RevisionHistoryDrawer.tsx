@@ -573,7 +573,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, sav
 																{isSelected ? (
 																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-brand" />
 																) : null}
-																{/* The day's timeline: segments above and below each glyph, centred on it (the 20px inset
+																{/* The day's timeline: segments above and below each glyph, centered on it (the 20px inset
 																    plus half the 20px glyph), so no backdrop has to hide a line behind the glyph. */}
 																{index > 0 ? (
 																	<span

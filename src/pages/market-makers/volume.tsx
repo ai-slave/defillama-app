@@ -23,7 +23,7 @@ export default function VolumeLeaderboard({ rows }: InferGetStaticPropsType<type
 		>
 			<Leaderboard
 				active="Volume"
-				title="Volume Leaderboard"
+				title="Volume leaderboard"
 				subtitle="See how Market Makers rank based on Volume KPIs such as the avg. daily fill volume (maker & taker) as well as percentage of market share"
 				columns={VOLUME_COLUMNS}
 				initialData={rows}

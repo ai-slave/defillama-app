@@ -9,7 +9,7 @@ import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -33,7 +33,7 @@ type SocialKind = {
 }
 
 const PRESET_SOCIALS: Array<SocialKind> = [
-	{ id: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/yourhandle' },
+	{ id: 'twitter', label: 'X/Twitter', placeholder: 'https://x.com/yourhandle' },
 	{ id: 'github', label: 'GitHub', placeholder: 'https://github.com/yourhandle' },
 	{ id: 'farcaster', label: 'Farcaster', placeholder: 'https://warpcast.com/yourhandle' },
 	{ id: 'bluesky', label: 'Bluesky', placeholder: 'https://bsky.app/profile/you.bsky.social' },
@@ -498,7 +498,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 												size="md"
 												square
 												aria-label={`Remove custom link ${entry.key || index + 1}`}
-												ref={focusNeighbourOnLeave()}
+												ref={focusNeighborOnLeave()}
 												onClick={() => removeCustom(index)}
 											/>
 										}

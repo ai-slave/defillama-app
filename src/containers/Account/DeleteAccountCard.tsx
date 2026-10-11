@@ -383,7 +383,7 @@ function DeleteAccountModal({
 		onSuccess: () => onDeleted(session)
 	})
 
-	// Neither request can be cancelled, so the dialog stays open until it settles.
+	// Neither request can be canceled, so the dialog stays open until it settles.
 	const pending = requestMutation.isPending || deleteMutation.isPending
 	const requiredConfirmation = requestedConfirmation ?? eligibilityQuery.data?.requiredConfirmation
 	// Apple accounts confirm in the mobile app, so their request keeps the overview.

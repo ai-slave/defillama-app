@@ -141,7 +141,7 @@ export function SubscriptionComparisonSection({
 							role="columnheader"
 							className="sticky left-0 z-30 box-border flex h-[132px] w-[233px] shrink-0 items-center bg-surface px-2 md:w-[400px] md:rounded-tl-[24px] md:px-4"
 						>
-							<h2 className="heading-sm text-primary md:w-[220px]">Compare Plans and Features</h2>
+							<h2 className="heading-sm text-primary md:w-[220px]">Compare plans and features</h2>
 						</div>
 
 						<div className="min-w-0 flex-1 overflow-hidden">

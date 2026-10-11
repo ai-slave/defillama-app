@@ -174,7 +174,7 @@ export const getMarketCapToAnnualizedMetricRatio = (marketCap?: number | null, a
 	return marketCap / annualizedMetric
 }
 
-/** 0x1234ab...cdef display form; returns short values unchanged. */
+/** 0x1234ab…cdef display form; returns short values unchanged. */
 export function truncateAddress(address: string): string {
-	return address.length > 12 ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
+	return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
 }

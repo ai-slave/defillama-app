@@ -54,7 +54,7 @@ export function Stats(props: IStatsProps) {
 
 	const { isAuthenticated } = useAuthContext()
 
-	const { toggledCharts, DENOMINATIONS, chainGeckoId, hasAtleasOneBarChart, groupBy, denomination } = useMemo(() => {
+	const { toggledCharts, DENOMINATIONS, chainGeckoId, hasAtLeastOneBarChart, groupBy, denomination } = useMemo(() => {
 		const DENOMINATIONS = getChainDenominations(props.metadata).map(({ symbol }) => symbol)
 		const chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
 
@@ -62,17 +62,17 @@ export function Stats(props: IStatsProps) {
 			index === 0 ? searchParams.get(chainCharts[tchart]) !== 'false' : searchParams.get(chainCharts[tchart]) === 'true'
 		)
 
-		const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
+		const hasAtLeastOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
 		const groupByParam = searchParams.get('groupBy')
 
-		const groupBy = hasAtleasOneBarChart && groupByParam ? (normalizeChartInterval(groupByParam) ?? 'daily') : 'daily'
+		const groupBy = hasAtLeastOneBarChart && groupByParam ? (normalizeChartInterval(groupByParam) ?? 'daily') : 'daily'
 
 		const currencyInSearchParams = searchParams.get('currency')?.toLowerCase()
 
 		return {
 			DENOMINATIONS,
 			chainGeckoId,
-			hasAtleasOneBarChart,
+			hasAtLeastOneBarChart,
 			toggledCharts,
 			groupBy,
 			denomination: DENOMINATIONS.find((d) => d.toLowerCase() === currencyInSearchParams) ?? 'USD'
@@ -210,7 +210,7 @@ export function Stats(props: IStatsProps) {
 					toggledCharts={toggledCharts}
 					denominations={DENOMINATIONS}
 					denomination={denomination}
-					hasBarChart={hasAtleasOneBarChart}
+					hasBarChart={hasAtLeastOneBarChart}
 					groupBy={groupBy}
 					chainGeckoId={chainGeckoId}
 					finalCharts={finalCharts}

@@ -68,7 +68,7 @@ function LossRing({ pct, className = '', strokeWidth = 2 }: { pct: number; class
 	)
 }
 
-// The ring inherits its severity colour via `stroke-current`; the figure stays neutral ink.
+// The ring inherits its severity color via `stroke-current`; the figure stays neutral ink.
 function LossHero({
 	title,
 	amount,
@@ -429,7 +429,7 @@ function ReasonNote({ scenario }: { scenario: ScenarioVM }) {
 		<Card padding="sm">
 			<p className="label-sm text-primary">Why this isn&apos;t quantified</p>
 			<p className="mt-1 body-md text-secondary">
-				Current on-chain inputs identify the scenario, but don&apos;t contain enough exposure data to size depositor
+				Current onchain inputs identify the scenario, but don&apos;t contain enough exposure data to size depositor
 				impact.
 			</p>
 			{scenario.notes ? <p className="mt-1.5 body-md text-secondary">{scenario.notes}</p> : null}

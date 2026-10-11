@@ -133,7 +133,7 @@ function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="heading-xs">Rate Comparison Across Chains</h3>
+			<h3 className="heading-xs">Rate comparison across chains</h3>
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
 			</div>
@@ -326,7 +326,7 @@ export default function Rates() {
 					<ChartPanelToolbar
 						leading={
 							<ChartPanelTitle>
-								{activeAsset} Interest Rate Model · {primaryReserve?.chain}
+								{activeAsset} Interest rate model · {primaryReserve?.chain}
 							</ChartPanelTitle>
 						}
 					>
@@ -368,7 +368,7 @@ export default function Rates() {
 			) : null}
 
 			{marketsLoading ? (
-				<CardSkeleton title="Rate Comparison Across Chains" />
+				<CardSkeleton title="Rate comparison across chains" />
 			) : (
 				<RateComparisonTable data={sortedAssetReserves} />
 			)}

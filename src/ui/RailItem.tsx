@@ -14,7 +14,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    table of contents, `aria-expanded` on a row that opens a group.
 
    Rows sit 2-4px apart, so on phones each row is 44px tall itself rather
-   than carrying a touch-target overlay that would reach into its neighbours.
+   than carrying a touch-target overlay that would reach into its neighbors.
 
    Renders an `a` by default; pass `as={BasicLink}` for routes and
    `as="button" type="button"` for rows that act in place.

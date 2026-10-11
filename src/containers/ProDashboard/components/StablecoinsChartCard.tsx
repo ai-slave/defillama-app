@@ -35,8 +35,8 @@ interface StablecoinsChartCardProps {
 }
 
 const CHART_TYPE_LABELS: Record<string, string> = {
-	totalMcap: 'Total Market Cap',
-	tokenMcaps: 'Token Market Caps',
+	totalMcap: 'Total market cap',
+	tokenMcaps: 'Token market caps',
 	pie: 'Pie',
 	dominance: 'Dominance',
 	usdInflows: 'USD Inflows',
@@ -91,7 +91,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		() =>
 			chartPayload.charts.map((chart) => ({
 				...chart,
-				// The payload colours series by rank; a stablecoin's brand colour wins.
+				// The payload colors series by rank; a stablecoin's brand color wins.
 				color: brandColors[chart.name] ?? chart.color,
 				...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
 			})),
@@ -203,7 +203,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				{latestMcap !== null && chartType === 'totalMcap' ? (
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
-							<span className="body-sm text-tertiary uppercase">Total Market Cap</span>
+							<span className="body-sm text-tertiary uppercase">Total market cap</span>
 							<span className="mono-md-bold text-primary">
 								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>

@@ -500,7 +500,7 @@ function TokenRightsPage({
 							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
 							icon="plus"
 						>
-							List Your Tokens
+							List your tokens
 						</ExternalLinkButton>
 					</TableToolbar>
 					<div role="group" aria-label="Filters" className="flex flex-wrap items-center gap-1.5 px-2 pb-2">

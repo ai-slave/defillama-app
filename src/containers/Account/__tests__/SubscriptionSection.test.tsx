@@ -305,7 +305,7 @@ test('a cancellation retry keeps the unconfirmed error on screen while it runs',
 	await act(async () => button('Confirm cancellation')!.click())
 
 	await waitFor(() =>
-		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Cancelling…')
+		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Canceling…')
 	)
 	expect(alerts()).toHaveLength(1)
 })

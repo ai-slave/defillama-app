@@ -13,7 +13,7 @@ import { Icon } from './Icon'
  * source), with a trailing arrow; an icon-only link is a square Button, never a Tag.
  *
  * Not a filter chip and not a selection pill — those are Button `filter`/`toggle`
- * and `MetricChip`, which own their brand active states. A state coloured by
+ * and `MetricChip`, which own their brand active states. A state colored by
  * whether it is good (Live, Failed) is `StatusBadge`. `className` is for
  * layout placement only, never colors, radius, or type styles.
  */

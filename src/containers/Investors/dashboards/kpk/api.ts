@@ -234,7 +234,7 @@ export interface KpkMandatePerf {
 	benchLabel: string
 	/** Excess return earned above benchmark over the trailing year, $m. */
 	excess: number | null
-	/** The annualised run-rate at the 30-day spread, $m. */
+	/** The annualized run-rate at the 30-day spread, $m. */
 	excessRunRate?: number
 	/** $m this denomination earned over the window, gross of the benchmark. */
 	earned?: number | null
@@ -365,7 +365,7 @@ export interface KpkMandates {
 		weightedDeployedPct: number | null
 		/** Earned above benchmark over the trailing year, $m. */
 		excess: number | null
-		/** The annualised run-rate it replaced, $m. */
+		/** The annualized run-rate it replaced, $m. */
 		excessRunRate?: number | null
 	}
 	refs: Array<KpkRef>

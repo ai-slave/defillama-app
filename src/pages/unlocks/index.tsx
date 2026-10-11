@@ -323,7 +323,7 @@ export default function Protocols({
 
 			<SummaryCardGrid>
 				<SummaryStatsCard>
-					<h1 className="heading-sm">Unlock Statistics</h1>
+					<h1 className="heading-sm">Unlock statistics</h1>
 					<div className="flex flex-col">
 						<UpcomingUnlockMetric days={7} values={upcomingUnlocks7d} />
 						<UpcomingUnlockMetric days={30} values={upcomingUnlocks30d} />
@@ -341,11 +341,11 @@ export default function Protocols({
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
-					<TopUnlocks data={data} period={1} title="Past 24h Top Unlocks" initialNowSec={generatedAtSec} />
+					<TopUnlocks data={data} period={1} title="Past 24h top unlocks" initialNowSec={generatedAtSec} />
 				</Card>
 
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
-					<TopUnlocks data={data} period={30} title="Past 30d Top Unlocks" initialNowSec={generatedAtSec} />
+					<TopUnlocks data={data} period={30} title="Past 30d top unlocks" initialNowSec={generatedAtSec} />
 				</Card>
 
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">

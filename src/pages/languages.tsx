@@ -39,7 +39,7 @@ function buildDataset(langs: Record<string, Record<string, number>>): {
 		for (const lang in tvlByLang) keysSet.add(lang)
 	}
 	entries.sort((a, b) => Number(a[0]) - Number(b[0]))
-	// Largest first by the latest day, so series colours and the stack follow rank.
+	// Largest first by the latest day, so series colors and the stack follow rank.
 	const latest = entries.at(-1)?.[1] ?? {}
 	const keys = Array.from(keysSet).sort((a, b) => (latest[b] ?? 0) - (latest[a] ?? 0))
 
@@ -116,20 +116,20 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceCharts, osDa
 			canonicalUrl="/languages"
 			pageName={pageName}
 		>
-			<EntityTitleStrip title="Breakdown by Smart Contract Languages" />
+			<EntityTitleStrip title="Breakdown by smart contract languages" />
 
 			<LanguageSeriesChart dataset={tvlDataset} charts={tvlCharts} title="TVL" label="Language" stacked />
 			<LanguageSeriesChart
 				dataset={tvlDataset}
 				charts={dominanceCharts}
-				title="TVL Dominance"
+				title="TVL dominance"
 				label="Language"
 				expandTo100Percent
 			/>
 			<LanguageSeriesChart
 				dataset={osDataset}
 				charts={osCharts}
-				title="Open/Closed Source breakdown of solana protocols"
+				title="Open/closed source breakdown of Solana protocols"
 				label="Source"
 				expandTo100Percent
 			/>

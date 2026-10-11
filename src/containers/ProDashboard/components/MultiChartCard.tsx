@@ -144,7 +144,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 	}, [failedItemRetries])
 	const retryingFailedItems = failedItems.some((item) => item.isFetching)
 
-	// Colours come from every configured series, so one still loading or failing does not shift the rest.
+	// Colors come from every configured series, so one still loading or failing does not shift the rest.
 	const seriesColors = useMemo(
 		() => getMultiChartSeriesColors(limitedItems, entityColors),
 		[limitedItems, entityColors]

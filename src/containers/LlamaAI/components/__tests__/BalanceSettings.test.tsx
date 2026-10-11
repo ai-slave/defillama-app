@@ -86,7 +86,7 @@ test('cancellation does not poll or claim payment succeeded', async () => {
 	const afterMount = balanceReads()
 	await advance(15_000)
 	expect(balanceReads()).toBe(afterMount)
-	expect(host.textContent).toContain('Payment cancelled')
+	expect(host.textContent).toContain('Payment canceled')
 })
 
 test('crypto checkout returns to Balance with separate completion and cancel results', async () => {

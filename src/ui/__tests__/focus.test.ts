@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, test } from 'vitest'
-import { neighbourRowControl } from '../focus'
+import { neighborRowControl } from '../focus'
 
 afterEach(() => document.body.replaceChildren())
 
@@ -19,15 +19,15 @@ function list(names: Array<string>) {
 
 test("a leaving row hands focus to the next row's same control, whatever icons the rows show", () => {
 	const { remove, row } = list(['Alpha', 'Beta', 'Gamma'])
-	expect(neighbourRowControl(row('Alpha'), remove('Alpha'))?.textContent).toBe('Remove Beta')
+	expect(neighborRowControl(row('Alpha'), remove('Alpha'))?.textContent).toBe('Remove Beta')
 })
 
 test("the last row hands focus to the previous row's same control", () => {
 	const { remove, row } = list(['Alpha', 'Beta'])
-	expect(neighbourRowControl(row('Beta'), remove('Beta'))?.textContent).toBe('Remove Alpha')
+	expect(neighborRowControl(row('Beta'), remove('Beta'))?.textContent).toBe('Remove Alpha')
 })
 
-test('a row that is its own control hands focus to the neighbour row itself', () => {
+test('a row that is its own control hands focus to the neighbor row itself', () => {
 	const { row } = list(['Alpha', 'Beta'])
-	expect(neighbourRowControl(row('Beta'), row('Beta'))).toBe(row('Alpha'))
+	expect(neighborRowControl(row('Beta'), row('Beta'))).toBe(row('Alpha'))
 })

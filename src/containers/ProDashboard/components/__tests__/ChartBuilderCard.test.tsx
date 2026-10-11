@@ -124,7 +124,7 @@ test('series color Reset buttons stay focusable while there is no override to re
 	)
 	const button = (label: string) => [...container.querySelectorAll('button')].find((el) => el.textContent === label)!
 	await act(async () => button('Colors').click())
-	for (const label of ['Reset', 'Reset All']) {
+	for (const label of ['Reset', 'Reset all']) {
 		expect(button(label).disabled).toBe(false)
 		expect(button(label).getAttribute('aria-disabled')).toBe('true')
 	}

@@ -62,7 +62,7 @@ test('dropping reports the new position, or that the card did not move', () => {
 	expect(dragAnnouncement(grouped, 'end', 'tvl', 'fees')).toBe('TVL notes moved to position 1 of 2 in Overview.')
 	expect(dragAnnouncement(grouped, 'end', 'tvl', 'tvl')).toBe('TVL notes was dropped where it started.')
 	expect(dragAnnouncement(grouped, 'end', 'tvl', null)).toBe('TVL notes was dropped where it started.')
-	expect(dragAnnouncement(grouped, 'cancel', 'tvl', null)).toBe('Moving TVL notes cancelled.')
+	expect(dragAnnouncement(grouped, 'cancel', 'tvl', null)).toBe('Moving TVL notes canceled.')
 })
 
 test('picking up a section names it without a card position, since sections are not counted among cards', () => {
@@ -94,5 +94,5 @@ test('a card on a tab is placed within the tab', () => {
 })
 
 test('a card missing from the dashboard is announced generically', () => {
-	expect(dragAnnouncement(grouped, 'cancel', 'gone', null)).toBe('Moving Card cancelled.')
+	expect(dragAnnouncement(grouped, 'cancel', 'gone', null)).toBe('Moving Card canceled.')
 })

@@ -180,7 +180,7 @@ export default function CreditCard() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="USD Inflows"
+							title="USD inflows"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={inflowsDataset}

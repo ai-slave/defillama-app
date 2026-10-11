@@ -43,7 +43,7 @@ function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticPro
 				<Card padding="none">
 					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
-							Protocol Rankings
+							Protocol rankings
 						</PanelTitle>
 						<TableSearchInput
 							columnId="name"
@@ -97,7 +97,7 @@ const columns = columnHelper.columns([
 		meta: {
 			headerClassName: 'w-[128px]',
 			align: 'end',
-			headerHelperText: "Value of tokens owned by a protocol, excluding it's own token"
+			headerHelperText: 'Value of tokens owned by a protocol, excluding its own token'
 		}
 	})
 ])

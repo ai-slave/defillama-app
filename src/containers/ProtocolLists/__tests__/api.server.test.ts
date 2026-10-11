@@ -89,7 +89,7 @@ test('API filtering and complete CSV export reuse the pinned population', async 
 	const result = await request({ kind: 'airdrops', snapshot: initial.protocolList.version, minTvl: '78', csv: 'true' })
 	expect(result.status).toBe(200)
 	expect((result as { body: string }).body).toBe(
-		'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nProtocol 79,Lending,79,,,79,0,0,0\nProtocol 78,Lending,78,,,78,0,0,0'
+		'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,30d TVL Change\nProtocol 79,Lending,79,,,79,0,0,0\nProtocol 78,Lending,78,,,78,0,0,0'
 	)
 	expect(builds()).toBe(1)
 })

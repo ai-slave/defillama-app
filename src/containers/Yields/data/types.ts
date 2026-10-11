@@ -38,7 +38,7 @@ export interface Holders {
 	top_10_share_pct: number | null
 }
 
-// Measured by simulating real holders' withdrawals on-chain. Null means not observed; 0 is a
+// Measured by simulating real holders' withdrawals onchain. Null means not observed; 0 is a
 // measured zero.
 export type VerifiedConfidence = 'high' | 'medium' | 'low'
 // `unavailable`: no usable exit path (paused or unauthorized). `blocked`: the exit reverted. Null:
@@ -84,7 +84,7 @@ export interface VerifiedBlock {
 	apy_note?: string | null
 	apy_confidence: VerifiedConfidence | null
 	exit: VerifiedExit | null
-	// Instantly-withdrawable capacity. A null amount means no on-chain liquidity truth (queued-exit
+	// Instantly-withdrawable capacity. A null amount means no onchain liquidity truth (queued-exit
 	// protocols) and must never render as zero.
 	exit_liquidity: VerifiedLiquidity | null
 	// `as_of` can sit a day behind the rest: the backend prefers the latest fully priced day.
@@ -92,7 +92,7 @@ export interface VerifiedBlock {
 	// Per internal share on rebasing tokens: safe as a series, never as an absolute "1 token = X".
 	price_per_share?: number | null
 	denomination?: VerifiedDenomination | null
-	// Detail only: the ordered on-chain calls the simulation executes.
+	// Detail only: the ordered onchain calls the simulation executes.
 	methods?: Array<string> | null
 }
 
@@ -163,7 +163,7 @@ export interface MetaTokenOption {
 	symbol: string
 }
 
-// Token option fed to the /yields token search, serialised as a compact
+// Token option fed to the /yields token search, serialized as a compact
 // `[name, value, geckoId?]` tuple to shrink the static page props (~4k options): `name` is
 // the display symbol, `value` is the option key sent to the earn route as
 // `token=<value>`, `geckoId` (assets with a token directory record) drives the logo.
@@ -315,7 +315,7 @@ export type EnrichedRouteRow = RouteRow &
 	EntityEnrichment & { collateralTokenKeys: Array<string> | null; borrowTokenKeys: Array<string> | null }
 export type EnrichedLoopRow = LoopRow & EntityEnrichment & { tokenKeys: TokenKeys | null }
 
-// Response row for the earn table route. Legacy APY percentage changes, realised 7d IL,
+// Response row for the earn table route. Legacy APY percentage changes, realized 7d IL,
 // 7d volume and inception APY are intentionally not reconstructed: v2 does not serve
 // those facts, and its 7d/30d averages are not equivalent metrics.
 // Flat response shape shared by the Earn table, CSV export, and token/RWA yield sections.

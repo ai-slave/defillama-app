@@ -9,8 +9,8 @@ import type { ElementType, ReactNode } from 'react'
    the page actions (website, bookmark, price alert) pushed right. The
    heading holds the name only, so it reads as the name; the logo and the
    actions sit beside it. min-h-8 is the height of the md actions, so the row
-   is as tall with or without them and neighbouring cards' first rows line
-   up (design.md → "Aligning neighbouring cards").
+   is as tall with or without them and neighboring cards' first rows line
+   up (design.md → "Aligning neighboring cards").
 ---------------------------------------------------------------------------- */
 export function EntityTitleRow({
 	as: Heading = 'h1',

@@ -52,7 +52,7 @@ export function AddToDashboardButton({
 	const showLabel = !smol && variant === 'button'
 	const button = (
 		<Tooltip
-			content="Add to Custom Dashboard"
+			content="Add to custom dashboard"
 			render={
 				<Button
 					type="button"
@@ -62,7 +62,7 @@ export function AddToDashboardButton({
 					disabled={loaders.userLoading || disabled || !hasConfig}
 					className={className}
 					data-umami-event="dashboard-add-chart"
-					aria-label={showLabel ? undefined : 'Add to Custom Dashboard'}
+					aria-label={showLabel ? undefined : 'Add to custom dashboard'}
 				/>
 			}
 		>

@@ -7,7 +7,7 @@ import { formatUsd, formatNumber } from '~/utils/numberFormat'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQualityModel } from './models'
 
-// A 0–100 score on the one value scale, centred on 50: 0 falling, 50 neutral grey, 100 rising. It colours fills and
+// A 0–100 score on the one value scale, centered on 50: 0 falling, 50 neutral gray, 100 rising. It colors fills and
 // borders only (3:1); the score number beside them stays in the text tiers.
 export const scoreColor = (score: number) => divergingColor((score - 50) / 50)
 
@@ -193,11 +193,10 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 			</div>
 			<p className="body-sm text-tertiary">
 				Built only on what we can measure or independently verify: order-book depth we snapshot ourselves, volume that
-				survives verification against those books, on-chain or attested reserves, open interest backed by them,
-				execution quality measured from tick-level fills, and how steadily it all holds. Inputs we could not measure
-				never count as zero; their weight redistributes. The indented rows split the Execution pillar into its
-				sub-metrics, each with its peer-relative score and the measured figure behind it. Experimental; weights will
-				move.{' '}
+				survives verification against those books, onchain or attested reserves, open interest backed by them, execution
+				quality measured from tick-level fills, and how steadily it all holds. Inputs we could not measure never count
+				as zero; their weight redistributes. The indented rows split the Execution pillar into its sub-metrics, each
+				with its peer-relative score and the measured figure behind it. Experimental; weights will move.{' '}
 				<BasicLink href="/exchanges/rank" className="text-link hover:underline">
 					Compare every exchange and read how the score is built
 				</BasicLink>

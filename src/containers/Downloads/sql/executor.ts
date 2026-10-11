@@ -30,7 +30,7 @@ export interface ExecutorCallbacks {
 
 export type ExecutorResult =
 	| { ok: true; result: QueryResult; durationMs: number; justLoaded: boolean }
-	| { ok: false; error: string; cancelled?: boolean }
+	| { ok: false; error: string; canceled?: boolean }
 
 interface AutoLoadStep {
 	key: string
@@ -100,8 +100,8 @@ async function runWithFreshLoadRetry(
 	}
 }
 
-function cancelled(error = 'Cancelled'): ExecutorResult {
-	return { ok: false, error, cancelled: true }
+function canceled(error = 'Canceled'): ExecutorResult {
+	return { ok: false, error, canceled: true }
 }
 
 function isAbortError(err: unknown): boolean {
@@ -114,7 +114,7 @@ function isAbortError(err: unknown): boolean {
  * - Auto-loads missing datasets (skipping any names in `skipAutoLoad`)
  * - Executes the query and returns rows/columns
  * - Respects `signal` for cancellation: best-effort conn.cancelSent() on abort,
- *   and the returned result carries `cancelled: true` so callers can skip error UI.
+ *   and the returned result carries `canceled: true` so callers can skip error UI.
  */
 export async function runSql(
 	ctx: ExecutorCtx,
@@ -124,7 +124,7 @@ export async function runSql(
 	signal?: AbortSignal
 ): Promise<ExecutorResult> {
 	if (!ctx.conn) return { ok: false, error: 'LlamaSQL connection not ready.' }
-	if (signal?.aborted) return cancelled()
+	if (signal?.aborted) return canceled()
 	const trimmed = sql.trim()
 	if (!trimmed) return { ok: false, error: 'Empty query.' }
 
@@ -151,7 +151,7 @@ export async function runSql(
 		for (const [index, step] of plan.entries()) {
 			if (signal?.aborted) {
 				callbacks.onLoadingStage?.(null)
-				return cancelled()
+				return canceled()
 			}
 			pending = pending.map((p) => (p.key === step.key ? { ...p, status: 'loading' } : p))
 			callbacks.onPendingChange?.(pending)
@@ -163,7 +163,7 @@ export async function runSql(
 			const loaded = await ctx.loadSource(step.source, signal)
 			if (signal?.aborted) {
 				callbacks.onLoadingStage?.(null)
-				return cancelled()
+				return canceled()
 			}
 			if (!loaded) {
 				pending = pending.map((p) => (p.key === step.key ? { ...p, status: 'failed' } : p))
@@ -200,7 +200,7 @@ export async function runSql(
 		}
 	} catch (error) {
 		callbacks.onLoadingStage?.(null)
-		if (isAbortError(error) || signal?.aborted) return cancelled()
+		if (isAbortError(error) || signal?.aborted) return canceled()
 		return { ok: false, error: error instanceof Error ? error.message : String(error) }
 	}
 }

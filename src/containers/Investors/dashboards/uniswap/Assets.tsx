@@ -113,7 +113,7 @@ export default function Assets() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Volume Composition</h2>
+				<h2 className="heading-xs">Volume composition</h2>
 				<SeriesTrendChart
 					title={data.volumeByCategory.title ?? 'Volume by Asset Category'}
 					subtitle={data.volumeByCategory.note ?? defs.volumeByCategory}
@@ -131,7 +131,7 @@ export default function Assets() {
 
 			{data.rwa && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Real-World Assets</h2>
+					<h2 className="heading-xs">Real-world assets</h2>
 					<KpiGrid
 						kpis={data.rwa.kpis ?? {}}
 						items={[
@@ -142,12 +142,12 @@ export default function Assets() {
 						]}
 					/>
 					<SeriesTrendChart
-						title="Uniswap RWA Volume by Sector"
+						title="Uniswap RWA volume by sector"
 						subtitle={`Uniswap volume in tokenized real-world assets, split by sector.${partialPeriodNote(data.rwa.bySectorDaily)}`}
 						series={chartToTrendSeries(data.rwa.bySectorDaily ?? data.rwa.bySector)}
 					/>
 					<SeriesTrendChart
-						title="Uniswap RWA Volume by Chain"
+						title="Uniswap RWA volume by chain"
 						subtitle={`Where the tracked RWAs actually trade: issuer-native chains alongside Ethereum, with everything outside the top 8 grouped as Other.${partialPeriodNote(data.rwa.byChainDaily)}`}
 						series={chartToTrendSeries(data.rwa.byChainDaily ?? data.rwa.byChain).map((series) => ({
 							...series,
@@ -198,7 +198,7 @@ export default function Assets() {
 
 			{(data.tradedAssets || data.newTokens) && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Token Breadth</h2>
+					<h2 className="heading-xs">Token breadth</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{data.tradedAssets && (
 							<TimeAreaCard
@@ -210,7 +210,7 @@ export default function Assets() {
 						{data.newTokens && (
 							<TimeAreaCard
 								chart={data.newTokens}
-								title="New Tokens First-Traded on Uniswap"
+								title="New tokens first-traded on Uniswap"
 								valueSymbol=""
 								subtitle="Tokens whose first-ever Uniswap trade happened that month (no volume floor; known scam/wash tokens excluded)."
 							/>
@@ -220,7 +220,7 @@ export default function Assets() {
 			)}
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Continuous Clearing Auctions</h2>
+				<h2 className="heading-xs">Continuous clearing auctions</h2>
 				<KpiGrid
 					kpis={data.cca.kpis}
 					cols={3}
@@ -232,7 +232,7 @@ export default function Assets() {
 				{/* Monthly default: proceeds are dominated by single graduation days, so the daily
 				    view is one giant spike; monthly reads the trend. */}
 				<SeriesTrendChart
-					title="CCA Auction Proceeds"
+					title="CCA auction proceeds"
 					subtitle="Realized proceeds of graduated auctions on the Uniswap launchpad."
 					series={ccaProceeds}
 					defaultView="month"

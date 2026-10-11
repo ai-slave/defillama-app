@@ -111,7 +111,7 @@ test('a saved column pick that hid Name still shows Name, and the picker does no
 	).toEqual([
 		'Select all, some selected',
 		'Price',
-		'MCap',
+		'Mcap',
 		'Unlocked Supply',
 		'Prev. Unlock Analysis',
 		'7d Price Change After Unlock',

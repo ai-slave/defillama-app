@@ -23,9 +23,9 @@ describe('MarketMakerPerformance', () => {
 		)
 
 		expect(html).toContain('Data not disclosed')
-		expect(html).not.toContain('Performance Summary')
+		expect(html).not.toContain('Performance summary')
 		// Without data the N/A insight cards stay hidden too.
-		expect(html).not.toContain('Performance Insights')
+		expect(html).not.toContain('Performance insights')
 	})
 
 	test('renders provider summary fields from the Forgd asset payload', () => {
@@ -50,7 +50,7 @@ describe('MarketMakerPerformance', () => {
 			/>
 		)
 
-		expect(html).toContain('Performance Summary')
+		expect(html).toContain('Performance summary')
 		expect(html).toContain('Keyrock')
 		expect(html).toContain('$1,000')
 		expect(html).toContain('1 active market maker')

@@ -120,7 +120,7 @@ export function buildNarrativeTreemapTreeData(
 		})
 	}
 
-	// Shades are relative to each category: its best gain and worst loss take the full colour and every other
+	// Shades are relative to each category: its best gain and worst loss take the full color and every other
 	// move starts at 40% of it, so a small move still reads as a rise or fall.
 	for (const { node, min, max } of categoryGroups.values()) {
 		for (const child of node.children) {

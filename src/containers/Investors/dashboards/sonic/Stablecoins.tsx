@@ -42,7 +42,7 @@ export default function Stablecoins() {
 				</Card>
 				<div className="absolute inset-0 flex items-center justify-center">
 					<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary">
-						Stablecoins — Coming Soon
+						Stablecoins — Coming soon
 					</span>
 				</div>
 			</div>

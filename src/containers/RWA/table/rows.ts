@@ -43,7 +43,7 @@ export type RWATableMetrics = {
 	volume24h: number | null
 	volume7d: number | null
 	volume30d: number | null
-	/** Perps: funding annualised from the venue interval, in percent. */
+	/** Perps: funding annualized from the venue interval, in percent. */
 	fundingApr: number | null
 	/** Perps: the raw rate per interval and the interval, for the tooltip. */
 	fundingRate: number | null
@@ -289,7 +289,7 @@ function buildPerpsLeafRow(
 			volume24hChange24h: toPerpsChange(volume24h, asset.volume24hChange24h ?? null),
 			volume7d: asset.volume7d ?? null,
 			volume30d: asset.volume30d,
-			fundingApr: annualiseFundingRate(asset.fundingRate ?? null, asset.fundingIntervalHours ?? null),
+			fundingApr: annualizeFundingRate(asset.fundingRate ?? null, asset.fundingIntervalHours ?? null),
 			fundingRate: asset.fundingRate ?? null,
 			fundingIntervalHours: asset.fundingIntervalHours ?? null,
 			premium: asset.premium == null ? null : asset.premium * 100,
@@ -332,7 +332,7 @@ function toPerpsChange(current: number | null, percent: number | null): RWAPerps
 export const HOURS_PER_YEAR = 24 * 365
 
 /** Per-interval funding as a yearly percent, so 1h and 8h venues compare. */
-export function annualiseFundingRate(rate: number | null, intervalHours: number | null): number | null {
+export function annualizeFundingRate(rate: number | null, intervalHours: number | null): number | null {
 	if (rate == null || intervalHours == null || intervalHours <= 0) return null
 	return rate * (HOURS_PER_YEAR / intervalHours) * 100
 }

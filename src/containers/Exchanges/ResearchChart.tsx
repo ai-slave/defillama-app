@@ -37,13 +37,13 @@ function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valu
 
 /**
  * Brand and asset colors, keyed by the line id the mappers emit. A venue keeps the same
- * colour on every chart it appears in, and BTC reads as BTC rather than as whatever slot
- * it landed in. Anything not named here takes the chart palette colour for its rank.
+ * color on every chart it appears in, and BTC reads as BTC rather than as whatever slot
+ * it landed in. Anything not named here takes the chart palette color for its rank.
  *
  * Each is [light, dark]: a brand under 3:1 on a chart background in one mode moves its
  * lightness (OKLCH, same hue) just far enough there; a brand that passes keeps its hex.
  *
- * ponytail: a flat map, not a token per venue — these are third-party brand colours, not
+ * ponytail: a flat map, not a token per venue — these are third-party brand colors, not
  * ours to systematize. Add a row when a venue starts reaching a top-eight slot.
  *
  * `btc-spot` / `btc-usd-perp` / `btc-coin-perp` are deliberately absent: they are three
@@ -57,7 +57,7 @@ const BRAND_COLORS: Record<string, readonly [light: string, dark: string]> = {
 	binance: ['#b6880f', '#f3ba2f'],
 	bybit: ['#c1820b', '#f7a600'],
 	// OKX's brand is black, which disappears on the dark theme; this is its lightest
-	// readable stand-in rather than a colour they actually publish.
+	// readable stand-in rather than a color they actually publish.
 	okx: ['#88909b', '#b4bcc8'],
 	coinbase: ['#0052ff', '#0052ff'],
 	kraken: ['#7132f5', '#7132f5'],

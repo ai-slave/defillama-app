@@ -8,7 +8,7 @@ const LiquidationsExplorerContext = React.createContext<BlockExplorersResponse>(
 
 function shorten(value: string): string {
 	if (value.length <= 18) return value
-	return `${value.slice(0, 8)}...${value.slice(-6)}`
+	return `${value.slice(0, 8)}…${value.slice(-6)}`
 }
 
 export function LiquidationsExplorerProvider({

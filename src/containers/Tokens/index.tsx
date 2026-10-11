@@ -384,7 +384,7 @@ export const EXPANDABLE_TOKENS_COLUMNS = [
 function TokensStats({ stats, display }: { stats: TokensPageStats; display: TokensPageStatsDisplay }) {
 	const items: Array<InlineStatStripItem> = [
 		{
-			label: 'MCap',
+			label: 'Mcap',
 			tooltip:
 				'Total market capitalization excluding wrapped, staked and other receipt assets identified by CoinGecko. The 24-hour change estimates price-driven movement using current circulating supplies.',
 			value: display.totalMarketCap,
@@ -394,12 +394,12 @@ function TokensStats({ stats, display }: { stats: TokensPageStats; display: Toke
 					: { value: stats.marketCapWeightedChange24h, comparison: 'over 24h' }
 		},
 		{
-			label: '24H Spot Vol',
+			label: '24h Spot Vol',
 			value: display.spotVolume24h ?? '—',
 			tooltip: 'Spot trading volume over the last 24 hours across tracked markets.'
 		},
 		{
-			label: '24H Perps Vol',
+			label: '24h Perps Vol',
 			value: display.perpsVolume24h ?? '—',
 			tooltip: 'Perpetual futures trading volume over the last 24 hours across tracked markets.'
 		},
@@ -409,13 +409,13 @@ function TokensStats({ stats, display }: { stats: TokensPageStats; display: Toke
 			tooltip: 'Current USD value of outstanding perpetual futures positions across tracked markets.'
 		},
 		{
-			label: 'Past 30D Unlocks',
+			label: 'Past 30d Unlocks',
 			value: display.unlock30dUsd ?? '—',
 			tooltip:
 				'Estimated value of cliff and linear releases during the previous 30 days, valued at current token prices.'
 		},
 		{
-			label: 'Next 30D Unlocks',
+			label: 'Next 30d Unlocks',
 			value: display.upcomingUnlockUsd ?? '—',
 			tooltip:
 				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices.'

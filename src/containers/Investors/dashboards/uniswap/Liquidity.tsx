@@ -55,17 +55,17 @@ type LpView = 'all' | 'chain' | 'version'
 const LP_VIEWS: Record<LpView, { label: string; title: string; subtitle: string }> = {
 	all: {
 		label: 'All',
-		title: 'LPs with Open Positions',
+		title: 'LPs with open positions',
 		subtitle: 'Wallets holding a position with liquidity remaining, measured weekly.'
 	},
 	chain: {
 		label: 'Chains',
-		title: 'LPs with Open Positions by Chain',
+		title: 'LPs with open positions by chain',
 		subtitle: 'The same wallets stacked by chain, measured weekly.'
 	},
 	version: {
 		label: 'Versions',
-		title: 'LPs with Open Positions by Version',
+		title: 'LPs with open positions by version',
 		subtitle: 'The same wallets stacked by protocol version, measured weekly.'
 	}
 }
@@ -235,7 +235,7 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Liquidity Providers</h2>
+				<h2 className="heading-xs">Liquidity providers</h2>
 				{lpOptions.length > 1 && <p className="-mt-3 body-sm text-tertiary">{LP_OVERLAP_NOTE}</p>}
 				<TimeAreaCard
 					chart={lpCharts[resolvedLpView] ?? data.activeLps}
@@ -270,7 +270,7 @@ export default function Liquidity() {
 						{data.activeLpsByCustody && (
 							<TimeAreaCard
 								chart={data.activeLpsByCustody}
-								title="LP Owners by Custody"
+								title="LP owners by custody"
 								stacked
 								valueSymbol=""
 								subtitle="Wallet-custodied vs contract-managed owners of open positions, weekly, v2-v4."
@@ -282,10 +282,10 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">TVL by Token Segment</h2>
+				<h2 className="heading-xs">TVL by token segment</h2>
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
-						title="TVL by Token Segment"
+						title="TVL by token segment"
 						subtitle="Latest daily snapshot of core-pool TVL by token segment (same series as the chart over time)."
 						items={segmentSnapshot}
 						valueSymbol="$"
@@ -294,7 +294,7 @@ export default function Liquidity() {
 					{segmentsOverTime && (
 						<TimeAreaCard
 							chart={segmentsOverTime}
-							title="TVL by Token Segment Over Time"
+							title="TVL by token segment over time"
 							stacked
 							valueSymbol="$"
 							subtitle="Daily snapshots of core pools (both tokens segment-mapped) across the top chains."
@@ -304,10 +304,10 @@ export default function Liquidity() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Top Pools</h2>
+				<h2 className="heading-xs">Top pools</h2>
 				{/* A concentration metric, not a leaderboard: the ten largest pools as a share of TVL. */}
 				<BarListCard
-					title="Top 10 Pools as % of TVL"
+					title="Top 10 pools as % of TVL"
 					subtitle="Each of the ten largest pools as a share of total protocol TVL."
 					items={data.topPools.rows.slice(0, 10).map((row) => ({
 						name: `${row.pool} (${row.version.replace(/^uniswap-/, '')}, ${row.chain})`,

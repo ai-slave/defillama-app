@@ -69,11 +69,11 @@ export function SubscribeLayout({
 									<MenuSurface variant="actions" className="theme-dark" aria-label="Account menu">
 										<MenuItem render={<BasicLink href="/" />} className="border-b border-subtle">
 											<Icon name="arrow-left" className="size-3.5 text-tertiary" aria-hidden="true" />
-											Return to Main Page
+											Return to main page
 										</MenuItem>
 										<MenuItem onClick={logout}>
 											<Icon name="x" className="size-3.5 text-tertiary" aria-hidden="true" />
-											Logout
+											Sign out
 										</MenuItem>
 									</MenuSurface>
 								</Ariakit.MenuProvider>

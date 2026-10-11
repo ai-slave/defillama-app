@@ -131,7 +131,7 @@ describe('pool detail query state', () => {
 
 describe('sticky pool chart prefs', () => {
 	test('share one stored range and never store a default', () => {
-		// One stored range serves both APY charts; the borrow chart still honours a bare `range` deep link.
+		// One stored range serves both APY charts; the borrow chart still honors a bare `range` deep link.
 		expect(POOL_CHART_RANGE_PREFS.borrow.storageKey).toBe(POOL_CHART_RANGE_PREFS.supply.storageKey)
 		expect(POOL_CHART_RANGE_PREFS.supply.isValid('30d')).toBe(true)
 		expect(POOL_CHART_RANGE_PREFS.supply.isValid('90d')).toBe(true)

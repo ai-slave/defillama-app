@@ -125,7 +125,7 @@ const categoriesColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
-		header: '1m TVL Change',
+		header: '30d TVL Change',
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end'
@@ -214,7 +214,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 		<>
 			<Panel>
 				<ChartPanelToolbar>
-					<h1 className="mr-auto heading-xs">TVL by Category</h1>
+					<h1 className="mr-auto heading-xs">TVL by category</h1>
 					{categories.length > 1 ? (
 						<SelectWithCombobox
 							allValues={categories}

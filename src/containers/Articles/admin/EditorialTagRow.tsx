@@ -3,7 +3,7 @@ import type * as React from 'react'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 
 type EditorialTagRowProps = {
 	article: ArticleDocument
@@ -50,7 +50,7 @@ export function EditorialTagRow({
 			</div>
 			<Button
 				// The last row's Remove hands focus to the section's article picker.
-				ref={focusNeighbourOnLeave((node) => node.closest('section')?.querySelector('input'))}
+				ref={focusNeighborOnLeave((node) => node.closest('section')?.querySelector('input'))}
 				variant="secondary"
 				size="sm"
 				onClick={onRemove}

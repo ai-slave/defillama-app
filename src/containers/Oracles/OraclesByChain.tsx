@@ -153,7 +153,7 @@ export function OraclesByChain({
 				</Panel>
 				<Panel className="flex-1">
 					<ChartPanelToolbar>
-						<h2 className="mr-auto heading-xs">Oracle Dominance</h2>
+						<h2 className="mr-auto heading-xs">Oracle dominance</h2>
 						{oracleSeries.length > 1 ? (
 							<SelectWithCombobox
 								allValues={oracleSeries}
@@ -168,7 +168,7 @@ export function OraclesByChain({
 						<ChartExportButtons
 							chartInstance={chartInstance}
 							filename="oracles-dominance"
-							title="Oracle Dominance"
+							title="Oracle dominance"
 							csvSource={selectedDominance.csvSource}
 						/>
 					</ChartPanelToolbar>
@@ -207,7 +207,7 @@ export function OraclesByChain({
 					<Card padding="none">
 						<PanelHeader>
 							<PanelTitle as="h1" className="whitespace-nowrap">
-								Oracle Rankings
+								Oracle rankings
 							</PanelTitle>
 							<TableSearchInput
 								columnId="name"

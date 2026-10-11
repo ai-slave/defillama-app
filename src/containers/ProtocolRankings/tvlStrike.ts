@@ -49,7 +49,7 @@ export function getProtocolTvlStrike(
 		return { struck: true, text: `${rowValues.category} protocols are not counted into Chain TVL` }
 	}
 	if (rowValues.childProtocols) {
-		return { struck: true, text: 'Some sub-protocols are excluded from chain tvl' }
+		return { struck: true, text: 'Some sub-protocols are excluded from Chain TVL' }
 	}
 	if (WHITE_LABELED_VAULT_PROVIDERS.has(rowValues.name)) {
 		return {

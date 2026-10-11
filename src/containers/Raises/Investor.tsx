@@ -185,7 +185,7 @@ export function InvestorContainer({
 								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredInvestmentByRounds })
 							}}
-							title="Investment by Rounds"
+							title="Investment by rounds"
 							valueSymbol=""
 							exportButtons={{
 								png: true,
@@ -205,7 +205,7 @@ export function InvestorContainer({
 								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset({ series: deferredRaisesByCategory })
 							}}
-							title="Investments by Category"
+							title="Investments by category"
 							valueSymbol=""
 							exportButtons={{
 								png: true,

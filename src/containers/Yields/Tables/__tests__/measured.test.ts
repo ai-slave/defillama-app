@@ -34,7 +34,7 @@ describe('exitFeeWarning', () => {
 		expect(exitFeeWarning(12)).toBe('exit fee ~12 bps, measured')
 	})
 
-	// The measurement returns small negative fees (dust in the holder's favour); flagging one
+	// The measurement returns small negative fees (dust in the holder's favor); flagging one
 	// as an exit fee would be a false alarm.
 	test('treats zero and negative measured fees as no fee at all', () => {
 		expect(exitFeeWarning(0)).toBeNull()

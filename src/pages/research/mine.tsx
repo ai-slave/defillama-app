@@ -17,7 +17,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { neighborRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SearchField } from '~/ui/SearchField'
@@ -56,10 +56,10 @@ function wordCount(text: string | undefined): number {
 }
 
 function MyArticlesContent() {
-	// The neighbour row's Delete is read when the confirm opens: the delete's success drops the row from the list.
+	// The neighbor row's Delete is read when the confirm opens: the delete's success drops the row from the list.
 	const [deleteTarget, setDeleteTarget] = useState<{
 		article: ArticleDocument
-		neighbour: HTMLElement | null | undefined
+		neighbor: HTMLElement | null | undefined
 	} | null>(null)
 	const returnFocusRef = useRef<HTMLElement | null>(null)
 	const newArticleRef = useRef<HTMLAnchorElement>(null)
@@ -166,7 +166,7 @@ function MyArticlesContent() {
 					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {
-						returnFocusRef.current = deleteTarget.neighbour ?? newArticleRef.current
+						returnFocusRef.current = deleteTarget.neighbor ?? newArticleRef.current
 					}}
 				/>
 			) : null}
@@ -460,7 +460,7 @@ function MyArticlesContent() {
 															returnFocusRef.current = null
 															setDeleteTarget({
 																article,
-																neighbour: neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+																neighbor: neighborRowControl(event.currentTarget.closest('li')!, event.currentTarget)
 															})
 														}}
 													/>

@@ -161,7 +161,7 @@ export default function Incentives() {
 					</>
 				)}
 			</div>
-			<ChartCard title="30d Spend by Venue">
+			<ChartCard title="30d spend by venue">
 				<SimpleTable
 					getRowKey={(row) => JSON.stringify([row.chain, row.id])}
 					rows={k.thirtyDayByVenue}
@@ -173,7 +173,7 @@ export default function Incentives() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Weekly Spend per Pool</h2>
+			<h2 className="heading-xs">Weekly spend per pool</h2>
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>Per-pool weekly spend</ChartPanelTitle>}>
 					<SegmentedControl<VenueId>
@@ -205,7 +205,7 @@ export default function Incentives() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">Epochs & Spend</h2>
+			<h2 className="heading-xs">Epochs & spend</h2>
 			<ChartCard title="Epoch breakdown">
 				<SegmentedControl<VenueId>
 					variant="default"
@@ -341,8 +341,8 @@ export default function Incentives() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Curve Pools</h2>
-			<ChartCard title="Curve Pools">
+			<h2 className="heading-xs">Curve pools</h2>
+			<ChartCard title="Curve pools">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
 					rows={data?.curvePools}

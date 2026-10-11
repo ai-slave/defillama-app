@@ -129,7 +129,7 @@ const stablecoinsColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => (row.yieldBearing ? null : row.pegDeviation_1m) ?? undefined, {
 		id: 'pegDeviation_1m',
-		header: '1m % Off Peg',
+		header: '30d % Off Peg',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
 			const rowValues = row.original
@@ -202,7 +202,7 @@ const stablecoinsColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
-		header: '1m Change',
+		header: '30d Change',
 		cell: (info) =>
 			info.getValue() != null ? (
 				<Change value={info.getValue()} tooltip={formatChange(info.row.original.change_1m_usd!, 'usd')} />

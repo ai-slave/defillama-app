@@ -179,7 +179,7 @@ export default function Revenue() {
 			</Card>
 
 			<div className="flex items-center justify-between">
-				<h2 className="heading-xs">Dashboard Timeframe</h2>
+				<h2 className="heading-xs">Dashboard timeframe</h2>
 				<SegmentedControl<Timeframe>
 					variant="default"
 					size="md"
@@ -199,7 +199,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Total Fees Generated</h2>
+				<h2 className="heading-xs">Total fees generated</h2>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<StatTile
 						label="All Time"
@@ -225,7 +225,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex items-center justify-between">
-				<h2 className="heading-xs">Data Aggregation</h2>
+				<h2 className="heading-xs">Data aggregation</h2>
 				<SegmentedControl<Aggregation>
 					variant="default"
 					size="md"
@@ -244,14 +244,14 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Total Fees Generated in NEAR</h2>
+				<h2 className="heading-xs">Total fees generated in NEAR</h2>
 				<Panel>
 					<ChartPanelToolbar
 						leading={
 							<ChartPanelTitle
 								subtitle={`Converted from USD to NEAR at daily prices. Line shows cumulative (left axis), bars show ${aggregation} breakdown (right axis).`}
 							>
-								All fees earned by NEAR Protocol and Products
+								All fees earned by NEAR Protocol and products
 							</ChartPanelTitle>
 						}
 					/>
@@ -271,7 +271,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Revenue Over Time</h2>
+				<h2 className="heading-xs">Revenue over time</h2>
 				<Panel>
 					<ChartPanelToolbar
 						leading={
@@ -299,7 +299,7 @@ export default function Revenue() {
 
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
-					<h2 className="heading-xs">Revenue vs Emissions</h2>
+					<h2 className="heading-xs">Revenue vs emissions</h2>
 					<SegmentedControl<typeof emissionsView>
 						variant="default"
 						size="md"
@@ -348,7 +348,7 @@ export default function Revenue() {
 
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Wallet Breakdown</h2>
+					<h2 className="heading-xs">Wallet breakdown</h2>
 					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
@@ -394,7 +394,7 @@ export default function Revenue() {
 
 			{data.metadata?.faq && data.metadata.faq.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Frequently Asked Questions</h2>
+					<h2 className="heading-xs">Frequently asked questions</h2>
 					<div className="flex flex-col gap-3">
 						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
 							<Card as="details" key={key} padding="none" className="group overflow-hidden">

@@ -6,7 +6,7 @@ import { policyTargetFiles } from '../lib/sourceFiles'
 /*
  * Icon size policy. Every `<Icon>` sizes with a `size-*` class: 14px (`size-3.5`) beside a label, 16px (`size-4`)
  * icon-only (design.md → Icons, src/ui/Icon.tsx). A `height` or `width` prop on `<Icon>` is refused, so the size sits in
- * the class list beside the icon's colour and a reader sees one scale. A component that lets callers pick the size
+ * the class list beside the icon's color and a reader sees one scale. A component that lets callers pick the size
  * takes the class (`size?: \`size-${number}\``), as CopyHelper does. src/ui owns the parts and is not checked.
  */
 

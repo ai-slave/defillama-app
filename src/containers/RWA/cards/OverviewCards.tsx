@@ -58,7 +58,7 @@ export function RWAOverviewCards({
 	return (
 		<div className="grid grid-cols-1 gap-2 md:grid-cols-3">
 			<SmolStatCard
-				title="RWA in DeFi by Protocol"
+				title="RWA in DeFi by protocol"
 				tooltip={`${definitions.totalDefiActiveTvl.description} The bars leave bridge and interop protocols out.`}
 				value={defi.value == null ? null : formatRwaKpiUsd(defi.value)}
 				change={
@@ -70,7 +70,7 @@ export function RWAOverviewCards({
 				<RWAValueBars bars={defi.bars} />
 			</SmolStatCard>
 			<RWAChangeCard
-				title="Change by Chain"
+				title="Change by chain"
 				tooltip="Active AUM now against 30 days ago, in total and per chain."
 				card={chain}
 				logo="chain"
@@ -78,7 +78,7 @@ export function RWAOverviewCards({
 				failedRead={chainHistory.failedRead}
 			/>
 			<SmolStatCard
-				title="RWA Perps Open Interest"
+				title="RWA perps open interest"
 				tooltip={perpsDefinitions.totalOpenInterest.description}
 				value={perpsValue == null ? null : formatRwaKpiUsd(perpsValue)}
 				change={

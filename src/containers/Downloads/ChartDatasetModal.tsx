@@ -927,7 +927,7 @@ export function ChartDatasetModal({
 			return `Select ${dataset.paramLabel.toLowerCase()}(s) to preview`
 		}
 		if (isBulk) {
-			if (loadingCount > 0) return `Loading ${readyCount}/${selectedParams.length}...`
+			if (loadingCount > 0) return `Loading ${readyCount}/${selectedParams.length}…`
 			if (selectedParam && headers.length > 0) {
 				return `${rowsCountLabel} · previewing ${selectedParam.label}`
 			}

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
    <Button variant="primary">Run <Keycap onBrand>⌘</Keycap><Keycap onBrand>↵</Keycap></Button>
 
    The text is the key as the keyboard prints it (⌘, ⇧↵, Tab, Esc). `onBrand`
-   is for a cap inside a brand-filled button, where the page-coloured cap would
+   is for a cap inside a brand-filled button, where the page-colored cap would
    punch a hole in the fill. Keycap takes no className: a cap hidden at a
    breakpoint, or from assistive tech beside a label that already names the
    shortcut, sits in a wrapping span that carries `hidden md:inline` or

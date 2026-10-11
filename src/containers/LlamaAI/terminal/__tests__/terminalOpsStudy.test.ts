@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { studyCatalogueFrom } from '../terminalData'
+import { studyCatalogFrom } from '../terminalData'
 import {
 	applyTerminalOps,
 	normalizeTerminalOpsPayload,
@@ -191,7 +191,7 @@ describe('the wire shape is the contract with the backend', () => {
 	})
 })
 
-describe('the catalogue the browser reports', () => {
+describe('the catalog the browser reports', () => {
 	const metainfos = [
 		{
 			description: 'Volume',
@@ -209,19 +209,19 @@ describe('the catalogue the browser reports', () => {
 	test('drops the inputs the library fills from the viewport', () => {
 		// showMA and the volume-profile bar times are machine-populated ranges; an agent that sets
 		// one pins the study to a window the user never chose.
-		expect(studyCatalogueFrom(metainfos)[0].inputs).toEqual([
+		expect(studyCatalogFrom(metainfos)[0].inputs).toEqual([
 			{ id: 'length', name: 'MA Length', type: 'integer', defval: 20, min: 1, max: 2000 }
 		])
 	})
 
 	test('drops studies the library hides from its own picker', () => {
-		expect(studyCatalogueFrom(metainfos).map((entry) => entry.name)).toEqual(['Volume', 'VWAP'])
+		expect(studyCatalogFrom(metainfos).map((entry) => entry.name)).toEqual(['Volume', 'VWAP'])
 	})
 
 	test('keeps shortDescription, which is the only place the acronyms live', () => {
 		// "VWAP", "RSI", "ATR" resolve through shortDescription; without it the agent's own
 		// vocabulary dead-ends on the backend.
-		expect(studyCatalogueFrom(metainfos)[1]).toEqual({
+		expect(studyCatalogFrom(metainfos)[1]).toEqual({
 			name: 'VWAP',
 			shortDescription: 'VWAP',
 			is_price_study: true,

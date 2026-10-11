@@ -287,7 +287,7 @@ function chartForDrawings(): TerminalChart | null {
 	return getTerminalWidget()?.activeChart() ?? null
 }
 
-// A clear names the ids it is clearing. Honouring them is what lets a saved indicator drop its own
+// A clear names the ids it is clearing. Honoring them is what lets a saved indicator drop its own
 // stale drawings on a re-run without wiping the drawings the agent made in chat.
 function removeDrawings(chart: TerminalChart, ids?: Array<string>) {
 	const targets = ids && ids.length > 0 ? ids : [...entityIds.keys()]
@@ -346,15 +346,15 @@ export function pruneDeletedTerminalDrawings() {
 function movedOp(op: TerminalDrawOp, points: Array<TerminalOpPoint>, text: string | undefined): TerminalDrawOp | null {
 	const [first, second] = points
 	if (!first) return null
-	const labelled = { ...op, ...(text ? { text } : op.type !== 'label' && { text: undefined }) }
-	if (labelled.type === 'hline') return { ...labelled, price: first.price }
-	if (labelled.type === 'vline') return { ...labelled, time: first.time }
-	if (labelled.type === 'label') return { ...labelled, time: first.time, price: first.price }
+	const labeled = { ...op, ...(text ? { text } : op.type !== 'label' && { text: undefined }) }
+	if (labeled.type === 'hline') return { ...labeled, price: first.price }
+	if (labeled.type === 'vline') return { ...labeled, time: first.time }
+	if (labeled.type === 'label') return { ...labeled, time: first.time, price: first.price }
 	if (!second) return null
-	if (labelled.type === 'trendline') return { ...labelled, points: [first, second] }
-	if (labelled.type === 'zone') {
+	if (labeled.type === 'trendline') return { ...labeled, points: [first, second] }
+	if (labeled.type === 'zone') {
 		return {
-			...labelled,
+			...labeled,
 			from: Math.min(first.time, second.time),
 			to: Math.max(first.time, second.time),
 			low: Math.min(first.price, second.price),
@@ -516,7 +516,7 @@ async function addIndicator(chart: TerminalChart, ticker: string) {
 
 /**
  * The same deal for a built-in study: the user's to keep, saved with their layout, removed through
- * the legend. The backend resolved the name against this build's own catalogue, so it is exact.
+ * the legend. The backend resolved the name against this build's own catalog, so it is exact.
  * Re-adding the same study with the same settings is a no-op; different settings is a second study,
  * which is what an RSI 14 next to an RSI 50 is.
  */

@@ -5,7 +5,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CountBadge } from '~/ui/CountBadge'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
-import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
@@ -315,7 +315,7 @@ export interface ActiveFilterPill {
 
 // A pill leaves once its filter clears, after the URL updates. With no pill left, the Filters button nearest the strip
 // takes focus.
-const focusNeighbourPillOnLeave = focusNeighbourOnLeave((pill) => {
+const focusNeighborPillOnLeave = focusNeighborOnLeave((pill) => {
 	for (let region = pill.parentElement; region; region = region.parentElement) {
 		const trigger = region.querySelector<HTMLElement>('[data-filter-builder]')
 		if (trigger) return trigger
@@ -332,7 +332,7 @@ export function ActiveFilterPills({ pills }: { pills: Array<ActiveFilterPill> })
 			{pills.map((pill) => (
 				<Button
 					key={pill.id}
-					ref={focusNeighbourPillOnLeave}
+					ref={focusNeighborPillOnLeave}
 					data-row
 					type="button"
 					variant="filter"

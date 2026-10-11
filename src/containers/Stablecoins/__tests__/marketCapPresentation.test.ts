@@ -10,7 +10,7 @@ type Row = { name: string; mcap: number | null }
 const getName = (row: Row) => row.name
 
 describe('buildStablecoinMarketCapPresentation', () => {
-	test('gives a pie peer picked from past the top ten a palette colour no drawn slice uses', () => {
+	test('gives a pie peer picked from past the top ten a palette color no drawn slice uses', () => {
 		const rows: Array<Row> = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => ({
 			name: `Token ${index}`,
 			mcap: 100 - index

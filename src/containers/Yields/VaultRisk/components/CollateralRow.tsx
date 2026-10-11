@@ -63,7 +63,7 @@ function legSide(slot: string): string {
 	return ''
 }
 
-// The resolved on-chain legs the oracle reads, in order. `kind` is a classification, not a
+// The resolved onchain legs the oracle reads, in order. `kind` is a classification, not a
 // severity, so its chip stays neutral.
 function OracleLegs({ legs }: { legs: Array<OracleLeg> }) {
 	return (
@@ -136,7 +136,7 @@ function MarketBreakCell({
 }
 
 // `className` carries layout only — the ink is owned here so the empty-value tier can't collide
-// with a caller's text colour.
+// with a caller's text color.
 function OracleExposureValue({
 	c,
 	supplyUsd,
@@ -444,7 +444,7 @@ export function CollateralRow({
 
 						<p className="text-pretty text-primary">{c.oracleMechanism ?? badge.story}</p>
 
-						{/* prefer the resolved on-chain legs (richest, launch-set only); else base/quote */}
+						{/* prefer the resolved onchain legs (richest, launch-set only); else base/quote */}
 						{c.oracleLegs?.length ? (
 							<OracleLegs legs={c.oracleLegs} />
 						) : (

@@ -71,7 +71,7 @@ export function useDashboardItemDeepLink({
 	// Set by the first reveal of this mount, so a reveal missed before it mounted never overrides one it handled.
 	const hasRevealedRef = useRef(false)
 	const frameRef = useRef(0)
-	// A lookup checks this each frame instead of being cancelled on unmount: Strict Mode's rehearsal unmount is
+	// A lookup checks this each frame instead of being canceled on unmount: Strict Mode's rehearsal unmount is
 	// followed by a remount that must still finish the reveal, and a real unmount must stop it.
 	const mountedRef = useRef(false)
 	const handledHashRef = useRef<string | null>(null)

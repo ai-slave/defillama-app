@@ -31,8 +31,8 @@ export function MeasuredSeal({ muted = false, size = 'size-4' }: { muted?: boole
 			role="img"
 			aria-label={
 				muted
-					? 'This pool is measured on-chain, but this APY window has no measurement'
-					: "Verified: this APY was observed by simulating a real holder's withdrawal on-chain"
+					? 'This pool is measured onchain, but this APY window has no measurement'
+					: "Verified: this APY was observed by simulating a real holder's withdrawal onchain"
 			}
 			className="flex shrink-0"
 		>
@@ -89,7 +89,7 @@ interface MeasuredOfferContent {
 export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content: MeasuredOfferContent }) {
 	// A neutral wash, not the brand tint, so the blue is only the seal, badge and button. The seal is brand
 	// here because this panel sells the tier; green is for the reader who already has it.
-	// Nothing tertiary inside it: grey over the wash measures 4.15:1 dark and 4.43:1 light, under AA.
+	// Nothing tertiary inside it: gray over the wash measures 4.15:1 dark and 4.43:1 light, under AA.
 	return (
 		<span className="flex flex-col gap-2 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 			<span className="flex items-center justify-between gap-3">
@@ -205,7 +205,7 @@ export function MeasuredColumnHint() {
 								<span className="text-secondary">What holders actually received.</span>
 							</span>
 							<span className="text-secondary">
-								Every day we simulate a real holder withdrawing from each measured pool on-chain and record what they
+								Every day we simulate a real holder withdrawing from each measured pool onchain and record what they
 								actually received.
 							</span>
 							<span className="text-secondary">
@@ -228,10 +228,10 @@ export function MeasuredColumnHint() {
 					}
 				>
 					{/* The seal, blue like the row seals, once the reader has it; the lock otherwise, including while
-				    access settles: this HTML reaches every reader, and a grey lock resolving to a blue seal for the
+				    access settles: this HTML reaches every reader, and a gray lock resolving to a blue seal for the
 				    few subscribers is quieter than anything else flashing for the signed-out majority. */}
 					{unlocked ? (
-						<span role="img" aria-label="Verified APYs in this column were measured on-chain" className="flex shrink-0">
+						<span role="img" aria-label="Verified APYs in this column were measured onchain" className="flex shrink-0">
 							<Icon name="badge-check" className="size-4 shrink-0 text-verified" aria-hidden />
 						</span>
 					) : (
@@ -275,7 +275,7 @@ export function MeasuredExitColumnHint() {
 								<span className="text-secondary">Whether a real holder could actually withdraw.</span>
 							</span>
 							<span className="text-secondary">
-								Every day we simulate a real holder withdrawing from each measured pool on-chain and record what
+								Every day we simulate a real holder withdrawing from each measured pool onchain and record what
 								happened: whether it went through, how long it took, and what it cost.
 							</span>
 							<span className="text-secondary">
@@ -296,7 +296,7 @@ export function MeasuredExitColumnHint() {
 					{unlocked ? (
 						<span
 							role="img"
-							aria-label="Verified exit status in this column is measured on-chain"
+							aria-label="Verified exit status in this column is measured onchain"
 							className="flex shrink-0"
 						>
 							<Icon name="badge-check" className="size-4 shrink-0 text-verified" aria-hidden />
@@ -443,7 +443,7 @@ function Grid({ rows }: { rows: Array<MeasuredRow> }) {
 							)
 						) : null}
 					</span>
-					{/* "verified" wears the seal's colour so it reads as the seal's claim, row by row. */}
+					{/* "verified" wears the seal's color so it reads as the seal's claim, row by row. */}
 					<span className={row.provenance === 'verified' ? 'text-primary' : 'text-tertiary'}>{row.provenance}</span>
 					<span
 						className={`text-right whitespace-nowrap ${row.muted ? 'text-tertiary' : 'text-primary'} ${

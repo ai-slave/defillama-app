@@ -29,7 +29,7 @@ import { selectTriggerStyles } from './types'
    (`popoverMeasuredRowStyles`, without `content-visibility`, because an
    off-screen row would report its placeholder height), so a row may wrap
    or carry a second line. Ariakit keeps DOM focus in the search field and
-   moves a virtual active row; the virtualizer keeps that row, its neighbours
+   moves a virtual active row; the virtualizer keeps that row, its neighbors
    and the selected rows mounted, so arrow keys continue past the rendered
    window and the list opens on the selection.
 
@@ -186,7 +186,7 @@ function OptionList({
 	const reserveLogo = useMemo(() => options.some((option) => option.logo), [options])
 
 	// Ariakit moves only between mounted rows, so the selected rows stay rendered and the list opens on the
-	// selection, and so do the active row and its neighbours: the rendered window follows scroll events, which
+	// selection, and so do the active row and its neighbors: the rendered window follows scroll events, which
 	// land a frame after each key press, so the next row has to exist before the key does.
 	const persistentIndexes = useMemo(() => {
 		const selected = new Set(selectedValues)

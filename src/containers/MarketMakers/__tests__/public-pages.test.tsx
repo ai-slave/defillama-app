@@ -38,9 +38,9 @@ describe('public Market Makers pages', () => {
 			'Performance Index'
 		)
 		expect(renderPage(MarketMakersDocumentationPage, {})).toContain('Documentation')
-		expect(renderPage(DepthLeaderboard, { payload: null })).toContain('Depth Leaderboard')
-		expect(renderPage(VolumeLeaderboard, { rows: [] })).toContain('Volume Leaderboard')
-		expect(renderPage(SpreadLeaderboard, { rows: [] })).toContain('Spread Leaderboard')
-		expect(renderPage(KpiLeaderboard, { rows: [] })).toContain('KPI Adherence Leaderboard')
+		expect(renderPage(DepthLeaderboard, { payload: null })).toContain('Depth leaderboard')
+		expect(renderPage(VolumeLeaderboard, { rows: [] })).toContain('Volume leaderboard')
+		expect(renderPage(SpreadLeaderboard, { rows: [] })).toContain('Spread leaderboard')
+		expect(renderPage(KpiLeaderboard, { rows: [] })).toContain('KPI Adherence leaderboard')
 	})
 })

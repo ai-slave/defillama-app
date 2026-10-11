@@ -90,7 +90,7 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
    pick's detail with a DialogBackButton); every switch goes through
    `keepFocus` from ./focus.ts.
 
-   `pending` locks the surface while a request that cannot be cancelled runs:
+   `pending` locks the surface while a request that cannot be canceled runs:
    Escape, an outside tap, the header × and DialogCancelButton stop closing
    it. A request that aborts on close does not need it.
 

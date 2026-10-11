@@ -23,7 +23,7 @@ export default function KpiLeaderboard({ rows }: InferGetStaticPropsType<typeof 
 		>
 			<Leaderboard
 				active="KPI Adherence"
-				title="KPI Adherence Leaderboard"
+				title="KPI Adherence leaderboard"
 				subtitle="See how Market Makers rank based on adherence to contractual obligations."
 				columns={KPI_COLUMNS}
 				initialData={rows}

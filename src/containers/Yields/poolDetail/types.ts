@@ -37,7 +37,7 @@ export interface Holder {
 export interface DetailHolders extends Holders {
 	count_change_7d: number | null
 	count_change_30d: number | null
-	// `balance` is the raw on-chain amount (string, scaled by `decimals`).
+	// `balance` is the raw onchain amount (string, scaled by `decimals`).
 	top_10_holders: {
 		holders: Array<Holder>
 		decimals: number | null

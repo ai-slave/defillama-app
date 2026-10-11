@@ -314,7 +314,7 @@ test('deleting a chat hands focus to the next chat once the list drops it', asyn
 	)
 })
 
-test('cancelling a chat delete returns focus to its Delete button', async () => {
+test('canceling a chat delete returns focus to its Delete button', async () => {
 	sessionsReply = () => ({
 		sessions: [
 			{

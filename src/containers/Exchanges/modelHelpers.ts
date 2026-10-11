@@ -109,7 +109,7 @@ export function filterDirectoryRows(
 		// country is chosen the row's root-derived funding is the wrong answer — it
 		// reports "no fiat on-ramp" for exactly those venues. Prefer the region's own
 		// figures; fall back to the root block when the cache predates them, so an
-		// older cache degrades to today's behaviour rather than to blank cells.
+		// older cache degrades to today's behavior rather than to blank cells.
 		const regionFunding = availability.funding
 		result.push({
 			...row,

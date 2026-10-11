@@ -21,7 +21,7 @@ test('a plan card says in words which features the plan includes and which it la
 	const card = {
 		key: 'pro',
 		title: 'Pro',
-		primaryCta: 'Get Started',
+		primaryCta: 'Get started',
 		sections: [
 			{
 				title: 'Features',

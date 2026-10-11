@@ -44,7 +44,7 @@ test('tiles stop once the column budget is spent', () => {
 	expect(tiles.every((tile) => tile.shape === 'area')).toBe(true)
 })
 
-test('a note without a title is labelled Note', () => {
+test('a note without a title is labeled Note', () => {
 	const [tile] = buildDashboardPreview([
 		{ id: 'x', kind: 'text', content: 'body' }
 	] as unknown as Array<DashboardItemConfig>)

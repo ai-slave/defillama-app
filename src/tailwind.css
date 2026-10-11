@@ -450,12 +450,12 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */
 		--apy-mid: var(--text-data-up);
 		--apy-very: var(--text-data-down);
-		/* Yields text and badge colours read the app's data and status tokens, so a good APY is the one up green. */
+		/* Yields text and badge colors read the app's data and status tokens, so a good APY is the one up green. */
 		--yield-positive-text: var(--text-data-up);
 		--yield-negative-text: var(--text-data-down);
 		--yield-warning-text: var(--text-warning);
 		--yield-reward-text: var(--amber-11);
-		/* Inset well for measured-on-chain figures: a tint of the product's positive hue, so the
+		/* Inset well for measured-onchain figures: a tint of the product's positive hue, so the
 		   block reads as its own region inside the summary card without a second border or shadow.
 		   Deliberately not a nested card. */
 		--yield-verified-badge: var(--bg-data-up-tint);

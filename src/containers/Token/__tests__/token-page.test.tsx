@@ -223,7 +223,7 @@ describe('token page', () => {
 					</AuthProvider>
 				</QueryClientProvider>
 			)
-			expect(html).toContain('Market Cap')
+			expect(html).toContain('Market cap')
 			expect(html).toContain('href="#token-overview"')
 			expect(html).toContain('href="#token-usage"')
 			expect(html).not.toContain('href="#token-liquidations"')

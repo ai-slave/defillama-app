@@ -248,7 +248,7 @@ function TokensPortfolioSelection() {
 			<TableToolbar>
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
-					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
+					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}…` : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => setSelectedPortfolio(value)}

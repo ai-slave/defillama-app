@@ -27,20 +27,20 @@ interface VolumeData {
 
 const VOLUME_KPIS: Array<[string, string]> = [
 	['volumeLifetime', 'Volume (Lifetime)'],
-	['volume30d', 'Volume (30D)'],
-	['avgDailyVolume30d', 'Avg Daily Volume (30D)']
+	['volume30d', 'Volume (30d)'],
+	['avgDailyVolume30d', 'Avg Daily Volume (30d)']
 ]
 
 const SWAP_KPIS: Array<[string, string]> = [
 	['allTimeSwaps', 'All-Time Swaps'],
-	['swaps30d', 'Swaps (30D)'],
-	['avgDailySwaps30d', 'Avg Daily Swaps (30D)']
+	['swaps30d', 'Swaps (30d)'],
+	['avgDailySwaps30d', 'Avg Daily Swaps (30d)']
 ]
 
 const TYPE_KPIS: Array<[string, string]> = [
-	['nativeShare30d', 'Native Assets (30D)'],
-	['tradeShare30d', 'Trade Assets (30D)'],
-	['securedShare30d', 'Secured Assets (30D)']
+	['nativeShare30d', 'Native Assets (30d)'],
+	['tradeShare30d', 'Trade Assets (30d)'],
+	['securedShare30d', 'Secured Assets (30d)']
 ]
 
 // Full-width charts, each with Daily / Monthly / Quarterly / Cumulative views.
@@ -64,30 +64,30 @@ export default function Volume() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">Swap Volume</h2>
+			<h2 className="heading-xs">Swap volume</h2>
 			<KpiGrid kpis={data.kpis} items={VOLUME_KPIS} cols={3} />
 			{data.volumeByChainChart?.series?.length ? (
 				<ApiTrendChart chart={data.volumeByChainChart} subtitle="Swap volume per source chain." />
 			) : (
 				<PlaceholderCard
-					title="Swap Volume by Chain"
+					title="Swap volume by chain"
 					subtitle="Swap volume per source chain."
 					note="volume.volumeByChainChart"
 				/>
 			)}
 
-			<h2 className="heading-xs">Unique Wallets</h2>
+			<h2 className="heading-xs">Unique wallets</h2>
 			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 				<Kpi kpi={data.kpis.uniqueWalletsLifetime} label="Unique Wallets (Lifetime)" note="unique-wallets feed" />
 				<Kpi
 					kpi={data.kpis.uniqueWallets30d}
-					label="Unique Wallets (30D)"
+					label="Unique Wallets (30d)"
 					def="Distinct wallets that transacted in the latest complete calendar month. It stands in for a rolling 30-day count, which has no data source: daily uniques can't be summed without double-counting."
 					note="monthly uniques feed"
 				/>
 				<Kpi
 					kpi={data.kpis.avgDailyActiveWallets30d}
-					label="Avg Daily Unique Wallets (30D)"
+					label="Avg Daily Unique Wallets (30d)"
 					def="Average of the daily distinct-wallet counts over the trailing 30 days."
 					note="daily uniques feed"
 				/>
@@ -112,7 +112,7 @@ export default function Volume() {
 				)
 			) : (
 				<PlaceholderCard
-					title="Unique Wallets"
+					title="Unique wallets"
 					subtitle="Distinct wallets per period. Awaiting feed."
 					note="raynalytics unique-wallet endpoints"
 				/>
@@ -122,7 +122,7 @@ export default function Volume() {
 			<KpiGrid kpis={data.kpis} items={SWAP_KPIS} cols={3} />
 			<ApiTrendChart chart={data.swapCountChart} valueSymbol="" />
 
-			<h2 className="heading-xs">Swap Types</h2>
+			<h2 className="heading-xs">Swap types</h2>
 			<KpiGrid kpis={data.kpis} items={TYPE_KPIS} cols={3} />
 			<ApiTrendChart chart={data.volumeChart} subtitle="Split by swap type." />
 		</div>

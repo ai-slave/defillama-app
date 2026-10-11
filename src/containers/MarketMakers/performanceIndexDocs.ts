@@ -7,7 +7,7 @@ export const PI_FIGURE_CAPTION =
 	'Supporting fields within the table provide additional context on each market maker’s infrastructure and capabilities, and a “Details” view allows for a more granular breakdown of performance and characteristics. Screenshot taken July 31, 2026.'
 
 export const PI_METHODOLOGY_INTRO =
-	'“Grades” assigned to each Market Maker in the Performance Index are calculated using a proprietary weighted composite model that incorporates over 50 underlying KPIs. These KPIs are measured at a granular level and may differentiate across specific dimensions (e.g., depth at varying thresholds, bid vs. ask side behavior, and execution characteristics).'
+	'“Grades” assigned to each Market Maker in the Performance Index are calculated using a proprietary weighted composite model that incorporates over 50 underlying KPIs. These KPIs are measured at a granular level and may differentiate across specific dimensions (e.g., depth at varying thresholds, bid vs ask side behavior, and execution characteristics).'
 
 export const PI_COMPOSITE_SCORE_INTRO =
 	'Each Market Maker’s weighted score creates a “Composite Score”, that ranges 1 - 10, with 10 representing the highest possible Composite Score, and 1 representing the lowest. Composite Scores are then used to assign a letter grade to provide a simplified interpretation of overall performance. Composite Scores align to Grades using predefined ranges and serve as shorthand for comparing market makers with similar overall performance profiles. The exact methodology for each grade can be found below:'

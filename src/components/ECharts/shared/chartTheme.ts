@@ -23,7 +23,7 @@ export interface ChartTheme {
 	/** Rising and falling marks (candles, up/down bars): emerald-9 and a matched crimson in light, step 11 in dark. */
 	up: string
 	down: string
-	/** Rising and falling values drawn as data (sparklines), the --text-data-* text colours. */
+	/** Rising and falling values drawn as data (sparklines), the --text-data-* text colors. */
 	dataUp: string
 	dataDown: string
 	/** The brand accent, for single-series lines without a direction. */
@@ -143,8 +143,8 @@ export function getChartTheme(isThemeDark: boolean): ChartTheme {
 	return theme
 }
 
-/** The canvas colour for a series colour: the up/down mark variables (CHART_UP/CHART_DOWN) become the theme's marks,
-    so a chart payload built without the theme still follows it; every other colour passes through. */
+/** The canvas color for a series color: the up/down mark variables (CHART_UP/CHART_DOWN) become the theme's marks,
+    so a chart payload built without the theme still follows it; every other color passes through. */
 export function resolveChartColor(color: string, theme: ChartTheme): string {
 	return color === CHART_UP ? theme.up : color === CHART_DOWN ? theme.down : color
 }

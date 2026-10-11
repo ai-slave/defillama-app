@@ -98,7 +98,7 @@ const EXCEPTIONS: Record<RuleId, Record<string, string>> = {
 			'the sparkline under a metric that is already on screen; a loading line there reads as the metric still loading'
 	},
 	'error-box': {
-		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-coloured on purpose',
+		'src/containers/Downloads/sql/ErrorBanner.tsx': 'a SQL run error with its jump-to-line, error-colored on purpose',
 		'src/containers/Yields/poolDetail/PoolDetailView.tsx': "the exploit warning banner on a hacked pool's page"
 	},
 	'alert-line': {

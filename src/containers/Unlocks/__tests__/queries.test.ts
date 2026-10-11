@@ -225,9 +225,9 @@ describe('getProtocolEmissionsPieData', () => {
 	})
 })
 
-describe('getProtocolEmissons', () => {
+describe('getProtocolEmissions', () => {
 	test('returns the empty result without fetching protocol data when the cached emissions list misses', async () => {
-		const result = await queries.getProtocolEmissons('chainlink', {
+		const result = await queries.getProtocolEmissions('chainlink', {
 			emissionsProtocolsList: ['aave']
 		})
 
@@ -239,7 +239,7 @@ describe('getProtocolEmissons', () => {
 		http.serve({ [DETAIL_API]: fixtureStatus(400) })
 
 		await expect(
-			queries.getProtocolEmissons('chainlink', {
+			queries.getProtocolEmissions('chainlink', {
 				skipAvailabilityCheck: true,
 				tokenlist: {}
 			})
@@ -249,7 +249,7 @@ describe('getProtocolEmissons', () => {
 	test('returns the empty result for an explicit missing detail', async () => {
 		http.serve({ [DETAIL_API]: fixtureStatus(404) })
 
-		const result = await queries.getProtocolEmissons('missing', {
+		const result = await queries.getProtocolEmissions('missing', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -260,7 +260,7 @@ describe('getProtocolEmissons', () => {
 	test('keeps a successful detail with an empty schedule distinct from not-found', async () => {
 		serveDetail(protocolDetail({ name: 'Empty Schedule', token: 'coingecko:empty-schedule' }))
 
-		const result = await queries.getProtocolEmissons('empty-schedule', {
+		const result = await queries.getProtocolEmissions('empty-schedule', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -291,7 +291,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('aave', {
+		const result = await queries.getProtocolEmissions('aave', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -318,7 +318,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('documented-only', {
+		const result = await queries.getProtocolEmissions('documented-only', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -338,7 +338,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('chainlink', {
+		const result = await queries.getProtocolEmissions('chainlink', {
 			skipAvailabilityCheck: true,
 			tokenlist: {
 				chainlink: {
@@ -379,7 +379,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('plasma', {
+		const result = await queries.getProtocolEmissions('plasma', {
 			skipAvailabilityCheck: true,
 			tokenlist: {
 				plasma: { current_price: 2, symbol: 'xpl' }
@@ -413,7 +413,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('binance-smart-chain', {
+		const result = await queries.getProtocolEmissions('binance-smart-chain', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -437,7 +437,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('nest', {
+		const result = await queries.getProtocolEmissions('nest', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -472,7 +472,7 @@ describe('getProtocolEmissons', () => {
 			})
 		)
 
-		const result = await queries.getProtocolEmissons('unsorted', {
+		const result = await queries.getProtocolEmissions('unsorted', {
 			skipAvailabilityCheck: true,
 			tokenlist: {}
 		})
@@ -509,7 +509,7 @@ describe('getProtocolEmissons', () => {
 			)
 		)
 
-		const result = await queries.getProtocolEmissons('canton', {
+		const result = await queries.getProtocolEmissions('canton', {
 			skipAvailabilityCheck: true
 		})
 

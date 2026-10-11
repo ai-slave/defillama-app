@@ -30,7 +30,7 @@ export default function DataDefinitions() {
 			description="Glossary of DeFi metrics including TVL, Fees, Revenue, FDV, DEX Volume, Holders Revenue, App Fees, and REV."
 			canonicalUrl="/data-definitions"
 		>
-			<EntityTitleStrip title="Data Definitions" />
+			<EntityTitleStrip title="Data definitions" />
 
 			<Definition header="TVL" id="tvl">
 				<p>For protocols: Value of all coins held in smart contracts of the protocol</p>
@@ -48,9 +48,9 @@ export default function DataDefinitions() {
 					<BasicLink className="text-link hover:underline" href="/fees">
 						Fees
 					</BasicLink>{' '}
-					are equivalent to what would traditionally be considered Revenue in most off-chain businesses. They reflect
-					the total amount paid by users for using the service, regardless of where those fees end up. This is the
-					top-line number that shows how much the protocol is facilitating in economic activity.
+					are equivalent to what would traditionally be considered Revenue in most offchain businesses. They reflect the
+					total amount paid by users for using the service, regardless of where those fees end up. This is the top-line
+					number that shows how much the protocol is facilitating in economic activity.
 				</p>
 			</Definition>
 
@@ -115,9 +115,9 @@ export default function DataDefinitions() {
 					<BasicLink className="text-link hover:underline" href="/expenses">
 						Expenses
 					</BasicLink>{' '}
-					here represent operational costs for salaries, audits... throughout the year. We collect this data mainly from
-					annual protocol reports on their forums, so it's always referencing old data and will not be up-to-date in
-					realtime like other DefiLlama data.
+					here represent operational costs for salaries, audits, etc. throughout the year. We collect this data mainly
+					from annual protocol reports on their forums, so it's always referencing old data and will not be up-to-date
+					in realtime like other DefiLlama data.
 				</p>
 			</Definition>
 
@@ -167,7 +167,7 @@ export default function DataDefinitions() {
 						Fully Diluted Valuation
 					</BasicLink>{' '}
 					is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly
-					used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating.
+					used to calculate the hypothetical market cap of the token if all the tokens were unlocked and circulating.
 				</p>
 				<p>Data for this metric is imported directly from CoinGecko.</p>
 			</Definition>
@@ -225,7 +225,7 @@ export default function DataDefinitions() {
 				</Definition>
 			</div>
 
-			<Definition header="Stablecoins Market Cap" id="stablecoins-market-cap">
+			<Definition header="Stablecoins market cap" id="stablecoins-market-cap">
 				<p>The total market cap of all stablecoins on a chain.</p>
 				<p>
 					<BasicLink className="text-link hover:underline" href="/stablecoins/chains">

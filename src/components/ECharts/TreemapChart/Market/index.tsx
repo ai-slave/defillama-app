@@ -409,7 +409,7 @@ export default function MarketTreemapChart({
 					]
 					if (typeof data.marketCap === 'number' && showMarketCapRow) {
 						rows.push(
-							`Market Cap: ${formatUsd(data.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
+							`Market cap: ${formatUsd(data.marketCap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 						)
 					}
 					const change = readPercentChange(values)

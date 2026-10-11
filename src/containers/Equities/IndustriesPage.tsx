@@ -295,7 +295,7 @@ function IndustriesReadyPage({
 		<div className="flex min-w-0 flex-col gap-2">
 			<EquitiesPageHeader
 				crumb="Industries"
-				title="Equity Industries"
+				title="Equity industries"
 				description={`${globalSummary.industryCount} industries across ${formatMetric(overview.companyCount, 'number')} US-listed equities, grouped into ${overview.sectorCount} sectors. The top 20 hold ${formatMetric(globalSummary.top20MarketShare, 'percent')} of market cap; ${globalSummary.underTenCompaniesCount} have fewer than 10 companies.`}
 			/>
 			<StaleDataNotice stale={state.stale} updatedAt={classifiedIndustries[0]?.updatedAt} />
@@ -333,12 +333,12 @@ function IndustriesReadyPage({
 				/>
 				{/* buildIndustrySummary picks best and worst only from rows with a 1M return. */}
 				<StatTile
-					label="Best industry · 1M"
+					label="Best industry · 30d"
 					value={summary.bestIndustry1m ? <Change value={summary.bestIndustry1m.priceChangePercentage1m!} /> : '—'}
 					sub={summary.bestIndustry1m?.industry}
 				/>
 				<StatTile
-					label="Worst industry · 1M"
+					label="Worst industry · 30d"
 					value={summary.worstIndustry1m ? <Change value={summary.worstIndustry1m.priceChangePercentage1m!} /> : '—'}
 					sub={summary.worstIndustry1m?.industry}
 				/>

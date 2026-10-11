@@ -46,7 +46,7 @@ function DashboardHeading({
 	)
 }
 
-/** The loading table; `still` when it is the backdrop of a "Coming Soon" note, which waits for nothing. */
+/** The loading table; `still` when it is the backdrop of a "Coming soon" note, which waits for nothing. */
 export function SkeletonTable({ still }: { still?: boolean }) {
 	return (
 		<Card padding="none" className="relative overflow-hidden">
@@ -85,7 +85,7 @@ function ComingSoonSection({ label }: { label: string }) {
 			<SkeletonTable still />
 			<div className="absolute inset-0 flex items-center justify-center">
 				<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary">
-					{label} — Coming Soon
+					{label} — Coming soon
 				</span>
 			</div>
 		</div>

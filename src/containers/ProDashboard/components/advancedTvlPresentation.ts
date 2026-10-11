@@ -79,7 +79,7 @@ export function buildAdvancedTvlPresentation({
 			: chartType === 'tokenValuesUsd' || chartType === 'tokenBalances' || chartType === 'tokenInflows'
 				? tokenNames
 				: []
-	// Series take the palette by rank in the chart; the folded remainder is always the Others grey.
+	// Series take the palette by rank in the chart; the folded remainder is always the Others gray.
 	const stackColors: Record<string, string> = {}
 	let rank = 0
 	for (const name of colorNames) stackColors[name] = name === 'Others' ? OTHERS_COLOR : chartColor(rank++)

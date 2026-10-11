@@ -197,7 +197,7 @@ const RWA_TABLE_TYPES = new Set<CombinedTableType>(['rwa', 'rwa-chains', 'rwa-se
 const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'rwa-chains', label: 'By chain' },
 	{ value: 'rwa', label: 'Assets' },
-	{ value: 'rwa-selected-chain', label: 'On chain' }
+	{ value: 'rwa-selected-chain', label: 'Onchain' }
 ]
 
 const EQUITIES_TABLE_TYPES = new Set<CombinedTableType>(['equities', 'equities-financials', 'equities-filings'])

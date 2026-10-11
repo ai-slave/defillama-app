@@ -138,7 +138,7 @@ export default function PressReleases() {
 		<div className="space-y-8 py-6">
 			{/* Header */}
 			<div className="flex flex-col gap-2">
-				<h2 className="heading-lg text-primary">Reports & Press Releases</h2>
+				<h2 className="heading-lg text-primary">Reports & press releases</h2>
 				<p className="body-md text-secondary">Latest news, announcements, and updates from Spark Protocol</p>
 			</div>
 
@@ -149,7 +149,7 @@ export default function PressReleases() {
 						<div className="flex size-8 items-center justify-center rounded-lg bg-brand-tint">
 							<Icon name="file-text" className="size-5 text-link" />
 						</div>
-						<h2 className="heading-xs text-primary">Financial Reports</h2>
+						<h2 className="heading-xs text-primary">Financial reports</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{financialReports.map((post) => (
@@ -198,7 +198,7 @@ export default function PressReleases() {
 						<div className="flex size-8 items-center justify-center rounded-lg bg-surface-elevated-2">
 							<Icon name="newspaper" className="size-5 text-primary" />
 						</div>
-						<h2 className="heading-xs text-primary">Press Releases</h2>
+						<h2 className="heading-xs text-primary">Press releases</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
 						{renderPressReleaseCards(pressReleases)}

@@ -99,7 +99,7 @@ function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 
 // Tier chip — the public summary of the venue's REAL score.
 // Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D. Each tier takes the value
-// scale at its band's place, so tier and score colours agree.
+// scale at its band's place, so tier and score colors agree.
 export const TIER_COLORS: Record<string, string> = {
 	S: divergingColor(1),
 	A: divergingColor(0.5),
@@ -108,8 +108,8 @@ export const TIER_COLORS: Record<string, string> = {
 	D: divergingColor(-1)
 }
 
-// The end tiers are solid (white text passes AA on both), A and C a tint of their colour, B an outline, so each tier
-// reads at a glance; the scale passes 3:1, not text contrast, so text is never the scale colour.
+// The end tiers are solid (white text passes AA on both), A and C a tint of their color, B an outline, so each tier
+// reads at a glance; the scale passes 3:1, not text contrast, so text is never the scale color.
 const TIER_SOLID = new Set(['S', 'D'])
 
 export function TierBadge({ tier }: { tier: string }) {
@@ -317,7 +317,7 @@ const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: ReadonlyArra
 	)
 
 /**
- * A "USD perp" column in the merged view, kept parameterised over `ALL_PERP_SEGMENTS`
+ * A "USD perp" column in the merged view, kept parameterized over `ALL_PERP_SEGMENTS`
  * so a second class can be folded back in by editing that list alone. With one class
  * it renders exactly like `segmentColumn`, minus the hover breakdown a single segment
  * has nothing to break down.
@@ -383,7 +383,7 @@ const EXECUTION_SCOPE_NOTE = 'Last 30 days of the venue’s measured markets in 
 /** The segments the merged view shows execution for, in reading order. */
 const MERGED_EXEC_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 
-/** One line per segment the venue runs, labelled; N/A when it runs none of them. */
+/** One line per segment the venue runs, labeled; N/A when it runs none of them. */
 function segmentLines(
 	row: ExchangeDirectoryRowModel,
 	value: (segment: ExchangeSegment) => React.ReactNode,

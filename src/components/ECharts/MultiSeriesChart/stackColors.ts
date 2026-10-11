@@ -1,19 +1,19 @@
 import { assignUniqueColors, CHART_COLORS } from '~/constants/colors'
 import type { MultiSeriesChartArrayRow, MultiSeriesChartSeriesConfig } from './types'
 
-// A band under 1% of its row is a sliver: it cannot be mistaken for a neighbour, so it adds no overlap.
+// A band under 1% of its row is a sliver: it cannot be mistaken for a neighbor, so it adds no overlap.
 const VISIBLE_SHARE = 0.01
 
 const PALETTE_INDEX = new Map(CHART_COLORS.map((color, index) => [color, index]))
 
 /**
- * Palette colours for a stack's drawn series. In draw order, a series keeps its colour unless an earlier one took it:
+ * Palette colors for a stack's drawn series. In draw order, a series keeps its color unless an earlier one took it:
  * past CHART_SERIES_LIMIT ranks, or with a series picked from past them, the palette cycles. While the drawn series fit
- * the palette, repeats take the unused colours in draw order (`assignUniqueColors`), the rule a pie beside the chart
- * follows, so both colour the same picks alike. Past the palette, each repeat, largest area first, takes the palette
- * colour it overlaps least with: overlap is the smaller share of two series summed over the rows where both are
- * visible, so series that never appear together share a colour and series that fill the chart together do not. Brand
- * and meaning colours are not palette colours and keep their own. Returns the colours that change, by series name, or
+ * the palette, repeats take the unused colors in draw order (`assignUniqueColors`), the rule a pie beside the chart
+ * follows, so both color the same picks alike. Past the palette, each repeat, largest area first, takes the palette
+ * color it overlaps least with: overlap is the smaller share of two series summed over the rows where both are
+ * visible, so series that never appear together share a color and series that fill the chart together do not. Brand
+ * and meaning colors are not palette colors and keep their own. Returns the colors that change, by series name, or
  * null when nothing changes.
  */
 export function assignStackColors({
@@ -35,7 +35,7 @@ export function assignStackColors({
 	for (let index = 0; index < charts.length; index++) {
 		const chart = charts[index]!
 		if (!stack.has(chart.name)) continue
-		// The renderer's own fallback for a series without a colour.
+		// The renderer's own fallback for a series without a color.
 		const palette = PALETTE_INDEX.get(chart.color ?? CHART_COLORS[index % CHART_COLORS.length]!)
 		if (palette === undefined) continue
 		// A series with its own points shares no rows with the stack, so its overlap is unknown.
@@ -105,7 +105,7 @@ export function assignStackColors({
 			const otherColor = colorIndex[other]!
 			if (otherColor >= 0) cost[otherColor]! += weight
 		}
-		// Ties (most often slivers that overlap nothing) go to the least-used colour, so they spread.
+		// Ties (most often slivers that overlap nothing) go to the least-used color, so they spread.
 		let best = 0
 		for (let color = 1; color < CHART_COLORS.length; color++) {
 			if (cost[color]! < cost[best]! || (cost[color] === cost[best] && uses[color]! < uses[best]!)) best = color

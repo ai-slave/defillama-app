@@ -4,7 +4,7 @@ import { getRwaEntityChartMetricsQuery, parseRwaEntityChartMetrics } from '../en
 import { RWA_PLATFORM_CHART } from '../metrics'
 
 describe('the metrics query', () => {
-	test('opens with the default alone, reads a comma list, drops unknown keys and keeps the catalogue order', () => {
+	test('opens with the default alone, reads a comma list, drops unknown keys and keeps the catalog order', () => {
 		expect(parseRwaEntityChartMetrics(RWA_PLATFORM_CHART, undefined)).toEqual(['activeMcap'])
 		expect(parseRwaEntityChartMetrics(RWA_PLATFORM_CHART, 'netFlows,activeMcap,nope')).toEqual([
 			'activeMcap',

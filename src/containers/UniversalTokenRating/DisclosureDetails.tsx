@@ -265,13 +265,13 @@ export function DisclosureDetails({
 			)
 		case 'treasury_reports':
 			return disclosures.treasuryReportingCommentary ? (
-				<Commentary title="Forgd Commentary" text={disclosures.treasuryReportingCommentary} />
+				<Commentary title="Forgd commentary" text={disclosures.treasuryReportingCommentary} />
 			) : (
 				<NotDisclosed />
 			)
 		case 'cash_flows':
 			return disclosures.cashFlowCommentary ? (
-				<Commentary title="Forgd Commentary" text={disclosures.cashFlowCommentary} />
+				<Commentary title="Forgd commentary" text={disclosures.cashFlowCommentary} />
 			) : (
 				<NotDisclosed />
 			)

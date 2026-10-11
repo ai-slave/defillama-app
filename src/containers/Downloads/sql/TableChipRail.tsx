@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusNeighbourOnLeave, keepFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { BusyGlyph } from '~/ui/Status'
 import { StatusDot } from '~/ui/StatusBadge'
@@ -117,7 +117,7 @@ function TableChip({
 				content="Remove"
 				render={
 					<Button
-						ref={focusNeighbourChipOnLeave}
+						ref={focusNeighborChipOnLeave}
 						variant="ghost"
 						size="sm"
 						square
@@ -134,7 +134,7 @@ function TableChip({
 }
 
 // The table drops once DuckDB does, after the press. With no chip left, the tables section takes focus.
-const focusNeighbourChipOnLeave = focusNeighbourOnLeave((node) => node.closest<HTMLElement>('section'))
+const focusNeighborChipOnLeave = focusNeighborOnLeave((node) => node.closest<HTMLElement>('section'))
 
 function PendingChip({ table }: { table: PendingTable }) {
 	const { status } = table
@@ -229,7 +229,7 @@ function EmptyTablesPrompt({
 	return (
 		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-subtle bg-surface px-3 py-2 body-sm text-secondary">
 			<span className="text-primary">
-				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
+				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalog.
 			</span>
 			<span className="ml-auto flex items-center gap-1.5">
 				<CopyForAIButton />

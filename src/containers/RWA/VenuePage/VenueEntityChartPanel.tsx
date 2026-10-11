@@ -45,7 +45,7 @@ export function RWAVenueEntityChartPanel({
 
 	return (
 		<RWAEntityChartPanel
-			catalogue={RWA_VENUE_CHART}
+			catalog={RWA_VENUE_CHART}
 			selected={selected}
 			chart={chart}
 			isLoading={openInterest.isLoading || volume.isLoading || markets.isLoading || totalOpenInterest.isLoading}

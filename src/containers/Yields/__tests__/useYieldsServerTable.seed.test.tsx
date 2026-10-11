@@ -177,7 +177,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		client.clear()
 	})
 
-	test('restores a cancelled preference navigation before fetching the matching rows', async () => {
+	test('restores a canceled preference navigation before fetching the matching rows', async () => {
 		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
 		routerMock.replace.mockResolvedValueOnce(false)
 		fetchJson.mockResolvedValue({ ...initialData, rows: [{ id: '30d-pool', tvl: 42 }] })

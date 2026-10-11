@@ -18,8 +18,8 @@ function LoadingDots() {
 }
 
 /** The one spinner; never hand-roll an `animate-spin` border circle. It is a block-level flex box, so the
-    role="status" span around it holds no text line and the spinner centres in its row; an inline-flex spinner rode
-    that line's baseline, above centre. */
+    role="status" span around it holds no text line and the spinner centers in its row; an inline-flex spinner rode
+    that line's baseline, above center. */
 export function LoadingSpinner({ size }: { size: number }) {
 	return (
 		<span className="flex shrink-0 animate-spin">

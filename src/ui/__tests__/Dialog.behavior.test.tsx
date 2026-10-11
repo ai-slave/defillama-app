@@ -552,7 +552,7 @@ test('a confirmation that closes after an update removed its trigger hands focus
 test.each([
 	['stays mounted while hidden', false],
 	['unmounts on hide', true]
-])('cancelling a confirmation that %s returns focus to the button that opened it', async (_, unmountOnHide) => {
+])('canceling a confirmation that %s returns focus to the button that opened it', async (_, unmountOnHide) => {
 	function Rows() {
 		const confirm = Ariakit.useDialogStore()
 		return (

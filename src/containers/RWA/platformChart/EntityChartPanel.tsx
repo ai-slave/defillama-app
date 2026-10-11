@@ -19,7 +19,7 @@ import {
 	parseRwaEntityChartMetrics,
 	RWA_ENTITY_CHART_METRICS_QUERY_KEY,
 	RWA_ENTITY_CHART_PERIOD_QUERY_KEY,
-	type RWAEntityChartCatalogue,
+	type RWAEntityChartCatalog,
 	type RWAEntityChartData
 } from './entityChart'
 import { buildRwaPlatformEntityCsvDataset } from './metrics'
@@ -30,19 +30,19 @@ const EMPTY_DATASET = { dimensions: ['timestamp'], source: [] }
 
 /** The metrics and the period the address asks the entity chart for. */
 export function useRwaEntityChartSelection<K extends string>(
-	catalogue: RWAEntityChartCatalogue<K>
+	catalog: RWAEntityChartCatalog<K>
 ): { selected: Array<K>; period: RWAFlowGrouping } {
 	const router = useRouter()
 	const selected = useMemo(
-		() => parseRwaEntityChartMetrics(catalogue, router.query[RWA_ENTITY_CHART_METRICS_QUERY_KEY]),
-		[catalogue, router.query]
+		() => parseRwaEntityChartMetrics(catalog, router.query[RWA_ENTITY_CHART_METRICS_QUERY_KEY]),
+		[catalog, router.query]
 	)
 	const period = parseRWAFlowGrouping(readSingleQueryValue(router.query[RWA_ENTITY_CHART_PERIOD_QUERY_KEY]))
 	return { selected, period }
 }
 
 type RWAEntityChartPanelProps<K extends string> = RWAEntityChartData & {
-	catalogue: RWAEntityChartCatalogue<K>
+	catalog: RWAEntityChartCatalog<K>
 	selected: ReadonlyArray<K>
 	filename: string
 	title: string
@@ -53,7 +53,7 @@ type RWAEntityChartPanelProps<K extends string> = RWAEntityChartData & {
  * Add Metrics dialog, chips and period control, the exports. The caller reads the selection and builds the series.
  */
 export function RWAEntityChartPanel<K extends string>({
-	catalogue,
+	catalog,
 	selected,
 	chart,
 	isLoading,
@@ -66,7 +66,7 @@ export function RWAEntityChartPanel<K extends string>({
 	const deferredChart = useDeferredValue(chart)
 	const setSelected = (next: ReadonlyArray<K>) =>
 		void pushShallowQuery(router, {
-			[RWA_ENTITY_CHART_METRICS_QUERY_KEY]: getRwaEntityChartMetricsQuery(catalogue, next)
+			[RWA_ENTITY_CHART_METRICS_QUERY_KEY]: getRwaEntityChartMetricsQuery(catalog, next)
 		})
 	const toggle = (key: K) =>
 		setSelected(selected.includes(key) ? selected.filter((entry) => entry !== key) : [...selected, key])
@@ -79,9 +79,9 @@ export function RWAEntityChartPanel<K extends string>({
 				leading={
 					<>
 						<ChartMetricsDialog
-							groups={catalogue.groups.map((group) => ({
+							groups={catalog.groups.map((group) => ({
 								label: group,
-								options: catalogue.metrics
+								options: catalog.metrics
 									.filter((metric) => metric.group === group)
 									.map((metric) => ({
 										key: metric.key,
@@ -94,11 +94,11 @@ export function RWAEntityChartPanel<K extends string>({
 							onToggle={(option) => toggle(option.key)}
 							clear={{
 								kind: 'reset',
-								atDefault: getRwaEntityChartMetricsQuery(catalogue, selected) === undefined,
+								atDefault: getRwaEntityChartMetricsQuery(catalog, selected) === undefined,
 								onReset: () => setSelected([])
 							}}
 						/>
-						{catalogue.metrics
+						{catalog.metrics
 							.filter((metric) => selected.includes(metric.key))
 							.map((metric) => (
 								<MetricChip

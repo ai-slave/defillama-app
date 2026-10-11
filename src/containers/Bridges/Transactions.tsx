@@ -552,7 +552,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 	return (
 		<div className="flex flex-col gap-6">
 			<header className="flex flex-col gap-2">
-				<h1 className="heading-sm">Bridge Transactions</h1>
+				<h1 className="heading-sm">Bridge transactions</h1>
 				<p className="max-w-2xl body-sm text-secondary">
 					Download cross-chain bridge transaction data by protocol and time window. Results include deposits,
 					withdrawals, USD value, and explorer links — exportable as CSV.
@@ -635,7 +635,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 					className="md:col-start-4 md:row-start-2"
 				>
 					<Icon name="search" className="size-3.5" />
-					Fetch Transactions
+					Fetch transactions
 				</Button>
 
 				{fetchFailure ? (

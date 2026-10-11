@@ -69,7 +69,7 @@ export default function Tokens() {
 	const { token, includecex } = router.query
 
 	const tokenSymbol = token ? (typeof token === 'string' ? token : token[0]) : null
-	const includeCentraliseExchanges = includecex === 'true'
+	const includeCentralizedExchanges = includecex === 'true'
 
 	const protocolsQuery = useQuery({
 		queryKey: ['token-usage', 'protocols-by-token', tokenSymbol],
@@ -86,10 +86,10 @@ export default function Tokens() {
 			protocols?.filter(
 				(protocol) =>
 					!protocol.misrepresentedTokens &&
-					(protocol.category?.toLowerCase() === 'cex' ? includeCentraliseExchanges : true)
+					(protocol.category?.toLowerCase() === 'cex' ? includeCentralizedExchanges : true)
 			) ?? []
 		)
-	}, [protocols, includeCentraliseExchanges])
+	}, [protocols, includeCentralizedExchanges])
 	const tokenUsageTreemapRootLabel = tokenSymbol ? `${tokenSymbol.toUpperCase()} usage` : 'Token usage'
 	const tokenUsageExportTitle = tokenSymbol ? `${tokenSymbol.toUpperCase()} token usage` : 'Token usage'
 	const tokenUsageExportFilename = tokenSymbol ? `token-usage-${tokenSymbol.toLowerCase()}` : 'token-usage'
@@ -201,11 +201,11 @@ export default function Tokens() {
 						<div className="flex flex-wrap items-center justify-end gap-1.5">
 							<Checkbox
 								variant="filter"
-								value="includeCentraliseExchanges"
-								checked={includeCentraliseExchanges}
+								value="includeCentralizedExchanges"
+								checked={includeCentralizedExchanges}
 								onChange={() => {
 									void pushShallowQuery(router, {
-										includecex: !includeCentraliseExchanges ? 'true' : undefined
+										includecex: !includeCentralizedExchanges ? 'true' : undefined
 									})
 								}}
 							>

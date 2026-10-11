@@ -187,7 +187,7 @@ export function ForksOverview({
 						<ChartExportButtons
 							chartInstance={pieChartInstance}
 							filename="forks-tvl-pie"
-							title="Forks TVL Breakdown"
+							title="Forks TVL breakdown"
 							csvSource={{
 								type: 'dataset',
 								prepare: () =>
@@ -212,7 +212,7 @@ export function ForksOverview({
 				</Panel>
 				<Panel className="flex-1">
 					<ChartPanelToolbar>
-						<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
+						<h2 className="mr-auto heading-xs">Forks TVL dominance (%)</h2>
 						{forkSeries.length > 1 ? (
 							<SelectWithCombobox
 								allValues={forkSeries}
@@ -227,7 +227,7 @@ export function ForksOverview({
 						<ChartExportButtons
 							chartInstance={chartInstance}
 							filename="forks-dominance-chart"
-							title="Forks TVL Dominance (%)"
+							title="Forks TVL dominance (%)"
 							csvSource={selectedDominance.csvSource}
 						/>
 					</ChartPanelToolbar>
@@ -261,7 +261,7 @@ export function ForksOverview({
 					<Card padding="none">
 						<PanelHeader>
 							<PanelTitle as="h1" className="whitespace-nowrap">
-								Protocol Rankings
+								Protocol rankings
 							</PanelTitle>
 							<TableSearchInput
 								columnId="name"

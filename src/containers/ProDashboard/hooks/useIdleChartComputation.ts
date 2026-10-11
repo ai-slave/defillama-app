@@ -11,7 +11,7 @@ interface IdleChartComputationOptions<I, T> {
 
 /**
  * Keep large pure chart construction out of React's render phase. The signature
- * identifies the input snapshot; stale idle callbacks are cancelled before they
+ * identifies the input snapshot; stale idle callbacks are canceled before they
  * can publish data for a newer selection.
  */
 export function useIdleChartComputation<I, T>({
@@ -27,11 +27,11 @@ export function useIdleChartComputation<I, T>({
 	useEffect(() => {
 		if (!enabled) return
 
-		let cancelled = false
+		let canceled = false
 		const runComputation = () => {
-			if (cancelled) return
+			if (canceled) return
 			const value = runLatest()
-			if (!cancelled) setComputed({ signature, value })
+			if (!canceled) setComputed({ signature, value })
 		}
 
 		let timeoutId: number | undefined
@@ -43,7 +43,7 @@ export function useIdleChartComputation<I, T>({
 		}
 
 		return () => {
-			cancelled = true
+			canceled = true
 			if (idleCallbackId !== undefined && typeof window !== 'undefined') {
 				window.cancelIdleCallback(idleCallbackId)
 			}

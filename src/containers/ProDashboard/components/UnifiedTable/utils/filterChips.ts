@@ -277,7 +277,7 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		clones,
 		'stablesMcapMin',
 		'stablesMcapMax',
-		'Stablecoin Market Cap',
+		'Stablecoins market cap',
 		formatUsd,
 		USD_LOWERCASE_MILLIONS_OPTIONS
 	)

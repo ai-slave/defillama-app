@@ -6,7 +6,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -108,7 +108,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		// filtered rows, and the reset that lands after it returns the leaderboard to page one. Waiting also lets
 		// the filter chips collapse before the row scrolls into view.
 		void resetFilters().then((navigated) => {
-			// A later navigation cancelled this one, so the filters were not reset.
+			// A later navigation canceled this one, so the filters were not reset.
 			if (!navigated) return
 			flushSync(() => setFocusRequest((current) => ({ asset: match.asset, nonce: (current?.nonce ?? 0) + 1 })))
 			scrollToLeaderboardRow(match.asset)
@@ -262,7 +262,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							onClick={chip.onRemove}
 							// The chip leaves once the URL drops its filter; with no chip left, the Filter button takes focus.
 							data-row
-							ref={focusNeighbourOnLeave(() => filterButtonRef.current)}
+							ref={focusNeighborOnLeave(() => filterButtonRef.current)}
 						>
 							<span className="sr-only">Remove </span>
 							{chip.label}
@@ -274,7 +274,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 
 			<Panel className="max-lg:hidden">
 				<PanelHeader>
-					<PanelTitle>Performance Matrix</PanelTitle>
+					<PanelTitle>Performance matrix</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>
 				<PerformanceMatrix rows={filteredRows} grading={scoringConfig?.grading} />
@@ -282,7 +282,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 
 			<Panel className="lg:hidden">
 				<PanelHeader>
-					<PanelTitle>Top-10 Project Rating Matrix</PanelTitle>
+					<PanelTitle>Top-10 project rating matrix</PanelTitle>
 				</PanelHeader>
 				<PerformanceMatrix
 					rows={filteredRows.slice(0, 10)}
@@ -299,7 +299,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 
 			<Panel>
 				<PanelHeader>
-					<PanelTitle>Leaderboard Ranking</PanelTitle>
+					<PanelTitle>Leaderboard ranking</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>
 				<Leaderboard

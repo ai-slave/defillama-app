@@ -143,7 +143,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 
 			<Panel>
 				<PanelHeader>
-					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
+					<PanelTitle as="h1">Crypto calendar</PanelTitle>
 					<SearchField
 						label="Search events"
 						name="search"

@@ -184,7 +184,7 @@ export default function Overview() {
 			<section className="flex flex-col gap-6">
 				<h2 className="heading-xs">Volume</h2>
 				<SeriesTrendChart
-					title="Total Volume by Chain"
+					title="Total volume by chain"
 					subtitle="Swap volume across all versions, split by chain (top chains plus Others)."
 					series={volumeByChain.data}
 					isLoading={volumeByChain.isLoading}
@@ -193,7 +193,7 @@ export default function Overview() {
 					minBucket="week"
 				/>
 				<SeriesTrendChart
-					title="Volume by Version"
+					title="Volume by version"
 					subtitle="Swap volume split by protocol version."
 					series={volumeByVersion.data}
 					isLoading={volumeByVersion.isLoading}
@@ -219,7 +219,7 @@ export default function Overview() {
 			<section className="flex flex-col gap-6">
 				<h2 className="heading-xs">Fees</h2>
 				<SeriesTrendChart
-					title="Fees Paid by Users, by Version"
+					title="Fees paid by users, by version"
 					subtitle="Swap fees paid by users, split by protocol version."
 					series={feesByVersion.data}
 					isLoading={feesByVersion.isLoading}
@@ -228,7 +228,7 @@ export default function Overview() {
 					minBucket="week"
 				/>
 				<SeriesTrendChart
-					title="Protocol Fees (Cumulative)"
+					title="Protocol Fees (cumulative)"
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, cumulative."
 					series={protocolFees.data}
 					isLoading={protocolFees.isLoading}
@@ -248,7 +248,7 @@ export default function Overview() {
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<TimeAreaCard
 						chart={data.tradersWeekly}
-						title="Swappers (Weekly Unique)"
+						title="Swappers (weekly unique)"
 						valueSymbol=""
 						subtitle={defs.traders ?? 'Weekly unique swapping wallets across all chains and versions.'}
 					/>

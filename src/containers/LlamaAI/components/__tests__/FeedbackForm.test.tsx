@@ -115,7 +115,7 @@ test('closing with typed feedback asks first, and keeping it returns to the text
 	})
 })
 
-test('a running submission names itself and cannot be cancelled', async () => {
+test('a running submission names itself and cannot be canceled', async () => {
 	const response = Promise.withResolvers<Response>()
 	session.serveInOrder(RATE, [() => response.promise])
 	await click('Thumbs down')

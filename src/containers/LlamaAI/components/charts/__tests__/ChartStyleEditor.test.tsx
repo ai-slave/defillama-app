@@ -51,7 +51,7 @@ const resetView = { logScale: false, stacked: true, showLabels: false, percentag
 const PREVIEW_DELAY = 350
 const noop = () => {}
 // The pane's fields carry a screen-reader-only label (Field hideLabel).
-function labelled(name: string) {
+function labeled(name: string) {
 	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === name)
 	return label ? (document.getElementById(label.htmlFor) as HTMLInputElement) : null
 }
@@ -273,7 +273,7 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async () => undefined)
 		await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
 
-		const secondName = labelled('Series 2 name')
+		const secondName = labeled('Series 2 name')
 		if (!secondName) throw new Error('Expected second series name input')
 		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 		if (!setInputValue) throw new Error('Expected native input value setter')
@@ -353,9 +353,9 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
-		const secondSeriesInput = labelled('Series 2 name')
+		const secondSeriesInput = labeled('Series 2 name')
 		await clickButton('Move series 2 up')
-		expect(labelled('Series 1 name')).toBe(secondSeriesInput)
+		expect(labeled('Series 1 name')).toBe(secondSeriesInput)
 		expect(previewNames()).toBe('2 days|11-20 days|6-10 days|1 day')
 
 		await clickButton('Save')
@@ -461,7 +461,7 @@ describe('ChartStyleEditor', () => {
 	})
 
 	const typeTitle = async (value: string) => {
-		const title = labelled('Chart title')!
+		const title = labeled('Chart title')!
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(title, value)
 			title.dispatchEvent(new Event('input', { bubbles: true }))
@@ -479,7 +479,7 @@ describe('ChartStyleEditor', () => {
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		await clickButton('Cancel')
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
-		const title = labelled('Chart title')!
+		const title = labeled('Chart title')!
 		await act(async () =>
 			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 		)
@@ -499,7 +499,7 @@ describe('ChartStyleEditor', () => {
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		await clickButton('Reset')
 		expect(named('Cancel')!.getAttribute('aria-disabled')).toBe('true')
-		expect(labelled('Chart title')!.value).toBe('First title')
+		expect(labeled('Chart title')!.value).toBe('First title')
 		await act(async () => saving.resolve(undefined))
 		expect(onSave.mock.calls.map(([saved]) => saved.title)).toEqual(['First title'])
 	})
@@ -511,9 +511,9 @@ describe('ChartStyleEditor', () => {
 		await clickButton('Save')
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		const fields = [
-			labelled('Chart title')!,
+			labeled('Chart title')!,
 			document.querySelector('input[type="color"]')!,
-			labelled('Series 1 name')!,
+			labeled('Series 1 name')!,
 			document.querySelector('[aria-label="Annotation 1 label"]')!,
 			named('bar')!,
 			named('+ Add annotation')!,
@@ -528,7 +528,7 @@ describe('ChartStyleEditor', () => {
 		await waitForUi(() => expect(fields.map(disabled)).toEqual([false, false, false, false, false, false, false]))
 	})
 
-	test('names each series colour swatch by its series', async () => {
+	test('names each series color swatch by its series', async () => {
 		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={vi.fn(async () => undefined)} />))
 		expect([...document.querySelectorAll('input[type="color"]')].map(accessibleName)).toEqual([
 			'Series 1 color',
@@ -553,13 +553,13 @@ describe('ChartStyleEditor', () => {
 		await clickButton('Save')
 
 		expect(pane('Style').checked).toBe(true)
-		const title = labelled('Chart title')!
+		const title = labeled('Chart title')!
 		expect(document.activeElement).toBe(title)
 		expect(fieldErrorOf(title)).toBeTruthy()
 		expect(onSave).not.toHaveBeenCalled()
 	})
 
-	// A pie colours each slice: its series names have no field, so they never block Save.
+	// A pie colors each slice: its series names have no field, so they never block Save.
 	test('saves a pie whose series name is blank, since no name field renders for it', async () => {
 		const pieConfig = {
 			...config,
@@ -570,7 +570,7 @@ describe('ChartStyleEditor', () => {
 		} satisfies ChartConfiguration
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => render(<EditorHarness editorConfig={pieConfig} onSave={onSave} />))
-		expect(labelled('Series 1 name')).toBeNull()
+		expect(labeled('Series 1 name')).toBeNull()
 
 		await clickButton('Save')
 

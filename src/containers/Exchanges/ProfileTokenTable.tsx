@@ -35,7 +35,7 @@ const definitions = exchangeDefinitions.directory
 const SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 const NOT_TRADED = <span className="text-tertiary">N/A</span>
 
-/** One labelled line per segment the token trades in here; N/A when it trades in neither. */
+/** One labeled line per segment the token trades in here; N/A when it trades in neither. */
 function segmentLines(
 	row: ExchangeTokenRow,
 	value: (segment: ExchangeSegment) => React.ReactNode,

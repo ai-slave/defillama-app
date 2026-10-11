@@ -117,7 +117,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 					.
 				</p>
 				<p>
-					For questions around product, methodology, data... You'll get much faster responses by using our priority
+					For questions around product, methodology, data, etc. You'll get much faster responses by using our priority
 					support, available{' '}
 					<a
 						className="text-link hover:underline"

@@ -57,7 +57,7 @@ export function YieldsWatchlistContainer() {
 			<WatchListTabs />
 			<Panel>
 				<PanelHeader>
-					<PanelTitle as="h1">Saved Pools</PanelTitle>
+					<PanelTitle as="h1">Saved pools</PanelTitle>
 					<Menu
 						name={selectedPortfolio}
 						options={portfolios}

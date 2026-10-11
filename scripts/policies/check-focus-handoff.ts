@@ -35,11 +35,11 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 10. An icon-only `Button`/`ProButton` (`square`) that no Tooltip, Hovercard or menu renders as its anchor (it is not a
  *    `render` value): sighted mouse readers get no name. Exceptions named in design.md: a disclosure chevron
  *    (`aria-expanded`), a composer's send arrow (`type="submit"`) and a field's clear ✕ (`aria-label` starting "Clear").
- * 11. A retry rendered as a link (`variant="link"` labelled Retry or Try again): a retry is a small secondary Button
+ * 11. A retry rendered as a link (`variant="link"` labeled Retry or Try again): a retry is a small secondary Button
  *    beside the error (docs/focus-and-errors.md).
- * 12. A row handoff built by hand: `neighbourRowControl` feeding `keepFocus`, `passFocusOnLeave` or `.focus()`. Put
- *    `focusNeighbourOnLeave(fallback)` on the control and `data-row` on its row. A neighbour read for another target
- *    (`neighbourRowControl(…)?.querySelector(…)`, a confirm's `finalFocus`) is not checked.
+ * 12. A row handoff built by hand: `neighborRowControl` feeding `keepFocus`, `passFocusOnLeave` or `.focus()`. Put
+ *    `focusNeighborOnLeave(fallback)` on the control and `data-row` on its row. A neighbor read for another target
+ *    (`neighborRowControl(…)?.querySelector(…)`, a confirm's `finalFocus`) is not checked.
  * 13. A definition anchor without `tabIndex` or `cursor-help`: a `Tooltip` whose anchor or text carries
  *    `decoration-dotted` and whose anchor is not a control (CONTROL_TAGS, `summary`). Ariakit never makes the anchor
  *    focusable, so without `tabIndex={0}` keyboard readers cannot open the definition; `cursor-help` tells mouse
@@ -124,8 +124,8 @@ function calleeName(node: ts.Node): string | null {
 	return ts.isCallExpression(node) && ts.isIdentifier(node.expression) ? node.expression.text : null
 }
 
-/** A neighbour handed to keepFocus, passFocusOnLeave or focus(): inside a passFocusOnLeave call, or in a function
-    that calls keepFocus or focus(). A neighbour whose own control is picked (`?.querySelector`) aims somewhere else on purpose. */
+/** A neighbor handed to keepFocus, passFocusOnLeave or focus(): inside a passFocusOnLeave call, or in a function
+    that calls keepFocus or focus(). A neighbor whose own control is picked (`?.querySelector`) aims somewhere else on purpose. */
 function isHandBuiltRowHandoff(call: ts.CallExpression): boolean {
 	if (ts.isPropertyAccessExpression(call.parent) && call.parent.expression === call) return false
 	for (let node: ts.Node = call.parent; !ts.isSourceFile(node); node = node.parent) {
@@ -278,7 +278,7 @@ export function scanSource(relative: string, source: string): Array<string> {
 				ts.isJsxElement(node) &&
 				/\b(?:Retry|Try again)\b/i.test(node.children.map((child) => child.getText()).join(' '))
 			) {
-				violations.push(`${at(opening)} renders a retry as a link; use a secondary sm Button labelled Try again`)
+				violations.push(`${at(opening)} renders a retry as a link; use a secondary sm Button labeled Try again`)
 			}
 			const tabIndex = attribute(opening, 'tabIndex')
 			const className = attribute(opening, 'className')
@@ -312,9 +312,9 @@ export function scanSource(relative: string, source: string): Array<string> {
 				}
 			}
 		}
-		if (ts.isCallExpression(node) && calleeName(node) === 'neighbourRowControl' && isHandBuiltRowHandoff(node)) {
+		if (ts.isCallExpression(node) && calleeName(node) === 'neighborRowControl' && isHandBuiltRowHandoff(node)) {
 			violations.push(
-				`${at(node)} hands focus to a neighbour row by hand; put focusNeighbourOnLeave on the control and data-row on its row`
+				`${at(node)} hands focus to a neighbor row by hand; put focusNeighborOnLeave on the control and data-row on its row`
 			)
 		}
 		// An element passed as `render` is the anchor of the Tooltip, Hovercard or menu that renders it.
@@ -535,37 +535,37 @@ if (process.argv.includes('--self-test')) {
 		{
 			name: 'row removal handing focus on with keepFocus',
 			source:
-				'export const F = () => <button onClick={(event) => { const next = neighbourRowControl(event.currentTarget.closest("li")!, event.currentTarget); keepFocus(remove, () => next) }}>Remove</button>',
+				'export const F = () => <button onClick={(event) => { const next = neighborRowControl(event.currentTarget.closest("li")!, event.currentTarget); keepFocus(remove, () => next) }}>Remove</button>',
 			violation: true
 		},
 		{
 			name: 'row removal handing focus on with passFocusOnLeave',
 			source:
-				'export const F = () => <button ref={passFocusOnLeave((node) => neighbourRowControl(node, node))}>Remove</button>',
+				'export const F = () => <button ref={passFocusOnLeave((node) => neighborRowControl(node, node))}>Remove</button>',
 			violation: true
 		},
 		{
-			name: 'row removal focusing the neighbour once a request settles',
+			name: 'row removal focusing the neighbor once a request settles',
 			source:
-				'export const F = () => <button onClick={(event) => { const next = neighbourRowControl(event.currentTarget.closest("li")!, event.currentTarget); archive.mutate(name, { onSuccess: () => next?.focus() }) }}>Archive</button>',
+				'export const F = () => <button onClick={(event) => { const next = neighborRowControl(event.currentTarget.closest("li")!, event.currentTarget); archive.mutate(name, { onSuccess: () => next?.focus() }) }}>Archive</button>',
 			violation: true
 		},
 		{
-			name: 'row removal through focusNeighbourOnLeave',
+			name: 'row removal through focusNeighborOnLeave',
 			source:
-				'export const F = () => <li data-row><button ref={focusNeighbourOnLeave()} onClick={remove}>Remove</button></li>',
+				'export const F = () => <li data-row><button ref={focusNeighborOnLeave()} onClick={remove}>Remove</button></li>',
 			violation: false
 		},
 		{
-			name: "a neighbour's own link as the target",
+			name: "a neighbor's own link as the target",
 			source:
-				"export const F = () => <div ref={passFocusOnLeave((card) => neighbourRowControl(card, card)?.querySelector(':scope > a'))} />",
+				"export const F = () => <div ref={passFocusOnLeave((card) => neighborRowControl(card, card)?.querySelector(':scope > a'))} />",
 			violation: false
 		},
 		{
-			name: "a neighbour kept for a confirm's finalFocus",
+			name: "a neighbor kept for a confirm's finalFocus",
 			source:
-				'export const F = () => <button onClick={(event) => setTarget({ neighbour: neighbourRowControl(event.currentTarget.closest("li")!, event.currentTarget) })}>Delete</button>',
+				'export const F = () => <button onClick={(event) => setTarget({ neighbor: neighborRowControl(event.currentTarget.closest("li")!, event.currentTarget) })}>Delete</button>',
 			violation: false
 		},
 		{

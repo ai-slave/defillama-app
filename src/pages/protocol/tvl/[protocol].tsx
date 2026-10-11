@@ -358,7 +358,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
 						<BreakdownChartCard
-							title="TVL by Chain"
+							title="TVL by chain"
 							seriesLabel="Chain"
 							allValues={chainsUnique}
 							breakdown={chainBreakdown}
@@ -374,7 +374,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
 						<BreakdownChartCard
-							title="Token Values (USD)"
+							title="Token values (USD)"
 							seriesLabel="Token"
 							allValues={tokensUnique}
 							breakdown={tokenBreakdownUSD}
@@ -392,7 +392,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					tokensUnique.length > 0 &&
 					(tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0) ? (
 						<TokensBreakdownPieChartCard
-							title="Tokens Breakdown (USD)"
+							title="Tokens breakdown (USD)"
 							tokenBreakdownPieSeries={tokenBreakdownPieSeries}
 							exportFilenameBase={buildFilename('tokens-breakdown-usd')}
 							exportTitle={buildTitle('TVL by Token (USD)')}
@@ -402,7 +402,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
 						<BreakdownChartCard
-							title="Token Balances (Raw Quantities)"
+							title="Token balances (raw quantities)"
 							seriesLabel="Token"
 							allValues={rawTokensUnique}
 							breakdown={tokenRawBreakdown}
@@ -417,7 +417,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{usdInflowsDataset ? (
 						<USDInflowsChartCard
-							title="USD Inflows"
+							title="USD inflows"
 							dataset={usdInflowsDataset}
 							exportFilenameBase={buildFilename('usd-inflows')}
 							exportTitle={props.name}
@@ -427,7 +427,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenInflows && inflowTokensUnique.length > 0 ? (
 						<InflowsByTokenChartCard
-							title="Inflows by Token"
+							title="Inflows by token"
 							allValues={inflowTokensUnique}
 							breakdown={tokenInflows}
 							exportFilenameBase={buildFilename('inflows-by-token')}

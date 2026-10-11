@@ -52,7 +52,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 						text: 'The Disclosure Axis (D) evaluates the completeness, quality, and freshness of information disclosed by the project itself, including team transparency, tokenomics, legal structure, and service provider disclosures.'
 					},
 					{
-						text: 'The Performance Axis (P) evaluates whether observed market structure and operational behavior validate those disclosures over time, drawing on live liquidity, volume, spread, exchange coverage, and on-chain data.'
+						text: 'The Performance Axis (P) evaluates whether observed market structure and operational behavior validate those disclosures over time, drawing on live liquidity, volume, spread, exchange coverage, and onchain data.'
 					}
 				]
 			},
@@ -66,7 +66,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			},
 			{
 				type: 'paragraph',
-				text: 'Forgd maintains data partnerships with DeFiLlama, Tokenomist, and other industry providers to source and verify the underlying metrics powering the Performance Axis. Disclosure data is submitted directly by projects or sourced from existing third-party transparency submissions.'
+				text: 'Forgd maintains data partnerships with DefiLlama, Tokenomist, and other industry providers to source and verify the underlying metrics powering the Performance Axis. Disclosure data is submitted directly by projects or sourced from existing third-party transparency submissions.'
 			}
 		]
 	},
@@ -81,7 +81,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'formula', text: 'TVS(t) = D(t) × P(t)' },
 			{
 				type: 'paragraph',
-				text: "Both axes dynamically update as new information enters the system. On the Disclosure side, static reporting must remain current — any material amendment not reflected within 60 days triggers an automatic 50% reduction to that category's Disclosure contribution until remediated. On the Performance side, live market maker reporting, exchange-level liquidity data, spreads, depth, volume, and on-chain events continuously roll forward and recalculate underlying ratios."
+				text: "Both axes dynamically update as new information enters the system. On the Disclosure side, static reporting must remain current — any material amendment not reflected within 60 days triggers an automatic 50% reduction to that category's Disclosure contribution until remediated. On the Performance side, live market maker reporting, exchange-level liquidity data, spreads, depth, volume, and onchain events continuously roll forward and recalculate underlying ratios."
 			},
 			{
 				type: 'paragraph',
@@ -138,7 +138,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			},
 			{
 				type: 'paragraph',
-				text: 'On the Performance side, new market maker reporting, exchange-level (and potentially trading pair-level) liquidity data, spreads, depth, volume and other live metrics continuously roll the trailing windows forward and recalculate the underlying ratios. Verified on-chain events also directly impact the score without requiring projects to manually refile disclosures. A new exchange listing changes the liquidity footprint baseline, a token unlock changes circulating float dynamics, and changes to market maker mandates update the underlying operational commitments being measured against.'
+				text: 'On the Performance side, new market maker reporting, exchange-level (and potentially trading pair-level) liquidity data, spreads, depth, volume and other live metrics continuously roll the trailing windows forward and recalculate the underlying ratios. Verified onchain events also directly impact the score without requiring projects to manually refile disclosures. A new exchange listing changes the liquidity footprint baseline, a token unlock changes circulating float dynamics, and changes to market maker mandates update the underlying operational commitments being measured against.'
 			},
 			{
 				type: 'paragraph',
@@ -153,7 +153,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 						children: ['P = 9.4', 'Score = 8.5 × 9.4 ≈ 80']
 					},
 					{
-						text: 'T+45 — a 4.2% token unlock occurs on-chain and liquidity conditions temporarily deteriorate as spreads widen and market maker uptime weakens. Trailing ratios fall to 0.86:',
+						text: 'T+45 — a 4.2% token unlock occurs onchain and liquidity conditions temporarily deteriorate as spreads widen and market maker uptime weakens. Trailing ratios fall to 0.86:',
 						children: ['P = 8.6', 'Score = 8.5 × 8.6 ≈ 73']
 					}
 				]
@@ -330,7 +330,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'formula', text: 'D(t) = 1.535 + 2.615 + 2.00 + 2.40 = 8.55' },
 			{
 				type: 'paragraph',
-				text: "Scores are graded by Forgd's methodology team for qualitative sub-criteria, or calculated directly from on-chain and submitted data for quantitative sub-criteria. Unresolved critical audit findings hard-cap the Auditor Disclosures sub-criterion at a score of 4, regardless of how complete the disclosure itself is."
+				text: "Scores are graded by Forgd's methodology team for qualitative sub-criteria, or calculated directly from onchain and submitted data for quantitative sub-criteria. Unresolved critical audit findings hard-cap the Auditor Disclosures sub-criterion at a score of 4, regardless of how complete the disclosure itself is."
 			},
 			{
 				type: 'paragraph',
@@ -358,7 +358,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 		blocks: [
 			{
 				type: 'paragraph',
-				text: "The Performance Axis evaluates whether a project's observed market structure and operational behavior validate the disclosures and commitments it has made over time. Unlike the Disclosure Axis, which measures what a project reports, the Performance Axis measures what a project delivers. It draws on live market data — liquidity depth, trading volume, bid-ask spreads, exchange coverage, funding rates, and on-chain tokenomics — to produce a continuously updated score that reflects actual market health rather than stated intentions."
+				text: "The Performance Axis evaluates whether a project's observed market structure and operational behavior validate the disclosures and commitments it has made over time. Unlike the Disclosure Axis, which measures what a project reports, the Performance Axis measures what a project delivers. It draws on live market data — liquidity depth, trading volume, bid-ask spreads, exchange coverage, funding rates, and onchain tokenomics — to produce a continuously updated score that reflects actual market health rather than stated intentions."
 			},
 			{
 				type: 'paragraph',
@@ -429,7 +429,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{
 				type: 'paragraph',
 				lead: 'Tokenomics (P) (24%):',
-				text: 'Evaluates on-chain tokenomics delivery, including whether observed unlock events match disclosed schedules, FDV, circulating supply dynamics, inflation, and buyback or burn activity.'
+				text: 'Evaluates onchain tokenomics delivery, including whether observed unlock events match disclosed schedules, FDV, circulating supply dynamics, inflation, and buyback or burn activity.'
 			},
 			{
 				type: 'table',
@@ -505,7 +505,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'heading', text: 'How to interpret' },
 			{
 				type: 'paragraph',
-				text: 'A higher Performance axis score reflects a project whose live market conditions, liquidity quality, and on-chain delivery consistently validate its disclosed commitments. Lower scores indicate deterioration in one or more of the underlying market or tokenomics categories.'
+				text: 'A higher Performance axis score reflects a project whose live market conditions, liquidity quality, and onchain delivery consistently validate its disclosed commitments. Lower scores indicate deterioration in one or more of the underlying market or tokenomics categories.'
 			},
 			{
 				type: 'paragraph',
@@ -716,7 +716,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			},
 			{
 				type: 'paragraph',
-				text: 'New token supply entering circulation over the next 12 months as a percentage of current circulating supply. Measures dilution pressure on existing holders. Calculated from on-chain and disclosed data; defaults to 0 if emissions are undisclosed.'
+				text: 'New token supply entering circulation over the next 12 months as a percentage of current circulating supply. Measures dilution pressure on existing holders. Calculated from onchain and disclosed data; defaults to 0 if emissions are undisclosed.'
 			},
 			{ type: 'heading', text: 'Auditor Disclosures (Smart Contract)' },
 			{
@@ -726,7 +726,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'heading', text: 'Buyback & Burn Events' },
 			{
 				type: 'paragraph',
-				text: 'Cumulative token buybacks and burn events measured relative to the total amount of supply released. Sourced primarily from Tokenomist, with DeFiLlama as a backfill where Tokenomist coverage is unavailable.'
+				text: 'Cumulative token buybacks and burn events measured relative to the total amount of supply released. Sourced primarily from Tokenomist, with DefiLlama as a backfill where Tokenomist coverage is unavailable.'
 			},
 			{ type: 'heading', text: 'Candle Win Rate' },
 			{
@@ -751,7 +751,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'heading', text: 'DEX' },
 			{
 				type: 'paragraph',
-				text: 'Decentralized exchange. An on-chain trading venue where assets are traded without a centralized intermediary.'
+				text: 'Decentralized exchange. An onchain trading venue where assets are traded without a centralized intermediary.'
 			},
 			{ type: 'heading', text: 'Disclosure Axis (D)' },
 			{
@@ -811,7 +811,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'heading', text: 'Multisig Disclosures' },
 			{
 				type: 'paragraph',
-				text: 'Whether all multi-signature wallets controlling material funds — treasury, ecosystem, team — are publicly disclosed with signer identities or roles, threshold structure, and on-chain address.'
+				text: 'Whether all multi-signature wallets controlling material funds — treasury, ecosystem, team — are publicly disclosed with signer identities or roles, threshold structure, and onchain address.'
 			},
 			{ type: 'heading', text: 'Open Interest (as % of Market Cap)' },
 			{
@@ -848,7 +848,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			{ type: 'heading', text: 'Tokenomics (Performance Category)' },
 			{
 				type: 'paragraph',
-				text: 'A Performance Axis category evaluating on-chain tokenomics delivery. Includes Actual Token Vesting vs Disclosures, FDV, Market Cap vs FDV, Annualized Rate of Inflation, and Buyback & Burn Events. Category weight: 24%.'
+				text: 'A Performance Axis category evaluating onchain tokenomics delivery. Includes Actual Token Vesting vs Disclosures, FDV, Market Cap vs FDV, Annualized Rate of Inflation, and Buyback & Burn Events. Category weight: 24%.'
 			},
 			{ type: 'heading', text: 'Top-Tier Exchange Coverage' },
 			{
@@ -906,7 +906,7 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
 	liquidity_footprint:
 		"Evaluates how the project's liquidity is distributed across venue types and market segments, including CEX versus DEX and spot versus perpetuals.",
 	tokenomics_p:
-		'Evaluates on-chain tokenomics delivery, including whether observed unlock events match disclosed schedules, FDV, circulating supply dynamics, inflation, and buyback or burn activity.'
+		'Evaluates onchain tokenomics delivery, including whether observed unlock events match disclosed schedules, FDV, circulating supply dynamics, inflation, and buyback or burn activity.'
 }
 
 function modernizeText(text: string): string {

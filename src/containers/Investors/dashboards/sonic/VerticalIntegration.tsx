@@ -7,7 +7,7 @@ export default function VerticalIntegration() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col gap-6">
 			<div className="max-w-2xl">
-				<h2 className="heading-xs text-primary">Vertical Integration</h2>
+				<h2 className="heading-xs text-primary">Vertical integration</h2>
 				<p className="mt-3 body-lg text-secondary">
 					Vertical integration is Sonic's strategy of building and aligning core applications, infrastructure, and
 					liquidity so that economic activity on the network compounds back into the S token rather than leaking to
@@ -29,7 +29,7 @@ export default function VerticalIntegration() {
 			</div>
 
 			<div className="flex flex-1 flex-col gap-4">
-				<h3 className="heading-xs">Product Breakdown</h3>
+				<h3 className="heading-xs">Product breakdown</h3>
 				<div className="flex flex-wrap items-center gap-2">
 					{PRODUCTS.map((name) => (
 						<span key={name} className="rounded-md border border-medium bg-surface px-3 py-1.5 body-md text-secondary">
@@ -42,7 +42,7 @@ export default function VerticalIntegration() {
 					<SkeletonTable still />
 					<div className="absolute inset-0 flex items-center justify-center">
 						<span className="rounded-full border border-medium bg-overlay px-5 py-2.5 title-md tracking-wide text-secondary">
-							Dashboard — Coming Soon
+							Dashboard — Coming soon
 						</span>
 					</div>
 				</div>

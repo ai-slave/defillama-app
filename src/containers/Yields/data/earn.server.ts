@@ -127,7 +127,7 @@ async function buildPreparedEarn(
 	access: EarnPageAccess
 ): Promise<PreparedEarn> {
 	// One clock per prepared table: freshness is judged once for every row, and the memo's lifetime
-	// bounds how far behind that judgement can fall.
+	// bounds how far behind that judgment can fall.
 	const now = Date.now()
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
@@ -164,7 +164,7 @@ async function buildPreparedEarn(
 	const noIlRisk = queryBoolean(query, 'noIlRisk')
 	const hasAudit = queryBoolean(query, 'hasAudit')
 	const potentialAirdrop = parseTriState(query, 'potentialAirdrop')
-	// Narrows to pools we measure on-chain. Coverage is sparse (~124 of 15k), so this is the
+	// Narrows to pools we measure onchain. Coverage is sparse (~124 of 15k), so this is the
 	// only practical way to find them without scanning the whole table.
 	const verifiedOnly = queryBoolean(query, 'verified')
 	// Intrinsic legs point at another pool's yield. Where that source pool is measured, its reading
@@ -218,7 +218,7 @@ async function buildPreparedEarn(
 		if (inTvlRange) apyValues.push(resolvedApy.total)
 		if (!inTvlRange || !inApyRange) continue
 
-		// A reading too old to land in the headline still reaches the card, labelled with its age,
+		// A reading too old to land in the headline still reaches the card, labeled with its age,
 		// so a subscriber sees WHY the seal went quiet rather than a pool that looks unmeasured.
 		const verifiedLastApy =
 			access.verifiedAccess && resolvedApy.measured == null && !isVerifiedCurrent(row.verified?.apy_as_of, now)

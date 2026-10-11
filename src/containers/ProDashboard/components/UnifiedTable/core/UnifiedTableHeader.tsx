@@ -1,7 +1,7 @@
 import { type ReactNode, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SearchField } from '~/ui/SearchField'
 import { Tag } from '~/ui/Tag'
@@ -197,7 +197,7 @@ export function UnifiedTableHeader({
 			/>
 			{hasFilters ? (
 				<div className="flex flex-wrap items-center gap-2 px-3">
-					{/* Its own row, so a removed chip's neighbour is a chip and never Clear all. */}
+					{/* Its own row, so a removed chip's neighbor is a chip and never Clear all. */}
 					<div className="contents">
 						{filterChips.map((chip) =>
 							canMutateFilters ? (
@@ -208,7 +208,7 @@ export function UnifiedTableHeader({
 									data-active
 									data-row
 									// After the last chip, the Filters button, else the card.
-									ref={focusNeighbourOnLeave(
+									ref={focusNeighborOnLeave(
 										(node) => filtersButtonRef.current ?? node.parentElement?.closest<HTMLElement>('[tabindex]')
 									)}
 									onClick={() => onFilterRemove?.(chip)}

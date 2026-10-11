@@ -310,7 +310,7 @@ function SqlWorkspaceInner({
 			if (!res.ok) {
 				const errRes = res as Extract<typeof res, { ok: false }>
 				updateTab(tabId, {
-					runError: errRes.cancelled ? null : errRes.error,
+					runError: errRes.canceled ? null : errRes.error,
 					result: null,
 					running: false,
 					loadingStage: null
@@ -583,7 +583,7 @@ function SqlWorkspaceInner({
 			run.release()
 			updateCell(tabId, cellId, {
 				result: null,
-				runError: errRes.cancelled ? null : errRes.error,
+				runError: errRes.canceled ? null : errRes.error,
 				running: false,
 				loadingStage: null
 			})
@@ -1360,7 +1360,7 @@ function sameSource(
 }
 
 function throwIfAborted(signal: AbortSignal): void {
-	if (signal.aborted) throw new DOMException('Cancelled', 'AbortError')
+	if (signal.aborted) throw new DOMException('Canceled', 'AbortError')
 }
 
 function isAbortError(err: unknown): boolean {

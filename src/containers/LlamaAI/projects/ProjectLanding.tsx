@@ -14,7 +14,7 @@ import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
-import { neighbourRowControl } from '~/ui/focus'
+import { neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/PopoverSurface'
 import { EmptyState, InlineStatus, PanelLoadingStatus, SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -426,7 +426,7 @@ export function ProjectLanding({
 												onSelect={() => handlePickSession(session)}
 												onDelete={(trigger) => {
 													deleteFocusRef.current = trigger
-													setSessionToDelete({ session, next: neighbourRowControl(trigger.closest('li')!, trigger) })
+													setSessionToDelete({ session, next: neighborRowControl(trigger.closest('li')!, trigger) })
 												}}
 											/>
 										))}

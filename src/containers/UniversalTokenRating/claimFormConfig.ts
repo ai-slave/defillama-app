@@ -69,14 +69,14 @@ const YES_NO = [
 export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 	{
 		id: 'team',
-		title: 'Team & Organizational Structure',
+		title: 'Team & organizational structure',
 		documentKey: 'teamOrg',
 		documentDescription:
 			'Upload any additional documentation that provides context on your team’s organizational structure, including core contributor biographies, professional responsibilities, governance processes, legal entity relationships (e.g., Foundation, Association, Labs, or other affiliated entities), and how each entity interacts with the protocol.',
 		sections: [
 			{
 				id: 'insiderIdentities',
-				title: '1. Insider Identities',
+				title: '1. Insider identities',
 				columns: [
 					{ key: 'name', label: 'Name', type: 'text' },
 					{ key: 'role', label: 'Role', type: 'text' },
@@ -85,7 +85,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 			},
 			{
 				id: 'organizationalStructure',
-				title: '2. Organizational Structure',
+				title: '2. Organizational structure',
 				columns: [
 					{ key: 'companyName', label: 'Company Name', type: 'text' },
 					{ key: 'jurisdiction', label: 'Jurisdiction', type: 'text' },
@@ -94,7 +94,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 			},
 			{
 				id: 'insiderWallets',
-				title: '3. Anonymized Insider Wallets',
+				title: '3. Anonymized insider wallets',
 				columns: [
 					{ key: 'walletAddress', label: 'Wallet Address', type: 'text' },
 					{ key: 'allocationPct', label: 'Allocation (% Total Supply)', type: 'percent' },
@@ -110,7 +110,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 		sections: [
 			{
 				id: 'tokenomicsGroups',
-				title: '1. Distribution & Vesting Schedule',
+				title: '1. Distribution & vesting schedule',
 				columns: [
 					{ key: 'groupName', label: 'Group Name', type: 'text' },
 					{ key: 'allocationPct', label: 'Allocation', type: 'percent' },
@@ -124,7 +124,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 			},
 			{
 				id: 'externalAllocations',
-				title: '2. External Allocations',
+				title: '2. External allocations',
 				columns: [
 					{ key: 'counterpartyName', label: 'Counterparty Name', type: 'text' },
 					{ key: 'allocationPct', label: 'Allocation (% Total Supply)', type: 'percent' },
@@ -133,7 +133,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 			},
 			{
 				id: 'multisigWallets',
-				title: '3. Multi-sig Information',
+				title: '3. Multi-sig information',
 				columns: [
 					{ key: 'walletAddress', label: 'Multisig Wallet', type: 'text' },
 					{ key: 'thresholdRequired', label: 'Required Signers', type: 'integer' },
@@ -145,18 +145,18 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 	},
 	{
 		id: 'legal',
-		title: 'Legal & Financial',
+		title: 'Legal & financial',
 		documentKey: 'legal',
 		additionalDocumentSection: {
 			key: 'treasuryCashFlows',
-			title: '1. Treasury & Cash Flows',
+			title: '1. Treasury & cash flows',
 			description:
 				"Share financial documentation detailing the project's assets and liabilities, revenue and expenses, and uses of cash."
 		},
 		sections: [
 			{
 				id: 'licenses',
-				title: '2. Licenses & Patents',
+				title: '2. Licenses & patents',
 				columns: [
 					{ key: 'name', label: 'Name of License or Patent', type: 'text' },
 					{ key: 'link', label: 'Link (optional)', type: 'url' },
@@ -167,13 +167,13 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 	},
 	{
 		id: 'providers',
-		title: 'Service Provider Engagements',
+		title: 'Service provider engagements',
 		documentKey: 'serviceProviders',
 		extras: { mmMonitoringQuestion: true },
 		sections: [
 			{
 				id: 'marketMakerEngagements',
-				title: '1. Market Maker Engagements',
+				title: '1. Market maker engagements',
 				columns: [
 					{
 						key: 'marketMakerId',
@@ -188,7 +188,7 @@ export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 			},
 			{
 				id: 'exchangeEngagements',
-				title: '2. Exchange Engagements',
+				title: '2. Exchange engagements',
 				columns: [
 					{
 						key: 'exchangeId',

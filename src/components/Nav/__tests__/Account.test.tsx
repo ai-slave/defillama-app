@@ -81,7 +81,7 @@ test('a sign-in from another tab keeps the open sign-in through loading, and clo
 		)
 	)
 	const signIn = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign In / Subscribe')
+		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign in / Subscribe')
 		expect(button).toBeDefined()
 		return button!
 	})
@@ -99,7 +99,7 @@ test('a sign-in from another tab keeps the open sign-in through loading, and clo
 	await act(async () => pb.authStore.save(session.token, session.record as never))
 	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in"))
 	await waitForUi(() => expect(container.textContent).toContain('Active Subscription'))
-	// The Sign In / Subscribe button that opened it is gone, so the close button has nothing to return focus to.
+	// The Sign in / Subscribe button that opened it is gone, so the close button has nothing to return focus to.
 	await act(async () =>
 		document.querySelector<HTMLButtonElement>('[role=dialog] button[aria-label="Close dialog"]')!.click()
 	)

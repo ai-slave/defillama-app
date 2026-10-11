@@ -247,7 +247,7 @@ function SectorsReadyPage({
 		<div className="flex min-w-0 flex-col gap-2">
 			<EquitiesPageHeader
 				crumb="Sectors"
-				title="Equity Sectors"
+				title="Equity sectors"
 				description={`Market capitalization, performance and valuation for ${overview.sectorCount} sectors across ${formatMetric(overview.companyCount, 'number')} US-listed equities.`}
 			/>
 			<StaleDataNotice stale={state.stale} updatedAt={sectors[0]?.updatedAt} />

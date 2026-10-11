@@ -218,7 +218,7 @@ export const SCENARIO_GROUPS: Array<{ key: ScenarioGroupKey; label: string; blur
 	{
 		key: 'not-quantified',
 		label: 'Not quantified',
-		blurb: "Identified, but on-chain inputs can't size the impact yet."
+		blurb: "Identified, but onchain inputs can't size the impact yet."
 	}
 ]
 

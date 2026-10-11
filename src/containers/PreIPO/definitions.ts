@@ -6,7 +6,7 @@ export const preIpoDefinitions = {
 				'Latest tracked valuation estimate. When no valuation series is available, this uses the latest funding-round valuation.'
 		},
 		valuationChange1Y: {
-			label: '1Y Change',
+			label: '1y Change',
 			description: 'Percentage change between the latest monthly valuation estimate and the estimate 12 months earlier.'
 		},
 		latestRaise: {

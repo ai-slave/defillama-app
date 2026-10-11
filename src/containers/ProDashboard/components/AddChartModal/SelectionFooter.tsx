@@ -20,7 +20,7 @@ export function ComposerNameField({ value, onChange }: { value: string; onChange
 	)
 }
 
-/** One chip per picked series: the colour the saved card draws it in, and a remove button. */
+/** One chip per picked series: the color the saved card draws it in, and a remove button. */
 export function ComposerChips({
 	composerItems,
 	chartCreationMode,

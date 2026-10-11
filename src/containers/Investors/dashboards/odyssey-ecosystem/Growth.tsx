@@ -277,7 +277,7 @@ export default function Growth() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">Loopr · Daily Activity (Combined)</h2>
+			<h2 className="heading-xs">Loopr · Daily activity (combined)</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<Panel>
 					{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
@@ -285,7 +285,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Active Accounts"
+								title="Active accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.activeAccounts}
@@ -303,7 +303,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Active Positions"
+								title="Active positions"
 								subtitle="Combined open positions"
 								headingAs="h3"
 								dataset={looprTotalDatasets.activePositions}
@@ -317,7 +317,7 @@ export default function Growth() {
 				</Panel>
 			</div>
 
-			<h2 className="heading-xs">Loopr · Cumulative Onboarding</h2>
+			<h2 className="heading-xs">Loopr · Cumulative onboarding</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<Panel>
 					{isLoading ? (
@@ -325,7 +325,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Cumulative Accounts"
+								title="Cumulative accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.cumulativeAccounts}
@@ -343,7 +343,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Cumulative Positions"
+								title="Cumulative positions"
 								subtitle="Across all chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.cumulativePositions}
@@ -357,11 +357,11 @@ export default function Growth() {
 				</Panel>
 			</div>
 
-			<h2 className="heading-xs">Loopr · Per-Chain Activity</h2>
+			<h2 className="heading-xs">Loopr · Per-chain activity</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by Chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active users by chain</ChartPanelTitle>} />
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
@@ -376,7 +376,7 @@ export default function Growth() {
 				)}
 				{perChainModels?.activePositions && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by Chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active positions by chain</ChartPanelTitle>} />
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
@@ -393,7 +393,7 @@ export default function Growth() {
 
 			{depositsModel && (
 				<>
-					<h2 className="heading-xs">Loopr · Deposits by Chain</h2>
+					<h2 className="heading-xs">Loopr · Deposits by chain</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={<ChartPanelTitle subtitle="USD deposits per chain">Total deposits over time</ChartPanelTitle>}
@@ -414,7 +414,7 @@ export default function Growth() {
 
 			{loopr?.byStrategy?.length ? (
 				<>
-					<h2 className="heading-xs">Loopr · By Strategy</h2>
+					<h2 className="heading-xs">Loopr · By strategy</h2>
 					<ChartCard title="Active strategies" subtitle="Deposits, users and performance fee per strategy">
 						<SimpleTable
 							getOccurrenceKey={(row) => JSON.stringify([row.strategyId, row.asset])}
@@ -450,13 +450,13 @@ export default function Growth() {
 				</>
 			) : null}
 
-			<h2 className="heading-xs">Token Prices</h2>
+			<h2 className="heading-xs">Token prices</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="MET Price"
+								title="MET price"
 								subtitle="Metronome governance token"
 								headingAs="h3"
 								dataset={tokenPriceDatasets.met}
@@ -472,7 +472,7 @@ export default function Growth() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="VSP Price"
+								title="VSP price"
 								subtitle="Vesper governance token"
 								headingAs="h3"
 								dataset={tokenPriceDatasets.vsp}
@@ -488,7 +488,7 @@ export default function Growth() {
 
 			{marketComboModel && (
 				<>
-					<h2 className="heading-xs">Ecosystem TVL Change vs ETH (cumulative)</h2>
+					<h2 className="heading-xs">Ecosystem TVL change vs ETH (cumulative)</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={
@@ -513,7 +513,7 @@ export default function Growth() {
 
 			{morphoMarketModel && (
 				<>
-					<h2 className="heading-xs">Morpho Market · Supply / Borrow / Utilization</h2>
+					<h2 className="heading-xs">Morpho market · Supply / borrow / utilization</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={
@@ -536,7 +536,7 @@ export default function Growth() {
 
 			{morphoMarkets.length > 0 && (
 				<>
-					<h2 className="heading-xs">Metronome Morpho Markets</h2>
+					<h2 className="heading-xs">Metronome Morpho markets</h2>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						{morphoMarkets.map(({ market, model }) => {
 							return (
@@ -567,7 +567,7 @@ export default function Growth() {
 
 			{spendVsTvl && (
 				<>
-					<h2 className="heading-xs">Incentive Spend vs Pool TVL · Efficiency</h2>
+					<h2 className="heading-xs">Incentive spend vs pool TVL · Efficiency</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={

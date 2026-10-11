@@ -12,7 +12,7 @@ test('formats each unit with its sign', () => {
 	expect(formatChange(-0.12, 'pp')).toBe('-0.12pp')
 })
 
-test('colours up and down, leaves zero to its container and renders nothing for a missing value', async () => {
+test('colors up and down, leaves zero to its container and renders nothing for a missing value', async () => {
 	const container = document.createElement('div')
 	const root = createRoot(container)
 	try {

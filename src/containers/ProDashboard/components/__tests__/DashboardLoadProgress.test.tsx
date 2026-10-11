@@ -78,7 +78,7 @@ test('the stream failure notice stops nagging after a while', async () => {
 	expect(container.querySelector('[role="status"]')).toBeNull()
 })
 
-test('an empty dashboard and an unauthorised stream stay quiet where a server failure speaks up', async () => {
+test('an empty dashboard and an unauthorized stream stay quiet where a server failure speaks up', async () => {
 	await renderProgress({ readyCount: 0, totalCount: 0, isStreaming: false, isDone: true, error: 'Stream failed: 500' })
 	expect(container.textContent).toBe('')
 	await renderProgress({ readyCount: 0, totalCount: 4, isStreaming: false, isDone: true, error: 'Stream failed: 500' })

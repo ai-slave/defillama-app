@@ -27,7 +27,7 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 		premium: market.premium,
 		maxLeverage: market.maxLeverage,
 		protocolFees24h: market.estimatedProtocolFees24h,
-		// Page props serialise to JSON, so a field an older payload lacks reads null, not undefined.
+		// Page props serialize to JSON, so a field an older payload lacks reads null, not undefined.
 		timestamp: market.timestamp ?? null,
 		venue: market.venue ?? null,
 		volume24hChange24h: market.volume24hChange24h ?? null,

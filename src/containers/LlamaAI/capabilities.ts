@@ -27,7 +27,7 @@ export const CAPABILITIES: Array<Capability> = [
 			'Is Euler viable after the 2023 exploit? Show pre/post metrics and recovery trajectory',
 			'Find tokenless protocols generating over $1M monthly revenue — airdrop alpha',
 			'Build a 5-token portfolio optimized for risk-adjusted returns with conviction-weighted allocation',
-			'Deep thesis on Hyperliquid — fundamentals, token dynamics, on-chain flows, sentiment, and risk'
+			'Deep thesis on Hyperliquid — fundamentals, token dynamics, onchain flows, sentiment, and risk'
 		]
 	},
 	{
@@ -83,9 +83,9 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'onchain_analytics',
-		name: 'On-chain analytics',
+		name: 'Onchain analytics',
 		icon: 'chain',
-		description: 'Look up any wallet, find top depositors, trace token flows, and query raw on-chain events.',
+		description: 'Look up any wallet, find top depositors, trace token flows, and query raw onchain events.',
 		prompts: [
 			'Who are the top 50 AAVE depositors on Ethereum by wallet address and balance?',
 			'Show me all USDC mint events on Ethereum in the last 30 days with amounts',
@@ -319,7 +319,7 @@ export const CAPABILITIES: Array<Capability> = [
 		name: 'CEX data',
 		icon: 'bar-chart-2',
 		description:
-			'Compare centralized exchanges — trading volume, reserves, leverage, and how they stack up against DEXes.',
+			'Compare centralized exchanges — trading volume, reserves, leverage, and how they stack up against DEXs.',
 		prompts: [
 			'Compare Binance vs Coinbase vs OKX — spot volume, derivative volume, and open interest',
 			'CEX vs DEX derivative volume over the last 6 months — is DEX market share growing?',
@@ -377,11 +377,11 @@ export const CAPABILITIES: Array<Capability> = [
 		key: 'open_interest',
 		name: 'Open interest',
 		icon: 'eye',
-		description: 'Track where traders are positioned — open interest across perp DEXes, by protocol and chain.',
+		description: 'Track where traders are positioned — open interest across perp DEXs, by protocol and chain.',
 		prompts: [
-			'Total open interest across all perp DEXes — trend over last 90 days',
+			'Total open interest across all perp DEXs — trend over last 90 days',
 			'Compare open interest on dYdX vs Hyperliquid vs GMX — who is gaining share?',
-			'Top 10 tokenless perp DEXes by open interest — airdrop opportunity screening',
+			'Top 10 tokenless perp DEXs by open interest — airdrop opportunity screening',
 			'Open interest vs daily volume ratio for top derivative protocols — who has sticky positions?',
 			'Which chain has the most derivative trading OI? Break down by protocol',
 			'Hyperliquid OI trend vs revenue — is growth translating to earnings?'

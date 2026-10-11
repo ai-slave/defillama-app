@@ -17,7 +17,7 @@ import {
 /**
  * A saved indicator re-runs unattended, so its drawings have to be removable without touching the
  * agent's chat drawings, and a run that draws fewer shapes than the last one must not leave the
- * extras behind. Both hang on `clear` honouring the ids it names, which it did not used to.
+ * extras behind. Both hang on `clear` honoring the ids it names, which it did not used to.
  */
 
 const DAY = 86_400

@@ -173,7 +173,7 @@ export function IntegrationRow({
 						{(control) => (
 							<div className="flex gap-2">
 								{/* Ariakit's autoFocus, so Settings opened from a Telegram login link starts on the code instead of its
-						    ×, and a cancelled switch returns here. */}
+						    ×, and a canceled switch returns here. */}
 								<Ariakit.Focusable
 									autoFocus
 									render={

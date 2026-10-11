@@ -10,7 +10,7 @@ import {
 } from '~/utils/numberFormat'
 
 /* ----------------------------------------------------------------------------
-   Change: a signed movement, coloured by its direction.
+   Change: a signed movement, colored by its direction.
 
    <Change value={-2.2} />                       -2.20%, in a table cell or row
    <Change value={52_100_000} unit="usd" />      +$52.1m
@@ -18,9 +18,9 @@ import {
    <Change value={-0.12} unit="pp" />            -0.12pp
    <Change value={1.4} tooltip="+$2.1b" />       the same movement in another unit, on hover
 
-   Change owns the sign, the format and the colour: up is text-data-up, down
-   text-data-down, zero takes its container's colour. Never colour a movement
-   by hand (policy: hand-coloured-change); a headline, tile, strip or small
+   Change owns the sign, the format and the color: up is text-data-up, down
+   text-data-down, zero takes its container's color. Never color a movement
+   by hand (policy: hand-colored-change); a headline, tile, strip or small
    card takes its change as `{ value, unit, comparison }` data and draws it
    through Change with the window beside it. A change with no earlier value
    is left out: the container shows nothing there, never a "no prior" state.

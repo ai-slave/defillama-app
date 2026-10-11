@@ -21,8 +21,8 @@ export type DiscoveryCategoriesInitialData = Record<string, DiscoveryCategoryRes
 
 /** Public shelves shown on /pro. Audits may override `limit` without redefining the shelf semantics. */
 export const DISCOVERY_CATEGORIES: Array<DiscoveryCategoryConfig> = [
-	{ key: 'trendingToday', title: 'Trending Today', sortBy: 'trending', timeFrame: '1d', limit: 12 },
-	{ key: 'trendingWeek', title: 'Trending This Week', sortBy: 'trending', timeFrame: '7d', limit: 12 },
-	{ key: 'popular', title: 'Most Popular', sortBy: 'popular', limit: 12 },
-	{ key: 'recent', title: 'Recently Created', sortBy: 'recent', limit: 12 }
+	{ key: 'trendingToday', title: 'Trending today', sortBy: 'trending', timeFrame: '1d', limit: 12 },
+	{ key: 'trendingWeek', title: 'Trending this week', sortBy: 'trending', timeFrame: '7d', limit: 12 },
+	{ key: 'popular', title: 'Most popular', sortBy: 'popular', limit: 12 },
+	{ key: 'recent', title: 'Recently created', sortBy: 'recent', limit: 12 }
 ]

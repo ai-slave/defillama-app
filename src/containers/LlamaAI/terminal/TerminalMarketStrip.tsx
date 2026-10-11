@@ -135,7 +135,7 @@ function statItems(symbol: string, stats: TerminalStats | undefined): Array<Inli
 			value: <span className="tabular-nums">{formatPrice(stats.markPx, decimals)}</span>
 		},
 		{ label: 'Oracle', value: <span className="tabular-nums">{formatPrice(stats.oraclePx, decimals)}</span> },
-		// The strip is stacked, so the label names the window and the change stays one line tall like its neighbours.
+		// The strip is stacked, so the label names the window and the change stays one line tall like its neighbors.
 		{
 			label: '24h change',
 			value: (

@@ -15,7 +15,7 @@ import type { ComponentPropsWithRef } from 'react'
    multi-pick, `role="radio"` with `aria-checked` inside a radiogroup.
 
    `layout`: stack (title over description, left aligned), row (a leading
-   indicator or icon beside the text), center (an icon over a centred label).
+   indicator or icon beside the text), center (an icon over a centered label).
    A one-line choice is a SegmentedControl or a toggle Button, not a tile.
    `className` is for layout placement only (grid cell, width, height).
 ---------------------------------------------------------------------------- */

@@ -107,7 +107,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 		<div className={clsx('grid grid-cols-1 gap-9', interviews.length > 0 && 'lg:grid-cols-[725fr_403fr]')}>
 			<section id="newsletters" className="min-w-0">
 				<div className="mb-6">
-					<TitleLine title="Research Notes Newsletters" />
+					<TitleLine title="Research Notes newsletters" />
 				</div>
 
 				<div ref={newsletterContentRef}>

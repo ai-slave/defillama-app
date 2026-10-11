@@ -65,7 +65,7 @@ export function SubscribeAPICard({
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
 					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
-					<span>Access to all data (unlocks, active users, token liq...)</span>
+					<span>Access to all data (unlocks, active users, token liquidity)</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
 					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />

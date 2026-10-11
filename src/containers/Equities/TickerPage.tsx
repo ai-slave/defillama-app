@@ -371,7 +371,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</div>
 
 						<ChartPanelToolbar>
-							<h2 className="mr-auto heading-xs">Price History</h2>
+							<h2 className="mr-auto heading-xs">Price history</h2>
 							<SegmentedControl
 								variant="default"
 								size="md"
@@ -476,7 +476,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					{activeTab === 'overview' ? (
 						<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 							<Card as="section" padding="sm" className="flex flex-col gap-3">
-								<h2 className="heading-xs">Market Data</h2>
+								<h2 className="heading-xs">Market data</h2>
 								<div className="flex flex-col">
 									<MetricRow
 										label={defs.currentPrice.label}
@@ -731,7 +731,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							</Card>
 
 							<Card as="section" padding="sm" className="flex flex-col gap-3">
-								<h2 className="heading-xs">Balance Sheet</h2>
+								<h2 className="heading-xs">Balance sheet</h2>
 								<div className="flex flex-col">
 									<MetricRow
 										label={defs.cashAndCashEquivalents.label}

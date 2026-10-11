@@ -76,7 +76,7 @@ export function LockedVerifiedSection({ symbol }: { symbol: string }) {
 					<div className="flex max-w-[60ch] flex-col gap-2">
 						<h2 className="heading-sm text-primary">See what {symbol} holders actually received.</h2>
 						<p className="body-md text-secondary">
-							Every day we simulate a real holder withdrawing from {symbol} on-chain and record what they actually
+							Every day we simulate a real holder withdrawing from {symbol} onchain and record what they actually
 							received: the base yield an exit paid, whether it went through, how long it took and what it cost.
 						</p>
 						<p className="body-sm text-secondary">Plus daily charts of measured growth and exit history.</p>

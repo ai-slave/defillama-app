@@ -2,7 +2,7 @@ import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/ty
 
 type IncomeStatementComponents = NonNullable<IProtocolOverviewPageData['incomeStatement']>['components']
 
-/** Names what a token's income statement sums; chains are labelled so they read apart from protocols. */
+/** Names what a token's income statement sums; chains are labeled so they read apart from protocols. */
 export function describeIncomeStatementComponents(components: IncomeStatementComponents): string | undefined {
 	const names = components?.map((component) =>
 		component.protocolType === 'chain' ? `${component.name} Chain` : component.name

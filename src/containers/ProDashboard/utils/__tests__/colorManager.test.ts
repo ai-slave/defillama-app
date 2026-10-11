@@ -47,13 +47,13 @@ describe('getDashboardEntityColors', () => {
 })
 
 describe('getMultiChartSeriesColors', () => {
-	test('uses the dashboard colours while each series is a different entity', () => {
+	test('uses the dashboard colors while each series is a different entity', () => {
 		const items = [protocol('a', 'aave'), chain('b', 'Base')]
 		const entityColors = { 'chain:Base': chartColor(0), 'protocol:aave': chartColor(4) }
 		expect(getMultiChartSeriesColors(items, entityColors)).toEqual({ a: chartColor(4), b: chartColor(0) })
 	})
 
-	test('colours by rank when an entity repeats, and keeps a chosen colour', () => {
+	test('colors by rank when an entity repeats, and keeps a chosen color', () => {
 		const items = [chain('a', 'Base'), { ...chain('b', 'Base', 'fees'), color: '#123456' }, chain('c', 'Solana')]
 		const entityColors = { 'chain:Solana': chartColor(0), 'chain:Base': chartColor(1) }
 		expect(getMultiChartSeriesColors(items, entityColors)).toEqual({
@@ -63,7 +63,7 @@ describe('getMultiChartSeriesColors', () => {
 		})
 	})
 
-	test('colours by rank when the wrapped palette gives two entities one colour', () => {
+	test('colors by rank when the wrapped palette gives two entities one color', () => {
 		const items = [chain('a', 'Base'), chain('b', 'Solana')]
 		const entityColors = { 'chain:Base': chartColor(0), 'chain:Solana': chartColor(CHART_COLORS.length) }
 		expect(getMultiChartSeriesColors(items, entityColors)).toEqual({ a: chartColor(0), b: chartColor(1) })

@@ -267,14 +267,14 @@ export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplor
 	)
 }
 
-function normalisedDrop(drop: number): number {
+function normalizedDrop(drop: number): number {
 	return Math.min(1, Math.max(0, drop))
 }
 
 type BadDebtMarketInputs = { lltv: number | null; badDebtAtZeroUsd: number }
 
 function badDebtAtDrop(debtUsd: number, liquidationThreshold: number, drop: number, capAtZeroUsd: number): number {
-	const x = normalisedDrop(drop)
+	const x = normalizedDrop(drop)
 	if (liquidationThreshold <= 0) return capAtZeroUsd
 	return Math.min(debtUsd * Math.max(0, 1 - (1 - x) / liquidationThreshold), capAtZeroUsd)
 }

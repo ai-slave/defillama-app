@@ -8,7 +8,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Field } from '~/ui/Field'
-import { focusNeighbourOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
+import { focusNeighborOnLeave, keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -245,7 +245,7 @@ function InlineTableSection({
 													size="md"
 													square
 													aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
-													ref={focusNeighbourOnLeave(() => addRef.current)}
+													ref={focusNeighborOnLeave(() => addRef.current)}
 													onClick={() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex))}
 												/>
 											}
@@ -343,7 +343,7 @@ function AttachDocuments({
 										size="sm"
 										square
 										aria-label={`Remove ${receipt.fileName}`}
-										ref={focusNeighbourOnLeave(() => tileRef.current)}
+										ref={focusNeighborOnLeave(() => tileRef.current)}
 										onClick={() => onRemove(index)}
 									/>
 								}
@@ -745,7 +745,7 @@ export function ClaimTokenProfile({
 							<div className="flex flex-wrap items-center justify-between gap-2 border-b border-subtle pb-3">
 								<h2 className="heading-sm">{block.title}</h2>
 								<Button type="button" size="md" onClick={() => setScoringCriteriaOpen(true)}>
-									View Scoring Criteria
+									View scoring criteria
 								</Button>
 							</div>
 							{block.id !== 'legal' ? (
@@ -829,7 +829,7 @@ export function ClaimTokenProfile({
 						aria-describedby={submitBlocker ? submitBlockerId : undefined}
 						onClick={onSubmit}
 					>
-						Submit Disclosure Details
+						Submit disclosure details
 						<Icon name="arrow-up-right" className="size-3.5" />
 					</Button>
 				</form>

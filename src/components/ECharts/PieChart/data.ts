@@ -149,7 +149,7 @@ export function buildRuntimePieChartPresentation({
 }: {
 	series: RuntimePieChartData
 	selectedSeries?: ReadonlySet<string>
-	/** Page-wide colours, so a peer keeps its colour across the page's charts; rank colours otherwise. */
+	/** Page-wide colors, so a peer keeps its color across the page's charts; rank colors otherwise. */
 	colorByPeer?: Readonly<Record<string, string>>
 }) {
 	const chartData: Array<{ name: string; value: number }> = []
@@ -162,7 +162,7 @@ export function buildRuntimePieChartPresentation({
 			continue
 		}
 		chartData.push(peer)
-		// Others is grey, outside the palette, so a peer keeps its palette colour without a reserved slot.
+		// Others is gray, outside the palette, so a peer keeps its palette color without a reserved slot.
 		slices.push({ name: peer.name, color: colorByPeer?.[peer.name] ?? chartColor(index) })
 	}
 	const stackColors = assignUniqueColors(slices)

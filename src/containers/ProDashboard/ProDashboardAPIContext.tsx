@@ -1484,7 +1484,7 @@ export function useProDashboardUI() {
 	return context
 }
 
-/** Each protocol's and chain's colour on this dashboard, keyed by `getChartEntityKey`. */
+/** Each protocol's and chain's color on this dashboard, keyed by `getChartEntityKey`. */
 export function useDashboardEntityColors() {
 	const context = useContext(ProDashboardEntityColorsContext)
 	if (context === undefined) {

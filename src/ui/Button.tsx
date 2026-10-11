@@ -78,7 +78,7 @@ import { LoadingSpinner } from './internal/Loaders'
    `doneLabel` with `done` (Copy → Copied, Share → Copied): pass the label
    always and set `done` while it shows. Button draws a check and the label
    in the same grid cell as the idle content, both always laid out, so the
-   button keeps one width in both states and its neighbours never move.
+   button keeps one width in both states and its neighbors never move.
    A button whose own label switches with a mode (Edit ↔ Done, Show ↔ Hide)
    renders `<StableLabel labels={['Edit', 'Done']} current={…} />` as its
    children, which lays every label out in one cell the same way.
@@ -121,7 +121,7 @@ import { LoadingSpinner } from './internal/Loaders'
    - `pendingLabel` with `pending`: pass the busy label always ("Saving…")
      and set `pending` while the action runs. The button shows a spinner and
      that label and is announced as busy, so it keeps focus and a form cannot
-     submit twice through Enter either. It keeps full colour, unlike a
+     submit twice through Enter either. It keeps full color, unlike a
      disabled button, so it reads as working, even when a disabled
      <fieldset> around it also disables it (the `not-aria-busy` guards).
    - `accessibleWhenDisabled`: a control that disables itself when pressed (a
@@ -135,7 +135,7 @@ import { LoadingSpinner } from './internal/Loaders'
    shows the spinner alone and announces the label. An export button in a
    toolbar row (.csv, .png) takes `pending` without a `pendingLabel` and swaps
    its icon for `BusyGlyph decorative`: its label stays, so it keeps the width
-   of its neighbours while it works.
+   of its neighbors while it works.
    Like Ariakit's, the button is type="button" unless it says otherwise: a
    submit button passes type="submit", so no other button submits by accident.
    Inside a dialog, any other focused control that disappears hands focus to
@@ -274,7 +274,7 @@ function buttonStyles(look: ButtonLook, truncate: boolean): string {
 }
 
 type ButtonProps<T extends ElementType> = ButtonLook & {
-	/** A link or other host keeps its own element and role; only the default button takes button behaviour. */
+	/** A link or other host keeps its own element and role; only the default button takes button behavior. */
 	as?: T
 	/** The label shown with a spinner while `pending` ("Saving…"). Passed always, so the button reserves its width at
 	    rest. Buttons only: a link (`as`) navigates and has nothing to wait on. */

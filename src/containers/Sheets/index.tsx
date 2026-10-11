@@ -468,7 +468,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<ShowcaseSection
 				overline="Market Metrics"
-				heading="Real-time Protocol & Chain Data"
+				heading="Real-time protocol & chain data"
 				description="Access TVL, fees, revenue, market cap, price and more for every protocol and chain. Data refreshes hourly."
 				bullets={[
 					'30+ metrics including fees, revenue, volume, perps',
@@ -481,7 +481,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<ShowcaseSection
 				overline="Yields"
-				heading="Yield Intelligence Across Chains"
+				heading="Yield intelligence across chains"
 				description="Discover the best yield opportunities — filter by chain, token, and APY. Get detailed pool data including IL risk and reward tokens."
 				bullets={[
 					'Filter pools by chain, token, APY, or TVL',
@@ -495,7 +495,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<ShowcaseSection
 				overline="Stablecoins"
-				heading="Stablecoin Market Intelligence"
+				heading="Stablecoin market intelligence"
 				description="Track stablecoin market caps, peg health, and supply across chains. Monitor historical trends and cross-chain distribution."
 				bullets={[
 					'Market cap by stablecoin and chain',
@@ -508,7 +508,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<ShowcaseSection
 				overline="Historical Data"
-				heading="Historical Snapshots & Time Series"
+				heading="Historical snapshots & time series"
 				description="Pull historical data for any metric and date range. Build charts and trend analysis with hourly-refreshed data."
 				bullets={[
 					'Single date or full date range queries',

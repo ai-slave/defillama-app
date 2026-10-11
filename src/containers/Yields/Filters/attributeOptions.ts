@@ -41,7 +41,7 @@ export const ATTRIBUTE_DEFS = {
 	verified: {
 		key: 'verified',
 		name: 'Verified APY',
-		help: "Pools whose yield we measure on-chain by simulating real holders' withdrawals"
+		help: "Pools whose yield we measure onchain by simulating real holders' withdrawals"
 	}
 } as const satisfies Record<string, { key: string; name: string; help: string }>
 

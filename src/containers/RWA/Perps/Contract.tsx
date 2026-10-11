@@ -240,7 +240,7 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 
 	return (
 		<Card as="section" padding="sm" className="col-span-full flex flex-col gap-2">
-			<h2 className="label-lg">Market Information</h2>
+			<h2 className="label-lg">Market information</h2>
 			{contract.contract.description ? <p className="body-sm">{contract.contract.description}</p> : null}
 			<div className="flex flex-col xl:hidden">
 				{infoRows.map((row) => (

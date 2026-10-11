@@ -51,7 +51,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 					hideDataZoom
 					showLegend
 					exportButtons="hidden"
-					// Category options bring a tooltip formatter built for a labelled axis;
+					// Category options bring a tooltip formatter built for a labeled axis;
 					// without them the chart falls back to its time-series defaults and prints
 					// a date for every band.
 					chartOptions={{

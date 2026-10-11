@@ -1,6 +1,6 @@
 /**
  * The Monaco themes for the SQL editor and notebook cells. Monaco cannot read `var()` and registers both themes up
- * front, so each colour is a copy of its token per mode; the contrast policy (rule 5) fails when a copy drifts.
+ * front, so each color is a copy of its token per mode; the contrast policy (rule 5) fails when a copy drifts.
  */
 
 export const LIGHT_THEME_ID = 'llama-sql-light'

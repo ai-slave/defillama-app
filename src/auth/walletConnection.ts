@@ -10,7 +10,7 @@ export async function connectWallet(config: Config, connector: Connector, signal
 		void provider.modal?.close()
 	}
 	// The SDK owns the pairing UI. Leaving our sheet must also dismiss that UI,
-	// including a modal that finishes opening after the attempt was cancelled.
+	// including a modal that finishes opening after the attempt was canceled.
 	const unsubscribe = provider.modal?.subscribeState(({ open }: { open: boolean }) => {
 		if (open && signal.aborted) closeModal()
 	})

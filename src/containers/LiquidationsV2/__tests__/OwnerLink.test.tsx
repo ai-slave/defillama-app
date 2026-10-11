@@ -46,7 +46,7 @@ describe('LiquidationsOwnerLink', () => {
 			</LiquidationsExplorerProvider>
 		)
 
-		expect(html).toContain('0x123456...345678')
+		expect(html).toContain('0x123456…345678')
 		expect(html).not.toContain('href=')
 	})
 })

@@ -6,7 +6,7 @@ import type { ComponentProps, ReactNode } from 'react'
    unchecked an empty border-strong box. Callers choose the wrapper
    `variant`:
    - default / filter / filter-borderless: rows in lists, menus and filters.
-   - inline:  label-md, centred, for short one-line toggles.
+   - inline:  label-md, centered, for short one-line toggles.
    - inline-sm: inline at label-sm, for a toggle inside a 12px panel
               (a chart builder's options).
    - consent: body-sm text-secondary like the form copy around it, for a
@@ -71,7 +71,7 @@ export function Checkbox({ ref, children, variant, isLoading, ...props }: Checkb
 					aria-busy={isLoading || undefined}
 				/>
 			</Ariakit.VisuallyHidden>
-			{/* mt-px centres the 14px box on body-sm's 16px first line. */}
+			{/* mt-px centers the 14px box on body-sm's 16px first line. */}
 			<CheckboxIndicator checked={props.checked} className={variant === 'consent' ? 'mt-px' : undefined} />
 			{children}
 		</label>

@@ -2816,7 +2816,7 @@ export function AgenticChat({
 							}}
 							className="underline"
 						>
-							Log in
+							Sign in
 						</button>{' '}
 						to use LlamaAI.
 					</p>

@@ -10,7 +10,7 @@ export function buildProtocolListCsv(rows: Array<RecentProtocolTableRow>, kind: 
 		'Listed At',
 		'1d TVL Change',
 		'7d TVL Change',
-		'1m TVL Change'
+		'30d TVL Change'
 	]
 	const values: Array<Array<string | number | null | undefined>> = [headers]
 	for (const row of rows) {

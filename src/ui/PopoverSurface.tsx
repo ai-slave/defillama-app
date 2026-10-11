@@ -80,7 +80,7 @@ import { tw } from './tw'
    A PopoverSurface carries the dialogs' lost-focus net (catchLostFocus in
    ./focus.ts): a control removed or disabled inside it hands focus to the
    surface's first control, never to the page. The net is the floor; a row
-   that leaves still hands focus to its neighbour (focusNeighbourOnLeave).
+   that leaves still hands focus to its neighbor (focusNeighborOnLeave).
 
    MenuSurface is `Ariakit.Menu` with the surface contract wired in. Menus
    anchor with `gutter={8}` (the default); `nested` flyouts pass `gutter={4}`

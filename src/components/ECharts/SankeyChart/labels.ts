@@ -78,7 +78,7 @@ function labelsOverlap(a: LabelRect, b: LabelRect) {
 /**
  * Mobile labels never hide on overlap. Each node label keeps its x (clamped into the chart) and moves up
  * or down by whole label heights to the level with the fewest collisions, alternating direction by depth
- * so neighbouring columns spread apart. Seeing a node index again means ECharts started a new layout pass.
+ * so neighboring columns spread apart. Seeing a node index again means ECharts started a new layout pass.
  */
 export function createMobileLabelLayout(
 	nodes: ISankeyChartProps['nodes'],

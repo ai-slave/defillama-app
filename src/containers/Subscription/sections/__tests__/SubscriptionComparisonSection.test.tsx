@@ -19,7 +19,7 @@ afterEach(async () => {
 	container.remove()
 })
 
-test('the comparison table is labelled, and each plan action names its plan', async () => {
+test('the comparison table is labeled, and each plan action names its plan', async () => {
 	await act(async () =>
 		root.render(
 			<SubscriptionComparisonSection
@@ -36,8 +36,8 @@ test('the comparison table is labelled, and each plan action names its plan', as
 	const table = container.querySelector('[role=table]')!
 	expect(accessibleName(table as HTMLElement)).toBe('Plan comparison')
 	expect([...table.querySelectorAll('[role=columnheader] button')].map((button) => accessibleName(button))).toEqual([
-		'Get Started: Pro',
-		'Get Started: API',
+		'Get started: Pro',
+		'Get started: API',
 		'Contact us: Enterprise'
 	])
 })

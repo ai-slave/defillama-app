@@ -267,7 +267,7 @@ const protocolsColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
-		header: '1m TVL Change',
+		header: '30d TVL Change',
 		cell: ({ getValue }) => <Change value={getValue()} />,
 		meta: {
 			headerClassName: 'w-[140px]',
@@ -310,7 +310,7 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 		}
 
 		if (text && rowValues.isParentProtocol) {
-			text = 'Some sub-protocols are excluded from chain tvl'
+			text = 'Some sub-protocols are excluded from Chain TVL'
 		}
 	}
 

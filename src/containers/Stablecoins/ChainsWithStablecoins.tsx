@@ -306,7 +306,7 @@ export function ChainsWithStablecoins({
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<StablecoinChangeStats
-						label="Total Stablecoins Market Cap"
+						label="Total stablecoins market cap"
 						value={mcapToDisplay}
 						changes={{ change1d, change7d, change30d, change1dUsd, change7dUsd, change30dUsd }}
 					/>
@@ -401,7 +401,7 @@ export function ChainsWithStablecoins({
 									variant="rwa"
 									containerClassName={`${CHART_FILL} min-h-[600px]`}
 									onReady={handleChartReady}
-									valueLabel="Market Cap"
+									valueLabel="Market cap"
 								/>
 							</React.Suspense>
 						</ChartPanelBody>

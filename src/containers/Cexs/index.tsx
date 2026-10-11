@@ -265,7 +265,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.inflows_1m ?? undefined, {
 		id: 'inflows_1m',
-		header: '1m Inflows',
+		header: '30d Inflows',
 		cell: (info) => <Change value={info.getValue()} unit="usd" />,
 		meta: {
 			headerClassName: 'w-[120px]',

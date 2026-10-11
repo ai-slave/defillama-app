@@ -20,7 +20,7 @@ export default function Unlocks() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">RUNE Token Unlocks</h2>
+			<h2 className="heading-xs">RUNE token unlocks</h2>
 			{data?.emissions ? (
 				<EmissionsByProtocol
 					data={data.emissions}
@@ -38,7 +38,7 @@ export default function Unlocks() {
 
 			{history?.unlockChart && (
 				<>
-					<h2 className="heading-xs">Historical Unlock Schedule</h2>
+					<h2 className="heading-xs">Historical unlock schedule</h2>
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 						<Kpi kpi={history.kpis.totalUnlocked} label="Unlocked (Allocations)" />
 						<Kpi kpi={history.kpis.unlockedPct} label="Unlocked %" />

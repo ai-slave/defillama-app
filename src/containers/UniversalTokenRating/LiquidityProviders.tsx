@@ -14,7 +14,7 @@ export function LpPerformanceInsights({
 	return (
 		<Panel>
 			<div className="border-b border-subtle px-4 py-3">
-				<h3 className="label-lg">Performance Insights</h3>
+				<h3 className="label-lg">Performance insights</h3>
 			</div>
 			<p className="p-4 body-xl">
 				Within all spot exchanges, all market makers represent{' '}

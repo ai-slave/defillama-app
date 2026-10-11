@@ -200,7 +200,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 	return (
 		<div className="flex flex-col gap-2">
 			<Card as="header" padding="sm" className="flex flex-col gap-2">
-				<h1 className="heading-sm">Pre-IPO Companies</h1>
+				<h1 className="heading-sm">Pre-IPO companies</h1>
 				<p className="body-sm text-secondary">
 					Track private-company valuations, funding rounds, and markets where pre-IPO exposure is tradable.
 				</p>

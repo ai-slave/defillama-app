@@ -12,15 +12,15 @@ export const PLAN_ORDER: Array<PlanKey> = ['free', 'pro', 'api', 'enterprise']
 
 export const PLAN_META_BY_CYCLE: Record<BillingCycle, Record<PlanKey, PlanMeta>> = {
 	monthly: {
-		free: { title: 'Free', price: '$0/month', action: 'Get Started' },
-		pro: { title: 'Pro', price: '$49/month', action: 'Get Started' },
-		api: { title: 'API', price: '$300/month', action: 'Get Started' },
+		free: { title: 'Free', price: '$0/month', action: 'Get started' },
+		pro: { title: 'Pro', price: '$49/month', action: 'Get started' },
+		api: { title: 'API', price: '$300/month', action: 'Get started' },
 		enterprise: { title: 'Enterprise', price: 'Custom', action: 'Contact us' }
 	},
 	yearly: {
-		free: { title: 'Free', price: '$0/month', action: 'Get Started' },
-		pro: { title: 'Pro', price: '$40.83/month', priceSecondary: '$490/year', action: 'Get Started' },
-		api: { title: 'API', price: '$250/month', priceSecondary: '$3,000/year', action: 'Get Started' },
+		free: { title: 'Free', price: '$0/month', action: 'Get started' },
+		pro: { title: 'Pro', price: '$40.83/month', priceSecondary: '$490/year', action: 'Get started' },
+		api: { title: 'API', price: '$250/month', priceSecondary: '$3,000/year', action: 'Get started' },
 		enterprise: { title: 'Enterprise', price: 'Custom', action: 'Contact us' }
 	}
 }
@@ -32,7 +32,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 		subtitle: 'Understand what\u2019s happening onchain',
 		sections: [
 			{
-				title: 'Core Data & Dashboards',
+				title: 'Core data & dashboards',
 				items: [
 					{ label: 'Track TVL, volume, and key metrics across every major chain and protocol', availability: 'check' },
 					{ label: 'Find & compare yield opportunities and stablecoin data', availability: 'check' },
@@ -55,7 +55,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 				]
 			}
 		],
-		primaryCta: 'Start for Free',
+		primaryCta: 'Start for free',
 		ctaSubtext: 'No card required'
 	},
 	{
@@ -65,7 +65,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 		includedTierText: 'Includes all Free tier features',
 		sections: [
 			{
-				title: 'Analysis & AI Tools',
+				title: 'Analysis & AI tools',
 				items: [
 					{
 						label: 'Ask LlamaAI anything: it does the analysis',
@@ -95,7 +95,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 				]
 			}
 		],
-		primaryCta: 'Get Pro Access',
+		primaryCta: 'Get Pro access',
 		secondaryCta: 'Pay with Crypto'
 	},
 	{
@@ -105,7 +105,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 		includedTierText: 'Includes all Pro tier features',
 		sections: [
 			{
-				title: 'API Access',
+				title: 'API access',
 				items: [
 					{ label: 'Premium endpoints: prices, inflows, token unlocks, and more', availability: 'check' },
 					{ label: 'Increased rate limit: 1,000 requests / minute, 1M calls / month', availability: 'check' },
@@ -120,7 +120,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 				]
 			}
 		],
-		primaryCta: 'Get API Access',
+		primaryCta: 'Get API access',
 		secondaryCta: 'Pay with Crypto',
 		highlighted: true,
 		recommendedLabel: 'Recommended'
@@ -133,7 +133,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 		includedTierText: 'Includes all Pro & API tier features',
 		sections: [
 			{
-				title: 'Custom Solutions & Data',
+				title: 'Custom solutions & data',
 				items: [
 					{ label: 'Direct raw access to our database', availability: 'check' },
 					{ label: 'Bespoke data solutions built around your use case', availability: 'check' },
@@ -150,7 +150,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 				]
 			}
 		],
-		primaryCta: 'Talk to Our Team'
+		primaryCta: 'Talk to our team'
 	}
 ]
 
@@ -190,7 +190,7 @@ export const PRICING_CARDS_BY_CYCLE: Record<BillingCycle, Array<PricingCardData>
 
 export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 	{
-		title: 'Core Data & Dashboards',
+		title: 'Core data & dashboards',
 		rows: [
 			{
 				label: 'Overview of chains & protocol metrics',
@@ -231,7 +231,7 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 		]
 	},
 	{
-		title: 'Analysis & AI Tools',
+		title: 'Analysis & AI tools',
 		rows: [
 			{
 				label: 'LlamaAI: Conversational Analytics',
@@ -321,7 +321,7 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 		]
 	},
 	{
-		title: 'API Access',
+		title: 'API access',
 		rows: [
 			{
 				label: 'Free public API endpoints',
@@ -397,7 +397,7 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 		]
 	},
 	{
-		title: 'Custom Solutions & Data',
+		title: 'Custom solutions & data',
 		rows: [
 			{
 				label: 'Direct raw access to our database',

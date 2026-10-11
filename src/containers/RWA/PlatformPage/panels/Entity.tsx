@@ -1,6 +1,6 @@
 import type { RWAPlatformMeta } from '../api.types'
 import { getRwaLeadership, getRwaRegulationFacts, getRwaSourceGroups, hasRwaEntityContent } from './panelData'
-import { LabelledProse, LinkPills, PanelCard, PanelRow, Pill } from './PanelParts'
+import { LabeledProse, LinkPills, PanelCard, PanelRow, Pill } from './PanelParts'
 
 /** Who is behind the platform: the entity facts, the leadership, the structure and registry prose, the source link. */
 export function EntityPanel({ meta }: { meta: RWAPlatformMeta }) {
@@ -28,8 +28,8 @@ export function EntityPanel({ meta }: { meta: RWAPlatformMeta }) {
 					))}
 				</div>
 			) : null}
-			<LabelledProse label="Entity structure" text={meta.entityStructureNotes} />
-			<LabelledProse label="Registry" text={meta.issuerRegistryInfo} />
+			<LabeledProse label="Entity structure" text={meta.entityStructureNotes} />
+			<LabeledProse label="Registry" text={meta.issuerRegistryInfo} />
 			<LinkPills groups={sources} />
 		</PanelCard>
 	)

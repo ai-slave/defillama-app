@@ -43,7 +43,7 @@ import { VenueChart } from './VenueChart'
 
 /**
  * The markets view to show. `all` is the per-token rollup and is always available once
- * the venue has any segment; an exact segment is honoured only if the venue trades it,
+ * the venue has any segment; an exact segment is honored only if the venue trades it,
  * so a stale ?segment= cannot land on an empty table.
  */
 export function resolveProfileSegment(

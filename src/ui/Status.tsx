@@ -129,9 +129,9 @@ const INLINE_STATUS = {
 
 /** A message in a dialog or above content: a request that failed, a caveat, an empty note, a neutral notice (`info`:
     a protocol renamed its site, a default the reader can change) in primary text. Error and warning take
-    their tinted box and status icon, so the two never differ by colour alone; the message stays primary text. The
-    icon sits centred on the first line (`h-lh`), so a wrapped message keeps it beside its opening words. `action` is
-    the one sm Button that answers it (Try again, Renew); with it, icon and text centre on that button's 24px row.
+    their tinted box and status icon, so the two never differ by color alone; the message stays primary text. The
+    icon sits centered on the first line (`h-lh`), so a wrapped message keeps it beside its opening words. `action` is
+    the one sm Button that answers it (Try again, Renew); with it, icon and text center on that button's 24px row.
     A failed read passes its query as `retry` instead: the part draws that Try again, waiting while the read runs again
     and handing focus to the region around it when what loads replaces the notice (a dialog's own net catches it there).
     A field's own error is never an InlineStatus: Field draws it under the field. Where the failed part already draws
@@ -206,8 +206,8 @@ export function InlineLoading({ label, insideLiveRegion = false }: { label: stri
 
 /** A row, chip, tab or line busy with its own work while it stays on screen (a saved query running, a file
     uploading, an autosave): the spinner and `label` naming the work ("Saving…", "Adding to queue"). The label shows
-    beside the spinner in the line's own type and colour; `hideLabel` keeps it for screen readers only where there is
-    no room (an icon slot, a chip), so the spinner is never unlabelled. The part announces itself; `insideLiveRegion`
+    beside the spinner in the line's own type and color; `hideLabel` keeps it for screen readers only where there is
+    no room (an icon slot, a chip), so the spinner is never unlabeled. The part announces itself; `insideLiveRegion`
     drops the role where the caller's own region already announces the change.
     Inside a control (a button, link, tab, menu item, combobox option, summary, a Card as a button), or beside text
     that already names the work, the glyph is `decorative`: the bare spinner, aria-hidden, with no role and no label.
@@ -284,7 +284,7 @@ type SurfaceBodyStatusProps = {
 }
 
 /* The body parts fill the body they sit in (`flex-auto`; a 0 basis would drop a caller's `h-*` in a column sized by
-   its content) and centre themselves in it (`m-auto`), so a slot that is not a stretching flex column (a grid cell, an
+   its content) and center themselves in it (`m-auto`), so a slot that is not a stretching flex column (a grid cell, an
    items-start column, a `max-w-*` box) still shows the state in its middle.
    `className` and `style` take the slot's size where it differs from the 360px default (min-h-0, h-*), so the page does
    not jump when one state replaces another. Children render as one text block; several blocks (a sentence and a
@@ -360,7 +360,7 @@ const EMPTY_STATE_SIZE = {
     holds the content it draws no frame. `actions` holds the buttons, or the picker or form that fills the space; the
     hint is inline text. The title is a <p>; `headingAs` makes it a heading when it stands in for the page's or tab's
     own (a gated page's h1). `className` places it (min-h, height, grid area), never restyles it. Copy invites rather
-    than apologises: the title names the space with no closing period, the hint says how it fills and ends with one. */
+    than apologizes: the title names the space with no closing period, the hint says how it fills and ends with one. */
 export function EmptyState({
 	size,
 	icon,

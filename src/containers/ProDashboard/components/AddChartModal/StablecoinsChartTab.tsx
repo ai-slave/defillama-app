@@ -61,8 +61,8 @@ const STABLECOIN_MODE_OPTIONS: Array<SegmentedControlOption<'chain' | 'asset'>> 
 ]
 
 const STABLECOIN_CHAIN_CHART_TYPES: Array<{ value: StablecoinChartType; label: string }> = [
-	{ value: 'totalMcap', label: 'Total Market Cap' },
-	{ value: 'tokenMcaps', label: 'Token Market Caps' },
+	{ value: 'totalMcap', label: 'Total market cap' },
+	{ value: 'tokenMcaps', label: 'Token market caps' },
 	{ value: 'pie', label: 'Pie' },
 	{ value: 'dominance', label: 'Dominance' },
 	{ value: 'usdInflows', label: 'USD Inflows' },
@@ -264,7 +264,7 @@ export function StablecoinsChartTab({
 		setSelectionIntent: setAssetSelectionIntent
 	})
 
-	// The payloads colour series by rank, like the saved cards; a stablecoin's brand colour wins.
+	// The payloads color series by rank, like the saved cards; a stablecoin's brand color wins.
 	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			chainChartPayload.charts.map((chart) => ({
@@ -489,7 +489,7 @@ export function StablecoinsChartTab({
 				<div className="body-sm text-tertiary">
 					{stablecoinMode === 'chain' && totalMcapCurrent !== null ? (
 						<p>
-							Total Market Cap:{' '}
+							Total market cap:{' '}
 							<span className="font-semibold text-primary">
 								{formatUsd(totalMcapCurrent, {
 									compact: true,
@@ -569,7 +569,7 @@ export function StablecoinsChartTab({
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}
 							</h3>
 							<p className="body-sm text-secondary">
-								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by chain'}
+								{stablecoinMode === 'chain' ? 'Stablecoins market cap' : 'Circulating by chain'}
 							</p>
 						</div>
 						<div className="flex min-h-[400px] flex-col">

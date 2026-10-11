@@ -6,7 +6,7 @@ import { listArticles, type ArticleListResponse } from '~/containers/Articles/ap
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
@@ -152,7 +152,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 										size="sm"
 										square
 										aria-label={`Remove ${titles[id] ?? 'article'}`}
-										ref={focusNeighbourOnLeave(() => inputRef.current)}
+										ref={focusNeighborOnLeave(() => inputRef.current)}
 										onClick={() => onChange(value.filter((entry) => entry !== id))}
 									/>
 								}

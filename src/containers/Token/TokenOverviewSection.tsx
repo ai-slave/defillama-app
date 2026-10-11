@@ -66,7 +66,7 @@ const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
 const FDV_TOOLTIP =
 	"Fully Diluted Valuation, this is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating."
 const OUTSTANDING_FDV_TOOLTIP =
-	'Outstanding FDV is calculated by taking the outstanding supply of the token and multiplying it by the price.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (eg coins in treasury or reserve).'
+	'Outstanding FDV is calculated by taking the outstanding supply of the token and multiplying it by the price.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g. coins in treasury or reserve).'
 const CIRCULATING_SUPPLY_TOOLTIP =
 	'Circulating supply is the number of tokens currently available and circulating in the market.'
 const MAX_SUPPLY_TOOLTIP = 'Max supply is the maximum number of tokens that can ever exist for this asset.'
@@ -353,7 +353,7 @@ function TokenMetrics({ overview }: { overview: TokenOverviewData }) {
 		<KeyMetricsPanel id="token-key-metrics">
 			{overview.marketData.mcap != null ? (
 				<MetricRow
-					label="Market Cap"
+					label="Market cap"
 					tooltip={MARKET_CAP_TOOLTIP}
 					value={formatUsd(overview.marketData.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 				/>
@@ -630,7 +630,7 @@ function TokenInformationCard({
 
 	return (
 		<Card as="section" padding="sm" className="col-span-full flex flex-wrap items-center gap-x-6 gap-y-3 body-md">
-			<h3 className="sr-only">Token Information</h3>
+			<h3 className="sr-only">Token information</h3>
 			{hasLinks ? (
 				<div className="flex flex-wrap gap-2">
 					{overview.website ? (

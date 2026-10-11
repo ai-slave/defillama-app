@@ -32,8 +32,8 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 	// The modal owns the cancellation, and all feedback renders inside the dialog.
 	const { cancelSubscriptionMutation } = useSubscribe()
 	const isLoading = cancelSubscriptionMutation.isPending
-	const cancelled = cancelSubscriptionMutation.isSuccess
-	const cancelledImmediately = Boolean(cancelSubscriptionMutation.data?.cancelled_immediately)
+	const canceled = cancelSubscriptionMutation.isSuccess
+	const canceledImmediately = Boolean(cancelSubscriptionMutation.data?.cancelled_immediately)
 	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
 	const [error, setError] = useState<string | null>(null)
 
@@ -49,16 +49,16 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 	// A confirmation: no ×, the choice is the footer, and Cancel stays visible at every width.
 	return (
 		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={isLoading} portal unmountOnHide>
-			{cancelled ? (
+			{canceled ? (
 				<>
 					<DialogHeader
-						title={cancelledImmediately ? 'Subscription cancelled' : 'Cancellation scheduled'}
+						title={canceledImmediately ? 'Subscription canceled' : 'Cancellation scheduled'}
 						closable={false}
 					/>
 					<DialogBody>
 						<Ariakit.DialogDescription className="body-sm text-secondary">
-							{cancelledImmediately
-								? 'Your subscription has been cancelled and access has ended.'
+							{canceledImmediately
+								? 'Your subscription has been canceled and access has ended.'
 								: `Your ${isTrial ? 'trial' : 'subscription'} stays active until the end of the current period and will not renew.`}
 						</Ariakit.DialogDescription>
 					</DialogBody>
@@ -75,12 +75,12 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 						<Ariakit.DialogDescription className="body-sm text-secondary">
 							{CANCEL_BODY_TEXT[variant]}
 						</Ariakit.DialogDescription>
-						<Field label="Reason for cancelling (optional)">
+						<Field label="Reason for canceling (optional)">
 							{(control) => (
 								<Textarea
 									{...control}
 									name="message"
-									placeholder="Let us know why you're cancelling…"
+									placeholder="Let us know why you're canceling…"
 									rows={3}
 									readOnly={isLoading}
 									className="w-full resize-none"
@@ -99,12 +99,12 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 						>
 							{isTrial ? 'Keep trial' : 'Keep subscription'}
 						</Ariakit.DialogDismiss>
-						<Button type="submit" variant="destructive" size="md" pendingLabel="Cancelling…" pending={isLoading}>
+						<Button type="submit" variant="destructive" size="md" pendingLabel="Canceling…" pending={isLoading}>
 							Confirm cancellation
 						</Button>
 					</DialogFooter>
 					<span role="status" className="sr-only">
-						{isLoading ? 'Cancelling…' : ''}
+						{isLoading ? 'Canceling…' : ''}
 					</span>
 				</form>
 			)}

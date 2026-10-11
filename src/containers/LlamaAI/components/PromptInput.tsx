@@ -244,10 +244,10 @@ export function PromptInput({
 
 		const { key, text, entities } = restoreRequest
 		const fillsComposer = value.trim().length === 0
-		let cancelled = false
+		let canceled = false
 
 		queueMicrotask(() => {
-			if (cancelled) return
+			if (canceled) return
 			// Used only once it runs: a cleanup that cancels this run, such as Strict Mode replaying a mount or a
 			// dependency change, leaves the request for the next run.
 			lastRestoreKeyRef.current = key
@@ -264,7 +264,7 @@ export function PromptInput({
 		})
 
 		return () => {
-			cancelled = true
+			canceled = true
 		}
 	}, [restoreRequest, value, restoreEntities, clearSearch, applyPromptEdit, onRestoreConsumed])
 

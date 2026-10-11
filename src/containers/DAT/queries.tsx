@@ -15,14 +15,14 @@ import type {
 	IDATTransactionRow
 } from './types'
 
-// Asset brand colours by name, [light, dark]; XRP and Tron pass 3:1 in both modes as they are.
+// Asset brand colors by name, [light, dark]; XRP and Tron pass 3:1 in both modes as they are.
 const DAT_ASSET_BRAND_COLORS: Record<string, readonly [light: string, dark: string]> = {
 	...ASSET_BRAND_COLORS,
 	XRP: ['#6b7280', '#6b7280'],
 	'Tron Network': ['#E91E63', '#E91E63']
 }
 
-// Assets without a brand colour take the palette colour for their rank by USD value.
+// Assets without a brand color take the palette color for their rank by USD value.
 function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, readonly [light: string, dark: string]> {
 	const assets = Object.keys(res.assetMetadata).sort(
 		(a, b) => (res.assetMetadata[b].totalUsdValue ?? 0) - (res.assetMetadata[a].totalUsdValue ?? 0)

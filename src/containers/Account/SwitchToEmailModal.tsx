@@ -134,7 +134,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 			setStep('success')
 		}
 	})
-	// Neither request can be cancelled, so the dialog stays open until it settles; a late result
+	// Neither request can be canceled, so the dialog stays open until it settles; a late result
 	// therefore always lands in the opening that started it.
 	const isLoading = requestOtpMutation.isPending || confirmMutation.isPending
 

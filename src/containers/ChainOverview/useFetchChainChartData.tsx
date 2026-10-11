@@ -4,7 +4,7 @@ import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
-import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
+import { useGetStablecoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
 import { TVL_SETTINGS, TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import { fetchJson } from '~/utils/async'
@@ -168,7 +168,7 @@ export const useFetchChainChartData = ({
 	})
 
 	const { data: stablecoinsChartData = null, isLoading: fetchingStablecoinsChartDataByChain } =
-		useGetStabelcoinsChartDataByChain(toggledChartsSet.has('Stablecoins Mcap') ? selectedChain : undefined)
+		useGetStablecoinsChartDataByChain(toggledChartsSet.has('Stablecoins Mcap') ? selectedChain : undefined)
 
 	const { data: inflowsChartData = null, isLoading: fetchingInflowsChartData } = useGetBridgeChartDataByChain(
 		toggledChartsSet.has('Net Inflows') ? selectedChain : undefined

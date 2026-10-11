@@ -11,7 +11,7 @@ export interface ScatterChartPoint {
 	entitySlug?: string
 	symbol?: string
 	symbolSize?: number
-	/** The point's own colour, such as a grade; points without one take their series colour. */
+	/** The point's own color, such as a grade; points without one take their series color. */
 	itemStyle?: { color: string }
 	label?: { show: boolean }
 }

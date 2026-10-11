@@ -75,7 +75,7 @@ describe('chart metric availability', () => {
 		)
 	})
 
-	test('still honours the other metrics from the query string', () => {
+	test('still honors the other metrics from the query string', () => {
 		expect(parseRwaChartState({ chartType: 'defiActiveTvl' }, { ...chain, availability: noActiveMcap }).metric).toBe(
 			'defiActiveTvl'
 		)

@@ -18,7 +18,7 @@ const PUBLISHER = {
 		{
 			'@type': 'ContactPoint',
 			email: 'research@defillama.com',
-			contactType: 'General enquiries'
+			contactType: 'General inquiries'
 		}
 	],
 	foundingDate: '2020-10-01',

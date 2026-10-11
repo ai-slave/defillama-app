@@ -255,14 +255,14 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
 					<img
 						src="/assets/defillama-dark-neutral.webp"
-						alt="defillama"
+						alt=""
 						height={53}
 						width={155}
 						className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
 					/>
 					<img
 						src="/assets/defillama-light-neutral.webp"
-						alt="defillama"
+						alt=""
 						height={53}
 						width={155}
 						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"

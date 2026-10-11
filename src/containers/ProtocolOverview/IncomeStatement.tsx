@@ -284,7 +284,7 @@ export function IncomeStatement({
 		}> = []
 		const links: Array<{ source: string; target: string; value: number; color?: string }> = []
 
-		// Inputs are neutral grey, profit rises and costs fall.
+		// Inputs are neutral gray, profit rises and costs fall.
 		// Helper to format percentage
 		const formatIncomePercent = (value: number, total: number) => {
 			if (total === 0) return '0%'
@@ -562,7 +562,7 @@ export function IncomeStatement({
 				{showTitles ? (
 					<div>
 						<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
-							Income Statement for {name}
+							Income statement for {name}
 							<a
 								aria-hidden="true"
 								tabIndex={-1}
@@ -596,14 +596,14 @@ export function IncomeStatement({
 						<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
 							<img
 								src="/assets/defillama-dark-neutral.webp"
-								alt="defillama"
+								alt=""
 								height={53}
 								width={155}
 								className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
 							/>
 							<img
 								src="/assets/defillama-light-neutral.webp"
-								alt="defillama"
+								alt=""
 								height={53}
 								width={155}
 								className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
@@ -759,7 +759,7 @@ export function IncomeStatement({
 					{sankeyData.nodes.length > 0 ? (
 						<>
 							<ChartPanelToolbar
-								leading={showTitles ? <ChartPanelTitle>Income Flow Visualization</ChartPanelTitle> : undefined}
+								leading={showTitles ? <ChartPanelTitle>Income flow visualization</ChartPanelTitle> : undefined}
 							>
 								<SegmentedControl
 									variant="default"

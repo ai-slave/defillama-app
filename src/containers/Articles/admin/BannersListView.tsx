@@ -11,17 +11,17 @@ import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
 import { Button, StableLabel } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { neighbourRowControl } from '~/ui/focus'
+import { neighborRowControl } from '~/ui/focus'
 import { EmptyState, InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { httpErrorMessage } from '~/utils/async'
 import { queryReadFailed, queryRefreshFailed } from '~/utils/query'
 
 export function BannersListView() {
-	// The neighbour row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
+	// The neighbor row's Delete is read when the confirm opens: once the delete succeeds, the refetched list has dropped the row.
 	const [deleteTarget, setDeleteTarget] = useState<{
 		banner: Banner
-		neighbour: HTMLElement | null | undefined
+		neighbor: HTMLElement | null | undefined
 	} | null>(null)
 	const returnFocusRef = useRef<HTMLElement | null>(null)
 	const newBannerRef = useRef<HTMLAnchorElement>(null)
@@ -105,7 +105,7 @@ export function BannersListView() {
 					finalFocus={returnFocusRef}
 					onClose={() => setDeleteTarget(null)}
 					onSuccess={() => {
-						returnFocusRef.current = deleteTarget.neighbour ?? newBannerRef.current
+						returnFocusRef.current = deleteTarget.neighbor ?? newBannerRef.current
 					}}
 				/>
 			) : null}
@@ -204,7 +204,7 @@ export function BannersListView() {
 										returnFocusRef.current = null
 										setDeleteTarget({
 											banner,
-											neighbour: neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
+											neighbor: neighborRowControl(event.currentTarget.closest('li')!, event.currentTarget)
 										})
 									}}
 									disabled={deleteBannerMutation.isPending}

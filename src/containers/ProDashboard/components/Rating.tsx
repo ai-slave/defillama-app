@@ -142,7 +142,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 						disabled={skipping}
 					>
 						<Icon name="sparkles" className="size-3.5" />
-						Submit Rating
+						Submit rating
 					</Button>
 				) : null}
 			</div>

@@ -113,7 +113,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h3 className="title-md text-primary">Fee Switch</h3>
+				<h3 className="title-md text-primary">Fee switch</h3>
 				<StatusBadge status={isActive ? 'good' : 'neutral'}>{feeSwitch.status}</StatusBadge>
 				<p className="body-sm text-tertiary">{feeSwitch.mechanism}</p>
 			</div>
@@ -425,7 +425,7 @@ export default function Economics() {
 					/>
 				) : (
 					<SeriesTrendChart
-						title="Protocol Fees by Pair Category"
+						title="Protocol Fees by pair category"
 						subtitle={
 							data.protocolFeesByCategory.note ??
 							'The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools).'
@@ -434,7 +434,7 @@ export default function Economics() {
 					/>
 				)}
 				<ChartCard
-					title="Protocol Fee Activation by Chain"
+					title="Protocol fee activation by chain"
 					subtitle="Per-chain activation date with trailing 30-day protocol fees and LP fees."
 				>
 					<FeeActivationTable rows={data.feeActivation?.rows ?? []} />
@@ -468,7 +468,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Protocol Fees & UNI Burn</h2>
+				<h2 className="heading-xs">Protocol Fees & UNI burn</h2>
 				<SeriesTrendChart
 					title="Protocol Fees (Holders Revenue)"
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, collected in the TokenJar and burned as UNI."
@@ -493,7 +493,7 @@ export default function Economics() {
 				/>
 				<TimeAreaCard
 					chart={data.uniBurnUnits}
-					title="UNI Burned by Source (Cumulative)"
+					title="UNI burned by source (cumulative)"
 					stacked
 					valueSymbol=""
 					subtitle="Cumulative UNI burned onchain, fee-switch burns and the one-off treasury burn shown separately."
@@ -501,7 +501,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">UNI Token Unlocks</h2>
+				<h2 className="heading-xs">UNI token unlocks</h2>
 				{unlockedKpi && (
 					<KpiGrid
 						kpis={{ supplyUnlocked: unlockedKpi }}

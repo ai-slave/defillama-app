@@ -108,7 +108,7 @@ const txColumns: Array<ColumnDef<typeof paginatedTableFeatures, TxRow>> = [
 		accessorKey: 'account',
 		cell: ({ getValue }) => {
 			const addr = getValue<string>()
-			return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+			return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 		},
 		size: 140
 	}
@@ -149,7 +149,7 @@ const dripColumns: Array<ColumnDef<typeof paginatedTableFeatures, DripRow>> = [
 		accessorKey: 'account',
 		cell: ({ getValue }) => {
 			const addr = getValue<string>()
-			return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+			return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 		},
 		size: 140
 	}
@@ -172,7 +172,7 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Recent stSyrup Transactions</h3>
+			<h3 className="mb-3 label-md text-secondary">Recent stSyrup transactions</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</Card>
@@ -196,7 +196,7 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Recent Drip Reward Claims</h3>
+			<h3 className="mb-3 label-md text-secondary">Recent drip reward claims</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</Card>
@@ -328,7 +328,7 @@ export default function SyrupActivity() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 heading-xs">Syrup Protocol</h3>
+				<h3 className="mb-3 heading-xs">Syrup protocol</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{protocolKpis ? (
 						<>
@@ -349,7 +349,7 @@ export default function SyrupActivity() {
 			</div>
 
 			<div>
-				<h3 className="mb-3 heading-xs">stSyrup Activity</h3>
+				<h3 className="mb-3 heading-xs">stSyrup activity</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{activityKpis ? (
 						<>
@@ -375,7 +375,7 @@ export default function SyrupActivity() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Monthly stSyrup Deposits vs Withdrawals"
+							title="Monthly stSyrup deposits vs withdrawals"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={monthlyChart}
@@ -396,7 +396,7 @@ export default function SyrupActivity() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Monthly Syrup Token Migrations"
+							title="Monthly Syrup token migrations"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={migrationChart}
@@ -410,10 +410,10 @@ export default function SyrupActivity() {
 				</Panel>
 			) : null}
 
-			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
+			{isLoading ? <CardSkeleton title="Recent stSyrup transactions" /> : <TxTable data={txRows} />}
 
 			<div>
-				<h3 className="mb-3 heading-xs">Drip Rewards</h3>
+				<h3 className="mb-3 heading-xs">Drip rewards</h3>
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>
@@ -436,7 +436,7 @@ export default function SyrupActivity() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Monthly Drip Claims"
+								title="Monthly drip claims"
 								headingAs="h3"
 								containerClassName={CHART_FILL}
 								dataset={dripMonthlyChart}
@@ -451,7 +451,7 @@ export default function SyrupActivity() {
 				) : null}
 			</div>
 
-			{dripLoading ? <CardSkeleton title="Recent Drip Reward Claims" /> : <DripTable data={dripRows} />}
+			{dripLoading ? <CardSkeleton title="Recent drip reward claims" /> : <DripTable data={dripRows} />}
 		</div>
 	)
 }

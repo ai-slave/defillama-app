@@ -9,7 +9,7 @@ export const VERIFIED_APY_SERIES = { key: 'verifiedApy', label: 'Verified Base' 
 
 // Ramp steps from src/styles/primitives.css, [light, dark]: emerald and crimson -11 are the app's up/down
 // text steps (--text-data-up/down), amber, violet and blue use step 9 in light and 11 in dark so lines
-// keep 3:1 on both cards; neutrals are the shared Others grey and the neutral-6/7 fill.
+// keep 3:1 on both cards; neutrals are the shared Others gray and the neutral-6/7 fill.
 export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark: string]> = {
 	accent: ['#016d3c', '#12b167'],
 	gold: ['#9f5a00', '#de841d'],

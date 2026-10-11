@@ -112,7 +112,7 @@ test('a delayed download keeps focus and prevents duplicate requests', async () 
 })
 
 test.each(['close', 'change image'])(
-	'%s isolates feedback without cancelling the requested image download',
+	'%s isolates feedback without canceling the requested image download',
 	async (action) => {
 		const request = Promise.withResolvers<Response>()
 		vi.stubGlobal('fetch', vi.fn().mockReturnValue(request.promise))

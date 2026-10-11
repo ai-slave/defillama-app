@@ -45,8 +45,8 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 			{isCancelPending ? (
 				<>
 					<p className="body-sm text-tertiary">
-						Your trial has been cancelled and will end on{' '}
-						<span className="font-bold text-primary">{formattedDate}</span>. You won't be charged.
+						Your trial has been canceled and will end on <span className="font-bold text-primary">{formattedDate}</span>
+						. You won't be charged.
 					</p>
 					<p className="label-sm text-warning">Cancellation scheduled</p>
 				</>

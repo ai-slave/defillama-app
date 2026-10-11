@@ -282,7 +282,7 @@ describe('SelectWithCombobox on one Combobox store', () => {
 					label="Columns"
 					variant="filter"
 					size="md"
-					customFooter={<button type="button">Add Custom Column</button>}
+					customFooter={<button type="button">Add custom column</button>}
 				/>
 			)
 		)
@@ -290,7 +290,7 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		await click(trigger())
 		await type(document.querySelector<HTMLInputElement>('input[role="combobox"]')!, 'zzz')
 		expect(document.querySelector('[role="status"]')?.textContent).toBe('No results found for "zzz"')
-		expect([...document.querySelectorAll('button')].map((button) => button.textContent)).toContain('Add Custom Column')
+		expect([...document.querySelectorAll('button')].map((button) => button.textContent)).toContain('Add custom column')
 	})
 })
 

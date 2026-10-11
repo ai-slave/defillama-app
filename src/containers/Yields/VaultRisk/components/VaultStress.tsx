@@ -13,7 +13,7 @@ import { usePositionUsd } from './PositionControl'
 import { lossPct } from './scenarioShared'
 
 // The section-level readout of the per-asset stress: sums whatever drop each collateral is
-// currently set to. It owns no control — each asset's drop is dialled in its own row, so
+// currently set to. It owns no control — each asset's drop is dialed in its own row, so
 // there's one place to change a drop instead of a vault-wide slider competing with per-row ones.
 export function VaultStress({
 	collateral,

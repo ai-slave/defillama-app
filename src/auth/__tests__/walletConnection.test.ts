@@ -3,7 +3,7 @@ import { createConfig, createConnector, http } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import { connectWallet } from '../walletConnection'
 
-test.each([false, true])('cancelling also closes the SDK modal; modal opens late=%s', async (opensLate) => {
+test.each([false, true])('canceling also closes the SDK modal; modal opens late=%s', async (opensLate) => {
 	let listener: ((state: { open: boolean }) => void) | undefined
 	let finishOpening!: () => void
 	let rejectConnection!: (error: Error) => void
@@ -25,7 +25,7 @@ test.each([false, true])('cancelling also closes the SDK modal; modal opens late
 			close() {
 				if (open) {
 					open = false
-					rejectConnection(new Error('Pairing cancelled'))
+					rejectConnection(new Error('Pairing canceled'))
 				}
 			}
 		}
@@ -74,7 +74,7 @@ test.each([false, true])('cancelling also closes the SDK modal; modal opens late
 		await vi.waitUntil(() => open)
 		controller.abort()
 	}
-	expect(await result).toMatchObject({ message: 'Pairing cancelled' })
+	expect(await result).toMatchObject({ message: 'Pairing canceled' })
 	expect(open).toBe(false)
 	expect(listener).toBeUndefined()
 })

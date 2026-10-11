@@ -230,7 +230,7 @@ function Form({
 					Clear
 				</Button>
 				<Button type="submit" variant="primary" size="md" className="w-full">
-					Apply Filter
+					Apply filter
 				</Button>
 			</div>
 		</form>

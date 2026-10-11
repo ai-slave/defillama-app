@@ -18,9 +18,9 @@ interface TokenData {
 }
 
 const RUNE_KPIS: Array<[string, string]> = [
-	['marketCap', 'Market Cap'],
+	['marketCap', 'Market cap'],
 	['fdv', 'FDV'],
-	['mcapFdv', 'Market Cap / FDV'],
+	['mcapFdv', 'Mcap/FDV'],
 	['circulatingSupply', 'Circulating Supply'],
 	['totalSupply', 'Total Supply'],
 	['reserveRune', 'Reserve']
@@ -29,7 +29,7 @@ const RUNE_KPIS: Array<[string, string]> = [
 // RUNE-denominated only — USD burn figures dropped per the protocol's review.
 const BURN_KPIS: Array<[string, string]> = [
 	['burnedLifetime', 'Burned (Lifetime)'],
-	['burned30d', 'Burned (30D)'],
+	['burned30d', 'Burned (30d)'],
 	['burnRate', 'Burn Rate']
 ]
 
@@ -65,7 +65,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="RUNE Price vs Swap Volume"
+						title="RUNE price vs swap volume"
 						subtitle="RUNE price against THORChain swap volume."
 						note="token.priceVolumeChart"
 					/>
@@ -75,10 +75,10 @@ export default function Token() {
 			<section className="flex flex-col gap-6">
 				<h2 className="heading-xs">TCY</h2>
 				<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-					<Kpi kpi={tcy.tcyMarketCap} label="Market Cap" />
+					<Kpi kpi={tcy.tcyMarketCap} label="Market cap" />
 					<Kpi kpi={tcy.tcyFdv} label="FDV" />
-					<Kpi kpi={tcy.tcyMcapFdv} label="Market Cap / FDV" />
-					<Kpi kpi={tcy.tcyMcapToRuneMcap} label="TCY MCap / RUNE MCap" />
+					<Kpi kpi={tcy.tcyMcapFdv} label="Mcap/FDV" />
+					<Kpi kpi={tcy.tcyMcapToRuneMcap} label="TCY Mcap / RUNE Mcap" />
 					<Kpi kpi={tcy.tcyCirculating} label="Circulating Supply" />
 					<Kpi kpi={tcy.tcySupply} label="Total Supply" />
 					<Kpi kpi={tcy.tcyProtocolOwned} label="Protocol Owned" note="thorchain/tcy_protocol_owned" />
@@ -88,7 +88,7 @@ export default function Token() {
 					<TimeAreaCard chart={data.tcy.priceChart} value={tcy.tcyPrice?.formatted} />
 				) : (
 					<PlaceholderCard
-						title="TCY Price"
+						title="TCY price"
 						subtitle="TCY price feed unavailable."
 						note="coins.llama.fi coingecko:tcy"
 					/>
@@ -101,7 +101,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="TCY Staking APR"
+						title="TCY staking APR"
 						subtitle="Needs both the rewards and TCY price feeds."
 						note="token.tcy.aprChart"
 					/>
@@ -115,7 +115,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="Protocol Owned TCY"
+						title="Protocol owned TCY"
 						subtitle="Protocol-owned TCY over time. Awaiting feed."
 						note="raynalytics treasury-pol-tcy-balance"
 					/>
@@ -123,7 +123,7 @@ export default function Token() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">RUNE Burn</h2>
+				<h2 className="heading-xs">RUNE burn</h2>
 				<KpiGrid kpis={data.burn.kpis} items={BURN_KPIS} cols={3} />
 				<ApiTrendChart
 					chart={data.burn.burnChart}

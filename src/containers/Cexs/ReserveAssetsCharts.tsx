@@ -163,7 +163,7 @@ function TokenValuesUSDChartCard({
 
 	return (
 		<CexChartPanel
-			title="Token Values (USD)"
+			title="Token values (USD)"
 			controls={
 				<>
 					{allTokens.length > 1 ? (
@@ -240,7 +240,7 @@ function TokensBreakdownPieChartCard({
 
 	return (
 		<CexChartPanel
-			title="Tokens Breakdown"
+			title="Tokens breakdown"
 			controls={
 				<>
 					{selectableSeries.length > 1 ? (
@@ -317,7 +317,7 @@ function TokenBalancesRawChartCard({
 
 	return (
 		<CexChartPanel
-			title="Token Balances (Raw Quantities)"
+			title="Token balances (raw quantities)"
 			controls={
 				<>
 					{allTokens.length > 1 ? (
@@ -365,7 +365,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 
 	return (
 		<CexChartPanel
-			title="USD Inflows"
+			title="USD inflows"
 			controls={
 				<ChartExportButtons
 					chartInstance={chartInstance}
@@ -422,7 +422,7 @@ function InflowsByTokenChartCard({
 
 	return (
 		<CexChartPanel
-			title="Inflows by Token"
+			title="Inflows by token"
 			controls={
 				<>
 					{allTokens.length > 1 ? (

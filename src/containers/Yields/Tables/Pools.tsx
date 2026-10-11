@@ -211,7 +211,7 @@ function createEarnColumns(
 				align: 'end',
 				headerTrail: () => <MeasuredExitColumnHint />,
 				headerHelperText:
-					'Whether you could actually withdraw, and how: instantly, after a queue, only in part, or not at all. Measured daily on-chain.'
+					'Whether you could actually withdraw, and how: instantly, after a queue, only in part, or not at all. Measured daily onchain.'
 			}
 		}),
 		columnHelper.accessor((row) => row.apyBase ?? undefined, {

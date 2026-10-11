@@ -261,7 +261,7 @@ describe('SettingsModal instructions', () => {
 		await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 		await waitForUi(() => expect(document.activeElement).toBe(closeButton()))
 	})
-	test('cancelling a memory deletion returns focus to Delete; deleting hands it to the next entry, the last to the dialog', async () => {
+	test('canceling a memory deletion returns focus to Delete; deleting hands it to the next entry, the last to the dialog', async () => {
 		const deleted = new Set<string>()
 		const entries = [
 			{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 },
@@ -292,7 +292,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
 		await waitForUi(() => expect(document.body.textContent).not.toContain('Prefer concise answers'))
 		await waitForUi(() => expect(document.activeElement).toBe(second))
-		// The last entry has no neighbour left.
+		// The last entry has no neighbor left.
 		await press(second)
 		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
@@ -849,7 +849,7 @@ describe('SettingsModal initial tab', () => {
 			'Balance'
 		])
 		await render(null)
-		expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain('Payment cancelled')
+		expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain('Payment canceled')
 		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
 		await act(async () => tab('App').click())
 		expect(openTabId()).toBe(tab('App').id)

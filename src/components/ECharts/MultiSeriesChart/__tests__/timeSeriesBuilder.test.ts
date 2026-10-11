@@ -77,7 +77,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	test('builds cumulative lines without bucketting timestamps', () => {
+	test('builds cumulative lines without bucketing timestamps', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'cumulativeLines',

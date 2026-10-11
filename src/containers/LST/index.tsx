@@ -409,7 +409,7 @@ export function LSTOverview({
 										<ChartExportButtons
 											chartInstance={pieChartInstance}
 											filename="lst-breakdown"
-											title="LST Breakdown"
+											title="LST breakdown"
 											csvSource={{
 												type: 'dataset',
 												prepare: () =>
@@ -541,7 +541,7 @@ export function LSTOverview({
 			<SearchTableProvider options={{ data: tokensList, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
 					<TableToolbar>
-						<h2 className="mr-auto label-md">Liquid Staking Protocols</h2>
+						<h2 className="mr-auto label-md">Liquid staking protocols</h2>
 						<TableSearchInput
 							columnId="name"
 							placeholder="Search protocols…"

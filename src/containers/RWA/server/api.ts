@@ -80,7 +80,7 @@ export function parseAssetBreakdownRequest(req: { query: ApiQuery }): RWAAssetBr
 	const key = parseChartMetricKey(req.query.key)
 	const includeStablecoin = parseBooleanQueryFlag(req.query.includeStablecoin)
 	const includeGovernance = parseBooleanQueryFlag(req.query.includeGovernance)
-	// Absent param => include bridge TVL (today's default behaviour).
+	// Absent param => include bridge TVL (today's default behavior).
 	const includeBridgeTvl = parseBooleanQueryFlag(req.query.includeBridgeTvl, true)
 
 	if (

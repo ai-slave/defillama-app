@@ -135,7 +135,7 @@ export default function CashTransactions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Weekly Transactions by Class"
+							title="Weekly transactions by class"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={transactionsByClassDataset}
@@ -155,7 +155,7 @@ export default function CashTransactions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Weekly Users by Class"
+							title="Weekly users by class"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={usersByClassDataset}
@@ -175,7 +175,7 @@ export default function CashTransactions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Weekly Transactions"
+							title="Weekly transactions"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={weeklyTxnsDataset}
@@ -194,7 +194,7 @@ export default function CashTransactions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Weekly Active Users"
+							title="Weekly active users"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={weeklyUsersDataset}
@@ -213,7 +213,7 @@ export default function CashTransactions() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Weekly Average Txns per User"
+							title="Weekly average txns per user"
 							headingAs="h3"
 							containerClassName={CHART_FILL}
 							dataset={weeklyAvgDataset}

@@ -4,7 +4,7 @@ import { type Ref, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { ListLoading, NoResults } from '~/ui/NoResults'
@@ -160,7 +160,7 @@ export function ArticlePageAssetPicker({
 									tip="Remove"
 									label={`Remove ${asset.symbol}`}
 									icon="x"
-									ref={focusNeighbourOnLeave(() => searchRef.current)}
+									ref={focusNeighborOnLeave(() => searchRef.current)}
 									onClick={() => onChange(value.filter((_, i) => i !== index))}
 								/>
 							</div>

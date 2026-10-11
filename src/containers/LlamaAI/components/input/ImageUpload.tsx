@@ -5,7 +5,7 @@ import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewM
 import { type AttachmentUpload, CHAT_FILE_ACCEPT, isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { keepFocus, neighborRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { BusyGlyph, ErrorLine } from '~/ui/Status'
@@ -246,10 +246,10 @@ export function TextChip({
 }
 
 /** The attachment leaves with its remove button: the next attachment's remove takes focus, else the previous one's,
-    else the prompt field. Image and file attachments differ in layout, so the neighbour's remove is found by name. */
+    else the prompt field. Image and file attachments differ in layout, so the neighbor's remove is found by name. */
 function removeAttachment(button: HTMLElement, remove: () => void) {
 	const row = button.closest('[data-attachment]')!
-	const next = neighbourRowControl(row, row)?.querySelector<HTMLElement>('[data-attachment-remove]')
+	const next = neighborRowControl(row, row)?.querySelector<HTMLElement>('[data-attachment-remove]')
 	keepFocus(remove, () => next ?? composerField())
 }
 

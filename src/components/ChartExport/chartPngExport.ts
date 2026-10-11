@@ -905,7 +905,7 @@ export function buildCartesianExportLegendOption(
 ): LegendComponentOption {
 	const legendBase: LegendComponentOption = {
 		show: true,
-		// Same item order as the live legend; toggled-off series stay hidden and greyed out.
+		// Same item order as the live legend; toggled-off series stay hidden and grayed out.
 		data: legendItems,
 		selected: sourceLegend?.selected,
 		textStyle: {

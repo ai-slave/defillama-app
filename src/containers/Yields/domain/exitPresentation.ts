@@ -59,7 +59,7 @@ export function exitCoverageLine(verified: VerifiedBlock): string | null {
 		// A null amount beside a queue is an UNCAPPED queue (no instant lane), never zero.
 		return verified.exit_liquidity?.amount == null
 			? 'Uncapped queue: no instant lane, takes any size'
-			: 'Withdrawal queue measured on-chain'
+			: 'Withdrawal queue measured onchain'
 	}
 	// Null (RPC failure) or an unknown status is not a claim about the pool; never read it as a working exit.
 	if (exit.status !== 'instant' && exit.status !== 'partial') return 'Exit could not be attested on the last check'
@@ -82,13 +82,13 @@ export function exitCoverageLine(verified: VerifiedBlock): string | null {
 /** "100% of pool withdrawable at once": for an instant lane whose dollar figure is shown elsewhere. */
 export function exitShareLine(verified: VerifiedBlock): string {
 	const pct = withdrawablePct(withdrawableFraction(verified))
-	return pct == null ? 'Instant lane measured on-chain' : `${pct}% of pool withdrawable at once`
+	return pct == null ? 'Instant lane measured onchain' : `${pct}% of pool withdrawable at once`
 }
 
 /**
  * Headline token: "Instant", "Partial 40%", "Queued ~3 days" ("~3d" compact), "Unavailable",
  * "Blocked". Every status names itself; a magnitude follows where there is one. Null for a null or
- * unrecognised status rather than a guess in either direction.
+ * unrecognized status rather than a guess in either direction.
  */
 export function exitHeadline(verified: VerifiedBlock, options?: { compact?: boolean }): string | null {
 	const exit = verified.exit
@@ -156,7 +156,7 @@ export function exitTone(verified: VerifiedBlock): ExitTone {
 	return exitStatusTone(verified.exit?.status)
 }
 
-/** Tone colours ride on the status ICON. Text keeps the table's own colours so a column of exits does not become a column of colours. */
+/** Tone colors ride on the status ICON. Text keeps the table's own colors so a column of exits does not become a column of colors. */
 export const EXIT_TONE_CLASS: Record<ExitTone, string> = {
 	good: 'text-success',
 	neutral: 'text-secondary',
@@ -167,7 +167,7 @@ export const EXIT_TONE_CLASS: Record<ExitTone, string> = {
 /**
  * A measured fee is a warning, not a footnote: it comes straight out of what the holder
  * received. Only a fee the holder actually PAYS earns the warning, because the measurement also
- * returns small negative values (dust in the holder's favour) and flagging those would be a
+ * returns small negative values (dust in the holder's favor) and flagging those would be a
  * false alarm. Returns null when there is nothing to warn about.
  */
 export function exitFeeWarning(feeBps: number | null): string | null {

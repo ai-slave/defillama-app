@@ -199,8 +199,8 @@ function ChainProtocolsTableInner({
 	// The custom column the dialog edits: an existing one by id, a new one (id null), or none while closed.
 	const [editingColumn, setEditingColumn] = useState<{ id: string | null } | null>(null)
 	const [deletingColumn, setDeletingColumn] = useState<CustomColumnDef | null>(null)
-	// A cancelled delete returns to its Delete button. A confirmed one removes that button, so the confirm sets this to
-	// Add Custom Column, which stays in the open picker.
+	// A canceled delete returns to its Delete button. A confirmed one removes that button, so the confirm sets this to
+	// Add custom column, which stays in the open picker.
 	const deleteFinalFocusRef = useRef<HTMLElement | null>(null)
 	const addColumnButtonRef = useRef<HTMLButtonElement>(null)
 	const presetSelection = useMemo(
@@ -618,7 +618,7 @@ function ChainProtocolsTableInner({
 							type="button"
 						>
 							<Icon name="plus" className="size-3.5" />
-							Add Custom Column
+							Add custom column
 						</button>
 					</>
 				}
@@ -665,14 +665,14 @@ function ChainProtocolsTableInner({
 		<div className={borderless ? 'isolate' : 'isolate rounded-lg border border-subtle bg-surface'}>
 			{!borderless && headingAs === 'h1' ? (
 				<PanelHeader>
-					<PanelTitle as="h1">Protocol Rankings</PanelTitle>
+					<PanelTitle as="h1">Protocol rankings</PanelTitle>
 					<TableToolbarControlGroup>{primaryToolbarControls}</TableToolbarControlGroup>
 					<div className="w-full pt-1">{secondaryToolbarControls}</div>
 				</PanelHeader>
 			) : (
 				<div className="border-b border-subtle">
 					<TableToolbar>
-						{borderless ? null : <h2 className="mr-auto label-md">Protocol Rankings</h2>}
+						{borderless ? null : <h2 className="mr-auto label-md">Protocol rankings</h2>}
 						{primaryToolbarControls}
 					</TableToolbar>
 					<div className="px-2 pb-2">{secondaryToolbarControls}</div>
@@ -1062,7 +1062,7 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	},
 	{ name: 'TVL 1d change', key: 'change_1d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_DAY },
 	{ name: 'TVL 7d change', key: 'change_7d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'TVL 1m change', key: 'change_1m', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'TVL 30d change', key: 'change_1m', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_MONTH },
 	{ name: 'Token Price', key: 'token_price' },
 	{ name: 'Market Cap', key: 'mcap' },
 	{ name: 'Mcap/TVL', key: 'mcaptvl' },
@@ -1070,12 +1070,12 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	{ name: 'Fees 7d', key: 'fees_7d', preset: TABLE_PRESETS.FEES, period: TABLE_PERIODS.SEVEN_DAYS },
 	{ name: 'Fees 30d', key: 'fees_30d', preset: TABLE_PRESETS.FEES, period: TABLE_PERIODS.ONE_MONTH },
 	{
-		name: 'Fees 1Y',
+		name: 'Fees 1y',
 		key: 'fees_1y',
 		preset: TABLE_PRESETS.FEES
 	},
 	{
-		name: 'Monthly Avg 1Y Fees',
+		name: 'Monthly Avg 1y Fees',
 		key: 'average_fees_1y',
 		preset: TABLE_PRESETS.FEES
 	},
@@ -1085,7 +1085,7 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	{ name: 'Revenue 30d', key: 'revenue_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
 	{ name: 'Revenue 1y', key: 'revenue_1y', preset: TABLE_PRESETS.REVENUE },
 	{
-		name: 'Monthly Avg 1Y Rev',
+		name: 'Monthly Avg 1y Rev',
 		key: 'average_revenue_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
@@ -1110,7 +1110,7 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	},
 	{ name: 'Holders Revenue 1y', key: 'holdersRevenue_1y', preset: TABLE_PRESETS.REVENUE },
 	{
-		name: 'Monthly Avg 1Y Holders Revenue',
+		name: 'Monthly Avg 1y Holders Revenue',
 		key: 'average_holdersRevenue_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
@@ -1119,12 +1119,12 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	{ name: 'Incentives 7d', key: 'emissions_7d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
 	{ name: 'Incentives 30d', key: 'emissions_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
 	{
-		name: 'Incentives 1Y',
+		name: 'Incentives 1y',
 		key: 'emissions_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
 	{
-		name: 'Monthly Avg 1Y Incentives',
+		name: 'Monthly Avg 1y Incentives',
 		key: 'average_emissions_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
@@ -1133,12 +1133,12 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 	{ name: 'Earnings 7d', key: 'earnings_7d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.SEVEN_DAYS },
 	{ name: 'Earnings 30d', key: 'earnings_30d', preset: TABLE_PRESETS.REVENUE, period: TABLE_PERIODS.ONE_MONTH },
 	{
-		name: 'Earnings 1Y',
+		name: 'Earnings 1y',
 		key: 'earnings_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
 	{
-		name: 'Monthly Avg 1Y Earnings',
+		name: 'Monthly Avg 1y Earnings',
 		key: 'average_earnings_1y',
 		preset: TABLE_PRESETS.REVENUE
 	},
@@ -1405,7 +1405,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('change_1m'), {
 				id: 'change_1m',
-				header: '1m Change',
+				header: '30d Change',
 				cell: ({ getValue }) => <Change value={getValue()} />,
 				meta: {
 					headerClassName: 'w-[112px] min-w-[112px]',
@@ -1614,7 +1614,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('fees_1y'), {
 				id: 'fees_1y',
-				header: 'Fees 1Y',
+				header: 'Fees 1y',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1627,7 +1627,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('average_fees_1y'), {
 				id: 'average_fees_1y',
-				header: 'Monthly Avg 1Y Fees',
+				header: 'Monthly Avg 1y Fees',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1640,7 +1640,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('revenue_1y'), {
 				id: 'revenue_1y',
-				header: 'Revenue 1Y',
+				header: 'Revenue 1y',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1653,7 +1653,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('holdersRevenue_1y'), {
 				id: 'holdersRevenue_1y',
-				header: 'Holders Revenue 1Y',
+				header: 'Holders Revenue 1y',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1666,7 +1666,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('average_revenue_1y'), {
 				id: 'average_revenue_1y',
-				header: 'Monthly Avg 1Y Rev',
+				header: 'Monthly Avg 1y Rev',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1679,7 +1679,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('average_holdersRevenue_1y'), {
 				id: 'average_holdersRevenue_1y',
-				header: 'Monthly Avg 1Y Holders Revenue',
+				header: 'Monthly Avg 1y Holders Revenue',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1692,7 +1692,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('emissions_1y'), {
 				id: 'emissions_1y',
-				header: 'Incentives 1Y',
+				header: 'Incentives 1y',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1705,7 +1705,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('average_emissions_1y'), {
 				id: 'average_emissions_1y',
-				header: 'Monthly Avg 1Y Incentives',
+				header: 'Monthly Avg 1y Incentives',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1831,7 +1831,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('earnings_1y'), {
 				id: 'earnings_1y',
-				header: 'Earnings 1Y',
+				header: 'Earnings 1y',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -1844,7 +1844,7 @@ const columns = columnHelper.columns([
 			}),
 			columnHelper.accessor(protocolRankingAccessor('average_earnings_1y'), {
 				id: 'average_earnings_1y',
-				header: 'Monthly Avg 1Y Earnings',
+				header: 'Monthly Avg 1y Earnings',
 				cell: (info) =>
 					info.getValue() != null
 						? formatUsd(info.getValue(), {

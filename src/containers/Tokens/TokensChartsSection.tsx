@@ -137,7 +137,7 @@ export function TokensChartsSection({
 									<ChartExportButtons
 										chartInstance={chartInstance}
 										filename={EXPORT_FILENAME}
-										title="Tokens Market Map"
+										title="Tokens market map"
 										csvSource={{
 											type: 'prepare-csv',
 											prepare: () =>
@@ -202,7 +202,7 @@ export function TokensChartsSection({
 						<MarketTreemapChart
 							treeData={treemap.treeData}
 							leaves={treemap.leaves}
-							sizeLabel="MCap"
+							sizeLabel="Market cap"
 							colorLabel={`Price ${colorBy.toUpperCase()}`}
 							valueSymbol="$"
 							height={MAP_HEIGHT}
@@ -229,9 +229,9 @@ export function TokensChartsSection({
 				</>
 			) : movers ? (
 				<div className="grid grid-cols-1 lg:grid-cols-2">
-					<MoversChart title="Top Gainers" entries={movers.gainers} color={CHART_UP} />
+					<MoversChart title="Top gainers" entries={movers.gainers} color={CHART_UP} />
 					<MoversChart
-						title="Top Losers"
+						title="Top losers"
 						className="border-t border-subtle lg:border-t-0 lg:border-l"
 						entries={movers.losers}
 						color={CHART_DOWN}

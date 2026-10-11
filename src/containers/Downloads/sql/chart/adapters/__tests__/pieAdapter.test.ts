@@ -3,7 +3,7 @@ import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors
 import { buildSqlPieData } from '../PieChartAdapter'
 
 describe('buildSqlPieData', () => {
-	test('keeps one reconciled Other slice, last and grey, when a real Other category would rank in the top set', () => {
+	test('keeps one reconciled Other slice, last and gray, when a real Other category would rank in the top set', () => {
 		const rows = [['Other', 100], ...Array.from({ length: 12 }, (_, index) => [`Item ${index}`, 20 - index])]
 		const result = buildSqlPieData(rows, 0, 1, {})
 

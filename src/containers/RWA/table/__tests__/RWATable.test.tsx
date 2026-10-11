@@ -314,8 +314,8 @@ describe('RWA table column set', () => {
 
 describe('perps cell formats', () => {
 	test('the funding tooltip prints the raw rate per interval with three significant digits', () => {
-		expect(formatFundingRateDetail(0.00000625, 1)).toBe('+0.000625% per 1h, annualised.')
-		expect(formatFundingRateDetail(-0.000123456, 8)).toBe('-0.0123% per 8h, annualised.')
+		expect(formatFundingRateDetail(0.00000625, 1)).toBe('+0.000625% per 1h, annualized.')
+		expect(formatFundingRateDetail(-0.000123456, 8)).toBe('-0.0123% per 8h, annualized.')
 	})
 
 	test('max leverage prints a rounded ratio', () => {

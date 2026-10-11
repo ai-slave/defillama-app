@@ -202,7 +202,7 @@ export function LedgerTile({
 }: {
 	label: string
 	value?: string
-	/** Colours a headline that carries a sign, e.g. an excess return that can be negative. */
+	/** Colors a headline that carries a sign, e.g. an excess return that can be negative. */
 	valueClass?: string
 	/** Rendered small and dim next to the headline, e.g. the `+` in `$8bn+`. */
 	suffix?: string
@@ -213,7 +213,7 @@ export function LedgerTile({
 	 */
 	suffixBelow?: boolean
 	sub?: string
-	/** How the headline was measured, where the caption can only summarise it. */
+	/** How the headline was measured, where the caption can only summarize it. */
 	subTitle?: string
 	/** The query behind the headline, linked inline from the caption. */
 	subRef?: KpkRef
@@ -269,7 +269,7 @@ export function LedgerTile({
 					))}
 				</span>
 			)}
-			{/* Centred as its own column: the extras are a fixed-width meter, a note and a
+			{/* Centered as its own column: the extras are a fixed-width meter, a note and a
 			    full-width rule, and only the note is text that `text-center` could move. */}
 			{children && <div className="flex flex-col items-center gap-2">{children}</div>}
 		</div>
@@ -367,7 +367,7 @@ export function MeterBar({
 /**
  * The mockup's two-tone comparison bar: KPK's figure in mint above the benchmark it is
  * measured against in periwinkle, both on one shared scale so the gap between them is
- * the point. Colour alone never carries the reading — the same two numbers sit in the
+ * the point. Color alone never carries the reading — the same two numbers sit in the
  * columns to the left.
  */
 export function CompareBars({

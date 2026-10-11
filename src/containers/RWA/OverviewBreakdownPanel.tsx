@@ -13,8 +13,8 @@ import { RWASnapshotChartPanel } from './SnapshotChartPanel'
 import { buildRwaNestedTreemapTreeData, canBuildRwaNestedTreemap } from './treemap'
 
 /** Flat treemap tiles per axis, Others included: the chain treemap stays small, every category keeps its own tile.
-   The pie folds past ten slices on every axis, because a slice past the palette repeats a colour; the treemap is where
-   every category shows, each tile labelled. */
+   The pie folds past ten slices on every axis, because a slice past the palette repeats a color; the treemap is where
+   every category shows, each tile labeled. */
 const TREEMAP_LIMITS: Record<RwaChartAxis, number> = {
 	chain: 10,
 	category: Number.POSITIVE_INFINITY,

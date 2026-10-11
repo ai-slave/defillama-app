@@ -17,8 +17,8 @@ interface CalendarDayCellProps {
 }
 
 export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday }: CalendarDayCellProps) {
-	// In-month days sit on the card; other days and empty slots recede to the page colour. The grid lines between
-	// cells are the parent's translucent border colour, so a cell without its own background turns grey.
+	// In-month days sit on the card; other days and empty slots recede to the page color. The grid lines between
+	// cells are the parent's translucent border color, so a cell without its own background turns gray.
 	if (!dayInfo.date) return <div className="h-24 w-full bg-page" />
 
 	const dateStr = dayInfo.date.format('YYYY-MM-DD')

@@ -399,7 +399,7 @@ describe('ProtocolTaxonomy queries', () => {
 		])
 	})
 
-	test('folds a breakdown past the series limit into one grey Others with any upstream remainder', () => {
+	test('folds a breakdown past the series limit into one gray Others with any upstream remainder', () => {
 		const names = Array.from({ length: CHART_SERIES_LIMIT + 2 }, (_, index) => `Card ${index + 1}`)
 		const values = names.map((_, index) => (names.length - index) * 10)
 		const chart = buildBreakdownCharts(

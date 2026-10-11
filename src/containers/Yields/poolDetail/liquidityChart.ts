@@ -2,7 +2,7 @@
 //
 // Two stacked areas whose total is the measured deposits:
 //   available - `verified.liquidity_available`, a BINDING CONSTRAINT: the most that could exit
-//               right now. Not backing inventory. Labelled "withdrawable now".
+//               right now. Not backing inventory. Labeled "withdrawable now".
 //   remainder - the rest of the deposits, i.e. beyond that instant lane.
 //
 // The API serves a raw base-unit string AND a USD figure for each, so USD needs no price lookup on

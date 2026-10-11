@@ -15,7 +15,7 @@ const CAPABILITY_BADGES = [
 	['bar-chart-2', 'Charts'],
 	['file-text', 'Reports'],
 	['trending-up', 'Forecasts'],
-	['link', 'On-chain'],
+	['link', 'Onchain'],
 	['calendar', 'Alerts']
 ] as const
 
@@ -79,7 +79,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		selectors: ['[data-walkthrough="explore-button"]'],
 		title: 'Explore',
 		description:
-			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
+			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, onchain, and more.',
 		icon: 'layout-grid',
 		tone: 'brand',
 		placement: 'top'
@@ -129,14 +129,14 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		selectors: ['[data-walkthrough="mobile-explore-item"]'],
 		title: 'Explore',
 		description:
-			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
+			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, onchain, and more.',
 		icon: 'layout-grid',
 		tone: 'brand',
 		placement: 'top'
 	}
 }
 
-// Spotlight hues as theme colours: the glow, hairline, chip, and icon all derive from one variable.
+// Spotlight hues as theme colors: the glow, hairline, chip, and icon all derive from one variable.
 const TONE_VAR = {
 	brand: 'var(--color-brand)',
 	warning: 'var(--color-warning)',
@@ -386,7 +386,7 @@ export function OnboardingWalkthrough({
 									Welcome to LlamaAI
 								</Ariakit.DialogHeading>
 								<p className="body-md text-secondary">
-									AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
+									AI-powered research across DeFi, TradFi, and onchain data. Charts, reports, forecasts, and alerts —
 									all in one conversation.
 								</p>
 							</div>

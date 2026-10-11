@@ -160,7 +160,7 @@ function TokenPnlContent({
 				/>
 				{annualizedReturn != null ? (
 					<StatTile
-						label="Annualised return"
+						label="Annualized return"
 						value={<Change value={annualizedReturn} />}
 						sub={`Based on ${holdingPeriodDays}d period`}
 					/>
@@ -170,7 +170,7 @@ function TokenPnlContent({
 			<Panel>
 				<PanelHeader>
 					<PanelTitle as="h3" className="mr-0">
-						Price Over Time
+						Price over time
 					</PanelTitle>
 					<p className="mr-auto flex items-center gap-1 body-sm text-nowrap text-secondary">
 						<span>{formatDateLabel(start)}</span>
@@ -420,7 +420,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	return (
 		<>
 			<Card padding="strip">
-				<h1 className="heading-sm">Token Holder Profit and Loss</h1>
+				<h1 className="heading-sm">Token holder profit and loss</h1>
 			</Card>
 			<div className="grid flex-1 gap-2 xl:grid-cols-[300px_minmax(0,1fr)]">
 				<Card padding="sm" className="flex flex-col gap-3">

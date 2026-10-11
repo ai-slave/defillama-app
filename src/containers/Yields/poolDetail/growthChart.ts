@@ -2,7 +2,7 @@
 //
 // One line: the verified redemption rate (`verified.price_per_share`) rebased to the day the user
 // chose to deposit, i.e. what a holder's money actually became, measured by simulating their
-// withdrawal on-chain. The anchor is recomputed for whatever window is in view, which is why the
+// withdrawal onchain. The anchor is recomputed for whatever window is in view, which is why the
 // raw series lives here and the rebasing happens per-render.
 //
 // Deliberately NOT compared against the pool's reported APY: reported APY includes reward tokens
@@ -464,7 +464,7 @@ export function growthAxisDigits(span: number): number {
 	return Math.max(0, Math.min(6, Math.ceil(-Math.log10(span)) + 1))
 }
 
-// Only outcomes this build knows are labelled. An unknown one yields null and the tooltip omits
+// Only outcomes this build knows are labeled. An unknown one yields null and the tooltip omits
 // the row — never a guessed or negative claim about the pool.
 const OUTCOME_LABELS: Record<VerifiedExitOutcome, string> = {
 	ok_full: 'Exit: full',

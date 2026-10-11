@@ -152,7 +152,7 @@ const assetClassColumn = createDistinctTextColumn({
 	meta: textColumnMeta('w-[168px]', definitions.assetClass.description, definitions.assetClass.label)
 })
 
-/** Coloured wherever one value applies: on a leaf, and on a group whose children share it. */
+/** Colored wherever one value applies: on a leaf, and on a group whose children share it. */
 export function createAccessModelColumn(fold: RWAGroupTextFold) {
 	return createDistinctTextColumn({
 		id: 'accessModel',

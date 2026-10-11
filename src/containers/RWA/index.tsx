@@ -220,7 +220,7 @@ export function RWAOverview(props: RWAOverviewProps) {
 		() => perpsFilters?.filter((definition) => definition.kind !== 'venueType') ?? null,
 		[perpsFilters]
 	)
-	/* The split routes honour Venue Type DEX only (`includeCex=false`); CEX only and every other filter fold the
+	/* The split routes honor Venue Type DEX only (`includeCex=false`); CEX only and every other filter fold the
 	   per-market history in the browser (the chart, Change by Venue and the Volume card). */
 	const hasPerpsHistoryFilters =
 		perpsFiltersButVenueType != null &&

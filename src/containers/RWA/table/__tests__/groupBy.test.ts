@@ -117,7 +117,7 @@ describe('getRwaGroupMemberships', () => {
 		])
 	})
 
-	test('uses the category and the normalised asset group', () => {
+	test('uses the category and the normalized asset group', () => {
 		expect(getRwaGroupMemberships(row, 'category')).toEqual([
 			{ key: 'Treasuries', label: 'Treasuries', href: '/rwa/category/treasuries', icon: null, chain: null }
 		])

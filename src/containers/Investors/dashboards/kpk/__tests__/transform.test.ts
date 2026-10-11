@@ -68,7 +68,7 @@ describe('buildComposition', () => {
 		expect(buildComposition(sparse).dataset.source[1]).toEqual(['Jul 26', null])
 	})
 
-	test('gives a segment the same colour whatever position it arrives in', () => {
+	test('gives a segment the same color whatever position it arrives in', () => {
 		const reordered: KpkComposition = { ...comp, segments: [comp.segments[1], comp.segments[0]] }
 		const byName = new Map(buildComposition(comp).rows.map((row) => [row.name, row.color]))
 
@@ -79,7 +79,7 @@ describe('buildComposition', () => {
 
 	// Names on a single graph take free slots in name order, so the union across ranges
 	// has to decide them — not whichever range happens to be on screen.
-	test('keeps a surviving segment colour when another range drops an earlier name', () => {
+	test('keeps a surviving segment color when another range drops an earlier name', () => {
 		const colorNames = ['Balancer', 'Euler', 'Euler']
 		const widest = buildComposition(
 			{
@@ -215,7 +215,7 @@ describe('compositionColors', () => {
 	const theme = kpkChartColors(true)
 	const colorsOf = (names: ReadonlyArray<string>) => compositionColors(names, theme)
 
-	test('assigns one distinct colour per segment', () => {
+	test('assigns one distinct color per segment', () => {
 		const colors = colorsOf(['Morpho', 'Euler', 'Gearbox'])
 
 		expect(Object.keys(colors)).toHaveLength(3)
@@ -321,7 +321,7 @@ describe('compositionColors', () => {
 		]
 	}
 
-	test('gives every category on a live graph its own colour, as far as eight slots allow', () => {
+	test('gives every category on a live graph its own color, as far as eight slots allow', () => {
 		for (const names of Object.values(LIVE_BREAKDOWNS)) {
 			const colors = colorsOf(names)
 			const categories = names.filter((name) => !name.startsWith('Other ('))
@@ -331,7 +331,7 @@ describe('compositionColors', () => {
 		}
 	})
 
-	test('paints each category one colour across every live graph it appears on', () => {
+	test('paints each category one color across every live graph it appears on', () => {
 		const seen = new Map<string, Set<string>>()
 		for (const names of Object.values(LIVE_BREAKDOWNS)) {
 			for (const [name, color] of Object.entries(colorsOf(names))) {

@@ -37,7 +37,7 @@ export default function Overview() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">Chain Ecosystem</h2>
+			<h2 className="heading-xs">Chain ecosystem</h2>
 			<div className="grid grid-cols-2 gap-4">
 				<StatTile label="Chain TVL" value={tvl.currentFormatted} />
 				{tvl.currentBridgedFormatted && <StatTile label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
@@ -61,7 +61,7 @@ export default function Overview() {
 
 			{protocolRankings.length > 0 && (
 				<>
-					<h2 className="heading-xs">Protocol Rankings</h2>
+					<h2 className="heading-xs">Protocol rankings</h2>
 					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full text-left body-md">
 							<thead>
@@ -138,7 +138,7 @@ export default function Overview() {
 						charts={stables.charts}
 						valueSymbol="$"
 						title={stables.title}
-						subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged."
+						subtitle="Stablecoin supply circulating on Flare: native-minted vs bridged."
 						headingAs="h3"
 						containerClassName={CHART_FILL}
 						solidChartAreaStyle

@@ -17,7 +17,7 @@ function Picker() {
 	return (
 		<MultiSelectCombobox
 			heading="Protocols"
-			placeholder="Select Protocols…"
+			placeholder="Select protocols…"
 			data={data}
 			selectedValues={selected}
 			setSelectedValues={setSelected}

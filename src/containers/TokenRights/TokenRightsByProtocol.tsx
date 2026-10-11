@@ -137,7 +137,7 @@ export function TokenRightsByProtocol({
 					</SectionCard>
 
 					{/* Governance & Decisions */}
-					<SectionCard title="Governance Rights" badge="Control">
+					<SectionCard title="Governance rights" badge="Control">
 						<p className="body-sm">{governance.summary}</p>
 						<RightsRow
 							label="Governance Decisions"
@@ -174,7 +174,7 @@ export function TokenRightsByProtocol({
 							{resources.addresses.length > 0 ? (
 								<div className="flex flex-col gap-2 body-sm">
 									{resources.addresses.every((a) => !a.label) ? (
-										<h3 className="text-secondary">Foundation Multisigs / Addresses</h3>
+										<h3 className="text-secondary">Foundation multisigs / addresses</h3>
 									) : null}
 									{keyedOccurrences(resources.addresses, (a) => a.value).map(({ item: a, key }) => {
 										const isLink = a.value.startsWith('http://') || a.value.startsWith('https://')
@@ -230,7 +230,7 @@ export function TokenRightsByProtocol({
 				<div className="flex flex-col gap-2">
 					{hasPrimaryValueAccrual ? (
 						<GreenCard
-							title="Primary Value Accrual"
+							title="Primary value accrual"
 							tooltip="The main mechanism by which value accrues to token holders"
 						>
 							{valueAccrual.primary !== null ? (
@@ -242,7 +242,7 @@ export function TokenRightsByProtocol({
 
 					{hasEquityStatement ? (
 						<GreenCard
-							title="Equity Statement"
+							title="Equity statement"
 							tooltip="Protocol statement on the relationship between equity and token holders, and how value ultimately flows or may flow in the future"
 						>
 							<p className="body-sm">{alignment.equityStatement}</p>
@@ -250,7 +250,7 @@ export function TokenRightsByProtocol({
 					) : null}
 
 					{/* Economic Rights & Value Accrual */}
-					<SectionCard title="Economic Rights" badge="Value Capture">
+					<SectionCard title="Economic rights" badge="Value Capture">
 						{economic.summary !== null ? <p className="body-sm">{economic.summary}</p> : null}
 						<RightsRow label="Buybacks" tooltip={TOOLTIPS['Buybacks']} details={valueAccrual.buybacks.details}>
 							<DetailsTokenList display={valueAccrual.buybacks} />
@@ -323,7 +323,7 @@ export function TokenRightsByProtocol({
 					headerVariant === 'embedded' ? (
 						<div className="flex flex-wrap items-center gap-2 border-b border-subtle p-2">
 							<h2 className="group relative flex items-center gap-1 heading-xs">
-								Token Rights and Value Accrual
+								Token rights and value accrual
 								<a
 									aria-hidden="true"
 									tabIndex={-1}
@@ -673,7 +673,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 						Raise History
 					</Tooltip>
 				) : (
-					<h3 className="label-md">Raise History</h3>
+					<h3 className="label-md">Raise history</h3>
 				)}
 				<span className="label-sm text-secondary">
 					{raises.length} round{raises.length !== 1 ? 's' : ''} · <RaisesTotal {...summarizeRaises(raises)} /> total

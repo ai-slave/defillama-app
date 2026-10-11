@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, Textarea } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -156,7 +156,7 @@ export function TagsField({
 										square
 										disabled={disabled}
 										aria-label={`Remove tag ${tag}`}
-										ref={focusNeighbourOnLeave(() => inputRef.current)}
+										ref={focusNeighborOnLeave(() => inputRef.current)}
 										onClick={() => onChange(tags.filter((t) => t !== tag))}
 									/>
 								}

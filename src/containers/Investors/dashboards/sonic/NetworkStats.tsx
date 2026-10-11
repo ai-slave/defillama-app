@@ -235,7 +235,7 @@ export default function NetworkStats() {
 			{/* Recent Blocks */}
 			{stream.recentBlocks.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Recent Blocks</h2>
+					<h2 className="heading-xs">Recent blocks</h2>
 					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
@@ -278,7 +278,7 @@ export default function NetworkStats() {
 			{/* Fees & Epoch */}
 			{(data.fees || data.epoch) && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Fees & Epoch</h2>
+					<h2 className="heading-xs">Fees & epoch</h2>
 					<Card padding="none">
 						<div className="flex flex-col divide-y divide-(--border-subtle)">
 							{data.fees && (

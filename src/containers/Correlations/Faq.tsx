@@ -11,7 +11,7 @@ export function FAQ() {
 					other, and uncorrelated variables move independently of each other.
 				</div>
 				<div className="flex flex-col gap-1">
-					<h2 className="heading-xs">Pearson Correlation Coefficient</h2>
+					<h2 className="heading-xs">Pearson correlation coefficient</h2>
 					<p>
 						The Pearson Correlation Coefficient quantifies the estimated strength of the linear association between two
 						variables. It ranges from +1 to -1: +1 indicates a perfect positive linear correlation, -1 a perfect

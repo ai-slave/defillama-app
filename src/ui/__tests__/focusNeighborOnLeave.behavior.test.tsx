@@ -3,7 +3,7 @@
 import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { focusNeighbourOnLeave } from '../focus'
+import { focusNeighborOnLeave } from '../focus'
 
 let root: Root
 let container: HTMLDivElement
@@ -50,7 +50,7 @@ function List({
 						<button
 							type="button"
 							aria-disabled={keepOne && names.length === 1 ? true : undefined}
-							ref={focusNeighbourOnLeave(withFallback ? () => searchRef.current : undefined)}
+							ref={focusNeighborOnLeave(withFallback ? () => searchRef.current : undefined)}
 							onClick={() => setNames(names.filter((item) => item !== name))}
 						>
 							Remove {name}
@@ -91,19 +91,19 @@ test('removing the only row hands focus to the fallback', async () => {
 	expect(document.activeElement?.getAttribute('aria-label')).toBe('Search')
 })
 
-test('a neighbour that leaves in the same commit gives way to the fallback', async () => {
+test('a neighbor that leaves in the same commit gives way to the fallback', async () => {
 	act(() => root.render(<List initial={['Alpha', 'Beta']} hideBelowTwo />))
 	await click(button('Remove Alpha'))
 	expect(document.activeElement?.getAttribute('aria-label')).toBe('Search')
 })
 
-test('a neighbour that disables in the same commit gives way to the fallback', async () => {
+test('a neighbor that disables in the same commit gives way to the fallback', async () => {
 	act(() => root.render(<List initial={['Alpha', 'Beta']} keepOne />))
 	await click(button('Remove Alpha'))
 	expect(document.activeElement?.getAttribute('aria-label')).toBe('Search')
 })
 
-test('without a fallback, a disabled neighbour that stays focusable still takes focus', async () => {
+test('without a fallback, a disabled neighbor that stays focusable still takes focus', async () => {
 	act(() => root.render(<List initial={['Alpha', 'Beta']} keepOne withFallback={false} />))
 	await click(button('Remove Alpha'))
 	expect(document.activeElement).toBe(button('Remove Beta'))

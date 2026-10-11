@@ -137,7 +137,7 @@ test('closing an edited custom column asks before dropping the edit', async () =
 	expect(formula.isConnected).toBe(true)
 })
 
-test('a confirmed delete hands focus to Add Custom Column, since the deleted column takes its Delete button', async () => {
+test('a confirmed delete hands focus to Add custom column, since the deleted column takes its Delete button', async () => {
 	localStorage.setItem(
 		'DEFILLAMA',
 		JSON.stringify({ CUSTOM_COLUMNS: [{ id: 'ratio', name: 'Alpha', formula: 'tvl', formatType: 'number' }] })
@@ -160,7 +160,7 @@ test('a confirmed delete hands focus to Add Custom Column, since the deleted col
 	})
 	await click([...dialog.querySelectorAll('button')].find((el) => el.textContent === 'Delete')!)
 
-	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add Custom Column'))
+	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add custom column'))
 })
 
 test('saving a custom column without a name or formula says so under each field and focuses the name', async () => {
@@ -174,7 +174,7 @@ test('saving a custom column without a name or formula says so under each field 
 	await click(document.querySelector<HTMLButtonElement>('button[aria-label="Columns dropdown"]')!)
 	const add = await waitForUi(() => {
 		const element = [...document.querySelectorAll<HTMLElement>('button, [role="menuitem"]')].find(
-			(el) => el.textContent?.trim() === 'Add Custom Column'
+			(el) => el.textContent?.trim() === 'Add custom column'
 		)
 		expect(element).toBeDefined()
 		return element!

@@ -25,7 +25,7 @@ export const popoverHovercardSurfaceStyles = `z-50 max-h-[min(calc(100dvh-80px),
 /* Text-only tooltips: same chrome as hovercards, but radius follows the
    component's size — 6px on a one-line bubble, not the popover 12px. The
    surface sets text-primary, so a tooltip rendered in place (portal={false})
-   never takes its anchor's colour, such as a toast's red title. */
+   never takes its anchor's color, such as a toast's red title. */
 export const tooltipSurfaceStaticStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay body-sm text-primary shadow-overlay lg:max-h-(--popover-available-height)`
 
 export const tooltipSurfaceStyles = `${tooltipSurfaceStaticStyles} ${tooltipMotionStyles}`

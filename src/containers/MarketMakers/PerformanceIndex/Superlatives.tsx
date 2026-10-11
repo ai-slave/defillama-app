@@ -66,7 +66,7 @@ export function Superlatives({
 		<UICard padding="none" className="overflow-hidden">
 			<div className="grid grid-cols-1 gap-px bg-border-subtle min-[713px]:grid-cols-2 min-[1120px]:grid-cols-4">
 				<Card
-					label={`Top Avg. (+/-) 2.00% Depth (${period})`}
+					label={`Top Avg (+/-) 2.00% Depth (${period})`}
 					winner={topDepth}
 					value={formatUsd(topDepth?.bidAskDepth?.value, { compact: true }) ?? '—'}
 				/>

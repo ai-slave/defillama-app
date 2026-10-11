@@ -73,8 +73,8 @@ describe('filters query round trip', () => {
 
 describe('formatTokensActiveFilter', () => {
 	test('formats ranges and one-sided filters', () => {
-		expect(formatTokensActiveFilter({ id: 'rank', min: 100, max: 500 })).toBe('MCap Rank: 100 - 500')
-		expect(formatTokensActiveFilter({ id: 'marketCap', min: 1_000_000_000, max: null })).toBe('MCap ≥ $1B')
-		expect(formatTokensActiveFilter({ id: 'priceChange7d', min: null, max: -5 })).toBe('7D Change ≤ -5%')
+		expect(formatTokensActiveFilter({ id: 'rank', min: 100, max: 500 })).toBe('Mcap Rank: 100 - 500')
+		expect(formatTokensActiveFilter({ id: 'marketCap', min: 1_000_000_000, max: null })).toBe('Mcap ≥ $1B')
+		expect(formatTokensActiveFilter({ id: 'priceChange7d', min: null, max: -5 })).toBe('7d Change ≤ -5%')
 	})
 })

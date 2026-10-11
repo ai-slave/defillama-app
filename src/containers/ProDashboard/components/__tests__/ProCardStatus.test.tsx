@@ -21,9 +21,9 @@ afterEach(async () => {
 	container.remove()
 })
 
-function buttonLabelled(label: string) {
+function buttonLabeled(label: string) {
 	const match = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.trim() === label)
-	if (!match) throw new Error(`Expected a button labelled "${label}"`)
+	if (!match) throw new Error(`Expected a button labeled "${label}"`)
 	return match
 }
 
@@ -50,7 +50,7 @@ test('the error state is an alert and calls back from Try again', async () => {
 	)
 	expect(alertTexts(container)).toHaveLength(1)
 	expect(alertTexts(container)[0]).toContain('The request failed')
-	await act(async () => buttonLabelled('Try again').click())
+	await act(async () => buttonLabeled('Try again').click())
 	expect(onRetry).toHaveBeenCalledOnce()
 })
 
@@ -65,7 +65,7 @@ test('a Try again that loads the content outside any card hands focus to the pag
 		)
 	}
 	await act(async () => root.render(<Harness />))
-	const retry = buttonLabelled('Try again')
+	const retry = buttonLabeled('Try again')
 	await act(async () => {
 		retry.focus()
 		retry.click()
@@ -86,7 +86,7 @@ test('the empty state is a status and can carry one action', async () => {
 		root.render(<ProCardEmpty message="This query hasn't run yet." action={{ label: 'Run query', onClick }} />)
 	)
 	expect(container.querySelector('[role="status"]')?.textContent).toContain("This query hasn't run yet.")
-	await act(async () => buttonLabelled('Run query').click())
+	await act(async () => buttonLabeled('Run query').click())
 	expect(onClick).toHaveBeenCalledOnce()
 })
 
@@ -110,7 +110,7 @@ test('a warning notice is a status, an error notice is an alert', async () => {
 	)
 	const alert = container.querySelector('[role="alert"]')
 	expect(alert?.textContent).toContain("Couldn't refresh this query.")
-	await act(async () => buttonLabelled('Try again').click())
+	await act(async () => buttonLabeled('Try again').click())
 	expect(onClick).toHaveBeenCalledOnce()
 })
 
@@ -124,8 +124,8 @@ test('a failed refresh warns without hiding the data and retries', async () => {
 	const onRetry = vi.fn()
 	await act(async () => root.render(<ProCardRefreshFailed retry={{ refetch: onRetry, isFetching: false }} />))
 	const status = container.querySelector('[role="status"]')
-	expect(status?.contains(buttonLabelled('Try again'))).toBe(true)
+	expect(status?.contains(buttonLabeled('Try again'))).toBe(true)
 	expect(container.querySelector('[role="alert"]')).toBeNull()
-	await act(async () => buttonLabelled('Try again').click())
+	await act(async () => buttonLabeled('Try again').click())
 	expect(onRetry).toHaveBeenCalledOnce()
 })

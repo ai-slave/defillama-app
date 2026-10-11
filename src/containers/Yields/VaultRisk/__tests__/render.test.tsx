@@ -523,7 +523,7 @@ describe('VaultRiskSection render', () => {
 
 	test('gives a vendor whose on-chain admin is unresolved its own oracle row (aave)', async () => {
 		const html = await renderAaveCollateral()
-		expect(text(html)).toContain('Chainlink· on-chain control not resolved')
+		expect(text(html)).toContain('Chainlink· onchain control not resolved')
 		expect(html).toContain('mispriceable if this feed lies')
 	})
 
@@ -563,7 +563,7 @@ describe('VaultRiskSection render', () => {
 			/>
 		)
 		expect(html).toContain('a 4/9 Safe multisig') // the resolved admin row still renders
-		expect(html).toContain('on-chain control not resolved') // …and so does the $8m vendor row
+		expect(html).toContain('onchain control not resolved') // …and so does the $8m vendor row
 		// with an admin row covering (nearly) all of the vendor's exposure, the vendor row is deduped
 		d.vault.oracle_dependencies[0]!.exposure_usd = 8_000_000
 		const vm2 = buildVaultRiskVM(d)
@@ -578,7 +578,7 @@ describe('VaultRiskSection render', () => {
 			/>
 		)
 		expect(html2).toContain('a 4/9 Safe multisig')
-		expect(html2).not.toContain('on-chain control not resolved')
+		expect(html2).not.toContain('onchain control not resolved')
 	})
 
 	test('renders vendorless drainable exposure as explicit rows instead of dropping it (sUSDe / mHYPER shapes)', async () => {
@@ -631,12 +631,12 @@ describe('VaultRiskSection render', () => {
 		// the panel renders at all (previously: no proven vendor + no admins → null, header total orphaned)
 		expect(html).toContain('Oracle dependencies')
 		// the immutable exchange rate is named for what it is, not "control not resolved"
-		expect(html).toContain('On-chain exchange rate')
+		expect(html).toContain('Onchain exchange rate')
 		expect(html).toContain('no external feed or admin')
 		expect(html).toContain('mispriceable only via the issuing contract')
 		// the unidentified-vendor gap stays an honest, visible row
 		expect(html).toContain('Unidentified feeds')
-		expect(html).toContain('vendor and on-chain control not resolved')
+		expect(html).toContain('vendor and onchain control not resolved')
 	})
 
 	test('aave collateral renders each bad_debt_basis distinctly (precise / approx / confident-zero / unmodeled)', async () => {

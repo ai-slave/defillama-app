@@ -73,7 +73,7 @@ export function useRwaPerpsChartQuery(url: string, enabled: boolean) {
 
 /**
  * The Perps time series by the Group by: a server split per venue, asset group or reference asset, or the
- * per-contract split (about 8 MB, so only when None is picked). Venue Type DEX only is the one flag the split honours.
+ * per-contract split (about 8 MB, so only when None is picked). Venue Type DEX only is the one flag the split honors.
  */
 export function useRwaPerpsChartDataset({ source, metric, includeCex, scope, enabled }: RwaPerpsChartDatasetRequest): {
 	chartDataset: RWAPositionalChartDataset

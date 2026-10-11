@@ -144,7 +144,7 @@ describe('the ops the chart SDK emits survive the wire', () => {
 
 	// A vertical line per mark wrote its sentence across the candles; a badge keeps the axis readable
 	// and the number is what the answer text refers to.
-	test('a marks set is one drawing and one axis badge per mark, with its own colour', async () => {
+	test('a marks set is one drawing and one axis badge per mark, with its own color', async () => {
 		const payload = normalizeTerminalOpsPayload({ symbol: 'AAVE', interval: '1D', ops: [marks] })
 		expect(payload?.ops).toEqual([marks])
 

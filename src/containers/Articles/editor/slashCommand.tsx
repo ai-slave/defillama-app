@@ -241,7 +241,7 @@ const ALL_ITEMS: Array<SlashCommandItem> = [
 	},
 	{
 		id: 'callout-bio',
-		title: 'Interview Bio',
+		title: 'Interview bio',
 		description: 'Highlighted bio with blue stroke (no quote marks)',
 		icon: '◑',
 		group: 'Custom',

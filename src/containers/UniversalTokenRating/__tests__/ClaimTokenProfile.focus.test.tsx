@@ -147,7 +147,7 @@ async function fillRequiredFields() {
 }
 
 test('a missing required field takes focus, is marked invalid and reads its error', async () => {
-	await press(button('Submit Disclosure Details'))
+	await press(button('Submit disclosure details'))
 	const firstName = field('First name')
 	expect(document.activeElement).toBe(firstName)
 	expect(firstName.required).toBe(true)
@@ -170,7 +170,7 @@ test('an invalid disclosure cell takes focus once the reader fields are complete
 		name.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 
-	await press(button('Submit Disclosure Details'))
+	await press(button('Submit disclosure details'))
 
 	expect(document.activeElement).toBe(role)
 	expect(role.getAttribute('aria-invalid')).toBe('true')
@@ -182,7 +182,7 @@ test('a failed submit stays on screen while its retry runs', async () => {
 	const answers = [Promise.resolve(Response.json({ error: 'Forgd is unavailable' }, { status: 503 })), retry.promise]
 	http.serve({ '/api/public/utr/claim': () => answers.shift()! })
 	await fillRequiredFields()
-	const submit = button('Submit Disclosure Details')
+	const submit = button('Submit disclosure details')
 	await press(submit)
 	await waitForUi(() => expect(container.querySelector('[role="alert"]')).not.toBeNull())
 	const failure = container.querySelector('[role="alert"]')!.textContent
@@ -199,7 +199,7 @@ test('Submit keeps focus while the request runs, and the confirmation takes it o
 	const answer = Promise.withResolvers<Response>()
 	http.serve({ '/api/public/utr/claim': () => answer.promise })
 	await fillRequiredFields()
-	const submit = button('Submit Disclosure Details')
+	const submit = button('Submit disclosure details')
 	await press(submit)
 	await waitForUi(() => expect(submit.getAttribute('aria-busy')).toBe('true'))
 	expect(submit.disabled).toBe(false)

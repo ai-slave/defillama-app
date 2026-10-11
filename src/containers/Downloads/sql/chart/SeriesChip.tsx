@@ -1,4 +1,4 @@
-import { focusNeighbourOnLeave } from '~/ui/focus'
+import { focusNeighborOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ChartConfig, ChartType } from '../chartConfig'
@@ -95,7 +95,7 @@ export function SeriesChip({
 				render={
 					<button
 						type="button"
-						ref={focusNeighbourOnLeave()}
+						ref={focusNeighborOnLeave()}
 						onClick={onRemove}
 						aria-label={`Remove ${name}`}
 						className="touch-target flex h-4 w-5 items-center justify-center rounded-sm text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-hover-row hover:text-primary focus-visible:opacity-100 pointer-coarse:opacity-100"

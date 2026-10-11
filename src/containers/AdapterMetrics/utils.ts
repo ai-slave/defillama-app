@@ -346,9 +346,9 @@ const MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS = 9
 const MIN_COMPLETE_DAILY_GAP_MS = 23 * 60 * 60 * 1000
 
 /**
- * Palette colours for the series a chart draws, in rank order. A series keeps its canonical colour (its colour in the
- * unfiltered chart), so colours hold while the picker changes; the rest take the colours left free, by rank. "Others"
- * is always grey. A picker chart drawing more than ten series repeats colours.
+ * Palette colors for the series a chart draws, in rank order. A series keeps its canonical color (its color in the
+ * unfiltered chart), so colors hold while the picker changes; the rest take the colors left free, by rank. "Others"
+ * is always gray. A picker chart drawing more than ten series repeats colors.
  */
 function getSeriesColors(
 	names: ReadonlyArray<string>,
@@ -372,7 +372,7 @@ function getSeriesColors(
 	return colors
 }
 
-/** The canonical colours: the top ranked series of the unfiltered chart, one palette colour each. */
+/** The canonical colors: the top ranked series of the unfiltered chart, one palette color each. */
 function getCanonicalSeriesColors(rankedNames: ReadonlyArray<string>): Map<string, string> {
 	const topNames: Array<string> = []
 	for (const name of rankedNames) {

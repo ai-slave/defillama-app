@@ -34,19 +34,19 @@ export const VOLUME_COLUMNS: Array<ColumnConfig> = [
 	{
 		metricKey: 'orderFillVolumeMaker',
 		marketKey: 'orderFillVolumeMakerMarketPercentage',
-		label: 'Avg. Maker',
+		label: 'Avg Maker',
 		kind: 'usd'
 	},
 	{
 		metricKey: 'orderFillVolumeTaker',
 		marketKey: 'orderFillVolumeTakerMarketPercentage',
-		label: 'Avg. Taker',
+		label: 'Avg Taker',
 		kind: 'usd'
 	},
 	{
 		metricKey: 'orderFillVolumeTotal',
 		marketKey: 'orderFillVolumeTotalMarketPercentage',
-		label: 'Avg. Maker & Taker',
+		label: 'Avg Maker & Taker',
 		kind: 'usd'
 	},
 	{ metricKey: 'volumeLoanUtilization', label: 'Volume Loan Utilization', kind: 'percent' }
@@ -66,9 +66,9 @@ export const KPI_COLUMNS: Array<ColumnConfig> = [
 ]
 
 export const DEPTH_COLUMNS: Array<ColumnConfig> = [
-	{ metricKey: 'bidDepth', marketKey: 'bidDepthMarketPercentage', label: 'Avg. Bid Depth', kind: 'usd' },
-	{ metricKey: 'askDepth', marketKey: 'askDepthMarketPercentage', label: 'Avg. Ask Depth', kind: 'usd' },
-	{ metricKey: 'bidAskDepth', marketKey: 'bidAskDepthMarketPercentage', label: 'Avg. Bid & Ask Depth', kind: 'usd' },
+	{ metricKey: 'bidDepth', marketKey: 'bidDepthMarketPercentage', label: 'Avg Bid Depth', kind: 'usd' },
+	{ metricKey: 'askDepth', marketKey: 'askDepthMarketPercentage', label: 'Avg Ask Depth', kind: 'usd' },
+	{ metricKey: 'bidAskDepth', marketKey: 'bidAskDepthMarketPercentage', label: 'Avg Bid & Ask Depth', kind: 'usd' },
 	{ metricKey: 'uptime', label: 'Uptime %', kind: 'percent' },
 	{ metricKey: 'depthLoanUtilization', label: 'Depth Loan Utilization', kind: 'percent' }
 ]

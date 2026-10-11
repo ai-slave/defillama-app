@@ -47,10 +47,10 @@ function PressPage() {
 	return (
 		<Layout
 			title="DefiLlama in the Press - Media Coverage & Mentions"
-			description="DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB."
+			description="DefiLlama is used across a large number of media organizations, governments, and financial institutions notably by the US Treasury and the ECB."
 			canonicalUrl="/press"
 		>
-			<EntityTitleStrip title="Press & Media" />
+			<EntityTitleStrip title="Press & media" />
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About DefiLlama</h2>
@@ -103,7 +103,7 @@ function PressPage() {
 
 				<p>DefiLlama Data is free to use by anyone for press usage. Attribution is always appreciated.</p>
 				<hr className="border-subtle" />
-				<p>DefiLlama is used across a large number of media organisations, governments, and financial institutions.</p>
+				<p>DefiLlama is used across a large number of media organizations, governments, and financial institutions.</p>
 				<div className="mt-4 grid w-full grid-cols-[repeat(auto-fit,minmax(100px,200px))] place-content-center gap-2">
 					{pressList.map((imageFilename) => (
 						<a
@@ -120,7 +120,7 @@ function PressPage() {
 			</Card>
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
-				<h2 className="heading-xs">Branding Assets</h2>
+				<h2 className="heading-xs">Branding assets</h2>
 				<hr className="border-subtle" />
 				<p>
 					We have a few guidelines for using our brand resources. These ensure that our brand is always recognizable and

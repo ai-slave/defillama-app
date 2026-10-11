@@ -3,7 +3,7 @@
  *
  * - On a selected-chain page, canonical `/lite/protocols2` `protocol.chains` decides TVL membership; adapter-only
  *   fallback rows use their adapter's source chains. Adapter metric chains may enrich display metadata but never admit
- *   a canonical off-chain TVL child.
+ *   a canonical offchain TVL child.
  * - Membership is filtered before parent grouping: one remaining child shows as that child, several form a parent, and a
  *   declared member missing its exact chain snapshot makes that parent's TVL unavailable.
  * - Category and tag directory totals summarize a successful listing: a metadata-only protocol with null current or

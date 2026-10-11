@@ -55,7 +55,7 @@ export function dragAnnouncement(
 		const place = placeFor(context, activeId)
 		return `Picked up ${label}.${place ? ` Currently at ${place}.` : ''}`
 	}
-	if (phase === 'cancel') return `Moving ${label} cancelled.`
+	if (phase === 'cancel') return `Moving ${label} canceled.`
 	if (phase === 'over') {
 		if (overId === null) return `${label} is not over a card.`
 		const overLabel = labelFor(context, overId)

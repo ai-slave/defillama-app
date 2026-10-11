@@ -223,7 +223,7 @@ export function chartStack(
 }
 
 /**
- * The chart's one stack of drawn series. Past the palette, colours repeat, so the renderer recolours this stack by
+ * The chart's one stack of drawn series. Past the palette, colors repeat, so the renderer recolors this stack by
  * overlap and the tooltip names the band under the pointer. Null without a stack, with stacks side by side (height
  * alone cannot tell them apart), or with a strategy other than ECharts' default, which stacks positive and negative
  * values apart.

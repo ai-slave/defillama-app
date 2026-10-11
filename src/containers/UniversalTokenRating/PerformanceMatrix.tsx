@@ -98,7 +98,7 @@ export function formatMatrixTooltip(row: UtrLeaderboardRow, grading: UtrGradingC
 	</div>`
 }
 
-/** One point per row, at its disclosure and performance scores, in its overall grade colour and drawn as its logo. */
+/** One point per row, at its disclosure and performance scores, in its overall grade color and drawn as its logo. */
 export function buildMatrixPoints(
 	rows: Array<UtrLeaderboardRow>,
 	icons: MatrixIconMap,
