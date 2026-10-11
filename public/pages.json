@@ -928,7 +928,7 @@
     {
       "name": "Tools",
       "route": "/tools",
-      "icon": "pencil-ruler"
+      "icon": "wrench"
     },
     {
       "name": "Chains",
@@ -959,7 +959,7 @@
     {
       "name": "RWA",
       "route": "/rwa",
-      "icon": "banknote",
+      "icon": "landmark",
       "searchKeywords": [
         "rwa",
         "rwas",
@@ -970,17 +970,17 @@
     {
       "name": "Exchanges",
       "route": "/exchanges",
-      "icon": "bar-chart-2"
+      "icon": "arrow-left-right"
     },
     {
       "name": "MiCA",
       "route": "/mica",
-      "icon": "clipboard-check"
+      "icon": "scale"
     },
     {
       "name": "Tokens",
       "route": "/tokens",
-      "icon": "tag"
+      "icon": "coins"
     },
     {
       "name": "Equities",
@@ -1008,7 +1008,7 @@
     {
       "name": "Pre-IPO",
       "route": "/pre-ipo",
-      "icon": "briefcase-business",
+      "icon": "rocket",
       "searchKeywords": [
         "pre ipo",
         "pre-ipo",
@@ -1018,7 +1018,7 @@
     {
       "name": "Market Makers",
       "route": "/market-makers",
-      "icon": "star",
+      "icon": "droplets",
       "searchKeywords": [
         "market maker",
         "leaderboard",
@@ -1031,7 +1031,7 @@
     {
       "name": "Universal Token Rating",
       "route": "/universal-token-rating",
-      "icon": "bar-chart-2",
+      "icon": "token-rating",
       "searchKeywords": [
         "utr",
         "token rating",
@@ -1054,23 +1054,24 @@
     {
       "name": "DEX Aggregator",
       "route": "https://swap.defillama.com",
-      "icon": "landmark"
+      "icon": "route"
     },
     {
       "name": "Investor Relations",
       "route": "https://investors.defillama.com",
-      "icon": "trending-up"
+      "icon": "presentation"
     },
     {
       "name": "DefiLlama Research",
-      "route": "/research"
+      "route": "/research",
+      "icon": "research"
     }
   ],
   "Premium": [
     {
       "name": "Pricing",
       "route": "/subscription",
-      "icon": "users"
+      "icon": "gem"
     },
     {
       "name": "Mobile App",
@@ -1081,6 +1082,7 @@
     {
       "name": "LlamaAI",
       "route": "/ai",
+      "icon": "llamaai",
       "umamiEvent": "nav-llamaai-click"
     },
     {
@@ -1091,7 +1093,7 @@
     {
       "name": "Custom Dashboards",
       "route": "/pro",
-      "icon": "blocks"
+      "icon": "layout-dashboard"
     },
     {
       "name": "Sheets",
@@ -1101,7 +1103,7 @@
     {
       "name": "LlamaFeed",
       "route": "https://llamafeed.io",
-      "icon": "activity",
+      "icon": "rss",
       "umamiEvent": "nav-llamafeed-click"
     }
   ],

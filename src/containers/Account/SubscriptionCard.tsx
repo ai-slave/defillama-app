@@ -105,7 +105,7 @@ export function SubscriptionCard({
 							pending={isTopupLoading}
 						>
 							Top up
-							<Icon name="circle-external-link" className="size-4 shrink-0" />
+							<Icon name="external-link" className="size-4 shrink-0" />
 						</Button>
 					)}
 					<Button
@@ -115,7 +115,7 @@ export function SubscriptionCard({
 						pending={isManageLoading}
 					>
 						{manageLabel}
-						<Icon name="circle-external-link" className="size-4 shrink-0" />
+						<Icon name="external-link" className="size-4 shrink-0" />
 					</Button>
 					<Button size="md" onClick={onCancel}>
 						Cancel subscription

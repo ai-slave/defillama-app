@@ -375,7 +375,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 			{slackAcquisition ? (
 				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-muted bg-sub-purple-faint px-4 py-3 text-left">
 					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-tint">
-						<Icon name="chat" className="size-4 text-sub-purple-text" />
+						<Icon name="message-square" className="size-4 text-sub-purple-text" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<span className="label-md text-primary">LlamaAI is ready in Slack</span>
@@ -418,9 +418,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 										style={{ backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)` }}
 									>
 										{option.iconType === 'svg' ? (
-											<svg className="size-[18px]" style={{ color: isSelected ? '#FDE0A9' : c }}>
-												<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-											</svg>
+											<Icon name="llamaai" className="size-[18px]" style={{ color: isSelected ? '#FDE0A9' : c }} />
 										) : (
 											<Icon
 												name={option.iconName}

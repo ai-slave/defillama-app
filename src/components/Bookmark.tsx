@@ -76,10 +76,6 @@ export function Bookmark({
 				}
 			}
 
-	const buttonStyle: React.CSSProperties & Record<'--fill-icon', string> = {
-		'--fill-icon': isSaved ? 'var(--text-primary)' : 'none'
-	}
-
 	return (
 		<Tooltip
 			content={label}
@@ -91,7 +87,6 @@ export function Bookmark({
 					square
 					type="button"
 					{...props}
-					style={buttonStyle}
 					onClick={(event) => {
 						onButtonClick?.(event)
 						if (!event.defaultPrevented) onClick()
@@ -99,7 +94,7 @@ export function Bookmark({
 				/>
 			}
 		>
-			<Icon name="bookmark" className="size-4 shrink-0" />
+			<Icon name="bookmark" className={isSaved ? 'size-4 shrink-0 fill-current' : 'size-4 shrink-0'} />
 			<span className="sr-only">{label}</span>
 		</Tooltip>
 	)

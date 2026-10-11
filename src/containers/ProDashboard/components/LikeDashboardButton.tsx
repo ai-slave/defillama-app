@@ -35,7 +35,7 @@ export function LikeDashboardButton({
 				/>
 			}
 		>
-			<Icon name="star" className={isLiked ? 'size-3.5 fill-current text-warning' : 'size-3.5 fill-none'} />
+			<Icon name="star" className={isLiked ? 'size-3.5 fill-current text-warning' : 'size-3.5'} />
 			<span>{likeCount ?? currentDashboard.likeCount ?? 0}</span>
 			<span className="sr-only">Stars</span>
 		</Tooltip>

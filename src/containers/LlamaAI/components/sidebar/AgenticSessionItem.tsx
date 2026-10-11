@@ -315,7 +315,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						render={<span aria-label={`Terminal chart, ${terminalSymbol}`} />}
 						className="flex shrink-0 items-center"
 					>
-						<Icon name="bar-chart" className="size-3.5 shrink-0 text-tertiary" />
+						<Icon name="bar-chart-2" className="size-3.5 shrink-0 text-tertiary" />
 					</Tooltip>
 				) : null}
 				{session.hasUnseenCompletion ? (

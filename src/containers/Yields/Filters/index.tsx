@@ -180,22 +180,12 @@ function SaveViewForm({
 	)
 }
 
-// Unset --fill-icon renders the sprite's bookmark solid black.
-const watchlistIconStyle: React.CSSProperties & Record<'--fill-icon', string> = { '--fill-icon': 'none' }
-
 function WatchlistLink() {
 	return (
 		<Tooltip
 			content="Watchlist"
 			render={
-				<Button
-					as={BasicLink}
-					href="/yields/watchlist"
-					size="md"
-					square
-					style={watchlistIconStyle}
-					data-umami-event="yields-watchlist-open"
-				/>
+				<Button as={BasicLink} href="/yields/watchlist" size="md" square data-umami-event="yields-watchlist-open" />
 			}
 		>
 			<Icon name="bookmark" className="size-4 shrink-0" />

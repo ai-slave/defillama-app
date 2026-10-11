@@ -191,7 +191,7 @@ function RatingStars({
 						<Icon
 							name="star"
 							aria-hidden="true"
-							className={`size-5${star <= (hovered || value) ? 'fill-current text-warning' : 'text-secondary'} transition-colors`}
+							className={`size-5 ${star <= (hovered || value) ? 'fill-current text-warning' : 'text-secondary'} transition-colors`}
 						/>
 					</span>
 				))}

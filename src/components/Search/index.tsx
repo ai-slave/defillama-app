@@ -79,9 +79,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 				data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 				onClick={freeLabel.trackEntryClick}
 			>
-				<svg className="size-4 shrink-0">
-					<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-				</svg>
+				<Icon name="llamaai" className="size-4 shrink-0" />
 				{isClient && shouldSkipLanding ? (
 					<span className="sr-only">Ask LlamaAI</span>
 				) : (
@@ -336,9 +334,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 					onClick={freeLabel.trackEntryClick}
 				>
-					<svg className="size-4 shrink-0">
-						<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-					</svg>
+					<Icon name="llamaai" className="size-4 shrink-0" />
 					{isClient && shouldSkipLanding ? (
 						<span className="whitespace-nowrap">Ask LlamaAI</span>
 					) : (

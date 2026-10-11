@@ -3,7 +3,6 @@ import type { SVGProps } from 'react'
 const RESEARCH_ICON_NAMES = [
 	'research-media-kit',
 	'calendly-mark',
-	'research-icon',
 	'rss',
 	'rss-mark',
 	'rss-feed',

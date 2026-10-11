@@ -372,6 +372,8 @@ Each component's header comment holds its own rules. Read it before using the co
 
 Icons:
 
+- Every interface icon is a symbol in the one sprite (`Icon`, `src/ui/Icon.tsx`), copied unchanged from lucide.dev: a 24px canvas, a 2px stroke, round caps and joins, `currentColor`. Never paste an export from Figma or another icon set, and never draw an icon inline in a component. A glyph Lucide lacks (the unlock schedules) is drawn on the same grid. A brand logo comes from simpleicons.org into the Brands group; DefiLlama's product marks (LlamaAI, Research, the token rating) sit in the DefiLlama group. `src/ui/__tests__/Icon.test.tsx` fails a symbol that breaks the grid, stroke or color rules. The `Icon` header lists the steps to add one.
+- Icons are outlines. A star, bookmark or pin shows its on state with `fill-current`. The only solid icons are two status marks, the verified seal (`badge-check`) and the warning triangle (`alert-triangle-filled`), plus brand logos and DefiLlama's marks.
 - Affordance indicators (chevrons, resting sort carets, help circles, drag handles) are `text-tertiary`; never ship an icon that inherits whatever tier surrounds it.
 - An icon beside a label in the same control inherits `currentColor`, so it moves with its label on hover and active.
 - An icon-only action (copy, close, download, settings, pagination) rests on `text-secondary` and turns `text-primary` on hover and focus, never dimmed with opacity.

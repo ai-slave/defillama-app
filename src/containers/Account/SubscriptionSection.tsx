@@ -191,7 +191,7 @@ function PastDueSubscriptionCard({
 						pending={isUpdateLoading}
 					>
 						Update payment on Stripe
-						<Icon name="circle-external-link" className="size-3.5 shrink-0" />
+						<Icon name="external-link" className="size-3.5 shrink-0" />
 					</Button>
 				)}
 				{onCancel && (

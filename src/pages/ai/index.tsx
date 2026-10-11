@@ -282,9 +282,7 @@ function CTAButton() {
 	if (loaders.userLoading) {
 		return (
 			<GoldCta as="span" size="lg" aria-disabled className="relative z-10">
-				<svg className="size-4 shrink-0">
-					<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-				</svg>
+				<Icon name="llamaai" className="size-4 shrink-0" />
 				<span>LlamaAI</span>
 			</GoldCta>
 		)
@@ -298,9 +296,7 @@ function CTAButton() {
 			data-umami-event="llamaai-landing-cta-subscribed"
 			className="relative z-10"
 		>
-			<svg className="size-4 shrink-0">
-				<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-			</svg>
+			<Icon name="llamaai" className="size-4 shrink-0" />
 			<span>Ask LlamaAI</span>
 		</GoldCta>
 	) : (
@@ -315,9 +311,7 @@ function CTAButton() {
 			data-umami-event="llamaai-landing-cta-unsubscribed"
 			className="relative z-10"
 		>
-			<svg className="size-4 shrink-0">
-				<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-			</svg>
+			<Icon name="llamaai" className="size-4 shrink-0" />
 			<span>Try LlamaAI for free</span>
 		</GoldCta>
 	)

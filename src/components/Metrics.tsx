@@ -244,9 +244,6 @@ export function LinkToMetricOrToolPage({
 	pinnedRoutes: Set<string>
 }) {
 	const isPinned = pinnedRoutes.has(page.route)
-	const pinStyle: React.CSSProperties & Record<'--icon-fill', string> = {
-		'--icon-fill': isPinned ? 'white' : 'none'
-	}
 
 	const dialogStore = Ariakit.useDialogContext()
 
@@ -311,7 +308,7 @@ export function LinkToMetricOrToolPage({
 				// quiet there so a grid of cards is not a grid of brand squares.
 				className={`touch-target absolute top-1 right-1 hidden rounded-md p-1.5 group-focus-within:block group-hover:block group-data-[pinned=true]:block pointer-coarse:block ${isPinned ? 'bg-brand text-on-brand' : 'bg-brand text-on-brand pointer-coarse:bg-transparent pointer-coarse:text-tertiary'}`}
 			>
-				<Icon name="pin" className="size-3.5" style={pinStyle} />
+				<Icon name="pin" className={isPinned ? 'size-3.5 fill-current' : 'size-3.5'} />
 			</Tooltip>
 		</div>
 	)

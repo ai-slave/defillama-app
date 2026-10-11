@@ -1,15 +1,11 @@
 import type * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { freeBadgeBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
-import { ResearchIcon } from '~/components/ResearchIcon'
-import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { PromoBadge } from '~/ui/PromoBadge'
 import { navPath } from './path'
-
-type NavIconName = IIcon['name']
 
 export const navLinkStyles =
 	'group/link -ml-1.5 flex flex-1 items-center gap-3 rounded-md p-1.5 cv-auto-30 text-primary hover:bg-hover-row focus-visible:bg-hover-row not-data-[linkactive=true]:active:bg-pressed-row data-[linkactive=true]:bg-brand data-[linkactive=true]:text-on-brand data-[linkactive=true]:focus-visible:focus-ring-on-brand'
@@ -20,7 +16,7 @@ export const navSortableRowStyles =
 export const navSummaryStyles =
 	'-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row active:bg-pressed-row'
 
-function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: NavIconName; onToggle: () => void }) {
+function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: IIcon['name']; onToggle: () => void }) {
 	return (
 		<summary
 			className={navLinkStyles}
@@ -61,7 +57,7 @@ export function PrimaryNavGroup({
 }: {
 	name: string
 	route: string
-	icon?: NavIconName
+	icon?: IIcon['name']
 	pages: Array<{ name: string; route: string }>
 	asPath: string
 	open: boolean
@@ -117,7 +113,7 @@ export function LinkToPage({
 }: {
 	route: string
 	name: string
-	icon?: NavIconName
+	icon?: IIcon['name']
 	attention?: boolean
 	isNew?: boolean
 	asPath: string
@@ -164,7 +160,7 @@ export function NavItemContent({
 	wrapLabel
 }: {
 	name: string
-	icon?: NavIconName
+	icon?: IIcon['name']
 	attention?: boolean
 	freeLabel?: boolean
 	isNew?: boolean
@@ -173,17 +169,7 @@ export function NavItemContent({
 }) {
 	return (
 		<>
-			{hideIcon ? null : name === 'Universal Token Rating' ? (
-				<UniversalTokenRatingNavIcon />
-			) : icon ? (
-				<Icon name={icon} className="size-4 shrink-0 group-hover/link:animate-wiggle" />
-			) : name === 'LlamaAI' ? (
-				<svg className="size-4 shrink-0 group-hover/link:animate-wiggle">
-					<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-				</svg>
-			) : name === 'DefiLlama Research' ? (
-				<ResearchIcon name="research-icon" className="size-4 shrink-0 group-hover/link:animate-wiggle" />
-			) : null}
+			{icon && !hideIcon ? <Icon name={icon} className="size-4 shrink-0 group-hover/link:animate-wiggle" /> : null}
 			<span className="relative flex min-w-0 flex-1 flex-nowrap items-center gap-2 text-left leading-tight">
 				<span className={wrapLabel ? 'min-w-0 flex-1' : 'min-w-0 flex-1 truncate'}>{name}</span>
 				{attention ? (

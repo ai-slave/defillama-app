@@ -44,7 +44,7 @@ const SECTION_FILTERS: Array<SectionFilter> = [
 ]
 
 const SECTION_ICONS = {
-	interview: 'chat',
+	interview: 'message-square',
 	report: 'file-text',
 	spotlight: 'sparkles',
 	opinion: 'align-left',

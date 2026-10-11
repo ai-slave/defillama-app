@@ -42,7 +42,7 @@ export const MENU_VARIANT_B: Array<TNavLink> = [
 	{
 		name: 'Tools',
 		route: '/tools',
-		icon: 'pencil-ruler',
+		icon: 'wrench',
 		children: [
 			{ name: 'All Tools', route: '/tools' },
 			{ name: 'Crypto Cards', route: '/crypto-cards' },
@@ -55,7 +55,7 @@ export const MENU_VARIANT_B: Array<TNavLink> = [
 	{
 		name: 'Assets',
 		route: '/tokens',
-		icon: 'tag',
+		icon: 'coins',
 		children: [
 			{ name: 'Tokens', route: '/tokens' },
 			{ name: 'Stablecoins', route: '/stablecoins' },
@@ -79,7 +79,7 @@ export const MENU_VARIANT_B: Array<TNavLink> = [
 	{
 		name: 'Exchanges',
 		route: '/exchanges',
-		icon: 'bar-chart-2',
+		icon: 'arrow-left-right',
 		children: [
 			{ name: 'Exchanges', route: '/exchanges' },
 			{ name: 'MiCA', route: '/mica' },
@@ -87,9 +87,9 @@ export const MENU_VARIANT_B: Array<TNavLink> = [
 			{ name: 'Market Makers', route: '/market-makers' }
 		]
 	},
-	{ name: 'DefiLlama Research', route: '/research' },
-	{ name: 'Investor Relations', route: 'https://investors.defillama.com/', icon: 'trending-up' },
+	{ name: 'DefiLlama Research', route: '/research', icon: 'research' },
+	{ name: 'Investor Relations', route: 'https://investors.defillama.com/', icon: 'presentation' },
 	{ name: 'Support', route: '/support', icon: 'headset' },
 	{ name: 'API & MCP', route: 'https://api-docs.defillama.com/', icon: 'code' },
-	{ name: 'DEX Aggregator', route: 'https://swap.defillama.com/', icon: 'landmark' }
+	{ name: 'DEX Aggregator', route: 'https://swap.defillama.com/', icon: 'route' }
 ]

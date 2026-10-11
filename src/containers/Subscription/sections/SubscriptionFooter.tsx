@@ -16,7 +16,7 @@ function SocialIcons() {
 				aria-label="Discord"
 				className="rounded-full p-1 text-tertiary"
 			>
-				<Icon name="chat" className="size-4.5 md:size-5" aria-hidden="true" />
+				<Icon name="discord" className="size-4.5 md:size-5" aria-hidden="true" />
 			</a>
 			<a
 				href="https://twitter.com/DefiLlama"

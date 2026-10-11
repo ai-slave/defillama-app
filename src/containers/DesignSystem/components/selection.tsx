@@ -25,7 +25,7 @@ const METRICS = [
 ] as const
 
 const ICON_OPTIONS = [
-	{ value: 'bar', label: <Icon name="bar-chart" className="size-4" aria-hidden />, ariaLabel: 'Bar chart' },
+	{ value: 'bar', label: <Icon name="bar-chart-2" className="size-4" aria-hidden />, ariaLabel: 'Bar chart' },
 	{ value: 'line', label: <Icon name="activity" className="size-4" aria-hidden />, ariaLabel: 'Line chart' }
 ]
 const OPTION_TILE_LAYOUTS = ['stack', 'row', 'center'] as const
@@ -129,7 +129,7 @@ function SegmentedExamples() {
 					/>
 					<SegmentedControl
 						label="Metric with icon"
-						leading={<Icon name="bar-chart" className="size-4" aria-hidden />}
+						leading={<Icon name="bar-chart-2" className="size-4" aria-hidden />}
 						options={PERIODS}
 						value={period}
 						onValueChange={setPeriod}

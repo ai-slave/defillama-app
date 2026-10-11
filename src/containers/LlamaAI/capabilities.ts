@@ -317,7 +317,7 @@ export const CAPABILITIES: Array<Capability> = [
 	{
 		key: 'cex',
 		name: 'CEX data',
-		icon: 'bar-chart',
+		icon: 'bar-chart-2',
 		description:
 			'Compare centralized exchanges — trading volume, reserves, leverage, and how they stack up against DEXes.',
 		prompts: [

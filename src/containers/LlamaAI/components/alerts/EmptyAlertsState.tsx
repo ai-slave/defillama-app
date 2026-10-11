@@ -66,7 +66,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 
 			<div className="flex flex-col items-center gap-2.5 border-t border-subtle pt-4">
 				<p className="flex items-center gap-1.5 body-sm text-secondary">
-					<Icon name="chat" className="size-3.5" />
+					<Icon name="message-square" className="size-3.5" />
 					Or just describe it in chat
 				</p>
 				<div className="flex flex-wrap items-center justify-center gap-2">

@@ -22,6 +22,7 @@
 - An icon-only navigation control needs an explicit accessible label, even with a tooltip.
 - Long group labels wrap so their full names stay readable; ordinary destination links truncate.
 - `label-sm text-secondary` is only for section headings and utility groups.
+- Every top-level row has its own icon: no icon repeats within a sidebar layout (`__tests__/icons.test.ts`). The icon names the destination with a common picture (coins for Tokens, a wrench for Tools); a DefiLlama product uses its mark from the sprite's DefiLlama group. Icons come from the row's `icon` field, never from matching its name, and none is colored or animated beyond the shared hover wiggle; a destination being promoted takes `isNew`.
 - Aligned child labels drop their icons and indent with `pl-7` to match the 16px icon and 12px gap. The guide line beside them is an absolute pseudo-element, so its border never offsets the labels.
 - Sidebar scroll containers clip horizontally, so a long pinned label or a capped divider never adds a horizontal scrollbar.
 - Nav borders use the semantic border tokens, never black or white opacity classes.

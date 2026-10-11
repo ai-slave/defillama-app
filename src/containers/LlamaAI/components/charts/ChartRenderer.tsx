@@ -389,7 +389,7 @@ function ChartEditorSession({
 	} else if (!previewPresentation.plan.hasData) {
 		previewContent = (
 			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
-				<Icon name="bar-chart" className="size-4" />
+				<Icon name="bar-chart-2" className="size-4" />
 				<p>No data available for chart</p>
 			</div>
 		)
@@ -679,7 +679,7 @@ function ActiveSingleChart({
 	if (!renderPlan.hasData) {
 		return (
 			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
-				<Icon name="bar-chart" className="size-4" />
+				<Icon name="bar-chart-2" className="size-4" />
 				<p>No data available for chart</p>
 			</div>
 		)

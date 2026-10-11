@@ -1,7 +1,14 @@
 import type { SVGProps } from 'react'
 
 /** Every icon in the sprite, grouped by meaning so the design system page and a reader of this list find one fast.
-    Grouping is order only: a name maps to its sprite symbol by id, so regrouping never needs a new sprite version. */
+    The sprite lists its symbols in this order under one `<!-- Group -->` comment each, so a pasted icon lands next to
+    its neighbors and a duplicate shows up in review. To add one (design.md → Icons):
+    1. Copy the SVG from lucide.dev (a brand from simpleicons.org) without changing it.
+    2. Paste it into the sprite under its group as `<symbol id="name" …>`, keeping Lucide's root attributes. Star,
+       bookmark and pin drop `fill="none"` so `fill-current` can fill them.
+    3. Add the name here in the same position.
+    4. Copy the sprite to the next version and point ICON_SPRITE at it, so cached copies of the old one are never used.
+    src/ui/__tests__/Icon.test.tsx fails a symbol that breaks the grid, stroke or color rules, or is out of order. */
 export const ICON_GROUPS = [
 	[
 		'Arrows',
@@ -11,6 +18,7 @@ export const ICON_GROUPS = [
 			'arrow-left',
 			'arrow-right',
 			'arrow-up-right',
+			'arrow-left-right',
 			'chevron-up',
 			'chevron-down',
 			'chevron-left',
@@ -18,7 +26,6 @@ export const ICON_GROUPS = [
 			'chevrons-left',
 			'chevrons-right',
 			'external-link',
-			'circle-external-link',
 			'repeat',
 			'expand',
 			'shrink'
@@ -66,7 +73,6 @@ export const ICON_GROUPS = [
 			'shield-check',
 			'lock',
 			'key',
-			'key-filled',
 			'eye',
 			'eye-off',
 			'sparkles',
@@ -78,6 +84,7 @@ export const ICON_GROUPS = [
 		[
 			'house',
 			'layout-grid',
+			'layout-dashboard',
 			'layers',
 			'blocks',
 			'panel-left-open',
@@ -92,7 +99,6 @@ export const ICON_GROUPS = [
 	[
 		'Data and time',
 		[
-			'bar-chart',
 			'bar-chart-2',
 			'pie-chart',
 			'activity',
@@ -109,17 +115,22 @@ export const ICON_GROUPS = [
 		'Finance and crypto',
 		[
 			'dollar-sign',
+			'coins',
 			'wallet',
 			'credit-card',
 			'banknote',
 			'receipt',
 			'landmark',
-			'ethereum',
+			'gem',
+			'scale',
+			'droplets',
+			'route',
 			'protocol',
 			'chain',
 			'plug',
 			'house-plug',
-			'briefcase-business'
+			'briefcase-business',
+			'rocket'
 		]
 	],
 	[
@@ -139,7 +150,10 @@ export const ICON_GROUPS = [
 			'cli',
 			'tag',
 			'pencil-ruler',
-			'package'
+			'wrench',
+			'package',
+			'presentation',
+			'rss'
 		]
 	],
 	[
@@ -152,7 +166,6 @@ export const ICON_GROUPS = [
 			'graduation-cap',
 			'gift',
 			'mail',
-			'chat',
 			'message-square',
 			'message-square-plus',
 			'message-square-warning',
@@ -160,10 +173,14 @@ export const ICON_GROUPS = [
 		]
 	],
 	['Web and places', ['globe', 'map']],
+	['DefiLlama', ['llamaai', 'research', 'token-rating']],
 	['Brands', ['github', 'google', 'twitter', 'telegram', 'discord', 'linkedin', 'farcaster', 'bluesky', 'mastodon']]
 ] as const
 
 export const ICON_NAMES: ReadonlyArray<Name> = ICON_GROUPS.flatMap(([, names]) => names)
+
+/** The one place the sprite version lives; _document.tsx prefetches the same file. */
+export const ICON_SPRITE = '/icons/v52.svg'
 
 type Name = (typeof ICON_GROUPS)[number][1][number]
 
@@ -171,11 +188,13 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 	name: Name
 }
 /** A sprite icon. Size it with a `size-*` class: `size-3.5` (14px) beside a label, `size-4` (16px) icon-only
-    (design.md → Icons). Never pass `height` or `width`; scripts/policies/check-icon-size.ts fails them. */
+    (design.md → Icons). Never pass `height` or `width`; scripts/policies/check-icon-size.ts fails them.
+    Icons are outlines; `fill-current` fills the ones whose symbol leaves fill open (star, bookmark, pin) to show an
+    on state. */
 export function Icon({ name, ...props }: IIcon) {
 	return (
-		<svg {...props}>
-			<use href={`/icons/v51.svg#${name}`} />
+		<svg fill="none" {...props}>
+			<use href={`${ICON_SPRITE}#${name}`} />
 		</svg>
 	)
 }

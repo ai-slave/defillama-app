@@ -41,7 +41,7 @@ export function CardLikeButton({
 			{isLiking ? (
 				<BusyGlyph decorative size={14} />
 			) : (
-				<Icon name="star" className={isLiked ? 'size-3.5 fill-current text-warning' : 'size-3.5 fill-none'} />
+				<Icon name="star" className={isLiked ? 'size-3.5 fill-current text-warning' : 'size-3.5'} />
 			)}
 			<span className="tabular-nums">{count}</span>
 		</Tooltip>

@@ -592,7 +592,7 @@ function CreateAlertModalForm({
 							onClick={handleJustAsk}
 							className="flex items-center gap-1.5 self-start text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:text-link"
 						>
-							<Icon name="chat" className="size-3.5 shrink-0" />
+							<Icon name="message-square" className="size-3.5 shrink-0" />
 							{triggerType === 'price'
 								? 'Beyond a fixed level? % moves, TVL drops, conditions — ask in chat'
 								: 'Want conditions or a multi-token watchlist? Ask in chat'}

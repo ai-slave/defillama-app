@@ -313,11 +313,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 					size="md"
 					aria-pressed={showOnlyWatchlist}
 				>
-					<Icon
-						name="bookmark"
-						className="size-4"
-						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
-					/>
+					<Icon name="bookmark" className={showOnlyWatchlist ? 'size-4 fill-current' : 'size-4'} />
 					<StableLabel
 						labels={['Show Watchlist', 'Show All']}
 						current={showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
