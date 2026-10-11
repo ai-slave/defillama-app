@@ -14,7 +14,7 @@ import { OTHERS_COLOR } from '~/constants/colors'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useIsClient } from '~/hooks/useIsClient'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
 import { Panel } from '~/ui/Panel'
@@ -124,7 +124,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		})
 	}, [props.name, props.geckoId, toggledCharts, props.chartColors, groupBy])
 
-	const isClient = useIsClient()
 	const shouldShowEnabledEventsChip = toggledMetrics.events === 'true'
 
 	const metricGroups = useMemo(() => {
@@ -255,14 +254,14 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					iconUrl={tokenIconUrl(props.name)}
 				/>
 			</ChartPanelToolbar>
-			{isClient ? (
+			<ClientOnly>
 				<FailedDataNote
 					labels={failedMetrics.map((metric) =>
 						metric.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')
 					)}
 					shows="The chart shows the other metrics."
 				/>
-			) : null}
+			</ClientOnly>
 			<ChartPanelBody>
 				{isActiveAddressesHidden ? (
 					<CumulativeUnavailableNotice

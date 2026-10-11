@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectsSignInGate } from '../ProjectsSignInGate'
@@ -35,13 +36,13 @@ afterEach(async () => {
 
 test('an open sign-in stays after a sign-in from another tab, while the prompt to sign in leaves', async () => {
 	const signIn = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Sign in')
+		const button = [...document.querySelectorAll('button')].find((el) => accessibleName(el) === 'Sign in')
 		expect(button).toBeDefined()
 		return button!
 	})
 	await act(async () => signIn.click())
 	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Sign in'))
 	await act(async () => pb.authStore.save(session.token, session.record as never))
-	await waitForUi(() => expect(document.body.textContent).not.toContain('to access this page'))
+	await waitForUi(() => expect(document.querySelector('h1')).toBeNull())
 	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in")
 })

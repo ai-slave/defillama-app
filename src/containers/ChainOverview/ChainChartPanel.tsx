@@ -14,7 +14,7 @@ import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/Cumulat
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useIsClient } from '~/hooks/useIsClient'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { ChartPanelBody, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricChip } from '~/ui/MetricChip'
 import { Panel } from '~/ui/Panel'
@@ -107,7 +107,6 @@ export function ChainChartPanel({
 	darkMode
 }: ChainChartPanelProps) {
 	const router = useRouter()
-	const isClient = useIsClient()
 	const chartColors = useMemo(() => getChainChartColors(toggledCharts), [toggledCharts])
 	const chartRenderModel = useMemo(
 		() => ({
@@ -254,8 +253,10 @@ export function ChainChartPanel({
 					/>
 				) : null}
 			</ChartPanelToolbar>
-			{isClient && loadingCharts.length === 0 ? (
-				<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
+			{loadingCharts.length === 0 ? (
+				<ClientOnly>
+					<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
+				</ClientOnly>
 			) : null}
 			{tvlSettingsFailed ? <FailedDataNote labels={['your TVL settings']} shows="TVL leaves them out." /> : null}
 

@@ -3,7 +3,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
-import { useIsClient } from '~/hooks/useIsClient'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -34,7 +34,6 @@ export function AddToDashboardButton({
 	const dashboardDialogStore = Ariakit.useDialogStore()
 	const subscribeDialogStore = Ariakit.useDialogStore()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const isClient = useIsClient()
 
 	const config = chartConfig ?? multiChart
 	const hasConfig = config || llamaAIChart
@@ -75,8 +74,8 @@ export function AddToDashboardButton({
 	return (
 		<>
 			{button}
-			{isClient && hasConfig ? (
-				<>
+			{hasConfig ? (
+				<ClientOnly>
 					<AddToDashboardModal
 						dialogStore={dashboardDialogStore}
 						chartConfig={config ?? null}
@@ -84,7 +83,7 @@ export function AddToDashboardButton({
 						{...(unsupportedMetrics === undefined ? {} : { unsupportedMetrics })}
 					/>
 					<LazySubscribeProModal dialogStore={subscribeDialogStore} />
-				</>
+				</ClientOnly>
 			) : null}
 		</>
 	)
