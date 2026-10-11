@@ -97,17 +97,13 @@ export function ProjectSidebarRow({
 				>
 					<Icon
 						name={isExpanded ? 'chevron-down' : 'chevron-right'}
-						height={14}
-						width={14}
 						aria-hidden="true"
-						className={`-mr-1 shrink-0 text-secondary ${isExpanded ? '' : 'lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100'}`}
+						className={`-mr-1 size-3.5 shrink-0 text-secondary ${isExpanded ? '' : 'lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100'}`}
 					/>
 					<Icon
 						name="folder"
-						height={16}
-						width={16}
 						aria-hidden="true"
-						className={`shrink-0 ${isActive || isSessionContext ? '' : 'text-secondary'}`}
+						className={`size-4 shrink-0 ${isActive || isSessionContext ? '' : 'text-secondary'}`}
 					/>
 					<span className="min-w-0 flex-1 truncate">{project.name}</span>
 				</button>
@@ -126,7 +122,7 @@ export function ProjectSidebarRow({
 							/>
 						}
 					>
-						<Icon name="square-pen" height={16} width={16} aria-hidden="true" />
+						<Icon name="square-pen" className="size-4" aria-hidden="true" />
 					</Tooltip>
 					<Ariakit.MenuProvider>
 						<Ariakit.MenuButton
@@ -134,11 +130,11 @@ export function ProjectSidebarRow({
 							ref={projectMenuRef}
 							render={<Button type="button" size="sm" variant="ghost" square />}
 						>
-							<Icon name="ellipsis" height={16} width={16} />
+							<Icon name="ellipsis" className="size-4" />
 						</Ariakit.MenuButton>
 						<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`}>
 							<MenuItem onClick={renameStore.show} className="border-b border-subtle">
-								<Icon name="pencil" height={14} width={14} />
+								<Icon name="pencil" className="size-3.5" />
 								Rename project
 							</MenuItem>
 							<MenuItem
@@ -149,7 +145,7 @@ export function ProjectSidebarRow({
 									setConfirmDelete(true)
 								}}
 							>
-								<Icon name="trash-2" height={14} width={14} />
+								<Icon name="trash-2" className="size-3.5" />
 								Delete project
 							</MenuItem>
 						</MenuSurface>

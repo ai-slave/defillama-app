@@ -412,7 +412,7 @@ export function LiquidationsPositionsTable({
 						<TableToolbar>
 							<label className={searchFieldInlineWrapperStyles}>
 								<span className="sr-only">Search positions</span>
-								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+								<Icon name="search" className={searchFieldIconStyles} />
 								<Input
 									onInput={(e) => setSearchValue(e.currentTarget.value)}
 									placeholder="Search positions by protocol, chain, owner, or collateral"

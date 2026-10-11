@@ -389,7 +389,7 @@ function ChartEditorSession({
 	} else if (!previewPresentation.plan.hasData) {
 		previewContent = (
 			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
-				<Icon name="bar-chart" height={16} width={16} />
+				<Icon name="bar-chart" className="size-4" />
 				<p>No data available for chart</p>
 			</div>
 		)
@@ -679,7 +679,7 @@ function ActiveSingleChart({
 	if (!renderPlan.hasData) {
 		return (
 			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
-				<Icon name="bar-chart" height={16} width={16} />
+				<Icon name="bar-chart" className="size-4" />
 				<p>No data available for chart</p>
 			</div>
 		)
@@ -721,7 +721,7 @@ function ActiveSingleChart({
 							<Button type="button" size="md" square onClick={handleOpenStyleEditor} aria-label="Edit chart style" />
 						}
 					>
-						<Icon name="settings" height={16} width={16} />
+						<Icon name="settings" className="size-4" />
 					</Tooltip>
 				) : null}
 				{openArticleExport && messageId && !readOnly ? (
@@ -740,7 +740,7 @@ function ActiveSingleChart({
 								/>
 							}
 						>
-							<Icon name="bookmark" height={16} width={16} />
+							<Icon name="bookmark" className="size-4" />
 						</Tooltip>
 						<Tooltip
 							content="Add to research article"
@@ -763,7 +763,7 @@ function ActiveSingleChart({
 								/>
 							}
 						>
-							<Icon name="file-plus" height={16} width={16} />
+							<Icon name="file-plus" className="size-4" />
 						</Tooltip>
 					</>
 				) : null}

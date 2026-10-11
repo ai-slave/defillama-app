@@ -17,7 +17,7 @@ export function AddressActions({
 			<span className="mono-sm text-secondary">{short}</span>
 			<CopyHelper
 				toCopy={address}
-				size={12}
+				size="size-3"
 				aria-label={`Copy ${label}`}
 				className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary"
 			/>

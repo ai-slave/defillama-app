@@ -80,7 +80,7 @@ function AnswerColumn({
 					onClick={onChoose}
 					className="w-full"
 				>
-					<Icon name="check" height={14} width={14} />
+					<Icon name="check" className="size-3.5" />
 					I prefer this response
 				</Button>
 			</div>

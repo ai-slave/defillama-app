@@ -59,9 +59,9 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 							className="h-full"
 						>
 							<span className="flex items-center gap-1.5">
-								<Icon height={13} width={13} name={option.icon} className={active ? 'text-link' : 'text-tertiary'} />
+								<Icon name={option.icon} className={active ? 'size-3.5 text-link' : 'size-3.5 text-tertiary'} />
 								<span className="title-sm text-primary">{option.label}</span>
-								{active ? <Icon name="check" height={11} width={11} className="text-link" /> : null}
+								{active ? <Icon name="check" className="size-3.5 text-link" /> : null}
 							</span>
 							<p className="body-sm text-secondary">{option.description}</p>
 						</OptionTile>

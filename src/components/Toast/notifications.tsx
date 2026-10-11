@@ -23,7 +23,7 @@ export function errorToast({ title, description }: { title: string; description:
 		(t) => (
 			<div className="flex flex-col gap-2">
 				<p className="flex items-center gap-2 title-md text-error">
-					<Icon name="alert-triangle" height={16} width={16} />
+					<Icon name="alert-triangle" className="size-4" />
 					<span>{title}</span>
 					<Tooltip
 						content="Close"

@@ -170,7 +170,7 @@ function PastDueSubscriptionCard({
 			<div className="flex items-start gap-2">
 				{/* Centred on the heading's first line. */}
 				<span className="flex h-lh shrink-0 items-center title-lg">
-					<Icon name="alert-triangle" height={20} width={20} className="text-warning" />
+					<Icon name="alert-triangle" className="size-5 text-warning" />
 				</span>
 				<div className="flex flex-col gap-1">
 					<h3 className="title-lg text-warning">{planName} subscription past due</h3>
@@ -207,7 +207,7 @@ function LegacyWarning() {
 	return (
 		<div className="flex items-start gap-2 rounded-2xl border border-warning-muted bg-warning-tint p-4 body-md">
 			<span className="flex h-lh shrink-0 items-center">
-				<Icon name="alert-triangle" height={20} width={20} className="text-warning" />
+				<Icon name="alert-triangle" className="size-5 text-warning" />
 			</span>
 			<p className="text-warning">
 				Your current subscription is a legacy plan. You need to unsubscribe via{' '}
@@ -232,7 +232,7 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 	return (
 		<div className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={20} width={20} className="text-primary" />
+				<Icon name="users" className="size-5 text-primary" />
 				<span className="label-md text-primary">Team subscription</span>
 			</div>
 			{hasAssigned ? (

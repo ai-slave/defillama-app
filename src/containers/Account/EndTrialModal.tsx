@@ -72,7 +72,7 @@ function EndTrialDialog({
 							<ul className="flex flex-col gap-1 body-sm text-primary">
 								{BENEFITS.map((b) => (
 									<li key={b} className="flex items-center gap-2">
-										<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+										<Icon name="check" className="size-3.5 shrink-0 text-success" />
 										<span>{b}</span>
 									</li>
 								))}

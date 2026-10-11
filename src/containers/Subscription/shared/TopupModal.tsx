@@ -216,11 +216,11 @@ export function TopupForm({
 						<div className="grid grid-cols-2 gap-2">
 							{/* While crypto redirects, the submit handler ignores a card press; crypto's pending label says why. */}
 							<Button type="submit" value="stripe" size="md">
-								<Icon name="credit-card" height={14} width={14} />
+								<Icon name="credit-card" className="size-3.5" />
 								Pay with card
 							</Button>
 							<Button type="submit" value="llamapay" size="md" pendingLabel="Redirecting…" pending={isRedirecting}>
-								<Icon name="wallet" height={14} width={14} />
+								<Icon name="wallet" className="size-3.5" />
 								Pay with crypto
 							</Button>
 						</div>

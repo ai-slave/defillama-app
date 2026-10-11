@@ -81,7 +81,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 						/>
 					}
 				>
-					<Icon name="x" height={16} width={16} />
+					<Icon name="x" className="size-4" />
 				</Tooltip>
 			</div>
 
@@ -136,7 +136,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 						pending={saving}
 						disabled={skipping}
 					>
-						<Icon name="sparkles" height={14} width={14} />
+						<Icon name="sparkles" className="size-3.5" />
 						Submit Rating
 					</Button>
 				) : null}
@@ -185,10 +185,8 @@ function RatingStars({
 						/>
 						<Icon
 							name="star"
-							height={20}
-							width={20}
 							aria-hidden="true"
-							className={`${star <= (hovered || value) ? 'fill-current text-warning' : 'text-secondary'} transition-colors`}
+							className={`size-5${star <= (hovered || value) ? 'fill-current text-warning' : 'text-secondary'} transition-colors`}
 						/>
 					</span>
 				))}

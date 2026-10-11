@@ -381,9 +381,7 @@ export function Leaderboard({
 											<span className="flex flex-col">
 												<span className="flex items-center gap-1 text-primary">
 													{row.symbol}
-													{row.claimed ? (
-														<Icon name="check-circle" height={12} width={12} className="text-link" />
-													) : null}
+													{row.claimed ? <Icon name="check-circle" className="size-3 text-link" /> : null}
 												</span>
 												<span className="body-xs text-tertiary">{row.name}</span>
 											</span>

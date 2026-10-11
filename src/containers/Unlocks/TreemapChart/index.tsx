@@ -245,7 +245,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 								/>
 							}
 						>
-							<Icon name="chevron-left" height={16} width={16} />
+							<Icon name="chevron-left" className="size-4" />
 						</Tooltip>
 						<span className="w-32 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
 						<Tooltip
@@ -261,7 +261,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 								/>
 							}
 						>
-							<Icon name="chevron-right" height={16} width={16} />
+							<Icon name="chevron-right" className="size-4" />
 						</Tooltip>
 					</div>
 				) : null}

@@ -84,7 +84,7 @@ export function CopyDashboardLinkButton({
 			await onMakePublic()
 			actionToast({
 				message: 'Dashboard is live',
-				icon: <Icon name="globe" height={14} width={14} />,
+				icon: <Icon name="globe" className="size-3.5" />,
 				action: {
 					label: 'Copy link',
 					onClick: () => void handleCopyLink(),
@@ -103,7 +103,7 @@ export function CopyDashboardLinkButton({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="secondary" />}>
-				<Icon name={isPrivate ? 'link' : 'share'} height={14} width={14} />
+				<Icon name={isPrivate ? 'link' : 'share'} className="size-3.5" />
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
 
@@ -168,9 +168,9 @@ export function CopyDashboardLinkButton({
 									}
 								>
 									{copied === 'link' ? (
-										<Icon name="check-circle" height={16} width={16} className="text-success" />
+										<Icon name="check-circle" className="size-4 text-success" />
 									) : (
-										<Icon name="copy" height={16} width={16} />
+										<Icon name="copy" className="size-4" />
 									)}
 								</Tooltip>
 							</div>
@@ -207,9 +207,9 @@ export function CopyDashboardLinkButton({
 									}
 								>
 									{copied === 'embed' ? (
-										<Icon name="check-circle" height={16} width={16} className="text-success" />
+										<Icon name="check-circle" className="size-4 text-success" />
 									) : (
-										<Icon name="code" height={16} width={16} />
+										<Icon name="code" className="size-4" />
 									)}
 								</Tooltip>
 							</div>
@@ -225,7 +225,7 @@ export function CopyDashboardLinkButton({
 									onClick={() => handleShareTo('twitter')}
 									className="flex-1"
 								>
-									<Icon name="twitter" height={16} width={16} />
+									<Icon name="twitter" className="size-4" />
 									<span>X/Twitter</span>
 								</Button>
 								<Button

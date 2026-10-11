@@ -663,7 +663,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 	const undoToast = (message: string, id: string) => {
 		actionToast({
 			message,
-			icon: <Icon name="trash-2" height={14} width={14} />,
+			icon: <Icon name="trash-2" className="size-3.5" />,
 			action: { label: 'Undo', onClick: undo, umamiEvent: 'dashboard-undo' },
 			id,
 			duration: TOAST_DURATION_UNDO
@@ -813,7 +813,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 
 	const addItemTile = (placement?: DashboardItemPlacement) => (
 		<DashedTile onClick={() => onAddChartClick(placement)} className="col-span-full min-h-12 w-full">
-			<Icon name="plus" height={14} width={14} />
+			<Icon name="plus" className="size-3.5" />
 			Add card
 		</DashedTile>
 	)
@@ -897,7 +897,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 											className="px-1"
 											items={[
 												<>
-													<Icon name="pin" height={12} width={12} />
+													<Icon name="pin" className="size-3" />
 													Shown on every tab
 												</>
 											]}

@@ -212,7 +212,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								onClick={() => unlinkMutation.mutate(report.id)}
 								ref={passUnlinkFocus}
 							>
-								<Icon name="x" height={12} width={12} /> Unlink
+								<Icon name="x" className="size-3" /> Unlink
 							</Button>
 						</li>
 					))}

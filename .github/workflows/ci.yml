@@ -70,6 +70,9 @@ jobs:
       - name: Check form validation policy
         run: bun scripts/policies/check-form-validation.ts --self-test && bun scripts/policies/check-form-validation.ts
 
+      - name: Check icon size policy
+        run: bun scripts/policies/check-icon-size.ts --self-test && bun scripts/policies/check-icon-size.ts
+
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 

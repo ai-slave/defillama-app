@@ -246,7 +246,7 @@ export function RWAChainsDataset() {
 							smol
 						/>
 						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								type="text"
 								aria-label="Search chains"

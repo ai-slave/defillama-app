@@ -2994,7 +2994,7 @@ export function AgenticChat({
 														}
 														className={HEADER_ICON_BUTTON}
 													>
-														<Icon name="chevrons-right" height={14} width={14} />
+														<Icon name="chevrons-right" className="size-3.5" />
 														<span className="sr-only">Hide chat</span>
 													</Tooltip>
 												) : effectiveMessages.length > 0 ? (
@@ -3013,7 +3013,7 @@ export function AgenticChat({
 														}
 														className={`${HEADER_ICON_BUTTON} aria-disabled:cursor-not-allowed aria-disabled:text-disabled`}
 													>
-														<Icon name="share" height={14} width={14} />
+														<Icon name="share" className="size-3.5" />
 														<span className="sr-only">{SHARE_TOOLTIP}</span>
 													</Tooltip>
 												) : null}
@@ -3177,7 +3177,7 @@ export const ChatControls = memo(function ChatControls({
 				}
 				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong"
 			>
-				<Icon name="panel-left-open" height={16} width={16} />
+				<Icon name="panel-left-open" className="size-4" />
 				<span className="sr-only">Open chat history</span>
 			</Tooltip>
 			<Tooltip
@@ -3193,7 +3193,7 @@ export const ChatControls = memo(function ChatControls({
 					/>
 				}
 			>
-				<Icon name="square-pen" height={16} width={16} />
+				<Icon name="square-pen" className="size-4" />
 			</Tooltip>
 			{canShare ? (
 				<Tooltip
@@ -3210,7 +3210,7 @@ export const ChatControls = memo(function ChatControls({
 					}
 					className="flex size-6 items-center justify-center rounded-sm bg-brand-tint text-link not-disabled:not-aria-disabled:hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong aria-disabled:cursor-not-allowed aria-disabled:bg-disabled aria-disabled:text-disabled"
 				>
-					<Icon name="share" height={14} width={14} />
+					<Icon name="share" className="size-3.5" />
 					<span className="sr-only">{SHARE_TOOLTIP}</span>
 				</Tooltip>
 			) : null}

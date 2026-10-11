@@ -127,7 +127,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 								className="inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline"
 							>
 								{linkLabel}
-								<Icon name="arrow-up-right" height={10} width={10} />
+								<Icon name="arrow-up-right" className="size-3.5" />
 							</a>
 						) : (
 							<Link

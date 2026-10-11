@@ -35,7 +35,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 					/>
 				}
 			>
-				<Icon name="settings" height={16} width={16} />
+				<Icon name="settings" className="size-4" />
 			</Tooltip>
 			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
 			<ComboboxSurface variant="panel" heading="Settings" unmountOnHide={false}>

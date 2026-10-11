@@ -84,7 +84,7 @@ export function SaveViewButton({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure render={<Button type="button" variant="toggle" size="md" data-active={dirty} />}>
-				<Icon name="plus" height={14} width={14} />
+				<Icon name="plus" className="size-3.5" />
 				Save view
 				{count > 0 ? <span className="rounded-full bg-surface-elevated-1 px-1.5 label-xs">{count}</span> : null}
 			</Ariakit.PopoverDisclosure>
@@ -106,7 +106,7 @@ export function SaveViewButton({
 									className="flex min-w-0 flex-1 items-center gap-2 text-left"
 									onClick={() => handleLoad(viewName)}
 								>
-									<Icon name="bookmark" height={14} width={14} className="shrink-0 text-tertiary" />
+									<Icon name="bookmark" className="size-3.5 shrink-0 text-tertiary" />
 									<span className="min-w-0 flex-1 truncate">{viewName}</span>
 								</button>
 								<Tooltip

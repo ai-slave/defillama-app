@@ -323,7 +323,7 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 							{billingInterval === 'month' && !lockedInterval && (
 								<div className="flex items-start gap-2 body-sm">
 									<span className="flex h-lh shrink-0 items-center">
-										<Icon name="sparkles" height={12} width={12} className="text-tertiary" />
+										<Icon name="sparkles" className="size-3 text-tertiary" />
 									</span>
 									<p className="text-secondary">
 										Switch to yearly billing and get 2 months free — save $

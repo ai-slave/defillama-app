@@ -61,19 +61,14 @@ export function SelectTypeStep() {
 								onClick={() => actions.setComparisonType(option.type)}
 								render={<OptionTile layout="center" selected={isSelected} />}
 							>
-								<Icon
-									name={option.icon}
-									height={32}
-									width={32}
-									className={isSelected ? 'text-link' : 'text-secondary'}
-								/>
+								<Icon name={option.icon} className={isSelected ? 'size-8 text-link' : 'size-8 text-secondary'} />
 								<div>
 									<span className="block label-md text-primary">{option.title}</span>
 									<span className="mt-1 block body-sm text-tertiary">{option.description}</span>
 								</div>
 								{isSelected ? (
 									<div aria-hidden className="flex items-center gap-1.5 label-sm text-link">
-										<Icon name="check" height={14} width={14} />
+										<Icon name="check" className="size-3.5" />
 										Selected
 									</div>
 								) : null}

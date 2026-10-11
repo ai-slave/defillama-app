@@ -145,7 +145,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						<div className="flex min-w-0 flex-col gap-1">
 							<span className="flex items-start gap-2 title-lg text-primary">
 								<span className="flex h-lh shrink-0 items-center">
-									<Icon name="mail" height={20} width={20} className="text-link" />
+									<Icon name="mail" className="size-5 text-link" />
 								</span>
 								Get DefiLlama in your inbox
 							</span>
@@ -229,7 +229,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="mail" height={28} width={28} className="text-primary" />
+				<Icon name="mail" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Newsletters</span>
 			</div>
 
@@ -301,7 +301,7 @@ function NewsletterSuccess({
 		return (
 			<div role="status" className="flex items-start gap-2 body-md text-primary">
 				<span className="flex h-lh shrink-0 items-center">
-					<Icon name="check-circle" height={20} width={20} className="text-link" />
+					<Icon name="check-circle" className="size-5 text-link" />
 				</span>
 				<span>Subscribed to selected newsletters.</span>
 			</div>
@@ -311,7 +311,7 @@ function NewsletterSuccess({
 	return (
 		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
 			<div className="flex size-12 items-center justify-center rounded-full bg-brand-faint">
-				<Icon name="check-circle" height={28} width={28} className="text-link" />
+				<Icon name="check-circle" className="size-7 text-link" />
 			</div>
 			<div className="flex flex-col gap-1">
 				<span className="label-lg text-primary">You are subscribed</span>

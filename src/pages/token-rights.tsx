@@ -490,7 +490,7 @@ function TokenRightsPage({
 					<TableToolbar>
 						<label className={searchFieldWrapperStyles}>
 							<span className="sr-only">Search protocol</span>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								onInput={(event) => {
 									setSearchValue(event.currentTarget.value)

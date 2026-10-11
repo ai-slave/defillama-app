@@ -130,7 +130,7 @@ export function Metrics({
 	const search = (
 		<label className="relative">
 			<span className="sr-only">Search pages</span>
-			<Icon name="search" height={16} width={16} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
+			<Icon name="search" className="absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary" />
 			<Input
 				ref={searchInputRef}
 				// The dialog moves focus itself when it opens; see MetricsAndTools.
@@ -278,7 +278,7 @@ export function LinkToMetricOrToolPage({
 				<span className="flex w-full flex-wrap items-center gap-1">
 					<span className="label-md">{page.name}</span>
 					{/* On touch the pin is always shown in this corner instead. */}
-					<Icon name="arrow-right" height={16} width={16} className="ml-auto pointer-coarse:invisible" />
+					<Icon name="arrow-right" className="ml-auto size-4 pointer-coarse:invisible" />
 				</span>
 				{totalTrackedByMetric && page.totalTrackedKey ? (
 					<span className="body-sm text-link">{getTotalTracked(totalTrackedByMetric, page.totalTrackedKey)}</span>
@@ -311,7 +311,7 @@ export function LinkToMetricOrToolPage({
 				// quiet there so a grid of cards is not a grid of brand squares.
 				className={`touch-target absolute top-1 right-1 hidden rounded-md p-1.5 group-focus-within:block group-hover:block group-data-[pinned=true]:block pointer-coarse:block ${isPinned ? 'bg-brand text-on-brand' : 'bg-brand text-on-brand pointer-coarse:bg-transparent pointer-coarse:text-tertiary'}`}
 			>
-				<Icon name="pin" height={14} width={14} style={pinStyle} />
+				<Icon name="pin" className="size-3.5" style={pinStyle} />
 			</Tooltip>
 		</div>
 	)

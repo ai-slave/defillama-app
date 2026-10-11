@@ -226,7 +226,7 @@ export function YieldsColumnManagementPanel({
 				</Tooltip>
 			</div>
 			<div className="relative mb-3">
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Icon name="search" className={searchFieldIconStyles} />
 				<Input
 					ref={searchRef}
 					type="text"

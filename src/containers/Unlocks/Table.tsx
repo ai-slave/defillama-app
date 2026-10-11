@@ -299,7 +299,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects…</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
@@ -316,8 +316,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 				>
 					<Icon
 						name="bookmark"
-						height={16}
-						width={16}
+						className="size-4"
 						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
 					<StableLabel

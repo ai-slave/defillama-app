@@ -52,7 +52,7 @@ export function Menu({
 					/>
 				}
 			>
-				<Icon name="menu" height={16} width={16} />
+				<Icon name="menu" className="size-4" />
 			</Tooltip>
 
 			<Ariakit.Dialog

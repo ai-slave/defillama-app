@@ -83,7 +83,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 						/>
 					}
 				>
-					{pdfExport.isPending ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
+					{pdfExport.isPending ? <LoadingSpinner size={16} /> : <Icon name="download-paper" className="size-4" />}
 				</Tooltip>
 				<MenuSurface variant="actions" className="w-44">
 					<MenuItem
@@ -92,7 +92,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 						onClick={() => exportPdf(false)}
 						disabled={loading}
 					>
-						<Icon name="sun" height={14} width={14} className="shrink-0" />
+						<Icon name="sun" className="size-3.5 shrink-0" />
 						Light mode
 					</MenuItem>
 					<MenuItem
@@ -101,7 +101,7 @@ export function PDFExportButton({ sessionId, messageId }: { sessionId: string; m
 						onClick={() => exportPdf(true)}
 						disabled={loading}
 					>
-						<Icon name="moon" height={14} width={14} className="shrink-0" />
+						<Icon name="moon" className="size-3.5 shrink-0" />
 						Dark mode
 					</MenuItem>
 				</MenuSurface>

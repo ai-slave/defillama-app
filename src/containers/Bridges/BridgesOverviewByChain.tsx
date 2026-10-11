@@ -553,7 +553,7 @@ export function BridgesOverviewByChain({
 							{activeTab === 'largeTxs' ? null : (
 								<label className={searchFieldInlineWrapperStyles}>
 									<span className="sr-only">Search bridges</span>
-									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+									<Icon name="search" className={searchFieldIconStyles} />
 									<Input
 										onInput={(e) => setSearchValue(e.currentTarget.value)}
 										placeholder="Search…"

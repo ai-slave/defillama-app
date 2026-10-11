@@ -96,17 +96,13 @@ export function DashboardOverflowMenu({
 
 	// The menu closes on a pick, so a running duplicate or move shows on the button that reopens it.
 	const triggerIcon =
-		duplicate.isPending || move.isPending ? (
-			<LoadingSpinner size={14} />
-		) : (
-			<Icon name="ellipsis" height={16} width={16} />
-		)
+		duplicate.isPending || move.isPending ? <LoadingSpinner size={14} /> : <Icon name="ellipsis" className="size-4" />
 
 	const dashboardItems = (
 		<>
 			{onOpenSettings ? (
 				<MenuItem aria-label="Dashboard Settings" onClick={onOpenSettings}>
-					<Icon name="settings" height={14} width={14} />
+					<Icon name="settings" className="size-3.5" />
 					<span>Settings</span>
 				</MenuItem>
 			) : null}
@@ -119,13 +115,13 @@ export function DashboardOverflowMenu({
 						duplicate.mutate()
 					}}
 				>
-					<Icon name="copy" height={14} width={14} />
+					<Icon name="copy" className="size-3.5" />
 					<span>{duplicate.isPending ? 'Duplicating…' : 'Duplicate'}</span>
 				</MenuItem>
 			) : null}
 			{onNewDashboard ? (
 				<MenuItem onClick={onNewDashboard}>
-					<Icon name="plus" height={14} width={14} />
+					<Icon name="plus" className="size-3.5" />
 					<span>New dashboard</span>
 				</MenuItem>
 			) : null}
@@ -136,7 +132,7 @@ export function DashboardOverflowMenu({
 					data-umami-event={moveTeam.team ? 'dashboard-move-personal' : 'dashboard-move-team'}
 					onClick={() => move.mutate(moveTeam.team ? null : moveTeam.myTeam.id)}
 				>
-					<Icon name="users" height={14} width={14} />
+					<Icon name="users" className="size-3.5" />
 					<span>
 						{move.isPending
 							? 'Moving…'
@@ -152,7 +148,7 @@ export function DashboardOverflowMenu({
 				<>
 					<Ariakit.MenuSeparator className="my-1 border-subtle" />
 					<MenuItem destructive data-umami-event="dashboard-delete" onClick={() => setShowDeleteConfirm(true)}>
-						<Icon name="trash-2" height={14} width={14} />
+						<Icon name="trash-2" className="size-3.5" />
 						<span>Delete dashboard…</span>
 					</MenuItem>
 				</>
@@ -209,7 +205,7 @@ export function DashboardOverflowMenu({
 								{...(action.umami ? { 'data-umami-event': action.umami } : {})}
 								onClick={() => selection.mutate(action)}
 							>
-								<Icon name={action.icon} height={14} width={14} />
+								<Icon name={action.icon} className="size-3.5" />
 								<span className="flex min-w-0 flex-col">
 									<span id={`${id}-${index}-label`}>{action.label}</span>
 									{reasonId ? (

@@ -11,18 +11,10 @@ const RING_RADIUS = 6
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 const STROKE = 2.25
 
-export function ExitStatusIcon({
-	verified,
-	size = 14,
-	className
-}: {
-	verified: VerifiedBlock
-	size?: number
-	className?: string
-}) {
+export function ExitStatusIcon({ verified, className }: { verified: VerifiedBlock; className?: string }) {
 	const status = verified.exit?.status
 	if (!status) return null
-	const tone = `shrink-0 ${EXIT_TONE_CLASS[exitTone(verified)]} ${className ?? ''}`.trim()
+	const tone = `size-3.5 shrink-0 ${EXIT_TONE_CLASS[exitTone(verified)]} ${className ?? ''}`.trim()
 
 	if (status === 'partial' || status === 'depleted') {
 		// The arc is the withdrawable share, the number printed beside it. A depleted lane draws the
@@ -32,7 +24,7 @@ export function ExitStatusIcon({
 		const empty = status === 'depleted'
 		const arc = fraction != null && fraction > 0 ? Math.max(fraction * RING_CIRCUMFERENCE, 1.5) : null
 		return (
-			<svg width={size} height={size} viewBox="0 0 16 16" className={tone} aria-hidden>
+			<svg viewBox="0 0 16 16" className={tone} aria-hidden>
 				<circle
 					cx="8"
 					cy="8"
@@ -61,8 +53,6 @@ export function ExitStatusIcon({
 	if (status === 'unavailable') {
 		return (
 			<svg
-				width={size}
-				height={size}
 				viewBox="0 0 24 24"
 				fill="none"
 				stroke="currentColor"
@@ -78,5 +68,5 @@ export function ExitStatusIcon({
 	}
 
 	const name = status === 'instant' ? 'check' : status === 'queued' ? 'clock' : 'circle-x'
-	return <Icon name={name} height={size} width={size} className={tone} aria-hidden />
+	return <Icon name={name} className={tone} aria-hidden />
 }

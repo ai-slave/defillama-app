@@ -16,7 +16,7 @@ export function SettingsCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="settings" height={28} width={28} className="text-primary" />
+				<Icon name="settings" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Settings</span>
 			</div>
 

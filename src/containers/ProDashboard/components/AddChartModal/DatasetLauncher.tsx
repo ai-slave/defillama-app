@@ -34,10 +34,10 @@ export function DatasetLauncher<T extends string>({
 			>
 				<span className="flex items-center gap-3">
 					<span className="flex size-10 items-center justify-center rounded-lg bg-brand-tint">
-						<Icon name={hero.icon} height={22} width={22} className="text-link" />
+						<Icon name={hero.icon} className="size-5 text-link" />
 					</span>
 					<span className="mr-auto heading-xs text-primary">{hero.title}</span>
-					<Icon name="arrow-right" height={18} width={18} className="text-tertiary" />
+					<Icon name="arrow-right" className="size-4.5 text-tertiary" />
 				</span>
 				<span className="body-md text-secondary">{hero.description}</span>
 				<span className="flex flex-wrap gap-1.5">
@@ -62,7 +62,7 @@ export function DatasetLauncher<T extends string>({
 								className="hover-wash-card flex items-start gap-2.5 text-left"
 							>
 								<span className="flex h-lh shrink-0 items-center label-md">
-									<Icon name={locked ? 'file-lock-2' : card.icon} height={16} width={16} className="text-secondary" />
+									<Icon name={locked ? 'file-lock-2' : card.icon} className="size-4 text-secondary" />
 								</span>
 								<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 									<span className="label-md text-primary">

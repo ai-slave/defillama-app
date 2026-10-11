@@ -116,7 +116,7 @@ export function TopAuthorsRail() {
 								/>
 							}
 						>
-							<Icon name="chevron-left" height={16} width={16} />
+							<Icon name="chevron-left" className="size-4" />
 						</Tooltip>
 					</>
 				) : null}
@@ -153,7 +153,7 @@ export function TopAuthorsRail() {
 								/>
 							}
 						>
-							<Icon name="chevron-right" height={16} width={16} />
+							<Icon name="chevron-right" className="size-4" />
 						</Tooltip>
 					</>
 				) : null}

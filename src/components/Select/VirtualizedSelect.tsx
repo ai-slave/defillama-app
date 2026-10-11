@@ -145,7 +145,7 @@ function filterOptions<T extends string>(
 function SearchInput({ label }: { label: string }) {
 	return (
 		<div className="relative">
-			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
+			<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
 			<Ariakit.ComboboxInput
 				aria-label={`Search ${label}`}
 				placeholder="Search…"

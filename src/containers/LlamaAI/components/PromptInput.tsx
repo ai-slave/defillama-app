@@ -519,7 +519,7 @@ export function PromptInput({
 
 			{quotedText ? (
 				<div className="flex items-center gap-2 rounded-md border-l-2 border-brand bg-brand-muted py-1 pr-1 pl-3">
-					<Icon name="message-square-plus" height={14} width={14} className="shrink-0 text-link" />
+					<Icon name="message-square-plus" className="size-3.5 shrink-0 text-link" />
 					<p className="min-w-0 flex-1 truncate body-sm text-secondary">{quotedText}</p>
 					<Button
 						type="button"
@@ -532,7 +532,7 @@ export function PromptInput({
 						}}
 						aria-label="Clear quoted text"
 					>
-						<Icon name="x" height={14} width={14} />
+						<Icon name="x" className="size-3.5" />
 					</Button>
 				</div>
 			) : null}

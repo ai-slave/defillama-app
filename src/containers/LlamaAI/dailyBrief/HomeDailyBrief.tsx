@@ -104,13 +104,13 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 	const openLabel = (
 		<>
 			Hide full brief
-			<Icon name="chevron-up" height={14} width={14} />
+			<Icon name="chevron-up" className="size-3.5" />
 		</>
 	)
 	const closedLabel = (
 		<>
 			{`Read full brief · ${bulletCount}`}
-			<Icon name="chevron-right" height={14} width={14} />
+			<Icon name="chevron-right" className="size-3.5" />
 		</>
 	)
 
@@ -158,9 +158,7 @@ export function HomeDailyBrief({ brief }: { brief: DailyBrief }) {
 					<span className="line-clamp-2 sm:truncate">{brief.headline}</span>
 					<Icon
 						name="chevron-right"
-						height={16}
-						width={16}
-						className={`shrink-0 text-tertiary transition-transform group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none ${isExpanded ? 'rotate-90' : isExpanded === null ? 'lg:[html[data-ab-home-brief-default-v1=b]_&]:rotate-90' : ''}`}
+						className={`size-4 shrink-0 text-tertiary transition-transform group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none ${isExpanded ? 'rotate-90' : isExpanded === null ? 'lg:[html[data-ab-home-brief-default-v1=b]_&]:rotate-90' : ''}`}
 					/>
 				</button>
 				{isExpanded !== false ? (

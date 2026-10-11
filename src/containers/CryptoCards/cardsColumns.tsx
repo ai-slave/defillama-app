@@ -205,12 +205,12 @@ function BooleanValue({ row, field, value }: { row: CardTableRow; field: CardBoo
 	if (value === VARIES_BY_TIER) return <TierComparisonPopover row={row} field={field} />
 	return value ? (
 		<span>
-			<Icon name="check" height={16} width={16} className="inline text-success" />
+			<Icon name="check" className="inline size-4 text-success" />
 			<span className="sr-only">Yes</span>
 		</span>
 	) : (
 		<span>
-			<Icon name="x" height={16} width={16} className="inline text-tertiary" />
+			<Icon name="x" className="inline size-4 text-tertiary" />
 			<span className="sr-only">No</span>
 		</span>
 	)
@@ -263,12 +263,12 @@ export function buildCardsColumns(
 							>
 								{row.getIsExpanded() ? (
 									<>
-										<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
+										<Icon name="chevron-down" className="size-4 text-tertiary" />
 										<span className="sr-only">{`Hide ${expansionLabel}`}</span>
 									</>
 								) : (
 									<>
-										<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+										<Icon name="chevron-right" className="size-4 text-tertiary" />
 										<span className="sr-only">{`View ${expansionLabel}`}</span>
 									</>
 								)}
@@ -309,7 +309,7 @@ export function buildCardsColumns(
 										</div>
 									}
 								>
-									<Icon name="alert-triangle" height={14} width={14} className="text-warning" aria-hidden="true" />
+									<Icon name="alert-triangle" className="size-3.5 text-warning" aria-hidden="true" />
 								</Hovercard>
 							) : null}
 						</div>

@@ -139,7 +139,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 						trailingIcon={
 							<Ariakit.HovercardProvider>
 								<Ariakit.HovercardAnchor>
-									<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
+									<Icon name="help-circle" className="size-4 cursor-help text-tertiary" />
 								</Ariakit.HovercardAnchor>
 								<Ariakit.Hovercard
 									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay"
@@ -190,9 +190,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 															<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
 																<Icon
 																	name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
-																	height={16}
-																	width={16}
-																	className="text-tertiary"
+																	className="size-4 text-tertiary"
 																/>
 															</Tooltip>
 														</span>

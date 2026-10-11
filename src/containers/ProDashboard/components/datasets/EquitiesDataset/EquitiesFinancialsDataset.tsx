@@ -63,7 +63,7 @@ function FinancialRow({
 							}}
 							className="-ml-1 flex w-full items-center gap-1 rounded-sm text-left text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 						>
-							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} className="shrink-0" />
+							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-3.5 shrink-0" />
 							<span className="truncate">{row.label}</span>
 						</button>
 					) : (

@@ -456,7 +456,7 @@ export function MetricSentenceBuilder({
 						<PopoverHeader
 							search={
 								<div className="relative">
-									<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+									<Icon name="search" className={searchFieldIconStyles} />
 									<Input
 										value={searchTerm}
 										onChange={(event) => setSearchTerm(event.target.value)}
@@ -494,7 +494,7 @@ export function MetricSentenceBuilder({
 						<PopoverHeader
 							search={
 								<div className="relative">
-									<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+									<Icon name="search" className={searchFieldIconStyles} />
 									<Combobox
 										autoFocus
 										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
@@ -659,7 +659,7 @@ export function MetricSentenceBuilder({
 			<div className="rounded-lg border border-subtle bg-linear-to-br from-surface via-surface to-surface p-2.5 sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
 					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link sm:size-8">
-						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
+						<Icon name="sparkles" className="size-3.5 sm:size-4" />
 					</div>
 					<div className="min-w-0">
 						<div className="title-sm text-primary">Metric sentence builder</div>

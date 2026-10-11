@@ -362,7 +362,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 				</div>
 				<div className="mt-3 flex items-center gap-2 sm:gap-4">
 					<div className={searchFieldWrapperStyles}>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							aria-label="Search protocols"
 							placeholder="Search protocols…"

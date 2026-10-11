@@ -109,9 +109,7 @@ export function MetricSection({ label, tooltip, value, extra, children, defaultO
 			</span>
 			<Icon
 				name="chevron-down"
-				height={16}
-				width={16}
-				className="relative top-1 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
+				className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
 			/>
 			{extra}
 			{value != null ? (
@@ -161,9 +159,7 @@ export function SubMetricSection({
 				</span>
 				<Icon
 					name="chevron-down"
-					height={16}
-					width={16}
-					className="relative top-1 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
+					className="relative top-1 size-4 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
 				/>
 				{value != null ? (
 					<span className="ml-auto mono-md" data-metric-value>

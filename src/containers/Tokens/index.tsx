@@ -362,9 +362,7 @@ const expanderColumn = columnHelper.display({
 				Markets
 				<Icon
 					name="chevron-down"
-					height={12}
-					width={12}
-					className={`text-tertiary transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
+					className={`size-3 text-tertiary transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
 				/>
 			</Button>
 		)

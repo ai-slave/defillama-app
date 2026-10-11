@@ -28,7 +28,7 @@ function PoolExternalLink({ url, name, poolId }: { url: string; name: string; po
 			onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: name, pool_id: poolId })}
 			className="shrink-0 text-tertiary transition-colors hover:text-link"
 		>
-			<Icon name="external-link" height={14} width={14} />
+			<Icon name="external-link" className="size-3.5" />
 		</a>
 	)
 }
@@ -103,7 +103,7 @@ export function PoolNameLockup({
 				<span className="ml-auto flex shrink-0 items-center gap-2">
 					{exploited ? (
 						<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
-							<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-error" />
+							<Icon name="alert-triangle-filled" className="size-5 shrink-0 text-error" />
 						</Tooltip>
 					) : null}
 					{hasRiskData ? <RiskDataHint configID={configID} poolName={value} /> : null}
@@ -163,7 +163,7 @@ export function RiskDataHint({ configID, poolName }: { configID: string; poolNam
 				/>
 			}
 		>
-			<Icon name="shield-check" height={21} width={21} />
+			<Icon name="shield-check" className="size-4" />
 		</Tooltip>
 	)
 }

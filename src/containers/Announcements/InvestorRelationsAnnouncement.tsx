@@ -23,7 +23,7 @@ export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTr
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
 				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-ir-announcement-badge-text dark:ring-1 dark:ring-ir-announcement-ring">
-					<Icon name="bar-chart-2" height={12} width={12} />
+					<Icon name="bar-chart-2" className="size-3" />
 					IR
 				</span>
 				<span className="font-medium">
@@ -38,7 +38,7 @@ export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTr
 					className={announcementCtaStyles}
 				>
 					See how it works
-					<Icon name="arrow-right" height={12} width={12} />
+					<Icon name="arrow-right" className="size-3" />
 				</a>
 			</span>
 		</Announcement>

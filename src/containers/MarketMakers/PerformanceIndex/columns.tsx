@@ -133,7 +133,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 					onClick={() => onSelectMM(row.original.marketMakerId, row.original.marketMakerName)}
 				>
 					Details
-					<Icon name="arrow-right" height={12} width={12} />
+					<Icon name="arrow-right" className="size-3" />
 				</Button>
 			</div>
 		),

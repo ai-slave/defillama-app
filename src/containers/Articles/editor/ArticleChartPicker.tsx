@@ -442,7 +442,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							<Field hideLabel label={tab === 'protocol' ? 'Search protocols' : 'Search chains'} error={seriesError}>
 								{(control) => (
 									<div className="relative">
-										<Icon name="search" aria-hidden className={`${searchFieldIconStyles} size-4`} />
+										<Icon name="search" aria-hidden className={searchFieldIconStyles} />
 										<Input
 											{...control}
 											ref={searchRef}

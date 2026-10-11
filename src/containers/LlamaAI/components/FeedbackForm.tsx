@@ -103,7 +103,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 										: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-success not-disabled:not-aria-disabled:hover:text-success'
 								}`}
 							>
-								<Icon name="thumbs-up" height={14} width={14} />
+								<Icon name="thumbs-up" className="size-3.5" />
 								Good
 							</button>
 							<button
@@ -117,7 +117,7 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 										: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-error not-disabled:not-aria-disabled:hover:text-error'
 								}`}
 							>
-								<Icon name="thumbs-down" height={14} width={14} />
+								<Icon name="thumbs-down" className="size-3.5" />
 								Bad
 							</button>
 						</div>

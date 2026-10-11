@@ -76,7 +76,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects…</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						ref={searchInputRef}
 						name="search"

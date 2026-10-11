@@ -54,7 +54,7 @@ export function ProCardHeader({
 									content="Edit card"
 									render={<Button size="sm" square variant="ghost" aria-label="Edit card" onClick={onEdit} />}
 								>
-									<Icon name="pencil" height={16} width={16} />
+									<Icon name="pencil" className="size-4" />
 								</Tooltip>
 							) : null}
 						</ProCardEditControls>

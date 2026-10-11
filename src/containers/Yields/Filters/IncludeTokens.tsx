@@ -147,7 +147,7 @@ export function IncludeTokens({
 						/>
 					}
 				>
-					<Icon name="search" height={16} width={16} className="shrink-0" />
+					<Icon name="search" className="size-4 shrink-0" />
 				</Tooltip>
 				{dialog}
 			</>
@@ -165,7 +165,7 @@ export function IncludeTokens({
 					onClick={openDialog}
 					className="flex min-w-0 flex-1 items-center gap-2 px-3 py-1.5 text-left outline-hidden"
 				>
-					<Icon name="search" height={16} width={16} />
+					<Icon name="search" className="size-4" />
 					{hasSelection ? (
 						<span className="flex min-w-0 flex-1 items-center gap-1 text-left text-primary">
 							<span className="truncate">{firstSelectedName}</span>

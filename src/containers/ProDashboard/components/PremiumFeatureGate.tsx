@@ -41,7 +41,7 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 						variant="primary"
 						size="sm"
 					>
-						<Icon name="sparkles" height={14} width={14} />
+						<Icon name="sparkles" className="size-3.5" />
 						Upgrade to Pro
 					</Button>
 				}

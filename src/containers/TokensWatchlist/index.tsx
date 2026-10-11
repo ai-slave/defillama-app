@@ -256,7 +256,7 @@ function TokensPortfolioSelection() {
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
 				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md">
-					<Icon name="folder-plus" height={16} width={16} />
+					<Icon name="folder-plus" className="size-4" />
 					<span>New</span>
 				</Button>
 				<DeletePortfolioButton portfolio={selectedPortfolio} onDelete={removePortfolio} finalFocus={newButtonRef} />

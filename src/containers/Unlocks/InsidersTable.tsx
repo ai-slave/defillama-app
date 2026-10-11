@@ -52,7 +52,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 								className="flex items-center gap-1 mono-md text-tertiary hover:underline"
 							>
 								{shortAddress}
-								<Icon name="external-link" height={10} width={10} />
+								<Icon name="external-link" className="size-3.5" />
 							</a>
 						) : (
 							<span className="mono-md text-tertiary">{shortAddress}</span>

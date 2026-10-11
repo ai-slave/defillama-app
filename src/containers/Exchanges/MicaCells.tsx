@@ -60,7 +60,7 @@ export function MicaDepthValue({
 				{formatUsd(value, { compact: true }) ?? '–'}
 			</Tooltip>
 			<Tooltip content={helperText}>
-				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />
+				<Icon name="help-circle" className="size-3.5 shrink-0 text-tertiary" />
 			</Tooltip>
 		</span>
 	)
@@ -101,7 +101,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 					<span className="flex flex-col gap-3 p-3">
 						<span className="flex items-start gap-2">
 							<span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
-								<Icon name="gift" height={15} width={15} />
+								<Icon name="gift" className="size-3.5" />
 							</span>
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="label-md text-primary">{promotion.title}</span>
@@ -127,9 +127,9 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 									data-umami-event-link={link.label}
 									className="flex items-center gap-2 px-3 py-2 label-sm text-primary hover:bg-hover-row"
 								>
-									<Icon name="gift" height={12} width={12} className="shrink-0 text-link" />
+									<Icon name="gift" className="size-3 shrink-0 text-link" />
 									<span>{link.label}</span>
-									<Icon name="arrow-up-right" height={12} width={12} className="ml-auto shrink-0 text-tertiary" />
+									<Icon name="arrow-up-right" className="ml-auto size-3 shrink-0 text-tertiary" />
 								</a>
 							))}
 						</span>

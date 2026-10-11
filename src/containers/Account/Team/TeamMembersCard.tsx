@@ -10,7 +10,7 @@ export function TeamMembersCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={20} width={20} className="text-primary" />
+				<Icon name="users" className="size-5 text-primary" />
 				<h2 ref={headingRef} tabIndex={-1} className="label-lg text-primary">
 					Members ({members.length})
 				</h2>

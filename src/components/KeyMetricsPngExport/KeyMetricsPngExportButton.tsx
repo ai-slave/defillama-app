@@ -304,7 +304,7 @@ export function KeyMetricsPngExportButton({
 				/>
 			}
 		>
-			<Icon name="download-paper" height={12} width={12} />
+			<Icon name="download-paper" className="size-3" />
 			<span>.png</span>
 		</Tooltip>
 	)

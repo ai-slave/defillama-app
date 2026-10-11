@@ -69,9 +69,7 @@ function Chevron({ open }: { open: boolean }) {
 	return (
 		<Icon
 			name="chevron-right"
-			height={14}
-			width={14}
-			className={`shrink-0 text-tertiary duration-150 motion-safe:transition-transform ${open ? 'rotate-90' : ''}`}
+			className={`size-3.5 shrink-0 text-tertiary duration-150 motion-safe:transition-transform ${open ? 'rotate-90' : ''}`}
 		/>
 	)
 }
@@ -189,12 +187,7 @@ export function AgentTimeline({
 				aria-expanded={expanded}
 				className={`flex w-full items-center gap-2 rounded-md py-1 text-left ${hackerMode ? 'mono-sm' : 'label-sm'} not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
 			>
-				<Icon
-					name="check"
-					height={12}
-					width={12}
-					className={`shrink-0 ${failed > 0 ? 'text-warning' : 'text-success'}`}
-				/>
+				<Icon name="check" className={`size-3 shrink-0 ${failed > 0 ? 'text-warning' : 'text-success'}`} />
 				<span className="min-w-0 flex-1 truncate">{summarizeSteps(steps)}</span>
 				{failed > 0 ? <span className="shrink-0 body-sm text-warning">{failed} failed</span> : null}
 
@@ -276,7 +269,7 @@ function TimelineRows({
 			{isCompacting ? (
 				<li className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
-						<Icon name="layers" height={14} width={14} className="shrink-0 text-tertiary motion-safe:animate-pulse" />
+						<Icon name="layers" className="size-3.5 shrink-0 text-tertiary motion-safe:animate-pulse" />
 						<span className={`body-sm ${muted}`}>Optimizing context memory&hellip;</span>
 					</div>
 				</li>
@@ -293,9 +286,9 @@ function TimelineRows({
 				<li key={agent.id} className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
 						{agent.status === 'completed' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+							<Icon name="check" className="size-3.5 shrink-0 text-success" />
 						) : agent.status === 'error' ? (
-							<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
+							<Icon name="x" className="size-3.5 shrink-0 text-error" />
 						) : (
 							<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 						)}
@@ -397,15 +390,13 @@ function ToolRow({
 			{step.status === 'running' ? (
 				<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 			) : step.status === 'done' ? (
-				<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+				<Icon name="check" className="size-3.5 shrink-0 text-success" />
 			) : (
-				<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
+				<Icon name="x" className="size-3.5 shrink-0 text-error" />
 			)}
 			<Icon
 				name={meta.icon as never}
-				height={14}
-				width={14}
-				className={`shrink-0 ${hackerMode ? 'text-ai-terminal' : TOOL_TONE_CLASS[meta.tone]}`}
+				className={`size-3.5 shrink-0 ${hackerMode ? 'text-ai-terminal' : TOOL_TONE_CLASS[meta.tone]}`}
 			/>
 			<span className="flex min-w-0 flex-1 items-baseline gap-1">
 				<span className={`shrink-0 font-semibold ${hackerMode ? 'text-ai-terminal' : 'text-secondary'}`}>

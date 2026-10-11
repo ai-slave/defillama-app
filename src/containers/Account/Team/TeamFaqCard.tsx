@@ -30,7 +30,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 	return (
 		<div className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="help-circle" height={20} width={20} className="text-primary" />
+				<Icon name="help-circle" className="size-5 text-primary" />
 				<span className="label-lg text-primary">Frequently asked questions</span>
 			</div>
 
@@ -53,7 +53,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
 								<p className="body-md text-primary">{item.question}</p>
-								<Icon name={isExpanded ? 'x' : 'plus'} height={16} width={16} className="shrink-0 text-tertiary" />
+								<Icon name={isExpanded ? 'x' : 'plus'} className="size-4 shrink-0 text-tertiary" />
 							</button>
 							<div
 								id={answerId}

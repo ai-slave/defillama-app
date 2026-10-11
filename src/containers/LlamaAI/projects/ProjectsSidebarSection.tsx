@@ -97,28 +97,26 @@ export function ProjectsSidebarSection({
 				}
 				className={`${SIDEBAR_ROW} -mx-2 text-left`}
 			>
-				<Icon name="folder" height={16} width={16} className="shrink-0" />
+				<Icon name="folder" className="size-4 shrink-0" />
 				<span className="min-w-0 flex-1 truncate">Projects</span>
 				{!isLocked && projects.length > 0 ? (
 					<span className="shrink-0 body-sm text-tertiary tabular-nums">{projects.length}</span>
 				) : null}
 				<Icon
 					name={isOpen ? 'chevron-down' : 'chevron-right'}
-					height={14}
-					width={14}
 					aria-hidden="true"
 					// The chevron glyph sits inset in its box; pull it out so its tip lines up with the counts above it.
-					className="-mr-1 shrink-0 text-tertiary"
+					className="-mr-1 size-3.5 shrink-0 text-tertiary"
 				/>
 			</button>
 
 			{!isOpen ? null : isLocked ? (
 				<Button as={BasicLink} href="/subscription" size="md" className="w-full justify-between">
 					<span className="flex items-center gap-1">
-						<Icon name="folder-plus" height={14} width={14} />
+						<Icon name="folder-plus" className="size-3.5" />
 						Upgrade for projects
 					</span>
-					<Icon name="chevron-right" height={14} width={14} />
+					<Icon name="chevron-right" className="size-3.5" />
 				</Button>
 			) : (
 				<>
@@ -128,7 +126,7 @@ export function ProjectsSidebarSection({
 						type="button"
 						className={`${SIDEBAR_ROW} -mx-2 text-left text-secondary not-disabled:not-aria-disabled:hover:text-primary`}
 					>
-						<Icon name="plus" height={16} width={16} className="shrink-0 text-link" />
+						<Icon name="plus" className="size-4 shrink-0 text-link" />
 						<span className="min-w-0 truncate">New project</span>
 					</Ariakit.DialogDisclosure>
 
@@ -183,7 +181,7 @@ export function ProjectsSidebarSection({
 							className="-ml-2 self-start"
 						>
 							All projects ({projects.length})
-							<Icon name="arrow-right" height={14} width={14} />
+							<Icon name="arrow-right" className="size-3.5" />
 						</Button>
 					) : null}
 				</>

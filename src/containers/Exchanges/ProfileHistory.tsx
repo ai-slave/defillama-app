@@ -14,7 +14,7 @@ function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: str
 	return (
 		<div className="flex items-center gap-2">
 			<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-				<Icon name={icon} height={17} width={17} />
+				<Icon name={icon} className="size-4" />
 			</span>
 			<h2 className="label-lg">{title}</h2>
 			{count != null ? <Tag>{count}</Tag> : null}
@@ -39,9 +39,7 @@ function HistorySection({
 				<HistoryHeader icon={icon} title={title} count={count} />
 				<Icon
 					name="chevron-down"
-					height={16}
-					width={16}
-					className="ml-auto text-tertiary transition-transform group-open/history:rotate-180"
+					className="ml-auto size-4 text-tertiary transition-transform group-open/history:rotate-180"
 				/>
 			</summary>
 			<div className="divide-y divide-(--border-subtle)">{children}</div>
@@ -146,7 +144,7 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 											className="inline-flex items-center gap-1 text-link hover:underline"
 										>
 											{formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
-											<Icon name="external-link" height={12} width={12} />
+											<Icon name="external-link" className="size-3" />
 										</BasicLink>
 									) : (
 										(formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')

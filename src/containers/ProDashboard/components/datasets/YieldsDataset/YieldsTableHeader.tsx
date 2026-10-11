@@ -55,7 +55,7 @@ export function YieldsTableHeader({
 		<div className="mb-3 text-primary">
 			<div className="mb-3 flex items-center justify-end gap-4">
 				<div className={searchFieldInlineWrapperStyles}>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						type="text"
 						aria-label="Search pools"

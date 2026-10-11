@@ -99,7 +99,7 @@ export function Bookmark({
 				/>
 			}
 		>
-			<Icon name="bookmark" width={16} height={16} className="shrink-0" />
+			<Icon name="bookmark" className="size-4 shrink-0" />
 			<span className="sr-only">{label}</span>
 		</Tooltip>
 	)

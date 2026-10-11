@@ -15,7 +15,7 @@ export function HelpIcon({ content, label }: { content: ReactNode; label?: strin
 			contentClassName="max-w-105 p-3"
 			render={<button type="button" aria-label={label} />}
 		>
-			<Icon name="help-circle" height={14} width={14} />
+			<Icon name="help-circle" className="size-3.5" />
 		</Hovercard>
 	)
 }

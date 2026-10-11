@@ -291,7 +291,7 @@ function PasswordInput(props: Omit<ComponentPropsWithRef<'input'>, 'type' | 'cla
 					/>
 				}
 			>
-				<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
+				<Icon name={visible ? 'eye-off' : 'eye'} className="size-4" />
 			</Tooltip>
 		</div>
 	)
@@ -708,7 +708,7 @@ function AuthScreen({
 							{signInWithGithubMutation.isPending ? (
 								<LoadingSpinner size={16} />
 							) : (
-								<Icon name="github" height={18} width={18} />
+								<Icon name="github" className="size-4.5" />
 							)}
 						</span>
 						<span className="min-w-0 truncate">

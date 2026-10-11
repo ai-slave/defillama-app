@@ -145,7 +145,7 @@ export function MetricTab(props: MetricTabProps) {
 								<p className="body-sm text-tertiary">Shown above the metric tile</p>
 							</div>
 							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link md:flex">
-								<Icon name="pencil" width={14} height={14} />
+								<Icon name="pencil" className="size-3.5" />
 							</div>
 						</div>
 						<div className="mt-2 space-y-1.5">

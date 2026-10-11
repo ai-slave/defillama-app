@@ -117,7 +117,7 @@ export function ProjectsGrid() {
 				/>
 			}
 		>
-			<Icon name="plus" height={14} width={14} />
+			<Icon name="plus" className="size-3.5" />
 			New project
 		</Tooltip>
 	)
@@ -166,7 +166,7 @@ export function ProjectsGrid() {
 
 			{hasProjects ? (
 				<div className={searchFieldFlexibleWrapperStyles}>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						ref={searchRef}
 						value={query}
@@ -185,7 +185,7 @@ export function ProjectsGrid() {
 							onClick={clearSearch}
 							className="absolute top-0 right-1 bottom-0 my-auto"
 						>
-							<Icon name="x" height={14} width={14} />
+							<Icon name="x" className="size-3.5" />
 						</Button>
 					) : null}
 				</div>
@@ -228,7 +228,7 @@ export function ProjectsGrid() {
 							<div className="group hover-wash-card relative flex size-full flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left">
 								<header className="flex items-center gap-2">
 									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
-										<Icon name="folder" height={14} width={14} />
+										<Icon name="folder" className="size-3.5" />
 									</div>
 									<div className="min-w-0 flex-1">
 										<h3 className="truncate label-md text-primary">
@@ -256,7 +256,7 @@ export function ProjectsGrid() {
 												/>
 											}
 										>
-											<Icon name="pencil" height={16} width={16} />
+											<Icon name="pencil" className="size-4" />
 										</Tooltip>
 										<Tooltip
 											content="Delete project"
@@ -274,7 +274,7 @@ export function ProjectsGrid() {
 												/>
 											}
 										>
-											<Icon name="trash-2" height={16} width={16} className="text-error" />
+											<Icon name="trash-2" className="size-4 text-error" />
 										</Tooltip>
 									</div>
 								</header>

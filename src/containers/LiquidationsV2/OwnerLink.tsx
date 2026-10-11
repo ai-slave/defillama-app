@@ -44,7 +44,7 @@ export function LiquidationsOwnerLink({ position }: { position: LiquidationPosit
 	return (
 		<a href={ownerUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
 			<span>{label}</span>
-			<Icon name="external-link" height={12} width={12} />
+			<Icon name="external-link" className="size-3" />
 		</a>
 	)
 }

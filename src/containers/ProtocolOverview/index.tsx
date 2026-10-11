@@ -171,7 +171,7 @@ function ProtocolHeader({
 				{props.token?.symbol && props.token.symbol !== '-' ? (
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
-				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
+				{props.deprecated ? <DeprecatedProtocolMarker size="size-4.5" /> : null}
 			</EntityTitleRow>
 			{props.exchangeProfileRoute ? (
 				// Sits directly under the title, like the token page's issuer line: this protocol

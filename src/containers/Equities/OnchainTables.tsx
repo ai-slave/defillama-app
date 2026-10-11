@@ -167,7 +167,7 @@ const marketsColumns = marketsColumnHelper.columns([
 				className="inline-flex items-center gap-1 text-link hover:underline"
 			>
 				Open
-				<Icon name="arrow-up-right" height={14} width={14} />
+				<Icon name="arrow-up-right" className="size-3.5" />
 			</a>
 		),
 		meta: {

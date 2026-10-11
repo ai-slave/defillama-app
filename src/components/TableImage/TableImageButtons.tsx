@@ -165,7 +165,7 @@ export function TableImageButtons({
 					{isLoading ? (
 						<LoadingSpinner size={14} />
 					) : (
-						(triggerContent ?? <Icon name="download-paper" height={14} width={14} />)
+						(triggerContent ?? <Icon name="download-paper" className="size-3.5" />)
 					)}
 					{triggerContent || iconOnly ? null : <span>{triggerLabel ?? '.png'}</span>}
 				</Tooltip>
@@ -177,7 +177,7 @@ export function TableImageButtons({
 							data-umami-event="export-csv"
 							onClick={() => csv.requestDownload(() => downloadPreparedCsv(prepareCsv))}
 						>
-							<Icon name="download-paper" height={14} width={14} />
+							<Icon name="download-paper" className="size-3.5" />
 							<span>Download CSV</span>
 						</MenuItem>
 					) : null}
@@ -186,11 +186,11 @@ export function TableImageButtons({
 						data-umami-event="export-table-png"
 						onClick={() => void run('download')}
 					>
-						<Icon name="download-paper" height={14} width={14} />
+						<Icon name="download-paper" className="size-3.5" />
 						<span>Download image</span>
 					</MenuItem>
 					<MenuItem disabled={disabled || isLoading} data-umami-event="copy-table-png" onClick={() => void run('copy')}>
-						<Icon name="copy" height={14} width={14} />
+						<Icon name="copy" className="size-3.5" />
 						<span>Copy image</span>
 					</MenuItem>
 					{watermarkMode === 'preference' && !hideWatermarkItem ? (

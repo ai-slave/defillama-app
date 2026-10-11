@@ -184,7 +184,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search investors…</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							name="search"
 							onInput={(e) => setInvestorName(e.currentTarget.value)}

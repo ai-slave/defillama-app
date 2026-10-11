@@ -191,7 +191,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 
 				<div className="mx-auto my-8 w-full max-w-3xl min-w-0">
 					<div className="relative">
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Ariakit.Combobox
 							aria-label="Search protocols"
 							placeholder="Search protocols…"

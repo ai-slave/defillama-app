@@ -193,7 +193,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 						content="Find token in leaderboard"
 						render={<Button type="submit" size="md" square aria-label="Find token in leaderboard" />}
 					>
-						<Icon name="search" height={16} width={16} />
+						<Icon name="search" className="size-4" />
 					</Tooltip>
 				</form>
 				{searchError ? (
@@ -243,11 +243,11 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				>
 					Filter
 					{activeFilterCount ? <span className="label-sm text-link">({activeFilterCount})</span> : null}
-					<Icon name="settings" height={14} width={14} />
+					<Icon name="settings" className="size-3.5" />
 				</Button>
 				<Button type="button" size="md" onClick={() => setDocsOpen(true)} className="lg:ml-auto">
 					Documentation
-					<Icon name="file-text" height={14} width={14} />
+					<Icon name="file-text" className="size-3.5" />
 				</Button>
 			</div>
 			{filterChips.length > 0 ? (
@@ -290,7 +290,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				/>
 				<div className="p-3">
 					<div className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2.5 body-sm text-secondary">
-						<Icon name="help-circle" height={16} width={16} className="shrink-0 text-link" />
+						<Icon name="help-circle" className="size-4 shrink-0 text-link" />
 						View the full chart on desktop
 					</div>
 				</div>

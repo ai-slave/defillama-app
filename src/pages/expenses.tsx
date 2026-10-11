@@ -131,7 +131,7 @@ const columns = columnHelper.columns([
 					render={<a href={source} target="_blank" rel="noopener noreferrer" aria-label="View source" />}
 					className="flex shrink-0 items-center justify-center rounded-md bg-brand-tint px-2.5 py-1 label-sm whitespace-nowrap text-link hover:bg-brand-tint-strong focus-visible:bg-brand-tint-strong"
 				>
-					<Icon name="arrow-up-right" height={14} width={14} className="shrink-0" />
+					<Icon name="arrow-up-right" className="size-3.5 shrink-0" />
 				</Tooltip>
 			) : null
 		},

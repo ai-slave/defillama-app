@@ -249,7 +249,7 @@ export function SelectItemsStep() {
 											/>
 										}
 									>
-										<Icon name="x" height={16} width={16} />
+										<Icon name="x" className="size-4" />
 									</Tooltip>
 								</div>
 							))
@@ -283,7 +283,7 @@ export function SelectItemsStep() {
 								/>
 							</div>
 							<div className="relative">
-								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+								<Icon name="search" className={searchFieldIconStyles} />
 								<Input
 									{...control}
 									ref={searchRef}

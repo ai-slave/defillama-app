@@ -25,7 +25,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 					/>
 				}
 			>
-				<Icon name="arrow-up" height={16} width={16} />
+				<Icon name="arrow-up" className="size-4" />
 				<span className="sr-only">Queue message</span>
 			</Tooltip>
 		)
@@ -41,7 +41,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 						content="Queue — sends when this response finishes"
 						render={<Button type="submit" size="md" variant="outline" square data-umami-event="llamaai-queue-submit" />}
 					>
-						<Icon name="arrow-up" height={16} width={16} />
+						<Icon name="arrow-up" className="size-4" />
 						<span className="sr-only">Queue message</span>
 					</Tooltip>
 				) : null}
@@ -77,7 +77,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 			disabled={mode.disabled}
 			accessibleWhenDisabled
 		>
-			<Icon name="arrow-up" height={16} width={16} />
+			<Icon name="arrow-up" className="size-4" />
 			<span className="sr-only">Submit prompt</span>
 		</Button>
 	)

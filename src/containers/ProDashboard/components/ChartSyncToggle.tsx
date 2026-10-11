@@ -22,7 +22,7 @@ export function ChartSyncToggle() {
 				/>
 			}
 		>
-			<Icon name="link" height={16} width={16} />
+			<Icon name="link" className="size-4" />
 		</Tooltip>
 	)
 }

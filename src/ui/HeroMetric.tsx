@@ -41,9 +41,7 @@ export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: Her
 				{valueEl}
 				<Icon
 					name="chevron-down"
-					height={16}
-					width={16}
-					className="relative top-0.5 text-tertiary transition-transform duration-100 group-open:rotate-180"
+					className="relative top-0.5 size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
 				/>
 			</span>
 		</>

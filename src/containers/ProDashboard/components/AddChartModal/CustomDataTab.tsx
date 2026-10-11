@@ -26,7 +26,7 @@ const DISPLAY_MODE_OPTIONS: Array<SegmentedControlOption<CustomDataModalState['d
 		value: 'chart',
 		label: (
 			<span className="flex items-center gap-1.5">
-				<Icon name="bar-chart-2" height={12} width={12} />
+				<Icon name="bar-chart-2" className="size-3" />
 				Chart
 			</span>
 		)
@@ -35,7 +35,7 @@ const DISPLAY_MODE_OPTIONS: Array<SegmentedControlOption<CustomDataModalState['d
 		value: 'table',
 		label: (
 			<span className="flex items-center gap-1.5">
-				<Icon name="align-left" height={12} width={12} />
+				<Icon name="align-left" className="size-3" />
 				Table
 			</span>
 		)

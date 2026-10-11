@@ -170,6 +170,8 @@ type Name = (typeof ICON_GROUPS)[number][1][number]
 export interface IIcon extends SVGProps<SVGSVGElement> {
 	name: Name
 }
+/** A sprite icon. Size it with a `size-*` class: `size-3.5` (14px) beside a label, `size-4` (16px) icon-only
+    (design.md → Icons). Never pass `height` or `width`; scripts/policies/check-icon-size.ts fails them. */
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>

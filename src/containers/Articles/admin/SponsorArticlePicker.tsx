@@ -35,7 +35,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 	return (
 		<Ariakit.ComboboxProvider open={open} setOpen={setOpen} setInputValue={setSearchValue} resetValueOnHide>
 			<div className="relative flex items-center">
-				<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
+				<Icon name="search" className="pointer-events-none absolute left-3 size-3.5 text-tertiary" />
 				<Ariakit.Combobox
 					aria-label="Research article to link"
 					placeholder="Search Research articles…"

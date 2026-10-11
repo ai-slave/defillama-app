@@ -237,9 +237,7 @@ export function QueueChips({
 								) : (
 									<Icon
 										name={failed ? 'alert-triangle' : 'clock'}
-										height={14}
-										width={14}
-										className={`shrink-0 ${failed ? 'text-error' : 'text-tertiary'}`}
+										className={`size-3.5 shrink-0 ${failed ? 'text-error' : 'text-tertiary'}`}
 									/>
 								)}
 								<div className="min-w-0 flex-1">
@@ -275,7 +273,7 @@ export function QueueChips({
 												/>
 											}
 										>
-											<Icon name="x" height={14} width={14} />
+											<Icon name="x" className="size-3.5" />
 											<span className="sr-only">Dismiss</span>
 										</Tooltip>
 									</div>
@@ -340,7 +338,7 @@ export function QueueChips({
 						const busy = status?.action !== null && status?.action !== undefined
 						return (
 							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
-								<Icon name="clock" height={14} width={14} className="shrink-0 text-tertiary" />
+								<Icon name="clock" className="size-3.5 shrink-0 text-tertiary" />
 								<div className="min-w-0 flex-1">
 									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
 										{message}
@@ -368,7 +366,7 @@ export function QueueChips({
 											/>
 										}
 									>
-										<Icon name="pencil" height={16} width={16} />
+										<Icon name="pencil" className="size-4" />
 										<span className="sr-only">Edit</span>
 									</Tooltip>
 									<Tooltip
@@ -388,7 +386,7 @@ export function QueueChips({
 											/>
 										}
 									>
-										<Icon name="x" height={14} width={14} />
+										<Icon name="x" className="size-3.5" />
 										<span className="sr-only">Dismiss</span>
 									</Tooltip>
 								</div>
@@ -441,7 +439,7 @@ export function QueueChips({
 											/>
 										}
 									>
-										<Icon name="repeat" height={16} width={16} />
+										<Icon name="repeat" className="size-4" />
 										<span className="sr-only">Retry</span>
 									</Tooltip>
 								) : null}
@@ -462,7 +460,7 @@ export function QueueChips({
 										/>
 									}
 								>
-									<Icon name="x" height={14} width={14} />
+									<Icon name="x" className="size-3.5" />
 									<span className="sr-only">Dismiss</span>
 								</Tooltip>
 							</div>

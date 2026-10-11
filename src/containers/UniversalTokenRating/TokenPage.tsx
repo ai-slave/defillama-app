@@ -64,7 +64,7 @@ export function ClaimProfileBanner({ asset }: { asset?: string | null }) {
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand p-4">
 			<div className="flex items-start gap-3">
 				<span className="flex h-lh shrink-0 items-center label-lg">
-					<Icon name="shield-check" height={24} width={24} className="text-on-brand" />
+					<Icon name="shield-check" className="size-6 text-on-brand" />
 				</span>
 				<div className="flex flex-col gap-1">
 					<p className="label-lg text-on-brand">Claim this token profile</p>
@@ -262,7 +262,7 @@ export function MetricCard({
 						content={`Open ${title} details`}
 						render={<Button type="button" size="sm" square aria-label={`Open ${title} details`} onClick={onOpen} />}
 					>
-						<Icon name="arrow-right" height={16} width={16} />
+						<Icon name="arrow-right" className="size-4" />
 					</Tooltip>
 				) : null}
 			</div>

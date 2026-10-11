@@ -35,12 +35,7 @@ export const columns = helper.columns([
 					aria-controls={row.getIsExpanded() ? `reward-details-${row.id}` : undefined}
 					onClick={row.getToggleExpandedHandler()}
 				>
-					<Icon
-						name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'}
-						height={16}
-						width={16}
-						aria-hidden="true"
-					/>
+					<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} className="size-4" aria-hidden="true" />
 				</Button>
 				<TokenLogo src={row.original.logo} size={28} />
 				<div className="flex min-w-0 flex-col gap-0.5">

@@ -52,7 +52,7 @@ export function EmbedChart() {
 				content="Embed chart"
 				render={<Ariakit.PopoverDisclosure store={popover} render={<Button size="md" square />} />}
 			>
-				<Icon name="code" height={16} width={16} />
+				<Icon name="code" className="size-4" />
 				<span className="sr-only">Embed chart</span>
 			</Tooltip>
 

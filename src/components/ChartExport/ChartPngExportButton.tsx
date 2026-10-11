@@ -83,7 +83,7 @@ export function ChartPngExportButton({
 					/>
 				}
 			>
-				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
+				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" className="size-3.5" />}
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Tooltip>
 
@@ -102,7 +102,7 @@ export function ChartPngExportButton({
 							}
 						}}
 					>
-						<Icon name="download-paper" height={14} width={14} />
+						<Icon name="download-paper" className="size-3.5" />
 						<span>Download CSV</span>
 					</MenuItem>
 				) : null}
@@ -112,7 +112,7 @@ export function ChartPngExportButton({
 					data-umami-event-page={router.pathname}
 					onClick={handleDownload}
 				>
-					<Icon name="download-paper" height={14} width={14} />
+					<Icon name="download-paper" className="size-3.5" />
 					<span>Download image</span>
 				</MenuItem>
 				<MenuItem
@@ -121,7 +121,7 @@ export function ChartPngExportButton({
 					data-umami-event-page={router.pathname}
 					onClick={handleCopyToClipboard}
 				>
-					<Icon name="copy" height={14} width={14} />
+					<Icon name="copy" className="size-3.5" />
 					<span>Copy to clipboard</span>
 				</MenuItem>
 			</MenuSurface>

@@ -35,7 +35,7 @@ export function AuthenticationCard() {
 		<>
 			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="key-filled" height={28} width={28} className="text-primary" />
+					<Icon name="key-filled" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Authentication</span>
 				</div>
 
@@ -45,7 +45,7 @@ export function AuthenticationCard() {
 					<>
 						<div className="flex items-center gap-3">
 							<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
-								<Icon name="wallet" height={20} width={20} className="text-primary" />
+								<Icon name="wallet" className="size-5 text-primary" />
 							</div>
 							<div className="flex flex-col gap-1">
 								<span className="body-md text-primary">{walletDisplayName}</span>
@@ -71,7 +71,7 @@ export function AuthenticationCard() {
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
 								<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
-									<Icon name="mail" height={20} width={20} className="text-primary" />
+									<Icon name="mail" className="size-5 text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
 									<span className="body-md text-primary">{user?.email}</span>
@@ -91,7 +91,7 @@ export function AuthenticationCard() {
 						{user?.walletAddress && (
 							<div className="flex items-center gap-3">
 								<div className="flex items-center rounded-full bg-surface-elevated-1 p-2">
-									<Icon name="wallet" height={20} width={20} className="text-primary" />
+									<Icon name="wallet" className="size-5 text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
 									<span className="body-md text-primary">{truncateAddress(user.walletAddress)}</span>

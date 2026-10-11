@@ -244,7 +244,7 @@ export function ProjectLanding({
 				<div className="mx-auto flex w-full max-w-[760px] flex-col">
 					<header className="flex items-center justify-between gap-3 pb-2 label-sm">
 						<Button variant="link" as={BasicLink} href="/ai/projects">
-							<Icon name="chevron-left" height={14} width={14} />
+							<Icon name="chevron-left" className="size-3.5" />
 							All projects
 						</Button>
 						<div className="flex items-center gap-1">
@@ -254,7 +254,7 @@ export function ProjectLanding({
 									aria-label={`Actions for ${project.data.name}`}
 									render={<Button size="md" variant="ghost" square />}
 								>
-									<Icon name="ellipsis" height={16} width={16} />
+									<Icon name="ellipsis" className="size-4" />
 								</Ariakit.MenuButton>
 								<MenuSurface variant="actions" gutter={6} className="w-52">
 									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
@@ -268,7 +268,7 @@ export function ProjectLanding({
 
 					<div className="flex items-center gap-2 pb-2">
 						<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-							<Icon name="folder" height={16} width={16} />
+							<Icon name="folder" className="size-4" />
 						</div>
 						<div className="min-w-0 flex-1">
 							<h1 className="truncate heading-sm text-primary">{project.data.name}</h1>
@@ -358,7 +358,7 @@ export function ProjectLanding({
 													/>
 												}
 											>
-												<Icon name="plus" height={16} width={16} />
+												<Icon name="plus" className="size-4" />
 											</Tooltip>
 										}
 									/>
@@ -390,7 +390,7 @@ export function ProjectLanding({
 										pending={send === 'sending'}
 										aria-label="Send message"
 									>
-										<Icon name="arrow-up" height={16} width={16} />
+										<Icon name="arrow-up" className="size-4" />
 									</Button>
 								</ComposerFrame>
 								{send === 'readFailed' ? (

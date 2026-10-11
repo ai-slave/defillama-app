@@ -237,7 +237,7 @@ function CoinPicker({
 					</>
 				) : (
 					<>
-						<Icon name="search" height={16} width={16} className="shrink-0 text-tertiary" />
+						<Icon name="search" className="size-4 shrink-0 text-tertiary" />
 						<span className="text-tertiary">Search coins…</span>
 					</>
 				)}

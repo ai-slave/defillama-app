@@ -87,9 +87,7 @@ export function SectionCard({
 				>
 					<Icon
 						name="chevron-down"
-						height={16}
-						width={16}
-						className={`transition-[rotate] duration-180 ease-out-quart ${collapsed ? '-rotate-90' : ''}`}
+						className={`size-4 transition-[rotate] duration-180 ease-out-quart ${collapsed ? '-rotate-90' : ''}`}
 					/>
 				</Tooltip>
 			) : null}
@@ -159,7 +157,7 @@ export function SectionCard({
 							/>
 						}
 					>
-						<Icon name="chevron-up" height={16} width={16} />
+						<Icon name="chevron-up" className="size-4" />
 					</Tooltip>
 					<Tooltip
 						content="Move section down"
@@ -175,7 +173,7 @@ export function SectionCard({
 							/>
 						}
 					>
-						<Icon name="chevron-down" height={16} width={16} />
+						<Icon name="chevron-down" className="size-4" />
 					</Tooltip>
 					<Tooltip
 						content="Add section below"
@@ -190,7 +188,7 @@ export function SectionCard({
 							/>
 						}
 					>
-						<Icon name="plus" height={16} width={16} />
+						<Icon name="plus" className="size-4" />
 					</Tooltip>
 					<Tooltip
 						content="Remove section (cards stay)"
@@ -204,7 +202,7 @@ export function SectionCard({
 							/>
 						}
 					>
-						<Icon name="trash-2" height={16} width={16} />
+						<Icon name="trash-2" className="size-4" />
 					</Tooltip>
 				</div>
 			) : null}

@@ -282,7 +282,7 @@ function InlineTableSection({
 					onClick={() => onChange([...rows, { id: crypto.randomUUID(), values: {} }])}
 				>
 					Add more
-					<Icon name="plus" height={14} width={14} />
+					<Icon name="plus" className="size-3.5" />
 				</Button>
 			</span>
 		</div>
@@ -387,7 +387,7 @@ function ClaimConfirmation() {
 	return (
 		<Card padding="md" className="mx-auto flex w-full max-w-3xl flex-col gap-5">
 			<span className="flex size-16 items-center justify-center rounded-full border-2 border-success">
-				<Icon name="check" height={28} width={28} className="text-success" />
+				<Icon name="check" className="size-7 text-success" />
 			</span>
 			{/* Replaces the form whose Submit had focus. */}
 			<h2 ref={takeLostFocus} tabIndex={-1} className="heading-lg">
@@ -847,7 +847,7 @@ export function ClaimTokenProfile({
 						onClick={onSubmit}
 					>
 						Submit Disclosure Details
-						<Icon name="arrow-up-right" height={14} width={14} />
+						<Icon name="arrow-up-right" className="size-3.5" />
 					</Button>
 				</form>
 			)}

@@ -75,7 +75,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 							accessibleWhenDisabled
 							onClick={handleResend}
 						>
-							<Icon name="mail" height={14} width={14} />
+							<Icon name="mail" className="size-3.5" />
 							{onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
 						</Button>
 					)}
@@ -87,7 +87,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 							setShowRevokeConfirm(true)
 						}}
 					>
-						<Icon name="x" height={14} width={14} />
+						<Icon name="x" className="size-3.5" />
 						Revoke
 					</Button>
 				</div>
@@ -123,7 +123,7 @@ export function TeamInvitesCard() {
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Icon name="mail" height={20} width={20} className="text-primary" />
+					<Icon name="mail" className="size-5 text-primary" />
 					<span className="label-lg text-primary">Pending invites</span>
 				</div>
 				<Button
@@ -133,7 +133,7 @@ export function TeamInvitesCard() {
 					ref={inviteButtonRef}
 					onClick={() => setShowInviteModal(true)}
 				>
-					<Icon name="plus" height={14} width={14} />
+					<Icon name="plus" className="size-3.5" />
 					Invite member
 				</Button>
 			</div>

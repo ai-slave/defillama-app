@@ -70,7 +70,7 @@ const BRIDGE_TABLE_VIEW_OPTIONS = [
 		value: 'tokens',
 		label: (
 			<span className="flex items-center gap-1">
-				<Icon name="trending-up" height={14} width={14} />
+				<Icon name="trending-up" className="size-3.5" />
 				Tokens
 			</span>
 		),
@@ -80,7 +80,7 @@ const BRIDGE_TABLE_VIEW_OPTIONS = [
 		value: 'addresses',
 		label: (
 			<span className="flex items-center gap-1">
-				<Icon name="users" height={14} width={14} />
+				<Icon name="users" className="size-3.5" />
 				Addresses
 			</span>
 		),

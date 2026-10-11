@@ -137,7 +137,7 @@ function ImagePreviewContent({
 					{copy.isPending ? (
 						<LoadingSpinner size={14} />
 					) : (
-						<Icon name={copy.isSuccess ? 'check' : 'copy'} height={14} width={14} />
+						<Icon name={copy.isSuccess ? 'check' : 'copy'} className="size-3.5" />
 					)}
 					{/* All three labels stay laid out in one grid cell, so the button keeps its widest width and Download
 					    beside it never moves. */}
@@ -167,12 +167,12 @@ function ImagePreviewContent({
 					{download.isPending ? (
 						<LoadingSpinner size={14} />
 					) : (
-						<Icon name={download.isSuccess ? 'check' : 'download-cloud'} height={14} width={14} />
+						<Icon name={download.isSuccess ? 'check' : 'download-cloud'} className="size-3.5" />
 					)}
 					<span>{download.isPending ? 'Downloading…' : download.isSuccess ? 'Download again' : 'Download'}</span>
 				</Ariakit.Button>
 				<a href={imageUrl} target="_blank" rel="noopener noreferrer" className={TOOLBAR_BUTTON}>
-					<Icon name="external-link" height={14} width={14} />
+					<Icon name="external-link" className="size-3.5" />
 					<span>
 						Open<span className="sr-only"> in new tab</span>
 					</span>

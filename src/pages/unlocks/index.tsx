@@ -220,7 +220,7 @@ function UpcomingUnlockVolumeChart({
 						content="Total View aggregates the selected unlock type across all protocols. Breakdown View stacks the same value by protocol."
 						render={<button type="button" aria-label="Explain chart views" className="cursor-help text-tertiary" />}
 					>
-						<Icon name="help-circle" height={16} width={16} aria-hidden="true" />
+						<Icon name="help-circle" className="size-4" aria-hidden="true" />
 					</Tooltip>
 				</div>
 				{protocolSeries.length > 1 ? (

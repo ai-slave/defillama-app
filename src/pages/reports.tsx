@@ -150,12 +150,12 @@ function DLReportCard({ report }: { report: Report }) {
 					)}
 					<div className="flex items-center gap-3 body-sm text-secondary">
 						<span className="flex items-center gap-1">
-							<Icon name="calendar" height={12} width={12} />
+							<Icon name="calendar" className="size-3" />
 							{report.date}
 						</span>
 						{report.author && (
 							<span className="flex items-center gap-1">
-								<Icon name="users" height={12} width={12} />
+								<Icon name="users" className="size-3" />
 								{report.author}
 							</span>
 						)}
@@ -201,22 +201,22 @@ function DLReportCard({ report }: { report: Report }) {
 				{!report.image && <h3 className="heading-xs">{report.title}</h3>}
 				<div className="flex items-center gap-3 body-sm text-secondary">
 					<span className="flex items-center gap-1">
-						<Icon name="calendar" height={12} width={12} />
+						<Icon name="calendar" className="size-3" />
 						{report.date}
 					</span>
 					{report.pages && (
 						<span className="flex items-center gap-1">
-							<Icon name="file-text" height={12} width={12} />
+							<Icon name="file-text" className="size-3" />
 							{report.pages} pages
 						</span>
 					)}
 					{report.author && (
 						<span className="flex items-center gap-1">
-							<Icon name="users" height={12} width={12} />
+							<Icon name="users" className="size-3" />
 							{report.author}
 						</span>
 					)}
-					<Icon name="arrow-up-right" height={14} width={14} className="ml-auto shrink-0 text-tertiary" />
+					<Icon name="arrow-up-right" className="ml-auto size-3.5 shrink-0 text-tertiary" />
 				</div>
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
@@ -252,22 +252,22 @@ function ReportCard({ report }: { report: Report }) {
 				{!report.image && <h3 className="heading-xs">{report.title}</h3>}
 				<div className="flex items-center gap-3 body-sm text-secondary">
 					<span className="flex items-center gap-1">
-						<Icon name="calendar" height={12} width={12} />
+						<Icon name="calendar" className="size-3" />
 						{report.date}
 					</span>
 					{report.pages && (
 						<span className="flex items-center gap-1">
-							<Icon name="file-text" height={12} width={12} />
+							<Icon name="file-text" className="size-3" />
 							{report.pages} pages
 						</span>
 					)}
 					{report.author && (
 						<span className="flex items-center gap-1">
-							<Icon name="users" height={12} width={12} />
+							<Icon name="users" className="size-3" />
 							{report.author}
 						</span>
 					)}
-					<Icon name="arrow-up-right" height={14} width={14} className="ml-auto shrink-0 text-tertiary" />
+					<Icon name="arrow-up-right" className="ml-auto size-3.5 shrink-0 text-tertiary" />
 				</div>
 				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">

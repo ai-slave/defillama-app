@@ -129,7 +129,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							>
 								{result.code}
 							</output>
-							<CopyHelper toCopy={result.code} size={20} aria-label="Copy invite code" />
+							<CopyHelper toCopy={result.code} size="size-5" aria-label="Copy invite code" />
 						</div>
 						<p className="body-md text-secondary">
 							{minutesLeft > 0

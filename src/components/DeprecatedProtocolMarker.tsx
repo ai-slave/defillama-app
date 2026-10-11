@@ -1,13 +1,13 @@
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 
 interface DeprecatedProtocolMarkerProps {
-	size?: number
+	size?: `size-${number}`
 	className?: string
 	content?: string
 }
 
 export function DeprecatedProtocolMarker({
-	size = 14,
+	size = 'size-3.5',
 	className = '',
 	content = 'Deprecated protocol'
 }: DeprecatedProtocolMarkerProps) {

@@ -138,7 +138,7 @@ export function TextSelectionPopup({
 			</Ariakit.Button>
 			{onAddToArticle ? (
 				<Ariakit.Button onClick={handleAddToArticle} className={`${actionButton} border-l border-medium`}>
-					<Icon name="file-plus" height={14} width={14} className="text-secondary" />
+					<Icon name="file-plus" className="size-3.5 text-secondary" />
 					Add to article
 				</Ariakit.Button>
 			) : null}

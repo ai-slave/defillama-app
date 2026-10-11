@@ -83,7 +83,7 @@ const columns = columnHelper.columns([
 					rel="noopener noreferrer"
 					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-tint p-1.5 hover:bg-brand-tint-strong"
 				>
-					<Icon name="arrow-up-right" height={14} width={14} />
+					<Icon name="arrow-up-right" className="size-3.5" />
 					<span className="sr-only">open in new tab</span>
 				</a>
 			</span>
@@ -257,7 +257,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							smol
 						/>
 						<div className={searchFieldInlineWrapperStyles}>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								type="text"
 								aria-label="Search filings"

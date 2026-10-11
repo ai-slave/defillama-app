@@ -180,7 +180,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 				<PanelTitle as="h1">Chains</PanelTitle>
 				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search…</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}

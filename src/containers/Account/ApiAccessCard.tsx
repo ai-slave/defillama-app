@@ -53,7 +53,7 @@ export function ApiAccessCard({
 		return (
 			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="cli" height={28} width={28} className="text-primary" />
+					<Icon name="cli" className="size-7 text-primary" />
 					<span className="label-lg text-primary">API access</span>
 				</div>
 
@@ -70,7 +70,7 @@ export function ApiAccessCard({
 							pendingLabel="Generating…"
 							pending={generateNewKeyMutation.isPending}
 						>
-							<Icon name="key" height={14} width={14} />
+							<Icon name="key" className="size-3.5" />
 							Generate API key
 						</Button>
 					}
@@ -86,7 +86,7 @@ export function ApiAccessCard({
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			{/* Header */}
 			<div className="flex items-center gap-2">
-				<Icon name="cli" height={28} width={28} className="text-primary" />
+				<Icon name="cli" className="size-7 text-primary" />
 				<span className="label-lg text-primary">API access</span>
 			</div>
 
@@ -102,7 +102,7 @@ export function ApiAccessCard({
 							onClick={() => setShowKey((v) => !v)}
 							aria-label={showKey ? 'Hide API key' : 'Show API key'}
 						>
-							<Icon name={showKey ? 'eye-off' : 'eye'} height={14} width={14} />
+							<Icon name={showKey ? 'eye-off' : 'eye'} className="size-3.5" />
 							<StableLabel labels={['Show', 'Hide']} current={showKey ? 'Hide' : 'Show'} />
 						</Button>
 						<Button
@@ -113,7 +113,7 @@ export function ApiAccessCard({
 							doneLabel="Copied"
 							done={copy.isSuccess && copy.data === apiKey}
 						>
-							<Icon name="copy" height={14} width={14} />
+							<Icon name="copy" className="size-3.5" />
 							Copy
 						</Button>
 						<Button
@@ -122,7 +122,7 @@ export function ApiAccessCard({
 							pendingLabel="Regenerating…"
 							pending={generateNewKeyMutation.isPending}
 						>
-							<Icon name="repeat" height={14} width={14} />
+							<Icon name="repeat" className="size-3.5" />
 							Regenerate
 						</Button>
 					</div>

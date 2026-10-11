@@ -103,7 +103,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="relative">
-				<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+				<Icon name="search" className={searchFieldIconStyles} />
 				<Input
 					ref={searchRef}
 					type="search"
@@ -137,7 +137,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 								>
 									{chart.title}
 								</button>
-								{selected ? <Icon name="check" height={16} width={16} className="shrink-0 text-link" /> : null}
+								{selected ? <Icon name="check" className="size-4 shrink-0 text-link" /> : null}
 								<Tooltip
 									content="Delete chart"
 									render={
@@ -154,7 +154,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 										/>
 									}
 								>
-									<Icon name="trash-2" height={16} width={16} />
+									<Icon name="trash-2" className="size-4" />
 								</Tooltip>
 							</div>
 							<p className="line-clamp-2 body-sm text-tertiary">{chart.original_query}</p>

@@ -31,9 +31,9 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 	return (
 		<Ariakit.MenuProvider store={menu}>
 			<Ariakit.MenuItem render={<Ariakit.MenuButton />} className={PARENT_ITEM_CLASS}>
-				<Icon name="folder-plus" height={14} width={14} className="shrink-0" />
+				<Icon name="folder-plus" className="size-3.5 shrink-0" />
 				<span className="flex-1 text-left">Move to project</span>
-				<Icon name="chevron-right" height={14} width={14} className="shrink-0 text-tertiary" />
+				<Icon name="chevron-right" className="size-3.5 shrink-0 text-tertiary" />
 			</Ariakit.MenuItem>
 			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4}>
 				<NestedDrawerHeader
@@ -68,12 +68,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 								const isCurrentProject = p.id === currentProjectId
 								return (
 									<MenuItem key={p.id} onClick={() => void onMove(p.id)} disabled={isCurrentProject || move.isPending}>
-										<Icon
-											name={isCurrentProject ? 'check' : 'folder'}
-											height={14}
-											width={14}
-											className="shrink-0 opacity-70"
-										/>
+										<Icon name={isCurrentProject ? 'check' : 'folder'} className="size-3.5 shrink-0 opacity-70" />
 										<span className="min-w-0 flex-1 truncate text-left">{p.name}</span>
 									</MenuItem>
 								)
@@ -84,7 +79,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 									disabled={move.isPending}
 									className="border-t border-subtle"
 								>
-									<Icon name="x" height={14} width={14} className="shrink-0 opacity-70" />
+									<Icon name="x" className="size-3.5 shrink-0 opacity-70" />
 									<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>
 								</MenuItem>
 							) : null}

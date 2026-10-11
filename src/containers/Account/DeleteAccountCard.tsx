@@ -510,7 +510,7 @@ export function DeleteAccountCard() {
 		<>
 			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="trash-2" height={28} width={28} className="text-error" />
+					<Icon name="trash-2" className="size-7 text-error" />
 					<span className="label-lg text-primary">Delete account</span>
 				</div>
 				<div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">

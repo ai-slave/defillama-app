@@ -58,7 +58,7 @@ export function LikedDashboards() {
 							/>
 						}
 					>
-						<Icon name="chevron-left" height={16} width={16} />
+						<Icon name="chevron-left" className="size-4" />
 					</Tooltip>
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -99,7 +99,7 @@ export function LikedDashboards() {
 							/>
 						}
 					>
-						<Icon name="chevron-right" height={16} width={16} />
+						<Icon name="chevron-right" className="size-4" />
 					</Tooltip>
 				</div>
 			) : null}

@@ -49,7 +49,7 @@ export function DashboardList({
 					framed
 					actions={
 						<ProButton type="button" variant="primary" size="md" onClick={onCreateNew}>
-							<Icon name="plus" height={14} width={14} />
+							<Icon name="plus" className="size-3.5" />
 							Create dashboard
 						</ProButton>
 					}

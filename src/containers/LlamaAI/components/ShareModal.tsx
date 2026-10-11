@@ -241,7 +241,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 						doneLabel="Copied"
 						done={copy.isSuccess}
 					>
-						<Icon name="copy" height={14} width={14} />
+						<Icon name="copy" className="size-3.5" />
 						Copy link
 					</Button>
 				) : null}

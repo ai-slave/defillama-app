@@ -246,9 +246,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						<span>Methodology and limitations</span>
 						<Icon
 							name="chevron-down"
-							height={16}
-							width={16}
-							className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
+							className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
 					<p className="mt-2 body-md">
@@ -272,9 +270,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						<span>Show exposure details</span>
 						<Icon
 							name="chevron-down"
-							height={16}
-							width={16}
-							className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
+							className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
 					<p className="mt-2 body-md">

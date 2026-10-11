@@ -18,7 +18,7 @@ export function RWASuspiciousWarning({
 			render={<span role="img" aria-label={warning} className="cursor-help text-warning" />}
 			tabIndex={0}
 		>
-			<Icon name="alert-triangle" height={16} width={16} aria-hidden="true" />
+			<Icon name="alert-triangle" className="size-4" aria-hidden="true" />
 		</Tooltip>
 	)
 }

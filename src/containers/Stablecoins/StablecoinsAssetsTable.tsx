@@ -311,7 +311,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search stablecoins</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search…"

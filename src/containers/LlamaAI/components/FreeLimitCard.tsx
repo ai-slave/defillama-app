@@ -44,7 +44,7 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 					className="w-full"
 				>
 					Start 7-day free trial
-					<Icon name="arrow-right" height={14} width={14} />
+					<Icon name="arrow-right" className="size-3.5" />
 				</Button>
 
 				<p className="text-center body-sm text-tertiary">
@@ -87,7 +87,7 @@ export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
 				className="w-full"
 			>
 				Get the DefiLlama App
-				<Icon name="arrow-right" height={14} width={14} />
+				<Icon name="arrow-right" className="size-3.5" />
 			</Button>
 
 			<p className="text-center body-sm text-tertiary">

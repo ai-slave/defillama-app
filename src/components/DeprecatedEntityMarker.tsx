@@ -2,19 +2,19 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface DeprecatedEntityMarkerProps {
-	size?: number
+	size?: `size-${number}`
 	className?: string
 	content?: string
 }
 
 export function DeprecatedEntityMarker({
-	size = 14,
+	size = 'size-3.5',
 	className = '',
 	content = 'Deprecated'
 }: DeprecatedEntityMarkerProps) {
 	return (
 		<Tooltip content={content} className={`text-error ${className}`}>
-			<Icon name="alert-triangle" height={size} width={size} aria-hidden="true" />
+			<Icon name="alert-triangle" className={size} aria-hidden="true" />
 			<span className="sr-only">{content}</span>
 		</Tooltip>
 	)

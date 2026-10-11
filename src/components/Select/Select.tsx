@@ -92,7 +92,7 @@ function OptionLabel({ option }: { option: SelectValues[number] }) {
 		return (
 			<Tooltip content={option.help}>
 				<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
-				<Icon name="help-circle" height={15} width={15} />
+				<Icon name="help-circle" className="size-3.5" />
 			</Tooltip>
 		)
 	return <span className={option.muted ? 'text-secondary' : undefined}>{option.name}</span>

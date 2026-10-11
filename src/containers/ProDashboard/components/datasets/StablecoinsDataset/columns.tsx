@@ -47,9 +47,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 						>
 							<Icon
 								name="alert-triangle"
-								height={14}
-								width={14}
-								className={pegDeviation > 0 ? 'text-data-up' : 'text-data-down'}
+								className={pegDeviation > 0 ? 'size-3.5 text-data-up' : 'size-3.5 text-data-down'}
 							/>
 						</Tooltip>
 					) : null}

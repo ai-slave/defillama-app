@@ -20,7 +20,7 @@ type SearchFieldProps = {
 export function SearchField({ label, value, onChange, className, autoFocus, ...props }: SearchFieldProps) {
 	return (
 		<div className={`relative ${className ?? ''}`.trim()}>
-			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
+			<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
 			<Ariakit.Focusable
 				// On the Focusable, not the input: Ariakit's dialog picks its first focus from the Focusable's flag.
 				autoFocus={autoFocus}

@@ -220,7 +220,7 @@ export function GoogleSignInButton({
 					{busy || loadStatus === 'loading' ? (
 						<LoadingSpinner size={14} />
 					) : (
-						<Icon name="google" height={18} width={18} />
+						<Icon name="google" className="size-4.5" />
 					)}
 				</span>
 				<span className="min-w-0 truncate">

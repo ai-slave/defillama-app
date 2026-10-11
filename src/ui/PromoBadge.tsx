@@ -20,7 +20,7 @@ export const promoBadgeStyles = tw`shrink-0 items-center gap-1 rounded-md border
 export function PromoBadge({ children, icon }: { children: ReactNode; icon?: IIcon['name'] }) {
 	return (
 		<span className={`inline-flex ${promoBadgeStyles}`}>
-			{icon ? <Icon name={icon} height={10} width={10} /> : null}
+			{icon ? <Icon name={icon} className="size-3.5" /> : null}
 			{children}
 		</span>
 	)

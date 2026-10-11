@@ -96,7 +96,7 @@ export const searchFieldInlineWrapperStyles = tw`relative w-full min-w-0 sm:w-[2
 
 export const searchFieldFlexibleWrapperStyles = tw`relative w-full min-w-0 sm:max-w-[280px]`
 
-export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 bottom-0 left-3 my-auto text-tertiary`
+export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary`
 
 export const searchFieldInputPlacementStyles = tw`w-full pl-8`
 

@@ -25,11 +25,11 @@ const isViewMode = (value: string): value is ViewMode => viewModes.some((candida
 const VIEW_MODE_OPTIONS: Array<SegmentedControlOption<ViewMode>> = [
 	{
 		value: 'grid',
-		label: <Icon name="layout-grid" height={16} width={16} />,
+		label: <Icon name="layout-grid" className="size-4" />,
 		ariaLabel: 'Grid view',
 		tooltip: 'Grid view'
 	},
-	{ value: 'list', label: <Icon name="menu" height={16} width={16} />, ariaLabel: 'List view', tooltip: 'List view' }
+	{ value: 'list', label: <Icon name="menu" className="size-4" />, ariaLabel: 'List view', tooltip: 'List view' }
 ]
 const DEFAULT_PAGE_LIMIT = 20
 const itemsPerPageOptions = [
@@ -204,7 +204,7 @@ export function DashboardDiscovery({
 						<BasicLink href="/pro?tab=discover" shallow className="text-link hover:underline">
 							Discover
 						</BasicLink>
-						<Icon name="chevron-right" height={14} width={14} className="text-secondary" />
+						<Icon name="chevron-right" className="size-3.5 text-secondary" />
 						<span className="text-secondary">
 							{selectedSortBy.name}
 							{selectedSortBy.key === 'trending' ? ` (${selectedTimeFrame.name})` : ''}
@@ -324,7 +324,7 @@ export function DashboardDiscovery({
 								>
 									<span className="sr-only">Remove filter </span>
 									<span>{tag}</span>
-									<Icon name="x" height={14} width={14} />
+									<Icon name="x" className="size-3.5" />
 								</Button>
 							))}
 						</div>
@@ -373,7 +373,7 @@ export function DashboardDiscovery({
 							</div>
 
 							<Button as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="md">
-								<Icon name="plus" height={14} width={14} />
+								<Icon name="plus" className="size-3.5" />
 								Create your first dashboard
 							</Button>
 						</div>
@@ -416,7 +416,7 @@ export function DashboardDiscovery({
 										/>
 									}
 								>
-									<Icon name="chevrons-left" height={16} width={16} />
+									<Icon name="chevrons-left" className="size-4" />
 								</Tooltip>
 								<Tooltip
 									content="Previous page"
@@ -432,7 +432,7 @@ export function DashboardDiscovery({
 										/>
 									}
 								>
-									<Icon name="chevron-left" height={16} width={16} />
+									<Icon name="chevron-left" className="size-4" />
 								</Tooltip>
 								{pagesToShow.map((pageNum) => {
 									const isActive = selectedPage === pageNum
@@ -463,7 +463,7 @@ export function DashboardDiscovery({
 										/>
 									}
 								>
-									<Icon name="chevron-right" height={16} width={16} />
+									<Icon name="chevron-right" className="size-4" />
 								</Tooltip>
 								<Tooltip
 									content="Last page"
@@ -479,7 +479,7 @@ export function DashboardDiscovery({
 										/>
 									}
 								>
-									<Icon name="chevrons-right" height={16} width={16} />
+									<Icon name="chevrons-right" className="size-4" />
 								</Tooltip>
 							</div>
 							<p className="body-sm text-secondary">

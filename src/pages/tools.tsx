@@ -31,7 +31,7 @@ export default function Tools() {
 			<Card padding="sm" className="flex flex-col gap-2">
 				<h1 className="heading-sm">Tools</h1>
 				<div className="relative">
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						id={searchInputId}
 						type="text"

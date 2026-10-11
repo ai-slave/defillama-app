@@ -42,7 +42,7 @@ export function EditDoneButton({
 				pending={editing ? refreshingSql : navigation.isPending}
 				onClick={editing ? onDone : () => navigation.mutate()}
 			>
-				<Icon name={editing ? 'check' : 'pencil'} height={14} width={14} />
+				<Icon name={editing ? 'check' : 'pencil'} className="size-3.5" />
 				<StableLabel labels={['Edit', 'Done']} current={editing ? 'Done' : 'Edit'} />
 			</Button>
 			{!editing && navigationFailed ? (
@@ -96,7 +96,7 @@ export function CopyDashboardButton({
 					})
 				}}
 			>
-				<Icon name="copy" height={14} width={14} />
+				<Icon name="copy" className="size-3.5" />
 				Copy Dashboard
 			</Button>
 			<span role="status" className="sr-only">
@@ -142,7 +142,7 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 				ref={buttonRef}
 				onClick={() => undo.mutate()}
 			>
-				<Icon name="arrow-left" height={14} width={14} />
+				<Icon name="arrow-left" className="size-3.5" />
 				Undo AI changes
 			</Button>
 			<span role="status" className="sr-only">

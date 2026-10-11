@@ -268,8 +268,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 				>
 					<Icon
 						name="bookmark"
-						height={16}
-						width={16}
+						className="size-4"
 						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
 					<StableLabel
@@ -283,7 +282,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 					size="md"
 					aria-pressed={showOnlyInsider}
 				>
-					<Icon name="key" height={16} width={16} style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
+					<Icon name="key" className="size-4" style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
 					<StableLabel
 						labels={['Show Insiders Only', 'Show All']}
 						current={showOnlyInsider ? 'Show All' : 'Show Insiders Only'}

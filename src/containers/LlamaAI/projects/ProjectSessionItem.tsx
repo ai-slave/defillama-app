@@ -103,7 +103,7 @@ export function ProjectSessionItem({
 							/>
 						}
 					>
-						<Icon name="x" height={16} width={16} />
+						<Icon name="x" className="size-4" />
 					</Tooltip>
 				</form>
 				{renameError ? (
@@ -160,7 +160,7 @@ export function ProjectSessionItem({
 							/>
 						}
 					>
-						<Icon name="pencil" height={16} width={16} />
+						<Icon name="pencil" className="size-4" />
 					</Tooltip>
 					<Tooltip
 						content="Delete chat"
@@ -179,7 +179,7 @@ export function ProjectSessionItem({
 							/>
 						}
 					>
-						<Icon name="trash-2" height={16} width={16} className="text-error" />
+						<Icon name="trash-2" className="size-4 text-error" />
 					</Tooltip>
 				</div>
 			</div>

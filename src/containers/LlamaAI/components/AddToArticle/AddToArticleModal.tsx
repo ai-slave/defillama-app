@@ -291,7 +291,7 @@ function AddToArticleForm({
 					<fieldset disabled={isSubmitting} className="contents">
 						<FieldGroup label="Add to a draft" error={submitted ? draftError : null}>
 							<div className="relative">
-								<Icon name="search" aria-hidden="true" className={`${searchFieldIconStyles} size-4`} />
+								<Icon name="search" aria-hidden="true" className={searchFieldIconStyles} />
 								<Input
 									ref={searchRef}
 									type="text"

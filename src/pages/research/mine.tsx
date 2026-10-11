@@ -260,7 +260,7 @@ function MyArticlesContent() {
 					{/* One row at every width: on a phone the search takes what the sort select leaves. */}
 					<div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
 						<label className="relative flex min-w-0 flex-1 items-center">
-							<Icon name="search" className={`${searchFieldIconStyles} size-4`} aria-hidden />
+							<Icon name="search" className={searchFieldIconStyles} aria-hidden />
 							<Input
 								type="search"
 								onInput={(e) => setSearchInput(e.currentTarget.value)}

@@ -134,7 +134,7 @@ function DashboardSettingsModalInner({
 									>
 										<span className="flex min-w-0 flex-col gap-0.5">
 											<span className="flex items-center gap-1.5 label-sm text-primary">
-												<Icon name="users" height={14} width={14} />
+												<Icon name="users" className="size-3.5" />
 												Share with {myTeam.name}
 											</span>
 											<span className="body-sm text-secondary">
@@ -159,7 +159,7 @@ function DashboardSettingsModalInner({
 									<p className="mb-1.5 block label-sm text-error">Danger zone</p>
 									<p className="mb-3 body-sm text-tertiary">Once you delete a dashboard, there is no going back.</p>
 									<Button type="button" variant="destructive" size="md" onClick={() => setShowDeleteConfirm(true)}>
-										<Icon name="trash-2" height={16} width={16} />
+										<Icon name="trash-2" className="size-4" />
 										Delete dashboard
 									</Button>
 								</div>

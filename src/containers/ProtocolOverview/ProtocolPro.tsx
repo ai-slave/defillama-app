@@ -82,7 +82,7 @@ export function SortableDragHandle({
 			aria-label={label}
 			className={`flex cursor-grab items-center text-tertiary opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 hover:text-primary active:cursor-grabbing md:pointer-coarse:opacity-100 ${className ?? ''}`}
 		>
-			<Icon name="grip-vertical" height={14} width={14} />
+			<Icon name="grip-vertical" className="size-3.5" />
 		</button>
 	)
 }

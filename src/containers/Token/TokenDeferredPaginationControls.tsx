@@ -29,13 +29,13 @@ export function TokenDeferredPaginationControls({
 					content="Go to first page"
 					render={<Button type="button" variant="ghost" square size="md" aria-label="Go to first page" disabled />}
 				>
-					<Icon name="chevrons-left" height={16} width={16} />
+					<Icon name="chevrons-left" className="size-4" />
 				</Tooltip>
 				<Tooltip
 					content="Go to previous page"
 					render={<Button type="button" variant="ghost" square size="md" aria-label="Go to previous page" disabled />}
 				>
-					<Icon name="chevron-left" height={16} width={16} />
+					<Icon name="chevron-left" className="size-4" />
 				</Tooltip>
 				<span className="label-sm text-secondary">{`Page 1 of ${pageCount}`}</span>
 				<Tooltip
@@ -53,7 +53,7 @@ export function TokenDeferredPaginationControls({
 						/>
 					}
 				>
-					<Icon name="chevron-right" height={16} width={16} />
+					<Icon name="chevron-right" className="size-4" />
 				</Tooltip>
 				<Tooltip
 					content="Go to last page"
@@ -70,7 +70,7 @@ export function TokenDeferredPaginationControls({
 						/>
 					}
 				>
-					<Icon name="chevrons-right" height={16} width={16} />
+					<Icon name="chevrons-right" className="size-4" />
 				</Tooltip>
 			</div>
 			{isLoading ? (

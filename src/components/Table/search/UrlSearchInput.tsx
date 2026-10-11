@@ -48,7 +48,7 @@ export function UrlSearchInput({
 		>
 			<label className="relative block min-w-0">
 				<span className="sr-only">{label}</span>
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Icon name="search" className={searchFieldIconStyles} />
 				<Input
 					ref={inputRef}
 					name="search"

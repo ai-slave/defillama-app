@@ -209,7 +209,7 @@ export function TokenUsageSection({
 									value: 'list',
 									label: (
 										<>
-											<Icon name="align-left" height={14} width={14} />
+											<Icon name="align-left" className="size-3.5" />
 											<span>List</span>
 										</>
 									)
@@ -218,7 +218,7 @@ export function TokenUsageSection({
 									value: 'treemap',
 									label: (
 										<>
-											<Icon name="layout-grid" height={14} width={14} />
+											<Icon name="layout-grid" className="size-3.5" />
 											<span>Treemap</span>
 										</>
 									)

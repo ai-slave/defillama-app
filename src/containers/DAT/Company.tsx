@@ -446,7 +446,7 @@ export const datTransactionColumns = columnHelper.columns([
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					<Icon name="arrow-up-right" height={14} width={14} />
+					<Icon name="arrow-up-right" className="size-3.5" />
 					<span className="sr-only">open in new tab</span>
 				</a>
 			)

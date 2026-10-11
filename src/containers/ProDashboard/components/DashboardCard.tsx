@@ -81,7 +81,7 @@ function DashboardCardActionsMenu({ name, onDelete }: { name: string; onDelete: 
 				className="absolute top-2 right-2 z-10"
 				onClick={(event: React.MouseEvent) => event.stopPropagation()}
 			>
-				<Icon name="ellipsis" height={16} width={16} />
+				<Icon name="ellipsis" className="size-4" />
 			</Ariakit.MenuButton>
 			<MenuSurface variant="actions" gutter={6}>
 				<MenuItem destructive onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}>
@@ -130,7 +130,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 						className="inline-flex items-center gap-1"
 						title={`Forked from ${dashboard.copiedFrom.name}`}
 					>
-						<Icon name="copy" height={12} width={12} />
+						<Icon name="copy" className="size-3" />
 						Fork
 					</span>
 				) : null,
@@ -243,7 +243,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 								/>
 							}
 						>
-							<Icon name="trash-2" height={16} width={16} />
+							<Icon name="trash-2" className="size-4" />
 						</Tooltip>
 					) : null}
 				</div>

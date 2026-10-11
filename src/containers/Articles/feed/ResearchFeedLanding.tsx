@@ -169,7 +169,7 @@ export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPrevie
 						rel="noopener noreferrer"
 						className="inline-flex items-center gap-1.5 transition-colors hover:text-secondary"
 					>
-						View raw XML <Icon name="arrow-up-right" height={12} width={12} />
+						View raw XML <Icon name="arrow-up-right" className="size-3" />
 					</a>
 				</div>
 			</div>

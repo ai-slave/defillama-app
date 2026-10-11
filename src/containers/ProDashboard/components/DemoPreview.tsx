@@ -492,7 +492,7 @@ export function DemoPreview() {
 									className="flex flex-wrap items-center justify-center gap-2 rounded-sm bg-linear-to-b from-brand-faint to-transparent px-8 py-15 body-md text-secondary"
 								>
 									<div className="align-center flex gap-2">
-										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-link" />
+										<Icon name={feature.icon} className="size-8 shrink-0 text-link" />
 										<span className="heading-xs whitespace-nowrap">{feature.title}</span>
 									</div>
 								</div>
@@ -511,19 +511,19 @@ export function DemoPreview() {
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-secondary">Access to public dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-secondary">View community-created dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-secondary">Basic DeFi data access</span>
 									</li>
@@ -543,43 +543,43 @@ export function DemoPreview() {
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="star" height={14} width={14} className="text-link" />
+											<Icon name="star" className="size-3.5 text-link" />
 										</span>
 										<span className="font-semibold text-primary">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-primary">Create unlimited custom dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-primary">CSV data downloads</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-primary">Advanced analytics & custom columns</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-primary">Full LlamaFeed access with AI summaries</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check" height={14} width={14} className="text-success" />
+											<Icon name="check" className="size-3.5 text-success" />
 										</span>
 										<span className="text-primary">Priority access to new features</span>
 									</li>
 								</ul>
 								<Button as={BasicLink} href={createAccountHref} variant="primary" size="lg">
-									<Icon name="sparkles" height={14} width={14} />
+									<Icon name="sparkles" className="size-3.5" />
 									Upgrade to Pro
 								</Button>
 							</div>

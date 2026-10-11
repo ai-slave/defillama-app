@@ -228,7 +228,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					{activeTab !== 'saved' ? (
 						<label className="relative">
 							<span className="sr-only">Search datasets</span>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								type="text"
 								inputMode="search"
@@ -503,9 +503,7 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 				<span className="flex-1 label-md text-primary">{question}</span>
 				<Icon
 					name="chevron-down"
-					height={16}
-					width={16}
-					className="shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
+					className="size-4 shrink-0 text-secondary transition-transform duration-200 group-open:rotate-180"
 				/>
 			</summary>
 			<div className="pb-4 body-md text-secondary">{children}</div>

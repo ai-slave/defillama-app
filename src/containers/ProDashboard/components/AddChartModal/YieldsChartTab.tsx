@@ -443,7 +443,7 @@ export function YieldsChartTab({
 									<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
 										<div className="flex items-center gap-3">
 											<div className="relative">
-												<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+												<Icon name="search" className={searchFieldIconStyles} />
 												<Input
 													{...control}
 													onInput={(e) => setPoolSearch(e.currentTarget.value)}
@@ -476,9 +476,7 @@ export function YieldsChartTab({
 											TVL
 											<Icon
 												name={sortColumn === 'tvl' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-												width={10}
-												height={10}
-												className={sortColumn === 'tvl' ? 'opacity-100' : 'opacity-30'}
+												className={sortColumn === 'tvl' ? 'size-3.5 opacity-100' : 'size-3.5 opacity-30'}
 											/>
 										</button>
 										<button
@@ -492,9 +490,7 @@ export function YieldsChartTab({
 											APY
 											<Icon
 												name={sortColumn === 'apy' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-												width={10}
-												height={10}
-												className={sortColumn === 'apy' ? 'opacity-100' : 'opacity-30'}
+												className={sortColumn === 'apy' ? 'size-3.5 opacity-100' : 'size-3.5 opacity-30'}
 											/>
 										</button>
 										<p className="text-right text-tertiary max-sm:hidden">Category</p>

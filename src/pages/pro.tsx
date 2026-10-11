@@ -393,7 +393,7 @@ function ProContent({
 							}
 							data-umami-event="dashboard-llamaai-generate"
 						>
-							<Icon name="sparkles" height={14} width={14} />
+							<Icon name="sparkles" className="size-3.5" />
 							<span className="sm:hidden">Generate</span>
 							<span className="hidden sm:inline">Generate with LlamaAI</span>
 						</ProButton>
@@ -410,7 +410,7 @@ function ProContent({
 							}
 							data-umami-event="dashboard-create"
 						>
-							<Icon name="plus" height={14} width={14} />
+							<Icon name="plus" className="size-3.5" />
 							<span className="sm:hidden">Create</span>
 							<span className="hidden sm:inline">Create dashboard</span>
 						</ProButton>
@@ -488,7 +488,7 @@ function ProContent({
 										/>
 									}
 								>
-									<Icon name="chevrons-left" height={16} width={16} />
+									<Icon name="chevrons-left" className="size-4" />
 								</Tooltip>
 
 								<Tooltip
@@ -506,7 +506,7 @@ function ProContent({
 										/>
 									}
 								>
-									<Icon name="chevron-left" height={16} width={16} />
+									<Icon name="chevron-left" className="size-4" />
 								</Tooltip>
 
 								{getDashboardPagesToShow(selectedPage, myDashboardsTotalPages).map((pageNum) => {
@@ -541,7 +541,7 @@ function ProContent({
 										/>
 									}
 								>
-									<Icon name="chevron-right" height={16} width={16} />
+									<Icon name="chevron-right" className="size-4" />
 								</Tooltip>
 								<Tooltip
 									content="Last page"
@@ -558,7 +558,7 @@ function ProContent({
 										/>
 									}
 								>
-									<Icon name="chevrons-right" height={16} width={16} />
+									<Icon name="chevrons-right" className="size-4" />
 								</Tooltip>
 							</div>
 						) : null}

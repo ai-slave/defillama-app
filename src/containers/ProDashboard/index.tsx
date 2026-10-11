@@ -204,7 +204,7 @@ function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) 
 						type="button"
 						variant="ai"
 						aria-label={action.label}
-						icon={<Icon name={action.icon} height={16} width={16} />}
+						icon={<Icon name={action.icon} className="size-4" />}
 						onClick={() => void action.onSelect()}
 					/>
 				}
@@ -234,10 +234,10 @@ function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) 
 			}
 		>
 			{action.square ? (
-				<Icon name={action.icon} height={16} width={16} />
+				<Icon name={action.icon} className="size-4" />
 			) : (
 				<>
-					<Icon name={action.icon} height={14} width={14} />
+					<Icon name={action.icon} className="size-3.5" />
 					<span>{action.label}</span>
 				</>
 			)}
@@ -596,7 +596,7 @@ function ProDashboardContent() {
 		<div className="flex flex-1 flex-col gap-2 p-2 lg:px-0">
 			<div className="flex flex-wrap items-center gap-2 label-sm">
 				<Button as={BasicLink} href="/pro" variant="link">
-					<Icon name="arrow-left" height={14} width={14} />
+					<Icon name="arrow-left" className="size-3.5" />
 					Dashboards
 				</Button>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1">
@@ -605,7 +605,7 @@ function ProDashboardContent() {
 						render={<p />}
 						className="flex min-h-8 items-center gap-1.5 px-2 label-md text-tertiary"
 					>
-						<Icon name="eye" height={14} width={14} />
+						<Icon name="eye" className="size-3.5" />
 						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
 						<span className="sr-only">Views</span>
 					</Tooltip>
@@ -656,7 +656,7 @@ function ProDashboardContent() {
 									aria-hidden="true"
 									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 body-md text-secondary"
 								>
-									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" height={14} width={14} />}
+									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" className="size-3.5" />}
 									{doneStatusLabel}
 								</span>
 							) : null}
@@ -708,12 +708,12 @@ function ProDashboardContent() {
 					<StatusBadge status="neutral">Private</StatusBadge>
 				)}
 				{dashboardTeam ? (
-					<ProBadge tone="info" icon={<Icon name="users" height={12} width={12} />}>
+					<ProBadge tone="info" icon={<Icon name="users" className="size-3" />}>
 						{dashboardTeam.name}
 					</ProBadge>
 				) : null}
 				{currentDashboard?.aiGenerated && Object.keys(currentDashboard.aiGenerated).length > 0 ? (
-					<ProBadge tone="info" icon={<Icon name="sparkles" height={12} width={12} />}>
+					<ProBadge tone="info" icon={<Icon name="sparkles" className="size-3" />}>
 						AI Generated
 					</ProBadge>
 				) : null}

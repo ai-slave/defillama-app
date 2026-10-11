@@ -179,9 +179,9 @@ export function ResponseControls({
 							}
 						>
 							{copyStatus === 'copied' ? (
-								<Icon name="check-circle" height={16} width={16} />
+								<Icon name="check-circle" className="size-4" />
 							) : (
-								<Icon name="clipboard" height={16} width={16} />
+								<Icon name="clipboard" className="size-4" />
 							)}
 						</Tooltip>
 					) : null}
@@ -208,7 +208,7 @@ export function ResponseControls({
 									/>
 								}
 							>
-								<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
+								<Icon name="thumbs-up" className={isRatedAsGood ? 'size-4 text-success' : 'size-4'} />
 								<span className="sr-only">Thumbs up</span>
 							</Tooltip>
 							<Tooltip
@@ -225,7 +225,7 @@ export function ResponseControls({
 									/>
 								}
 							>
-								<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
+								<Icon name="thumbs-down" className={isRatedAsBad ? 'size-4 text-error' : 'size-4'} />
 								<span className="sr-only">Thumbs down</span>
 							</Tooltip>
 						</>
@@ -243,7 +243,7 @@ export function ResponseControls({
 									/>
 								}
 							>
-								<Icon name="help-circle" height={16} width={16} />
+								<Icon name="help-circle" className="size-4" />
 							</Tooltip>
 							<PopoverSurface variant="panel" heading="Response details" gutter={8}>
 								<div className="flex justify-between gap-4 p-3 body-sm text-primary">
@@ -269,7 +269,7 @@ export function ResponseControls({
 								/>
 							}
 						>
-							<Icon name="message-square-warning" height={16} width={16} />
+							<Icon name="message-square-warning" className="size-4" />
 							<span className="sr-only">Provide feedback</span>
 						</Tooltip>
 					) : null}
@@ -278,7 +278,7 @@ export function ResponseControls({
 							content="Make public and share"
 							render={<Button variant="ghost" size="md" square onClick={() => onShare(messageId)} />}
 						>
-							<Icon name="share" height={16} width={16} />
+							<Icon name="share" className="size-4" />
 							<span className="sr-only">Make public and share</span>
 						</Tooltip>
 					) : null}
@@ -289,7 +289,7 @@ export function ResponseControls({
 								<Button variant="ghost" size="md" square onClick={() => openArticleExport(articleExportRequest())} />
 							}
 						>
-							<Icon name="file-plus" height={16} width={16} />
+							<Icon name="file-plus" className="size-4" />
 							<span className="sr-only">Export to research article</span>
 						</Tooltip>
 					) : null}

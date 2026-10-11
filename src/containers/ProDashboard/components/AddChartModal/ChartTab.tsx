@@ -20,7 +20,7 @@ const CHART_MODE_OPTIONS: Array<SegmentedControlOption<ChartModeType>> = [
 		value: 'builder',
 		label: (
 			<>
-				<Icon name="pencil-ruler" width={14} height={14} />
+				<Icon name="pencil-ruler" className="size-3.5" />
 				Top-N breakdown
 			</>
 		)
@@ -29,7 +29,7 @@ const CHART_MODE_OPTIONS: Array<SegmentedControlOption<ChartModeType>> = [
 		value: 'manual',
 		label: (
 			<>
-				<Icon name="layers" width={14} height={14} />
+				<Icon name="layers" className="size-3.5" />
 				Manual
 			</>
 		)

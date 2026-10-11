@@ -330,7 +330,7 @@ export function PortfolioNotifications({
 								preferences.active ? (
 									<span className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="check-circle" height={14} width={14} className="text-success" />
+											<Icon name="check-circle" className="size-3.5 text-success" />
 										</span>
 										<span>
 											Weekly email notifications are <strong className="text-success">active</strong> for "
@@ -340,7 +340,7 @@ export function PortfolioNotifications({
 								) : (
 									<span className="flex items-start gap-2">
 										<span className="flex h-lh shrink-0 items-center">
-											<Icon name="pause" height={14} width={14} className="text-secondary" />
+											<Icon name="pause" className="size-3.5 text-secondary" />
 										</span>
 										<span>
 											Weekly email notifications are <strong className="text-secondary">disabled</strong> for "
@@ -373,7 +373,7 @@ export function PortfolioNotifications({
 								</p>
 							) : null}
 							<div className="mt-1 text-tertiary">
-								<Icon name="calendar" height={12} width={12} className="mr-1 inline" />
+								<Icon name="calendar" className="mr-1 inline size-3" />
 								Delivered weekly to your email
 							</div>
 						</div>
@@ -389,7 +389,7 @@ export function PortfolioNotifications({
 							onClick={handleNotificationsButtonClick}
 							disabled={loaders.userLoading || isLoading || !hasWatchlist}
 						>
-							<Icon name="mail" height={16} width={16} />
+							<Icon name="mail" className="size-4" />
 							<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
 						</Button>
 
@@ -403,7 +403,7 @@ export function PortfolioNotifications({
 									pendingLabel="Updating…"
 									pending={updateStatus.isPending}
 								>
-									<Icon name={preferences.active ? 'pause' : 'check-circle'} height={16} width={16} />
+									<Icon name={preferences.active ? 'pause' : 'check-circle'} className="size-4" />
 									<span>{preferences.active ? 'Disable' : 'Enable'}</span>
 								</Button>
 								<Button
@@ -413,7 +413,7 @@ export function PortfolioNotifications({
 									onClick={() => setConfirmingDelete(true)}
 									disabled={loaders.userLoading || isChangingPreferences}
 								>
-									<Icon name="trash-2" height={16} width={16} />
+									<Icon name="trash-2" className="size-4" />
 									<span>Delete</span>
 								</Button>
 							</>
@@ -698,7 +698,7 @@ function PortfolioSelection() {
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={handleAddPortfolio} />
 				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md">
-					<Icon name="folder-plus" height={16} width={16} />
+					<Icon name="folder-plus" className="size-4" />
 					<span>New</span>
 				</Button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
@@ -716,7 +716,7 @@ function PortfolioSelection() {
 							loaders.subscriptionInitialCheck || isLoadingNotificationPreferences || notificationPreferencesFailed
 						}
 					>
-						<Icon name="trash-2" height={16} width={16} />
+						<Icon name="trash-2" className="size-4" />
 						<span>Delete</span>
 					</Button>
 				) : null}

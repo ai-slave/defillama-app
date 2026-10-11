@@ -259,12 +259,7 @@ function MobileAppCard() {
 						className="group inline-flex items-center gap-1 label-md text-ai-gold-deep"
 					>
 						Learn more
-						<Icon
-							name="arrow-right"
-							height={12}
-							width={12}
-							className="transition-transform duration-200 group-hover:translate-x-0.5"
-						/>
+						<Icon name="arrow-right" className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
 					</BasicLink>
 				</div>
 			</div>
@@ -410,7 +405,7 @@ function ExampleShowcase() {
 						/>
 						<span className="relative flex items-center gap-2 rounded-full bg-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold">
 							View full conversation
-							<Icon name="arrow-up-right" height={14} width={14} />
+							<Icon name="arrow-up-right" className="size-3.5" />
 						</span>
 					</div>
 				</div>
@@ -592,7 +587,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 					<div className="hidden overflow-hidden rounded-xl border border-subtle bg-border-subtle md:grid md:grid-cols-5 md:gap-px">
 						{CAPABILITIES.map((cap) => (
 							<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
-								<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
+								<Icon name={cap.icon} className="size-4.5 text-ai-gold" />
 								<span className="title-sm text-tertiary">{cap.label}</span>
 								<span className="body-xs text-tertiary">{cap.sub}</span>
 							</div>
@@ -603,7 +598,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						<div className="grid w-full grid-cols-3 gap-px overflow-hidden rounded-t-xl border-x border-t border-subtle bg-border-subtle">
 							{CAPABILITIES.slice(0, 3).map((cap) => (
 								<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
-									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
+									<Icon name={cap.icon} className="size-4.5 text-ai-gold" />
 									<span className="title-sm text-tertiary">{cap.label}</span>
 									<span className="body-xs text-tertiary">{cap.sub}</span>
 								</div>
@@ -612,7 +607,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						<div className="grid w-2/3 grid-cols-2 gap-px overflow-hidden rounded-b-xl border-x border-b border-subtle bg-border-subtle">
 							{CAPABILITIES.slice(3).map((cap) => (
 								<div key={cap.label} className="flex flex-col items-center gap-1.5 bg-surface px-3 py-4 text-center">
-									<Icon name={cap.icon} height={18} width={18} className="text-ai-gold" />
+									<Icon name={cap.icon} className="size-4.5 text-ai-gold" />
 									<span className="title-sm text-tertiary">{cap.label}</span>
 									<span className="body-xs text-tertiary">{cap.sub}</span>
 								</div>
@@ -656,12 +651,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											const meta = TOOL_ICONS[tool.key] || { icon: 'sparkles', tone: 'neutral' }
 											return (
 												<div key={tool.key} className="flex items-center gap-2 px-3 py-1.5">
-													<Icon
-														name={meta.icon as any}
-														height={12}
-														width={12}
-														className={`shrink-0 ${TOOL_TONE_CLASS[meta.tone]}`}
-													/>
+													<Icon name={meta.icon as any} className={`size-3 shrink-0 ${TOOL_TONE_CLASS[meta.tone]}`} />
 													<span className="flex-1 truncate body-sm text-secondary">{TOOL_LABELS[tool.key]}</span>
 													<span className="label-xs text-success">ok</span>
 													<span className="body-xs text-tertiary tabular-nums">{tool.time}</span>
@@ -1034,9 +1024,7 @@ function FAQ({ question, children }: { question: string; children: React.ReactNo
 				</span>
 				<Icon
 					name="chevron-down"
-					height={16}
-					width={16}
-					className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
+					className="size-4 shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 				/>
 			</summary>
 			<div className="pb-4 body-md text-secondary md:pb-5">{children}</div>

@@ -82,11 +82,11 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 					{/* The icon is the only sign of whether the plan has the feature, so it carries a name. */}
 					<span className="sr-only">{item.availability === 'check' ? 'Included: ' : 'Not included: '}</span>
 					{item.availability === 'check' ? (
-						<Icon name="check" height={24} width={24} className="text-link sm:h-5 sm:w-5" />
+						<Icon name="check" className="size-6 text-link sm:h-5 sm:w-5" />
 					) : item.availability === 'x' ? (
-						<Icon name="x" height={24} width={24} className="text-error sm:h-5 sm:w-5" />
+						<Icon name="x" className="size-6 text-error sm:h-5 sm:w-5" />
 					) : (
-						<Icon name="minus" height={24} width={24} className="text-tertiary sm:h-5 sm:w-5" />
+						<Icon name="minus" className="size-6 text-tertiary sm:h-5 sm:w-5" />
 					)}
 				</span>
 			)}
@@ -593,7 +593,7 @@ export function ComparisonCell({
 			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-subtle text-center md:w-[146px] ${selectedStyle} ${borderEnd} ${className}`}
 		>
 			{isIncluded ? (
-				<Icon name="check" height={24} width={24} className="text-link" aria-hidden="true" />
+				<Icon name="check" className="size-6 text-link" aria-hidden="true" />
 			) : isLimited ? (
 				// Focusable so keyboards reach the limit's explanation, and tappable on touch, not hover-only.
 				<Tooltip
@@ -605,7 +605,7 @@ export function ComparisonCell({
 					<span className="label-md text-warning">Limited</span>
 				</Tooltip>
 			) : (
-				<Icon name="minus" height={24} width={24} className="text-tertiary" aria-hidden="true" />
+				<Icon name="minus" className="size-6 text-tertiary" aria-hidden="true" />
 			)}
 		</div>
 	)

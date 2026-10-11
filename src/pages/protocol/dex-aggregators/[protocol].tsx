@@ -201,7 +201,7 @@ export default function Protocols(props: DexAggregatorProtocolPageProps) {
 					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
-						{props.deprecated ? <DeprecatedProtocolMarker size={16} /> : null}
+						{props.deprecated ? <DeprecatedProtocolMarker size="size-4" /> : null}
 					</h1>
 					<KeyMetrics
 						{...props}

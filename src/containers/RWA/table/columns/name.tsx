@@ -43,7 +43,7 @@ function GroupNameCell({ group, expanded, onToggle }: { group: RWAGroupRow; expa
 	return (
 		<span className="relative flex items-center gap-2 pl-6">
 			<button type="button" className="absolute -left-0.5" aria-expanded={expanded} onClick={onToggle}>
-				<Icon name={expanded ? 'chevron-down' : 'chevron-right'} height={16} width={16} className="text-tertiary" />
+				<Icon name={expanded ? 'chevron-down' : 'chevron-right'} className="size-4 text-tertiary" />
 				<span className="sr-only">
 					{expanded ? 'Hide' : 'Show'} {group.children[0]?.asset.kind === 'perps' ? 'markets' : 'assets'}
 				</span>

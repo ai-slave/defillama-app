@@ -85,7 +85,7 @@ function AuthContent() {
 					<div className="w-full max-w-md rounded-xl border border-subtle bg-surface p-8 text-center">
 						<div className="mb-6">
 							<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success-tint">
-								<Icon name="check" height={24} width={24} className="text-success" />
+								<Icon name="check" className="size-6 text-success" />
 							</div>
 							<h2 className="mb-2 heading-sm text-primary">Successfully logged in.</h2>
 							{user?.email ? <p className="body-md text-tertiary">Signed in as {user.email}</p> : null}

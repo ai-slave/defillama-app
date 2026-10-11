@@ -66,12 +66,12 @@ export function MeasuredSeal({ muted = false, size = 13 }: { muted?: boolean; si
  * value's ink.
  */
 export function MeasuredLock({
-	size = 12,
+	size = 'size-3',
 	className,
 	tone = 'tertiary',
 	label = "This pool's verified APY is available on a Pro subscription"
 }: {
-	size?: number
+	size?: `size-${number}`
 	className?: string
 	tone?: 'tertiary' | 'inherit'
 	label?: string
@@ -80,10 +80,8 @@ export function MeasuredLock({
 	return (
 		<Icon
 			name="lock"
-			height={size}
-			width={size}
 			aria-label={label}
-			className={`shrink-0 ${color} ${className ?? ''}`.replace(/\s+/g, ' ').trim()}
+			className={`${size} shrink-0 ${color} ${className ?? ''}`.replace(/\s+/g, ' ').trim()}
 		/>
 	)
 }
@@ -422,7 +420,7 @@ export function MeasuredCard({
 			{feeWarning ? (
 				<span className="flex items-start gap-1.5 text-warning">
 					<span className="flex h-lh shrink-0 items-center">
-						<Icon name="alert-triangle" height={12} width={12} aria-hidden />
+						<Icon name="alert-triangle" className="size-3" aria-hidden />
 					</span>
 					{feeWarning}
 				</span>

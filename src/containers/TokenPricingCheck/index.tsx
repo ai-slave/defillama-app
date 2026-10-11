@@ -52,9 +52,7 @@ function PricingResult({ tokenKey, details }: { tokenKey: string; details: Prici
 			<div className="flex flex-wrap items-center gap-2">
 				<Icon
 					name={currentPrice ? 'check-circle' : 'help-circle'}
-					height={18}
-					width={18}
-					className={currentPrice ? 'shrink-0 text-success' : 'shrink-0 text-warning'}
+					className={currentPrice ? 'size-4.5 shrink-0 text-success' : 'size-4.5 shrink-0 text-warning'}
 				/>
 				<h2 className="label-lg text-primary">{currentPrice ? 'Pricing available' : 'No price returned'}</h2>
 				{currentPrice?.symbol ? (

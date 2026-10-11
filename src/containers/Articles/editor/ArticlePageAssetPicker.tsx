@@ -92,7 +92,7 @@ export function ArticlePageAssetPicker({
 				resetValueOnHide
 			>
 				<div className="relative">
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Ariakit.Combobox
 						ref={searchRef}
 						aria-label="Search tokens to add"

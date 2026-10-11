@@ -21,7 +21,7 @@ export function AutosaveStatus() {
 					accessibleWhenDisabled
 					disabled={!canRetry && !pending}
 				>
-					{state?.status === 'success' ? <Icon name="check" height={14} width={14} /> : null}
+					{state?.status === 'success' ? <Icon name="check" className="size-3.5" /> : null}
 					{canRetry ? 'Retry save' : 'Changes saved'}
 				</Button>
 			) : null}

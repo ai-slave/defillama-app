@@ -69,7 +69,7 @@ export function DashboardPaywallModal({ reason, onClose }: DashboardPaywallModal
 					<ul className="flex flex-col gap-2">
 						{config.features.map((feature) => (
 							<li key={feature} className="flex items-center gap-2 body-sm text-secondary">
-								<Icon name="check" height={14} width={14} className="shrink-0 text-link" />
+								<Icon name="check" className="size-3.5 shrink-0 text-link" />
 								{feature}
 							</li>
 						))}
@@ -84,7 +84,7 @@ export function DashboardPaywallModal({ reason, onClose }: DashboardPaywallModal
 					href="/subscription"
 					data-umami-event="dashboard-paywall-upgrade"
 				>
-					<Icon name="sparkles" height={14} width={14} />
+					<Icon name="sparkles" className="size-3.5" />
 					Upgrade to Pro
 				</Button>
 			</DialogFooter>

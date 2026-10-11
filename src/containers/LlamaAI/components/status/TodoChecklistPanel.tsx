@@ -17,7 +17,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 				aria-hidden="true"
 				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-success bg-success text-on-brand"
 			>
-				<Icon name="check" height={10} width={10} />
+				<Icon name="check" className="size-3" />
 			</span>
 		)
 	}
@@ -37,7 +37,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 				aria-hidden="true"
 				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-medium text-tertiary"
 			>
-				<Icon name="x" height={10} width={10} />
+				<Icon name="x" className="size-3" />
 			</span>
 		)
 	}

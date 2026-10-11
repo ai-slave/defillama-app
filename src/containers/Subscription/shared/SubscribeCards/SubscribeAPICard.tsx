@@ -56,23 +56,23 @@ export function SubscribeAPICard({
 			) : null}
 			<ul className="mx-auto mb-auto flex w-full flex-col gap-3 py-6 max-sm:body-md">
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
+					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
 					<span>All features included in Pro tier</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
+					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
 					<span>Access to TVL, revenue/fees and prices API endpoints</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
+					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
 					<span>Access to all data (unlocks, active users, token liq...)</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
+					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
 					<span>Priority support</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
+					<Icon name="check" className="relative top-1 size-4 shrink-0 text-success" />
 					<span>Access to DefiLlama MCP Server for AI agents</span>
 				</li>
 				<p className="px-6.5 font-medium">

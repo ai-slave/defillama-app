@@ -90,7 +90,7 @@ export function ArticlePicker({ value, onChange, hint, listArticlesParams }: Pro
 				resetValueOnHide
 			>
 				<div className="relative">
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
+					<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
 					<Ariakit.Combobox
 						ref={inputRef}
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}

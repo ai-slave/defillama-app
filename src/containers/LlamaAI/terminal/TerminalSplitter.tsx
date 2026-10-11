@@ -46,7 +46,7 @@ export function TerminalSplitter({
 					}
 					className={RAIL_BUTTON_CLASSES}
 				>
-					<Icon name="chevrons-left" height={16} width={16} />
+					<Icon name="chevrons-left" className="size-4" />
 					<span className="sr-only">Show chat</span>
 				</Tooltip>
 			</nav>
@@ -94,7 +94,7 @@ export function TerminalSplitter({
 			}}
 			className="hidden w-3 flex-none cursor-col-resize touch-none items-center justify-center rounded-sm hover:bg-brand-muted lg:flex"
 		>
-			<Icon name="grip-vertical" height={12} width={12} className="text-tertiary" />
+			<Icon name="grip-vertical" className="size-3 text-tertiary" />
 		</div>
 	)
 }

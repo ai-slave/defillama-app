@@ -77,7 +77,7 @@ export function TableSearchInput({
 	return (
 		<label className={className}>
 			<span className="sr-only">{placeholder}</span>
-			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<Icon name="search" className={searchFieldIconStyles} />
 			<Input
 				value={draft.value}
 				onInput={(event) =>

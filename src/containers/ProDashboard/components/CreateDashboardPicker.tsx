@@ -241,7 +241,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
-							<Icon name="file-plus" height={20} width={20} />
+							<Icon name="file-plus" className="size-5" />
 						</span>
 						<span className="flex flex-col gap-1">
 							<span className="label-md text-primary">From scratch</span>
@@ -258,7 +258,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						className="hover-wash-card flex flex-col items-center gap-4 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<span className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
-							<Icon name="bar-chart-2" height={20} width={20} />
+							<Icon name="bar-chart-2" className="size-5" />
 						</span>
 						<span className="flex flex-col gap-1">
 							<span className="label-md text-primary">Comparison</span>
@@ -511,7 +511,7 @@ function CreateDashboardModalContent({
 											value: 'personal',
 											label: (
 												<>
-													<Icon name="user" height={14} width={14} />
+													<Icon name="user" className="size-3.5" />
 													My dashboards
 												</>
 											)
@@ -521,7 +521,7 @@ function CreateDashboardModalContent({
 											disabled: !canCreateInTeam,
 											label: (
 												<>
-													<Icon name="users" height={14} width={14} />
+													<Icon name="users" className="size-3.5" />
 													<span className="truncate">{team.name}</span>
 													{hasActiveSubscription ? null : '(Pro)'}
 												</>

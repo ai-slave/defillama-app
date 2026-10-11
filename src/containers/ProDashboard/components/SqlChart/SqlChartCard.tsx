@@ -115,7 +115,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 									Refresh
 								</Button>
 								<Tooltip content={REFRESH_HINT} className="flex items-center">
-									<Icon name="help-circle" height={13} width={13} className="text-tertiary" />
+									<Icon name="help-circle" className="size-4 text-tertiary" />
 								</Tooltip>
 							</>
 						) : null

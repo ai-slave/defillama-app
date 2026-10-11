@@ -223,9 +223,7 @@ export function TokenPageHero({
 							<StaleText className="min-h-8 mono-xl">{price}</StaleText>
 							<Icon
 								name="chevron-down"
-								height={18}
-								width={18}
-								className="text-tertiary transition-transform duration-100 group-open/price:rotate-180"
+								className="size-4.5 text-tertiary transition-transform duration-100 group-open/price:rotate-180"
 							/>
 						</span>
 						{summaryChange}

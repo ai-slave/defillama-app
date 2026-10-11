@@ -183,7 +183,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 					<span className="inline-flex items-center gap-1 whitespace-nowrap">
 						<span className="truncate text-secondary">{venue.variant.regulator}</span>
 						{venue.variant.micaLicensed ? (
-							<Icon name="clipboard-check" height={13} width={13} className="shrink-0 text-link" />
+							<Icon name="clipboard-check" className="size-3.5 shrink-0 text-link" />
 						) : null}
 					</span>
 				)

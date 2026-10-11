@@ -146,7 +146,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 					<PanelTitle as="h1">Rewards</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search protocols or programs</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							type="search"
 							value={search}

@@ -561,7 +561,7 @@ export function ChartStyleEditor({
 																	/>
 																}
 															>
-																<Icon name="chevron-up" height={16} width={16} />
+																<Icon name="chevron-up" className="size-4" />
 															</Tooltip>
 															<Tooltip
 																content="Move down"
@@ -577,7 +577,7 @@ export function ChartStyleEditor({
 																	/>
 																}
 															>
-																<Icon name="chevron-down" height={16} width={16} />
+																<Icon name="chevron-down" className="size-4" />
 															</Tooltip>
 														</div>
 													) : null}
@@ -743,7 +743,7 @@ export function ChartStyleEditor({
 													/>
 												}
 											>
-												<Icon name="x" height={16} width={16} />
+												<Icon name="x" className="size-4" />
 											</Tooltip>
 										</div>
 									))}

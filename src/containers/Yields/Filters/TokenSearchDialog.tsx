@@ -179,7 +179,7 @@ function Chip({
 			<LeadMark value={value} geckoId={geckoId} size={16} />
 			{name}
 			{isFamily(value) ? <span className="label-xs text-tertiary">Group</span> : null}
-			{remove ? <Icon name="x" height={12} width={12} className="-mr-1 text-tertiary" /> : null}
+			{remove ? <Icon name="x" className="-mr-1 size-3 text-tertiary" /> : null}
 		</button>
 	)
 }

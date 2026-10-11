@@ -355,7 +355,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search…"
@@ -549,12 +549,12 @@ const NameColumn = (type: IProps['type']) =>
 						>
 							{row.getIsExpanded() ? (
 								<>
-									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-down" className="size-4 text-tertiary" />
 									<span className="sr-only">View child protocols</span>
 								</>
 							) : (
 								<>
-									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-right" className="size-4 text-tertiary" />
 									<span className="sr-only">Hide child protocols</span>
 								</>
 							)}
@@ -575,7 +575,7 @@ const NameColumn = (type: IProps['type']) =>
 							</BasicLink>
 							{row.original.warning ? (
 								<Tooltip content={row.original.warning}>
-									<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
+									<Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" />
 								</Tooltip>
 							) : null}
 						</span>
@@ -838,7 +838,7 @@ const ratioColumn = (id: OptionsRatioKey, header: string, headerHelperText: stri
 					<Tooltip
 						content={`More than ${HIGH_RATIO_MULTIPLE}x the median across exchanges on this page (${formatRatio(median)})`}
 					>
-						<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
+						<Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" />
 					</Tooltip>
 					{formatRatio(info.getValue())}
 				</span>

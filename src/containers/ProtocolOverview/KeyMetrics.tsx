@@ -741,7 +741,7 @@ function SmolStats({
 		? [primary.tooltipContent, `⚠ ${warning}`].filter(Boolean).join('\n\n')
 		: primary.tooltipContent
 	const extra = warning ? (
-		<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" aria-label={warning} />
+		<Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" aria-label={warning} />
 	) : undefined
 
 	if (data.length === 1 && !primary.chainBreakdown) {

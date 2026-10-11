@@ -541,7 +541,7 @@ function ChainProtocolsTableInner({
 		<>
 			<label className={searchFieldInlineWrapperStyles}>
 				<span className="sr-only">Search protocols by name</span>
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Icon name="search" className={searchFieldIconStyles} />
 				<Input
 					type="search"
 					value={nameSearch}
@@ -595,7 +595,7 @@ function ChainProtocolsTableInner({
 												/>
 											}
 										>
-											<Icon name="settings" height={16} width={16} />
+											<Icon name="settings" className="size-4" />
 										</Tooltip>
 										<Tooltip
 											content={`Delete ${column.name}`}
@@ -613,7 +613,7 @@ function ChainProtocolsTableInner({
 												/>
 											}
 										>
-											<Icon name="trash-2" height={16} width={16} />
+											<Icon name="trash-2" className="size-4" />
 										</Tooltip>
 									</li>
 								))}
@@ -625,7 +625,7 @@ function ChainProtocolsTableInner({
 							onClick={() => setEditingColumn({ id: null })}
 							type="button"
 						>
-							<Icon name="plus" height={14} width={14} />
+							<Icon name="plus" className="size-3.5" />
 							Add Custom Column
 						</button>
 					</>
@@ -1302,12 +1302,12 @@ const columns = columnHelper.columns([
 						>
 							{row.getIsExpanded() ? (
 								<>
-									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-down" className="size-4 text-tertiary" />
 									<span className="sr-only">Hide child protocols</span>
 								</>
 							) : (
 								<>
-									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-right" className="size-4 text-tertiary" />
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
@@ -1335,7 +1335,7 @@ const columns = columnHelper.columns([
 					</span>
 					{value === 'SyncDEX Finance' ? (
 						<Tooltip content="Many users have reported issues with this protocol">
-							<Icon name="alert-triangle" height={14} width={14} />
+							<Icon name="alert-triangle" className="size-3.5" />
 						</Tooltip>
 					) : null}
 				</span>

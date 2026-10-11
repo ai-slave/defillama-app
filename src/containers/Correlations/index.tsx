@@ -319,9 +319,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 									</span>
 									<Icon
 										name="x"
-										height={12}
-										width={12}
-										className="ml-auto text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 hover:text-primary"
+										className="ml-auto size-3 text-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 hover:text-primary"
 									/>
 								</button>
 							))}

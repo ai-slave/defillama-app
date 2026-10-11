@@ -40,7 +40,7 @@ function RegularButton() {
 			content="Add to calendar"
 			render={<Ariakit.MenuButton render={<Button variant="ghost" size="md" square />} aria-label="Add to calendar" />}
 		>
-			<Icon name="calendar-plus" width={16} height={16} />
+			<Icon name="calendar-plus" className="size-4" />
 		</Tooltip>
 	)
 }
@@ -61,7 +61,7 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 					}
 					className="border-b border-subtle"
 				>
-					<Icon name="external-link" width={16} height={16} />
+					<Icon name="external-link" className="size-4" />
 					Google Calendar
 				</MenuItem>
 
@@ -76,7 +76,7 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 						/>
 					}
 				>
-					<Icon name="download-cloud" width={16} height={16} />
+					<Icon name="download-cloud" className="size-4" />
 					Other Calendars Apps
 				</MenuItem>
 			</MenuSurface>
@@ -326,7 +326,7 @@ export function UpcomingEvent({
 	const renderBreakdownRow = (item: UnlockBreakdown, variant: 'protocol' | 'hover', index: number) => {
 		const RowTag = variant === 'protocol' ? 'div' : 'span'
 		const LineTag = variant === 'protocol' ? 'div' : 'span'
-		const iconSize = variant === 'protocol' ? 14 : 16
+		const iconSize = variant === 'protocol' ? 'size-3.5' : 'size-4'
 		const rowClass = variant === 'protocol' ? 'flex flex-col gap-0.5' : 'flex flex-col gap-1'
 		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'body-md'
 		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'body-sm text-secondary'
@@ -353,9 +353,7 @@ export function UpcomingEvent({
 						>
 							<Icon
 								name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
-								height={iconSize}
-								width={iconSize}
-								className="text-tertiary"
+								className={`${iconSize} text-tertiary`}
 							/>
 						</Tooltip>
 					</span>

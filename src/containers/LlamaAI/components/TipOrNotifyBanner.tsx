@@ -57,7 +57,7 @@ function LowBalanceTip({ answerRunning }: { answerRunning: boolean }) {
 					/>
 				}
 			>
-				<Icon name="x" height={14} width={14} />
+				<Icon name="x" className="size-3.5" />
 			</Tooltip>
 		</div>
 	)

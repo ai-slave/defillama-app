@@ -370,7 +370,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
 				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple-muted bg-sub-purple-faint px-3 py-1 label-sm tracking-wide text-sub-purple-text">
-					<Icon name="check-circle" height={13} width={13} />
+					<Icon name="check-circle" className="size-3.5" />
 					{planName} activated
 				</span>
 				<h1 className="heading-lg tracking-tight text-primary">Welcome to DefiLlama {planName}</h1>
@@ -379,7 +379,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 			{slackAcquisition ? (
 				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-muted bg-sub-purple-faint px-4 py-3 text-left">
 					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-tint">
-						<Icon name="chat" height={16} width={16} className="text-sub-purple-text" />
+						<Icon name="chat" className="size-4 text-sub-purple-text" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<span className="label-md text-primary">LlamaAI is ready in Slack</span>
@@ -428,8 +428,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 										) : (
 											<Icon
 												name={option.iconName}
-												height={18}
-												width={18}
+												className="size-4.5"
 												style={{ color: isSelected ? c : 'var(--text-tertiary)' }}
 											/>
 										)}

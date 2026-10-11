@@ -195,7 +195,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
 							placeholder="Search chains…"

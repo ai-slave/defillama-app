@@ -404,13 +404,13 @@ function SearchItem({
 			{route.type === 'Token' && route.symbol ? <span className="text-tertiary">{route.symbol}</span> : null}
 			{route.subName ? (
 				<>
-					<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+					<Icon name="chevron-right" className="size-4 text-tertiary" />
 					<span className="text-tertiary">{route.subName}</span>
 				</>
 			) : null}
 			{route.deprecated ? <DeprecatedEntityMarker content={deprecatedContent} /> : null}
 			{route.hideType ? null : recent ? (
-				<Icon name="clock" height={12} width={12} className="ml-auto" />
+				<Icon name="clock" className="ml-auto size-3" />
 			) : (
 				<span className="ml-auto label-sm text-link">{route.type}</span>
 			)}

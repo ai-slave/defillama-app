@@ -32,7 +32,7 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 	return (
 		<div className="flex min-w-0 flex-1 flex-col justify-between gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="receipt" height={28} width={28} className="text-primary" />
+				<Icon name="receipt" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Subscription</span>
 			</div>
 

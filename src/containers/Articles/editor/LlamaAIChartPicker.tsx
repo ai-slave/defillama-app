@@ -136,7 +136,7 @@ function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit
 			<DialogToolbar>
 				<label className="relative block">
 					<span className="sr-only">Search saved charts</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
 					<Ariakit.Focusable
 						autoFocus={!isSmallScreen}

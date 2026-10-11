@@ -157,7 +157,7 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 					{missing.map((label) => (
 						<li key={label} className="flex items-start gap-1.5 body-sm text-secondary">
 							<span className="flex h-lh shrink-0 items-center">
-								<Icon name="plus" height={12} width={12} />
+								<Icon name="plus" className="size-3" />
 							</span>
 							{label}
 						</li>
@@ -263,7 +263,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 		<Card as="form" noValidate onSubmit={save} padding="md" className="grid gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
-					<Icon name="users" height={24} width={24} className="text-primary" />
+					<Icon name="users" className="size-6 text-primary" />
 					<span className="label-lg text-primary">Public Profile</span>
 				</div>
 				{profile.slug ? (

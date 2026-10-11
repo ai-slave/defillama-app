@@ -37,7 +37,7 @@ export function CreateTeamCard() {
 							ref={createTeamButtonRef}
 							onClick={() => setIsCreating(true)}
 						>
-							<Icon name="plus" height={16} width={16} />
+							<Icon name="plus" className="size-4" />
 							Create team
 						</Button>
 					)

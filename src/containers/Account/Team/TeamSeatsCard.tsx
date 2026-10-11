@@ -101,7 +101,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 							onClick={() => setShowUpgradeConfirm(true)}
 							disabled={!canChangeTeamBilling}
 						>
-							<Icon name="sparkles" height={14} width={14} />
+							<Icon name="sparkles" className="size-3.5" />
 							Upgrade to yearly
 						</Button>
 					)}
@@ -113,7 +113,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 						onClick={() => setShowManageModal(true)}
 						disabled={!canChangeTeamBilling}
 					>
-						<Icon name="settings" height={14} width={14} />
+						<Icon name="settings" className="size-3.5" />
 						Manage
 					</Button>
 				</div>
@@ -216,7 +216,7 @@ function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }
 	return (
 		<div className="flex items-start gap-2 body-sm">
 			<span className="flex h-lh shrink-0 items-center">
-				<Icon name="sparkles" height={12} width={12} className="text-tertiary" />
+				<Icon name="sparkles" className="size-3 text-tertiary" />
 			</span>
 			<p className="text-tertiary">
 				Tip: switch to yearly billing and get 2 months free — save {formatUsd(savings)}/year on your current seats.
@@ -244,7 +244,7 @@ export function TeamSeatsCard() {
 		<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<Icon name="receipt" height={20} width={20} className="text-primary" />
+					<Icon name="receipt" className="size-5 text-primary" />
 					<span className="label-lg text-primary">Subscriptions & Billing</span>
 					{/* The one reason the billing buttons are disabled while it runs; a failed refresh's retry shows its own. */}
 					<div role="status">
@@ -260,7 +260,7 @@ export function TeamSeatsCard() {
 							pendingLabel="Opening…"
 							pending={createPortalSessionMutation.isPending}
 						>
-							<Icon name="external-link" height={14} width={14} />
+							<Icon name="external-link" className="size-3.5" />
 							Manage in Stripe
 						</Button>
 					)}
@@ -271,7 +271,7 @@ export function TeamSeatsCard() {
 						disabled={!canChangeTeamBilling}
 						onClick={() => setShowPurchaseModal(true)}
 					>
-						<Icon name="plus" height={14} width={14} />
+						<Icon name="plus" className="size-3.5" />
 						Purchase seats
 					</Button>
 				</div>

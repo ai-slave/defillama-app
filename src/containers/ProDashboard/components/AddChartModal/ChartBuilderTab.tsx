@@ -750,7 +750,7 @@ export function ChartBuilderTab({
 										}`}
 									>
 										<Ariakit.Radio value={option.value} className="sr-only" />
-										<Icon name={option.icon} height={14} width={14} />
+										<Icon name={option.icon} className="size-3.5" />
 										<span className="label-sm">{option.label}</span>
 									</label>
 								))}

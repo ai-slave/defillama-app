@@ -43,7 +43,7 @@ export function FullOldViewButton() {
 		<>
 			<span className="flex items-center gap-1">
 				<Button type="button" size="md" onClick={handleClick} pendingLabel="Creating dashboard…" pending={isLoading}>
-					<Icon name="plus" height={16} width={16} />
+					<Icon name="plus" className="size-4" />
 					<span>Open in Dashboard</span>
 				</Button>
 				<Hovercard
@@ -51,7 +51,7 @@ export function FullOldViewButton() {
 					contentClassName="w-max max-w-(--popover-available-width) p-3"
 					render={<Button type="button" variant="ghost" size="md" square aria-label="What Full View includes" />}
 				>
-					<Icon name="help-circle" height={16} width={16} />
+					<Icon name="help-circle" className="size-4" />
 				</Hovercard>
 			</span>
 			<LazySubscribeProModal dialogStore={subscribeModalStore} />

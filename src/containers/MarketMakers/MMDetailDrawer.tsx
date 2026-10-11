@@ -149,9 +149,9 @@ function WebsiteButton({ href, name }: { href: string; name: string }) {
 			data-umami-event-placement="drawer"
 			data-umami-event-url={href}
 		>
-			<Icon name="globe" height={14} width={14} />
+			<Icon name="globe" className="size-3.5" />
 			Website
-			<Icon name="arrow-up-right" height={14} width={14} />
+			<Icon name="arrow-up-right" className="size-3.5" />
 		</Button>
 	)
 }
@@ -225,7 +225,7 @@ function ClaimBanner({ onClaim }: { onClaim: () => void }) {
 	return (
 		<section className="flex items-start gap-3 rounded-lg bg-brand p-4">
 			<span className="flex h-lh shrink-0 items-center label-lg">
-				<Icon name="shield-check" height={24} width={24} className="text-on-brand" />
+				<Icon name="shield-check" className="size-6 text-on-brand" />
 			</span>
 			<div className="flex flex-col gap-2">
 				<h3 className="label-lg text-on-brand">Claim this organization</h3>
@@ -305,7 +305,7 @@ function DrawerBody({
 				</div>
 				<button type="button" className={forgdCtaPrimaryButtonStyles} onClick={() => onOpenLead('connect')}>
 					Connect with {name}
-					<Icon name="arrow-right" height={14} width={14} />
+					<Icon name="arrow-right" className="size-3.5" />
 				</button>
 				{(status ?? 'none') === 'none' ? <ClaimBanner onClaim={() => onOpenLead('claim')} /> : null}
 			</section>
@@ -342,7 +342,7 @@ function DrawerBody({
 						>
 							<div className="flex flex-col gap-1">
 								<h4 className="flex items-center gap-2 label-md">
-									<Icon name={card.icon} height={16} width={16} className="shrink-0 text-secondary" />
+									<Icon name={card.icon} className="size-4 shrink-0 text-secondary" />
 									{card.label}
 								</h4>
 								<p className="body-sm text-secondary">

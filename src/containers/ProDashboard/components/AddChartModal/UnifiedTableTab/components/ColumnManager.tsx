@@ -657,7 +657,7 @@ export function ColumnManager({
 
 				<div className="border-b border-subtle p-2">
 					<div className="relative">
-						<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label="Search columns"
@@ -705,9 +705,7 @@ export function ColumnManager({
 					<div className="flex items-center gap-2">
 						<Icon
 							name={!hasActiveSubscription ? 'file-lock-2' : customColumnExpanded ? 'minus' : 'plus'}
-							width={14}
-							height={14}
-							className="text-link"
+							className="size-3.5 text-link"
 						/>
 						<span className="title-sm text-primary">
 							{editingId ? 'Edit custom column' : 'Custom column'}
@@ -721,9 +719,7 @@ export function ColumnManager({
 					</div>
 					<Icon
 						name="chevron-down"
-						width={14}
-						height={14}
-						className={`text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
+						className={`size-3.5 text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
 					/>
 				</button>
 
@@ -777,9 +773,9 @@ export function ColumnManager({
 										{customExpression ? (
 											<div className="absolute top-1/2 right-2 -translate-y-1/2">
 												{expressionValidation.isValid ? (
-													<Icon name="check" height={12} width={12} className="text-success" />
+													<Icon name="check" className="size-3 text-success" />
 												) : (
-													<Icon name="x" height={12} width={12} className="text-error" />
+													<Icon name="x" className="size-3 text-error" />
 												)}
 											</div>
 										) : null}
@@ -967,12 +963,12 @@ function SortableChip({
 				aria-label={`Move ${label}`}
 				className="cursor-grab touch-none text-tertiary hover:text-secondary active:cursor-grabbing"
 			>
-				<Icon name="menu" width={10} height={10} />
+				<Icon name="menu" className="size-4" />
 			</span>
 			<span className="max-w-[80px] truncate font-medium text-primary" title={label}>
 				{label}
 			</span>
-			{isFirst ? <Icon name="pin" width={8} height={8} className="text-link" /> : null}
+			{isFirst ? <Icon name="pin" className="size-3.5 text-link" /> : null}
 			<Tooltip
 				content={`Hide ${label}`}
 				render={

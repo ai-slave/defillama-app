@@ -129,7 +129,7 @@ export function ChatLanding({
 				<img src="/assets/llamaai/llama-ai.svg" alt="LlamaAI" className="object-contain" width={64} height={77} />
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
 					<span className="inline-flex items-center gap-1.5 rounded-full border border-ai-gold-muted bg-ai-gold-tint px-2.5 py-1 label-xs tracking-wide text-ai-gold-deep uppercase">
-						<Icon name="sparkles" height={14} width={14} />
+						<Icon name="sparkles" className="size-3.5" />
 						Suggested for you
 					</span>
 				) : null}
@@ -147,7 +147,7 @@ export function ChatLanding({
 							<span className="border-b border-transparent pb-px group-hover:border-ai-gold-muted">
 								{greetingTip.cta.label}
 							</span>
-							<Icon name="arrow-right" height={14} width={14} />
+							<Icon name="arrow-right" className="size-3.5" />
 						</button>
 						<span className="h-3 w-px bg-surface-elevated-2" aria-hidden />
 						<button
@@ -268,7 +268,7 @@ function Capability({
 				onClick={() => trackUmamiEvent('llamaai-landing-capability-click', { category: cap.key })}
 				render={<Button type="button" size="md" variant={open ? 'outline' : 'secondary'} />}
 			>
-				<Icon name={cap.icon} height={14} width={14} />
+				<Icon name={cap.icon} className="size-3.5" />
 				{cap.name}
 				{cap.badge ? (
 					<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">
@@ -286,7 +286,7 @@ function Capability({
 				className="w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
-					<Icon name={cap.icon} height={14} width={14} className="text-link" />
+					<Icon name={cap.icon} className="size-3.5 text-link" />
 					<Ariakit.PopoverHeading className="label-md text-primary">{cap.name}</Ariakit.PopoverHeading>
 					<Ariakit.PopoverDismiss
 						render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
@@ -308,9 +308,7 @@ function Capability({
 							{prompt}
 							<Icon
 								name="chevron-right"
-								height={14}
-								width={14}
-								className="shrink-0 text-tertiary opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+								className="size-3.5 shrink-0 text-tertiary opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
 							/>
 						</button>
 					))}

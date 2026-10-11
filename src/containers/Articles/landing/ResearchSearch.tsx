@@ -121,7 +121,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 			onSubmit={handleSubmit}
 			className="group relative flex items-center border-b border-medium transition-colors focus-within:border-brand"
 		>
-			<Icon name="search" height={14} width={14} className="pointer-events-none mr-3 text-tertiary" />
+			<Icon name="search" className="pointer-events-none mr-3 size-3.5 text-tertiary" />
 			<label className="flex-1">
 				<span className="sr-only">Search research</span>
 				<input

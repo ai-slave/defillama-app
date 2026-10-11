@@ -101,7 +101,7 @@ export function RecentlyListedProtocolsTable({
 			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Icon name="search" className={searchFieldIconStyles} />
 					<Input
 						value={nameSearch}
 						onChange={(e) => void pushShallowQuery(router, { search: e.currentTarget.value })}
@@ -171,12 +171,12 @@ const protocolsColumns = columnHelper.columns([
 						>
 							{row.getIsExpanded() ? (
 								<>
-									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-down" className="size-4 text-tertiary" />
 									<span className="sr-only">Hide child protocols</span>
 								</>
 							) : (
 								<>
-									<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+									<Icon name="chevron-right" className="size-4 text-tertiary" />
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
@@ -208,7 +208,7 @@ const protocolsColumns = columnHelper.columns([
 					</span>
 					{value === 'SyncDEX Finance' ? (
 						<Tooltip content="Many users have reported issues with this protocol">
-							<Icon name="alert-triangle" height={14} width={14} />
+							<Icon name="alert-triangle" className="size-3.5" />
 						</Tooltip>
 					) : null}
 				</span>

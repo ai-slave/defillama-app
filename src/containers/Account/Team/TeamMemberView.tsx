@@ -47,7 +47,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="users" height={28} width={28} className="text-primary" />
+					<Icon name="users" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Team</span>
 				</div>
 
@@ -83,7 +83,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 					}}
 					className="w-fit"
 				>
-					<Icon name="sign-out" height={14} width={14} />
+					<Icon name="sign-out" className="size-3.5" />
 					Leave team
 				</Button>
 			</div>
@@ -91,7 +91,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 			{members.length > 0 && (
 				<div className="flex flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 					<div className="flex items-center gap-2">
-						<Icon name="users" height={20} width={20} className="text-primary" />
+						<Icon name="users" className="size-5 text-primary" />
 						<span className="label-lg text-primary">Members ({members.length})</span>
 					</div>
 					<div className="flex flex-col gap-2">

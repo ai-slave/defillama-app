@@ -242,7 +242,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 							deposit ? 'bg-data-up-tint text-data-up' : 'bg-data-down-tint text-data-down'
 						}`}
 					>
-						<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
+						<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} className="size-3" />
 						{deposit ? 'Deposit' : 'Withdrawal'}
 					</span>
 				)
@@ -287,7 +287,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 						}
 					>
 						{truncateMiddle(value, 8, 4)}
-						<Icon name="external-link" height={10} width={10} />
+						<Icon name="external-link" className="size-3.5" />
 					</Tooltip>
 				)
 			},
@@ -351,7 +351,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 						}
 					>
 						{display}
-						<Icon name="external-link" height={10} width={10} />
+						<Icon name="external-link" className="size-3.5" />
 					</Tooltip>
 				)
 			},
@@ -385,7 +385,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 						}
 					>
 						{display}
-						<Icon name="external-link" height={10} width={10} />
+						<Icon name="external-link" className="size-3.5" />
 					</Tooltip>
 				)
 			},
@@ -424,7 +424,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 						}
 					>
 						<span className="mono-sm">{truncateMiddle(value)}</span>
-						<Icon name="external-link" height={10} width={10} />
+						<Icon name="external-link" className="size-3.5" />
 					</Tooltip>
 				)
 			},
@@ -637,7 +637,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 					pending={isPending}
 					className="md:col-start-4 md:row-start-2"
 				>
-					<Icon name="search" height={14} width={14} />
+					<Icon name="search" className="size-3.5" />
 					Fetch Transactions
 				</Button>
 
@@ -840,7 +840,7 @@ function TransactionsTable({
 				<TableToolbarControlGroup>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search transactions</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							value={globalFilter}
 							onChange={(e) => setGlobalFilter(e.target.value)}
@@ -872,14 +872,14 @@ function TransactionsTable({
 						onClick={() => React.startTransition(() => instance.setPageIndex(0))}
 						disabled={!instance.getCanPreviousPage()}
 					>
-						<Icon name="chevrons-left" height={16} width={16} />
+						<Icon name="chevrons-left" className="size-4" />
 					</PagerButton>
 					<PagerButton
 						aria-label="Previous page"
 						onClick={() => React.startTransition(() => instance.previousPage())}
 						disabled={!instance.getCanPreviousPage()}
 					>
-						<Icon name="chevron-left" height={16} width={16} />
+						<Icon name="chevron-left" className="size-4" />
 					</PagerButton>
 					<span className="px-2 font-medium text-primary">
 						{pageCount === 0 ? '0 / 0' : `${pageIndex + 1} / ${pageCount}`}
@@ -889,14 +889,14 @@ function TransactionsTable({
 						onClick={() => React.startTransition(() => instance.nextPage())}
 						disabled={!instance.getCanNextPage()}
 					>
-						<Icon name="chevron-right" height={16} width={16} />
+						<Icon name="chevron-right" className="size-4" />
 					</PagerButton>
 					<PagerButton
 						aria-label="Last page"
 						onClick={() => React.startTransition(() => instance.setPageIndex(Math.max(0, pageCount - 1)))}
 						disabled={!instance.getCanNextPage()}
 					>
-						<Icon name="chevrons-right" height={16} width={16} />
+						<Icon name="chevrons-right" className="size-4" />
 					</PagerButton>
 				</div>
 

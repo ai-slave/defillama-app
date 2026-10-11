@@ -38,7 +38,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 						return (
 							<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
 								<span className="truncate">{symbol}</span>
-								<Icon name="external-link" height={10} width={10} />
+								<Icon name="external-link" className="size-3.5" />
 							</a>
 						)
 					},

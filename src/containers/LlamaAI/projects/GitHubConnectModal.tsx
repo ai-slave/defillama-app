@@ -423,7 +423,7 @@ function GitHubConnectForm({
 							pending={install.isPending}
 							onClick={onStartInstall}
 						>
-							<Icon name="github" height={14} width={14} />
+							<Icon name="github" className="size-3.5" />
 							Install GitHub App
 						</Button>
 					) : null}

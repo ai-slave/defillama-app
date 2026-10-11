@@ -117,7 +117,7 @@ export function BrowserContent({
 					{/* Desktop: category header */}
 					<div className="shrink-0 px-4 pt-1 pb-2 sm:border-b sm:border-subtle sm:pt-3 sm:pb-3">
 						<div className="hidden items-center gap-2 sm:flex">
-							<Icon name={activeCategory.icon} height={14} width={14} className="text-secondary" />
+							<Icon name={activeCategory.icon} className="size-3.5 text-secondary" />
 							<h3 className="label-md text-primary">{activeCategory.name}</h3>
 							{activeCategory.badge ? (
 								<span className="rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">

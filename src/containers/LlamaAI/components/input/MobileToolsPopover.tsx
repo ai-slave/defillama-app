@@ -61,7 +61,7 @@ export function MobileToolsPopover({
 					<Button type="button" size="md" variant={open ? 'outline' : 'secondary'} square className="@sm:hidden" />
 				}
 			>
-				<Icon name="plus" height={16} width={16} />
+				<Icon name="plus" className="size-4" />
 			</Ariakit.MenuButton>
 
 			<MenuSurface
@@ -79,7 +79,7 @@ export function MobileToolsPopover({
 					hideOnClick={false}
 					onClick={handleImageUpload}
 				>
-					<Icon name="paperclip" height={16} width={16} className="shrink-0 text-secondary" />
+					<Icon name="paperclip" className="size-4 shrink-0 text-secondary" />
 					<span>Upload files</span>
 				</Ariakit.MenuItem>
 
@@ -93,9 +93,9 @@ export function MobileToolsPopover({
 					onChange={() => setMode('quick')}
 					data-umami-event="llamaai-quick-mode-toggle"
 				>
-					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-secondary" />
+					<Icon name="sparkles" className="size-4 shrink-0 text-secondary" />
 					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
+					{mode === 'quick' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
 				</Ariakit.MenuItemRadio>
 
 				<Ariakit.MenuItemRadio
@@ -113,13 +113,11 @@ export function MobileToolsPopover({
 					}}
 					data-umami-event="llamaai-fact-checked-mode-toggle"
 				>
-					<Icon name="check" height={16} width={16} className="shrink-0 text-secondary" />
+					<Icon name="check" className="size-4 shrink-0 text-secondary" />
 					<span className="flex-1">Fact-checked</span>
 					<span className="flex items-center gap-1.5">
 						<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
-						{mode === 'fact_checked' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-link" />
-						) : null}
+						{mode === 'fact_checked' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
 					</span>
 				</Ariakit.MenuItemRadio>
 
@@ -132,11 +130,11 @@ export function MobileToolsPopover({
 					onChange={() => setMode('research')}
 					data-umami-event="llamaai-research-mode-toggle"
 				>
-					<Icon name="search" height={16} width={16} className="shrink-0 text-secondary" />
+					<Icon name="search" className="size-4 shrink-0 text-secondary" />
 					<span className="flex-1">Research</span>
 					<span className="flex items-center gap-1.5">
 						<ModeUsage usage={researchUsage} feature="research" />
-						{mode === 'research' ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
+						{mode === 'research' ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
 					</span>
 				</Ariakit.MenuItemRadio>
 
@@ -150,7 +148,7 @@ export function MobileToolsPopover({
 						data-walkthrough="mobile-explore-item"
 						className={itemClassName}
 					>
-						<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-secondary" />
+						<Icon name="layout-grid" className="size-4 shrink-0 text-secondary" />
 						<span className="flex-1">Explore</span>
 						<Icon name="chevron-right" className="size-4" />
 					</Ariakit.PopoverDisclosure>

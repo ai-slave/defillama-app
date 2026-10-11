@@ -252,9 +252,9 @@ function AboutDrawer({
 				</div>
 				{asset.websiteUrl ? (
 					<Button as="a" href={asset.websiteUrl} target="_blank" rel="noreferrer" size="md" className="w-fit">
-						<Icon name="globe" height={14} width={14} />
+						<Icon name="globe" className="size-3.5" />
 						Website
-						<Icon name="arrow-up-right" height={12} width={12} />
+						<Icon name="arrow-up-right" className="size-3" />
 					</Button>
 				) : null}
 				<div className="grid grid-cols-2 items-center gap-3 rounded-lg border border-subtle bg-surface p-3 lg:flex lg:flex-wrap lg:justify-between lg:gap-4">
@@ -552,11 +552,11 @@ export function TokenPageLive({
 				<div className="flex items-center gap-2 max-lg:w-full">
 					<Button type="button" size="md" onClick={() => setAboutOpen(true)} className="justify-center max-lg:flex-1">
 						About {asset.symbol}
-						<Icon name="help-circle" height={14} width={14} />
+						<Icon name="help-circle" className="size-3.5" />
 					</Button>
 					<Button type="button" size="md" className="justify-center max-lg:flex-1">
 						Share
-						<Icon name="share" height={14} width={14} />
+						<Icon name="share" className="size-3.5" />
 					</Button>
 				</div>
 			</div>
@@ -635,7 +635,7 @@ export function TokenPageLive({
 												/>
 											}
 										>
-											<Icon name="arrow-right" height={16} width={16} />
+											<Icon name="arrow-right" className="size-4" />
 										</Tooltip>
 									</div>
 									<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
@@ -1039,7 +1039,7 @@ export function TokenPageLive({
 												/>
 											}
 										>
-											<Icon name="arrow-right" height={16} width={16} />
+											<Icon name="arrow-right" className="size-4" />
 										</Tooltip>
 									</div>
 									<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:items-stretch md:divide-x md:divide-y-0">
@@ -1181,7 +1181,7 @@ export function TokenPageLive({
 													/>
 												}
 											>
-												<Icon name="arrow-right" height={16} width={16} />
+												<Icon name="arrow-right" className="size-4" />
 											</Tooltip>
 										) : null}
 									</div>
@@ -1243,7 +1243,7 @@ export function TokenPageLive({
 														}
 													>
 														Vesting Details
-														<Icon name="arrow-right" height={14} width={14} />
+														<Icon name="arrow-right" className="size-3.5" />
 													</Button>
 												) : null}
 											</div>
@@ -1288,7 +1288,7 @@ export function TokenPageLive({
 														/>
 													}
 												>
-													<Icon name="arrow-right" height={16} width={16} />
+													<Icon name="arrow-right" className="size-4" />
 												</Tooltip>
 											) : null}
 										</div>

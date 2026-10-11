@@ -32,7 +32,7 @@ export function BranchArrows({
 					/>
 				}
 			>
-				<Icon name="chevron-left" height={16} width={16} />
+				<Icon name="chevron-left" className="size-4" />
 			</Tooltip>
 			<span className="px-0.5 body-sm text-tertiary tabular-nums">
 				{currentVersion}/{totalVersions}
@@ -52,7 +52,7 @@ export function BranchArrows({
 					/>
 				}
 			>
-				<Icon name="chevron-right" height={16} width={16} />
+				<Icon name="chevron-right" className="size-4" />
 			</Tooltip>
 		</div>
 	)

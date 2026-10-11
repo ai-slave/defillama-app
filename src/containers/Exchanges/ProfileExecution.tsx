@@ -100,7 +100,7 @@ export function IntraSpread({ pct }: { pct: number | null | undefined }) {
 				className="ms-auto w-fit"
 			>
 				<span className="flex items-center gap-1 text-warning">
-					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />
+					<Icon name="alert-triangle" className="size-3.5" aria-hidden="true" />
 					{text}
 				</span>
 			</Tooltip>

@@ -35,7 +35,7 @@ export function DiscoveryShelfHeading({
 			{seeAllHref ? (
 				<BasicLink href={seeAllHref} className="flex shrink-0 items-center gap-1 label-md text-link hover:underline">
 					See all
-					<Icon name="arrow-right" height={14} width={14} />
+					<Icon name="arrow-right" className="size-3.5" />
 				</BasicLink>
 			) : null}
 		</div>
@@ -107,7 +107,7 @@ export function DiscoverySection({
 								/>
 							}
 						>
-							<Icon name="chevron-left" height={16} width={16} />
+							<Icon name="chevron-left" className="size-4" />
 						</Tooltip>
 					</>
 				) : null}
@@ -147,7 +147,7 @@ export function DiscoverySection({
 								/>
 							}
 						>
-							<Icon name="chevron-right" height={16} width={16} />
+							<Icon name="chevron-right" className="size-4" />
 						</Tooltip>
 					</>
 				) : null}

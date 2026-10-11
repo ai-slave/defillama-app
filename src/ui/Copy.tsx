@@ -4,7 +4,7 @@ import { Icon } from '~/ui/Icon'
 
 interface CopyHelperProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	toCopy: string
-	size?: number
+	size?: `size-${number}`
 }
 
 /** Copies text and says so for 2 seconds; a failed write says why in a toast. */
@@ -30,7 +30,7 @@ export function useCopy() {
 	return { copied, copy }
 }
 
-export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
+export function CopyHelper({ toCopy, size = 'size-3.5', ...props }: CopyHelperProps) {
 	const { copied, copy } = useCopy()
 	// The icon swap is silent, so a polite status says the copy landed. It sits beside the button because the
 	// button's aria-label replaces anything inside it.
@@ -45,11 +45,7 @@ export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 				aria-label="Copy"
 				{...props}
 			>
-				{copied ? (
-					<Icon name="check-circle" height={size} width={size} />
-				) : (
-					<Icon name="copy" height={size} width={size} />
-				)}
+				{copied ? <Icon name="check-circle" className={size} /> : <Icon name="copy" className={size} />}
 			</button>
 			<span role="status" className="sr-only">
 				{copied ? 'Copied' : ''}

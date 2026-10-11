@@ -175,7 +175,7 @@ function TokenPnlContent({
 					</PanelTitle>
 					<p className="mr-auto flex items-center gap-1 body-sm text-nowrap text-secondary">
 						<span>{formatDateLabel(start)}</span>
-						<Icon name="arrow-right" width={14} height={14} />
+						<Icon name="arrow-right" className="size-3.5" />
 						<span>{formatDateLabel(end)}</span>
 					</p>
 					<ChartExportButtons
@@ -458,7 +458,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 								</>
 							) : (
 								<>
-									<Icon name="search" width={16} height={16} className="shrink-0 text-tertiary" />
+									<Icon name="search" className="size-4 shrink-0 text-tertiary" />
 									<span className="text-tertiary">Select token</span>
 								</>
 							)}

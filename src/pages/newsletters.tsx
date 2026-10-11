@@ -139,7 +139,7 @@ export default function NewslettersPage() {
 					<header className="flex flex-col gap-5 border-b border-medium pb-6">
 						<div className="flex max-w-3xl flex-col gap-3">
 							<p className="flex items-center gap-2 title-md text-link">
-								<Icon name="mail" height={20} width={20} aria-hidden />
+								<Icon name="mail" className="size-5" aria-hidden />
 								DefiLlama newsletters
 							</p>
 							<h1 className="max-w-3xl text-[clamp(2.25rem,4.25vw,4.5rem)] leading-[0.96] font-bold tracking-tight text-primary">
@@ -227,7 +227,7 @@ export default function NewslettersPage() {
 															}`}
 															aria-hidden
 														>
-															{on ? <Icon name="check" height={13} width={13} /> : null}
+															{on ? <Icon name="check" className="size-3.5" /> : null}
 															{on ? 'Selected' : 'Add'}
 														</span>
 													</span>
@@ -289,7 +289,7 @@ export default function NewslettersPage() {
 									{succeeded ? (
 										<div role="status" className="flex items-start gap-2 body-md text-primary">
 											<span className="flex h-lh shrink-0 items-center">
-												<Icon name="check-circle" height={18} width={18} className="text-link" />
+												<Icon name="check-circle" className="size-4.5 text-link" />
 											</span>
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>

@@ -46,7 +46,7 @@ function UploadStatus({
 						aria-describedby={errorId}
 						className="flex h-6 items-center gap-1 rounded-sm body-sm text-error hover:bg-error-tint"
 					>
-						Failed <Icon name="help-circle" height={14} width={14} />
+						Failed <Icon name="help-circle" className="size-3.5" />
 					</Ariakit.PopoverDisclosure>
 					{upload.retryable !== false ? (
 						<Tooltip
@@ -92,9 +92,9 @@ function UploadStatus({
 			</span>
 			<div aria-hidden="true" className="flex items-center gap-1.5 body-sm text-secondary">
 				{upload.status === 'done' ? (
-					<Icon name="check" height={14} width={14} className="text-link" />
+					<Icon name="check" className="size-3.5 text-link" />
 				) : upload.status === 'pending' ? (
-					<Icon name="clock" height={14} width={14} />
+					<Icon name="clock" className="size-3.5" />
 				) : (
 					<LoadingSpinner size={14} />
 				)}
@@ -206,7 +206,7 @@ export function TextChip({
 				aria-describedby={failed ? statusId : undefined}
 				className={`flex min-h-14 w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left ${onOpen ? 'cursor-pointer hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-progress' : ''}`}
 			>
-				<Icon name="file-text" height={16} width={16} className="shrink-0 text-secondary" />
+				<Icon name="file-text" className="size-4 shrink-0 text-secondary" />
 				<div className={`min-w-0 flex-1 ${onRemove ? 'pr-5' : ''}`}>
 					<p title={topLine} className="truncate label-sm text-primary">
 						{topLine}
@@ -243,7 +243,7 @@ export function TextChip({
 					aria-label={removeLabel}
 					className={ATTACHMENT_REMOVE_BUTTON}
 				>
-					<Icon name="x" height={14} width={14} />
+					<Icon name="x" className="size-3.5" />
 				</button>
 			) : null}
 		</div>
@@ -335,7 +335,7 @@ export function ImageUpload({
 										aria-label={`Remove ${file.name}`}
 										className={ATTACHMENT_REMOVE_BUTTON}
 									>
-										<Icon name="x" height={14} width={14} />
+										<Icon name="x" className="size-3.5" />
 									</button>
 								)}
 							</div>
@@ -364,7 +364,7 @@ export function ImageUploadButton({ onClick, disabled = false }: ImageUploadButt
 			content="Attach file (or paste with Ctrl+V)"
 			render={<Button type="button" size="md" square onClick={onClick} aria-label="Attach file" disabled={disabled} />}
 		>
-			<Icon name="paperclip" height={16} width={16} />
+			<Icon name="paperclip" className="size-4" />
 		</Tooltip>
 	)
 }

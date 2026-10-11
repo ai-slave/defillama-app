@@ -57,7 +57,7 @@ function StreamingImagePlaceholder() {
 		<div className={`${IMAGE_FRAME} flex items-center justify-center`} style={{ aspectRatio: '1 / 1' }}>
 			<Skeleton className="absolute inset-0" />
 			<div role="status" className="relative flex flex-col items-center gap-1.5 body-sm text-tertiary">
-				<Icon name="image-plus" height={20} width={20} />
+				<Icon name="image-plus" className="size-5" />
 				<p>Generating image…</p>
 			</div>
 		</div>
@@ -96,7 +96,7 @@ function GeneratedImageBlock({
 				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 bg-surface-elevated-2 p-6 text-center text-secondary`}
 				style={{ aspectRatio: aspect ?? '1 / 1' }}
 			>
-				<Icon name="alert-triangle" height={20} width={20} className="text-error" />
+				<Icon name="alert-triangle" className="size-5 text-error" />
 				<p className="label-md text-error">Image failed to load</p>
 				<a
 					href={url}
@@ -644,7 +644,7 @@ function MessageBubbleContent({
 										/>
 									}
 								>
-									<Icon name="pencil" height={16} width={16} />
+									<Icon name="pencil" className="size-4" />
 								</Tooltip>
 							</span>
 						) : null}

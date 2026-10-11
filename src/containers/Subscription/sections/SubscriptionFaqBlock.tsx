@@ -51,7 +51,7 @@ export function SubscriptionFaqBlock({
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
 								<p className="label-lg text-primary md:label-md">{item.question}</p>
-								<Icon name={isExpanded ? 'x' : 'plus'} height={18} width={18} className="shrink-0 text-primary" />
+								<Icon name={isExpanded ? 'x' : 'plus'} className="size-4.5 shrink-0 text-primary" />
 							</button>
 							<div
 								id={answerId}

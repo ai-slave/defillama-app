@@ -166,7 +166,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						/>
 					}
 				>
-					<Icon name="ellipsis" height={16} width={16} />
+					<Icon name="ellipsis" className="size-4" />
 				</Tooltip>
 				<MenuSurface variant="actions" composite={false}>
 					<Ariakit.MenuList store={menu} aria-label="Card actions">
@@ -236,9 +236,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 												<span className="mr-auto">{COL_SPAN_LABELS[option]}</span>
 												<Icon
 													name="check"
-													height={14}
-													width={14}
-													className={option === layout.colSpan ? 'text-link' : 'invisible'}
+													className={option === layout.colSpan ? 'size-3.5 text-link' : 'invisible size-3.5'}
 												/>
 											</Ariakit.MenuItemRadio>
 										))}
@@ -260,9 +258,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 												<span className="mr-auto">{DASHBOARD_CARD_HEIGHT_LABELS[option]}</span>
 												<Icon
 													name="check"
-													height={14}
-													width={14}
-													className={option === layout.height ? 'text-link' : 'invisible'}
+													className={option === layout.height ? 'size-3.5 text-link' : 'invisible size-3.5'}
 												/>
 											</Ariakit.MenuItemRadio>
 										))}
@@ -341,7 +337,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								) : null}
 								<Ariakit.MenuGroup>
 									<MenuItem destructive onClick={onRemove} data-umami-event="dashboard-card-remove">
-										<Icon name="trash-2" height={14} width={14} />
+										<Icon name="trash-2" className="size-3.5" />
 										Remove card
 									</MenuItem>
 								</Ariakit.MenuGroup>

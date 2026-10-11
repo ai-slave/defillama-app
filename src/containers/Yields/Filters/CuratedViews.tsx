@@ -236,7 +236,7 @@ export function CuratedViews({
 								className={metricOptionChipMdStyles}
 								data-active={active}
 							>
-								<Icon name={preset.icon} height={14} width={14} />
+								<Icon name={preset.icon} className="size-3.5" />
 								{preset.label}
 							</button>
 						)
@@ -290,7 +290,7 @@ export function CuratedViews({
 								/>
 							}
 						>
-							<Icon name={preset.icon} height={14} width={14} />
+							<Icon name={preset.icon} className="size-3.5" />
 							{preset.label}
 						</Hovercard>
 					)

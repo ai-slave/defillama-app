@@ -121,7 +121,7 @@ export function CitationDetailPanel({
 						<>
 							{onBackToDashboard ? <DialogBackButton label="Back to dashboard" onClick={onBackToDashboard} /> : null}
 							<span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${accent.chip}`}>
-								<Icon name={iconName} height={16} width={16} />
+								<Icon name={iconName} className="size-4" />
 							</span>
 						</>
 					}
@@ -146,13 +146,13 @@ export function CitationDetailPanel({
 				<div className={`absolute top-0 left-0 h-full w-[3px] ${accent.bar}`} />
 				<div className="flex shrink-0 items-start gap-2.5 border-b border-subtle py-3 pr-3 pl-4">
 					<span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
-						<Icon name={iconName} height={14} width={14} />
+						<Icon name={iconName} className="size-3.5" />
 					</span>
 					{summary}
 					<div className="flex shrink-0 items-center gap-1">
 						{onBackToDashboard ? (
 							<Button type="button" variant="ghost" size="sm" onClick={() => leaveDesktopPanel(onBackToDashboard)}>
-								<Icon name="chevron-left" height={14} width={14} />
+								<Icon name="chevron-left" className="size-3.5" />
 								Dashboard
 							</Button>
 						) : null}

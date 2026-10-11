@@ -26,7 +26,7 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 							}`}
 						>
 							{isCompleted ? (
-								<Icon name="check" height={14} width={14} role="img" aria-label={`Step ${index + 1} done`} />
+								<Icon name="check" className="size-3.5" role="img" aria-label={`Step ${index + 1} done`} />
 							) : (
 								index + 1
 							)}
@@ -58,14 +58,14 @@ export function WizardNavigation({ currentStep, onBack, creating, metricsLoad }:
 		<DialogFooter
 			leading={
 				<Button type="button" size="md" onClick={onBack} disabled={creating}>
-					<Icon name="arrow-left" height={14} width={14} />
+					<Icon name="arrow-left" className="size-3.5" />
 					Back
 				</Button>
 			}
 		>
 			{currentStep === 'preview' ? (
 				<Button type="submit" variant="primary" size="md" pendingLabel="Creating…" pending={creating}>
-					<Icon name="plus" height={14} width={14} />
+					<Icon name="plus" className="size-3.5" />
 					Create dashboard
 				</Button>
 			) : (
@@ -79,7 +79,7 @@ export function WizardNavigation({ currentStep, onBack, creating, metricsLoad }:
 					accessibleWhenDisabled
 				>
 					Next
-					<Icon name="arrow-right" height={14} width={14} />
+					<Icon name="arrow-right" className="size-3.5" />
 				</Button>
 			)}
 		</DialogFooter>

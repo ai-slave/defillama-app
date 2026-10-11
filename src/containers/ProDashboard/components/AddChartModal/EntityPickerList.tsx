@@ -117,7 +117,7 @@ export function EntityPickerList({
 				<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-subtle">
 					<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
 						<div className="relative flex-1">
-							<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								{...control}
 								ref={searchRef}

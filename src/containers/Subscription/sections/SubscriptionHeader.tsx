@@ -43,7 +43,7 @@ export function SubscriptionHeader() {
 			{/* Mobile */}
 			<header className="relative z-20 flex h-16 items-center justify-between bg-page-glass px-4 backdrop-blur-[12px] md:hidden">
 				<BasicLink href="/" aria-label="Back to home" className="flex size-10 items-center justify-center rounded-full">
-					<Icon name="chevron-left" height={28} width={28} />
+					<Icon name="chevron-left" className="size-7" />
 				</BasicLink>
 				<div className="flex items-center gap-4">
 					<ThemeSwitch variant="pill" />
@@ -54,7 +54,7 @@ export function SubscriptionHeader() {
 			{/* Desktop */}
 			<header className="relative z-20 hidden h-12 items-center justify-between bg-page-glass px-10.5 backdrop-blur-[12px] md:flex">
 				<BasicLink href="/" className="flex items-center gap-2 body-sm text-primary">
-					<Icon name="chevron-left" height={16} width={16} />
+					<Icon name="chevron-left" className="size-4" />
 					Back
 				</BasicLink>
 				<div className="flex items-center gap-5">

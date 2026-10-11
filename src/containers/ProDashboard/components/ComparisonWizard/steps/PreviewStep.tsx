@@ -122,7 +122,7 @@ export function PreviewStep() {
 				<div className="rounded-lg border border-subtle p-3">
 					<div className="mb-2 flex items-center justify-between">
 						<h3 className="flex items-center gap-1.5 label-sm text-primary">
-							<Icon name="activity" height={14} width={14} />
+							<Icon name="activity" className="size-3.5" />
 							Add metric cards
 						</h3>
 						<span className="body-sm text-tertiary">Optional</span>
@@ -174,7 +174,7 @@ export function PreviewStep() {
 					>
 						<span className="flex min-w-0 flex-col gap-0.5">
 							<span className="flex items-center gap-1.5 label-sm text-primary">
-								<Icon name="layout-grid" height={14} width={14} />
+								<Icon name="layout-grid" className="size-3.5" />
 								Include comparison table
 							</span>
 							<span className="body-sm text-secondary">
@@ -186,7 +186,7 @@ export function PreviewStep() {
 
 				<div className="rounded-lg border border-subtle p-3">
 					<h3 className="mb-2 flex items-center gap-1.5 label-sm text-primary">
-						<Icon name="file-text" height={14} width={14} />
+						<Icon name="file-text" className="size-3.5" />
 						Summary
 					</h3>
 					<div className="space-y-1.5 body-sm">

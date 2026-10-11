@@ -66,7 +66,7 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 			const message = "Couldn't load inflows for this date range."
 			return (
 				<Tooltip content={message} className="ml-auto text-error">
-					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />
+					<Icon name="alert-triangle" className="size-3.5" aria-hidden="true" />
 					<span className="sr-only">{message}</span>
 				</Tooltip>
 			)

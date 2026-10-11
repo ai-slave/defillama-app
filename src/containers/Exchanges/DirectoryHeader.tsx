@@ -57,9 +57,7 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 							</span>
 							<Icon
 								name="chevron-down"
-								height={16}
-								width={16}
-								className="text-tertiary transition-transform duration-100 group-open:rotate-180"
+								className="size-4 text-tertiary transition-transform duration-100 group-open:rotate-180"
 							/>
 						</span>
 					</Ariakit.TooltipAnchor>

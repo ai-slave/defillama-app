@@ -70,9 +70,7 @@ export function SpawnProgressCard({
 
 				<Icon
 					name="chevron-right"
-					height={14}
-					width={14}
-					className={`hidden shrink-0 text-tertiary duration-150 motion-safe:transition-transform sm:block ${isExpanded ? 'rotate-90' : ''}`}
+					className={`hidden size-3.5 shrink-0 text-tertiary duration-150 motion-safe:transition-transform sm:block ${isExpanded ? 'rotate-90' : ''}`}
 				/>
 			</button>
 
@@ -81,9 +79,9 @@ export function SpawnProgressCard({
 					{agentList.map((agent) => (
 						<li key={agent.id} className="flex items-center gap-2 pl-1">
 							{agent.status === 'completed' ? (
-								<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+								<Icon name="check" className="size-3.5 shrink-0 text-success" />
 							) : agent.status === 'error' ? (
-								<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
+								<Icon name="x" className="size-3.5 shrink-0 text-error" />
 							) : (
 								<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 							)}

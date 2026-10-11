@@ -97,7 +97,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				resetValueOnHide
 			>
 				<div className="relative">
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
+					<Icon name="search" className={searchFieldIconStyles} aria-hidden="true" />
 					<Ariakit.Combobox
 						ref={inputRef}
 						placeholder="Search articles by title…"
@@ -128,7 +128,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 										{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 									</span>
 								</span>
-								{selected ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
+								{selected ? <Icon name="check" className="size-3.5 shrink-0 text-link" /> : null}
 							</Ariakit.ComboboxItem>
 						)
 					})}

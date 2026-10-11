@@ -80,7 +80,7 @@ export function DepegWarningIcon({
 	const content = `${token} is ${formatPercent(abs, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} off peg — ${consequence}.`
 	return (
 		<Tooltip content={content}>
-			<Icon name="alert-triangle-filled" height={20} width={20} className={`shrink-0 ${colorClass}`} />
+			<Icon name="alert-triangle-filled" className={`size-5 shrink-0 ${colorClass}`} />
 		</Tooltip>
 	)
 }
@@ -181,7 +181,7 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	// Filled seal = measured; muted = this window isn't; padlock = measured but withheld. The mark
 	// trails the figure; an unmarked row keeps the slot so every figure shares one right edge.
 	const glyph = locked ? (
-		<MeasuredLock size={13} className="text-tertiary" />
+		<MeasuredLock size="size-3.25" className="text-tertiary" />
 	) : row.verified || measuredIntrinsic != null ? (
 		<MeasuredSeal muted={!headlineMeasured} />
 	) : (
@@ -284,7 +284,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					>
 						<span className="flex items-center gap-1.5 text-secondary">
 							<span className="underline decoration-dotted">•••</span>
-							<MeasuredLock size={13} className="text-tertiary" />
+							<MeasuredLock size="size-3.25" className="text-tertiary" />
 						</span>
 					</Hovercard>
 				)}
@@ -366,7 +366,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					{feeWarning ? (
 						<span className="flex items-start gap-1.5 text-warning">
 							<span className="flex h-lh shrink-0 items-center">
-								<Icon name="alert-triangle" height={12} width={12} />
+								<Icon name="alert-triangle" className="size-3" />
 							</span>
 							{feeWarning}
 						</span>
@@ -389,7 +389,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					<ExitStatusIcon verified={verified} />
 					{/* The value inherits the table's text like every other column; the icon carries the tone. */}
 					<span className="underline decoration-dotted">{label}</span>
-					{feeWarning ? <Icon name="alert-triangle" height={12} width={12} className="shrink-0 text-warning" /> : null}
+					{feeWarning ? <Icon name="alert-triangle" className="size-3 shrink-0 text-warning" /> : null}
 				</span>
 				{withdrawableUsd != null ? (
 					<span className="text-secondary">{formatUsd(withdrawableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>

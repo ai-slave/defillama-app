@@ -72,13 +72,13 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 					/>
 				}
 			>
-				<Icon name="search" height={16} width={16} />
+				<Icon name="search" className="size-4" />
 			</Tooltip>
 		)
 	}
 	return (
 		<div className="relative w-64">
-			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<Icon name="search" className={searchFieldIconStyles} />
 			<Input
 				type="search"
 				autoFocus

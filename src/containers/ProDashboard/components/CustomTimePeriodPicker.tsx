@@ -77,7 +77,7 @@ export function CustomTimePeriodPicker({
 			>
 				<span className="flex items-center gap-1">
 					{isActive ? formatCompactLabel(customPeriod) : 'Custom'}
-					<Icon name="chevron-down" height={14} width={14} />
+					<Icon name="chevron-down" className="size-3.5" />
 				</span>
 			</Ariakit.PopoverDisclosure>
 

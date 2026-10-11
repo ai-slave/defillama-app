@@ -86,7 +86,7 @@ export default function DashboardEmbedPage({
 						data-umami-event="embed-open-dashboard"
 					>
 						Open on DefiLlama
-						<Icon name="external-link" height={12} width={12} aria-hidden="true" />
+						<Icon name="external-link" className="size-3" aria-hidden="true" />
 					</a>
 				</header>
 				<ProDashboardAPIProvider

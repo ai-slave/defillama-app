@@ -209,7 +209,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search companies, IDs, or sectors</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							onInput={(event) => {
 								setSearchValue(event.currentTarget.value)

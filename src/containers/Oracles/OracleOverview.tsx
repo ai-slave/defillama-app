@@ -93,7 +93,7 @@ export function OracleOverview({
 										className="absolute -left-1.5"
 										onClick={row.getToggleExpandedHandler()}
 									>
-										<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} height={16} width={16} />
+										<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} className="size-4" />
 										<span className="sr-only">
 											{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
 										</span>

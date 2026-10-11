@@ -198,7 +198,7 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 							/>
 						}
 					>
-						<Icon name="arrow-left" height={16} width={16} />
+						<Icon name="arrow-left" className="size-4" />
 					</Tooltip>
 				) : null}
 				<div className="min-w-0 overflow-hidden">
@@ -224,7 +224,7 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 							/>
 						}
 					>
-						<Icon name="arrow-right" height={16} width={16} />
+						<Icon name="arrow-right" className="size-4" />
 					</Tooltip>
 				) : null}
 			</div>
@@ -245,7 +245,7 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 							/>
 						}
 					>
-						<Icon name="arrow-left" height={16} width={16} />
+						<Icon name="arrow-left" className="size-4" />
 					</Tooltip>
 
 					<span className="label-sm text-secondary">
@@ -266,7 +266,7 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 							/>
 						}
 					>
-						<Icon name="arrow-right" height={16} width={16} />
+						<Icon name="arrow-right" className="size-4" />
 					</Tooltip>
 				</div>
 			) : null}

@@ -122,7 +122,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 				style={itemStyle}
 				className={`flex items-center gap-1 label-sm text-secondary ${item.isFirst ? 'pt-0' : 'pt-3'}`}
 			>
-				{item.groupName === 'Pinned' ? <Icon name="pin" height={14} width={14} className="shrink-0" /> : null}
+				{item.groupName === 'Pinned' ? <Icon name="pin" className="size-3.5 shrink-0" /> : null}
 				{item.groupName}
 			</h2>
 		)
@@ -425,14 +425,14 @@ function SidebarPanel({
 								/>
 							}
 						>
-							<Icon name={showsFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
+							<Icon name={showsFullscreen ? 'shrink' : 'expand'} className="size-4" />
 							<span className="sr-only">{showsFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
 						</Tooltip>
 					</div>
 
 					{isSearchShown ? (
 						<div className="relative w-full min-w-0">
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								type="text"
 								autoFocus
@@ -466,7 +466,7 @@ function SidebarPanel({
 										aria-label="Clear session search"
 										onClick={clearSearchField}
 									>
-										<Icon name="x" height={14} width={14} />
+										<Icon name="x" className="size-3.5" />
 									</Button>
 								)}
 							</span>
@@ -516,7 +516,7 @@ function SidebarPanel({
 									disabled={isLoading && !hasShownSessions}
 									className="-mr-2 disabled:invisible"
 								>
-									<Icon name={selectMode ? 'x' : 'check'} height={14} width={14} />
+									<Icon name={selectMode ? 'x' : 'check'} className="size-3.5" />
 									<StableLabel labels={['Select', 'Cancel']} current={selectMode ? 'Cancel' : 'Select'} />
 								</Button>
 							) : null}
@@ -660,7 +660,7 @@ function SidebarPanel({
 								render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
 								className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 							>
-								<Icon name="download" height={16} width={16} />
+								<Icon name="download" className="size-4" />
 								<span className="sr-only">Get the mobile app</span>
 							</Tooltip>
 						</footer>
@@ -690,7 +690,7 @@ function SidebarBalance({ onOpen }: { onOpen: () => void }) {
 function SettingsIcon({ hasCustomInstructions }: { hasCustomInstructions?: boolean }) {
 	return (
 		<span className="relative flex">
-			<Icon name="settings" height={16} width={16} />
+			<Icon name="settings" className="size-4" />
 			{hasCustomInstructions ? <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" /> : null}
 		</span>
 	)
@@ -776,7 +776,7 @@ function SidebarToggles({
 			<SidebarItem
 				folded
 				label={folded ? 'Open sidebar' : 'Close sidebar'}
-				icon={<Icon name={folded ? 'panel-left-open' : 'panel-left-close'} height={16} width={16} />}
+				icon={<Icon name={folded ? 'panel-left-open' : 'panel-left-close'} className="size-4" />}
 				onClick={toggleSidebar}
 				aria-expanded={!folded}
 				data-umami-event="llamaai-sidebar-toggle"
@@ -787,7 +787,7 @@ function SidebarToggles({
 				ref={searchRef}
 				folded
 				label="Search chats"
-				icon={<Icon name="search" height={16} width={16} />}
+				icon={<Icon name="search" className="size-4" />}
 				active={searchOpen}
 				onClick={onSearch}
 				aria-expanded={searchOpen}
@@ -834,13 +834,13 @@ function SidebarDestinations({
 					? [
 							{
 								value: 'chat',
-								label: <Icon name="message-square" height={16} width={16} />,
+								label: <Icon name="message-square" className="size-4" />,
 								ariaLabel: 'Chat',
 								tooltip: 'Chat'
 							},
 							{
 								value: 'terminal',
-								label: <Icon name="bar-chart-2" height={16} width={16} />,
+								label: <Icon name="bar-chart-2" className="size-4" />,
 								ariaLabel: 'Terminal',
 								tooltip: 'Terminal'
 							}
@@ -871,7 +871,7 @@ function SidebarDestinations({
 					placement="right"
 					render={<Button type="button" size="md" variant="outline" square onClick={newChat} />}
 				>
-					<Icon name="square-pen" height={16} width={16} />
+					<Icon name="square-pen" className="size-4" />
 					<span className="sr-only">New chat</span>
 				</Tooltip>
 				{placeSwitch}
@@ -882,7 +882,7 @@ function SidebarDestinations({
 		<>
 			{placeSwitch}
 			<Button ref={newChatRef} type="button" size="md" variant="outline" onClick={newChat} className="w-full">
-				<Icon name="square-pen" height={14} width={14} />
+				<Icon name="square-pen" className="size-3.5" />
 				New chat
 			</Button>
 		</>
@@ -906,7 +906,7 @@ function AlertsItem({
 			data-walkthrough="alerts-item"
 			icon={
 				<span className="relative flex shrink-0">
-					<Icon name="calendar-plus" height={16} width={16} />
+					<Icon name="calendar-plus" className="size-4" />
 					{folded && alertsCount ? (
 						<span className="absolute -top-1.5 -right-2 min-w-3.5 rounded-full bg-surface-elevated-2 px-0.5 text-center label-xs text-secondary">
 							{alertsCount}
@@ -960,7 +960,7 @@ function SidebarRail({
 			<SidebarItem
 				folded
 				label="Projects"
-				icon={<Icon name="folder" height={16} width={16} />}
+				icon={<Icon name="folder" className="size-4" />}
 				onClick={() => {
 					setStorageItem(SIDEBAR_PROJECTS_OPEN_KEY, 'true')
 					toggleSidebar()

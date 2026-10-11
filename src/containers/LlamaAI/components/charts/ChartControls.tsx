@@ -102,7 +102,7 @@ export function ChartControls({
 			{controls.groupingLocked ? (
 				onOpenStyleEditor ? (
 					<Button type="button" size="md" onClick={onOpenStyleEditor}>
-						<Icon name="settings" height={14} width={14} />
+						<Icon name="settings" className="size-3.5" />
 						Set series aggregation to enable W/M/Q/Y
 					</Button>
 				) : (

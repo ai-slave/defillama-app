@@ -70,7 +70,7 @@ function TokenSearchField({
 					aria-label={selected ? `${label}: ${nameByValue.get(selected) ?? selected}` : placeholder}
 					className="flex min-w-0 flex-1 items-center gap-2 px-3 py-1.5 text-left outline-hidden"
 				>
-					<Icon name="search" height={16} width={16} />
+					<Icon name="search" className="size-4" />
 					{selected ? (
 						<span className="min-w-0 flex-1 truncate text-left text-primary">
 							<span className="whitespace-nowrap text-secondary">{label}: </span>

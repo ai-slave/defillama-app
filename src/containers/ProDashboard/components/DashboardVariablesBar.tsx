@@ -47,7 +47,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 					}}
 				/>
 				<Button type="submit" size="md" square variant="ghost" aria-label="Save parameter name">
-					<Icon name="check" height={14} width={14} />
+					<Icon name="check" className="size-3.5" />
 				</Button>
 				<Tooltip
 					content="Cancel rename"
@@ -62,7 +62,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 						/>
 					}
 				>
-					<Icon name="x" height={16} width={16} />
+					<Icon name="x" className="size-4" />
 				</Tooltip>
 			</form>
 		)
@@ -105,19 +105,19 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 							/>
 						}
 					>
-						<Icon name="ellipsis" height={16} width={16} />
+						<Icon name="ellipsis" className="size-4" />
 					</Tooltip>
 					<MenuSurface variant="actions" gutter={6}>
 						<MenuItem data-umami-event="dashboard-variable-rename" onClick={() => setRenameDraft(variable.label)}>
-							<Icon name="pencil" height={14} width={14} />
+							<Icon name="pencil" className="size-3.5" />
 							<span>Rename</span>
 						</MenuItem>
 						<MenuItem data-umami-event="dashboard-variable-unbind" onClick={() => unbindVariable(variable.id)}>
-							<Icon name="link" height={14} width={14} />
+							<Icon name="link" className="size-3.5" />
 							<span>Unbind all</span>
 						</MenuItem>
 						<MenuItem data-umami-event="dashboard-variable-remove" onClick={() => removeVariable(variable.id)}>
-							<Icon name="trash-2" height={14} width={14} />
+							<Icon name="trash-2" className="size-3.5" />
 							<span>Delete</span>
 						</MenuItem>
 					</MenuSurface>

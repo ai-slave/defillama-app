@@ -103,7 +103,7 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 			</DialogBody>
 			<DialogFooter>
 				<Button type="button" size="md" onClick={handleCopy} pendingLabel="Copying…" pending={copyStatus === 'pending'}>
-					<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} height={14} width={14} />
+					<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} className="size-3.5" />
 					{copyLabel}
 				</Button>
 				{typeof preview.original === 'string' ? (
@@ -115,11 +115,11 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 						rel="noopener noreferrer"
 						size="md"
 					>
-						<Icon name="download" height={14} width={14} /> Download full file
+						<Icon name="download" className="size-3.5" /> Download full file
 					</Button>
 				) : (
 					<Button type="button" size="md" onClick={handleDownload}>
-						<Icon name="download" height={14} width={14} /> {preview.truncated ? 'Download full file' : 'Download'}
+						<Icon name="download" className="size-3.5" /> {preview.truncated ? 'Download full file' : 'Download'}
 					</Button>
 				)}
 			</DialogFooter>

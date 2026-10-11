@@ -87,7 +87,7 @@ function ActionLink({
 			size="md"
 		>
 			{action.label}
-			<Icon name="arrow-up-right" height={14} width={14} aria-hidden />
+			<Icon name="arrow-up-right" className="size-3.5" aria-hidden />
 		</Button>
 	)
 }
@@ -149,7 +149,7 @@ export function ActionButtonGroup({
 						{action.label}
 						{sent ? (
 							<span className="flex items-center gap-1 text-secondary">
-								<Icon name="check" height={14} width={14} />
+								<Icon name="check" className="size-3.5" />
 								Sent
 							</span>
 						) : null}

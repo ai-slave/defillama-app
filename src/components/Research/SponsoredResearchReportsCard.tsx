@@ -80,7 +80,7 @@ export function SponsoredResearchReportsCard({
 								<span className="flex flex-wrap items-center justify-between gap-2 body-sm text-tertiary">
 									<span>{formatDate(report.displayDate ?? report.publishedAt)}</span>
 									<span className="inline-flex items-center gap-1 label-sm text-primary">
-										Read report <Icon name="arrow-up-right" height={14} width={14} />
+										Read report <Icon name="arrow-up-right" className="size-3.5" />
 									</span>
 								</span>
 							</span>

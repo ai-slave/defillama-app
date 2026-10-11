@@ -965,7 +965,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 					<>
 						{EQUITIES_MORE_PRESETS.map(renderPreset)}
 						<Button type="button" aria-expanded onClick={() => setMorePresetsOpen(false)} variant="secondary" size="md">
-							<Icon name="minus" height={14} width={14} />
+							<Icon name="minus" className="size-3.5" />
 							Less
 						</Button>
 					</>

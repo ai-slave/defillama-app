@@ -5,7 +5,8 @@ import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 /* ── Footer sub-components ──────────────────────────────────────────── */
 
-function SocialIcons({ size }: { size: number }) {
+// Each footer shows at one breakpoint only, so the icon size follows the breakpoint.
+function SocialIcons() {
 	return (
 		<div className="flex items-center gap-2">
 			<a
@@ -15,7 +16,7 @@ function SocialIcons({ size }: { size: number }) {
 				aria-label="Discord"
 				className="rounded-full p-1 text-tertiary"
 			>
-				<Icon name="chat" height={size} width={size} aria-hidden="true" />
+				<Icon name="chat" className="size-4.5 md:size-5" aria-hidden="true" />
 			</a>
 			<a
 				href="https://twitter.com/DefiLlama"
@@ -24,7 +25,7 @@ function SocialIcons({ size }: { size: number }) {
 				aria-label="X/Twitter"
 				className="rounded-full p-1 text-tertiary"
 			>
-				<Icon name="twitter" height={size} width={size} aria-hidden="true" />
+				<Icon name="twitter" className="size-4.5 md:size-5" aria-hidden="true" />
 			</a>
 			<a
 				href="https://github.com/DefiLlama"
@@ -33,7 +34,7 @@ function SocialIcons({ size }: { size: number }) {
 				aria-label="GitHub"
 				className="rounded-full p-1 text-tertiary"
 			>
-				<Icon name="github" height={size} width={size} aria-hidden="true" />
+				<Icon name="github" className="size-4.5 md:size-5" aria-hidden="true" />
 			</a>
 		</div>
 	)
@@ -71,7 +72,7 @@ export function SubscriptionFooter() {
 							className="hidden h-7 w-[82px] object-contain object-left dark:block"
 						/>
 					</div>
-					<SocialIcons size={18} />
+					<SocialIcons />
 				</div>
 				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 body-xs text-secondary">
 					<FooterLinks />
@@ -98,7 +99,7 @@ export function SubscriptionFooter() {
 								className="hidden h-7 w-[83px] object-contain object-left dark:block"
 							/>
 						</div>
-						<SocialIcons size={20} />
+						<SocialIcons />
 					</div>
 					<div className="flex items-center justify-between body-sm text-tertiary">
 						<StaleText as="p">{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}</StaleText>

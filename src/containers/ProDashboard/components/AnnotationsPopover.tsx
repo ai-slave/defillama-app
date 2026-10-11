@@ -27,7 +27,7 @@ export function AnnotationsPopover() {
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="ghost" />}>
-				<Icon name="pin" height={14} width={14} />
+				<Icon name="pin" className="size-3.5" />
 				<span>Annotations</span>
 				{/* Unpadded, the count fits the md button's 32px height instead of growing it. */}
 				{annotations.length > 0 ? (
@@ -171,7 +171,7 @@ function AnnotationsPanel({
 						accessibleWhenDisabled
 						data-umami-event="dashboard-annotation-add"
 					>
-						<Icon name="plus" height={14} width={14} />
+						<Icon name="plus" className="size-3.5" />
 						<span>Add</span>
 					</Button>
 				</div>

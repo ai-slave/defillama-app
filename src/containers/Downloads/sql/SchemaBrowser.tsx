@@ -270,7 +270,7 @@ export function SearchField({
 	const inputRef = useRef<HTMLInputElement>(null)
 	return (
 		<div className="relative">
-			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<Icon name="search" className={searchFieldIconStyles} />
 			<Input
 				ref={inputRef}
 				type="text"

@@ -37,7 +37,7 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 					render={<button type="button" aria-label="Source methodology note" />}
 					className="text-tertiary hover:text-primary focus-visible:text-primary"
 				>
-					<Icon name="help-circle" height={14} width={14} />
+					<Icon name="help-circle" className="size-3.5" />
 				</Tooltip>
 			) : null}
 			<Button as={BasicLink} href={source.url} target="_blank" rel="noopener noreferrer" size="sm">
@@ -74,7 +74,7 @@ function ExternalMetadataLink({ value }: { value: { label: string; url: string }
 			className="inline-flex items-center gap-1 text-link hover:underline"
 		>
 			{metadataValueLabel(value.label)}
-			<Icon name="external-link" height={12} width={12} />
+			<Icon name="external-link" className="size-3" />
 		</BasicLink>
 	)
 }
@@ -278,12 +278,7 @@ function MetadataTableField({
 					className="flex w-full items-center justify-center gap-1 px-3 py-2 label-sm text-link hover:bg-hover-row"
 				>
 					{expanded ? 'Show fewer tiers' : `Show all ${field.value.length} tiers`}
-					<Icon
-						name="chevron-down"
-						height={14}
-						width={14}
-						className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
-					/>
+					<Icon name="chevron-down" className={`size-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
 				</button>
 			) : null}
 		</div>
@@ -369,7 +364,7 @@ function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {
 	return (
 		<div className="flex flex-wrap items-center gap-2 border-b border-subtle px-3 py-2.5">
 			<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-				<Icon name={presentation.icon} height={17} width={17} />
+				<Icon name={presentation.icon} className="size-4" />
 			</span>
 			<h2 className="label-lg">{presentation.title}</h2>
 			{group.fromProofOfReserves ? <StatusBadge status="good">Live reserves data</StatusBadge> : null}
@@ -402,7 +397,7 @@ function MetadataGroup({
 			{nestedGroup ? (
 				<>
 					<div className="flex flex-wrap items-center gap-2 border-b border-subtle px-3 py-2.5">
-						<Icon name="link" height={15} width={15} className="text-link" />
+						<Icon name="link" className="size-3.5 text-link" />
 						<h3 className="label-md">Links & platforms</h3>
 						<span className="ml-auto">
 							<MetadataSource source={nestedGroup.source} />

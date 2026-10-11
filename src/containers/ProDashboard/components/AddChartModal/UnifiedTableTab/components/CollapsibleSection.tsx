@@ -21,9 +21,9 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 			>
 				<div className="flex items-center gap-2">
 					{isExpanded ? (
-						<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
+						<Icon name="chevron-down" className="size-4 text-tertiary" />
 					) : (
-						<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+						<Icon name="chevron-right" className="size-4 text-tertiary" />
 					)}
 					<h3 className="title-md text-primary">{title}</h3>
 					{badge !== undefined ? (

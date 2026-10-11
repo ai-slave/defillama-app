@@ -58,7 +58,7 @@ export function VisibilityField({
 						disabled,
 						label: (
 							<>
-								<Icon name="globe" height={14} width={14} />
+								<Icon name="globe" className="size-3.5" />
 								Public
 							</>
 						)
@@ -68,7 +68,7 @@ export function VisibilityField({
 						disabled: disabled || !hasActiveSubscription,
 						label: (
 							<>
-								<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} height={14} width={14} />
+								<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} className="size-3.5" />
 								{hasActiveSubscription ? 'Private' : 'Private (Pro)'}
 							</>
 						)
@@ -166,7 +166,7 @@ export function TagsField({
 									/>
 								}
 							>
-								<Icon name="x" height={16} width={16} />
+								<Icon name="x" className="size-4" />
 							</Tooltip>
 						</li>
 					))}

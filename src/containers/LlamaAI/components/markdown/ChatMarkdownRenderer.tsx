@@ -365,7 +365,7 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 					/>
 				}
 			>
-				<Icon name={copied ? 'check' : 'copy'} height={16} width={16} />
+				<Icon name={copied ? 'check' : 'copy'} className="size-4" />
 			</Tooltip>
 			<pre {...props} className={`${language ? 'pt-8!' : ''} ${className ?? ''}`}>
 				{children}
@@ -412,7 +412,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 					<line x1="8" x2="16" y1="12" y2="12" />
 				</svg>
 				<span>Sources</span>
-				<Icon name="chevron-down" height={14} width={14} />
+				<Icon name="chevron-down" className="size-3.5" />
 			</summary>
 			<div className="flex flex-col gap-2.5 pt-2.5">
 				{sourceEntries.map(({ normalizedUrl, citationNumber }) => (

@@ -27,7 +27,7 @@ export function CapabilityChips({ onPromptSelect, isPending, isStreaming }: Capa
 				disabled={disabled}
 				render={<Button type="button" size="md" variant={open ? 'outline' : 'secondary'} />}
 			>
-				<Icon name={open ? 'x' : 'layout-grid'} height={14} width={14} />
+				<Icon name={open ? 'x' : 'layout-grid'} className="size-3.5" />
 				Explore
 			</Ariakit.PopoverDisclosure>
 			<CapabilityBrowser onPromptSelect={onPromptSelect} />

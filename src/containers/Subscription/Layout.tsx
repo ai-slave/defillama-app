@@ -42,7 +42,7 @@ export function SubscribeLayout({
 								href="/"
 								className="flex items-center gap-2 text-secondary transition-colors hover:text-primary"
 							>
-								<Icon name="chevron-left" height={20} width={20} />
+								<Icon name="chevron-left" className="size-5" />
 								<span className="hidden sm:inline-block">Back</span>
 							</BasicLink>
 						</div>

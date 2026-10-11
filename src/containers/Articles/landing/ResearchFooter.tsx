@@ -169,9 +169,7 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 					<span className={headingClassName}>{title}</span>
 					<Icon
 						name="chevron-down"
-						height={18}
-						width={18}
-						className={`shrink-0 text-tertiary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+						className={`size-4.5 shrink-0 text-tertiary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
 					/>
 				</button>
 			</h2>
@@ -274,12 +272,7 @@ function FooterMediaKit() {
 				className={`${headingClassName} group mt-1 inline-flex w-fit items-center gap-1.5 transition-colors hover:text-secondary`}
 			>
 				DefiLlama newsletters
-				<Icon
-					name="arrow-right"
-					height={14}
-					width={14}
-					className="transition-transform duration-200 group-hover:translate-x-0.5"
-				/>
+				<Icon name="arrow-right" className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
 			</Link>
 		</div>
 	)

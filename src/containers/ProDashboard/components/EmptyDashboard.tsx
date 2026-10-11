@@ -49,7 +49,7 @@ export function EmptyDashboard({ onAddChart, onGenerateWithAI, isReadOnly = fals
 					isReadOnly ? (
 						editHref ? (
 							<ProButton as={BasicLink} href={editHref} size="md" variant="primary">
-								<Icon name="pencil" height={14} width={14} />
+								<Icon name="pencil" className="size-3.5" />
 								Edit dashboard
 							</ProButton>
 						) : (
@@ -60,12 +60,12 @@ export function EmptyDashboard({ onAddChart, onGenerateWithAI, isReadOnly = fals
 					) : (
 						<>
 							<ProButton type="button" size="md" variant="primary" onClick={onAddChart}>
-								<Icon name="plus" height={14} width={14} />
+								<Icon name="plus" className="size-3.5" />
 								Add your first card
 							</ProButton>
 							{showAIGeneration ? (
 								<ProButton type="button" size="md" variant="ai" onClick={onGenerateWithAI}>
-									<Icon name="sparkles" height={14} width={14} />
+									<Icon name="sparkles" className="size-3.5" />
 									Generate with LlamaAI
 								</ProButton>
 							) : null}
@@ -89,7 +89,7 @@ export function EmptyDashboard({ onAddChart, onGenerateWithAI, isReadOnly = fals
 							className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface-elevated-1 p-3 text-left"
 						>
 							<span className="flex items-center gap-2 label-md text-primary">
-								<Icon name={hint.icon} height={16} width={16} className="text-secondary" />
+								<Icon name={hint.icon} className="size-4 text-secondary" />
 								{hint.title}
 							</span>
 							<span className="body-sm text-tertiary">{hint.description}</span>

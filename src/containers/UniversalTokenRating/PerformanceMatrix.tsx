@@ -122,13 +122,13 @@ function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
 		return (
 			<span className="flex flex-1 items-center opacity-60">
 				<span className="h-px flex-1 bg-current" />
-				<Icon name="arrow-right" height={10} width={10} className="-ml-1 shrink-0" />
+				<Icon name="arrow-right" className="-ml-1 size-3 shrink-0" />
 			</span>
 		)
 	}
 	return (
 		<span className="flex flex-1 flex-col items-center opacity-60">
-			<Icon name="arrow-right" height={10} width={10} className="-mb-1 shrink-0 -rotate-90" />
+			<Icon name="arrow-right" className="-mb-1 size-3 shrink-0 -rotate-90" />
 			<span className="w-px flex-1 bg-current" />
 		</span>
 	)

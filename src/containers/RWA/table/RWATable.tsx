@@ -117,7 +117,7 @@ function RWATableView({
 					<TableToolbarControlGroup>
 						<label className={searchFieldInlineWrapperStyles}>
 							<span className="sr-only">{section === 'perps' ? 'Search markets' : 'Search assets'}</span>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Icon name="search" className={searchFieldIconStyles} />
 							<Input
 								onInput={(event) => setSearchValue(event.currentTarget.value)}
 								placeholder={section === 'perps' ? 'Search markets…' : 'Search assets…'}

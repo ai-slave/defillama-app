@@ -49,7 +49,7 @@ export function SubscriptionCard({
 		return (
 			<div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 				<div className="flex items-center gap-2">
-					<Icon name="receipt" height={28} width={28} className="text-primary" />
+					<Icon name="receipt" className="size-7 text-primary" />
 					<span className="label-lg text-primary">Subscription</span>
 				</div>
 
@@ -67,7 +67,7 @@ export function SubscriptionCard({
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-subtle bg-surface p-4">
 			<div className="flex items-center gap-2">
-				<Icon name="receipt" height={28} width={28} className="text-primary" />
+				<Icon name="receipt" className="size-7 text-primary" />
 				<span className="label-lg text-primary">Subscription</span>
 			</div>
 
@@ -104,7 +104,7 @@ export function SubscriptionCard({
 							pending={isTopupLoading}
 						>
 							Top up
-							<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+							<Icon name="circle-external-link" className="size-4 shrink-0" />
 						</Button>
 					)}
 					<Button
@@ -114,7 +114,7 @@ export function SubscriptionCard({
 						pending={isManageLoading}
 					>
 						{manageLabel}
-						<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+						<Icon name="circle-external-link" className="size-4 shrink-0" />
 					</Button>
 					<Button size="md" onClick={onCancel}>
 						Cancel subscription

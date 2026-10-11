@@ -37,7 +37,7 @@ export function DeepLinkPromptModal({ isOpen, prompt, onClose, onConfirm, prompt
 					Cancel
 				</Ariakit.DialogDismiss>
 				<Button type="button" size="md" variant="primary" onClick={onConfirm}>
-					<Icon name="sparkles" height={14} width={14} />
+					<Icon name="sparkles" className="size-3.5" />
 					Ask LlamaAI
 				</Button>
 			</DialogFooter>

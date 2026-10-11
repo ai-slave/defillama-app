@@ -23,7 +23,7 @@ export function EthenaPayInviteDialog() {
 					</output>
 					<CopyHelper
 						toCopy={ETHENA_PAY_INVITE_CODE}
-						size={20}
+						size="size-5"
 						aria-label="Copy Ethena Pay invite code"
 						data-umami-event="crypto-cards-invite-code-copy"
 						data-umami-event-card={ETHENA_PAY_CARD_ID}

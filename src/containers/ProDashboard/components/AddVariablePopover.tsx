@@ -29,7 +29,7 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 		value: 'chain',
 		label: (
 			<>
-				<Icon name="chain" height={14} width={14} />
+				<Icon name="chain" className="size-3.5" />
 				{VARIABLE_KIND_LABELS.chain}
 			</>
 		)
@@ -38,7 +38,7 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 		value: 'protocol',
 		label: (
 			<>
-				<Icon name="protocol" height={14} width={14} />
+				<Icon name="protocol" className="size-3.5" />
 				{VARIABLE_KIND_LABELS.protocol}
 			</>
 		)
@@ -95,7 +95,7 @@ export function AddVariablePopover() {
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure render={<Button size="md" type="button" variant="ghost" />}>
-				<Icon name="plus" height={14} width={14} />
+				<Icon name="plus" className="size-3.5" />
 				<span>Parameter</span>
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" gutter={8} heading="Add a dashboard parameter">

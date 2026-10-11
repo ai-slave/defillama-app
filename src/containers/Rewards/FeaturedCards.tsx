@@ -47,7 +47,7 @@ export function FeaturedCards({ programs }: { programs: Array<RewardProgram> }) 
 							className="mt-auto flex items-center justify-between gap-2 rounded-b-lg border-t border-subtle px-4 py-3 label-sm text-link no-underline hover:bg-hover-row hover:no-underline focus-visible:bg-hover-row focus-visible:focus-ring"
 						>
 							Open with DefiLlama link
-							<Icon name="arrow-right" height={16} width={16} aria-hidden="true" />
+							<Icon name="arrow-right" className="size-4" aria-hidden="true" />
 						</a>
 					) : null}
 				</Card>

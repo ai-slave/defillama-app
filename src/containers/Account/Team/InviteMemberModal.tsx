@@ -48,7 +48,7 @@ export function InviteMemberModal({ onClose }: { onClose: () => void }) {
 					<Field label="Email address" error={submitted ? emailMessage : null}>
 						{(control) => (
 							<div className="relative">
-								<Icon name="mail" height={16} width={16} className={searchFieldIconStyles} />
+								<Icon name="mail" className={searchFieldIconStyles} />
 								{/* Ariakit's autoFocus, so the dialog starts on the field instead of its first button, the ×. */}
 								<Ariakit.Focusable
 									autoFocus

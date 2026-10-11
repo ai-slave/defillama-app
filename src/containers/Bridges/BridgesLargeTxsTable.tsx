@@ -137,7 +137,7 @@ export function BridgesLargeTxsTable({
 								className="flex items-center justify-end"
 							>
 								<span>{symbol}</span>
-								<Icon name="external-link" height={10} width={10} />
+								<Icon name="external-link" className="size-3.5" />
 							</a>
 						)
 					},
@@ -180,7 +180,7 @@ export function BridgesLargeTxsTable({
 								className="flex items-center justify-end gap-2"
 							>
 								<span>View Transaction</span>
-								<Icon name="external-link" height={10} width={10} />
+								<Icon name="external-link" className="size-3.5" />
 							</a>
 						)
 					},

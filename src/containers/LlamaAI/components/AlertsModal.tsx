@@ -570,27 +570,27 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								render={<Button type="button" size="md" variant="ghost" square className="sm:hidden" />}
 								data-active={showExecutions || editing}
 							>
-								<Icon name="ellipsis" height={16} width={16} />
+								<Icon name="ellipsis" className="size-4" />
 							</Ariakit.MenuButton>
 							<MenuSurface variant="actions" gutter={6}>
 								{isFiredOneTimePriceAlert(alert) ? (
 									<MenuItem onClick={rearmIntoEditor}>
-										<Icon name="repeat" height={14} width={14} />
+										<Icon name="repeat" className="size-3.5" />
 										Re-arm alert
 									</MenuItem>
 								) : null}
 								{alert.run_count > 0 ? (
 									<MenuItem onClick={handleToggleExecutions}>
-										<Icon name="clock" height={14} width={14} />
+										<Icon name="clock" className="size-3.5" />
 										{showExecutions ? 'Hide history' : 'View history'}
 									</MenuItem>
 								) : null}
 								<MenuItem onClick={() => switchMode(editing ? 'view' : 'editing')}>
-									<Icon name="pencil" height={14} width={14} />
+									<Icon name="pencil" className="size-3.5" />
 									{editing ? 'Cancel editing' : 'Edit alert'}
 								</MenuItem>
 								<MenuItem destructive onClick={() => switchMode('deleting')}>
-									<Icon name="trash-2" height={14} width={14} />
+									<Icon name="trash-2" className="size-3.5" />
 									Delete alert
 								</MenuItem>
 							</MenuSurface>

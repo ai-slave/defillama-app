@@ -39,7 +39,7 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 							/>
 						}
 					>
-						<Icon name="chevron-left" height={16} width={16} />
+						<Icon name="chevron-left" className="size-4" />
 					</Tooltip>
 				</>
 			) : null}
@@ -72,7 +72,7 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 							/>
 						}
 					>
-						<Icon name="chevron-right" height={16} width={16} />
+						<Icon name="chevron-right" className="size-4" />
 					</Tooltip>
 				</>
 			) : null}
@@ -130,7 +130,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 							className="w-[160px] shrink-0 snap-start md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
-							<Icon name="chevron-right" height={14} width={14} />
+							<Icon name="chevron-right" className="size-3.5" />
 						</DashedTile>
 					) : null}
 				</ShelfRail>
@@ -188,7 +188,7 @@ export function FollowingShelves() {
 							/>
 						}
 					>
-						<Icon name="chevron-left" height={16} width={16} />
+						<Icon name="chevron-left" className="size-4" />
 					</Tooltip>
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -229,7 +229,7 @@ export function FollowingShelves() {
 							/>
 						}
 					>
-						<Icon name="chevron-right" height={16} width={16} />
+						<Icon name="chevron-right" className="size-4" />
 					</Tooltip>
 				</div>
 			) : null}

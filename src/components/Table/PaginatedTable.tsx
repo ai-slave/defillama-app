@@ -371,7 +371,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 											/>
 										}
 									>
-										<Icon name="chevrons-left" height={16} width={16} />
+										<Icon name="chevrons-left" className="size-4" />
 									</Tooltip>
 									<Tooltip
 										content="Go to previous page"
@@ -388,7 +388,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 											/>
 										}
 									>
-										<Icon name="chevron-left" height={16} width={16} />
+										<Icon name="chevron-left" className="size-4" />
 									</Tooltip>
 									<span className="body-sm text-secondary">{pageLabel}</span>
 									<Tooltip
@@ -406,7 +406,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 											/>
 										}
 									>
-										<Icon name="chevron-right" height={16} width={16} />
+										<Icon name="chevron-right" className="size-4" />
 									</Tooltip>
 									<Tooltip
 										content="Go to last page"
@@ -423,7 +423,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 											/>
 										}
 									>
-										<Icon name="chevrons-right" height={16} width={16} />
+										<Icon name="chevrons-right" className="size-4" />
 									</Tooltip>
 								</>
 							) : null}

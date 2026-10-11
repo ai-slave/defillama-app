@@ -12,7 +12,7 @@ export function DataFreshness({
 }) {
 	return (
 		<p className={`flex items-center gap-1.5 body-md text-warning ${className ?? ''}`.trim()}>
-			<Icon name="alert-triangle" height={14} width={14} className="shrink-0" />
+			<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 			<RelativeTime value={timestamp} input="seconds" prefix={label} />
 		</p>
 	)

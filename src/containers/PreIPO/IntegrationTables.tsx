@@ -24,7 +24,7 @@ function IntegrationLink({ href, label }: { href: string; label: string }) {
 			className="inline-flex max-w-full items-center gap-1 text-link hover:underline"
 		>
 			<span className="truncate">{label}</span>
-			<Icon name="arrow-up-right" height={14} width={14} className="shrink-0" aria-hidden="true" />
+			<Icon name="arrow-up-right" className="size-3.5 shrink-0" aria-hidden="true" />
 		</BasicLink>
 	)
 }

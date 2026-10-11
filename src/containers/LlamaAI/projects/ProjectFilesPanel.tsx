@@ -111,20 +111,20 @@ export function ProjectFilesPanel({
 						disabled={isUploading}
 						render={<Button size="sm" variant="outline" />}
 					>
-						<Icon name="plus" height={14} width={14} />
+						<Icon name="plus" className="size-3.5" />
 						Add sources
 					</Ariakit.MenuButton>
 					<MenuSurface variant="actions" gutter={6} className="w-60">
 						<MenuItem onClick={onPick}>
-							<Icon name="file-plus" height={14} width={14} />
+							<Icon name="file-plus" className="size-3.5" />
 							Upload from device
 						</MenuItem>
 						<MenuItem onClick={() => addTextStore.show()}>
-							<Icon name="file-text" height={14} width={14} />
+							<Icon name="file-text" className="size-3.5" />
 							Add text content
 						</MenuItem>
 						<MenuItem onClick={() => githubStore.show()}>
-							<Icon name="github" height={14} width={14} />
+							<Icon name="github" className="size-3.5" />
 							Connect GitHub repo
 						</MenuItem>
 					</MenuSurface>
@@ -160,7 +160,7 @@ export function ProjectFilesPanel({
 								key={source.id}
 								className="group flex items-center gap-2 rounded-md border border-subtle bg-surface px-2.5 py-1.5 body-sm text-primary"
 							>
-								<Icon name="github" height={14} width={14} className="shrink-0 text-secondary" />
+								<Icon name="github" className="size-3.5 shrink-0 text-secondary" />
 								<span className="min-w-0 flex-1 truncate mono-sm">
 									{owner}/{repo}
 								</span>
@@ -231,7 +231,7 @@ export function ProjectFilesPanel({
 									key={file.id}
 									className="group flex items-center gap-2 border-b border-subtle px-2.5 py-1.5 body-sm text-primary last:border-b-0 not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
-									<Icon name="file-text" height={14} width={14} className="shrink-0 text-secondary" />
+									<Icon name="file-text" className="size-3.5 shrink-0 text-secondary" />
 									<span title={file.path} className="min-w-0 flex-1 truncate mono-sm">
 										{file.path}
 									</span>

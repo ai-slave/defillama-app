@@ -418,7 +418,7 @@ export function PeggedAssetInfo({
 							name
 						)}
 						{!showStablecoinMenu && symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
-						{lifecycleStatus ? <DeprecatedProtocolMarker size={18} content={lifecycleStatus} /> : null}
+						{lifecycleStatus ? <DeprecatedProtocolMarker size="size-4.5" content={lifecycleStatus} /> : null}
 					</EntityTitleRow>
 
 					<p className="flex flex-col">

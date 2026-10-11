@@ -114,7 +114,7 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 				<EntityIcon src={entity.logo} name={entity.name} />
 			) : (
 				<span className="inline-flex size-5 shrink-0 items-center justify-center text-tertiary">
-					<Icon name={KIND_ICONS[suggestion.kind]} height={14} width={14} />
+					<Icon name={KIND_ICONS[suggestion.kind]} className="size-3.5" />
 				</span>
 			)}
 			<span className="flex min-w-0 flex-1 flex-col">

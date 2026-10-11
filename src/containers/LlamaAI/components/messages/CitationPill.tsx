@@ -178,7 +178,7 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 					{entity ? <span className="label-xs tracking-wide text-tertiary uppercase">{entity}</span> : <span />}
 					{rowDate ? (
 						<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-1 px-2 py-0.5 label-sm text-link">
-							<Icon name="calendar" height={12} width={12} />
+							<Icon name="calendar" className="size-3" />
 							{rowDate}
 						</span>
 					) : null}
@@ -457,7 +457,7 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 				className={`${CITATION_MARKER_BOX} ${accent.marker} cursor-pointer not-disabled:not-aria-disabled:hover:brightness-110`}
 				aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
 			>
-				{showMarkerIcon ? <Icon name={iconName} height={12} width={12} className="shrink-0" /> : null}
+				{showMarkerIcon ? <Icon name={iconName} className="size-3 shrink-0" /> : null}
 				<span className={showMarkerIcon ? 'truncate' : ''}>{markerText}</span>
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
@@ -469,7 +469,7 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 			>
 				<div className="flex items-center gap-2 border-b border-subtle pb-2">
 					<span className={`flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
-						<Icon name={iconName} height={14} width={14} />
+						<Icon name={iconName} className="size-3.5" />
 					</span>
 					<span className={`label-xs tracking-wide uppercase ${accent.text}`}>{badge}</span>
 					{asOfText ? <span className="ml-auto body-sm text-tertiary">as of {asOfText}</span> : null}

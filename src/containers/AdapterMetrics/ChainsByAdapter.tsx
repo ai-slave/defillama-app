@@ -101,7 +101,7 @@ export function ChainsByAdapter(props: IProps) {
 				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search…"
@@ -146,7 +146,7 @@ const NameColumn = (route: string) =>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 					{row.original.warning ? (
 						<Tooltip content={row.original.warning}>
-							<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
+							<Icon name="alert-triangle" className="size-3.5 shrink-0 text-warning" />
 						</Tooltip>
 					) : null}
 				</span>

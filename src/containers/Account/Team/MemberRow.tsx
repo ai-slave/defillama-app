@@ -56,7 +56,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 									onClick={() => setOpenDialog('assign')}
 									aria-label={`Assign subscription to ${member.email}`}
 								>
-									<Icon name="plus" height={14} width={14} />
+									<Icon name="plus" className="size-3.5" />
 									Assign
 								</Button>
 							)
@@ -68,7 +68,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 								onClick={() => setOpenDialog('unassign')}
 								aria-label={`Unassign subscription from ${member.email}`}
 							>
-								<Icon name="x" height={14} width={14} />
+								<Icon name="x" className="size-3.5" />
 								Unassign
 							</Button>
 						)}
@@ -88,7 +88,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 									/>
 								}
 							>
-								<Icon name="trash-2" height={16} width={16} />
+								<Icon name="trash-2" className="size-4" />
 							</Tooltip>
 						)}
 					</div>

@@ -51,7 +51,7 @@ export function ContextWarningBanner({ warning, onStartNewChat, onDismiss }: Con
 							/>
 						}
 					>
-						<Icon name="x" height={14} width={14} />
+						<Icon name="x" className="size-3.5" />
 					</Tooltip>
 				</>
 			}

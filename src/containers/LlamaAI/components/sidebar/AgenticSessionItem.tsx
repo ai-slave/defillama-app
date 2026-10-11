@@ -271,7 +271,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							/>
 						}
 					>
-						<Icon name="x" height={16} width={16} className="shrink-0" />
+						<Icon name="x" className="size-4 shrink-0" />
 					</Tooltip>
 				</div>
 				{renameError ? (
@@ -309,14 +309,14 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				accessibleWhenDisabled
 				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:text-disabled"
 			>
-				{session.isPinned ? <Icon name="pin" height={14} width={14} className="shrink-0 text-tertiary" /> : null}
+				{session.isPinned ? <Icon name="pin" className="size-3.5 shrink-0 text-tertiary" /> : null}
 				{terminalSymbol ? (
 					<Tooltip
 						content={`Terminal chart · ${terminalSymbol}`}
 						render={<span aria-label={`Terminal chart, ${terminalSymbol}`} />}
 						className="flex shrink-0 items-center"
 					>
-						<Icon name="bar-chart" height={14} width={14} className="shrink-0 text-tertiary" />
+						<Icon name="bar-chart" className="size-3.5 shrink-0 text-tertiary" />
 					</Tooltip>
 				) : null}
 				{session.hasUnseenCompletion ? (
@@ -349,7 +349,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						/>
 					}
 				>
-					<Icon name="pencil" height={16} width={16} className="shrink-0" />
+					<Icon name="pencil" className="size-4 shrink-0" />
 				</Tooltip>
 				<Ariakit.MenuProvider store={menu}>
 					<Ariakit.MenuButton
@@ -357,7 +357,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						aria-label={`Actions for ${session.title}`}
 						render={<Button type="button" size="sm" variant="ghost" square />}
 					>
-						<Icon name="ellipsis" height={16} width={16} className="shrink-0" />
+						<Icon name="ellipsis" className="size-4 shrink-0" />
 						<span className="sr-only">Open menu</span>
 					</Ariakit.MenuButton>
 					<MenuSurface
@@ -374,7 +374,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								}}
 								className="border-b border-subtle last-of-type:border-b-0"
 							>
-								<Icon name="pin" height={14} width={14} className="shrink-0" />
+								<Icon name="pin" className="size-3.5 shrink-0" />
 								{session.isPinned ? 'Unpin' : 'Pin to top'}
 							</MenuItem>
 							{/* A link only opens for others once the conversation is public, so a private one publishes first. */}
@@ -406,9 +406,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								{visibility.isPending || copyLink.isPending ? (
 									<LoadingSpinner size={14} />
 								) : copyLink.isSuccess ? (
-									<Icon name="check-circle" height={14} width={14} className="shrink-0" />
+									<Icon name="check-circle" className="size-3.5 shrink-0" />
 								) : (
-									<Icon name="copy" height={14} width={14} className="shrink-0" />
+									<Icon name="copy" className="size-3.5 shrink-0" />
 								)}
 								{visibility.isPending
 									? 'Making public…'
@@ -428,7 +428,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 									disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
 									className="border-b border-subtle last-of-type:border-b-0"
 								>
-									<Icon name="eye" height={14} width={14} className="shrink-0" />
+									<Icon name="eye" className="size-3.5 shrink-0" />
 									Make private
 								</MenuItem>
 							) : null}
@@ -443,7 +443,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								{deletion.isPending ? (
 									<LoadingSpinner size={14} />
 								) : (
-									<Icon name="trash-2" height={14} width={14} className="shrink-0" />
+									<Icon name="trash-2" className="size-3.5 shrink-0" />
 								)}
 								Delete session
 							</MenuItem>

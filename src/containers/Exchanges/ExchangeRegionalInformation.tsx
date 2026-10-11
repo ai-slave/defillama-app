@@ -166,7 +166,7 @@ export function ExchangeRegionalInformation({
 			<Card as="section" padding="none" className="overflow-hidden">
 				<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
 					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-error-tint text-error">
-						<Icon name="circle-x" height={17} width={17} />
+						<Icon name="circle-x" className="size-4" />
 					</span>
 					<h2 className="label-lg">Not available in {country}</h2>
 				</div>
@@ -209,7 +209,7 @@ export function ExchangeRegionalInformation({
 							<Card key={placeholder.key} as="section" padding="none" className="overflow-hidden">
 								<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
 									<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
-										<Icon name={presentation.icon} height={17} width={17} />
+										<Icon name={presentation.icon} className="size-4" />
 									</span>
 									<h2 className="label-lg">{presentation.title}</h2>
 								</div>

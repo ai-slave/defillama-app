@@ -54,7 +54,7 @@ export function NotificationPermissionBanner() {
 					/>
 				}
 			>
-				<Icon name="x" height={16} width={16} />
+				<Icon name="x" className="size-4" />
 			</Tooltip>
 		</div>
 	)

@@ -397,7 +397,7 @@ export function OnboardingWalkthrough({
 										key={label}
 										className="flex items-center gap-1 rounded-md border border-ai-gold-muted bg-ai-gold-tint px-2 py-0.5 body-xs text-ai-gold-deep"
 									>
-										<Icon name={icon} height={12} width={12} className="opacity-70" />
+										<Icon name={icon} className="size-3 opacity-70" />
 										{label}
 									</span>
 								))}
@@ -486,7 +486,7 @@ export function OnboardingWalkthrough({
 												className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${TONE_TEXT[config.tone]}`}
 												style={{ backgroundColor: `color-mix(in srgb, ${TONE_VAR[config.tone]} 10%, transparent)` }}
 											>
-												<Icon name={config.icon} height={14} width={14} />
+												<Icon name={config.icon} className="size-3.5" />
 											</div>
 											<div className="flex flex-col gap-1">
 												<Ariakit.PopoverHeading className="label-md text-primary">
@@ -543,7 +543,7 @@ export function OnboardingWalkthrough({
 							<div className="p-6">
 								<div className="mb-4 flex flex-col items-center gap-1 text-center">
 									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-success-tint">
-										<Icon name="check" height={14} width={14} className="text-success" />
+										<Icon name="check" className="size-3.5 text-success" />
 									</div>
 									<Ariakit.DialogHeading className="title-md text-primary">Research mode is on</Ariakit.DialogHeading>
 									<span className="body-sm text-secondary">Unsure what to ask? Try one of these:</span>

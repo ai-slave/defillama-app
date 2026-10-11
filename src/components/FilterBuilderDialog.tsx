@@ -61,7 +61,7 @@ export function FilterBuilderDialog({
 					<>
 						<CountBadge count={appliedCount} />
 						<span>{label}</span>
-						<Icon name="settings" height={14} width={14} className="text-tertiary" />
+						<Icon name="settings" className="size-3.5 text-tertiary" />
 					</>
 				) : (
 					<span>{label}</span>

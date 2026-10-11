@@ -151,7 +151,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search events…</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Icon name="search" className={searchFieldIconStyles} />
 						<Input
 							name="search"
 							onInput={(e) => setProjectName(e.currentTarget.value)}

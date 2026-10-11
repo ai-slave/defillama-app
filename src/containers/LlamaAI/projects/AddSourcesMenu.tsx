@@ -43,7 +43,7 @@ export function AddSourcesMenu({
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>
 							<MenuItem onClick={onAddPhotosFiles} className="w-full gap-2 text-left">
-								<Icon name="image-plus" height={14} width={14} className="text-secondary" />
+								<Icon name="image-plus" className="size-3.5 text-secondary" />
 								Add photos &amp; files
 							</MenuItem>
 							<Ariakit.MenuSeparator className="my-1 border-t border-subtle" />
@@ -51,19 +51,19 @@ export function AddSourcesMenu({
 						</>
 					) : null}
 					<MenuItem onClick={() => fileInputRef.current?.click()} className="w-full gap-2 text-left">
-						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
+						<Icon name="file-plus" className="size-3.5 text-secondary" />
 						Upload files
 					</MenuItem>
 					<MenuItem onClick={() => folderInputRef.current?.click()} className="w-full gap-2 text-left">
-						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
+						<Icon name="file-plus" className="size-3.5 text-secondary" />
 						Upload folder
 					</MenuItem>
 					<MenuItem onClick={() => addTextStore.show()} className="w-full gap-2 text-left">
-						<Icon name="file-text" height={14} width={14} className="text-secondary" />
+						<Icon name="file-text" className="size-3.5 text-secondary" />
 						Add text content
 					</MenuItem>
 					<MenuItem onClick={() => githubStore.show()} className="w-full gap-2 text-left">
-						<Icon name="github" height={14} width={14} className="text-secondary" />
+						<Icon name="github" className="size-3.5 text-secondary" />
 						Connect GitHub repo
 					</MenuItem>
 				</MenuSurface>

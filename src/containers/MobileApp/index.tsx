@@ -256,7 +256,7 @@ function HeroPhone() {
 					className={`absolute hidden items-center gap-2.5 rounded-2xl border border-medium bg-surface-glass py-2.5 pr-4 pl-3 shadow-overlay backdrop-blur-md motion-safe:animate-float lg:flex ${chip.className}`}
 				>
 					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand to-sub-brand-soft text-on-brand">
-						<Icon name={chip.icon} height={15} width={15} />
+						<Icon name={chip.icon} className="size-4" />
 					</span>
 					<span className="label-md whitespace-nowrap text-primary">{chip.label}</span>
 				</div>
@@ -318,7 +318,7 @@ function Features() {
 				{FEATURES.map((feature) => (
 					<div key={feature.title} className="flex flex-col gap-3 rounded-2xl border border-subtle bg-surface p-6">
 						<span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-brand to-sub-brand-soft text-on-brand shadow-sub-blue-glow">
-							<Icon name={feature.icon} height={20} width={20} />
+							<Icon name={feature.icon} className="size-5" />
 						</span>
 						<h3 className="heading-xs text-primary">{feature.title}</h3>
 						<p className="body-md text-secondary">{feature.description}</p>

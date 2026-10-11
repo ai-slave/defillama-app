@@ -890,12 +890,7 @@ function IncomeStatementByLabel({
 									setIsExpanded((expanded) => !expanded)
 								}}
 							>
-								<Icon
-									name={isExpanded ? 'chevron-down' : 'chevron-right'}
-									height={16}
-									width={16}
-									className="text-tertiary"
-								/>
+								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} className="size-4 text-tertiary" />
 							</Button>
 						) : alignWithBreakdownRows ? (
 							<span aria-hidden="true" className="-ml-1 block size-6 shrink-0" />
@@ -906,7 +901,7 @@ function IncomeStatementByLabel({
 								className="flex items-center justify-start gap-1 underline decoration-current decoration-dotted"
 							>
 								{label}
-								<Icon name="help-circle" height={14} width={14} className="shrink-0" />
+								<Icon name="help-circle" className="size-3.5 shrink-0" />
 							</Tooltip>
 						) : (
 							<>{label}</>

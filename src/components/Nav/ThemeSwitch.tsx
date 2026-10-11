@@ -15,7 +15,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 	const [isDarkMode, toggleDarkMode] = useDarkModeManager()
 
 	if (variant === 'pill') {
-		const iconSize = size === 'sm' ? 16 : 24
+		const iconSize = size === 'sm' ? 'size-4' : 'size-6'
 
 		return (
 			<button
@@ -36,7 +36,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 						'bg-surface-elevated-2 text-primary dark:bg-transparent dark:text-secondary'
 					)}
 				>
-					<Icon name="sun" height={iconSize} width={iconSize} />
+					<Icon name="sun" className={iconSize} />
 				</span>
 				<span
 					className={joinClasses(
@@ -44,7 +44,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 						'text-secondary dark:bg-surface-elevated-2 dark:text-primary'
 					)}
 				>
-					<Icon name="moon" height={iconSize} width={iconSize} />
+					<Icon name="moon" className={iconSize} />
 				</span>
 			</button>
 		)
@@ -59,9 +59,9 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 			aria-pressed={isDarkMode}
 			className={joinClasses('mt-2 hidden w-fit items-center gap-2 lg:flex', className)}
 		>
-			<Icon name="sun" height={20} width={20} className="text-primary dark:text-tertiary dark:hover:text-primary" />
+			<Icon name="sun" className="size-5 text-primary dark:text-tertiary dark:hover:text-primary" />
 			<span>{' / '}</span>
-			<Icon name="moon" height={20} width={20} className="text-tertiary hover:text-primary dark:text-primary" />
+			<Icon name="moon" className="size-5 text-tertiary hover:text-primary dark:text-primary" />
 		</button>
 	)
 }
