@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { DividedGrid } from '~/ui/DividedGrid'
 import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -165,8 +166,10 @@ export function earnedTitle(window: KpkExcessWindow | null | undefined): string 
  */
 export function LedgerStrip({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="grid grid-cols-1 overflow-hidden rounded-lg border border-subtle bg-surface sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
-			{children}
+		<div className="rounded-lg border border-subtle bg-surface">
+			<DividedGrid columns="grid-cols-1 sm:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
+				{children}
+			</DividedGrid>
 		</div>
 	)
 }
@@ -223,7 +226,7 @@ export function LedgerTile({
 }) {
 	const pairs = metrics ?? (metric ? [{ value: metric, label: metricLabel, title: metricTitle, ref: metricRef }] : [])
 	return (
-		<div className="flex min-w-0 flex-col gap-2 border-t border-subtle p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
+		<div className="flex min-w-0 flex-col gap-2 p-5 text-center">
 			<span className="label-sm tracking-wider text-secondary uppercase">{label}</span>
 			{value == null ? (
 				<Skeleton className="mx-auto h-8 w-28" />

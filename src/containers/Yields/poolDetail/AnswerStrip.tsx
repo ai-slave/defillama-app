@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
+import { DividedGrid } from '~/ui/DividedGrid'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { StatusBadge } from '~/ui/StatusBadge'
 import { Tooltip } from '~/ui/Tooltip'
@@ -90,7 +91,7 @@ function Split({ parts }: { parts: Array<ApyPart> }) {
 function Cell({ className, hug = false, children }: { className?: string; hug?: boolean; children: ReactNode }) {
 	return (
 		<div
-			className={`flex min-w-0 flex-col justify-center gap-1 border-b border-l border-subtle px-4 py-3 ${hug ? '' : '@min-[64rem]:flex-auto'} ${className ?? ''}`.trim()}
+			className={`flex min-w-0 flex-col justify-center gap-1 px-4 py-3 ${hug ? '' : '@min-[64rem]:flex-auto'} ${className ?? ''}`.trim()}
 		>
 			{children}
 		</div>
@@ -183,8 +184,8 @@ export function AnswerStrip({
 	const holderCount = holders?.count ?? null
 
 	return (
-		<Card padding="none" className="overflow-hidden">
-			<div className="-mb-px -ml-px grid grid-cols-2 @min-[48rem]:grid-cols-3 @min-[64rem]:flex @min-[64rem]:flex-wrap">
+		<Card padding="none">
+			<DividedGrid columns="grid-cols-2 @min-[48rem]:grid-cols-3 @min-[64rem]:flex @min-[64rem]:flex-wrap">
 				{/* The reported tile only returns when there is no measured reading. */}
 				{supply && snapshot ? (
 					<Cell className="col-span-full gap-2" hug>
@@ -279,7 +280,7 @@ export function AnswerStrip({
 						})}
 					/>
 				) : null}
-			</div>
+			</DividedGrid>
 		</Card>
 	)
 }

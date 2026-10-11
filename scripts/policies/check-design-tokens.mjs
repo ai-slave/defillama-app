@@ -114,6 +114,14 @@ const BORDER_STYLE_KEYWORDS = new Set([
 ])
 const BORDER_SIDE = /^[tblrxyse]$/
 const STRING_LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g
+
+// A grid or wrapping row pulled one pixel left so its cells' left lines fall outside a clipping box. Breakpoint
+// variants count too: `-ml-px md:grid` is the same trick.
+function isDividedGridTrick(classes) {
+	const tokens = new Set(classes.split(/[\s'"`]+/).map((token) => token.slice(token.lastIndexOf(':') + 1)))
+	return tokens.has('-ml-px') && (tokens.has('grid') || tokens.has('flex-wrap'))
+}
+
 const BORDER_TOKEN = /(?<![\w.-])((?:[\w[\]()&>~.*-]+:)*)((?:border|divide)(?:-[\w[\]().%/-]+)?)(?![\w-])/g
 
 const BORDER_ONLY_COLORS = new Set(['very-subtle', 'subtle', 'medium', 'strong', 'brand'])
@@ -1199,6 +1207,20 @@ const RULES = [
 					(has('text-center') || (has('justify-center') && has('text-(?:tertiary|secondary)')))
 				)
 					found.push('dashed well')
+			}
+			return found.length > 0 ? found : null
+		},
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'hand-built-divided-grid',
+		description:
+			"stat cells sharing hairlines drawn by hand: a grid or wrapping row pulled one pixel left (-ml-px) so its cells' left lines fall outside a clipping box — render the cells in DividedGrid (src/ui/DividedGrid.tsx), passing the grid classes as `columns`, and drop the cells' border and first:/nth-child rules",
+		match: (content) => {
+			const found = []
+			for (const [literal] of withoutComments(content).matchAll(STRING_LITERAL)) {
+				if (classStrings(literal).some(isDividedGridTrick)) found.push(literal.slice(0, 80))
 			}
 			return found.length > 0 ? found : null
 		},

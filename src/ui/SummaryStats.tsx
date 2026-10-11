@@ -36,6 +36,9 @@ import { Tooltip } from '~/ui/Tooltip'
 
    Inline summary strips above a table or chart use InlineStatStrip; never
    hand-roll a new strip.
+   Stat cells that share hairlines in one surface (a readout row under a
+   chart, a ledger strip) sit in DividedGrid (./DividedGrid.tsx); never
+   hand-roll the border and negative-margin rules.
 ---------------------------------------------------------------------------- */
 
 export function SummaryCardGrid({ className, children }: { className?: string; children: ReactNode }) {

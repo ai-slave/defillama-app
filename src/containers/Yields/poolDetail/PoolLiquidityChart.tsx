@@ -18,6 +18,7 @@ import {
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { ChartPanelBody, ChartPanelBodyError, ChartPanelBodyLoading, CHART_FILL } from '~/ui/ChartPanel'
+import { DividedGrid } from '~/ui/DividedGrid'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
@@ -328,7 +329,7 @@ function describeExitMechanism(
 	return { title, detail: coverage ? (plot ? `${coverage}. ${plot}` : coverage) : plot }
 }
 
-const CELL = 'border-t border-l border-subtle px-4 py-3'
+const CELL = 'px-4 py-3'
 
 /** One row of equal stats summarising the plot, label over figure. */
 function LiquidityReadout({
@@ -394,7 +395,7 @@ function LiquidityReadout({
 	)
 
 	return (
-		<div className="-mt-px -ml-px grid grid-cols-1 md:grid-cols-3">
+		<DividedGrid columns="grid-cols-1 md:grid-cols-3">
 			<ReadoutCell label="Exit Status" className={CELL}>
 				<span className="mono-xl text-primary">{mechanism.title}</span>
 				{mechanism.detail ? <span className="basis-full body-sm text-secondary">{mechanism.detail}</span> : null}
@@ -440,7 +441,7 @@ function LiquidityReadout({
 					</span>
 				</ReadoutCell>
 			) : null}
-		</div>
+		</DividedGrid>
 	)
 }
 

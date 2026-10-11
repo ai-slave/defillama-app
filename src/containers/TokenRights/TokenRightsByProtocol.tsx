@@ -6,6 +6,7 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
+import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatusBadge, type Status } from '~/ui/StatusBadge'
@@ -468,16 +469,15 @@ function TokenRightsOverviewView({
 					) : null}
 
 					<div className="overflow-x-auto">
-						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-lg border border-subtle">
-							{rightsFields.map((field) => (
-								<div
-									key={field.label}
-									className="min-w-max border-r border-b border-subtle p-2 [&:nth-child(4n)]:border-r-0 [&:nth-child(n+5)]:border-b-0"
-								>
-									<div className="mb-1 label-sm text-secondary uppercase">{field.label}</div>
-									{field.value}
-								</div>
-							))}
+						<div className="min-w-[640px] rounded-lg border border-subtle">
+							<DividedGrid columns="grid-cols-[repeat(4,minmax(max-content,1fr))]">
+								{rightsFields.map((field) => (
+									<div key={field.label} className="min-w-max p-2">
+										<div className="mb-1 label-sm text-secondary uppercase">{field.label}</div>
+										{field.value}
+									</div>
+								))}
+							</DividedGrid>
 						</div>
 					</div>
 

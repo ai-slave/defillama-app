@@ -3,6 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
+import { DividedGrid } from '~/ui/DividedGrid'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
@@ -71,12 +72,12 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 				<div className="border-b border-subtle px-3 py-2.5">
 					<HistoryHeader icon="bar-chart-2" title="Overview" />
 				</div>
-				<div className="grid grid-cols-1 sm:grid-cols-2">
+				<DividedGrid columns="grid-cols-1 sm:grid-cols-2">
 					<div className="p-3">
 						<p className="label-sm text-tertiary">Funds lost in recorded hacks</p>
 						<p className="mt-1 mono-lg">{hackedTotalLabel}</p>
 					</div>
-					<div className="border-t border-subtle p-3 sm:border-t-0 sm:border-l">
+					<div className="p-3">
 						<p className="label-sm text-tertiary">Total disclosed raises</p>
 						<p className="mt-1 mono-lg">
 							{profile.raises.length > 0 ? (
@@ -86,7 +87,7 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 							)}
 						</p>
 					</div>
-				</div>
+				</DividedGrid>
 			</Card>
 
 			{profile.hacks.length > 0 ? (
