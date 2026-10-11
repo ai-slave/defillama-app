@@ -118,7 +118,7 @@ export default function Pegs() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">msUSD · Peg depth</h2>
+			<h2 className="heading-xs">msUSD · Peg Depth</h2>
 			<ChartCard
 				title="msUSD across chains"
 				subtitle="Effective peg at 5 trade sizes (DefiLlama coins · KyberSwap on supported chains)"
@@ -126,12 +126,12 @@ export default function Pegs() {
 				<SynthTable rows={msUSD} />
 			</ChartCard>
 
-			<h2 className="heading-xs">msETH · Peg depth</h2>
+			<h2 className="heading-xs">msETH · Peg Depth</h2>
 			<ChartCard title="msETH across chains" subtitle="Effective peg at 5 trade sizes">
 				<SynthTable rows={msETH} />
 			</ChartCard>
 
-			<h2 className="heading-xs">Supply caps · Onchain + bridges</h2>
+			<h2 className="heading-xs">Supply Caps · Onchain + bridges</h2>
 			{(() => {
 				const capCols: Array<Col<PegSupplyCap>> = [
 					{ key: 'chain', label: 'Chain' },
@@ -158,7 +158,7 @@ export default function Pegs() {
 				]
 				return (
 					<>
-						<ChartCard title="Mint caps" subtitle="totalSupply / maxTotalSupply">
+						<ChartCard title="Mint Caps" subtitle="totalSupply / maxTotalSupply">
 							<SimpleTable<PegSupplyCap>
 								getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
 								rows={data?.supplyCaps}
@@ -166,7 +166,7 @@ export default function Pegs() {
 							/>
 						</ChartCard>
 						{data?.bridgeInCaps?.length ? (
-							<ChartCard title="Bridge-in caps" subtitle="Per-chain bridged-in supply vs cap">
+							<ChartCard title="Bridge-In Caps" subtitle="Per-chain bridged-in supply vs cap">
 								<SimpleTable<PegSupplyCap>
 									getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
 									rows={data.bridgeInCaps}
@@ -175,7 +175,7 @@ export default function Pegs() {
 							</ChartCard>
 						) : null}
 						{data?.bridgeOutCaps?.length ? (
-							<ChartCard title="Bridge-out caps" subtitle="Per-chain bridged-out supply vs cap">
+							<ChartCard title="Bridge-Out Caps" subtitle="Per-chain bridged-out supply vs cap">
 								<SimpleTable<PegSupplyCap>
 									getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
 									rows={data.bridgeOutCaps}

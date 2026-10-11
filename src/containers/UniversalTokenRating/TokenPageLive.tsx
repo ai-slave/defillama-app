@@ -412,7 +412,7 @@ export function TokenPageLive({
 
 	const tokenomicsCards = [
 		{
-			title: 'Market cap vs FDV (ratio)',
+			title: 'Market Cap vs FDV (ratio)',
 			value:
 				metrics?.marketCapUsd != null && metrics.fdvUsd != null && metrics.fdvUsd !== 0
 					? `${formatNumber(metrics.marketCapUsd / metrics.fdvUsd, {
@@ -425,19 +425,19 @@ export function TokenPageLive({
 			criterion: findTokenomicsCriterion('mcap_vs_fdv')
 		},
 		{
-			title: 'Fully diluted valuation (FDV) (USD)',
+			title: 'Fully Diluted Valuation (FDV) (USD)',
 			value: usd(metrics?.fdvUsd),
 			hasData: metrics?.fdvUsd != null,
 			criterion: findTokenomicsCriterion('fdv')
 		},
 		{
-			title: 'Annualized rate of inflation',
+			title: 'Annualized Rate of Inflation',
 			value: formatPercent(metrics?.annualizedInflationPct, UTR_PERCENT_OPTIONS) ?? 'N/A',
 			hasData: metrics?.annualizedInflationPct != null,
 			criterion: findTokenomicsCriterion('inflation')
 		},
 		{
-			title: 'Buyback & burn events',
+			title: 'Buyback & Burn Events',
 			value:
 				metrics?.cumulativeBuybackTokens != null || metrics?.cumulativeBurnTokens != null
 					? `${formatNumber(Math.round((metrics.cumulativeBuybackTokens ?? 0) + (metrics.cumulativeBurnTokens ?? 0)))} tokens`
@@ -463,28 +463,28 @@ export function TokenPageLive({
 
 	const footprintCharts = [
 		{
-			title: 'Total volume (CEX vs DEX)',
+			title: 'Total Volume (CEX vs DEX)',
 			chart: charts.cexVsDexVolume,
 			names: ['CEX Volume', 'DEX Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
 			kind: 'cexdex' as const
 		},
 		{
-			title: 'Total +/- 2% depth (CEX vs DEX)',
+			title: 'Total +/- 2% Depth (CEX vs DEX)',
 			chart: charts.cexVsDexDepth,
 			names: ['CEX Depth', 'DEX Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
 			kind: 'cexdex' as const
 		},
 		{
-			title: 'Total volume (spot vs perps)',
+			title: 'Total Volume (Spot vs Perps)',
 			chart: charts.spotVsPerpsVolume,
 			names: ['Spot Volume', 'Perps Volume'] as const,
 			colors: UTR_METRIC_COLORS.volumeStack,
 			kind: 'spotperp' as const
 		},
 		{
-			title: 'Total +/- 2% depth (spot vs perps)',
+			title: 'Total +/- 2% Depth (Spot vs Perps)',
 			chart: charts.spotVsPerpsDepth,
 			names: ['Spot Depth', 'Perps Depth'] as const,
 			colors: UTR_METRIC_COLORS.depthStack,
@@ -693,14 +693,14 @@ export function TokenPageLive({
 							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 								{hasVolumeMarketQuality ? (
 									<MetricCard
-										title="Total volume (as % of market cap)"
+										title="Total Volume (as % of Market Cap)"
 										onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.volumeMcap)}
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Market cap (USD)</ChartCaption>
+													<ChartCaption>Market Cap (USD)</ChartCaption>
 													{/* Both charts share one floor, so this card's chart area matches the Depth card beside it. */}
 													<ChartPanelBody>
 														<MultiSeriesChart
@@ -708,7 +708,7 @@ export function TokenPageLive({
 															charts={[
 																{
 																	type: 'line',
-																	name: 'Market cap (USD)',
+																	name: 'Market Cap (USD)',
 																	encode: { x: 0, y: 1 },
 																	color: metricColor(UTR_METRIC_COLORS.marketCap),
 																	data: marketQuality.series.map((point): [number, number] => [
@@ -751,12 +751,12 @@ export function TokenPageLive({
 										<KvTable
 											rows={[
 												[
-													`Trade volume (prev. ${marketQuality?.windowDays ?? 30}d avg)`,
+													`Trade Volume (prev. ${marketQuality?.windowDays ?? 30}d avg)`,
 													usd(marketQuality?.volumeMcap.avgUsd)
 												],
-												['Market cap (prev. 30d avg)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
+												['Market Cap (prev. 30d avg)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
 												[
-													'Trade volume / market cap',
+													'Trade Volume / Market Cap',
 													formatPercent(marketQuality?.volumeMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -765,14 +765,14 @@ export function TokenPageLive({
 								) : null}
 								{hasDepthMarketQuality ? (
 									<MetricCard
-										title="Depth +/- 2% (as a % of market cap)"
+										title="Depth +/- 2% (as a % of Market Cap)"
 										onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(marketQuality?.depthMcap)}
 										chart={
 											marketQuality?.series.length ? (
 												<>
-													<ChartCaption>Depth +/- 2% (USD) | Market cap (USD)</ChartCaption>
+													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
 													<ChartPanelBody>
 														<MultiSeriesChart
 															dataset={UTR_TIME_DATASET}
@@ -791,7 +791,7 @@ export function TokenPageLive({
 																},
 																{
 																	type: 'line',
-																	name: 'Market cap',
+																	name: 'Market Cap',
 																	encode: { x: 0, y: 1 },
 																	color: metricColor(UTR_METRIC_COLORS.depthMarketCap),
 																	yAxisIndex: 1,
@@ -818,9 +818,9 @@ export function TokenPageLive({
 													`Depth +/- 2% (prev. ${marketQuality?.windowDays ?? 30}d avg)`,
 													usd(marketQuality?.depthMcap.avgUsd)
 												],
-												['Market cap (prev. 30d avg)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
+												['Market Cap (prev. 30d avg)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
 												[
-													'Depth / market cap',
+													'Depth / Market Cap',
 													formatPercent(marketQuality?.depthMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -829,7 +829,7 @@ export function TokenPageLive({
 								) : null}
 								{hasSpreadData ? (
 									<MetricCard
-										title="Bid / ask spread (volume weighted spreads)"
+										title="Bid / Ask Spread (volume weighted spreads)"
 										onOpen={() => openTotalMarket(spread?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(spread)}
@@ -882,7 +882,7 @@ export function TokenPageLive({
 								) : null}
 								{hasPriceData ? (
 									<MetricCard
-										title="Price performance"
+										title="Price Performance"
 										onOpen={() => openTotalMarket(priceChart?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										badge={
@@ -924,7 +924,7 @@ export function TokenPageLive({
 								) : null}
 								{hasOpenInterestData ? (
 									<MetricCard
-										title="Open Interest (as a % of market cap)"
+										title="Open Interest (as a % of Market Cap)"
 										onOpen={() => openTotalMarket(openInterest?.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
 										{...summaryFooter(openInterest)}
@@ -948,7 +948,7 @@ export function TokenPageLive({
 										<KvTable
 											rows={[
 												[
-													'Open Interest / market cap',
+													'Open Interest / Market Cap',
 													formatPercent(openInterest?.oiMcapRatioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
 												]
 											]}
@@ -1030,7 +1030,7 @@ export function TokenPageLive({
 							{tier1Covered != null ? (
 								<Panel>
 									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
-										<h3 className="label-lg">Top-tier exchange coverage</h3>
+										<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
 										<Tooltip
 											content="Open exchange coverage details"
 											render={

@@ -23,12 +23,12 @@ import {
 function routeNetRows(row: RouteTableRow): Array<SignedTipRow> {
 	const { supplyApyBase, supplyApyReward, supplyApyIntrinsic, borrowApyBase, borrowApyReward, borrowApyIntrinsic } = row
 	const rows: Array<SignedTipRow> = []
-	if (supplyApyBase != null) rows.push({ label: 'Supply base', value: supplyApyBase, signed: 'plus' })
-	if (hasPart(supplyApyReward)) rows.push({ label: 'Supply reward', value: supplyApyReward, signed: 'plus' })
-	if (hasPart(supplyApyIntrinsic)) rows.push({ label: 'Supply intrinsic', value: supplyApyIntrinsic, signed: 'plus' })
-	if (borrowApyBase != null) rows.push({ label: 'Borrow base cost', value: borrowApyBase, signed: 'minus' })
-	if (hasPart(borrowApyReward)) rows.push({ label: 'Borrow reward', value: borrowApyReward, signed: 'plus' })
-	if (hasPart(borrowApyIntrinsic)) rows.push({ label: 'Borrow intrinsic', value: borrowApyIntrinsic, signed: 'minus' })
+	if (supplyApyBase != null) rows.push({ label: 'Supply Base', value: supplyApyBase, signed: 'plus' })
+	if (hasPart(supplyApyReward)) rows.push({ label: 'Supply Reward', value: supplyApyReward, signed: 'plus' })
+	if (hasPart(supplyApyIntrinsic)) rows.push({ label: 'Supply Intrinsic', value: supplyApyIntrinsic, signed: 'plus' })
+	if (borrowApyBase != null) rows.push({ label: 'Borrow Base Cost', value: borrowApyBase, signed: 'minus' })
+	if (hasPart(borrowApyReward)) rows.push({ label: 'Borrow Reward', value: borrowApyReward, signed: 'plus' })
+	if (hasPart(borrowApyIntrinsic)) rows.push({ label: 'Borrow Intrinsic', value: borrowApyIntrinsic, signed: 'minus' })
 	return rows
 }
 
@@ -218,7 +218,7 @@ const routeColumns = routeHelper.columns([
 								? [{ label: 'Supply', value: row.original.supplyApy, signed: 'plus' as const }]
 								: []),
 							...(row.original.borrowApy != null
-								? [{ label: 'Borrow cost', value: row.original.borrowApy, signed: 'minus' as const }]
+								? [{ label: 'Borrow Cost', value: row.original.borrowApy, signed: 'minus' as const }]
 								: [])
 						]
 			return <SignedApyCell value={row.original.netApy} summaryLabel="Net" tooltipRows={tooltipRows} />

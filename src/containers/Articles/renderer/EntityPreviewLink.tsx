@@ -266,7 +266,7 @@ function PreviewBody({
 						</span>
 					) : null}
 					{preview.volume7d != null ? (
-						<MetricRow label="7d volume" value={formatUsd(preview.volume7d, { compact: true }) ?? '—'} />
+						<MetricRow label="7d Volume" value={formatUsd(preview.volume7d, { compact: true }) ?? '—'} />
 					) : null}
 					{preview.destinationChain ? <MetricRow label="Destination" value={preview.destinationChain} /> : null}
 					{preview.chains && preview.chains.length > 0 ? (

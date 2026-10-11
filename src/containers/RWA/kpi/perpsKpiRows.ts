@@ -55,13 +55,13 @@ export function getRwaPerpsKpiRows(kpi: RwaPerpsKpi): Array<RwaKpiRow> {
 			value: kpiCount(kpi.markets),
 			rows: [
 				{ label: 'Venues', value: kpiCount(kpi.venues) },
-				{ label: 'Reference assets', value: kpiCount(kpi.referenceAssets) },
-				{ label: 'Asset groups', value: kpiCount(kpi.assetGroups) }
+				{ label: 'Reference Assets', value: kpiCount(kpi.referenceAssets) },
+				{ label: 'Asset Groups', value: kpiCount(kpi.assetGroups) }
 			]
 		},
 		{
-			label: 'DEX share of OI',
-			csv: 'DEX share of OI %',
+			label: 'DEX Share of OI',
+			csv: 'DEX Share of OI %',
 			tooltip: RWA_DEX_SHARE_TOOLTIP,
 			value: { kind: 'ratio', value: kpi.dexShare }
 		},
@@ -86,8 +86,8 @@ export function getRwaVenueKpiRows(
 			tooltip: d.markets.description,
 			value: kpiCount(kpi.markets),
 			rows: [
-				{ label: 'Reference assets', value: kpiCount(kpi.referenceAssets) },
-				{ label: 'Asset groups', value: kpiCount(kpi.assetGroups) },
+				{ label: 'Reference Assets', value: kpiCount(kpi.referenceAssets) },
+				{ label: 'Asset Groups', value: kpiCount(kpi.assetGroups) },
 				{
 					label: `Share of ${type} OI`,
 					csv: `Share of ${type} OI %`,
@@ -99,16 +99,16 @@ export function getRwaVenueKpiRows(
 		getFeesRow(kpi, [
 			{ label: 'All-time', csv: 'Est. Fees (all-time)', value: kpiUsd(kpi.feesAllTime) },
 			{
-				label: 'Est. annual',
-				csv: 'Est. annual fees',
+				label: 'Est. Annual',
+				csv: 'Est. Annual Fees',
 				tooltip: 'The 30 day fees times 365 / 30.',
 				value: kpiUsd(kpi.feesAnnual)
 			},
 			...(takerFeeBps != null
 				? [
 						{
-							label: 'Taker fee',
-							csv: 'Taker fee (bps)',
+							label: 'Taker Fee',
+							csv: 'Taker Fee (bps)',
 							value: kpiCount(takerFeeBps),
 							text: `${formatNumber(takerFeeBps)} bps`
 						}

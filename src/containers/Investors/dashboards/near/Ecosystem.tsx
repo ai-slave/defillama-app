@@ -266,7 +266,7 @@ export default function Ecosystem() {
 			</div>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents daily volume</ChartPanelTitle>} />
+				<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Daily Volume</ChartPanelTitle>} />
 				{isLoading || !intentModels.volume ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (
@@ -285,7 +285,7 @@ export default function Ecosystem() {
 
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents fees</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Fees</ChartPanelTitle>} />
 					{isLoading || !intentModels.fees ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
@@ -302,7 +302,7 @@ export default function Ecosystem() {
 					)}
 				</Panel>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents swap activity</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>NEAR Intents Swap Activity</ChartPanelTitle>} />
 					{isLoading || !intentModels.activity ? (
 						<SurfaceBodyLoadingStatus label="Loading chart" />
 					) : (
@@ -419,7 +419,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Daily transactions"
+								title="Daily Transactions"
 								headingAs="h3"
 								dataset={areaDatasets.transactions}
 								charts={DAILY_TRANSACTIONS_CHART}
@@ -435,7 +435,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Daily active accounts"
+								title="Daily Active Accounts"
 								headingAs="h3"
 								dataset={areaDatasets.activeAccounts}
 								charts={ACTIVE_ACCOUNTS_CHART}
@@ -451,7 +451,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="New accounts created"
+								title="New Accounts Created"
 								headingAs="h3"
 								dataset={areaDatasets.newAccounts}
 								charts={NEW_ACCOUNTS_CHART}
@@ -467,7 +467,7 @@ export default function Ecosystem() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Daily gas fees (NEAR)"
+								title="Daily Gas Fees (NEAR)"
 								headingAs="h3"
 								dataset={areaDatasets.gasFees}
 								charts={GAS_FEES_CHART}
@@ -485,7 +485,7 @@ export default function Ecosystem() {
 				{token ? (
 					<>
 						<StatTile label="NEAR Price" value={token.kpis.nearPrice.formatted} />
-						<StatTile label="Market cap" value={token.kpis.marketCap.formatted} />
+						<StatTile label="Market Cap" value={token.kpis.marketCap.formatted} />
 						<StatTile label="Circulating Supply" value={token.kpis.circulatingSupply.formatted} />
 						<StatTile label="Total Supply" value={token.kpis.totalSupply.formatted} />
 						<StatTile label="Locked Supply" value={token.kpis.lockedSupply.formatted} />
@@ -493,7 +493,7 @@ export default function Ecosystem() {
 				) : (
 					<>
 						<StatTile label="NEAR Price" loading />
-						<StatTile label="Market cap" loading />
+						<StatTile label="Market Cap" loading />
 						<StatTile label="Circulating Supply" loading />
 						<StatTile label="Total Supply" loading />
 						<StatTile label="Locked Supply" loading />
@@ -507,7 +507,7 @@ export default function Ecosystem() {
 				) : (
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="NEAR price (USD)"
+							title="NEAR Price (USD)"
 							headingAs="h3"
 							dataset={areaDatasets.nearPrice}
 							charts={NEAR_PRICE_CHART}
@@ -519,7 +519,7 @@ export default function Ecosystem() {
 			</Panel>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Token supply</ChartPanelTitle>} />
+				<ChartPanelToolbar leading={<ChartPanelTitle>Token Supply</ChartPanelTitle>} />
 				{isLoading || !supplyModel ? (
 					<SurfaceBodyLoadingStatus label="Loading chart" />
 				) : (

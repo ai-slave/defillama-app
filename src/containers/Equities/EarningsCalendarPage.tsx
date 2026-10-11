@@ -502,7 +502,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 						includeQueryKey="marketCap"
 						excludeQueryKey="excludeMarketCap"
 						nestedMenu={false}
-						label="Market cap"
+						label="Market Cap"
 						labelType="regular"
 						variant="filter"
 						size="md"

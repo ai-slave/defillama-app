@@ -375,7 +375,7 @@ export default function SyrupActivity() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Monthly stSyrup deposits vs withdrawals"
+							title="Monthly stSyrup Deposits vs Withdrawals"
 							headingAs="h3"
 							dataset={monthlyChart}
 							groupBy="monthly"
@@ -395,7 +395,7 @@ export default function SyrupActivity() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Monthly Syrup token migrations"
+							title="Monthly Syrup Token Migrations"
 							headingAs="h3"
 							dataset={migrationChart}
 							groupBy="monthly"
@@ -411,7 +411,7 @@ export default function SyrupActivity() {
 			{isLoading ? <CardSkeleton title="Recent stSyrup transactions" /> : <TxTable data={txRows} />}
 
 			<div>
-				<h3 className="mb-3 heading-xs">Drip rewards</h3>
+				<h3 className="mb-3 heading-xs">Drip Rewards</h3>
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>
@@ -434,7 +434,7 @@ export default function SyrupActivity() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Monthly drip claims"
+								title="Monthly Drip Claims"
 								headingAs="h3"
 								dataset={dripMonthlyChart}
 								groupBy="monthly"

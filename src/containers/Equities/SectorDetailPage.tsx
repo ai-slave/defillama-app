@@ -72,13 +72,13 @@ const constituentColumns = constituentColumnHelper.columns([
 	}),
 	constituentColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
-		header: 'Market cap',
+		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
 		meta: { headerClassName: 'w-28', align: 'end' }
 	}),
 	constituentColumnHelper.accessor((row) => row.sectorWeight ?? undefined, {
 		id: 'sectorWeight',
-		header: 'Sector wt.',
+		header: 'Sector Wt.',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	}),
@@ -279,7 +279,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
 				<StatTile
-					label="Market cap"
+					label="Market Cap"
 					value={formatMetric(sector.marketCap, 'usd')}
 					change={
 						sector.priceChangePercentage1d == null
@@ -291,7 +291,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 								}
 					}
 				/>
-				<StatTile label="Sector weight" value={formatMetric(sector.weight, 'percent')} sub="of tracked market cap" />
+				<StatTile label="Sector Weight" value={formatMetric(sector.weight, 'percent')} sub="of tracked market cap" />
 				<StatTile
 					label="Volume 24h"
 					value={formatMetric(sector.dollarVolume24h, 'usd')}
@@ -299,7 +299,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 				/>
 				<StatTile label="Revenue TTM" value={formatMetric(sector.revenueTTM, 'usd')} sub="Sum of constituents" />
 				<StatTile
-					label="Net income TTM"
+					label="Net Income TTM"
 					value={formatMetric(sector.earningsTTM, 'usd')}
 					sub={`${formatMetric(netMargin, 'percent')} net margin`}
 				/>
@@ -313,7 +313,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 					sub={`Market P/E ${formatMetric(overview.trailingPE, 'multiple')}`}
 				/>
 				<StatTile
-					label="Dividend yield"
+					label="Dividend Yield"
 					value={formatMetric(sector.dividendYield, 'percent')}
 					sub={`Market ${formatMetric(overview.dividendYield, 'percent')}`}
 				/>

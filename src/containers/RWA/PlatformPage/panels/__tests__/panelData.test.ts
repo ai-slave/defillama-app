@@ -117,13 +117,13 @@ describe('fees and revenue', () => {
 			})
 		)
 		expect(rows).toEqual([
-			{ label: 'Est. annual revenue', value: '$4.2m', mono: true },
-			{ label: 'Holder total fee', value: '25 bps', mono: true },
-			{ label: 'Performance fee', value: '10%', mono: true },
-			{ label: 'Mint fee', value: '0 bps', mono: true },
-			{ label: 'Recurring service fee', value: '$12,000/yr', mono: true },
-			{ label: 'Float income', value: 'No', mono: false },
-			{ label: 'Fees last verified', value: '2026-05-04', mono: true }
+			{ label: 'Est. Annual Revenue', value: '$4.2m', mono: true },
+			{ label: 'Holder Total Fee', value: '25 bps', mono: true },
+			{ label: 'Performance Fee', value: '10%', mono: true },
+			{ label: 'Mint Fee', value: '0 bps', mono: true },
+			{ label: 'Recurring Service Fee', value: '$12,000/yr', mono: true },
+			{ label: 'Float Income', value: 'No', mono: false },
+			{ label: 'Fees Last Verified', value: '2026-05-04', mono: true }
 		])
 	})
 

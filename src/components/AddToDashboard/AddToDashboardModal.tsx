@@ -69,8 +69,8 @@ function getConfigName(config: DashboardChartConfig | null, llamaAIChart?: Llama
 	}
 	if (config.kind === 'stablecoins') {
 		const chartTypeLabels: Record<string, string> = {
-			totalMcap: 'Total market cap',
-			tokenMcaps: 'Token market caps',
+			totalMcap: 'Total Market Cap',
+			tokenMcaps: 'Token Market Caps',
 			pie: 'Pie',
 			dominance: 'Dominance',
 			usdInflows: 'USD Inflows',

@@ -102,7 +102,7 @@ export function getRwaFeeRows(meta: RWAPlatformMeta): Array<RWAPanelRow> {
 		if (value != null) rows.push({ label, value, mono })
 	}
 	push(
-		'Est. annual revenue',
+		'Est. Annual Revenue',
 		meta.estAnnualRevenueUsd == null
 			? null
 			: formatUsd(meta.estAnnualRevenueUsd, {
@@ -111,35 +111,35 @@ export function getRwaFeeRows(meta: RWAPlatformMeta): Array<RWAPanelRow> {
 					compactSuffix: 'lowercase'
 				})
 	)
-	push('Holder total fee', meta.holderTotalFeeBps == null ? null : bps(meta.holderTotalFeeBps))
-	push('Asset manager take', meta.assetManagerTakeBps == null ? null : bps(meta.assetManagerTakeBps))
+	push('Holder Total Fee', meta.holderTotalFeeBps == null ? null : bps(meta.holderTotalFeeBps))
+	push('Asset Manager Take', meta.assetManagerTakeBps == null ? null : bps(meta.assetManagerTakeBps))
 	push(
-		'Tokenization platform take',
+		'Tokenization Platform Take',
 		meta.tokenizationPlatformTakeBps == null ? null : bps(meta.tokenizationPlatformTakeBps)
 	)
-	push('Performance fee', meta.performanceFeePct == null ? null : pct(meta.performanceFeePct))
-	push('Yield spread retained', meta.yieldSpreadRetainedBps == null ? null : bps(meta.yieldSpreadRetainedBps))
-	push('Mint fee', meta.mintFeeBps == null ? null : bps(meta.mintFeeBps))
-	push('Redemption fee', meta.redemptionFeeBps == null ? null : bps(meta.redemptionFeeBps))
-	push('Underlying fund expense', meta.underlyingFundExpenseBps == null ? null : bps(meta.underlyingFundExpenseBps))
-	push('Platform setup fee', meta.platformSetupFeeUsd == null ? null : formatUsd(meta.platformSetupFeeUsd))
+	push('Performance Fee', meta.performanceFeePct == null ? null : pct(meta.performanceFeePct))
+	push('Yield Spread Retained', meta.yieldSpreadRetainedBps == null ? null : bps(meta.yieldSpreadRetainedBps))
+	push('Mint Fee', meta.mintFeeBps == null ? null : bps(meta.mintFeeBps))
+	push('Redemption Fee', meta.redemptionFeeBps == null ? null : bps(meta.redemptionFeeBps))
+	push('Underlying Fund Expense', meta.underlyingFundExpenseBps == null ? null : bps(meta.underlyingFundExpenseBps))
+	push('Platform Setup Fee', meta.platformSetupFeeUsd == null ? null : formatUsd(meta.platformSetupFeeUsd))
 	push(
-		'Recurring service fee',
+		'Recurring Service Fee',
 		meta.platformRecurringServiceFeeUsdPerYr == null
 			? null
 			: `${formatUsd(meta.platformRecurringServiceFeeUsdPerYr)}/yr`
 	)
-	push('Perp maker fee', meta.perpMakerFeeBps == null ? null : bps(meta.perpMakerFeeBps))
-	push('Perp taker fee', meta.perpTakerFeeBps == null ? null : bps(meta.perpTakerFeeBps))
-	push('Perp funding retention', meta.perpFundingRetentionPct == null ? null : pct(meta.perpFundingRetentionPct))
-	push('Float income', meta.floatIncome == null ? null : meta.floatIncome ? 'Yes' : 'No', false)
+	push('Perp Maker Fee', meta.perpMakerFeeBps == null ? null : bps(meta.perpMakerFeeBps))
+	push('Perp Taker Fee', meta.perpTakerFeeBps == null ? null : bps(meta.perpTakerFeeBps))
+	push('Perp Funding Retention', meta.perpFundingRetentionPct == null ? null : pct(meta.perpFundingRetentionPct))
+	push('Float Income', meta.floatIncome == null ? null : meta.floatIncome ? 'Yes' : 'No', false)
 	push(
-		'Margin settlement assets',
+		'Margin Settlement Assets',
 		meta.marginSettlementAsset?.length ? meta.marginSettlementAsset.join(', ') : null,
 		false
 	)
-	push('Fees last verified', meta.feeLastVerified)
-	push('Fee waiver ends', meta.feeWaiverEndDate)
+	push('Fees Last Verified', meta.feeLastVerified)
+	push('Fee Waiver Ends', meta.feeWaiverEndDate)
 	return rows
 }
 

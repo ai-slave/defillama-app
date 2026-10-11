@@ -644,7 +644,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 										}
 									/>
 									<MetricRow
-										label="Coverage since"
+										label="Coverage Since"
 										value={<StaleText>{formatDate(props.metadata.startDate) ?? '-'}</StaleText>}
 									/>
 									<MetricRow

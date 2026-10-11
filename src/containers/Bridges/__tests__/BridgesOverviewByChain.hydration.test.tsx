@@ -12,7 +12,7 @@ vi.mock('next/router', () => ({
 }))
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
 
-const DAY_TOTAL_LABEL = 'Total volume (last completed day)'
+const DAY_TOTAL_LABEL = 'Total Volume (last completed day)'
 const day = (date: number) => Date.UTC(2026, 6, date) / 1e3
 
 const chainPage = (

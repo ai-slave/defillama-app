@@ -49,7 +49,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.costToTradeBps ?? undefined, {
 		id: 'costToTrade',
-		header: 'Cost to trade',
+		header: 'Cost to Trade',
 		sortDescFirst: false,
 		cell: ({ getValue }) =>
 			getValue() == null
@@ -63,7 +63,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.effectiveSpreadBps ?? undefined, {
 		id: 'effectiveSpread',
-		header: 'Effective spread',
+		header: 'Effective Spread',
 		sortDescFirst: false,
 		cell: ({ getValue }) =>
 			getValue() == null
@@ -73,7 +73,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.quotedSpreadBps ?? undefined, {
 		id: 'quotedSpread',
-		header: 'Quoted spread',
+		header: 'Quoted Spread',
 		sortDescFirst: false,
 		cell: ({ getValue }) =>
 			getValue() == null
@@ -111,7 +111,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.takerFeeBps ?? undefined, {
 		id: 'takerFee',
-		header: 'Taker fee',
+		header: 'Taker Fee',
 		sortDescFirst: false,
 		cell: ({ getValue }) =>
 			getValue() == null
@@ -125,7 +125,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.hoursCovered, {
 		id: 'hoursCovered',
-		header: 'Hours covered',
+		header: 'Hours Covered',
 		cell: ({ getValue }) => formatNumber(getValue(), { maximumFractionDigits: 0 }),
 		meta: {
 			align: 'end',
@@ -135,7 +135,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.nTrades, {
 		id: 'nTrades',
-		header: 'Trades measured',
+		header: 'Trades Measured',
 		cell: ({ getValue }) => formatNumber(getValue(), { maximumFractionDigits: 0 }),
 		meta: { align: 'end', headerClassName: 'min-w-[155px]' }
 	})

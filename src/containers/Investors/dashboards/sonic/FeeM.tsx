@@ -205,7 +205,7 @@ export default function FeeM() {
 			<div className="flex flex-col gap-4">
 				<h2 className="heading-xs">Rewards distribution</h2>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Collected rewards by protocol</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Collected Rewards by protocol</ChartPanelTitle>} />
 					<FeeMTreemap leaderboard={data.leaderboard} />
 				</Panel>
 			</div>

@@ -18,7 +18,7 @@ interface TokenData {
 }
 
 const RUNE_KPIS: Array<[string, string]> = [
-	['marketCap', 'Market cap'],
+	['marketCap', 'Market Cap'],
 	['fdv', 'FDV'],
 	['mcapFdv', 'Mcap/FDV'],
 	['circulatingSupply', 'Circulating Supply'],
@@ -65,7 +65,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="RUNE price vs swap volume"
+						title="RUNE Price vs Swap Volume"
 						subtitle="RUNE price against THORChain swap volume."
 						note="token.priceVolumeChart"
 					/>
@@ -75,7 +75,7 @@ export default function Token() {
 			<section className="flex flex-col gap-6">
 				<h2 className="heading-xs">TCY</h2>
 				<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-					<Kpi kpi={tcy.tcyMarketCap} label="Market cap" />
+					<Kpi kpi={tcy.tcyMarketCap} label="Market Cap" />
 					<Kpi kpi={tcy.tcyFdv} label="FDV" />
 					<Kpi kpi={tcy.tcyMcapFdv} label="Mcap/FDV" />
 					<Kpi kpi={tcy.tcyMcapToRuneMcap} label="TCY Mcap / RUNE Mcap" />
@@ -88,7 +88,7 @@ export default function Token() {
 					<TimeAreaCard chart={data.tcy.priceChart} value={tcy.tcyPrice?.formatted} />
 				) : (
 					<PlaceholderCard
-						title="TCY price"
+						title="TCY Price"
 						subtitle="TCY price feed unavailable."
 						note="coins.llama.fi coingecko:tcy"
 					/>
@@ -101,7 +101,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="TCY staking APR"
+						title="TCY Staking APR"
 						subtitle="Needs both the rewards and TCY price feeds."
 						note="token.tcy.aprChart"
 					/>
@@ -115,7 +115,7 @@ export default function Token() {
 					/>
 				) : (
 					<PlaceholderCard
-						title="Protocol owned TCY"
+						title="Protocol Owned TCY"
 						subtitle="Protocol-owned TCY over time. Awaiting feed."
 						note="raynalytics treasury-pol-tcy-balance"
 					/>
@@ -123,7 +123,7 @@ export default function Token() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">RUNE burn</h2>
+				<h2 className="heading-xs">RUNE Burn</h2>
 				<KpiGrid kpis={data.burn.kpis} items={BURN_KPIS} cols={3} />
 				<ApiTrendChart
 					chart={data.burn.burnChart}

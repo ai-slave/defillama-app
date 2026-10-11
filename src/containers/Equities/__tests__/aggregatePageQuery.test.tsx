@@ -146,7 +146,7 @@ test('sector page controls write their pick to the URL and read it back', async 
 test('an unknown value in a sector page link opens the default', async () => {
 	await open(sectorsPage, { period: '5y', mapSize: 'employees' })
 	expect(radio('Sector performance period', '1D').checked).toBe(true)
-	expect(radio('Treemap size', 'Market cap').checked).toBe(true)
+	expect(radio('Treemap size', 'Market Cap').checked).toBe(true)
 })
 
 test('the industry map By sector toggle round-trips through the URL', async () => {

@@ -38,7 +38,7 @@ export default function DistributionRewards() {
 	return (
 		<div className="flex flex-col gap-4">
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Actual revenue - User</ChartPanelTitle>}>
+				<ChartPanelToolbar leading={<ChartPanelTitle>Actual Revenue - User</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={actualRev.chartInstance}
 						filename="actual-revenue-user"
@@ -64,7 +64,7 @@ export default function DistributionRewards() {
 			</Panel>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Revenue projection - User</ChartPanelTitle>}>
+				<ChartPanelToolbar leading={<ChartPanelTitle>Revenue Projection - User</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={revProjection.chartInstance}
 						filename="revenue-projection-user"
@@ -95,7 +95,7 @@ export default function DistributionRewards() {
 					<ChartPngExportButton
 						chartInstance={susdsTvl.chartInstance}
 						filename="susds-susdc-tvl-spark-referrals"
-						title={sparkExportTitle('sUSDS & sUSDC TVL by Spark Referrals')}
+						title={sparkExportTitle('sUSDS & sUSDC TVL by Spark referrals')}
 						smol
 					/>
 				</ChartPanelToolbar>
@@ -118,11 +118,11 @@ export default function DistributionRewards() {
 			</Panel>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>XR rewards - sUSDS cross-chain</ChartPanelTitle>}>
+				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDS cross-chain</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={xrSusds.chartInstance}
 						filename="xr-rewards-susds-crosschain"
-						title={sparkExportTitle('XR rewards - sUSDS cross-chain')}
+						title={sparkExportTitle('XR Rewards - sUSDS cross-chain')}
 						smol
 					/>
 				</ChartPanelToolbar>
@@ -144,11 +144,11 @@ export default function DistributionRewards() {
 			</Panel>
 
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>XR rewards - sUSDC cross-chain</ChartPanelTitle>}>
+				<ChartPanelToolbar leading={<ChartPanelTitle>XR Rewards - sUSDC cross-chain</ChartPanelTitle>}>
 					<ChartPngExportButton
 						chartInstance={xrSusdc.chartInstance}
 						filename="xr-rewards-susdc-crosschain"
-						title={sparkExportTitle('XR rewards - sUSDC cross-chain')}
+						title={sparkExportTitle('XR Rewards - sUSDC cross-chain')}
 						smol
 					/>
 				</ChartPanelToolbar>
@@ -174,7 +174,7 @@ export default function DistributionRewards() {
 					<ChartPngExportButton
 						chartInstance={stakedUsds.chartInstance}
 						filename="staked-usds-tvl-spark-referrals"
-						title={sparkExportTitle('Staked USDS TVL by Spark Referrals')}
+						title={sparkExportTitle('Staked USDS TVL by Spark referrals')}
 						smol
 					/>
 				</ChartPanelToolbar>

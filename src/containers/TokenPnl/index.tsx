@@ -145,7 +145,7 @@ function TokenPnlContent({
 			>
 				<StatTile label="Return" value={<Change value={percentChange} />} sub={quantityLabel} />
 				<StatTile
-					label="Holding period"
+					label="Holding Period"
 					value={
 						<>
 							{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
@@ -160,7 +160,7 @@ function TokenPnlContent({
 				/>
 				{annualizedReturn != null ? (
 					<StatTile
-						label="Annualized return"
+						label="Annualized Return"
 						value={<Change value={annualizedReturn} />}
 						sub={`Based on ${holdingPeriodDays}d period`}
 					/>
@@ -197,12 +197,12 @@ function TokenPnlContent({
 
 			<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 				<StatTile
-					label="Current price"
+					label="Current Price"
 					value={formatUsd(currentPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					sub={selectedCoinInfo?.symbol?.toUpperCase()}
 				/>
 				<StatTile
-					label="Start price"
+					label="Start Price"
 					value={formatUsd(metrics.startPrice, {
 						compact: true,
 						minimumCompactValue: 1_000_000,
@@ -210,14 +210,14 @@ function TokenPnlContent({
 					})}
 				/>
 				<StatTile
-					label="End price"
+					label="End Price"
 					value={formatUsd(metrics.endPrice, {
 						compact: true,
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					})}
 				/>
-				<StatTile label="Max drawdown" value={formatPnlPercent(-Math.abs(metrics.maxDrawdown))} />
+				<StatTile label="Max Drawdown" value={formatPnlPercent(-Math.abs(metrics.maxDrawdown))} />
 				<StatTile
 					label="Volatility (ann.)"
 					value={formatPercent(metrics.volatility, { input: 'percent', maximumFractionDigits: 2 })}

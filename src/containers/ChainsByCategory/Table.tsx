@@ -395,7 +395,7 @@ const columns = columnHelper.columns([
 	),
 	columnHelper.accessor((row) => row.stablesMcap ?? undefined, {
 		id: 'stablesMcap',
-		header: 'Stablecoins market cap',
+		header: 'Stablecoins Market Cap',
 		cell: (info) =>
 			info.getValue() != null
 				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })

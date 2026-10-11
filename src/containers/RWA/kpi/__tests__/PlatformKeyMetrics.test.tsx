@@ -55,7 +55,7 @@ describe('RWAPlatformKeyMetrics', () => {
 		expect(between('Active AUM', 'Key Metrics')).not.toContain('$0')
 		expect(between('Onchain AUM', 'Active / Onchain')).toContain('N/A')
 		expect(between('Net Flows 30d', 'Live Assets')).not.toContain('$0')
-		expect(between('Largest protocol', 'Net Flows 30d')).toContain('N/A')
+		expect(between('Largest Protocol', 'Net Flows 30d')).toContain('N/A')
 	})
 
 	test('shows est. annual revenue and the suspicious badge only when the index flags them', () => {
@@ -93,8 +93,8 @@ describe('RWAPlatformKeyMetrics', () => {
 			['DeFi Active TVL', 200_000],
 			['DeFi Active TVL change (24h) %', 1.0101010101010102],
 			['Utilization %', 12.5],
-			['Largest protocol', 'Aave'],
-			['Largest protocol DeFi Active TVL', 200_000],
+			['Largest Protocol', 'Aave'],
+			['Largest Protocol DeFi Active TVL', 200_000],
 			['Net Flows 30d', null],
 			['Net Flows 7d', null],
 			['Live Assets', 2],

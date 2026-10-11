@@ -30,35 +30,35 @@ function loopLegRows(row: LoopTableRow): Array<SignedTipRow> {
 	const rows: Array<SignedTipRow> = []
 	if (supplyApyBase != null)
 		rows.push({
-			label: 'Supply base',
+			label: 'Supply Base',
 			value: supplyApyBase * sMult,
 			signed: 'plus',
 			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
 		})
 	if (hasPart(supplyApyReward))
 		rows.push({
-			label: 'Supply reward',
+			label: 'Supply Reward',
 			value: supplyApyReward * sMult,
 			signed: 'plus',
 			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
 		})
 	if (hasPart(supplyApyIntrinsic))
 		rows.push({
-			label: 'Supply intrinsic',
+			label: 'Supply Intrinsic',
 			value: supplyApyIntrinsic * sMult,
 			signed: 'plus',
 			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
 		})
 	if (borrowApyBase != null)
 		rows.push({
-			label: 'Borrow base cost',
+			label: 'Borrow Base Cost',
 			value: borrowApyBase * bMult,
 			signed: 'minus',
 			...(bMultProp !== undefined ? { multiple: bMultProp } : {})
 		})
 	if (hasPart(borrowApyReward))
 		rows.push({
-			label: 'Borrow reward',
+			label: 'Borrow Reward',
 			value: borrowApyReward * bMult,
 			signed: 'plus',
 			...(bMultProp !== undefined ? { multiple: bMultProp } : {})
@@ -171,7 +171,7 @@ const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['co
 							...(borrowApy != null
 								? [
 										{
-											label: 'Borrow cost',
+											label: 'Borrow Cost',
 											value: borrowApy * borrowMult,
 											signed: 'minus' as const,
 											...(leverage != null ? { multiple: borrowMult } : {})

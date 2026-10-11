@@ -35,8 +35,8 @@ interface StablecoinsChartCardProps {
 }
 
 const CHART_TYPE_LABELS: Record<string, string> = {
-	totalMcap: 'Total market cap',
-	tokenMcaps: 'Token market caps',
+	totalMcap: 'Total Market Cap',
+	tokenMcaps: 'Token Market Caps',
 	pie: 'Pie',
 	dominance: 'Dominance',
 	usdInflows: 'USD Inflows',
@@ -203,7 +203,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 				{latestMcap !== null && chartType === 'totalMcap' ? (
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
-							<span className="body-sm text-tertiary uppercase">Total market cap</span>
+							<span className="body-sm text-tertiary uppercase">Total Market Cap</span>
 							<span className="mono-md-bold text-primary">
 								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>

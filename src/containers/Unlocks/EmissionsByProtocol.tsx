@@ -345,7 +345,7 @@ function TokenStats({
 	}
 	if (tokenMcap != null) {
 		items.push({
-			label: 'Mcap',
+			label: 'Market Cap',
 			value: formatUsd(tokenMcap, {
 				compact: true,
 				minimumCompactValue: 1_000_000,

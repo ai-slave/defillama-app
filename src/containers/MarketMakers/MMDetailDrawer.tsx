@@ -363,11 +363,11 @@ function DrawerBody({
 
 			<section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 				<StatTile
-					label="Active engagements in Forgd"
+					label="Active Engagements in Forgd"
 					value={activeEngagements == null ? FALLBACK : activeEngagements}
 				/>
 				<StatTile
-					label="Avg FDV of projects in Forgd"
+					label="Avg FDV of Projects in Forgd"
 					value={avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}
 				/>
 			</section>

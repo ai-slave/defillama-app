@@ -155,7 +155,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily transactions"
+						title="Daily Transactions"
 						headingAs="h3"
 						dataset={data.chartDatasets.transactions}
 						charts={TRANSACTIONS_CHART}
@@ -169,7 +169,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Active & new addresses"
+						title="Active & New Addresses"
 						headingAs="h3"
 						dataset={data.chartDatasets.addresses}
 						charts={ADDRESSES_CHARTS}
@@ -192,7 +192,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily gas fees (USD)"
+						title="Daily Gas Fees (USD)"
 						headingAs="h3"
 						dataset={data.chartDatasets.gasFees}
 						charts={GAS_FEES_CHART}
@@ -206,7 +206,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Block utilization (%)"
+						title="Block Utilization (%)"
 						headingAs="h3"
 						dataset={data.chartDatasets.blockUtilization}
 						charts={UTILIZATION_CHART}
@@ -222,7 +222,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="New contracts deployed (monthly)"
+						title="New Contracts Deployed (monthly)"
 						headingAs="h3"
 						dataset={data.chartDatasets.contractDeployments}
 						charts={CONTRACTS_CHART}
@@ -238,7 +238,7 @@ export default function Blockchain() {
 			<Panel>
 				<Suspense fallback={<ChartPanelExportShellLoading />}>
 					<MultiSeriesChart
-						title="Daily token transfer volume (USD)"
+						title="Daily Token Transfer Volume (USD)"
 						headingAs="h3"
 						dataset={data.chartDatasets.tokenTransfers}
 						charts={TRANSFERS_CHART}
@@ -251,7 +251,7 @@ export default function Blockchain() {
 
 			{data.topTokens.length > 0 && (
 				<div className="flex flex-col gap-4">
-					<h2 className="heading-xs">Top tokens by 30d transfer volume</h2>
+					<h2 className="heading-xs">Top tokens by 30d Transfer Volume</h2>
 					<Card padding="none" className="overflow-x-auto">
 						<table className="w-full">
 							<thead>

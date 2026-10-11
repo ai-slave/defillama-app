@@ -55,13 +55,13 @@ describe('all-chains summary charts', () => {
 	test('shows the latest ETF inflow and the total RWA active AUM', async () => {
 		await act(async () => root.render(<SmolStats {...props} />))
 
-		expect(cardTexts()).toEqual(['ETF inflows$2m24h', 'Total RWA Active AUM$3m'])
+		expect(cardTexts()).toEqual(['ETF Inflows$2m24h', 'Total RWA Active AUM$3m'])
 	})
 
 	test('hides the RWA card when its chart has no points', async () => {
 		await act(async () => root.render(<SmolStats {...props} totalRwaActiveMcap={{ total: 3_000_000, chart: [] }} />))
 
-		expect(cardTexts()).toEqual(['ETF inflows$2m24h'])
+		expect(cardTexts()).toEqual(['ETF Inflows$2m24h'])
 	})
 
 	test('reports chart clicks with their slot and metric', async () => {

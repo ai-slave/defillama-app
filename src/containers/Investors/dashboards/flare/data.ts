@@ -634,7 +634,7 @@ export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 		},
 		emissions: {
 			emissionsTitle: emissions.emissionsChart.title ?? 'FLR Emissions per Epoch',
-			burnVsEmitTitle: emissions.burnVsEmitChart.title ?? 'Burn vs emit',
+			burnVsEmitTitle: emissions.burnVsEmitChart.title ?? 'Burn vs Emit',
 			burnVsEmitSubtitle: emissions.burnVsEmitChart.subtitle,
 			perEpochDataset: buildColumnarTimeSeriesDataset(
 				emissions.emissionsChart.dates,

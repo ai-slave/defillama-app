@@ -202,8 +202,8 @@ export function TokensChartsSection({
 						<MarketTreemapChart
 							treeData={treemap.treeData}
 							leaves={treemap.leaves}
-							sizeLabel="Market cap"
-							colorLabel={`Price ${colorBy.toUpperCase()}`}
+							sizeLabel="Market Cap"
+							colorLabel={`Price ${colorBy}`}
 							valueSymbol="$"
 							height={MAP_HEIGHT}
 							showMarketCapRow={false}

@@ -311,7 +311,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.customRange ?? undefined, {
 		id: 'customRange',
-		header: 'Custom range Inflows',
+		header: 'Custom Range Inflows',
 		cell: ({ row }) => <CustomRangeCell state={row.original.customRangeState} value={row.original.customRange} />,
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',

@@ -78,7 +78,7 @@ export function RWAOverviewCards({
 				failedRead={chainHistory.failedRead}
 			/>
 			<SmolStatCard
-				title="RWA perps open interest"
+				title="RWA Perps Open Interest"
 				tooltip={perpsDefinitions.totalOpenInterest.description}
 				value={perpsValue == null ? null : formatRwaKpiUsd(perpsValue)}
 				change={

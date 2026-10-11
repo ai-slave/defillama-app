@@ -42,7 +42,7 @@ import type { EquitiesPageDataState, IEquitiesSectorsData } from './types'
 type SectorCardSort = 'marketCap' | 'priceChangePercentage1d' | 'dollarVolume24h' | 'trailingPE'
 type SectorPerformancePeriod = '1d' | '7d' | '1m' | 'ytd' | '1y'
 const TREEMAP_OPTIONS = [
-	{ value: 'marketCap', label: 'Market cap' },
+	{ value: 'marketCap', label: 'Market Cap' },
 	{ value: 'volume', label: 'Volume' },
 	{ value: 'revenue', label: 'Revenue' }
 ] as const
@@ -93,7 +93,7 @@ const sectorColumns = sectorColumnHelper.columns([
 	}),
 	sectorColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
-		header: 'Market cap',
+		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
 		meta: { headerClassName: 'w-28', align: 'end' }
 	}),
@@ -135,7 +135,7 @@ const sectorColumns = sectorColumnHelper.columns([
 	}),
 	sectorColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
-		header: 'Div. yield',
+		header: 'Div. Yield',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	}),
@@ -144,7 +144,7 @@ const sectorColumns = sectorColumnHelper.columns([
 		meta: { headerClassName: 'w-20', align: 'end' }
 	}),
 	sectorColumnHelper.accessor('topHoldings', {
-		header: 'Top holdings',
+		header: 'Top Holdings',
 		enableSorting: false,
 		cell: ({ getValue }) => {
 			const holdings = getValue()
@@ -168,8 +168,8 @@ const sectorColumns = sectorColumnHelper.columns([
 
 // `ranking` completes "Ranked by …" under the heading.
 const CARD_SORT_OPTIONS: Array<{ value: SectorCardSort; label: string; ranking: string }> = [
-	{ value: 'marketCap', label: 'Market cap', ranking: 'market cap' },
-	{ value: 'priceChangePercentage1d', label: '1D change', ranking: '1D change' },
+	{ value: 'marketCap', label: 'Market Cap', ranking: 'market cap' },
+	{ value: 'priceChangePercentage1d', label: '1d Change', ranking: '1d change' },
 	{ value: 'dollarVolume24h', label: 'Volume', ranking: '24h volume' },
 	{ value: 'trailingPE', label: 'P/E', ranking: 'P/E' }
 ]
@@ -254,7 +254,7 @@ function SectorsReadyPage({
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
 				<StatTile
-					label="Total equity market cap"
+					label="Total Equity Market Cap"
 					value={formatMetric(overview.marketCap, 'usd')}
 					change={
 						overview.priceChangePercentage1d == null
@@ -268,12 +268,12 @@ function SectorsReadyPage({
 					}
 				/>
 				<StatTile
-					label="24h trading volume"
+					label="24h Trading Volume"
 					value={formatMetric(overview.dollarVolume24h, 'usd')}
 					sub={`Across ${overview.sectorCount} sectors`}
 				/>
 				<StatTile
-					label="Best sector · 1D"
+					label="Best Sector · 1d"
 					value={
 						overview.bestSector1d.priceChangePercentage1d == null ? (
 							'—'
@@ -284,7 +284,7 @@ function SectorsReadyPage({
 					sub={overview.bestSector1d.sector}
 				/>
 				<StatTile
-					label="Worst sector · 1D"
+					label="Worst Sector · 1d"
 					value={
 						overview.worstSector1d.priceChangePercentage1d == null ? (
 							'—'
@@ -295,7 +295,7 @@ function SectorsReadyPage({
 					sub={overview.worstSector1d.sector}
 				/>
 				<StatTile
-					label={`${overview.largestSector.sector} dominance`}
+					label={`${overview.largestSector.sector} Dominance`}
 					value={formatMetric(overview.largestSector.weight, 'percent')}
 					sub={`${sectorsUp} of ${overview.sectorCount} sectors up today`}
 				/>
@@ -403,7 +403,7 @@ function SectorsReadyPage({
 							</div>
 							<div className="grid grid-cols-2 gap-3">
 								<p className="body-sm text-secondary">
-									Market cap
+									Market Cap
 									<br />
 									<span className="label-lg text-primary">{formatMetric(sector.marketCap, 'usd')}</span>
 								</p>

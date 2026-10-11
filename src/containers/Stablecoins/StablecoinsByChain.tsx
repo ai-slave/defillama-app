@@ -248,9 +248,9 @@ export function StablecoinsByChain({
 		})
 	}, [chartType, chartView, peggedTotals])
 
-	let title = `Stablecoins market cap`
+	let title = `Stablecoins Market Cap`
 	if (selectedChain !== 'All') {
-		title = `${selectedChain} Stablecoins market cap`
+		title = `${selectedChain} Stablecoins Market Cap`
 	}
 
 	const dashboardChartType = getStablecoinDashboardChartType(chartType, chartView)
@@ -312,7 +312,7 @@ export function StablecoinsByChain({
 		const baseTitle = selectedChain !== 'All' ? `${selectedChain} Stablecoins` : 'Stablecoins'
 
 		if (chartType === 'marketCap') {
-			return chartView === 'total' ? baseTitle : `${baseTitle} market cap`
+			return chartView === 'total' ? baseTitle : `${baseTitle} Market Cap`
 		}
 		if (chartType === 'volume') {
 			return chartView === 'total' ? baseTitle : `${baseTitle} Volume`
@@ -611,7 +611,7 @@ export function StablecoinsByChain({
 									variant="rwa"
 									containerClassName="min-h-[600px]"
 									onReady={handleChartReady}
-									valueLabel="Market cap"
+									valueLabel="Market Cap"
 								/>
 							</React.Suspense>
 						</ChartPanelBody>

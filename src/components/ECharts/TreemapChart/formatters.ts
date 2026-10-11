@@ -21,7 +21,7 @@ export function formatNarrativeTreemapLabel(name: string, value: TreemapValue): 
 	return [
 		`{name|${name}}`,
 		`Return: {apy| ${formatPercent(value[1] ?? 0, { input: 'percent' })}}`,
-		`Market cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
+		`Market Cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
 	].join('\n')
 }
 
@@ -39,6 +39,6 @@ export function formatNarrativeTreemapTooltip(treePathInfo: Array<{ name?: unkno
 	return [
 		`${escapeHtml(treePath[1]!)}<br>`,
 		`Return: ${formatPercent(value[1], { input: 'percent' })}<br>`,
-		`Market cap: ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
+		`Market Cap: ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 	].join('')
 }

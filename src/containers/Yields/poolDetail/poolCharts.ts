@@ -288,7 +288,7 @@ export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolC
 	if (hasBase)
 		bars.push({
 			key: 'baseCost',
-			label: 'Base cost',
+			label: 'Base Cost',
 			colorKey: 'chartFill',
 			sign: 1,
 			values: base,
@@ -298,7 +298,7 @@ export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolC
 	if (hasReward)
 		bars.push({
 			key: 'rewardOffset',
-			label: 'Reward offset',
+			label: 'Reward Offset',
 			colorKey: 'gold',
 			sign: -1,
 			values: reward,
@@ -327,7 +327,7 @@ export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolC
 		],
 		netLine: {
 			key: 'net',
-			label: 'Net cost',
+			label: 'Net Cost',
 			colorKey: 'warn',
 			values: net,
 			avg7: net7,

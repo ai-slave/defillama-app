@@ -286,7 +286,7 @@ export default function Markets() {
 							dataset={marketSizeDataset}
 							charts={MARKET_SIZE_CHART}
 							valueSymbol="$"
-							title="Market size by chain"
+							title="Market Size by chain"
 							headingAs="h3"
 							chartOptions={AAVE_CATEGORY_DOLLAR_CHART_OPTIONS}
 							exportButtons={AAVE_BAR_EXPORT}

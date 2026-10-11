@@ -963,7 +963,7 @@ function TokenCGData(props: IKeyMetricsProps) {
 	return (
 		<>
 			{props.tokenCGData.marketCap.current != null ? (
-				<MetricRow label="Market cap" value={props.formatPrice(props.tokenCGData.marketCap.current)} />
+				<MetricRow label="Market Cap" value={props.formatPrice(props.tokenCGData.marketCap.current)} />
 			) : null}
 			{props.tokenCGData.price.current != null ? (
 				props.tokenCGData.price.ath != null || props.tokenCGData.price.atl != null ? (

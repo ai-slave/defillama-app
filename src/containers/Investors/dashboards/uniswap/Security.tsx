@@ -284,7 +284,7 @@ export default function Security() {
 					<ChartPanelToolbar
 						leading={
 							<CardTitle
-								title="Vote turnout by proposal (USD)"
+								title="Vote Turnout by proposal (USD)"
 								subtitle={data.voteTurnout?.note ?? 'Governor Bravo proposals; USD at vote-time UNI price.'}
 							/>
 						}

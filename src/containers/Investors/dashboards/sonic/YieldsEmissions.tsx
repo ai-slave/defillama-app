@@ -86,7 +86,7 @@ export default function YieldsEmissions() {
 		<div className="flex flex-col gap-6">
 			{/* Emissions */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">S token emissions</h2>
+				<h2 className="heading-xs">S Token Emissions</h2>
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
@@ -107,7 +107,7 @@ export default function YieldsEmissions() {
 			{data.burn && (
 				<div className="flex flex-col gap-4">
 					<div className="flex items-center justify-between">
-						<h2 className="heading-xs">S token burns</h2>
+						<h2 className="heading-xs">S Token Burns</h2>
 						<a
 							href="https://burn.soniclabs.com"
 							target="_blank"

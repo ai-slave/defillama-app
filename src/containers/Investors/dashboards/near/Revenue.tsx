@@ -199,7 +199,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Total fees generated</h2>
+				<h2 className="heading-xs">Total Fees Generated</h2>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<StatTile
 						label="All Time"
@@ -244,7 +244,7 @@ export default function Revenue() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Total fees generated in NEAR</h2>
+				<h2 className="heading-xs">Total Fees Generated in NEAR</h2>
 				<Panel>
 					<ChartPanelToolbar
 						leading={
@@ -297,7 +297,7 @@ export default function Revenue() {
 
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
-					<h2 className="heading-xs">Revenue vs emissions</h2>
+					<h2 className="heading-xs">Revenue vs Emissions</h2>
 					<SegmentedControl<typeof emissionsView>
 						variant="default"
 						size="md"

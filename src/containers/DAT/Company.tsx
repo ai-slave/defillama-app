@@ -280,7 +280,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								charts={props.fdChart.charts}
 								valueSymbol=""
 								showLegend
-								title="Fully diluted shares"
+								title="Fully Diluted Shares"
 								exportButtons={{
 									png: true,
 									csv: true,

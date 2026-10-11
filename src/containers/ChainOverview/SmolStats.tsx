@@ -32,7 +32,7 @@ export function SmolStats(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 					{unlocks && unlocks.chart.length > 0 ? (
 						<SmolStatCard
 							layout="split"
-							title="Upcoming unlocks"
+							title="Upcoming Unlocks"
 							tooltip={unlocksTooltip}
 							link={<BasicLink href="/unlocks" />}
 							value={formatUsd(unlocks.total14d, USD_LOWERCASE_MILLIONS_OPTIONS)}
@@ -56,7 +56,7 @@ export function SmolStats(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 					{etfs && etfs.length > 0 ? (
 						<SmolStatCard
 							layout="split"
-							title="ETF inflows"
+							title="ETF Inflows"
 							tooltip="Daily net inflows/outflows into Bitcoin, Ethereum ETFs, showing institutional investment trends"
 							link={
 								<BasicLink
@@ -108,7 +108,7 @@ export function SmolStats(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 			{feesChart && feesChart.length > 0 ? (
 				<SmolStatCard
 					className="h-[196px]"
-					title="Fees paid"
+					title="Fees Paid"
 					tooltip={`Total fees paid by protocols on ${props.metadata.name === 'All' ? 'all chains' : props.metadata.name}`}
 					link={<BasicLink href={props.metadata.name === 'All' ? '/fees' : `/fees/chain/${chainSlug}`} />}
 					value={
@@ -124,7 +124,7 @@ export function SmolStats(props: Omit<IChainOverviewData, 'extraTvlCharts'>) {
 			{stablecoins && stablecoinChart && stablecoinChart.length > 0 ? (
 				<SmolStatCard
 					className="h-[196px]"
-					title="Stablecoins market cap"
+					title="Stablecoins Market Cap"
 					tooltip={`Total market cap of all stablecoins issued on ${
 						props.metadata.name === 'All' ? 'all chains' : props.metadata.name
 					}`}

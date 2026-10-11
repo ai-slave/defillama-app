@@ -85,7 +85,7 @@ export default function Overview() {
 				{/* A guarded query that failed sends `null`, so the tile reads "—" while the
 				    rest of the strip stands. A loading tile is the skeleton, not a dash. */}
 				<LedgerTile
-					label="Deployed onchain"
+					label="Deployed Onchain"
 					value={data ? (data.deployedOnchain.value ?? '—') : undefined}
 					suffix={data?.deployedOnchain.suffix}
 					sub={data?.deployedOnchain.sub}
@@ -95,7 +95,7 @@ export default function Overview() {
 					metricRef={data?.deployedOnchain.metricRef}
 				/>
 				<LedgerTile
-					label="Agent rebalancing volume"
+					label="Agent Rebalancing Volume"
 					value={data ? (data.rebalancing.value ?? '—') : undefined}
 					suffix={data?.rebalancing.suffix}
 					sub={data?.rebalancing.sub}
@@ -106,7 +106,7 @@ export default function Overview() {
 				{/* "Since inception" rather than the year: the rule is the track record, and
 				    a date beside a zero read as the date something happened. */}
 				<LedgerTile
-					label="Funds lost"
+					label="Funds Lost"
 					value={data ? formatNumber(data.fundsLost.value, { maximumFractionDigits: 0 }) : undefined}
 					suffix={data ? 'since inception' : undefined}
 					suffixBelow

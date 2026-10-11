@@ -182,7 +182,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.display({
 		id: 'spotFee',
-		header: 'Spot fees',
+		header: 'Spot Fees',
 		cell: ({ row }) =>
 			supportsMicaProduct(row.original, 'spot') ? (
 				<FeeValue fee={row.original.spotFee} kind="spot" />
@@ -198,7 +198,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.display({
 		id: 'perpFee',
-		header: 'Perp fees',
+		header: 'Perp Fees',
 		cell: ({ row }) =>
 			supportsMicaProduct(row.original, 'perp') ? (
 				<FeeValue fee={row.original.perpFee} kind="perp" />
@@ -214,7 +214,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.rampCost?.onRamp.totalUsd ?? undefined, {
 		id: 'onRampCost',
-		header: '$1k on-ramp',
+		header: '$1k On-Ramp',
 		cell: ({ row }) => <RampCostValue row={row.original} direction="onRamp" />,
 		meta: {
 			headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
@@ -224,7 +224,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.rampCost?.offRamp.totalUsd ?? undefined, {
 		id: 'offRampCost',
-		header: '$1k off-ramp',
+		header: '$1k Off-Ramp',
 		cell: ({ row }) => <RampCostValue row={row.original} direction="offRamp" />,
 		meta: {
 			headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',

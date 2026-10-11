@@ -335,7 +335,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</Panel>
-				<h2 className="heading-xs">Top protocols by fees</h2>
+				<h2 className="heading-xs">Top protocols by Fees</h2>
 				<ProtocolTable data={data.fees.topProtocols} valueLabel="Fees" />
 			</div>
 
@@ -367,7 +367,7 @@ export default function Ecosystem() {
 						/>
 					</Suspense>
 				</Panel>
-				<h2 className="heading-xs">Top DEXs by volume</h2>
+				<h2 className="heading-xs">Top DEXs by Volume</h2>
 				<ProtocolTable data={data.dexVolume.topDexes} valueLabel="Volume" />
 			</div>
 
@@ -398,7 +398,7 @@ export default function Ecosystem() {
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin supply breakdown</ChartPanelTitle>} />
+					<ChartPanelToolbar leading={<ChartPanelTitle>Stablecoin Supply breakdown</ChartPanelTitle>} />
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: '320px' }} />}>

@@ -58,14 +58,14 @@ describe('RWAVenueKeyMetrics', () => {
 			'All-time',
 			'Turnover (30d)',
 			'Markets',
-			'Reference assets',
-			'Asset groups',
+			'Reference Assets',
+			'Asset Groups',
 			'Share of DEX OI',
 			'Est. Fees (30d)',
 			'24h',
 			'All-time',
-			'Est. annual',
-			'Taker fee'
+			'Est. Annual',
+			'Taker Fee'
 		])
 		const text = render().textContent
 		expect(text).not.toContain('With volume today')
@@ -76,7 +76,7 @@ describe('RWAVenueKeyMetrics', () => {
 	test('reads the CEX share for a CEX venue and hides the taker fee without one', () => {
 		const root = render({ venueType: 'CEX', takerFeeBps: null })
 		expect(labels(root)).toContain('Share of CEX OI')
-		expect(labels(root)).not.toContain('Taker fee')
+		expect(labels(root)).not.toContain('Taker Fee')
 		expect(typeTags(root)).toContain('CEX')
 		expect(typeTags(root)).not.toContain('DEX')
 	})
@@ -97,14 +97,14 @@ describe('RWAVenueKeyMetrics', () => {
 			['Volume (all-time)', null],
 			['Turnover (30d) x', 4],
 			['Markets', 2],
-			['Reference assets', 1],
-			['Asset groups', 1],
+			['Reference Assets', 1],
+			['Asset Groups', 1],
 			['Share of DEX OI %', 25],
 			['Est. Fees (30d)', 3000],
 			['Est. Fees (24h)', 600],
 			['Est. Fees (all-time)', null],
-			['Est. annual fees', 36_500],
-			['Taker fee (bps)', 4.5]
+			['Est. Annual Fees', 36_500],
+			['Taker Fee (bps)', 4.5]
 		]
 		expect(rows).toEqual(expected)
 	})

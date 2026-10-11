@@ -86,7 +86,7 @@ export default function Vaults() {
 				{/* No `+` suffix: unlike the brief-stated facts on Overview, this is an exact
 				    figure from Dune, so "at least" would understate a number we know. */}
 				<LedgerTile
-					label="Agent rebalancing volume"
+					label="Agent Rebalancing Volume"
 					value={data?.rebalancingVolume}
 					sub="Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
 					subRef={data ? (data.rebalancingRef ?? REBALANCING_REF) : undefined}
@@ -94,7 +94,7 @@ export default function Vaults() {
 					metricLabel="cumulative rebalancing actions"
 				/>
 				<LedgerTile
-					label="Instant liquidity"
+					label="Instant Liquidity"
 					value={data ? (formatPercent(data.liquidityPct, KPK_PERCENT_OPTIONS) ?? '—') : undefined}
 					suffix={data ? 'of TVA' : undefined}
 					sub={
@@ -170,7 +170,7 @@ export default function Vaults() {
 							},
 							{
 								key: 'spreadBps',
-								label: 'vs benchmark',
+								label: 'vs Benchmark',
 								right: true,
 								render: (row) => (
 									<span className="flex flex-col items-end">
@@ -181,13 +181,13 @@ export default function Vaults() {
 							},
 							{
 								key: 'interest',
-								label: 'Interest earned',
+								label: 'Interest Earned',
 								right: true,
 								render: (row) => usdFromMillions(row.interest)
 							},
 							{
 								key: 'liq',
-								label: 'Instant liquidity',
+								label: 'Instant Liquidity',
 								title: "Share of the current TVA that's available to withdraw instantly",
 								right: true,
 								render: (row) => (
@@ -213,14 +213,14 @@ export default function Vaults() {
 							},
 							{
 								key: 'deriskingAutomations',
-								label: 'Derisking automations',
+								label: 'Derisking Automations',
 								title:
 									'All-time count of agent-executed derisking rebalances. Only venues with an agent-attributed event source report a figure.',
 								right: true,
 								render: (row) => formatNumber(row.deriskingAutomations, { maximumFractionDigits: 0 }) ?? '—'
 							},
-							{ key: 'losses', label: 'Incurred losses', render: () => 'None' },
-							{ key: 'exposure', label: 'Collateral & market exposure', wrap: true }
+							{ key: 'losses', label: 'Incurred Losses', render: () => 'None' },
+							{ key: 'exposure', label: 'Collateral & Market Exposure', wrap: true }
 						]}
 						footer={footer}
 					/>

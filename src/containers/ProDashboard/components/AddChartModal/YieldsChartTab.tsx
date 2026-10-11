@@ -276,7 +276,7 @@ export function YieldsChartTab({
 			})
 			types.push({
 				value: 'supply-apy-7d',
-				label: '7 Day Avg Supply APY',
+				label: '7d Avg Supply APY',
 				available: selectedYieldChartData.some(
 					(point) => point.apy.avg_7d.total != null || point.intrinsic?.apy.avg_7d.base != null
 				)
@@ -704,7 +704,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={supplyApy7dCharts}
 													chartOptions={singlePercentTimeChartOptions}
-													title="7d avg supply APY"
+													title="7d Avg Supply APY"
 													valueSymbol="%"
 												/>
 											) : null}
@@ -714,7 +714,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={borrowApyCharts}
 													chartOptions={percentTimeChartOptions}
-													title="Borrow cost APY"
+													title="Borrow Cost APY"
 													valueSymbol="%"
 													showLegend
 												/>
@@ -725,7 +725,7 @@ export function YieldsChartTab({
 													dataset={yieldsChartDataset}
 													charts={netBorrowApyCharts}
 													chartOptions={singlePercentTimeChartOptions}
-													title="Net borrow cost"
+													title="Net Borrow Cost"
 													valueSymbol="%"
 												/>
 											) : null}

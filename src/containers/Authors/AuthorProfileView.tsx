@@ -405,8 +405,8 @@ function AuthorHero({
 					</div>
 					<div className="grid gap-4">
 						<div className="grid grid-cols-2 gap-4">
-							<AuthorStat label="Total views" value={formatNumber(stats.totalViews)} />
-							<AuthorStat label="Total likes" value={formatNumber(stats.totalLikes)} />
+							<AuthorStat label="Total Views" value={formatNumber(stats.totalViews)} />
+							<AuthorStat label="Total Likes" value={formatNumber(stats.totalLikes)} />
 						</div>
 						<AuthorStat label="Followers" value={formatNumber(stats.followerCount)} />
 					</div>

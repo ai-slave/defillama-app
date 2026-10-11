@@ -100,7 +100,7 @@ export function prepareTokensTreemapCsv({
 	colorWindow: TokensChangeWindow
 	filename: string
 }) {
-	const rows: Array<Array<string | number>> = [['Token', 'Name', 'Market Cap', `Price ${colorWindow.toUpperCase()}`]]
+	const rows: Array<Array<string | number>> = [['Token', 'Name', 'Market Cap', `Price ${colorWindow}`]]
 	for (const leaf of leaves) {
 		rows.push([leaf.name, leaf.companyName, leaf.marketCap ?? '', leaf.value[1] ?? ''])
 	}

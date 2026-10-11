@@ -85,7 +85,7 @@ export default function Integrations() {
 		<div className="flex flex-col gap-10">
 			{/* No KPI stat cards on this tab. */}
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Market share</h2>
+				<h2 className="heading-xs">Market Share</h2>
 				{/* Open on the last ~2 years: the full weekly history back to 2018 is unreadable
 				    as a default view (the zoom slider still reaches it). */}
 				<TimeAreaCard
@@ -118,7 +118,7 @@ export default function Integrations() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Order flow</h2>
+				<h2 className="heading-xs">Order Flow</h2>
 				<SeriesTrendChart
 					title="Entity-driven protocol order flow"
 					subtitle="Weekly volume by the third-party integrator or aggregator that routed the swap (tx_to labeling); top 12 entities plus Others."
@@ -193,7 +193,7 @@ export default function Integrations() {
 					valueSymbol=""
 				/>
 				<SeriesTrendChart
-					title="Hook volume"
+					title="Hook Volume"
 					subtitle="Weekly v4 swap volume through hooked vs non-hooked pools (Ethereum)."
 					series={chartToTrendSeries(data.hookVolume)}
 				/>

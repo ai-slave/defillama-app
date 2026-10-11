@@ -117,7 +117,7 @@ export const stats: Family = {
 			render: (values) => (
 				<div className="w-80">
 					<SummaryStatsCard padding={values.padding as 'md' | 'sm'} gap={values.gap as 'md' | 'sm'}>
-						<StatItem label="Stablecoins market cap" value="$231.4b" />
+						<StatItem label="Stablecoins Market Cap" value="$231.4b" />
 						<div className="flex flex-col">
 							<MetricRow label="USDT" value="$118.2b" />
 							<MetricRow label="USDC" value="$61.9b" />
@@ -224,7 +224,7 @@ export const stats: Family = {
 				<Example name="Sub rows" prop="SubMetricRow" note="Indented rows under a section.">
 					<div className="flex w-80 flex-col">
 						<SubMetricRow label="Stablecoins" value="$11.2m" />
-						<SubMetricRow label="Native token" tooltip="Held in the protocol's own token." value="$7.4m" />
+						<SubMetricRow label="Native Token" tooltip="Held in the protocol's own token." value="$7.4m" />
 					</div>
 				</Example>
 			)
@@ -266,7 +266,7 @@ export const stats: Family = {
 						stacked={values.stacked === true}
 						items={[
 							{
-								label: 'Market cap',
+								label: 'Market Cap',
 								value: '$2.41t',
 								change: values.changes ? { value: 1.84, comparison: 'over 24h' } : undefined
 							},
@@ -295,7 +295,7 @@ export const stats: Family = {
 						<InlineStatStrip
 							stacked
 							items={[
-								{ label: 'Market cap', value: '$2.41t', tooltip: 'Circulating supply times price.' },
+								{ label: 'Market Cap', value: '$2.41t', tooltip: 'Circulating supply times price.' },
 								{ label: 'Venue', value: 'Binance', labelHidden: true },
 								{ label: 'Pairs', value: '1,204' }
 							]}

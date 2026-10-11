@@ -321,14 +321,14 @@ function HolderSummary({ holders, donut }: { holders: DetailHolders; donut: Reac
 				<div className="mt-auto flex flex-wrap justify-center gap-x-12 gap-y-4 border-t border-subtle pt-4">
 					{count != null ? (
 						<div className="flex items-end gap-2">
-							<StatItem label="Total holders" value={formatNumber(count)} />
+							<StatItem label="Total Holders" value={formatNumber(count)} />
 							{countChange30d != null ? (
 								<SummaryChange value={countChange30d} unit="count" comparison="over 30d" />
 							) : null}
 						</div>
 					) : null}
 					{avg != null ? (
-						<StatItem label="Avg holder amount" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)} />
+						<StatItem label="Avg Holder Amount" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)} />
 					) : null}
 				</div>
 			) : null}
@@ -378,7 +378,7 @@ export function HoldersPanel({
 				<h2 className="heading-xs">Holders</h2>
 				<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
 					<StatItem
-						label="Total holders"
+						label="Total Holders"
 						value={
 							count == null
 								? '—'
@@ -388,8 +388,8 @@ export function HoldersPanel({
 									})
 						}
 					/>
-					<StatItem label="Avg position" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} />
-					<StatItem label="Top 10 holders" value={top10Pct == null ? '—' : formatPercent(top10Pct, PERCENT_OPTIONS)} />
+					<StatItem label="Avg Position" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} />
+					<StatItem label="Top 10 Holders" value={top10Pct == null ? '—' : formatPercent(top10Pct, PERCENT_OPTIONS)} />
 				</div>
 			</Card>
 		)

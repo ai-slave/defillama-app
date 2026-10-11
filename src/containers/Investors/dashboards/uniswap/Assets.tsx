@@ -142,12 +142,12 @@ export default function Assets() {
 						]}
 					/>
 					<SeriesTrendChart
-						title="Uniswap RWA volume by sector"
+						title="Uniswap RWA Volume by sector"
 						subtitle={`Uniswap volume in tokenized real-world assets, split by sector.${partialPeriodNote(data.rwa.bySectorDaily)}`}
 						series={chartToTrendSeries(data.rwa.bySectorDaily ?? data.rwa.bySector)}
 					/>
 					<SeriesTrendChart
-						title="Uniswap RWA volume by chain"
+						title="Uniswap RWA Volume by chain"
 						subtitle={`Where the tracked RWAs actually trade: issuer-native chains alongside Ethereum, with everything outside the top 8 grouped as Other.${partialPeriodNote(data.rwa.byChainDaily)}`}
 						series={chartToTrendSeries(data.rwa.byChainDaily ?? data.rwa.byChain).map((series) => ({
 							...series,
@@ -232,7 +232,7 @@ export default function Assets() {
 				{/* Monthly default: proceeds are dominated by single graduation days, so the daily
 				    view is one giant spike; monthly reads the trend. */}
 				<SeriesTrendChart
-					title="CCA auction proceeds"
+					title="CCA Auction Proceeds"
 					subtitle="Realized proceeds of graduated auctions on the Uniswap launchpad."
 					series={ccaProceeds}
 					defaultView="month"

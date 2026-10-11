@@ -82,12 +82,12 @@ function getCoreRows(
 					value: { kind: 'ratio', value: getRwaRatio(metrics.defiActiveTvl, metrics.activeMcap) }
 				},
 				{
-					label: 'Largest protocol',
+					label: 'Largest Protocol',
 					value: {
 						kind: 'named',
 						name: largestProtocol?.name ?? null,
 						value: largestProtocol?.value ?? null,
-						csvValue: 'Largest protocol DeFi Active TVL'
+						csvValue: 'Largest Protocol DeFi Active TVL'
 					}
 				}
 			]
@@ -114,8 +114,8 @@ export function getRwaOverviewKpiRows(
 					value: { kind: 'change', change: perps.openInterestChange24h, total: perps.openInterest }
 				},
 				{
-					label: 'DEX share',
-					csv: 'DEX share %',
+					label: 'DEX Share',
+					csv: 'DEX Share %',
 					tooltip: RWA_DEX_SHARE_TOOLTIP,
 					value: { kind: 'ratio', value: perps.dexShare }
 				},

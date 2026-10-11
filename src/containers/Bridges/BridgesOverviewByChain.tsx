@@ -330,7 +330,7 @@ export function BridgesOverviewByChain({
 				<SummaryStatsCard padding="sm">
 					{dayTotalVolume != null ? (
 						<StatItem
-							label="Total volume (last completed day)"
+							label="Total Volume (last completed day)"
 							labelAs="h1"
 							value={formatUsd(dayTotalVolume, {
 								compact: true,
@@ -341,7 +341,7 @@ export function BridgesOverviewByChain({
 					) : null}
 					{weekTotalVolume != null ? (
 						<StatItem
-							label="Total volume (7 completed days)"
+							label="Total Volume (7 completed days)"
 							{...(dayTotalVolume == null ? { labelAs: 'h1' as const } : {})}
 							value={formatUsd(weekTotalVolume, {
 								compact: true,
@@ -353,7 +353,7 @@ export function BridgesOverviewByChain({
 					) : null}
 					{monthTotalVolume != null ? (
 						<StatItem
-							label="Total volume (30 completed days)"
+							label="Total Volume (30 completed days)"
 							{...(dayTotalVolume == null && weekTotalVolume == null ? { labelAs: 'h1' as const } : {})}
 							value={formatUsd(monthTotalVolume, {
 								compact: true,

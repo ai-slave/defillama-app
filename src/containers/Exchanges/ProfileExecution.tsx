@@ -182,22 +182,22 @@ const gapMs = (value: number) =>
 function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 	const stats = [
 		{
-			label: 'Typical update gap',
+			label: 'Typical Update Gap',
 			value: `~${gapMs(feed.avgGapMs)}`,
 			help: 'Elapsed time divided by book updates, so bursts of same-instant updates do not distort it.'
 		},
 		{
-			label: 'Slowest 1% of gaps',
+			label: 'Slowest 1% of Gaps',
 			value: gapMs(feed.p99GapMs),
 			help: '99% of book updates arrived faster than this.'
 		},
 		{
-			label: 'Longest gap',
+			label: 'Longest Gap',
 			value: gapMs(feed.maxGapMs),
 			help: 'The single longest wait between two book updates that day.'
 		},
 		{
-			label: 'Feed downtime',
+			label: 'Feed Downtime',
 			value: feed.downtimeS > 0 ? `${Math.round(feed.downtimeS)}s` : 'none',
 			help: 'Time the feed went silent long enough to count as an outage, not a quiet market.'
 		}
@@ -310,7 +310,7 @@ function executionColumns(rows: Array<ExchangeMarketExecution>): Array<Execution
 	const bands = (rows[0]?.slippage ?? []).map((band, index) => ({ ...band, index }))
 	const columns: Array<ExecutionColumn> = [
 		{
-			label: 'Cost to trade $10k',
+			label: 'Cost to Trade $10k',
 			help: 'All-in cost of a $10k market order: base-tier taker fee plus half the effective spread. VIP tiers lower the fee part.',
 			value: (execution) => execution.costToTradeBps,
 			render: (execution) => (execution.costToTradeBps == null ? NA : money(execution.costToTradeBps))
@@ -332,7 +332,7 @@ function executionColumns(rows: Array<ExchangeMarketExecution>): Array<Execution
 				)
 		},
 		{
-			label: 'Intra-spread vol.',
+			label: 'Intra-Spread Vol.',
 			help: 'Share of measured volume printed inside the spread the book showed. Blank below 2.5%, amber from 5%, a warning from 10%.',
 			value: (execution) => insideShown(execution.insideSpreadPct),
 			render: (execution) => <IntraSpread pct={execution.insideSpreadPct} />,
@@ -375,7 +375,7 @@ function executionColumns(rows: Array<ExchangeMarketExecution>): Array<Execution
 			shade: () => undefined
 		},
 		{
-			label: 'Taker fee',
+			label: 'Taker Fee',
 			help: 'Base-tier taker fee the cost to trade includes.',
 			value: (execution) => execution.takerFeeBps,
 			render: (execution) => (execution.takerFeeBps == null ? NA : pctOfBps(execution.takerFeeBps))

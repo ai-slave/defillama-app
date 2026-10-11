@@ -208,7 +208,7 @@ export default function Loans() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Interest rate distribution"
+								title="Interest Rate distribution"
 								headingAs="h3"
 								dataset={data.rateDistribution}
 								charts={RATE_DISTRIBUTION_CHART}
@@ -226,7 +226,7 @@ export default function Loans() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Loan age distribution"
+								title="Loan Age distribution"
 								headingAs="h3"
 								dataset={data.ageDistribution}
 								charts={AGE_DISTRIBUTION_CHART}

@@ -225,7 +225,7 @@ export default function DataDefinitions() {
 				</Definition>
 			</div>
 
-			<Definition header="Stablecoins market cap" id="stablecoins-market-cap">
+			<Definition header="Stablecoins Market Cap" id="stablecoins-market-cap">
 				<p>The total market cap of all stablecoins on a chain.</p>
 				<p>
 					<BasicLink className="text-link hover:underline" href="/stablecoins/chains">

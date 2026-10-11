@@ -202,7 +202,7 @@ export default function PoolsOverview() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Pool utilization"
+								title="Pool Utilization"
 								headingAs="h3"
 								dataset={data.utilization}
 								charts={UTILIZATION_CHART}

@@ -380,7 +380,7 @@ function LiquidityReadout({
 		) : null
 	) : (
 		<ReadoutCell
-			label="Withdrawable now"
+			label="Withdrawable Now"
 			hint="The most that could be withdrawn immediately, measured onchain at that day's block. A binding constraint, not backing inventory."
 			className={CELL}
 		>

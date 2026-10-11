@@ -196,7 +196,7 @@ export default function Tvl() {
 				)}
 			</div>
 
-			<h2 className="heading-xs">Total ecosystem TVL</h2>
+			<h2 className="heading-xs">Total Ecosystem TVL</h2>
 			<Panel>
 				<ChartPanelToolbar
 					leading={
@@ -221,7 +221,7 @@ export default function Tvl() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">TVL vs ETH price</h2>
+			<h2 className="heading-xs">TVL vs ETH Price</h2>
 			<Panel>
 				<ChartPanelToolbar
 					leading={<ChartPanelTitle subtitle="Correlation overlay">Ecosystem TVL vs ETH/USD</ChartPanelTitle>}

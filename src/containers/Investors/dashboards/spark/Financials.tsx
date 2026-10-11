@@ -85,7 +85,7 @@ function AllocatedAssetsSection({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<h2 className="heading-xs">SLL allocated assets</h2>
+			<h2 className="heading-xs">SLL Allocated Assets</h2>
 			<Panel>
 				<ChartPanelToolbar leading={<ChartPanelTitle>{allocatedAssets.title}</ChartPanelTitle>}>
 					<SegmentedControl<typeof view>
@@ -211,7 +211,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 
 	return (
 		<div className="flex flex-col gap-4">
-			<h2 className="heading-xs">Monthly returns</h2>
+			<h2 className="heading-xs">Monthly Returns</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.monthlyGross.title}</ChartPanelTitle>}>
@@ -354,7 +354,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 	const borrows = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<h2 className="heading-xs">SparkLend deposits &amp; borrows</h2>
+			<h2 className="heading-xs">SparkLend Deposits &amp; Borrows</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.deposits.title}</ChartPanelTitle>}>
@@ -468,7 +468,7 @@ function TreasurySection({ data }: { data: FinData }) {
 	const buybacks = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
-			<h2 className="heading-xs">Treasury &amp; buybacks</h2>
+			<h2 className="heading-xs">Treasury &amp; Buybacks</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Card padding="md">
 					<h3 className="mb-3 label-md text-secondary">Treasury</h3>
@@ -509,7 +509,7 @@ function TreasurySection({ data }: { data: FinData }) {
 			</div>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>Total treasury</ChartPanelTitle>}>
+					<ChartPanelToolbar leading={<ChartPanelTitle>Total Treasury</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={treasury.chartInstance}
 							filename="total-treasury"
@@ -529,7 +529,7 @@ function TreasurySection({ data }: { data: FinData }) {
 					</Suspense>
 				</Panel>
 				<Panel>
-					<ChartPanelToolbar leading={<ChartPanelTitle>SPK buybacks</ChartPanelTitle>}>
+					<ChartPanelToolbar leading={<ChartPanelTitle>SPK Buybacks</ChartPanelTitle>}>
 						<ChartPngExportButton
 							chartInstance={buybacks.chartInstance}
 							filename="spk-buybacks"
@@ -577,7 +577,7 @@ export default function Financials() {
 
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
-				<h2 className="heading-xs">Projected returns breakdown</h2>
+				<h2 className="heading-xs">Projected Returns breakdown</h2>
 				<Panel>
 					<ChartPanelToolbar leading={<ChartPanelTitle>{data.projectedBreakdown.title}</ChartPanelTitle>} />
 					{/* The donut is a side tile beside its table, so it keeps its own height rather than the 360 body floor. */}

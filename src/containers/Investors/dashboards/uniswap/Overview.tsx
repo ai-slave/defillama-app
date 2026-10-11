@@ -184,7 +184,7 @@ export default function Overview() {
 			<section className="flex flex-col gap-6">
 				<h2 className="heading-xs">Volume</h2>
 				<SeriesTrendChart
-					title="Total volume by chain"
+					title="Total Volume by chain"
 					subtitle="Swap volume across all versions, split by chain (top chains plus Others)."
 					series={volumeByChain.data}
 					isLoading={volumeByChain.isLoading}
@@ -254,7 +254,7 @@ export default function Overview() {
 					/>
 					<TimeAreaCard
 						chart={data.tradesWeekly}
-						title="Swaps (Weekly)"
+						title="Swaps (weekly)"
 						valueSymbol=""
 						subtitle="Weekly swap count, all chains and versions."
 					/>

@@ -933,7 +933,7 @@ export function RWAAssetPage({
 									value={formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 								/>
 							) : (
-								<ChartPanelTitle headingAs="h2">Native yield</ChartPanelTitle>
+								<ChartPanelTitle headingAs="h2">Native Yield</ChartPanelTitle>
 							)
 						}
 					>

@@ -93,7 +93,7 @@ export function VenueMarketsPanel({ summary }: { summary: RwaVenueMarketsSummary
 	return (
 		<PanelCard title="Markets">
 			<div className="flex flex-col">
-				<h3 className="mb-1 label-md text-secondary">Open interest by asset group</h3>
+				<h3 className="mb-1 label-md text-secondary">Open Interest by asset group</h3>
 				{openInterestByAssetGroup.shown.map((entry, index) => (
 					<ShareRow
 						key={entry.name}
@@ -123,27 +123,27 @@ export function VenueMarketsPanel({ summary }: { summary: RwaVenueMarketsSummary
 			) : null}
 			<div className="flex flex-col">
 				{summary.marginAssets.length > 0 ? (
-					<MarketsRow label="Margin assets">
+					<MarketsRow label="Margin Assets">
 						<Chips values={summary.marginAssets} />
 					</MarketsRow>
 				) : null}
 				{summary.oracleProviders.shown.length > 0 ? (
-					<MarketsRow label="Oracle providers">
+					<MarketsRow label="Oracle Providers">
 						<OracleProviders providers={summary.oracleProviders} />
 					</MarketsRow>
 				) : null}
 				{highestLeverage ? (
-					<MarketsRow label="Max leverage" mono>
+					<MarketsRow label="Max Leverage" mono>
 						{lowestLeverage === highestLeverage ? highestLeverage : `${lowestLeverage} to ${highestLeverage}`}
 					</MarketsRow>
 				) : null}
 				{summary.fundingIntervalHours.length > 0 ? (
-					<MarketsRow label="Funding interval">
+					<MarketsRow label="Funding Interval">
 						<Chips values={summary.fundingIntervalHours.map((hours) => `${hours}h`)} />
 					</MarketsRow>
 				) : null}
 				{summary.accessModels.length > 0 ? (
-					<MarketsRow label="Access model">
+					<MarketsRow label="Access Model">
 						<Chips values={summary.accessModels} />
 					</MarketsRow>
 				) : null}

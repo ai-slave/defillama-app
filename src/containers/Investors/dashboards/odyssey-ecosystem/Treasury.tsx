@@ -73,7 +73,7 @@ export default function Treasury() {
 				</>
 			) : null}
 
-			<h2 className="heading-xs">Plasma UniV3 unclaimed fees</h2>
+			<h2 className="heading-xs">Plasma UniV3 Unclaimed Fees</h2>
 			<ChartCard title="Plasma positions" subtitle="One row per NFT">
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}

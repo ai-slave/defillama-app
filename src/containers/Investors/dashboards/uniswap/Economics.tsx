@@ -468,7 +468,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">Protocol Fees & UNI burn</h2>
+				<h2 className="heading-xs">Protocol Fees & UNI Burn</h2>
 				<SeriesTrendChart
 					title="Protocol Fees (Holders Revenue)"
 					subtitle="The protocol's cut of swap fees since the fee-switch activation, collected in the TokenJar and burned as UNI."
@@ -493,7 +493,7 @@ export default function Economics() {
 				/>
 				<TimeAreaCard
 					chart={data.uniBurnUnits}
-					title="UNI burned by source (cumulative)"
+					title="UNI Burned by source (cumulative)"
 					stacked
 					valueSymbol=""
 					subtitle="Cumulative UNI burned onchain, fee-switch burns and the one-off treasury burn shown separately."
@@ -501,7 +501,7 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<h2 className="heading-xs">UNI token unlocks</h2>
+				<h2 className="heading-xs">UNI Token Unlocks</h2>
 				{unlockedKpi && (
 					<KpiGrid
 						kpis={{ supplyUnlocked: unlockedKpi }}

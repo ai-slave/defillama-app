@@ -49,7 +49,7 @@ const METRIC_GROUPS: Array<MetricGroup> = [
 		label: 'Value',
 		options: [
 			{ key: 'tvl', label: 'TVL', description: 'Total value locked in the protocol' },
-			{ key: 'mcap', label: 'Market cap' },
+			{ key: 'mcap', label: 'Market Cap' },
 			{ key: 'fdv', label: 'FDV' }
 		]
 	},
@@ -59,7 +59,7 @@ const METRIC_GROUPS: Array<MetricGroup> = [
 			{ key: 'fees', label: 'Fees' },
 			{ key: 'revenue', label: 'Revenue' },
 			{ key: 'volume', label: 'Volume' },
-			{ key: 'users', label: 'Active users' }
+			{ key: 'users', label: 'Active Users' }
 		]
 	},
 	{ label: 'Pro', options: [{ key: 'holders', label: 'Holders', locked: true }] }
@@ -78,7 +78,7 @@ const TOKEN_METRICS: MetricGroup = {
 
 const FILTERS = [
 	{ id: 'tvl', label: 'TVL', category: 'Size' },
-	{ id: 'mcap', label: 'Market cap', category: 'Size' },
+	{ id: 'mcap', label: 'Market Cap', category: 'Size' },
 	{ id: 'fees', label: 'Fees 24h', category: 'Activity' },
 	{ id: 'volume', label: 'Volume 24h', category: 'Activity' }
 ]

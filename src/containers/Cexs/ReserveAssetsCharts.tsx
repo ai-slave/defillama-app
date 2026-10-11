@@ -360,7 +360,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 
 	return (
 		<CexChartPanel
-			title="USD inflows"
+			title="USD Inflows"
 			controls={
 				<ChartExportButtons
 					chartInstance={chartInstance}

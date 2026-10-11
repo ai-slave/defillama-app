@@ -119,19 +119,19 @@ const industryColumns = industryColumnHelper.columns([
 	}),
 	industryColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
-		header: 'Market cap',
+		header: 'Market Cap',
 		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
 		meta: { headerClassName: 'w-28', align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.weight ?? undefined, {
 		id: 'weight',
-		header: 'Market share',
+		header: 'Market Share',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	}),
 	industryColumnHelper.accessor((row) => row.sectorWeight ?? undefined, {
 		id: 'sectorWeight',
-		header: 'Sector share',
+		header: 'Sector Share',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	}),
@@ -167,7 +167,7 @@ const industryColumns = industryColumnHelper.columns([
 	}),
 	industryColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
-		header: 'Div. yield',
+		header: 'Div. Yield',
 		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
 		meta: { headerClassName: 'w-24', align: 'end' }
 	})
@@ -318,12 +318,12 @@ function IndustriesReadyPage({
 					sub={`${filterIndustryTail(sectorRows, { hideTail: true }).visibleRows.length} shown above the tail`}
 				/>
 				<StatTile
-					label="Top 10 · share of market"
+					label="Top 10 · Share of Market"
 					value={formatMetric(summary.top10MarketShare, 'percent')}
 					sub={`Top 20 · ${formatMetric(summary.top20MarketShare, 'percent')}`}
 				/>
 				<StatTile
-					label="Largest industry"
+					label="Largest Industry"
 					value={formatMetric(summary.largestIndustry?.marketCap ?? null, 'usd')}
 					sub={
 						summary.largestIndustry
@@ -333,17 +333,17 @@ function IndustriesReadyPage({
 				/>
 				{/* buildIndustrySummary picks best and worst only from rows with a 1M return. */}
 				<StatTile
-					label="Best industry · 30d"
+					label="Best Industry · 30d"
 					value={summary.bestIndustry1m ? <Change value={summary.bestIndustry1m.priceChangePercentage1m!} /> : '—'}
 					sub={summary.bestIndustry1m?.industry}
 				/>
 				<StatTile
-					label="Worst industry · 30d"
+					label="Worst Industry · 30d"
 					value={summary.worstIndustry1m ? <Change value={summary.worstIndustry1m.priceChangePercentage1m!} /> : '—'}
 					sub={summary.worstIndustry1m?.industry}
 				/>
 				<StatTile
-					label="Under 0.1% of market"
+					label="Under 0.1% of Market"
 					value={summary.underPointOnePercentCount}
 					sub={`of ${summary.industryCount} · below ${formatMetric(summary.underPointOnePercentMarketCapThreshold, 'usd')}`}
 				/>
@@ -354,7 +354,7 @@ function IndustriesReadyPage({
 					title="Industry market map"
 					subtitle={`Top 20 by market cap${other.count ? ` · ${other.count} remaining grouped · ${other.underPointOnePercentCount} under 0.1%` : ''}`}
 					nodes={treemapNodes}
-					valueLabel="Market cap"
+					valueLabel="Market Cap"
 					controls={
 						<div className="flex flex-wrap gap-2">
 							<Button

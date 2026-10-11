@@ -162,7 +162,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.coreTvl, {
 		id: 'coreTvl',
-		header: 'Total excl. own tokens',
+		header: 'Total excl. Own Tokens',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {

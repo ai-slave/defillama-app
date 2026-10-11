@@ -108,7 +108,7 @@ const CRITERION_DRAWER_COPY: Record<string, Omit<UtrCriterionDrawerCopy, 'showMa
 	},
 	'performance:volume_mcap': {
 		navigationLabel: 'Trade Volume',
-		heading: 'Total volume (as % of market cap)',
+		heading: 'Total Volume (as % of Market Cap)',
 		definition:
 			'Aggregate 24h trading volume across all venues as a percentage of fully diluted market cap. Measures overall market activity from non-blacklisted exchanges relative to token size.'
 	},
@@ -120,13 +120,13 @@ const CRITERION_DRAWER_COPY: Record<string, Omit<UtrCriterionDrawerCopy, 'showMa
 	},
 	'performance:vwas': {
 		navigationLabel: 'Bid / Ask Spread',
-		heading: 'Bid / ask spread',
+		heading: 'Bid / Ask Spread',
 		definition:
 			'Volume-weighted average bid-ask spread across all active trading pairs, in basis points. Measures market efficiency and cost of execution on non-blacklisted exchanges.'
 	},
 	'performance:candle_win_rate_30d': {
 		navigationLabel: 'Price Performance',
-		heading: 'Price performance',
+		heading: 'Price Performance',
 		definition:
 			"Measures sustained buying pressure and market sentiment through daily candle direction over a trailing 30-day window. A green candle is any day where closing price > opening price. Intentionally isolated from BTC, ETH, or any altcoin index. The project's score reflects only its own market behavior, not macro conditions outside its control."
 	},
@@ -144,13 +144,13 @@ const CRITERION_DRAWER_COPY: Record<string, Omit<UtrCriterionDrawerCopy, 'showMa
 	},
 	'performance:mm_volume_pct': {
 		navigationLabel: 'MM Volume (as a % of total)',
-		heading: 'MM volume (as a % of total)',
+		heading: 'MM Volume (as a % of total)',
 		definition:
 			'Market maker-attributed fill volume as a percentage of total market fill volume across supported venues. Forgd collects market maker trade activity via API for projects utilizing its free-to-use Market Maker Monitoring tools.'
 	},
 	'performance:mm_depth_pct': {
 		navigationLabel: 'MM Depth (as a % of total)',
-		heading: 'MM depth (as a % of total)',
+		heading: 'MM Depth (as a % of total)',
 		definition:
 			'Market maker-attributed order book depth as a percentage of total market depth across supported venues. Forgd collects market maker trade activity via API for projects utilizing its free-to-use Market Maker Monitoring tools.'
 	},
@@ -162,37 +162,37 @@ const CRITERION_DRAWER_COPY: Record<string, Omit<UtrCriterionDrawerCopy, 'showMa
 	},
 	'performance:tier1_coverage': {
 		navigationLabel: 'Top-Tier Exchange Coverage',
-		heading: 'Top-tier exchange coverage',
+		heading: 'Top-Tier Exchange Coverage',
 		definition:
 			'Is the token listed and actively traded on at least one Tier-1 centralized exchange (Binance, Coinbase, OKX, Upbit)? How many Tier-1 venues are covered?'
 	},
 	'performance:cex_vs_dex_volume': {
 		navigationLabel: 'Total Volume (CEX vs DEX)',
-		heading: 'Total volume (CEX vs DEX)',
+		heading: 'Total Volume (CEX vs DEX)',
 		definition:
 			'Breakdown of total 24h trading volume between centralized and decentralized venues that are not blacklisted. Measures venue diversification and organic DEX demand signal.'
 	},
 	'performance:cex_vs_dex_depth': {
 		navigationLabel: 'Total Depth (CEX vs DEX)',
-		heading: 'Total depth (CEX vs DEX)',
+		heading: 'Total Depth (CEX vs DEX)',
 		definition:
 			'Order book and pool depth split between non-blacklisted CEX and DEX venues. Measures how resilient liquidity is. DEX liquidity is sticky; CEX liquidity can vanish faster.'
 	},
 	'performance:spot_vs_perps_volume': {
 		navigationLabel: 'Total Volume (Spot vs Perps)',
-		heading: 'Total volume (spot vs perps)',
+		heading: 'Total Volume (Spot vs Perps)',
 		definition:
 			'Breakdown of total volume between spot and perpetual/futures markets across non-blacklisted exchanges. Measures market maturity and the balance between hedging/speculative demand.'
 	},
 	'performance:spot_vs_perps_depth': {
 		navigationLabel: 'Total Depth (Spot vs Perps)',
-		heading: 'Total depth (spot vs perps)',
+		heading: 'Total Depth (Spot vs Perps)',
 		definition:
 			'Depth split between spot order books and perp/futures books of non-blacklisted exchanges. Measures whether price discovery is anchored in real asset transfers or primarily derivatives.'
 	},
 	'performance:vesting_actual_vs_disclosed': {
 		navigationLabel: 'Actual Token Vesting vs Disclosures',
-		heading: 'Actual token vesting vs disclosures',
+		heading: 'Actual Token Vesting vs Disclosures',
 		definition:
 			'Observed onchain token unlock events match the published vesting schedule. Measures disclosure accuracy and insider compliance with committed timelines.'
 	},
@@ -204,19 +204,19 @@ const CRITERION_DRAWER_COPY: Record<string, Omit<UtrCriterionDrawerCopy, 'showMa
 	},
 	'performance:mcap_vs_fdv': {
 		navigationLabel: 'Market Cap vs FDV',
-		heading: 'Market cap vs FDV',
+		heading: 'Market Cap vs FDV',
 		definition:
 			"Circulating market cap as a percentage of fully diluted valuation. Measures supply overhang - how much of the token's value is already circulating vs still locked and awaiting release."
 	},
 	'performance:annualized_inflation': {
 		navigationLabel: 'Annualized Rate of Inflation',
-		heading: 'Annualized rate of inflation',
+		heading: 'Annualized Rate of Inflation',
 		definition:
 			'New token supply entering circulation over the next 12 months as a percentage of current circulating supply. Measures dilution pressure on existing holders.'
 	},
 	'performance:buyback_burn': {
 		navigationLabel: 'Buyback & Burn Events',
-		heading: 'Buyback & burn events',
+		heading: 'Buyback & Burn Events',
 		definition:
 			'Measures buyback events and burn events (independently) relative to the amount of total supply that has been released.'
 	}

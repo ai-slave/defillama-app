@@ -349,7 +349,7 @@ function TokenMetrics({ overview }: { overview: TokenOverviewData }) {
 		<KeyMetricsPanel id="token-key-metrics">
 			{overview.marketData.mcap != null ? (
 				<MetricRow
-					label="Market cap"
+					label="Market Cap"
 					tooltip={MARKET_CAP_TOOLTIP}
 					value={formatUsd(overview.marketData.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 				/>

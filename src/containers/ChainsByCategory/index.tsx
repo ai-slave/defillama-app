@@ -231,7 +231,7 @@ export function ChainsByCategory({
 							<ChartExportButtons
 								chartInstance={chartInstance}
 								filename="chains-dominance"
-								title="Chains dominance"
+								title="Chains Dominance"
 								csvSource={selectedDominance.csvSource}
 							/>
 						</ChartPanelToolbar>

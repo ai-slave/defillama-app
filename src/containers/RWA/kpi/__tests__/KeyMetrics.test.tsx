@@ -105,11 +105,11 @@ describe('RWAKeyMetrics', () => {
 			['DeFi Active TVL', 100_000],
 			['DeFi Active TVL change (24h) %', 1.0101010101010102],
 			['Utilization %', 12.5],
-			['Largest protocol', 'Aave'],
-			['Largest protocol DeFi Active TVL', 100_000],
+			['Largest Protocol', 'Aave'],
+			['Largest Protocol DeFi Active TVL', 100_000],
 			['RWA Perps OI', 5000],
 			['RWA Perps OI change (24h) %', 25],
-			['DEX share %', 100],
+			['DEX Share %', 100],
 			['Perps volume (24h)', 1000]
 		]
 		expect(rows).toEqual(expected)

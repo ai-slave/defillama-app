@@ -105,7 +105,7 @@ export default function Mandates() {
 					)}
 				</LedgerTile>
 				<LedgerTile
-					label="Deployed onchain"
+					label="Deployed Onchain"
 					value={data ? (data.deployedOnchain ?? '—') : undefined}
 					sub="Cumulative across all mandates, since inception"
 					subRef={data?.deploymentRef}
@@ -116,7 +116,7 @@ export default function Mandates() {
 				{/* Dollars actually earned above benchmark, so it can be negative — and the
 				    caption has to say what window produced it. */}
 				<LedgerTile
-					label="Annual excess return"
+					label="Annual Excess Return"
 					value={data ? usdSignedFromMillions(data.totals.excess) : undefined}
 					valueClass={data ? signClass(data.totals.excess) : undefined}
 					sub={data ? earnedWindowLine(excessWindow) : undefined}
@@ -287,15 +287,15 @@ export default function Mandates() {
 									</span>
 								)
 							},
-							{ key: 'usd', label: 'USD mix & alpha', right: true, render: (row) => <SleeveCell sleeve={row.usd} /> },
-							{ key: 'eth', label: 'ETH mix & alpha', right: true, render: (row) => <SleeveCell sleeve={row.eth} /> },
+							{ key: 'usd', label: 'USD Mix & Alpha', right: true, render: (row) => <SleeveCell sleeve={row.usd} /> },
+							{ key: 'eth', label: 'ETH Mix & Alpha', right: true, render: (row) => <SleeveCell sleeve={row.eth} /> },
 							{
 								key: 'excess',
-								label: 'Annual excess return',
+								label: 'Annual Excess Return',
 								right: true,
 								render: (row) => <span className={signClass(row.excess)}>{usdSignedFromMillions(row.excess)}</span>
 							},
-							{ key: 'since', label: 'Managed since', right: true },
+							{ key: 'since', label: 'Managed Since', right: true },
 							{
 								key: 'url',
 								label: '',

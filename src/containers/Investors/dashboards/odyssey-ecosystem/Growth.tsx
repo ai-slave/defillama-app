@@ -285,7 +285,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Active accounts"
+								title="Active Accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.activeAccounts}
@@ -302,7 +302,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Active positions"
+								title="Active Positions"
 								subtitle="Combined open positions"
 								headingAs="h3"
 								dataset={looprTotalDatasets.activePositions}
@@ -323,7 +323,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Cumulative accounts"
+								title="Cumulative Accounts"
 								subtitle="Owner-deduped across chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.cumulativeAccounts}
@@ -340,7 +340,7 @@ export default function Growth() {
 					) : (
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="Cumulative positions"
+								title="Cumulative Positions"
 								subtitle="Across all chains"
 								headingAs="h3"
 								dataset={looprTotalDatasets.cumulativePositions}
@@ -357,7 +357,7 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainModels?.activeUsers && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active users by chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Users by chain</ChartPanelTitle>} />
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activeUsers.dataset}
@@ -371,7 +371,7 @@ export default function Growth() {
 				)}
 				{perChainModels?.activePositions && (
 					<Panel>
-						<ChartPanelToolbar leading={<ChartPanelTitle>Active positions by chain</ChartPanelTitle>} />
+						<ChartPanelToolbar leading={<ChartPanelTitle>Active Positions by chain</ChartPanelTitle>} />
 						<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
 							<MultiSeriesChart
 								dataset={perChainModels.activePositions.dataset}
@@ -443,13 +443,13 @@ export default function Growth() {
 				</>
 			) : null}
 
-			<h2 className="heading-xs">Token prices</h2>
+			<h2 className="heading-xs">Token Prices</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{tokenPriceDatasets.met.source.length > 0 && (
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="MET price"
+								title="MET Price"
 								subtitle="Metronome governance token"
 								headingAs="h3"
 								dataset={tokenPriceDatasets.met}
@@ -464,7 +464,7 @@ export default function Growth() {
 					<Panel>
 						<Suspense fallback={<ChartPanelExportShellLoading />}>
 							<MultiSeriesChart
-								title="VSP price"
+								title="VSP Price"
 								subtitle="Vesper governance token"
 								headingAs="h3"
 								dataset={tokenPriceDatasets.vsp}
@@ -479,7 +479,7 @@ export default function Growth() {
 
 			{marketComboModel && (
 				<>
-					<h2 className="heading-xs">Ecosystem TVL change vs ETH (cumulative)</h2>
+					<h2 className="heading-xs">Ecosystem TVL Change vs ETH (cumulative)</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={
@@ -503,7 +503,7 @@ export default function Growth() {
 
 			{morphoMarketModel && (
 				<>
-					<h2 className="heading-xs">Morpho market · Supply / borrow / utilization</h2>
+					<h2 className="heading-xs">Morpho market · Supply / Borrow / Utilization</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={
@@ -555,7 +555,7 @@ export default function Growth() {
 
 			{spendVsTvl && (
 				<>
-					<h2 className="heading-xs">Incentive spend vs pool TVL · Efficiency</h2>
+					<h2 className="heading-xs">Incentive Spend vs Pool TVL · Efficiency</h2>
 					<Panel>
 						<ChartPanelToolbar
 							leading={

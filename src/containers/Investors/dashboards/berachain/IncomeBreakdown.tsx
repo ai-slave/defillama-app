@@ -144,7 +144,7 @@ export default function IncomeBreakdown() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* HONEY Revenue Section */}
-			<h2 className="heading-xs">HONEY backing yield revenue</h2>
+			<h2 className="heading-xs">HONEY Backing Yield Revenue</h2>
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
 				{isHoneyLoading || !honeyRevenue ? (
 					<>
@@ -206,7 +206,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Cumulative revenue (all sources)"
+							title="Cumulative Revenue (all sources)"
 							headingAs="h3"
 							dataset={totalRevenue.cumulative}
 							charts={TOTAL_REVENUE_CHARTS}
@@ -244,7 +244,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Cumulative chain fees"
+							title="Cumulative Chain Fees"
 							headingAs="h3"
 							dataset={berachain.chainFeesCumulative}
 							charts={CHAIN_FEES_CHART}
@@ -278,7 +278,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Monthly revenue"
+							title="Monthly Revenue"
 							headingAs="h3"
 							{...bex.monthly}
 							charts={BEX_MONTHLY_CHART}
@@ -296,7 +296,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Cumulative revenue"
+							title="Cumulative Revenue"
 							headingAs="h3"
 							dataset={bex.cumulative}
 							charts={BEX_CUMULATIVE_CHART}
@@ -349,7 +349,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Cumulative fees"
+							title="Cumulative Fees"
 							headingAs="h3"
 							dataset={bend.feesCumulative}
 							charts={BEND_FEES_CHART}
@@ -367,7 +367,7 @@ export default function IncomeBreakdown() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="Cumulative revenue"
+							title="Cumulative Revenue"
 							headingAs="h3"
 							dataset={bend.revenueCumulative}
 							charts={BEND_REVENUE_CHART}

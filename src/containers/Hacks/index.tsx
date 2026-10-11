@@ -271,7 +271,7 @@ const hacksColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
 		id: 'amountUsd',
-		header: 'Amount lost',
+		header: 'Amount Lost',
 		cell: (info) => {
 			const value = info.getValue()
 			return value === undefined ? (

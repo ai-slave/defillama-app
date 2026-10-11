@@ -107,16 +107,16 @@ async function mountFiltered() {
 describe('RWAPerpsCards', () => {
 	test('draws Open Interest by Asset Group with the Key Metrics total, Change by Venue and the 7 day volume line', () => {
 		const text = render()
-		expect(text).toContain('Open interest by asset group $5m')
+		expect(text).toContain('Open Interest by asset group $5m')
 		expect(text).toContain('Change by venue')
 		expect(text).toMatch(/Volume, 7 day average \$7m a day \+250(\.00)?% over a week/)
-		expect(text).not.toContain('RWA perps open interest')
+		expect(text).not.toContain('RWA Perps Open Interest')
 		expect(text).toContain('Commodities')
 	})
 
 	test('follows Venue Type DEX only: the asset groups, the server split variant and the DEX daily volume', () => {
 		const text = render({ includeCex: false })
-		expect(text).toContain('Open interest by asset group $2m')
+		expect(text).toContain('Open Interest by asset group $2m')
 		expect(text).not.toContain('Commodities')
 		expect(text).toContain('Lighter')
 		expect(text).not.toContain('Binance')
@@ -148,7 +148,7 @@ describe('RWAPerpsCards', () => {
 		const { card } = await mountFiltered()
 		await waitForUi(() => expect(alertTexts(card('Change by venue'))).toHaveLength(1))
 		expect(alertTexts(card('Volume, 7 day average'))).toHaveLength(1)
-		expect(card('Open interest by asset group').textContent).toContain('$5m')
+		expect(card('Open Interest by asset group').textContent).toContain('$5m')
 
 		http.serve({ [CONTRACT_BREAKDOWN]: () => history })
 		const retry = [...card('Change by venue').querySelectorAll('button')].find(

@@ -23,7 +23,7 @@ import { Tooltip } from '~/ui/Tooltip'
    (FilterBrowser, with a search from 12); the other holds an
    ActiveFilterCard per added filter around the page's own editor. Below sm
    the panes stack, the active filters first. Number editors use
-   FilterNumberInput, which names each field ("Market cap minimum").
+   FilterNumberInput, which names each field ("Market Cap minimum").
 
    The caller owns its draft: render a session component as the child and
    build its `useState` from the applied filters. Each opening remounts the
@@ -359,7 +359,7 @@ export function FilterNumberInput({
 	prefix,
 	suffix
 }: {
-	/** The accessible name, such as "Market cap minimum"; the placeholder is only an example. */
+	/** The accessible name, such as "Market Cap minimum"; the placeholder is only an example. */
 	label: string
 	value: string
 	onChange: (value: string) => void

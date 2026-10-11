@@ -121,7 +121,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				])
 				break
 			case 'borrow-apy':
-				headers = ['Date', 'Base cost', 'Reward offset', 'Intrinsic']
+				headers = ['Date', 'Base Cost', 'Reward Offset', 'Intrinsic']
 				rows = currentChartDataset.source.map((point, pointIndex) => [
 					formatPointDate(point, pointIndex),
 					point[1] ?? '',
@@ -137,7 +137,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				])
 				break
 			case 'net-borrow-apy':
-				headers = ['Date', 'Net borrow cost']
+				headers = ['Date', 'Net Borrow Cost']
 				rows = currentChartDataset.source.map((point, pointIndex) => [
 					formatPointDate(point, pointIndex),
 					point[1] ?? ''

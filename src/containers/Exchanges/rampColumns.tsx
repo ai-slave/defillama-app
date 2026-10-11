@@ -83,7 +83,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.accessor((row) => row.roundTripUsd ?? undefined, {
 			id: 'roundTrip',
-			header: 'Round trip',
+			header: 'Round Trip',
 			cell: ({ row }) => <RampRoundTripValue row={row.original} size={size} />,
 			meta: {
 				headerClassName: 'min-w-[120px] whitespace-nowrap',
@@ -94,7 +94,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.accessor((row) => row.cost?.onRamp.totalUsd ?? undefined, {
 			id: 'onRamp',
-			header: 'On-ramp',
+			header: 'On-Ramp',
 			cell: ({ row }) => <RampLegValue row={row.original} direction="onRamp" size={size} />,
 			meta: {
 				headerClassName: 'min-w-[120px] whitespace-nowrap',
@@ -105,7 +105,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.accessor((row) => row.cost?.offRamp.totalUsd ?? undefined, {
 			id: 'offRamp',
-			header: 'Off-ramp',
+			header: 'Off-Ramp',
 			cell: ({ row }) => <RampLegValue row={row.original} direction="offRamp" size={size} />,
 			meta: {
 				headerClassName: 'min-w-[120px] whitespace-nowrap',
@@ -116,7 +116,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.accessor((row) => row.tradeCostUsd ?? undefined, {
 			id: 'tradeCost',
-			header: 'Cost to trade',
+			header: 'Cost to Trade',
 			cell: ({ row }) => <RampTradeValue row={row.original} size={size} />,
 			meta: {
 				headerClassName: 'min-w-[120px] whitespace-nowrap',
@@ -127,7 +127,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.display({
 			id: 'rails',
-			header: 'Fiat rails',
+			header: 'Fiat Rails',
 			cell: ({ row }) => <FiatFeesValue name={row.original.name} fees={row.original.variant.rails} />,
 			meta: {
 				headerClassName: 'min-w-[110px] whitespace-nowrap',
@@ -138,7 +138,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 		}),
 		columnHelper.display({
 			id: 'cryptoRails',
-			header: 'Crypto rails',
+			header: 'Crypto Rails',
 			cell: ({ row }) => <CryptoRailsValue name={row.original.name} rails={row.original.variant.cryptoRails} />,
 			meta: {
 				headerClassName: 'min-w-[116px] whitespace-nowrap',
@@ -152,7 +152,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 			(row) => (row.variant.fiatCurrencies.length > 0 ? row.variant.fiatCurrencies.length : undefined),
 			{
 				id: 'currencies',
-				header: 'Fiat ccy',
+				header: 'Fiat Ccy',
 				cell: ({ row }) => <RampCurrenciesValue row={row.original} currency={currency} />,
 				meta: {
 					headerClassName: 'min-w-[90px] whitespace-nowrap',

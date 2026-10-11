@@ -196,13 +196,23 @@ Named styles live in [`src/styles/typography.css`](src/styles/typography.css). E
 
 `mono-*` is JetBrains Mono; every other style is Inter. The families are Tailwind's `--font-mono` and `--font-sans`, so the app has one name for each.
 
-- Use sentence case for UI text: titles, headings, tabs, buttons, menu items, labels and tooltips capitalize only the first word and proper nouns ("Delete project"). Brands, products and named features keep their capitals (LlamaAI, Pro, External Data Balance), and so do third-party button names ("Add to Slack").
-- Sign in / Sign out, never Log in or Logout.
-- Headings are sentence case too: `h1`–`h3`, `PanelTitle`, `ChartPanelTitle` and the `heading` or `title` of a panel, card, dialog, section or drawer, on partner dashboards as well ("Top movers", "Change by chain"). A heading that is a metric name keeps the metric's spelling ("DEXs Volume"). SEO `<title>` and meta strings keep their own case.
-- Write "onchain" and "offchain", closed and lowercase mid-sentence ("Onchain" only at the start of a sentence or label). "cross-chain" keeps its hyphen.
-- A period inside a name is lowercase ("Fees 24h", "Price change 7d", "Fees 1y"); a label that is only a period, such as a range-picker segment or a bare period column in a set like 1D 1W 1M YTD 1Y, stays uppercase. A month inside a name is "30d", never "1m".
-- Write "Market cap" in headings, tooltips, cards, chart titles and prose. "Mcap" is only for compound metric names (Mcap/TVL, FDV/Mcap) and narrow table column headers; never "MCap" or "Marketcap". The stablecoin metric is "Stablecoins market cap". Write "DEXs", "X/Twitter", "vs" and "Avg" without a period.
-- Metric and column names keep their spelling ("Total Value Locked", "DEX Volume (24h)"), because the same names head CSV exports and feed search; the sentence around one still follows sentence case. Names from data show as the data spells them.
+- Capitalization, decided in this order. The test for a metric name: does the text label a number, a series or a column of values shown with it? A table or panel title does not, even when its columns are metric names, so "Protocol rankings" is a phrase over "Market Cap" and "Fees 30d" columns.
+  1. **A metric name is Title Case** wherever it labels a value: Key Metrics rows, KPI and stat tiles, table column headers, CSV headers, chart titles and legends that name a metric, series names, metric pickers and filter labels. One metric has one spelling in all of them, because the same names head CSV exports and feed search.
+  2. **A phrase is sentence case**: buttons, menu items, tabs, tooltips, empty states, and headings or chart titles that are phrases rather than a metric. A metric inside a phrase keeps its capitals.
+  3. **In a sentence a metric is lowercase**, prose and tooltip text included.
+  4. Brands, products, named features and third-party button names keep their own capitals (LlamaAI, Pro, External Data Balance, "Add to Slack"). Names from data show as the data spells them. SEO `<title>` and meta strings keep their own case.
+
+  | What the text is                                                         | Case                                     | Example                                                          |
+  | ------------------------------------------------------------------------ | ---------------------------------------- | ---------------------------------------------------------------- |
+  | A metric naming a value (row, tile, column, chart title, legend, picker) | Title Case                               | "Stablecoins Market Cap", "DEXs Volume (24h)", "Monthly Revenue" |
+  | A phrase (heading, chart title, button, menu item, tab)                  | Sentence case                            | "Protocol rankings", "Top movers", "Delete project"              |
+  | A table or panel title over metric columns                               | Sentence case                            | "Protocol rankings" over "Market Cap", "Fees 30d"                |
+  | A phrase containing a metric                                             | Sentence case, metric keeps its capitals | "Swap Volume by chain", "Active Loans by chain"                  |
+  | A sentence (prose, tooltip text)                                         | Lowercase metric                         | "Sum of the market cap of all stablecoins"                       |
+
+- "Market Cap" is the metric; prose says "market cap". "Mcap" is only for compound metric names (Mcap/TVL, FDV/Mcap), narrow table column headers and compact filter buttons; never "MCap" or "Marketcap". A label that is also a key (a chart label the URL or server search reads, a dataset dimension) keeps its spelling until the key and the label are split.
+- A period inside a name is lowercase ("Fees 24h", "DEXs Volume (24h)", "Fees 1y"); a label that is only a period, such as a range-picker segment or a bare period column in a set like 1D 1W 1M YTD 1Y, stays uppercase. A month inside a name is "30d", never "1m".
+- Sign in / Sign out, never Log in or Logout. Write "onchain" and "offchain", closed and lowercase mid-sentence ("Onchain" only at the start of a sentence or label); "cross-chain" keeps its hyphen. Write "DEXs", "X/Twitter", "vs" and "Avg" without a period.
 - Interactive text (buttons, pills, selects, menu rows) is 12px minimum. Card body and data rows are 14px. 10px (`label-xs`, `body-xs`) is only for non-interactive metadata, such as eyebrow headers and count badges.
 - Mono is never used in table cells. It sets only headline and summary values (Key Metrics, summary cards, stat strips, `HeroMetric`) and code, addresses and hashes.
 - Words are always Inter, even inside a mono value: a unit or an annotation beside a mono number takes a named Inter style, and a number inside a sentence follows the sentence.

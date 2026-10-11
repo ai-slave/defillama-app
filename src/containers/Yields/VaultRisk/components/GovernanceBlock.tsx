@@ -270,7 +270,7 @@ export function GovernanceBlock({
 
 			<div className="flex flex-col divide-y divide-(--border-subtle) border-t border-subtle pt-1">
 				{g?.contract ? (
-					<LabelValueRow label="Governance contract">
+					<LabelValueRow label="Governance Contract">
 						<AddressActions
 							address={g.contract}
 							url={explorerUrl(g.contract, g.chain, explorers)}
@@ -279,7 +279,7 @@ export function GovernanceBlock({
 					</LabelValueRow>
 				) : null}
 				{concentration != null ? (
-					<LabelValueRow label="Top-10 voter concentration">
+					<LabelValueRow label="Top-10 Voter Concentration">
 						<span className="inline-flex items-center gap-2">
 							<span className="h-1.5 w-16 overflow-hidden rounded-full bg-surface" aria-hidden>
 								<span
@@ -310,7 +310,7 @@ export function GovernanceBlock({
 					</LabelValueRow>
 				) : null}
 				{g?.quorum_min != null && g.quorum_min > 0 ? (
-					<LabelValueRow label="Quorum to pass">
+					<LabelValueRow label="Quorum to Pass">
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-1.5 gap-y-0.5">
 							<Definition
 								content="Voting power a proposal needs before it can execute — the bar a captured or concentrated voter base would have to clear."
@@ -342,7 +342,7 @@ export function GovernanceBlock({
 					</LabelValueRow>
 				) : null}
 				{timelock ? (
-					<LabelValueRow label="Governance timelock">
+					<LabelValueRow label="Governance Timelock">
 						<span className={toneClasses('good').text}>{timelock} to exit</span>
 					</LabelValueRow>
 				) : null}
@@ -361,7 +361,7 @@ export function GovernanceBlock({
 					</LabelValueRow>
 				) : null}
 				{g?.voting_token?.symbol ? (
-					<LabelValueRow label="Voting token">
+					<LabelValueRow label="Voting Token">
 						<span className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
 							<span className="inline-flex items-center gap-1.5">
 								{g.voting_token.address ? (

@@ -215,7 +215,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>Funding rates (annualized) — top 20 by OI</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle>Funding Rates (annualized) — top 20 by OI</ChartPanelTitle>} />
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" style={{ minHeight: height }} />}>
 				<HBarChart
 					categories={sorted.map((d) => d.name)}
@@ -452,7 +452,7 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 
 	return (
 		<Panel>
-			<ChartPanelToolbar leading={<ChartPanelTitle>Open interest distribution</ChartPanelTitle>} />
+			<ChartPanelToolbar leading={<ChartPanelTitle>Open Interest distribution</ChartPanelTitle>} />
 			{/* A side tile beside the scatter, so the donut keeps its own height rather than the 360 body floor. */}
 			<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" className="min-h-[400px]" />}>
 				<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
@@ -480,7 +480,7 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	return (
 		<Panel>
 			<ChartPanelToolbar
-				leading={<ChartPanelTitle>Volume vs open interest (bubble size = funding magnitude)</ChartPanelTitle>}
+				leading={<ChartPanelTitle>Volume vs Open Interest (bubble size = funding magnitude)</ChartPanelTitle>}
 			/>
 			<ChartPanelBody>
 				<Suspense fallback={<SurfaceBodyLoadingStatus label="Loading chart" />}>
@@ -518,7 +518,7 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 
 	return (
 		<Card padding="md">
-			<h3 className="mb-3 label-md text-secondary">Predicted funding rates (annualized) — HL vs CEXs</h3>
+			<h3 className="mb-3 label-md text-secondary">Predicted Funding Rates (annualized) — HL vs CEXs</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</Card>

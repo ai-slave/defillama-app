@@ -53,7 +53,7 @@ describe('SQL chart tooltip HTML boundaries', () => {
 
 	test('escapes grouped treemap labels in the narrative formatter', () => {
 		const html = formatNarrativeTreemapTooltip([{ name: 'All' }, { name: 'Group' }, { name: LABEL }], [7, 0, 0])
-		expect(expectLabelIsText(html).textContent).toBe(`${LABEL}Return: 0%Market cap: $7`)
+		expect(expectLabelIsText(html).textContent).toBe(`${LABEL}Return: 0%Market Cap: $7`)
 	})
 
 	test('preserves encoded-looking labels as literal text without double decoding', () => {

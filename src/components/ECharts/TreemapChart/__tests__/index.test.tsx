@@ -43,7 +43,7 @@ test('hovering a narrative token shows its name, return and market cap in the to
 	await act(async () => instance.dispatchAction({ type: 'showTip', seriesIndex: 0, name: 'Render' }))
 
 	// The canvas draws the boxes, so the tooltip is the only text in the chart.
-	expect(container.textContent).toBe('RenderReturn: 12.5%Market cap: $2.5b')
+	expect(container.textContent).toBe('RenderReturn: 12.5%Market Cap: $2.5b')
 })
 
 test('hovering a flat tile shows its name and value with the value label and symbol', async () => {

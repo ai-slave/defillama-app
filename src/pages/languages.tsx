@@ -122,7 +122,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceCharts, osDa
 			<LanguageSeriesChart
 				dataset={tvlDataset}
 				charts={dominanceCharts}
-				title="TVL dominance"
+				title="TVL Dominance"
 				label="Language"
 				expandTo100Percent
 			/>

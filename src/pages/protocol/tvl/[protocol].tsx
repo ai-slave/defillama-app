@@ -415,7 +415,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{usdInflowsDataset ? (
 						<USDInflowsChartCard
-							title="USD inflows"
+							title="USD Inflows"
 							dataset={usdInflowsDataset}
 							exportFilenameBase={buildFilename('usd-inflows')}
 							exportTitle={props.name}

@@ -154,7 +154,7 @@ describe('tokens treemap export', () => {
 		expect(prepareTokensTreemapCsv({ leaves: treemap.leaves, colorWindow: '24h', filename: 'tokens' })).toEqual({
 			filename: 'tokens',
 			rows: [
-				['Token', 'Name', 'Market Cap', 'Price 24H'],
+				['Token', 'Name', 'Market Cap', 'Price 24h'],
 				['BTC', 'Bitcoin', 100, 2]
 			]
 		})

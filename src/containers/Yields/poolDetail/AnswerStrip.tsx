@@ -32,7 +32,7 @@ export function apyParts(apy: ApyBreakdown, kind: ApyKind): Array<ApyPart> {
 	if (apy.base != null) {
 		parts.push({
 			key: 'base',
-			label: kind === 'borrow' ? 'Base cost' : 'Base',
+			label: kind === 'borrow' ? 'Base Cost' : 'Base',
 			value: formatPercent(apy.base, YIELD_PERCENT_OPTIONS),
 			strong: false
 		})

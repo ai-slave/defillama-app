@@ -201,9 +201,9 @@ export default function Financials() {
 
 			{!affiliate && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Affiliate fees</h2>
+					<h2 className="heading-xs">Affiliate Fees</h2>
 					<PlaceholderCard
-						title="Affiliate fees"
+						title="Affiliate Fees"
 						subtitle="Affiliate fee feed unavailable."
 						note="raynalytics daily-affiliate-fees"
 					/>
@@ -211,7 +211,7 @@ export default function Financials() {
 			)}
 			{affiliate && (
 				<section className="flex flex-col gap-6">
-					<h2 className="heading-xs">Affiliate fees</h2>
+					<h2 className="heading-xs">Affiliate Fees</h2>
 					{/* "Included in total fees" lives in the (i) tooltip, not a second header. */}
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
 						<Kpi kpi={affiliate.kpis.affiliateLifetime} label="Lifetime" def={defs.affiliateFees} />

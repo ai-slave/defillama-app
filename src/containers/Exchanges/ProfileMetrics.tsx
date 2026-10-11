@@ -255,7 +255,7 @@ export function ProfileMetrics({
 				))}
 				{profile.nativeToken ? (
 					<MetricRow
-						label="Native token"
+						label="Native Token"
 						className="items-center"
 						value={
 							<BasicLink

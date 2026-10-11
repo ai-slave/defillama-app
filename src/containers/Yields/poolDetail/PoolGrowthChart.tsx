@@ -510,7 +510,7 @@ function GrowthReadout({
 				</ReadoutCell>
 			) : null}
 			{total ? (
-				<ReadoutCell label="Total return">
+				<ReadoutCell label="Total Return">
 					<span className="mono-xl">
 						<Change value={total.returnPct} />
 					</span>
@@ -553,7 +553,7 @@ function GrowthReadout({
 			) : null}
 			{showDrawdown ? (
 				<ReadoutCell
-					label="Worst drawdown"
+					label="Worst Drawdown"
 					hint={`Deepest fall from a previous high: peak ${isoDay(drawdown.peakDate)}, low ${isoDay(
 						drawdown.troughDate
 					)}. ${drawdown.recovered ? 'The value has since made the dip back.' : 'The value is still below that peak.'}`}

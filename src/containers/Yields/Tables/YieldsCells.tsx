@@ -431,7 +431,7 @@ export function TotalApyCell({
 	const symbols = (rewardSymbols ?? []).filter(Boolean)
 
 	const tipRows: Array<SignedTipRow> = []
-	const baseLabel = kind === 'borrow' ? 'Base cost' : 'Base'
+	const baseLabel = kind === 'borrow' ? 'Base Cost' : 'Base'
 	// Inside a breakdown the base line always shows: a null base contributes 0.00% to the
 	// served total, and the rows must visibly sum to it. (The cell value itself keeps the
 	// null-renders-empty contract — these rows only exist when the total exists.)

@@ -242,7 +242,7 @@ export default function Revenue() {
 			</div>
 
 			{/* 1 · Claimed revenue */}
-			<h2 className="heading-xs">Claimed revenue · Last 30 days</h2>
+			<h2 className="heading-xs">Claimed Revenue · Last 30 days</h2>
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
 				{data ? (
 					<>
@@ -395,8 +395,8 @@ export default function Revenue() {
 				)}
 			</Panel>
 
-			<h2 className="heading-xs">Treasury LP positions · Pending rewards</h2>
-			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>
+			<h2 className="heading-xs">Treasury LP positions · Pending Rewards</h2>
+			<SubSectionCard title="Staked LP Gauge Rewards" total={lpTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => row.pool}
 					rows={up.treasuryLps}
@@ -410,7 +410,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<h2 className="heading-xs">UniV3 concentrated liquidity · Unclaimed fees</h2>
+			<h2 className="heading-xs">UniV3 concentrated liquidity · Unclaimed Fees</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SubSectionCard title="Ethereum UniV3" total={ethUniv3Total}>
 					<SimpleTable
@@ -438,7 +438,7 @@ export default function Revenue() {
 				</SubSectionCard>
 			</div>
 
-			<h2 className="heading-xs">Gauge & lock rewards</h2>
+			<h2 className="heading-xs">Gauge & Lock Rewards</h2>
 			<SubSectionCard title="veAERO locks (Base)" total={veAeroTotal}>
 				<SimpleTable
 					getOccurrenceKey={(row) => String(row.nft)}
@@ -481,7 +481,7 @@ export default function Revenue() {
 				/>
 			</SubSectionCard>
 
-			<h2 className="heading-xs">Convex vlCVX · Vote-locked rewards</h2>
+			<h2 className="heading-xs">Convex vlCVX · Vote-Locked Rewards</h2>
 			<SubSectionCard title="vlCVX claimable" subtitle={`Claimable rewards total ${fmtUsd(convexClaimable)}.`}>
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
@@ -496,9 +496,9 @@ export default function Revenue() {
 			</SubSectionCard>
 
 			{/* Synth interest — informational, not in pipeline total */}
-			<h2 className="heading-xs">Synth interest · Borrower-side accrual</h2>
+			<h2 className="heading-xs">Synth Interest · Borrower-side accrual</h2>
 			<SubSectionCard
-				title="Outstanding synth debt"
+				title="Outstanding Synth Debt"
 				subtitle={`Est. ${fmtUsd(synthDaily)} per day · ${fmtUsd(synthMonthly)} per month`}
 			>
 				<div className="flex flex-col gap-4">

@@ -58,11 +58,11 @@ describe('Pro Yields V2 chart transforms', () => {
 				source: [[Date.UTC(2026, 0, 2), 4]]
 			},
 			'borrow-apy': {
-				dimensions: ['timestamp', 'Base cost', 'Reward offset', 'Intrinsic'],
+				dimensions: ['timestamp', 'Base Cost', 'Reward Offset', 'Intrinsic'],
 				source: [[Date.UTC(2026, 0, 2), 6, -1, null]]
 			},
 			'net-borrow-apy': {
-				dimensions: ['timestamp', 'Net borrow cost'],
+				dimensions: ['timestamp', 'Net Borrow Cost'],
 				source: [[Date.UTC(2026, 0, 2), 5]]
 			}
 		} as const

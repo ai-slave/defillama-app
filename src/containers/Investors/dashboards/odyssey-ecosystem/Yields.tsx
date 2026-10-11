@@ -54,7 +54,7 @@ export default function Yields() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Odyssey Loopr · Per-strategy max APY</h2>
+			<h2 className="heading-xs">Odyssey Loopr · Per-strategy Max APY</h2>
 			<ChartCard title="Live strategies" subtitle="Collateral / borrow APY per pool (snapshot)">
 				<SimpleTable
 					getOccurrenceKey={(row) => JSON.stringify([row.name, row.chain, row.collateral, row.borrow])}

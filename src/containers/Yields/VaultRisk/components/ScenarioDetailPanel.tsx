@@ -132,7 +132,7 @@ function LossBox({
 				<p className="body-sm text-secondary">Modeled loss</p>
 				<p className="mt-1 heading-sm text-secondary">Not quantified</p>
 				<div className="mt-3 border-t border-subtle pt-3">
-					<StatRow label="Exit window" value={exit} />
+					<StatRow label="Exit Window" value={exit} />
 				</div>
 			</Card>
 		)
@@ -174,10 +174,10 @@ function LossBox({
 							muted={a.lossUsd <= 0}
 						/>
 					))}
-					<StatRow label="Worst case" value={worstValue} active={stress === 'worst'} />
+					<StatRow label="Worst Case" value={worstValue} active={stress === 'worst'} />
 				</div>
 				<div className="mt-3 border-t border-subtle pt-3">
-					<StatRow label="Exit window" value={exit} />
+					<StatRow label="Exit Window" value={exit} />
 				</div>
 				{cappedNote}
 				{positionNote}
@@ -198,11 +198,11 @@ function LossBox({
 			/>
 			{!worstOnly ? (
 				<div className="mt-3 border-t border-subtle pt-3">
-					<StatRow label="Worst case" value={worstValue} />
+					<StatRow label="Worst Case" value={worstValue} />
 				</div>
 			) : null}
 			<div className="mt-3 border-t border-subtle pt-3">
-				<StatRow label="Exit window" value={exit} />
+				<StatRow label="Exit Window" value={exit} />
 			</div>
 			{cappedNote}
 			{positionNote}

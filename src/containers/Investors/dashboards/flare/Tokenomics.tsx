@@ -110,12 +110,12 @@ export default function Tokenomics() {
 
 			{inf && (
 				<>
-					<h2 className="heading-xs">Inflation & supply</h2>
+					<h2 className="heading-xs">Inflation & Supply</h2>
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 						<StatTile label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
 						<StatTile label="Circulating Supply" value={inf.kpis.circulatingSupply} />
 						<StatTile
-							label="Onchain burned (total)"
+							label="Onchain Burned (Total)"
 							value={inf.kpis.cumulativeOnchainBurned}
 							tooltip="All onchain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
 						/>
@@ -198,7 +198,7 @@ export default function Tokenomics() {
 				</>
 			)}
 
-			<h2 className="heading-xs">FLR transaction burn</h2>
+			<h2 className="heading-xs">FLR Transaction Burn</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<StatTile label="Latest Daily" value={bk.latestDailyBurn} />
 				<StatTile label="Burn 7d" value={bk.burn7d} />
@@ -261,7 +261,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</Panel>
 
-			<h2 className="heading-xs">FLR emissions</h2>
+			<h2 className="heading-xs">FLR Emissions</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 				{maxSupplyQuery.data != null && <StatTile label="Max Supply" value={maxSupplyQuery.data} />}
 				<StatTile label="Latest Epoch Emit" value={ek.latestEpochEmit} />
@@ -284,7 +284,7 @@ export default function Tokenomics() {
 				</Suspense>
 			</Panel>
 
-			<h2 className="heading-xs">Burn vs emit & net inflation</h2>
+			<h2 className="heading-xs">Burn vs Emit & Net Inflation</h2>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<StatTile
 					label="Burn / Emit (latest)"

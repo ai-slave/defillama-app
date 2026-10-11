@@ -423,7 +423,7 @@ export function PeggedAssetInfo({
 					</EntityTitleRow>
 
 					<p className="flex flex-col">
-						<span className="label-md text-secondary">Market cap</span>
+						<span className="label-md text-secondary">Market Cap</span>
 						<span className="min-h-8 mono-xl">
 							{displayedMarketCap == null
 								? 'N/A'

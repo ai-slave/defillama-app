@@ -58,7 +58,7 @@ export function RWAPerpsCards({ cards, markets, kpi, filtered, includeCex }: RWA
 	return (
 		<div className="grid grid-cols-1 gap-2 md:grid-cols-3">
 			<SmolStatCard
-				title="Open interest by asset group"
+				title="Open Interest by asset group"
 				tooltip={`${perpsDefinitions.totalOpenInterest.description} Split by the asset group of each market's underlying.`}
 				value={kpi.openInterest == null ? null : formatRwaKpiUsd(kpi.openInterest)}
 			>

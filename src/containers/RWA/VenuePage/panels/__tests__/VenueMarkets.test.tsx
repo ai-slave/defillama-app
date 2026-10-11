@@ -9,7 +9,7 @@ function maxLeverageText(leverages: Array<number>): string {
 	const text = renderToStaticMarkup(<VenueMarketsPanel summary={summary} />)
 		.replace(/<[^>]+>/g, ' ')
 		.replace(/\s+/g, ' ')
-	return text.match(/Max leverage (.+?x(?: to .+?x)?) /)?.[1] ?? ''
+	return text.match(/Max Leverage (.+?x(?: to .+?x)?) /)?.[1] ?? ''
 }
 
 test('formats the max leverage range as the table cell does', () => {

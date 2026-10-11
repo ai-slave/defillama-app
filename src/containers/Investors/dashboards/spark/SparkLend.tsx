@@ -350,7 +350,7 @@ export default function SparkLend() {
 				<Panel>
 					<Suspense fallback={<ChartPanelExportShellLoading />}>
 						<MultiSeriesChart
-							title="USD inflows"
+							title="USD Inflows"
 							headingAs="h3"
 							dataset={inflowsDataset}
 							charts={INFLOWS_CHARTS}

@@ -170,7 +170,7 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 
 	return (
 		<ChainMetricSection
-			label="Stablecoins market cap"
+			label="Stablecoins Market Cap"
 			tooltip={
 				isAll
 					? 'Sum of market cap of all stablecoins circulating on all chains'
@@ -250,7 +250,7 @@ function DexsVolume({ dexs }: { dexs: IChainOverviewData['dexs'] }) {
 			) : null}
 			{dexs.dexsDominance != null ? (
 				<ChainSubMetricRow
-					label="DEX vs CEX dominance"
+					label="DEX vs CEX Dominance"
 					value={formatPercent(dexs.dexsDominance, { input: 'percent' })}
 				/>
 			) : null}
@@ -470,7 +470,7 @@ function ChainTokenInfo({ chainTokenInfo }: { chainTokenInfo: IChainOverviewData
 				value={formatNullableCurrency(chainTokenInfo.current_price)}
 			/>
 			<ChainMetricRow
-				label={tokenLabel(`$${chainTokenInfo.token_symbol} market cap`)}
+				label={tokenLabel(`$${chainTokenInfo.token_symbol} Market Cap`)}
 				value={formatNullableCurrency(chainTokenInfo.market_cap)}
 			/>
 			<ChainMetricRow

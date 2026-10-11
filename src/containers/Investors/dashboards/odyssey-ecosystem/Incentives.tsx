@@ -161,7 +161,7 @@ export default function Incentives() {
 					</>
 				)}
 			</div>
-			<ChartCard title="30d spend by venue">
+			<ChartCard title="30d Spend by venue">
 				<SimpleTable
 					getRowKey={(row) => JSON.stringify([row.chain, row.id])}
 					rows={k.thirtyDayByVenue}
@@ -173,9 +173,9 @@ export default function Incentives() {
 				/>
 			</ChartCard>
 
-			<h2 className="heading-xs">Weekly spend per pool</h2>
+			<h2 className="heading-xs">Weekly Spend per pool</h2>
 			<Panel>
-				<ChartPanelToolbar leading={<ChartPanelTitle>Per-pool weekly spend</ChartPanelTitle>}>
+				<ChartPanelToolbar leading={<ChartPanelTitle>Per-pool Weekly Spend</ChartPanelTitle>}>
 					<SegmentedControl<VenueId>
 						variant="default"
 						size="md"
@@ -266,10 +266,10 @@ export default function Incentives() {
 					{data.nonSpendIncentives.govTokenPower && (
 						<ChartCard title={data.nonSpendIncentives.govTokenPower.title || 'Gov-token incentive power'}>
 							<div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-								<StatTile label="vlCVX locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.vlCvxLockedUsd)} />
-								<StatTile label="veAERO locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.veAeroLockedUsd)} />
+								<StatTile label="vlCVX Locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.vlCvxLockedUsd)} />
+								<StatTile label="veAERO Locked" value={fmtUsd(data.nonSpendIncentives.govTokenPower.veAeroLockedUsd)} />
 								<StatTile
-									label="Total locked"
+									label="Total Locked"
 									value={
 										data.nonSpendIncentives.govTokenPower.totalFormatted ||
 										fmtUsd(data.nonSpendIncentives.govTokenPower.totalUsd)

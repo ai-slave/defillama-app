@@ -32,13 +32,13 @@ const supplyApy7dSeries = [
 ] satisfies Array<YieldSeries>
 
 const borrowApySeries = [
-	{ type: 'bar' as const, name: 'Base cost', color: CHART_COLORS[0], stack: 'a' },
-	{ type: 'bar' as const, name: 'Reward offset', color: CHART_COLORS[1], stack: 'a' },
+	{ type: 'bar' as const, name: 'Base Cost', color: CHART_COLORS[0], stack: 'a' },
+	{ type: 'bar' as const, name: 'Reward Offset', color: CHART_COLORS[1], stack: 'a' },
 	{ type: 'bar' as const, name: 'Intrinsic', color: CHART_COLORS[2], stack: 'a' }
 ] satisfies Array<YieldSeries>
 
 const netBorrowApySeries = [
-	{ type: 'line' as const, name: 'Net borrow cost', color: CHART_COLORS[0] }
+	{ type: 'line' as const, name: 'Net Borrow Cost', color: CHART_COLORS[0] }
 ] satisfies Array<YieldSeries>
 
 export const tvlApyDimensions = datasetDimensions(tvlApySeries)

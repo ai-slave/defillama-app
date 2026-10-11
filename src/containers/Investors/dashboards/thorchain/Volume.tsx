@@ -64,19 +64,19 @@ export default function Volume() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<h2 className="heading-xs">Swap volume</h2>
+			<h2 className="heading-xs">Swap Volume</h2>
 			<KpiGrid kpis={data.kpis} items={VOLUME_KPIS} cols={3} />
 			{data.volumeByChainChart?.series?.length ? (
 				<ApiTrendChart chart={data.volumeByChainChart} subtitle="Swap volume per source chain." />
 			) : (
 				<PlaceholderCard
-					title="Swap volume by chain"
+					title="Swap Volume by chain"
 					subtitle="Swap volume per source chain."
 					note="volume.volumeByChainChart"
 				/>
 			)}
 
-			<h2 className="heading-xs">Unique wallets</h2>
+			<h2 className="heading-xs">Unique Wallets</h2>
 			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 				<Kpi kpi={data.kpis.uniqueWalletsLifetime} label="Unique Wallets (Lifetime)" note="unique-wallets feed" />
 				<Kpi
@@ -112,7 +112,7 @@ export default function Volume() {
 				)
 			) : (
 				<PlaceholderCard
-					title="Unique wallets"
+					title="Unique Wallets"
 					subtitle="Distinct wallets per period. Awaiting feed."
 					note="raynalytics unique-wallet endpoints"
 				/>

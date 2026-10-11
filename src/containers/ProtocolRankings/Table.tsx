@@ -1058,9 +1058,9 @@ const columnOptions: Array<ProtocolTableColumnOption> = [
 		preset: TABLE_PRESETS.TVL,
 		snapshot: true
 	},
-	{ name: 'TVL 1d change', key: 'change_1d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_DAY },
-	{ name: 'TVL 7d change', key: 'change_7d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.SEVEN_DAYS },
-	{ name: 'TVL 30d change', key: 'change_1m', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_MONTH },
+	{ name: 'TVL 1d Change', key: 'change_1d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_DAY },
+	{ name: 'TVL 7d Change', key: 'change_7d', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.SEVEN_DAYS },
+	{ name: 'TVL 30d Change', key: 'change_1m', preset: TABLE_PRESETS.TVL, period: TABLE_PERIODS.ONE_MONTH },
 	{ name: 'Token Price', key: 'token_price' },
 	{ name: 'Market Cap', key: 'mcap' },
 	{ name: 'Mcap/TVL', key: 'mcaptvl' },
