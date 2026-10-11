@@ -3,11 +3,11 @@ import { type ReactNode, useCallback, useRef } from 'react'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { TabLink } from '~/ui/Tab'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
 import type { DashboardLayoutTab } from '../dashboardLayout/buildDashboardLayout'
-import { proTabStyles } from '../ui/styles'
 
 const scrollButtonClassName = tw`absolute top-1/2 z-10 hidden -translate-y-1/2 md:flex`
 
@@ -81,7 +81,7 @@ export function DashboardTabs({
 							ref={tab.section.id === activeTabId ? centerActiveTab : undefined}
 							type="button"
 							value={tab.section.id}
-							className={proTabStyles}
+							render={<TabLink as="button" />}
 							data-umami-event="dashboard-tab-switch"
 							title={tab.section.description}
 						>

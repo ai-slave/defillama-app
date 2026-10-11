@@ -1,5 +1,5 @@
+import { Card } from '~/ui/Card'
 import { tw } from '~/ui/tw'
-import { proCardShellStyles } from '../ui'
 import { SkeletonShimmer } from './ProCardSkeleton'
 
 interface LoadingSkeletonProps {
@@ -32,8 +32,8 @@ const LIST_CARD_CLASS = tw`relative isolate min-h-[156px] overflow-hidden`
 
 function SkeletonCard({ viewMode }: { viewMode: 'grid' | 'list' }) {
 	return (
-		<div className={`${proCardShellStyles} ${viewMode === 'grid' ? GRID_CARD_CLASS : LIST_CARD_CLASS}`} aria-hidden>
+		<Card padding="none" className={viewMode === 'grid' ? GRID_CARD_CLASS : LIST_CARD_CLASS} aria-hidden>
 			<SkeletonShimmer />
-		</div>
+		</Card>
 	)
 }

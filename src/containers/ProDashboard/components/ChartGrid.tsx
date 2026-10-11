@@ -34,6 +34,7 @@ import { ChartWatermarkContext } from '~/components/ECharts/shared/watermark'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
 import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { EmptyState } from '~/ui/Status'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
@@ -82,7 +83,6 @@ import {
 import { StreamDoneContext, StreamItemReadinessContext } from '../queries'
 import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type SectionConfig, type SqlChartConfig } from '../types'
 import { DashedTile, ProMeta } from '../ui'
-import { proCardShellStyles } from '../ui/styles'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { type DashboardItemPlacement, type DashboardWriteResult, toastRefusal } from '../useDashboardActions'
 import { generateItemId } from '../utils/dashboardUtils'
@@ -730,7 +730,9 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		const index = items.findIndex((candidate) => candidate.id === item.id)
 		const bounds = visibleGroupBounds(items, item.id, activeTabId)
 		return (
-			<SortableItem
+			<Card
+				as={SortableItem}
+				padding="none"
 				key={item.id}
 				id={item.id}
 				elementId={dashboardItemElementId(rawItem.id)}
@@ -741,7 +743,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 				// A card control that leaves while it has focus, such as a retry that succeeds, hands focus to its card.
 				tabIndex={-1}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
-				className={`${proCardShellStyles} ${DRAGGING_CARD_CLASS} group/dashboard-card col-span-1 flex flex-col overflow-hidden ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+				className={`${DRAGGING_CARD_CLASS} group/dashboard-card col-span-1 flex flex-col overflow-hidden ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 			>
 				<div className="min-h-0 flex-1">
 					<CardBody
@@ -764,7 +766,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 								})}
 					/>
 				</div>
-			</SortableItem>
+			</Card>
 		)
 	}
 

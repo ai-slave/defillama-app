@@ -12,7 +12,8 @@ import { tw } from './tw'
      to a card, panel, dialog or toolbar header.
    A value picker is never drawn as tabs; it is a radio `SegmentedControl`.
    Underline panel tabs are `ViewTabs`; render `Tab` with `TabLink` by hand
-   only when the items carry icons or counts.
+   only when the items carry icons or counts, need per-tab props (an
+   analytics event, a ref) or sit on their own track.
 
    Item: label-md, px-3 py-2, inactive text-secondary (primary on hover),
    active = text-primary + 2px bg-brand underline bar with rounded top

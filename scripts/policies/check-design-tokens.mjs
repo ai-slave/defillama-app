@@ -1112,17 +1112,10 @@ const RULES = [
 			'src/containers/Bridges/Transactions.tsx': 'the deposit or withdrawal direction pill, a tinted label',
 			'src/containers/DeFiWatchlist/index.tsx':
 				'the Positive and Negative filter labels name a direction, beside their checkboxes',
-			'src/containers/Exchanges/PairTable.tsx': 'a funding rate, coloured by who pays',
 			'src/containers/Exchanges/ProfileExecution.tsx': 'an execution cost, red when it costs the trader',
-			'src/containers/LlamaAI/terminal/TerminalMarketStrip.tsx': 'the hourly funding rate, coloured by who pays',
-			'src/containers/ProDashboard/components/datasets/StablecoinsDataset/columns.tsx':
-				'the off-peg warning icon, tinted by which side of the peg the price sits',
-			'src/containers/ProDashboard/ui/ProBadge.tsx':
-				"the Pro metric card's change pill, which tints its fill; Pro cards are their own card system",
+			'src/containers/ProDashboard/ui/ProBadge.tsx': "the Pro metric card's change pill, which tints its fill",
 			'src/containers/ProtocolOverview/IncomeStatement.tsx':
 				'earnings coloured as a profit or a loss, a level, not a movement',
-			'src/containers/RWA/table/columns/perps.tsx':
-				'funding and premium coloured by what they cost a long, so positive is red',
 			'src/components/ECharts/shared/chartTheme.ts': 'maps the tokens to the colours ECharts draws with',
 			'src/containers/Yields/Tables/YieldsCells.tsx': 'a signed APY is a rate that can go negative, not a movement',
 			'src/containers/Yields/poolDetail/ExitReliabilityPanel.tsx':

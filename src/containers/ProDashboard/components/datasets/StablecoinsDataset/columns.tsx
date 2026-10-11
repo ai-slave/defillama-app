@@ -5,7 +5,7 @@ import { Change } from '~/ui/Change'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import type { tableFeaturesConfig } from './index'
 import type { StablecoinsTableRow } from './useStablecoinsData'
 
@@ -42,13 +42,8 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 			return (
 				<span className="flex items-center gap-1">
 					{pegDeviation != null && Math.abs(pegDeviation) >= 0.5 ? (
-						<Tooltip
-							content={`${pegDeviation > 0 ? '+' : ''}${formatPercent(pegDeviation, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })} from peg`}
-						>
-							<Icon
-								name="alert-triangle"
-								className={pegDeviation > 0 ? 'size-3.5 text-data-up' : 'size-3.5 text-data-down'}
-							/>
+						<Tooltip content={`${formatPercentChange(pegDeviation)} from peg`}>
+							<Icon name="alert-triangle" className="size-3.5 text-warning" />
 						</Tooltip>
 					) : null}
 					<span>

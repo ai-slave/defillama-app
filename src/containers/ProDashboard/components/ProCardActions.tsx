@@ -17,6 +17,7 @@ import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { ErrorLine } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { tw } from '~/ui/tw'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import { DASHBOARD_CARD_HEIGHT_LABELS, getEmbedCardHeight } from '../dashboardLayout/cardHeight'
 import { getBindableFieldsForKind } from '../dashboardVariables/resolve'
@@ -28,13 +29,14 @@ import {
 	useProDashboardVariables
 } from '../ProDashboardAPIContext'
 import { keepKeyboardEventsInsideCard } from '../ui/keyboard'
-import { proMenuGroupLabelStyles } from '../ui/styles'
 import type { UnifiedRowHeaderType } from '../unifiedTable/config/types'
 import { useDashboardCardContext } from './DashboardCardContext'
 import { buildEmbedIframeSnippet, cardEmbedSrc, copyTextToClipboard, EmbedSnippetDialog } from './EmbedSnippetDialog'
 import { type CsvExportLevel, EXPORT_LEVEL_LABELS } from './UnifiedTable/core/csvExportLevels'
 
 const noChart = () => null
+
+const menuGroupLabelStyles = tw`px-3 pt-2 pb-1 body-sm text-tertiary`
 
 const COL_SPAN_LABELS = {
 	0.5: 'Quarter width',
@@ -222,7 +224,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								{hasExports ? <Ariakit.MenuSeparator /> : null}
 								{layout.colSpanOptions.length > 0 ? (
 									<Ariakit.MenuGroup>
-										<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Width</Ariakit.MenuGroupLabel>
+										<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Width</Ariakit.MenuGroupLabel>
 										{layout.colSpanOptions.map((option) => (
 											<Ariakit.MenuItemRadio
 												key={option}
@@ -244,7 +246,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								) : null}
 								{layout.height && layout.heightOptions.length > 0 ? (
 									<Ariakit.MenuGroup>
-										<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Height</Ariakit.MenuGroupLabel>
+										<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Height</Ariakit.MenuGroupLabel>
 										{layout.heightOptions.map((option) => (
 											<Ariakit.MenuItemRadio
 												key={option}
@@ -265,7 +267,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 									</Ariakit.MenuGroup>
 								) : null}
 								<Ariakit.MenuGroup>
-									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Move</Ariakit.MenuGroupLabel>
+									<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Move</Ariakit.MenuGroupLabel>
 									<MenuItem
 										disabled={!layout.canMoveUp}
 										accessibleWhenDisabled
@@ -289,7 +291,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 							<>
 								{hasExports || layout ? <Ariakit.MenuSeparator /> : null}
 								<Ariakit.MenuGroup>
-									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Parameters</Ariakit.MenuGroupLabel>
+									<Ariakit.MenuGroupLabel className={menuGroupLabelStyles}>Parameters</Ariakit.MenuGroupLabel>
 									{parameterActions.map((action) => (
 										<MenuItem
 											key={action.key}

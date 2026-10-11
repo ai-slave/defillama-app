@@ -27,7 +27,9 @@ import {
    chart tooltip string); changeTone for an HTML string.
 
    A signed value that is not a movement (a funding rate, a share of a total)
-   is not a Change.
+   is not a Change. A peg deviation, a perp premium or a funding rate is a
+   neutral signed number (formatPercentChange), and a funding rate says who
+   pays, in its tooltip or beside the value where it has none.
 ---------------------------------------------------------------------------- */
 
 export type ChangeUnit = 'percent' | 'usd' | 'count' | 'pp'

@@ -25,7 +25,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 
 type StablecoinDeviationInfo = {
 	timestamp: number
@@ -118,7 +118,7 @@ const stablecoinsColumns = columnHelper.columns([
 			return (
 				<span className="flex w-full items-center justify-end gap-1">
 					{rowValues.depeggedTwoPercent ? <QuestionHelper text="Currently de-pegged by 2% or more." /> : null}
-					{value != null ? <Change value={value} /> : <span>-</span>}
+					{value != null ? formatPercentChange(value) : '-'}
 				</span>
 			)
 		},
@@ -139,7 +139,7 @@ const stablecoinsColumns = columnHelper.columns([
 			return (
 				<span className="flex w-full items-center justify-end gap-1">
 					{rowValues.pegDeviationInfo ? <QuestionHelper text={pegDeviationText(rowValues.pegDeviationInfo)} /> : null}
-					{value != null ? <Change value={value} /> : <span>-</span>}
+					{value != null ? formatPercentChange(value) : '-'}
 				</span>
 			)
 		},

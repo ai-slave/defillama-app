@@ -84,9 +84,6 @@ export function pairName(symbol: string): string {
 
 const coinIconUrl = (symbol: string) => `https://app.hyperliquid.xyz/coins/${encodeURIComponent(symbol)}.svg`
 
-// Funding is coloured by who pays (positive: longs pay shorts), not as a movement.
-const fundingClass = (value: number) => (value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : '')
-
 export function priceDecimals(referencePx: number): number {
 	if (!Number.isFinite(referencePx) || referencePx <= 0) return 2
 	return Math.min(8, Math.max(0, 4 - Math.floor(Math.log10(referencePx))))
@@ -158,10 +155,10 @@ function statItems(symbol: string, stats: TerminalStats | undefined): Array<Inli
 		},
 		{
 			label: 'Funding / Countdown',
-			tooltip: `≈ ${funding.apr} · paid hourly`,
+			tooltip: `≈ ${funding.apr} · paid hourly${stats.funding > 0 ? ', longs pay shorts' : stats.funding < 0 ? ', shorts pay longs' : ''}`,
 			value: (
 				<span>
-					<span className={`tabular-nums ${fundingClass(stats.funding)}`}>{funding.rate}</span>
+					<span className="tabular-nums">{funding.rate}</span>
 					<span className="text-secondary"> / </span>
 					<FundingCountdown />
 				</span>

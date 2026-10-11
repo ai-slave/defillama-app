@@ -992,7 +992,9 @@ export function TokenPageLive({
 											rows={[
 												[
 													'Open Interest-Weighted Funding Rate',
-													formatPercent(funding?.oiWeightedFundingPct, PERCENT_FOUR_DECIMALS_OPTIONS) ?? 'N/A'
+													funding?.oiWeightedFundingPct == null
+														? 'N/A'
+														: `${formatPercent(funding.oiWeightedFundingPct, { ...PERCENT_FOUR_DECIMALS_OPTIONS, signDisplay: 'exceptZero' })}${funding.oiWeightedFundingPct > 0 ? ', longs pay shorts' : funding.oiWeightedFundingPct < 0 ? ', shorts pay longs' : ''}`
 												]
 											]}
 										/>

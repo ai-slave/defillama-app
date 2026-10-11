@@ -438,7 +438,7 @@ function SourcesNotesSection({ notes, futures }: { notes: Array<string>; futures
 							<p>{`Open Interest: ${formatUsd(futures.openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}</p>
 						) : null}
 						{futures.fundingRate != null ? (
-							<p>{`Funding Rate: ${formatPercent(futures.fundingRate, { input: 'percent' })}`}</p>
+							<p>{`Funding Rate: ${formatPercent(futures.fundingRate, { input: 'percent', signDisplay: 'exceptZero' })}${futures.fundingRate > 0 ? ', longs pay shorts' : futures.fundingRate < 0 ? ', shorts pay longs' : ''}`}</p>
 						) : null}
 					</div>
 				</Card>

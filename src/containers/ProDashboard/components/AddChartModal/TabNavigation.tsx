@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useAuthContext } from '~/auth'
 import { PromoBadge } from '~/ui/PromoBadge'
+import { TabLink } from '~/ui/Tab'
 import { Tab } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
-import { proTabStyles } from '../../ui'
 import type { MainTabType } from './types'
 
 const PRO_ONLY_TABS = new Set<MainTabType>(['llamaai', 'custom-data'])
@@ -42,7 +42,7 @@ export function TabNavigation({ isSqlAllowed }: { isSqlAllowed: boolean }) {
 				const lockLabel = requiresApiPlan ? 'API' : requiresPro ? 'Pro' : null
 				const lockTooltip = requiresApiPlan ? 'Requires the API plan' : 'Requires a Pro subscription'
 				return (
-					<Tab value={tab.id} key={tab.id} className={proTabStyles}>
+					<Tab value={tab.id} key={tab.id} render={<TabLink as="button" />}>
 						<span className="flex items-center justify-center gap-1.5">
 							<span className="lg:hidden">{tab.mobileLabel}</span>
 							<span className="hidden lg:inline">{tab.label}</span>

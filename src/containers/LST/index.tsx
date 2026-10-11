@@ -41,7 +41,7 @@ import { tabTrackStyles, TabLink } from '~/ui/Tab'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { buildActiveLstChartData } from './chartData'
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
 
@@ -187,7 +187,7 @@ const LST_PEG_COLUMN = columnHelper.accessor((row) => row.ethPeg?.deviation ?? u
 				}
 				className="justify-end"
 			>
-				<Change value={peg.deviation} />
+				{formatPercentChange(peg.deviation)}
 			</Tooltip>
 		)
 	},

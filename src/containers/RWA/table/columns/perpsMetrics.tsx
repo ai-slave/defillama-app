@@ -14,7 +14,6 @@ import {
 	createPerpsFeeRateColumn,
 	createPerpsUsdColumn,
 	getPerpsMarket,
-	longCostTone,
 	maxLeverageColumn,
 	venueTypeColumn
 } from './perps'
@@ -119,10 +118,7 @@ function PremiumCell({ row }: { row: RWATableRow }) {
 	if (formatted == null) return null
 	const detail = d.premium.description
 	return (
-		<Tooltip
-			content={detail}
-			className={`justify-end underline decoration-dotted ${longCostTone(row.metrics.premium)}`}
-		>
+		<Tooltip content={detail} className="justify-end underline decoration-dotted">
 			{formatted}
 		</Tooltip>
 	)
@@ -148,9 +144,10 @@ export function formatFundingRateDetail(rate: number, intervalHours: number): st
 function FundingCell({ metrics }: { metrics: RWATableMetrics }) {
 	const formatted = formatPercentChange(metrics.fundingApr)
 	if (formatted == null || metrics.fundingRate == null || metrics.fundingIntervalHours == null) return null
-	const detail = formatFundingRateDetail(metrics.fundingRate, metrics.fundingIntervalHours)
+	const payer = metrics.fundingRate > 0 ? ' Longs pay shorts.' : metrics.fundingRate < 0 ? ' Shorts pay longs.' : ''
+	const detail = formatFundingRateDetail(metrics.fundingRate, metrics.fundingIntervalHours) + payer
 	return (
-		<Tooltip content={detail} className={`justify-end underline decoration-dotted ${longCostTone(metrics.fundingApr)}`}>
+		<Tooltip content={detail} className="justify-end underline decoration-dotted">
 			{formatted}
 		</Tooltip>
 	)

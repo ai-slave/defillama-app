@@ -41,12 +41,13 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import { ProButton, ProDialogFallback, ProMeta, proTabStyles } from '~/containers/ProDashboard/ui'
+import { ProButton, ProDialogFallback, ProMeta } from '~/containers/ProDashboard/ui'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
+import { TabLink } from '~/ui/Tab'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
@@ -332,7 +333,12 @@ function ProContent({
 			<div className="flex flex-1 flex-col gap-4 p-2 lg:px-0">
 				<div className="flex items-center gap-2">
 					<Ariakit.TabList className="flex scrollbar-none min-w-0 overflow-x-auto" aria-label="Dashboard views">
-						<Tab type="button" value="discover" data-umami-event="dashboard-open-discover" className={proTabStyles}>
+						<Tab
+							type="button"
+							value="discover"
+							data-umami-event="dashboard-open-discover"
+							render={<TabLink as="button" />}
+						>
 							Discover
 						</Tab>
 						{isAuthenticated ? (
@@ -340,28 +346,43 @@ function ProContent({
 								type="button"
 								value="my-dashboards"
 								data-umami-event="dashboard-open-my-dashboards"
-								className={proTabStyles}
+								render={<TabLink as="button" />}
 							>
 								My Dashboards
 							</Tab>
 						) : null}
 						{isAuthenticated && myTeam ? (
-							<Tab type="button" value="team" data-umami-event="dashboard-open-team" className={proTabStyles}>
+							<Tab type="button" value="team" data-umami-event="dashboard-open-team" render={<TabLink as="button" />}>
 								Team
 							</Tab>
 						) : null}
 						{isAuthenticated ? (
-							<Tab type="button" value="favorites" data-umami-event="dashboard-open-favorites" className={proTabStyles}>
+							<Tab
+								type="button"
+								value="favorites"
+								data-umami-event="dashboard-open-favorites"
+								render={<TabLink as="button" />}
+							>
 								Starred
 							</Tab>
 						) : null}
 						{isAuthenticated ? (
-							<Tab type="button" value="following" data-umami-event="dashboard-open-following" className={proTabStyles}>
+							<Tab
+								type="button"
+								value="following"
+								data-umami-event="dashboard-open-following"
+								render={<TabLink as="button" />}
+							>
 								Following
 							</Tab>
 						) : null}
 						{isAuthenticated ? (
-							<Tab type="button" value="profile" data-umami-event="dashboard-open-my-profile" className={proTabStyles}>
+							<Tab
+								type="button"
+								value="profile"
+								data-umami-event="dashboard-open-my-profile"
+								render={<TabLink as="button" />}
+							>
 								My Profile
 							</Tab>
 						) : null}

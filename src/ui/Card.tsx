@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType } from 'react'
+import type { ComponentPropsWithRef, ElementType } from 'react'
 
 /**
  * Card — the surface for repeated content and data: bg-surface, border-subtle, 8px radius. Every new card uses it.
@@ -34,7 +34,7 @@ type CardProps<T extends ElementType> = {
 	padding: 'none' | 'sm' | 'md' | 'strip'
 	radius?: 'default' | 'large'
 	tone?: keyof typeof TONE
-} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'padding'>
+} & Omit<ComponentPropsWithRef<T>, 'as' | 'padding'>
 
 const PADDING = {
 	none: '',

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -16,7 +17,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
 import { countDashboardWidgets } from '../dashboardWidgets'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProMeta, proCardShellStyles } from '../ui'
+import { ProMeta } from '../ui'
 import { CardLikeButton } from './CardLikeButton'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 import { DashboardPreview } from './DashboardPreview'
@@ -194,9 +195,10 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 		) : null
 
 	return (
-		<div
+		<Card
+			padding="none"
 			ref={focusNeighbourOnLeave}
-			className={`${proCardShellStyles} hover-wash-card group/dashboard-card relative isolate flex flex-col overflow-hidden ${className ?? ''}`}
+			className={`hover-wash-card group/dashboard-card relative isolate flex flex-col overflow-hidden ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (
 				<div className="relative">
@@ -266,6 +268,6 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					onClose={() => setShowDeleteConfirm(false)}
 				/>
 			) : null}
-		</div>
+		</Card>
 	)
 }

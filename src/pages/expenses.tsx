@@ -138,7 +138,6 @@ const columns = columnHelper.columns([
 							aria-label="View source"
 							size="sm"
 							square
-							className="w-fit"
 						/>
 					}
 				>

@@ -93,12 +93,6 @@ export function createPerpsFeeRateColumn(
 	})
 }
 
-/** Read from the long side: a positive rate costs a long, so it is red. */
-export function longCostTone(value: number | null | undefined): string {
-	if (value == null || value === 0) return 'text-primary'
-	return value > 0 ? 'text-data-down' : 'text-data-up'
-}
-
 function createPerpsCsvColumn(id: string, header: string, pick: (market: RWAPerpsContractOverlayRow) => unknown) {
 	return asCsvOnly(
 		columnHelper.accessor(

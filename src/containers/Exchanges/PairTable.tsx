@@ -385,23 +385,21 @@ export function buildPairColumns(
 					header: definitions.fundingRate8h.label,
 					cell: ({ row, getValue }) => {
 						if (!capabilities.funding) return <UnsupportedMetric />
-						if (getValue() == null) return <span className="text-tertiary">–</span>
+						const value = getValue()
+						if (value == null) return <span className="text-tertiary">–</span>
 						return (
 							<Tooltip
-								content={`Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
+								content={`${value > 0 ? 'Longs pay shorts. ' : value < 0 ? 'Shorts pay longs. ' : ''}Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
 								className="ms-auto w-fit"
 							>
-								<span
-									className={`underline decoration-dotted ${
-										getValue()! > 0 ? 'text-data-up' : getValue()! < 0 ? 'text-data-down' : ''
-									}`.trim()}
-								>
-									{formatPercent(getValue(), {
+								<span className="underline decoration-dotted">
+									{formatPercent(value, {
 										input: 'fraction',
 										minimumFractionDigits: 4,
 										maximumFractionDigits: 4,
-										useGrouping: false
-									}) ?? '–'}
+										useGrouping: false,
+										signDisplay: 'exceptZero'
+									})}
 								</span>
 							</Tooltip>
 						)

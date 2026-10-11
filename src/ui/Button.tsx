@@ -239,11 +239,12 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 	lg: 'label-md min-h-11 gap-1.5 px-4 py-2.5'
 }
 
-/** Icon-only buttons: aspect-square + self-center so flex rows can't stretch them. */
+/** Icon-only buttons: aspect-square + self-center so flex rows can't stretch them, and w-fit so a block parent such
+    as a table cell can't either: a block-level flex box fills its parent's width, and the ratio then sets its height. */
 const SQUARE_SIZE_CLASSES: Record<ButtonSize, string> = {
-	sm: 'aspect-square min-h-6 self-center p-0.5',
-	md: 'aspect-square min-h-8 self-center p-1.5 sheet:min-h-11',
-	lg: 'aspect-square min-h-11 self-center p-2.5'
+	sm: 'aspect-square min-h-6 w-fit self-center p-0.5',
+	md: 'aspect-square min-h-8 w-fit self-center p-1.5 sheet:min-h-11',
+	lg: 'aspect-square min-h-11 w-fit self-center p-2.5'
 }
 
 const RADIUS_CLASSES: Record<ButtonSize, string> = {
