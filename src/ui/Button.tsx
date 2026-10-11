@@ -59,7 +59,8 @@ import { LoadingSpinner } from './Loaders'
                   buttons. Never pull a text action into line with a
                   negative margin; that is what the link's missing padding is for.
    Pick a pill by its job: a removable active filter or a filter picker is
-   `filter`; a pill that turns a list filter on or off is `toggle`; a pill
+   `filter`; a pill that turns a list filter on or off is `toggle` (whether
+   its value lives in the URL or in state is in docs/url-state.md); a pill
    that runs or inserts something (a suggestion, a search topic, a formula
    field) is `secondary` sm with no active state; LlamaAI question strips
    use md, keeping their 32px row.

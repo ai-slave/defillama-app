@@ -1,7 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
@@ -190,7 +190,8 @@ function IndustriesReadyPage({
 	state: Extract<EquitiesPageDataState<IndustriesPageData>, { status: 'ready' }>
 }) {
 	const router = useRouter()
-	const [groupBySector, setGroupBySector] = useState(false)
+	// `mapGroup` is the key the /equities market map uses for the same choice; here ungrouped is the default.
+	const groupBySector = router.query.mapGroup === 'sector'
 	const hideTail = !isTrueQueryParam(router.query.showTail)
 
 	const { overview, industries } = state.data
@@ -331,7 +332,7 @@ function IndustriesReadyPage({
 								size="md"
 								data-active={groupBySector}
 								aria-pressed={groupBySector}
-								onClick={() => setGroupBySector((value) => !value)}
+								onClick={() => void pushShallowQuery(router, { mapGroup: groupBySector ? undefined : 'sector' })}
 							>
 								By sector
 							</Button>

@@ -1,6 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
-import { lazy, Suspense, useState } from 'react'
+import { useRouter } from 'next/router'
+import { lazy, Suspense } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
@@ -16,6 +17,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { StatTile } from '~/ui/SummaryStats'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildSectorTreemapData,
 	filterKnownAggregates,
@@ -44,6 +46,13 @@ const TREEMAP_OPTIONS = [
 	{ value: 'volume', label: 'Volume' },
 	{ value: 'revenue', label: 'Revenue' }
 ] as const
+const PERFORMANCE_PERIOD_OPTIONS: Array<{ value: SectorPerformancePeriod; label: string }> = [
+	{ value: '1d', label: '1D' },
+	{ value: '7d', label: '7D' },
+	{ value: '1m', label: '1M' },
+	{ value: 'ytd', label: 'YTD' },
+	{ value: '1y', label: '1Y' }
+]
 
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 
@@ -179,9 +188,12 @@ function SectorsReadyPage({
 }: {
 	state: Extract<EquitiesPageDataState<IEquitiesSectorsData>, { status: 'ready' }>
 }) {
-	const [treemapMetric, setTreemapMetric] = useState<SectorTreemapMetric>('marketCap')
-	const [cardSort, setCardSort] = useState<SectorCardSort>('marketCap')
-	const [performancePeriod, setPerformancePeriod] = useState<SectorPerformancePeriod>('1d')
+	const router = useRouter()
+	// `mapSize` is the key the /equities market map uses for the same choice.
+	const treemapMetric = TREEMAP_OPTIONS.find((option) => option.value === router.query.mapSize)?.value ?? 'marketCap'
+	const cardSort = CARD_SORT_OPTIONS.find((option) => option.value === router.query.cardSort)?.value ?? 'marketCap'
+	const performancePeriod =
+		PERFORMANCE_PERIOD_OPTIONS.find((option) => option.value === router.query.period)?.value ?? '1d'
 
 	const { overview, sectors } = state.data
 	const classifiedSectors = filterKnownAggregates(sectors)
@@ -288,7 +300,9 @@ function SectorsReadyPage({
 				controls={
 					<SegmentedControl<SectorTreemapMetric>
 						value={treemapMetric}
-						onValueChange={setTreemapMetric}
+						onValueChange={(next) =>
+							void pushShallowQuery(router, { mapSize: next === 'marketCap' ? undefined : next })
+						}
 						options={TREEMAP_OPTIONS}
 						label="Treemap size"
 						variant="default"
@@ -305,14 +319,8 @@ function SectorsReadyPage({
 					</div>
 					<SegmentedControl<SectorPerformancePeriod>
 						value={performancePeriod}
-						onValueChange={setPerformancePeriod}
-						options={[
-							{ value: '1d', label: '1D' },
-							{ value: '7d', label: '7D' },
-							{ value: '1m', label: '1M' },
-							{ value: 'ytd', label: 'YTD' },
-							{ value: '1y', label: '1Y' }
-						]}
+						onValueChange={(next) => void pushShallowQuery(router, { period: next === '1d' ? undefined : next })}
+						options={PERFORMANCE_PERIOD_OPTIONS}
 						label="Sector performance period"
 						variant="default"
 						size="md"
@@ -359,7 +367,9 @@ function SectorsReadyPage({
 					</div>
 					<SegmentedControl<SectorCardSort>
 						value={cardSort}
-						onValueChange={setCardSort}
+						onValueChange={(next) =>
+							void pushShallowQuery(router, { cardSort: next === 'marketCap' ? undefined : next })
+						}
 						options={CARD_SORT_OPTIONS}
 						label="Sort sector cards"
 						variant="default"

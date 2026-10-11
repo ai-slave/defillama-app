@@ -47,7 +47,8 @@ import { Tooltip } from './Tooltip'
    `semantics` picks what the control announces; the look is the same:
    - radio (default): a value that reconfigures one region (a period, a
      denomination, a chart metric, a grouping). Nothing appears or
-     disappears, so it is a radiogroup. The caller holds `value`.
+     disappears, so it is a radiogroup. The caller holds `value`; whether
+     it lives in the URL or in state is in docs/url-state.md.
    - tabs: switching between distinct content panels. Render it inside a
      `Tabs` provider from ./Tabs, which holds the value, and give each panel
      a `TabPanel`; the provider wires every tab's id and aria-controls to
